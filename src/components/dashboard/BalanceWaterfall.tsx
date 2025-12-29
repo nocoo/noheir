@@ -14,6 +14,12 @@ import { MonthlyData } from '@/types/transaction';
 import { useSettings, getIncomeColor, getIncomeColorHex, getExpenseColor, getExpenseColorHex } from '@/contexts/SettingsContext';
 import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, formatCurrencyK } from '@/lib/chart-config';
 
+interface TooltipPayload {
+  payload?: {
+    isPositive: boolean;
+  };
+}
+
 interface BalanceWaterfallProps {
   data: MonthlyData[];
 }
@@ -61,8 +67,15 @@ export function BalanceWaterfall({ data }: BalanceWaterfallProps) {
               />
               <Tooltip
                 contentStyle={tooltipStyle.contentStyle}
-                formatter={(value: number, name: string) => {
-                  if (name === 'balance') return [`¥${value.toLocaleString()}`, '月结余'];
+                itemStyle={{ color: 'hsl(var(--foreground))' }}
+                formatter={(value: number, name: string, props: TooltipPayload) => {
+                  if (name === 'balance') {
+                    const color = props.payload?.isPositive ? incomeColorHex : expenseColorHex;
+                    return [
+                      <span style={{ color }}>¥{value.toLocaleString()}</span>,
+                      '月结余'
+                    ];
+                  }
                   if (name === 'cumulative') return [`¥${value.toLocaleString()}`, '累计结余'];
                   return [value, name];
                 }}
