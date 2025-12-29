@@ -65,18 +65,13 @@ export function SankeyChart({ transactions, type }: SankeyChartProps) {
       );
     });
 
-    // Rich color palette for Sankey categories
+    // Rich color palette for Sankey categories (all direct hex values for ECharts)
     const colors = [
       getIncomeColorHex(settings.colorScheme),
       getExpenseColorHex(settings.colorScheme),
-      'hsl(var(--chart-1))',  // Blue
-      'hsl(var(--chart-2))',  // Cyan
-      'hsl(var(--chart-3))',  // Indigo
-      'hsl(var(--chart-4))',  // Violet
-      'hsl(var(--chart-5))',  // Purple
+      '#3b82f6', // Blue-500
       '#06b6d4', // Cyan-500
       '#0ea5e9', // Sky-500
-      '#3b82f6', // Blue-500
       '#6366f1', // Indigo-500
       '#8b5cf6', // Violet-500
       '#a855f7', // Purple-500
@@ -91,6 +86,11 @@ export function SankeyChart({ transactions, type }: SankeyChartProps) {
       '#22c55e', // Green-500
       '#10b981', // Emerald-500
       '#14b8a6', // Teal-500
+      '#0891b2', // Cyan-600
+      '#0284c7', // Sky-600
+      '#2563eb', // Blue-600
+      '#4f46e5', // Indigo-600
+      '#7c3aed', // Violet-600
     ];
 
     // Build nodes and links for ECharts Sankey
@@ -202,9 +202,14 @@ export function SankeyChart({ transactions, type }: SankeyChartProps) {
             color: (params: SankeyLineStyleParams) => {
               // Find the source node's color
               const sourceNode = nodes[params.data.source];
-              const sourceColor = sourceNode?.name === rootNode ? totalColor :
-                colors[Math.floor((params.data.source - 1) / 10) % colors.length];
-              return sourceColor || 'hsl(var(--muted-foreground))';
+              if (!sourceNode) return 'hsl(var(--muted-foreground))';
+              if (sourceNode.name === rootNode) return totalColor;
+              // Get color from nodeColorIndex
+              const colorIdx = nodeColorIndex.get(sourceNode.name);
+              if (colorIdx !== undefined && colorIdx >= 0) {
+                return colors[colorIdx % colors.length];
+              }
+              return 'hsl(var(--muted-foreground))';
             },
             opacity: 0.3
           },
