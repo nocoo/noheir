@@ -2,10 +2,90 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useSettings, getIncomeColorHex, getExpenseColorHex } from '@/contexts/SettingsContext';
-import { Sun, Moon, Monitor, Palette } from 'lucide-react';
+import { DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from '@/types/category';
+import { Sun, Moon, Monitor, Palette, Layers, ChevronDown, ChevronRight } from 'lucide-react';
+import { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 export function Settings() {
   const { settings, updateTheme, updateColorScheme } = useSettings();
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+
+  const toggleCategory = (category: string) => {
+    setExpandedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(category)) {
+        next.delete(category);
+      } else {
+        next.add(category);
+      }
+      return next;
+    });
+  };
+
+  // Category mapping display component
+  const CategoryMappingDisplay = ({
+    title,
+    mappings,
+    icon: Icon
+  }: {
+    title: string;
+    mappings: Record<string, string[]>;
+    icon: any;
+  }) => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Icon className="h-5 w-5 text-primary" />
+          {title}
+        </CardTitle>
+        <CardDescription>二级分类与三级分类的映射关系（只读）</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ScrollArea className="h-[400px] pr-4">
+          <div className="space-y-3">
+            {Object.entries(mappings).map(([secondary, tertiaryList]) => (
+              <div key={secondary} className="border rounded-lg overflow-hidden">
+                <button
+                  onClick={() => toggleCategory(`${title}-${secondary}`)}
+                  className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    {expandedCategories.has(`${title}-${secondary}`) ? (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    <span className="font-medium">{secondary}</span>
+                    <Badge variant="secondary" className="text-xs">
+                      {tertiaryList.length}
+                    </Badge>
+                  </div>
+                </button>
+                {expandedCategories.has(`${title}-${secondary}`) && (
+                  <div className="p-3 pt-0 border-t bg-muted/20">
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {tertiaryList.map((tertiary) => (
+                        <Badge
+                          key={tertiary}
+                          variant="outline"
+                          className="text-xs px-2 py-1"
+                        >
+                          {tertiary}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -107,6 +187,27 @@ export function Settings() {
           </p>
         </CardContent>
       </Card>
+
+      {/* Category Mappings */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-xl font-semibold">分类映射</h2>
+          <p className="text-sm text-muted-foreground">查看二级分类与三级分类的对应关系</p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <CategoryMappingDisplay
+            title="支出分类"
+            mappings={DEFAULT_EXPENSE_CATEGORIES}
+            icon={Layers}
+          />
+          <CategoryMappingDisplay
+            title="收入分类"
+            mappings={DEFAULT_INCOME_CATEGORIES}
+            icon={Layers}
+          />
+        </div>
+      </div>
     </div>
   );
 }
