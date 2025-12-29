@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   TrendingUp,
   TrendingDown,
+  ArrowRightLeft,
   Percent,
   Wallet,
   GitCompareArrows,
@@ -44,6 +45,7 @@ const navGroups = [
     items: [
       { id: 'income', label: '收入分析', icon: TrendingUp },
       { id: 'expense', label: '支出分析', icon: TrendingDown },
+      { id: 'transfer', label: '转账分析', icon: ArrowRightLeft },
       { id: 'savings', label: '储蓄率', icon: Percent },
       { id: 'account', label: '账户分析', icon: Wallet },
       { id: 'flow', label: '资金流向', icon: Network },

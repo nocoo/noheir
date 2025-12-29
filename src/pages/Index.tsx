@@ -8,6 +8,7 @@ import { DataQuality } from '@/components/dashboard/DataQuality';
 import { DataManagement } from '@/components/dashboard/DataManagement';
 import { IncomeAnalysis } from '@/components/dashboard/IncomeAnalysis';
 import { ExpenseAnalysis } from '@/components/dashboard/ExpenseAnalysis';
+import { TransferAnalysis } from '@/components/dashboard/TransferAnalysis';
 import { AccountAnalysis } from '@/components/dashboard/AccountAnalysis';
 import { Settings } from '@/components/dashboard/Settings';
 import { SankeyChart } from '@/components/dashboard/SankeyChart';
@@ -207,6 +208,19 @@ const Index = () => {
             <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
           </div>
           <ExpenseAnalysis transactions={transactions} monthlyData={monthlyData} />
+        </div>
+      )}
+
+      {activeTab === 'transfer' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold">转账分析</h1>
+              <p className="text-muted-foreground">转账和信用卡还款记录分析</p>
+            </div>
+            <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
+          </div>
+          <TransferAnalysis transactions={transactions} monthlyData={monthlyData} />
         </div>
       )}
 
