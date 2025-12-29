@@ -43,22 +43,9 @@ export function SavingsRateChart({ data }: SavingsRateChartProps) {
   // Calculate difference from target
   const avgDiff = avgSavingsRate - targetSavingsRate;
   const totalIncome = chartData.reduce((sum, d) => sum + d.income, 0);
-  // Calculate target savings based on average savings rate (not weighted)
-  const targetSavingsAmount = totalIncome * (avgSavingsRate / 100);
-  const expectedTargetSavings = totalIncome * (targetSavingsRate / 100);
-  const savingsGap = totalSavings - expectedTargetSavings;
-
-  // Debug: log values to understand the issue
-  console.log('Savings Gap Debug:', {
-    avgSavingsRate,
-    targetSavingsRate,
-    avgDiff,
-    totalSavings,
-    totalIncome,
-    expectedTargetSavings,
-    savingsGap,
-    isGapPositive: savingsGap >= 0
-  });
+  // Calculate savings gap based on avgSavingsRate diff to keep consistency
+  // This shows: if avg rate is 4.9% below target, how much amount is that
+  const savingsGap = totalIncome * (avgDiff / 100);
 
   return (
     <Card className="col-span-full">
