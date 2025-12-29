@@ -252,16 +252,28 @@ const Index = () => {
         </div>
       )}
 
-      {activeTab === 'flow' && (
+      {activeTab === 'flow-income' && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold">资金流向</h1>
-              <p className="text-muted-foreground">可视化收入支出流向分类</p>
+              <h1 className="text-2xl font-bold">收入流向</h1>
+              <p className="text-muted-foreground">可视化收入从来源到分类的分布</p>
             </div>
             <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
           </div>
           <SankeyChart transactions={transactions} type="income" />
+        </div>
+      )}
+
+      {activeTab === 'flow-expense' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold">支出流向</h1>
+              <p className="text-muted-foreground">可视化支出从分类到用途的分布</p>
+            </div>
+            <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
+          </div>
           <SankeyChart transactions={transactions} type="expense" />
         </div>
       )}

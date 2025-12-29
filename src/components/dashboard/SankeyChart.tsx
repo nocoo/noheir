@@ -249,7 +249,7 @@ export function SankeyChart({ transactions, type }: SankeyChartProps) {
       <CardContent>
         <ReactECharts
           option={option}
-          style={{ height: '500px', width: '100%' }}
+          style={{ height: '700px', width: '100%' }}
           opts={{ renderer: 'svg' }}
         />
       </CardContent>
