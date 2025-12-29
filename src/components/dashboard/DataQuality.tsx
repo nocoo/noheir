@@ -2,115 +2,46 @@ import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Transaction } from '@/types/transaction';
-import { CheckCircle, AlertTriangle, XCircle, Calendar, Tag, Wallet, FileText } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { DataQualityMetrics, TransactionValidation } from '@/types/data';
+import {
+  CheckCircle,
+  AlertTriangle,
+  XCircle,
+  Calendar,
+  Tag,
+  Wallet,
+  FileText,
+  Copy,
+  Filter,
+  TrendingUp,
+  TrendingDown,
+  Layers
+} from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 
 interface DataQualityProps {
-  transactions: Transaction[];
+  metrics: DataQualityMetrics | null;
+  validations: TransactionValidation[] | null;
+  onFilterChange?: (severity: string[]) => void;
 }
 
-interface QualityMetric {
-  name: string;
-  score: number;
-  total: number;
-  issues: string[];
-  icon: typeof CheckCircle;
-}
-
-export function DataQuality({ transactions }: DataQualityProps) {
-  const metrics = useMemo(() => {
-    const result: QualityMetric[] = [];
-    
-    // Date completeness
-    const validDates = transactions.filter(t => t.date && !isNaN(new Date(t.date).getTime()));
-    const dateIssues = transactions.length - validDates.length;
-    result.push({
-      name: '日期完整性',
-      score: validDates.length,
-      total: transactions.length,
-      issues: dateIssues > 0 ? [`${dateIssues} 条记录日期无效`] : [],
-      icon: Calendar
-    });
-
-    // Category completeness
-    const validPrimary = transactions.filter(t => t.primaryCategory && t.primaryCategory.trim() !== '');
-    const validSecondary = transactions.filter(t => t.secondaryCategory && t.secondaryCategory.trim() !== '');
-    const categoryIssues: string[] = [];
-    if (transactions.length - validPrimary.length > 0) {
-      categoryIssues.push(`${transactions.length - validPrimary.length} 条记录缺少一级分类`);
-    }
-    if (transactions.length - validSecondary.length > 0) {
-      categoryIssues.push(`${transactions.length - validSecondary.length} 条记录缺少二级分类`);
-    }
-    result.push({
-      name: '分类完整性',
-      score: Math.min(validPrimary.length, validSecondary.length),
-      total: transactions.length,
-      issues: categoryIssues,
-      icon: Tag
-    });
-
-    // Account completeness
-    const validAccount = transactions.filter(t => t.account && t.account.trim() !== '');
-    const accountIssues = transactions.length - validAccount.length;
-    result.push({
-      name: '账户信息',
-      score: validAccount.length,
-      total: transactions.length,
-      issues: accountIssues > 0 ? [`${accountIssues} 条记录缺少账户信息`] : [],
-      icon: Wallet
-    });
-
-    // Amount validity
-    const validAmount = transactions.filter(t => t.amount > 0);
-    const amountIssues = transactions.length - validAmount.length;
-    result.push({
-      name: '金额有效性',
-      score: validAmount.length,
-      total: transactions.length,
-      issues: amountIssues > 0 ? [`${amountIssues} 条记录金额无效`] : [],
-      icon: FileText
-    });
-
-    return result;
-  }, [transactions]);
-
+export function DataQuality({ metrics, validations, onFilterChange }: DataQualityProps) {
   const overallScore = useMemo(() => {
-    if (transactions.length === 0) return 0;
-    const totalScore = metrics.reduce((sum, m) => sum + (m.score / m.total), 0);
-    return (totalScore / metrics.length) * 100;
-  }, [metrics, transactions.length]);
+    if (!metrics || metrics.totalRecords === 0) return 0;
 
-  const statistics = useMemo(() => {
-    if (transactions.length === 0) return null;
+    const completenessScore =
+      (metrics.dateCompleteness +
+        metrics.categoryCompleteness +
+        metrics.amountCompleteness +
+        metrics.accountCompleteness) / 4;
 
-    const years = [...new Set(transactions.map(t => t.year))].sort();
-    const months = [...new Set(transactions.map(t => `${t.year}-${t.month}`))].length;
-    const accounts = [...new Set(transactions.map(t => t.account))];
-    const primaryCategories = [...new Set(transactions.map(t => t.primaryCategory))];
-    const secondaryCategories = [...new Set(transactions.map(t => t.secondaryCategory))];
-    
-    const incomeCount = transactions.filter(t => t.type === 'income').length;
-    const expenseCount = transactions.filter(t => t.type === 'expense').length;
-    const totalIncome = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-    const totalExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+    const validityScore =
+      ((metrics.totalRecords - metrics.criticalRecords - metrics.errorRecords) / metrics.totalRecords) * 100;
 
-    return {
-      years,
-      months,
-      accounts,
-      primaryCategories,
-      secondaryCategories,
-      incomeCount,
-      expenseCount,
-      totalIncome,
-      totalExpense,
-      dateRange: transactions.length > 0 ? {
-        start: transactions.reduce((min, t) => t.date < min ? t.date : min, transactions[0].date),
-        end: transactions.reduce((max, t) => t.date > max ? t.date : max, transactions[0].date)
-      } : null
-    };
-  }, [transactions]);
+    return (completenessScore * 0.6 + validityScore * 0.4);
+  }, [metrics]);
 
   const getScoreColor = (percentage: number) => {
     if (percentage >= 90) return 'text-green-600 dark:text-green-400';
@@ -118,13 +49,40 @@ export function DataQuality({ transactions }: DataQualityProps) {
     return 'text-red-600 dark:text-red-400';
   };
 
-  const getScoreIcon = (percentage: number) => {
-    if (percentage >= 90) return CheckCircle;
-    if (percentage >= 70) return AlertTriangle;
-    return XCircle;
+  const getScoreBgColor = (percentage: number) => {
+    if (percentage >= 90) return 'bg-green-500';
+    if (percentage >= 70) return 'bg-yellow-500';
+    return 'bg-red-500';
   };
 
-  if (transactions.length === 0) {
+  const getScoreLabel = (percentage: number) => {
+    if (percentage >= 90) return '数据质量优秀';
+    if (percentage >= 70) return '数据质量良好';
+    if (percentage >= 50) return '数据质量一般';
+    return '数据质量较差';
+  };
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'valid': return 'default';
+      case 'warning': return 'secondary';
+      case 'error': return 'destructive';
+      case 'critical': return 'destructive';
+      default: return 'outline';
+    }
+  };
+
+  const getSeverityLabel = (severity: string) => {
+    switch (severity) {
+      case 'valid': return '正常';
+      case 'warning': return '警告';
+      case 'error': return '错误';
+      case 'critical': return '严重';
+      default: return severity;
+    }
+  };
+
+  if (!metrics || metrics.totalRecords === 0) {
     return (
       <Card>
         <CardHeader>
@@ -150,146 +108,303 @@ export function DataQuality({ transactions }: DataQualityProps) {
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-6">
-            <div className={`text-5xl font-bold ${getScoreColor(overallScore)}`}>
+            <div className={`text-6xl font-bold ${getScoreColor(overallScore)}`}>
               {overallScore.toFixed(0)}%
             </div>
-            <div className="flex-1">
+            <div className="flex-1 space-y-3">
               <Progress value={overallScore} className="h-3" />
-              <p className="text-sm text-muted-foreground mt-2">
-                {overallScore >= 90 ? '数据质量优秀' : 
-                 overallScore >= 70 ? '数据质量良好，部分需要完善' : 
-                 '数据质量需要改进'}
+              <p className={`text-lg font-medium ${getScoreColor(overallScore)}`}>
+                {getScoreLabel(overallScore)}
               </p>
+              <div className="flex gap-2 flex-wrap">
+                <Badge variant="outline" className="gap-1">
+                  <Layers className="h-3 w-3" />
+                  {metrics.totalRecords} 条记录
+                </Badge>
+                <Badge variant="outline" className="gap-1 text-green-600">
+                  <CheckCircle className="h-3 w-3" />
+                  {metrics.validRecords} 正常
+                </Badge>
+                <Badge variant="secondary" className="gap-1">
+                  <AlertTriangle className="h-3 w-3" />
+                  {metrics.warningRecords} 警告
+                </Badge>
+                <Badge variant="destructive" className="gap-1">
+                  <XCircle className="h-3 w-3" />
+                  {metrics.errorRecords + metrics.criticalRecords} 错误
+                </Badge>
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Detailed Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {metrics.map(metric => {
-          const percentage = metric.total > 0 ? (metric.score / metric.total) * 100 : 0;
-          const ScoreIcon = getScoreIcon(percentage);
-          
-          return (
-            <Card key={metric.name}>
-              <CardContent className="pt-6">
-                <div className="flex items-start gap-4">
-                  <div className={`p-2 rounded-lg bg-muted`}>
-                    <metric.icon className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <div className="flex-1">
+      {/* Completeness Metrics */}
+      <Card>
+        <CardHeader>
+          <CardTitle>数据完整性</CardTitle>
+          <CardDescription>各字段的完整度评估</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <CompletenessBar
+              name="日期完整性"
+              percentage={metrics.dateCompleteness}
+              icon={Calendar}
+              issues={metrics.missingDates}
+            />
+            <CompletenessBar
+              name="分类完整性"
+              percentage={metrics.categoryCompleteness}
+              icon={Tag}
+            />
+            <CompletenessBar
+              name="金额有效性"
+              percentage={metrics.amountCompleteness}
+              icon={FileText}
+              issues={metrics.zeroAmounts + metrics.negativeAmounts}
+            />
+            <CompletenessBar
+              name="账户信息"
+              percentage={metrics.accountCompleteness}
+              icon={Wallet}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Data Integrity */}
+      <Card>
+        <CardHeader>
+          <CardTitle>数据完整性检查</CardTitle>
+          <CardDescription>检测重复、异常数据等问题</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <IntegrityCard
+              label="重复记录"
+              count={metrics.duplicateCount}
+              total={metrics.totalRecords}
+              type={metrics.duplicateCount > 0 ? 'warning' : 'success'}
+            />
+            <IntegrityCard
+              label="无效日期"
+              count={metrics.missingDates}
+              total={metrics.totalRecords}
+              type={metrics.missingDates > 0 ? 'error' : 'success'}
+            />
+            <IntegrityCard
+              label="未来日期"
+              count={metrics.futureDates}
+              total={metrics.totalRecords}
+              type={metrics.futureDates > 0 ? 'warning' : 'success'}
+            />
+            <IntegrityCard
+              label="异常金额"
+              count={metrics.zeroAmounts + metrics.negativeAmounts}
+              total={metrics.totalRecords}
+              type={metrics.zeroAmounts + metrics.negativeAmounts > 0 ? 'error' : 'success'}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Basic Statistics */}
+      <Card>
+        <CardHeader>
+          <CardTitle>基础统计</CardTitle>
+          <CardDescription>数据概览信息</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div>
+              <p className="text-sm text-muted-foreground">日期范围</p>
+              <p className="text-lg font-semibold mt-1">
+                {metrics.dateRange?.start} ~ {metrics.dateRange?.end}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">年份数</p>
+              <p className="text-2xl font-bold">{metrics.years.length}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">月份数</p>
+              <p className="text-2xl font-bold">{metrics.months.length}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">账户数</p>
+              <p className="text-2xl font-bold">{metrics.accounts.length}</p>
+            </div>
+          </div>
+
+          <Separator className="my-6" />
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div>
+              <p className="text-sm text-muted-foreground">收入笔数</p>
+              <p className="text-2xl font-bold text-green-600">{metrics.incomeCount}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">支出笔数</p>
+              <p className="text-2xl font-bold text-red-600">{metrics.expenseCount}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">总收入</p>
+              <p className="text-xl font-bold text-green-600">
+                ¥{metrics.totalIncome.toLocaleString()}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">总支出</p>
+              <p className="text-xl font-bold text-red-600">
+                ¥{metrics.totalExpense.toLocaleString()}
+              </p>
+            </div>
+          </div>
+
+          <Separator className="my-6" />
+
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">
+                资金账户 ({metrics.accounts.length})
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {metrics.accounts.map(acc => (
+                  <Badge key={acc} variant="secondary">{acc}</Badge>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">
+                一级分类 ({metrics.primaryCategories.length})
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {metrics.primaryCategories.map(cat => (
+                  <Badge key={cat} variant="outline">{cat}</Badge>
+                ))}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Validation Details */}
+      {validations && validations.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>校验详情</CardTitle>
+            <CardDescription>各记录的详细校验结果（前100条）</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[400px]">
+              <div className="space-y-2">
+                {validations.slice(0, 100).map((v, idx) => (
+                  <div key={idx} className="p-3 border rounded-lg">
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium">{metric.name}</h4>
                       <div className="flex items-center gap-2">
-                        <span className={`text-sm font-semibold ${getScoreColor(percentage)}`}>
-                          {metric.score}/{metric.total}
+                        <Badge variant={getSeverityColor(v.severity) as any}>
+                          {getSeverityLabel(v.severity)}
+                        </Badge>
+                        <span className="text-sm font-medium">
+                          {v.transaction.date}
                         </span>
-                        <ScoreIcon className={`h-4 w-4 ${getScoreColor(percentage)}`} />
+                        <span className="text-sm text-muted-foreground">
+                          {v.transaction.primaryCategory} / {v.transaction.secondaryCategory}
+                        </span>
                       </div>
+                      <span className={`text-sm font-semibold ${v.transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                            {v.transaction.type === 'income' ? '+' : '-'}¥{v.transaction.amount.toFixed(2)}
+                          </span>
                     </div>
-                    <Progress value={percentage} className="h-2" />
-                    {metric.issues.length > 0 && (
-                      <div className="mt-2 space-y-1">
-                        {metric.issues.map((issue, i) => (
-                          <p key={i} className="text-xs text-muted-foreground">{issue}</p>
+                    {(v.errors.length > 0 || v.warnings.length > 0) && (
+                      <div className="text-xs space-y-1">
+                        {v.errors.map((err, i) => (
+                          <p key={i} className="text-red-600">• {err}</p>
+                        ))}
+                        {v.warnings.map((warn, i) => (
+                          <p key={i} className="text-yellow-600">• {warn}</p>
                         ))}
                       </div>
                     )}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* Basic Statistics */}
-      {statistics && (
-        <Card>
-          <CardHeader>
-            <CardTitle>基础统计</CardTitle>
-            <CardDescription>数据概览信息</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div>
-                <p className="text-sm text-muted-foreground">交易总数</p>
-                <p className="text-2xl font-bold">{transactions.length}</p>
+                ))}
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">日期范围</p>
-                <p className="text-lg font-semibold">
-                  {statistics.dateRange?.start} ~ {statistics.dateRange?.end}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">年份数</p>
-                <p className="text-2xl font-bold">{statistics.years.length}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">月份数</p>
-                <p className="text-2xl font-bold">{statistics.months}</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-6 pt-6 border-t border-border">
-              <div>
-                <p className="text-sm text-muted-foreground">收入笔数</p>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{statistics.incomeCount}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">支出笔数</p>
-                <p className="text-2xl font-bold text-red-600 dark:text-red-400">{statistics.expenseCount}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">总收入</p>
-                <p className="text-xl font-bold text-green-600 dark:text-green-400">
-                  ¥{statistics.totalIncome.toLocaleString()}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">总支出</p>
-                <p className="text-xl font-bold text-red-600 dark:text-red-400">
-                  ¥{statistics.totalExpense.toLocaleString()}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-6 pt-6 border-t border-border">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-2">账户 ({statistics.accounts.length})</p>
-                  <div className="flex flex-wrap gap-1">
-                    {statistics.accounts.map(acc => (
-                      <Badge key={acc} variant="secondary">{acc}</Badge>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground mb-2">一级分类 ({statistics.primaryCategories.length})</p>
-                  <div className="flex flex-wrap gap-1">
-                    {statistics.primaryCategories.map(cat => (
-                      <Badge key={cat} variant="outline">{cat}</Badge>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground mb-2">二级分类 ({statistics.secondaryCategories.length})</p>
-                  <div className="flex flex-wrap gap-1">
-                    {statistics.secondaryCategories.slice(0, 10).map(cat => (
-                      <Badge key={cat} variant="outline">{cat}</Badge>
-                    ))}
-                    {statistics.secondaryCategories.length > 10 && (
-                      <Badge variant="outline">+{statistics.secondaryCategories.length - 10}</Badge>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
+            </ScrollArea>
           </CardContent>
         </Card>
       )}
+    </div>
+  );
+}
+
+function CompletenessBar({
+  name,
+  percentage,
+  icon: Icon,
+  issues
+}: {
+  name: string;
+  percentage: number;
+  icon: any;
+  issues?: number;
+}) {
+  const getColor = (p: number) => {
+    if (p >= 95) return 'bg-green-500';
+    if (p >= 80) return 'bg-yellow-500';
+    return 'bg-red-500';
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <Icon className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium">{name}</span>
+          {issues !== undefined && issues > 0 && (
+            <Badge variant="destructive" className="text-xs">{issues} 问题</Badge>
+          )}
+        </div>
+        <span className="text-sm font-semibold">{percentage.toFixed(1)}%</span>
+      </div>
+      <div className="h-2 bg-muted rounded-full overflow-hidden">
+        <div
+          className={`h-full ${getColor(percentage)} transition-all`}
+          style={{ width: `${percentage}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function IntegrityCard({
+  label,
+  count,
+  total,
+  type
+}: {
+  label: string;
+  count: number;
+  total: number;
+  type: 'success' | 'warning' | 'error';
+}) {
+  const percentage = total > 0 ? (count / total) * 100 : 0;
+
+  const colors = {
+    success: 'text-green-600',
+    warning: 'text-yellow-600',
+    error: 'text-red-600'
+  };
+
+  return (
+    <div className="p-4 border rounded-lg">
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className={`text-2xl font-bold ${colors[type]}`}>
+        {count}
+        <span className="text-sm text-muted-foreground font-normal">
+          ({percentage.toFixed(1)}%)
+        </span>
+      </p>
     </div>
   );
 }

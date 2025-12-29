@@ -39,7 +39,10 @@ const Index = () => {
     comparisonYears,
     setComparisonYears,
     availableYears,
-    addTransactions,
+    loadFromFile,
+    isValidating,
+    validationResults,
+    qualityMetrics,
   } = useTransactions();
 
   const savingsRate = useMemo(() => {
@@ -72,7 +75,10 @@ const Index = () => {
             <h1 className="text-2xl font-bold">数据导入</h1>
             <p className="text-muted-foreground">上传交易数据文件开始分析</p>
           </div>
-          <DataImport onImport={addTransactions} />
+          <DataImport
+            isLoading={isValidating}
+            onLoadFile={loadFromFile}
+          />
         </div>
       )}
 
@@ -82,7 +88,10 @@ const Index = () => {
             <h1 className="text-2xl font-bold">数据质量评估</h1>
             <p className="text-muted-foreground">检查数据完整性和有效性</p>
           </div>
-          <DataQuality transactions={allTransactions} />
+          <DataQuality
+            metrics={qualityMetrics}
+            validations={validationResults}
+          />
         </div>
       )}
 

@@ -1,99 +1,45 @@
 import { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Upload, FileText, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { Transaction } from '@/types/transaction';
-import { toast } from '@/hooks/use-toast';
+import { Upload, FileText, AlertCircle, CheckCircle2, Loader2, AlertTriangle } from 'lucide-react';
 
 interface DataImportProps {
-  onImport: (transactions: Transaction[]) => void;
+  onLoadFile: (file: File) => Promise<void>;
+  isLoading?: boolean;
 }
 
-export function DataImport({ onImport }: DataImportProps) {
+export function DataImport({ onLoadFile, isLoading = false }: DataImportProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const parseCSV = (content: string): Transaction[] => {
-    const lines = content.trim().split('\n');
-    if (lines.length < 2) return [];
-
-    const headers = lines[0].split(',').map(h => h.trim());
-    const transactions: Transaction[] = [];
-
-    for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.trim());
-      if (values.length < 5) continue;
-
-      const dateStr = values[0];
-      const dateParts = dateStr.split(/[-/]/);
-      const year = parseInt(dateParts[0]);
-      const month = parseInt(dateParts[1]);
-      const amount = parseFloat(values[3]) || 0;
-
-      transactions.push({
-        id: `imported-${Date.now()}-${i}`,
-        date: dateStr,
-        year,
-        month,
-        primaryCategory: values[1] || '其他',
-        secondaryCategory: values[2] || '未分类',
-        amount: Math.abs(amount),
-        account: values[4] || '未知账户',
-        type: amount >= 0 ? 'income' : 'expense',
-      });
-    }
-
-    return transactions;
-  };
-
-  const handleFile = (file: File) => {
+  const handleFile = async (file: File) => {
     if (!file.name.endsWith('.csv')) {
-      toast({
-        title: '文件格式错误',
-        description: '请上传 CSV 格式的文件',
-        variant: 'destructive',
-      });
-      return;
+      setFileName(null);
+      throw new Error('请上传 CSV 格式的文件');
     }
 
     setFileName(file.name);
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const content = e.target?.result as string;
-      const transactions = parseCSV(content);
-      
-      if (transactions.length === 0) {
-        toast({
-          title: '解析失败',
-          description: '未能从文件中解析出有效数据',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      onImport(transactions);
-      toast({
-        title: '导入成功',
-        description: `成功导入 ${transactions.length} 条交易记录`,
-      });
-    };
-    reader.readAsText(file);
+    await onLoadFile(file);
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
+    if (isLoading) return;
+
     const file = e.dataTransfer.files[0];
-    if (file) handleFile(file);
+    if (file) {
+      handleFile(file).catch(err => {
+        console.error('Drop error:', err);
+      });
+    }
   };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    setIsDragging(true);
+    if (!isLoading) {
+      setIsDragging(true);
+    }
   };
 
   const handleDragLeave = () => {
@@ -102,7 +48,11 @@ export function DataImport({ onImport }: DataImportProps) {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) handleFile(file);
+    if (file && !isLoading) {
+      handleFile(file).catch(err => {
+        console.error('File input error:', err);
+      });
+    }
   };
 
   return (
@@ -113,7 +63,7 @@ export function DataImport({ onImport }: DataImportProps) {
           数据导入
         </CardTitle>
         <CardDescription>
-          上传 CSV 文件导入交易数据，格式：日期,一级分类,二级分类,金额,账户
+          上传 CSV 文件导入交易数据（支持真实数据格式）
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -124,18 +74,26 @@ export function DataImport({ onImport }: DataImportProps) {
           className={`
             border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer
             ${isDragging ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}
+            ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}
           `}
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => !isLoading && fileInputRef.current?.click()}
         >
-          <Input
+          <input
             ref={fileInputRef}
             type="file"
             accept=".csv"
             className="hidden"
             onChange={handleInputChange}
+            disabled={isLoading}
           />
-          
-          {fileName ? (
+
+          {isLoading ? (
+            <div className="flex flex-col items-center gap-2">
+              <Loader2 className="h-10 w-10 text-primary animate-spin" />
+              <p className="font-medium">正在处理文件...</p>
+              <p className="text-sm text-muted-foreground">正在解析和校验数据</p>
+            </div>
+          ) : fileName ? (
             <div className="flex flex-col items-center gap-2">
               <CheckCircle2 className="h-10 w-10 text-primary" />
               <p className="font-medium">{fileName}</p>
@@ -150,14 +108,28 @@ export function DataImport({ onImport }: DataImportProps) {
           )}
         </div>
 
-        <div className="mt-4 p-4 bg-accent/50 rounded-lg">
-          <div className="flex items-start gap-2">
-            <AlertCircle className="h-4 w-4 text-accent-foreground mt-0.5" />
-            <div className="text-sm">
-              <p className="font-medium text-accent-foreground">CSV 格式说明</p>
-              <p className="text-muted-foreground mt-1">
-                第一行为表头，之后每行一条记录。列顺序：日期(YYYY-MM-DD), 一级分类, 二级分类, 金额(正数为收入,负数为支出), 账户
-              </p>
+        <div className="mt-4 space-y-3">
+          <div className="p-4 bg-accent/50 rounded-lg">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 text-accent-foreground mt-0.5" />
+              <div className="text-sm flex-1">
+                <p className="font-medium text-accent-foreground">CSV 格式说明</p>
+                <p className="text-muted-foreground mt-1">
+                  期望格式：日期,交易分类,交易类型,流入金额,流出金额,币种,资金账户,标签,备注
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4 bg-muted/50 rounded-lg">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-muted-foreground mt-0.5" />
+              <div className="text-sm flex-1">
+                <p className="font-medium text-muted-foreground">示例数据</p>
+                <code className="text-xs block mt-1 p-2 bg-background rounded">
+                  2023-01-01,日常支出,电费,0.00,20.00,人民币,招商银行-生活账户,,
+                </code>
+              </div>
             </div>
           </div>
         </div>
