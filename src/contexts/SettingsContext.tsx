@@ -6,12 +6,14 @@ export type ColorScheme = 'default' | 'swapped';
 interface Settings {
   theme: Theme;
   colorScheme: ColorScheme;
+  targetSavingsRate: number; // 目标储蓄率，0-100
 }
 
 interface SettingsContextType {
   settings: Settings;
   updateTheme: (theme: Theme) => void;
   updateColorScheme: (scheme: ColorScheme) => void;
+  updateTargetSavingsRate: (rate: number) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -19,6 +21,7 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
   colorScheme: 'default',
+  targetSavingsRate: 60, // 默认60%
 };
 
 const SETTINGS_KEY = 'finance-analyzer-settings';
@@ -28,7 +31,13 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     const stored = localStorage.getItem(SETTINGS_KEY);
     if (stored) {
       try {
-        return JSON.parse(stored) as Settings;
+        const parsed = JSON.parse(stored) as Partial<Settings>;
+        // Merge with defaults to handle missing fields
+        return {
+          theme: parsed.theme ?? DEFAULT_SETTINGS.theme,
+          colorScheme: parsed.colorScheme ?? DEFAULT_SETTINGS.colorScheme,
+          targetSavingsRate: parsed.targetSavingsRate ?? DEFAULT_SETTINGS.targetSavingsRate,
+        };
       } catch {
         return DEFAULT_SETTINGS;
       }
@@ -64,8 +73,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setSettings(prev => ({ ...prev, colorScheme }));
   };
 
+  const updateTargetSavingsRate = (rate: number) => {
+    setSettings(prev => ({ ...prev, targetSavingsRate: rate }));
+  };
+
   return (
-    <SettingsContext.Provider value={{ settings, updateTheme, updateColorScheme }}>
+    <SettingsContext.Provider value={{ settings, updateTheme, updateColorScheme, updateTargetSavingsRate }}>
       {children}
     </SettingsContext.Provider>
   );

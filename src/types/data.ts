@@ -1,11 +1,13 @@
 /**
  * Raw CSV row structure matching the actual data format
  * 日期,交易分类,交易类型,流入金额,流出金额,币种,资金账户,标签,备注
+ * Note: 交易分类 = primary category, 交易类型 = tertiary category
+ * Secondary category will be derived from mapping based on tertiary category
  */
 export interface RawCSVRow {
   date: string;           // YYYY-MM-DD
-  primaryCategory: string; // 交易分类
-  secondaryCategory: string; // 交易类型
+  primaryCategory: string; // 交易分类 (一级分类)
+  tertiaryCategory: string; // 交易类型 (三级分类)
   inflow: string;         // 流入金额
   outflow: string;        // 流出金额
   currency: string;       // 币种
@@ -23,15 +25,17 @@ export interface ParsedTransaction {
   year: number;
   month: number;
   day: number;
-  primaryCategory: string;
-  secondaryCategory: string;
+  primaryCategory: string;   // 一级分类
+  secondaryCategory: string; // 二级分类 (derived from tertiary via mapping)
+  tertiaryCategory: string;  // 三级分类 (from CSV column 交易类型)
   amount: number;
-  type: 'income' | 'expense';
+  type: 'income' | 'expense' | 'transfer';
   account: string;
   currency: string;
   tags: string[];
   note?: string;
   rawIndex: number; // Original row index for traceability
+  hasSecondaryMapping: boolean; // Whether secondary category was successfully mapped
 }
 
 /**
@@ -73,11 +77,14 @@ export interface DataQualityMetrics {
   accountCompleteness: number;
 
   // Data integrity
-  duplicateCount: number;
   missingDates: number;
   futureDates: number;
   negativeAmounts: number;
   zeroAmounts: number;
+
+  // Category mapping
+  missingSecondaryMappings: number; // Records where tertiary->secondary mapping failed
+  unmappedTertiaryCategories: string[]; // List of tertiary categories without mapping
 
   // Statistics
   dateRange: { start: string; end: string } | null;
@@ -86,6 +93,7 @@ export interface DataQualityMetrics {
   accounts: string[];
   primaryCategories: string[];
   secondaryCategories: string[];
+  tertiaryCategories: string[];
   currencies: string[];
 
   incomeCount: number;

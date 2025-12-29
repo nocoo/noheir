@@ -1,7 +1,18 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { StoredYearData } from '@/lib/storage';
 import { DataQuality } from '@/components/dashboard/DataQuality';
 import { useSettings, getIncomeColor, getIncomeColorHex, getExpenseColor, getExpenseColorHex } from '@/contexts/SettingsContext';
@@ -17,7 +28,8 @@ import {
   HardDrive,
   Clock,
   Upload,
-  ChevronRight
+  ChevronRight,
+  AlertTriangle
 } from 'lucide-react';
 
 interface DataManagementProps {
@@ -46,6 +58,35 @@ export function DataManagement({
   const incomeColorHex = getIncomeColorHex(settings.colorScheme);
   const expenseColorClass = getExpenseColor(settings.colorScheme);
   const expenseColorHex = getExpenseColorHex(settings.colorScheme);
+
+  // Dialog states
+  const [clearAllDialogOpen, setClearAllDialogOpen] = useState(false);
+  const [deleteYearDialogOpen, setDeleteYearDialogOpen] = useState(false);
+  const [yearToDelete, setYearToDelete] = useState<number | null>(null);
+
+  // Handle clear all with confirmation
+  const handleClearAllClick = () => {
+    setClearAllDialogOpen(true);
+  };
+
+  const handleClearAllConfirm = () => {
+    setClearAllDialogOpen(false);
+    onClearAll();
+  };
+
+  // Handle delete year with confirmation
+  const handleDeleteYearClick = (year: number) => {
+    setYearToDelete(year);
+    setDeleteYearDialogOpen(true);
+  };
+
+  const handleDeleteYearConfirm = () => {
+    setDeleteYearDialogOpen(false);
+    if (yearToDelete !== null) {
+      onDeleteYear(yearToDelete);
+      setYearToDelete(null);
+    }
+  };
 
   // Calculate totals
   const totalRecords = storedYearsData.reduce((sum, d) => sum + d.recordCount, 0);
@@ -154,7 +195,7 @@ export function DataManagement({
           <Download className="h-4 w-4" />
           导出备份数据
         </Button>
-        <Button onClick={onClearAll} variant="destructive" className="gap-2">
+        <Button onClick={handleClearAllClick} variant="destructive" className="gap-2" disabled={storedYearsData.length === 0}>
           <Trash2 className="h-4 w-4" />
           清空所有数据
         </Button>
@@ -191,7 +232,7 @@ export function DataManagement({
                 .map((yearData) => (
                   <div
                     key={yearData.year}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
                   >
                     <div className="flex-1 space-y-3">
                       {/* Year and basic info */}
@@ -261,7 +302,7 @@ export function DataManagement({
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => onDeleteYear(yearData.year)}
+                        onClick={() => handleDeleteYearClick(yearData.year)}
                         className="text-destructive hover:text-destructive hover:bg-destructive/10"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -321,6 +362,62 @@ export function DataManagement({
           </div>
         </CardContent>
       </Card>
+
+      {/* Clear All Confirmation Dialog */}
+      <AlertDialog open={clearAllDialogOpen} onOpenChange={setClearAllDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              <AlertDialogTitle>确认清空所有数据？</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="space-y-2">
+              <p>此操作将删除所有已存储的年份数据，操作无法撤销。</p>
+              <p className="text-sm text-muted-foreground">
+                将删除 {storedYearsData.length} 个年份的数据，共 {totalRecords.toLocaleString()} 条记录。
+              </p>
+              <p className="text-sm font-medium text-destructive">
+                建议在执行此操作前先使用"导出备份数据"功能备份您的数据。
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction onClick={handleClearAllConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              确认清空
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Year Confirmation Dialog */}
+      <AlertDialog open={deleteYearDialogOpen} onOpenChange={setDeleteYearDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              <AlertDialogTitle>确认删除 {yearToDelete} 年数据？</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="space-y-2">
+              <p>此操作将删除 {yearToDelete} 年的所有数据，操作无法撤销。</p>
+              {(() => {
+                const yearData = storedYearsData.find(d => d.year === yearToDelete);
+                return yearData ? (
+                  <p className="text-sm text-muted-foreground">
+                    将删除 {yearData.recordCount.toLocaleString()} 条记录。
+                  </p>
+                ) : null;
+              })()}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteYearConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              确认删除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

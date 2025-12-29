@@ -182,16 +182,10 @@ export function DataQuality({ metrics, validations, onFilterChange }: DataQualit
       <Card>
         <CardHeader>
           <CardTitle>数据完整性检查</CardTitle>
-          <CardDescription>检测重复、异常数据等问题</CardDescription>
+          <CardDescription>检测异常数据问题</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <IntegrityCard
-              label="重复记录"
-              count={metrics.duplicateCount}
-              total={metrics.totalRecords}
-              type={metrics.duplicateCount > 0 ? 'warning' : 'success'}
-            />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <IntegrityCard
               label="无效日期"
               count={metrics.missingDates}
@@ -213,6 +207,42 @@ export function DataQuality({ metrics, validations, onFilterChange }: DataQualit
           </div>
         </CardContent>
       </Card>
+
+      {/* Category Mapping Warning */}
+      {metrics.missingSecondaryMappings > 0 && (
+        <Card className="border-orange-500/50 bg-orange-500/10">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-orange-700 dark:text-orange-400">
+              <AlertTriangle className="h-5 w-5" />
+              分类映射缺失
+            </CardTitle>
+            <CardDescription>部分三级分类未找到对应的二级分类映射</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-muted-foreground">缺失映射的记录数：</span>
+                <span className="font-semibold text-orange-700 dark:text-orange-400">
+                  {metrics.missingSecondaryMappings} / {metrics.totalRecords}
+                </span>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">未映射的三级分类：</p>
+                <div className="flex flex-wrap gap-2">
+                  {metrics.unmappedTertiaryCategories.map((cat) => (
+                    <Badge key={cat} variant="outline" className="text-xs border-orange-500/50 text-orange-700 dark:text-orange-400">
+                      {cat}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                提示：请在"设置"→"分类映射"中查看完整的二级→三级分类关系，或添加缺失的映射
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Basic Statistics */}
       <Card>
@@ -299,43 +329,53 @@ export function DataQuality({ metrics, validations, onFilterChange }: DataQualit
         <Card>
           <CardHeader>
             <CardTitle>校验详情</CardTitle>
-            <CardDescription>各记录的详细校验结果（前100条）</CardDescription>
+            <CardDescription>仅显示有异常的记录（共 {validations.filter(v => v.severity !== 'valid').length} 条）</CardDescription>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[400px]">
-              <div className="space-y-2">
-                {validations.slice(0, 100).map((v, idx) => (
-                  <div key={idx} className="p-3 border rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Badge variant={getSeverityColor(v.severity) as any}>
-                          {getSeverityLabel(v.severity)}
-                        </Badge>
-                        <span className="text-sm font-medium">
-                          {v.transaction.date}
-                        </span>
-                        <span className="text-sm text-muted-foreground">
-                          {v.transaction.primaryCategory} / {v.transaction.secondaryCategory}
-                        </span>
-                      </div>
-                      <span className={`text-sm font-semibold ${v.transaction.type === 'income' ? incomeColorClass : expenseColorClass}`}>
-                            {v.transaction.type === 'income' ? '+' : '-'}¥{v.transaction.amount.toFixed(2)}
-                          </span>
-                    </div>
-                    {(v.errors.length > 0 || v.warnings.length > 0) && (
-                      <div className="text-xs space-y-1">
-                        {v.errors.map((err, i) => (
-                          <p key={i} className="text-red-600">• {err}</p>
-                        ))}
-                        {v.warnings.map((warn, i) => (
-                          <p key={i} className="text-yellow-600">• {warn}</p>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
+            {validations.filter(v => v.severity !== 'valid').length === 0 ? (
+              <div className="text-center py-8 text-green-600 dark:text-green-400">
+                <CheckCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p>所有数据校验通过，无异常记录</p>
               </div>
-            </ScrollArea>
+            ) : (
+              <ScrollArea className="h-[400px]">
+                <div className="space-y-2">
+                  {validations
+                    .filter(v => v.severity !== 'valid')
+                    .slice(0, 100)
+                    .map((v, idx) => (
+                    <div key={idx} className="p-3 border rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Badge variant={getSeverityColor(v.severity) as any}>
+                            {getSeverityLabel(v.severity)}
+                          </Badge>
+                          <span className="text-sm font-medium">
+                            {v.transaction.date}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {v.transaction.primaryCategory} / {v.transaction.secondaryCategory}
+                          </span>
+                        </div>
+                        <span className={`text-sm font-semibold ${v.transaction.type === 'income' ? incomeColorClass : expenseColorClass}`}>
+                              {v.transaction.type === 'income' ? '+' : '-'}¥{v.transaction.amount.toFixed(2)}
+                            </span>
+                      </div>
+                      {(v.errors.length > 0 || v.warnings.length > 0) && (
+                        <div className="text-xs space-y-1">
+                          {v.errors.map((err, i) => (
+                            <p key={i} className="text-red-600">• {err}</p>
+                          ))}
+                          {v.warnings.map((warn, i) => (
+                            <p key={i} className="text-yellow-600">• {warn}</p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
           </CardContent>
         </Card>
       )}

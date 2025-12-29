@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Transaction } from '@/types/transaction';
+import { useSettings, getIncomeColorHex, getExpenseColorHex } from '@/contexts/SettingsContext';
 
 interface SankeyChartProps {
   transactions: Transaction[];
@@ -20,6 +21,9 @@ interface SankeyLink {
 }
 
 export function SankeyChart({ transactions, type }: SankeyChartProps) {
+  const { settings } = useSettings();
+  const totalColor = type === 'income' ? getIncomeColorHex(settings.colorScheme) : getExpenseColorHex(settings.colorScheme);
+
   const { nodes, links, total } = useMemo(() => {
     const filtered = transactions.filter(t => t.type === type);
     const total = filtered.reduce((sum, t) => sum + t.amount, 0);
@@ -54,7 +58,7 @@ export function SankeyChart({ transactions, type }: SankeyChartProps) {
     nodes.push({
       name: type === 'income' ? '总收入' : '总支出',
       value: total,
-      color: type === 'income' ? 'hsl(142, 76%, 36%)' : 'hsl(0, 84%, 60%)'
+      color: totalColor
     });
 
     // Add primary category nodes and links
@@ -92,7 +96,7 @@ export function SankeyChart({ transactions, type }: SankeyChartProps) {
     });
 
     return { nodes, links, total };
-  }, [transactions, type]);
+  }, [transactions, type, totalColor]);
 
   // Calculate layout positions
   const layout = useMemo(() => {

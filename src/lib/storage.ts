@@ -28,10 +28,11 @@ export interface Transaction {
   month: number;
   primaryCategory: string;
   secondaryCategory: string;
+  tertiaryCategory: string;
   amount: number;
   account: string;
   description?: string;
-  type: 'income' | 'expense';
+  type: 'income' | 'expense' | 'transfer';
 }
 
 /**

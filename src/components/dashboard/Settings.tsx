@@ -1,16 +1,17 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Slider } from '@/components/ui/slider';
 import { useSettings, getIncomeColorHex, getExpenseColorHex } from '@/contexts/SettingsContext';
 import { DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from '@/types/category';
-import { Sun, Moon, Monitor, Palette, Layers, ChevronDown, ChevronRight } from 'lucide-react';
+import { Sun, Moon, Monitor, Palette, Layers, ChevronDown, ChevronRight, Target } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
 export function Settings() {
-  const { settings, updateTheme, updateColorScheme } = useSettings();
+  const { settings, updateTheme, updateColorScheme, updateTargetSavingsRate } = useSettings();
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
   const toggleCategory = (category: string) => {
@@ -184,6 +185,49 @@ export function Settings() {
           </div>
           <p className="text-sm text-muted-foreground mt-2">
             {settings.colorScheme === 'default' ? '默认：收入为绿色，支出为红色' : '切换：收入为红色，支出为绿色'}
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Target Savings Rate */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Target className="h-5 w-5 text-primary" />
+            目标储蓄率
+          </CardTitle>
+          <CardDescription>设置每月的储蓄目标比例</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label>目标储蓄率</Label>
+              <span className="text-2xl font-bold text-primary">{settings.targetSavingsRate}%</span>
+            </div>
+            <Slider
+              value={[settings.targetSavingsRate]}
+              onValueChange={(value) => updateTargetSavingsRate(value[0])}
+              min={0}
+              max={100}
+              step={5}
+              className="w-full"
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>0%</span>
+              <span>25%</span>
+              <span>50%</span>
+              <span>75%</span>
+              <span>100%</span>
+            </div>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            建议储蓄率在 30%-70% 之间，当前设置：<span className={cn(
+              settings.targetSavingsRate >= 50 ? 'text-green-600 dark:text-green-400 font-semibold' :
+              settings.targetSavingsRate >= 30 ? 'text-yellow-600 dark:text-yellow-400 font-semibold' :
+              'text-red-600 dark:text-red-400 font-semibold'
+            )}>
+              {settings.targetSavingsRate < 30 ? '偏低' : settings.targetSavingsRate > 70 ? '偏高' : '合理'}
+            </span>
           </p>
         </CardContent>
       </Card>

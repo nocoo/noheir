@@ -1,11 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   ReferenceLine,
   Area,
@@ -13,13 +13,20 @@ import {
   Bar
 } from 'recharts';
 import { MonthlyData } from '@/types/transaction';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Target } from 'lucide-react';
+import { useSettings, getIncomeColor, getExpenseColor } from '@/contexts/SettingsContext';
+import { Badge } from '@/components/ui/badge';
 
 interface SavingsRateChartProps {
   data: MonthlyData[];
 }
 
 export function SavingsRateChart({ data }: SavingsRateChartProps) {
+  const { settings } = useSettings();
+  const targetSavingsRate = settings.targetSavingsRate;
+  const incomeColorClass = getIncomeColor(settings.colorScheme);
+  const expenseColorClass = getExpenseColor(settings.colorScheme);
+
   const chartData = data.map(item => ({
     ...item,
     savingsRate: item.income > 0 ? ((item.income - item.expense) / item.income) * 100 : 0,
@@ -29,10 +36,14 @@ export function SavingsRateChart({ data }: SavingsRateChartProps) {
   const avgSavingsRate = chartData.reduce((sum, d) => sum + d.savingsRate, 0) / chartData.filter(d => d.income > 0).length || 0;
   const totalSavings = chartData.reduce((sum, d) => sum + d.savings, 0);
   const bestMonth = chartData.reduce((best, curr) => curr.savingsRate > best.savingsRate ? curr : best, chartData[0]);
-  const worstMonth = chartData.reduce((worst, curr) => 
-    curr.income > 0 && curr.savingsRate < worst.savingsRate ? curr : worst, 
+  const worstMonth = chartData.reduce((worst, curr) =>
+    curr.income > 0 && curr.savingsRate < worst.savingsRate ? curr : worst,
     chartData.find(d => d.income > 0) || chartData[0]
   );
+
+  // Calculate difference from target
+  const avgDiff = avgSavingsRate - targetSavingsRate;
+  const lastMonthDiff = chartData.length > 0 ? chartData[chartData.length - 1].savingsRate - targetSavingsRate : 0;
 
   return (
     <Card className="col-span-full">
@@ -45,7 +56,13 @@ export function SavingsRateChart({ data }: SavingsRateChartProps) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
             <p className="text-sm text-muted-foreground">平均储蓄率</p>
-            <p className="text-2xl font-bold text-primary">{avgSavingsRate.toFixed(1)}%</p>
+            <div className="flex items-baseline gap-2">
+              <p className="text-2xl font-bold text-primary">{avgSavingsRate.toFixed(1)}%</p>
+              <Badge variant={avgDiff >= 0 ? "default" : "destructive"} className="text-xs">
+                {avgDiff >= 0 ? '+' : ''}{avgDiff.toFixed(1)}%
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">目标: {targetSavingsRate}%</p>
           </div>
           <div className="p-4 rounded-lg bg-accent border border-border">
             <p className="text-sm text-muted-foreground">累计储蓄</p>
@@ -64,6 +81,33 @@ export function SavingsRateChart({ data }: SavingsRateChartProps) {
             </p>
             <p className="text-lg font-semibold">{worstMonth?.month}</p>
             <p className="text-sm text-destructive">{worstMonth?.savingsRate.toFixed(1)}%</p>
+          </div>
+        </div>
+
+        {/* Target Comparison */}
+        <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/30">
+          <div className="flex items-center gap-3">
+            <Target className="h-5 w-5 text-primary" />
+            <div>
+              <p className="text-sm text-muted-foreground">目标储蓄率</p>
+              <p className="text-lg font-semibold">{targetSavingsRate}%</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-sm text-muted-foreground">与目标差距</p>
+            <div className="flex items-center gap-2">
+              <p className={`text-2xl font-bold ${avgDiff >= 0 ? incomeColorClass : expenseColorClass}`}>
+                {avgDiff >= 0 ? '+' : ''}{avgDiff.toFixed(1)}%
+              </p>
+              {avgDiff >= 0 ? (
+                <TrendingUp className={`h-5 w-5 ${incomeColorClass}`} />
+              ) : (
+                <TrendingDown className={`h-5 w-5 ${expenseColorClass}`} />
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {avgDiff >= 0 ? '超出目标' : '低于目标'}
+            </p>
           </div>
         </div>
 
@@ -110,18 +154,31 @@ export function SavingsRateChart({ data }: SavingsRateChartProps) {
                   return [value, name];
                 }}
               />
-              <ReferenceLine 
+              <ReferenceLine
                 yAxisId="left"
-                y={0} 
-                stroke="hsl(var(--destructive))" 
-                strokeDasharray="3 3" 
+                y={0}
+                stroke="hsl(var(--destructive))"
+                strokeDasharray="3 3"
               />
-              <ReferenceLine 
+              <ReferenceLine
                 yAxisId="left"
-                y={avgSavingsRate} 
-                stroke="hsl(var(--primary))" 
-                strokeDasharray="5 5" 
+                y={avgSavingsRate}
+                stroke="hsl(var(--primary))"
+                strokeDasharray="5 5"
                 label={{ value: `平均 ${avgSavingsRate.toFixed(1)}%`, fill: 'hsl(var(--primary))', fontSize: 11 }}
+              />
+              <ReferenceLine
+                yAxisId="left"
+                y={targetSavingsRate}
+                stroke="hsl(var(--chart-3))"
+                strokeDasharray="3 3"
+                strokeWidth={2}
+                label={{
+                  value: `目标 ${targetSavingsRate}%`,
+                  fill: 'hsl(var(--chart-3))',
+                  fontSize: 11,
+                  position: 'insideTopRight'
+                }}
               />
               <Bar 
                 yAxisId="right"

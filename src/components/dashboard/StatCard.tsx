@@ -21,26 +21,31 @@ export function StatCard({ title, value, icon: Icon, trend, variant = 'default' 
   const expenseColorClass = getExpenseColor(settings.colorScheme);
   const expenseColorHex = getExpenseColorHex(settings.colorScheme);
 
+  // For balance variant, determine if it's positive or negative
+  const isBalancePositive = variant === 'balance' && typeof value === 'number' && value >= 0;
+
   const variantStyles = {
     default: 'border-border',
     income: '',
     expense: '',
-    balance: 'border-l-4 border-l-accent-foreground',
+    balance: '',
   };
 
   const getValueColor = () => {
     if (variant === 'income') return incomeColorClass;
     if (variant === 'expense') return expenseColorClass;
+    if (variant === 'balance') return isBalancePositive ? incomeColorClass : expenseColorClass;
     return '';
   };
 
   const getBorderColor = () => {
     if (variant === 'income') return incomeColorHex;
     if (variant === 'expense') return expenseColorHex;
+    if (variant === 'balance') return isBalancePositive ? incomeColorHex : expenseColorHex;
     return '';
   };
 
-  const borderStyle = variant === 'income' || variant === 'expense'
+  const borderStyle = variant === 'income' || variant === 'expense' || variant === 'balance'
     ? { borderLeftColor: getBorderColor(), borderLeftWidth: '4px' }
     : {};
 

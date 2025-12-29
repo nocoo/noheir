@@ -89,7 +89,7 @@ export const DEFAULT_EXPENSE_CATEGORIES: ExpenseCategoryMapping = {
   "工作垫付": [
     "商务出行",
     "商务住宿",
-    "商务餐饮"
+    "商务餐食"
   ],
   "大额支出": [
     "保险支出",
@@ -153,10 +153,21 @@ export function findSecondaryCategory(
 ): string | null {
   const mappings = type === 'income' ? DEFAULT_INCOME_CATEGORIES : DEFAULT_EXPENSE_CATEGORIES;
 
+  // First, try to find exact match in tertiary categories
   for (const [secondary, tertiaries] of Object.entries(mappings)) {
     if (tertiaries.includes(tertiaryCategory)) {
       return secondary;
     }
+  }
+
+  // If not found, check if tertiaryCategory is actually a secondary category name
+  // In that case, return the first tertiary category from that secondary category
+  if (mappings[tertiaryCategory]) {
+    // The tertiaryCategory is actually a secondary category name
+    // Map it to the first tertiary category in that secondary category
+    const firstTertiary = mappings[tertiaryCategory][0];
+    // Return the secondary category name (which is the same as tertiaryCategory)
+    return tertiaryCategory;
   }
 
   return null;

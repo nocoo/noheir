@@ -28,6 +28,7 @@ function toTransaction(ct: CleanedTransaction): Transaction {
     month: ct.month,
     primaryCategory: ct.primaryCategory,
     secondaryCategory: ct.secondaryCategory,
+    tertiaryCategory: ct.tertiaryCategory,
     amount: ct.amount,
     account: ct.account,
     description: ct.note,
@@ -302,10 +303,17 @@ export function useTransactions() {
     [filteredTransactions]
   );
 
+  // Transfer transactions for selected year
+  const transferTransactions = useMemo(() =>
+    filteredTransactions.filter(t => t.type === 'transfer'),
+    [filteredTransactions]
+  );
+
   return {
     // Data
     transactions: filteredTransactions,
     allTransactions: transactions,
+    transferTransactions, // Transfer transactions for analysis
     monthlyData,
     categoryData,
     yearlyComparison,

@@ -1,22 +1,29 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   Cell,
   ReferenceLine
 } from 'recharts';
 import { MonthlyData } from '@/types/transaction';
+import { useSettings, getIncomeColor, getIncomeColorHex, getExpenseColor, getExpenseColorHex } from '@/contexts/SettingsContext';
 
 interface BalanceWaterfallProps {
   data: MonthlyData[];
 }
 
 export function BalanceWaterfall({ data }: BalanceWaterfallProps) {
+  const { settings } = useSettings();
+  const incomeColorClass = getIncomeColor(settings.colorScheme);
+  const incomeColorHex = getIncomeColorHex(settings.colorScheme);
+  const expenseColorClass = getExpenseColor(settings.colorScheme);
+  const expenseColorHex = getExpenseColorHex(settings.colorScheme);
+
   let cumulativeBalance = 0;
   const waterfallData = data.map((item, index) => {
     const prevBalance = cumulativeBalance;
@@ -69,20 +76,20 @@ export function BalanceWaterfall({ data }: BalanceWaterfallProps) {
               <ReferenceLine y={0} stroke="hsl(var(--border))" strokeWidth={2} />
               <Bar dataKey="balance" radius={[4, 4, 0, 0]}>
                 {waterfallData.map((entry, index) => (
-                  <Cell 
-                    key={`cell-${index}`} 
-                    fill={entry.isPositive ? 'hsl(var(--primary))' : 'hsl(var(--destructive))'} 
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={entry.isPositive ? incomeColorHex : expenseColorHex}
                   />
                 ))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
-        
+
         {/* Cumulative Balance Display */}
         <div className="mt-4 flex items-center justify-center gap-2 p-3 bg-accent/50 rounded-lg">
           <span className="text-sm text-muted-foreground">年度累计结余:</span>
-          <span className={`text-xl font-bold ${cumulativeBalance >= 0 ? 'text-primary' : 'text-destructive'}`}>
+          <span className={`text-xl font-bold ${cumulativeBalance >= 0 ? incomeColorClass : expenseColorClass}`}>
             ¥{cumulativeBalance.toLocaleString()}
           </span>
         </div>
