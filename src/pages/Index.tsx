@@ -178,10 +178,7 @@ const Index = () => {
 
           <IncomeExpenseComparison data={monthlyData} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <CategoryPieChart data={categoryData} />
-            <FinancialHealthScore totalIncome={totalIncome} totalExpense={totalExpense} savingsRate={savingsRate} monthlyData={monthlyData} />
-          </div>
+          <FinancialHealthScore totalIncome={totalIncome} totalExpense={totalExpense} savingsRate={savingsRate} monthlyData={monthlyData} />
 
           <TransactionTable transactions={transactions} />
         </div>

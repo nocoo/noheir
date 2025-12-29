@@ -121,14 +121,14 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
                     key={item.id}
                     variant={activeTab === item.id ? 'default' : 'ghost'}
                     className={cn(
-                      'w-full justify-start gap-3 transition-all hover:text-foreground',
+                      'w-full justify-start gap-3 transition-all',
                       !sidebarOpen && 'lg:justify-center lg:px-2'
                     )}
                     onClick={() => onTabChange(item.id)}
                   >
                     <item.icon className={cn(
                       "h-4 w-4 shrink-0",
-                      activeTab === item.id ? "text-primary-foreground" : "text-primary"
+                      activeTab === item.id ? "text-primary-foreground" : "text-muted-foreground"
                     )} />
                     {sidebarOpen && <span className="text-sm">{item.label}</span>}
                   </Button>
