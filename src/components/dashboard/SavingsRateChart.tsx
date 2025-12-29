@@ -23,6 +23,12 @@ interface SavingsRateChartProps {
   data: MonthlyData[];
 }
 
+interface TooltipPayload {
+  payload?: {
+    savings: number;
+  };
+}
+
 export function SavingsRateChart({ data }: SavingsRateChartProps) {
   const { settings } = useSettings();
   const targetSavingsRate = settings.targetSavingsRate;
@@ -128,8 +134,16 @@ export function SavingsRateChart({ data }: SavingsRateChartProps) {
               />
               <Tooltip
                 contentStyle={tooltipStyle.contentStyle}
-                formatter={(value: number, name: string) => {
-                  if (name === 'savingsRate') return [`${value.toFixed(1)}%`, '储蓄率'];
+                itemStyle={{ color: 'hsl(var(--foreground))' }}
+                formatter={(value: number, name: string, props: TooltipPayload) => {
+                  if (name === 'savingsRate') {
+                    const isPositive = props.payload?.savings >= 0;
+                    const color = isPositive ? incomeColorHex : expenseColorHex;
+                    return [
+                      <span style={{ color }}>{value.toFixed(1)}%</span>,
+                      '储蓄率'
+                    ];
+                  }
                   if (name === 'savings') return [`¥${value.toLocaleString()}`, '储蓄额'];
                   return [value, name];
                 }}
