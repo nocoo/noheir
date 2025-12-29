@@ -2,8 +2,6 @@ import { useState, useMemo } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { MonthlyChart } from '@/components/dashboard/MonthlyChart';
-import { CategoryPieChart } from '@/components/dashboard/CategoryPieChart';
-import { CategoryBreakdown } from '@/components/dashboard/CategoryBreakdown';
 import { TransactionTable } from '@/components/dashboard/TransactionTable';
 import { DataImport } from '@/components/dashboard/DataImport';
 import { DataQuality } from '@/components/dashboard/DataQuality';
@@ -17,7 +15,6 @@ import { YearSelector } from '@/components/dashboard/YearSelector';
 import { IncomeExpenseComparison } from '@/components/dashboard/IncomeExpenseComparison';
 import { SavingsRateChart } from '@/components/dashboard/SavingsRateChart';
 import { BalanceWaterfall } from '@/components/dashboard/BalanceWaterfall';
-import { ExpenseRadar } from '@/components/dashboard/ExpenseRadar';
 import { FinancialHealthScore } from '@/components/dashboard/FinancialHealthScore';
 import { YearComparisonChart } from '@/components/dashboard/YearComparisonChart';
 import { MultiYearSelector } from '@/components/dashboard/MultiYearSelector';
@@ -213,23 +210,6 @@ const Index = () => {
             <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
           </div>
           <ExpenseAnalysis transactions={transactions} monthlyData={monthlyData} />
-        </div>
-      )}
-
-      {activeTab === 'category' && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold">分类分析</h1>
-              <p className="text-muted-foreground">按分类查看收支明细</p>
-            </div>
-            <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ExpenseRadar currentData={categoryData} previousData={previousYearCategoryData.length > 0 ? previousYearCategoryData : undefined} currentLabel={`${selectedYear}年`} previousLabel={`${selectedYear - 1}年`} />
-            <CategoryBreakdown data={categoryData} />
-          </div>
-          <CategoryPieChart data={categoryData} />
         </div>
       )}
 

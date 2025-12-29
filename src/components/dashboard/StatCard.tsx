@@ -12,9 +12,10 @@ interface StatCardProps {
     isPositive: boolean;
   };
   variant?: 'default' | 'income' | 'expense' | 'balance';
+  showCurrency?: boolean;
 }
 
-export function StatCard({ title, value, icon: Icon, trend, variant = 'default' }: StatCardProps) {
+export function StatCard({ title, value, icon: Icon, trend, variant = 'default', showCurrency = true }: StatCardProps) {
   const { settings } = useSettings();
   const incomeColorClass = getIncomeColor(settings.colorScheme);
   const incomeColorHex = getIncomeColorHex(settings.colorScheme);
@@ -60,7 +61,7 @@ export function StatCard({ title, value, icon: Icon, trend, variant = 'default' 
       </CardHeader>
       <CardContent>
         <div className={cn('text-2xl font-bold', getValueColor())}>
-          {typeof value === 'number' ? `¥${value.toLocaleString()}` : value}
+          {typeof value === 'number' ? (showCurrency ? `¥${value.toLocaleString()}` : value.toLocaleString()) : value}
         </div>
         {trend && (
           <p className={cn(
