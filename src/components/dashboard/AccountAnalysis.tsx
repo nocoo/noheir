@@ -67,13 +67,39 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
     [accountData]
   );
 
-  const pieData = useMemo(() => 
-    accountData.map(acc => ({
+  const pieData = useMemo(() => {
+    const total = accountData.reduce((sum, acc) => sum + acc.income + acc.expense, 0);
+    const THRESHOLD = 5; // 5% threshold
+
+    // Group small accounts into "其他"
+    const major = accountData.filter(acc => {
+      const value = acc.income + acc.expense;
+      return (value / total) * 100 >= THRESHOLD;
+    });
+
+    const othersTotal = accountData
+      .filter(acc => {
+        const value = acc.income + acc.expense;
+        return (value / total) * 100 < THRESHOLD;
+      })
+      .reduce((sum, acc) => sum + acc.income + acc.expense, 0);
+
+    const result = major.map(acc => ({
       name: acc.name,
-      value: acc.income + acc.expense
-    })),
-    [accountData]
-  );
+      value: acc.income + acc.expense,
+      percentage: ((acc.income + acc.expense) / total) * 100,
+    }));
+
+    if (othersTotal > 0) {
+      result.push({
+        name: '其他',
+        value: othersTotal,
+        percentage: (othersTotal / total) * 100,
+      });
+    }
+
+    return result;
+  }, [accountData]);
 
   const monthlyByAccount = useMemo(() => {
     const monthMap = new Map<string, Map<string, { income: number; expense: number }>>();
@@ -201,30 +227,42 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
             <CardDescription>各账户交易活跃度</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
+            <div className="h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
+                <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                   <Pie
                     data={pieData}
                     cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
+                    cy="45%"
+                    innerRadius={50}
+                    outerRadius={90}
                     paddingAngle={2}
                     dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    label={(entry: any) => `${entry.name} ${entry.percentage.toFixed(0)}%`}
+                    labelLine={false}
+                    labelStyle={{ fontSize: '11px', fontWeight: 500 }}
                   >
                     {pieData.map((entry, index) => (
                       <Cell key={entry.name} fill={colors[index % colors.length]} />
                     ))}
                   </Pie>
-                  <Tooltip 
+                  <Tooltip
                     formatter={(value: number) => [`¥${value.toLocaleString()}`, '金额']}
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
+                      borderRadius: 'var(--radius)'
                     }}
+                  />
+                  <Legend
+                    verticalAlign="bottom"
+                    height={60}
+                    iconType="circle"
+                    formatter={(value, entry: any) => (
+                      <span style={{ color: 'hsl(var(--foreground))', fontSize: '12px' }}>
+                        {value} ({entry.payload.percentage.toFixed(1)}%)
+                      </span>
+                    )}
                   />
                 </PieChart>
               </ResponsiveContainer>

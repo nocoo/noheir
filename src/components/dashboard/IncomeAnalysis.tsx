@@ -2,11 +2,12 @@ import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Transaction, MonthlyData } from '@/types/transaction';
 import { StatCard } from './StatCard';
-import { 
+import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, Cell, PieChart, Pie, Legend
 } from 'recharts';
-import { TrendingUp, Wallet, Calendar, ArrowUp, ArrowDown } from 'lucide-react';
+import { TrendingUp, Wallet, Calendar, ArrowUp, ArrowDown, Trophy, Layers, CreditCard, FileText } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface IncomeAnalysisProps {
   transactions: Transaction[];
@@ -14,19 +15,20 @@ interface IncomeAnalysisProps {
 }
 
 export function IncomeAnalysis({ transactions, monthlyData }: IncomeAnalysisProps) {
-  const incomeTransactions = useMemo(() => 
+  const incomeTransactions = useMemo(() =>
     transactions.filter(t => t.type === 'income'),
     [transactions]
   );
 
-  const totalIncome = useMemo(() => 
+  const totalIncome = useMemo(() =>
     incomeTransactions.reduce((sum, t) => sum + t.amount, 0),
     [incomeTransactions]
   );
 
+  // Prepare nested pie data for income source distribution
   const categoryData = useMemo(() => {
     const categoryMap = new Map<string, { total: number; secondary: Map<string, number> }>();
-    
+
     incomeTransactions.forEach(t => {
       if (!categoryMap.has(t.primaryCategory)) {
         categoryMap.set(t.primaryCategory, { total: 0, secondary: new Map() });
@@ -36,36 +38,105 @@ export function IncomeAnalysis({ transactions, monthlyData }: IncomeAnalysisProp
       cat.secondary.set(t.secondaryCategory, (cat.secondary.get(t.secondaryCategory) || 0) + t.amount);
     });
 
-    return Array.from(categoryMap.entries()).map(([category, data]) => ({
+    const THRESHOLD = 5; // 5% threshold
+
+    // Process all categories
+    const processed = Array.from(categoryMap.entries()).map(([category, data]) => ({
       category,
       total: data.total,
       percentage: totalIncome > 0 ? (data.total / totalIncome) * 100 : 0,
       subcategories: Array.from(data.secondary.entries()).map(([name, total]) => ({
-        name,
+        name: name,
         total,
-        percentage: totalIncome > 0 ? (total / totalIncome) * 100 : 0
+        percentage: totalIncome > 0 ? (total / totalIncome) * 100 : 0,
+        parent: category
       }))
     })).sort((a, b) => b.total - a.total);
+
+    // Group small primary categories into "其他"
+    const majorCategories = processed.filter(c => c.percentage >= THRESHOLD);
+    const smallCategories = processed.filter(c => c.percentage < THRESHOLD);
+
+    const chartData = [...majorCategories];
+    if (smallCategories.length > 0) {
+      const othersTotal = smallCategories.reduce((sum, c) => sum + c.total, 0);
+      chartData.push({
+        category: '其他',
+        total: othersTotal,
+        percentage: totalIncome > 0 ? (othersTotal / totalIncome) * 100 : 0,
+        subcategories: []
+      });
+    }
+
+    // Flatten all subcategories for nested pie (outer ring)
+    const allSubcategories = processed
+      .flatMap(cat => cat.subcategories)
+      .filter(sub => sub.percentage >= THRESHOLD)
+      .sort((a, b) => b.total - a.total);
+
+    // Group small subcategories
+    const majorSubs = allSubcategories.filter(s => s.percentage >= THRESHOLD);
+    const smallSubsTotal = allSubcategories
+      .filter(s => s.percentage < THRESHOLD)
+      .reduce((sum, s) => sum + s.total, 0);
+
+    const outerPieData = [...majorSubs];
+    if (smallSubsTotal > 0) {
+      outerPieData.push({
+        name: '其他',
+        total: smallSubsTotal,
+        percentage: totalIncome > 0 ? (smallSubsTotal / totalIncome) * 100 : 0,
+        parent: ''
+      });
+    }
+
+    return { chartData, outerPieData, detailList: processed };
   }, [incomeTransactions, totalIncome]);
 
+  // Account data - top 5 + others
   const accountData = useMemo(() => {
     const accountMap = new Map<string, number>();
     incomeTransactions.forEach(t => {
       accountMap.set(t.account, (accountMap.get(t.account) || 0) + t.amount);
     });
-    return Array.from(accountMap.entries())
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value);
-  }, [incomeTransactions]);
 
-  const monthlyIncome = useMemo(() => 
+    const sorted = Array.from(accountMap.entries())
+      .map(([name, value]) => ({ name, value, percentage: totalIncome > 0 ? (value / totalIncome) * 100 : 0 }))
+      .sort((a, b) => b.value - a.value);
+
+    // Take top 5
+    const top5 = sorted.slice(0, 5);
+    const others = sorted.slice(5);
+
+    const result = [...top5];
+    if (others.length > 0) {
+      const othersTotal = others.reduce((sum, acc) => sum + acc.value, 0);
+      result.push({
+        name: '其他',
+        value: othersTotal,
+        percentage: totalIncome > 0 ? (othersTotal / totalIncome) * 100 : 0
+      });
+    }
+
+    return result;
+  }, [incomeTransactions, totalIncome]);
+
+  // Top 50 income transactions
+  const topIncomeTransactions = useMemo(() =>
+    [...incomeTransactions]
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 50),
+    [incomeTransactions]
+  );
+
+  const monthlyIncome = useMemo(() =>
     monthlyData.filter(d => d.income > 0),
     [monthlyData]
   );
 
-  const avgMonthlyIncome = useMemo(() => 
-    monthlyIncome.length > 0 
-      ? monthlyIncome.reduce((s, d) => s + d.income, 0) / monthlyIncome.length 
+  const avgMonthlyIncome = useMemo(() =>
+    monthlyIncome.length > 0
+      ? monthlyIncome.reduce((s, d) => s + d.income, 0) / monthlyIncome.length
       : 0,
     [monthlyIncome]
   );
@@ -103,25 +174,25 @@ export function IncomeAnalysis({ transactions, monthlyData }: IncomeAnalysisProp
     <div className="space-y-6">
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatCard 
-          title="总收入" 
-          value={totalIncome} 
+        <StatCard
+          title="总收入"
+          value={totalIncome}
           icon={TrendingUp}
           variant="income"
         />
-        <StatCard 
-          title="月均收入" 
-          value={Math.round(avgMonthlyIncome)} 
+        <StatCard
+          title="月均收入"
+          value={Math.round(avgMonthlyIncome)}
           icon={Calendar}
           variant="income"
         />
-        <StatCard 
-          title="收入笔数" 
+        <StatCard
+          title="收入笔数"
           value={incomeTransactions.length}
           icon={Wallet}
         />
-        <StatCard 
-          title="收入增长" 
+        <StatCard
+          title="收入增长"
           value={`${incomeGrowth >= 0 ? '+' : ''}${incomeGrowth.toFixed(1)}%`}
           icon={incomeGrowth >= 0 ? ArrowUp : ArrowDown}
           variant={incomeGrowth >= 0 ? 'income' : 'expense'}
@@ -131,7 +202,10 @@ export function IncomeAnalysis({ transactions, monthlyData }: IncomeAnalysisProp
       {/* Monthly Trend */}
       <Card>
         <CardHeader>
-          <CardTitle>月度收入趋势</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-primary" />
+            月度收入趋势
+          </CardTitle>
           <CardDescription>每月收入变化趋势</CardDescription>
         </CardHeader>
         <CardContent>
@@ -144,21 +218,29 @@ export function IncomeAnalysis({ transactions, monthlyData }: IncomeAnalysisProp
                     <stop offset="95%" stopColor="hsl(142, 76%, 36%)" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="month" className="text-xs" />
-                <YAxis className="text-xs" tickFormatter={(v) => `¥${(v/1000).toFixed(0)}k`} />
-                <Tooltip 
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis
+                  dataKey="month"
+                  tick={{ fill: 'hsl(var(--foreground))', fontSize: 11 }}
+                  axisLine={{ stroke: 'hsl(var(--border))' }}
+                />
+                <YAxis
+                  tick={{ fill: 'hsl(var(--foreground))', fontSize: 11 }}
+                  axisLine={{ stroke: 'hsl(var(--border))' }}
+                  tickFormatter={(v) => `¥${(v/1000).toFixed(0)}k`}
+                />
+                <Tooltip
                   formatter={(value: number) => [`¥${value.toLocaleString()}`, '收入']}
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--card))', 
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
                     border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
+                    borderRadius: 'var(--radius)'
                   }}
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="income" 
-                  stroke="hsl(142, 76%, 36%)" 
+                <Area
+                  type="monotone"
+                  dataKey="income"
+                  stroke="hsl(142, 76%, 36%)"
                   strokeWidth={2}
                   fill="url(#incomeGradient)"
                 />
@@ -169,39 +251,84 @@ export function IncomeAnalysis({ transactions, monthlyData }: IncomeAnalysisProp
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Category Breakdown */}
+        {/* Category Breakdown - Nested Pie Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>收入来源分布</CardTitle>
-            <CardDescription>按类别分析收入来源</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <Layers className="h-5 w-5 text-primary" />
+              收入来源分布
+            </CardTitle>
+            <CardDescription>内圈：一级分类 | 外圈：二级分类</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
+            <div className="h-[380px]">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
+                <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                  {/* Inner Pie - Primary Categories */}
                   <Pie
-                    data={categoryData}
+                    data={categoryData.chartData}
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={2}
+                    outerRadius={90}
+                    paddingAngle={1}
                     dataKey="total"
                     nameKey="category"
-                    label={({ category, percentage }) => `${category} ${percentage.toFixed(0)}%`}
+                    label={(entry: any) => entry.percentage >= 5 ? `${entry.category}` : ''}
                     labelLine={false}
+                    labelStyle={{ fontSize: '10px', fontWeight: 500 }}
                   >
-                    {categoryData.map((entry, index) => (
-                      <Cell key={entry.category} fill={colors[index % colors.length]} />
+                    {categoryData.chartData.map((entry, index) => (
+                      <Cell key={`inner-${entry.category}`} fill={colors[index % colors.length]} stroke="hsl(var(--card))" strokeWidth={2} />
                     ))}
                   </Pie>
-                  <Tooltip 
-                    formatter={(value: number) => [`¥${value.toLocaleString()}`, '金额']}
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
+
+                  {/* Outer Pie - Secondary Categories */}
+                  <Pie
+                    data={categoryData.outerPieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={92}
+                    outerRadius={120}
+                    paddingAngle={0.5}
+                    dataKey="total"
+                    nameKey="name"
+                    label={false}
+                  >
+                    {categoryData.outerPieData.map((entry, index) => {
+                      // Find parent category color
+                      const parentIndex = categoryData.chartData.findIndex(c => c.category === entry.parent);
+                      const baseColor = parentIndex >= 0 ? colors[parentIndex % colors.length] : colors[4];
+                      // Use lighter/darker variant for outer ring
+                      return (
+                        <Cell
+                          key={`outer-${entry.name}`}
+                          fill={baseColor}
+                          fillOpacity={0.7}
+                          stroke="hsl(var(--card))"
+                          strokeWidth={1}
+                        />
+                      );
+                    })}
+                  </Pie>
+
+                  <Tooltip
+                    formatter={(value: number, name: string) => [`¥${value.toLocaleString()}`, name]}
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
+                      borderRadius: 'var(--radius)'
                     }}
+                  />
+                  <Legend
+                    verticalAlign="bottom"
+                    height={70}
+                    iconType="circle"
+                    formatter={(value: string) => (
+                      <span style={{ color: 'hsl(var(--foreground))', fontSize: '11px' }}>
+                        {value}
+                      </span>
+                    )}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -209,25 +336,42 @@ export function IncomeAnalysis({ transactions, monthlyData }: IncomeAnalysisProp
           </CardContent>
         </Card>
 
-        {/* Account Distribution */}
+        {/* Account Distribution - Top 5 */}
         <Card>
           <CardHeader>
-            <CardTitle>收款账户分布</CardTitle>
-            <CardDescription>各账户收入情况</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-primary" />
+              收款账户分布
+            </CardTitle>
+            <CardDescription>Top 5 账户收入情况</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={accountData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis type="number" tickFormatter={(v) => `¥${(v/1000).toFixed(0)}k`} />
-                  <YAxis dataKey="name" type="category" width={80} />
-                  <Tooltip 
-                    formatter={(value: number) => [`¥${value.toLocaleString()}`, '收入']}
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis
+                    type="number"
+                    tick={{ fill: 'hsl(var(--foreground))', fontSize: 11 }}
+                    tickFormatter={(v) => `¥${(v/1000).toFixed(0)}k`}
+                    axisLine={{ stroke: 'hsl(var(--border))' }}
+                  />
+                  <YAxis
+                    dataKey="name"
+                    type="category"
+                    width={80}
+                    tick={{ fill: 'hsl(var(--foreground))', fontSize: 11 }}
+                    axisLine={{ stroke: 'hsl(var(--border))' }}
+                  />
+                  <Tooltip
+                    formatter={(value: number, name: string, props: any) => [
+                      `¥${value.toLocaleString()} (${props.payload.percentage.toFixed(1)}%)`,
+                      '收入'
+                    ]}
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
+                      borderRadius: 'var(--radius)'
                     }}
                   />
                   <Bar dataKey="value" fill="hsl(142, 76%, 36%)" radius={[0, 4, 4, 0]} />
@@ -241,24 +385,27 @@ export function IncomeAnalysis({ transactions, monthlyData }: IncomeAnalysisProp
       {/* Detailed Category List */}
       <Card>
         <CardHeader>
-          <CardTitle>收入明细</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5 text-primary" />
+            收入明细
+          </CardTitle>
           <CardDescription>各类别收入详情</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {categoryData.map((cat, i) => (
+            {categoryData.detailList.map((cat, i) => (
               <div key={cat.category} className="space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div 
-                      className="w-3 h-3 rounded-sm" 
+                    <div
+                      className="w-3 h-3 rounded-sm"
                       style={{ backgroundColor: colors[i % colors.length] }}
                     />
                     <span className="font-medium">{cat.category}</span>
                   </div>
                   <div className="text-right">
                     <span className="font-semibold text-green-600 dark:text-green-400">
-                      ¥{cat.total.toLocaleString()}
+                      ¥{cat.total.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                     <span className="text-sm text-muted-foreground ml-2">
                       ({cat.percentage.toFixed(1)}%)
@@ -270,7 +417,7 @@ export function IncomeAnalysis({ transactions, monthlyData }: IncomeAnalysisProp
                     {cat.subcategories.map(sub => (
                       <div key={sub.name} className="flex justify-between text-sm">
                         <span className="text-muted-foreground">{sub.name}</span>
-                        <span>¥{sub.total.toLocaleString()}</span>
+                        <span>¥{sub.total.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       </div>
                     ))}
                   </div>
@@ -278,6 +425,56 @@ export function IncomeAnalysis({ transactions, monthlyData }: IncomeAnalysisProp
               </div>
             ))}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Top 50 Income Transactions */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-primary" />
+            单次收入 Top 50
+          </CardTitle>
+          <CardDescription>最高的50笔收入记录</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-16">排名</TableHead>
+                <TableHead>日期</TableHead>
+                <TableHead>一级分类</TableHead>
+                <TableHead>二级分类</TableHead>
+                <TableHead>账户</TableHead>
+                <TableHead className="text-right">金额</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {topIncomeTransactions.map((t, index) => (
+                <TableRow key={t.id}>
+                  <TableCell className="font-medium">
+                    {index < 3 && (
+                      <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
+                        index === 0 ? 'bg-yellow-100 text-yellow-700' :
+                        index === 1 ? 'bg-gray-100 text-gray-700' :
+                        'bg-orange-100 text-orange-700'
+                      }`}>
+                        {index + 1}
+                      </span>
+                    )}
+                    {index >= 3 && <span className="text-muted-foreground">#{index + 1}</span>}
+                  </TableCell>
+                  <TableCell className="text-sm">{t.date}</TableCell>
+                  <TableCell>{t.primaryCategory}</TableCell>
+                  <TableCell className="text-muted-foreground">{t.secondaryCategory}</TableCell>
+                  <TableCell className="text-muted-foreground">{t.account}</TableCell>
+                  <TableCell className="text-right font-semibold text-green-600 dark:text-green-400">
+                    ¥{t.amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>
