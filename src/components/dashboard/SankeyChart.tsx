@@ -5,36 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Transaction } from '@/types/transaction';
 import { useSettings, getIncomeColorHex, getExpenseColorHex } from '@/contexts/SettingsContext';
 
-// ECharts Sankey callback parameter types
-interface SankeyNodeParams {
-  name: string;
-  value: number;
-}
-
-interface SankeyEdgeParams {
-  data: {
-    source: string | number;
-    target: string | number;
-    value: number;
-  };
-}
-
+// ECharts Sankey label callback parameter types
 interface SankeyLabelParams {
   name: string;
   value: number;
-}
-
-interface SankeyItemStyleParams {
-  name: string;
-  data: SankeyNodeParams;
-}
-
-interface SankeyLineStyleParams {
-  data: {
-    source: number;
-    target: number;
-    value: number;
-  };
 }
 
 interface SankeyChartProps {
@@ -94,28 +68,31 @@ export function SankeyChart({ transactions, type }: SankeyChartProps) {
     ];
 
     // Build nodes and links for ECharts Sankey
-    const nodes: Array<{ name: string }> = [];
+    // Node type with optional itemStyle for direct color assignment
+    const nodes: Array<{ name: string; itemStyle?: { color: string } }> = [];
     const links: Array<{ source: string | number; target: string | number; value: number }> = [];
 
     // Add root node
     const rootNode = type === 'income' ? '总收入' : '总支出';
-    nodes.push({ name: rootNode });
+    nodes.push({ name: rootNode, itemStyle: { color: totalColor } });
 
     // Track node names for index-based links
     const nodeNameSet = new Set<string>([rootNode]);
 
-    // Track which primary category index each node belongs to
-    const nodeColorIndex = new Map<string, number>();
-    nodeColorIndex.set(rootNode, -1); // Root node gets special color
-
     let primaryIndex = 0;
     primaryMap.forEach((data, category) => {
+      // Skip first 2 colors (income/expense theme colors)
+      const colorIndex = primaryIndex + 2;
+      const categoryColor = colors[colorIndex % colors.length];
+
       // Use category with index as unique identifier for display
       const categoryNode = category;
       if (!nodeNameSet.has(categoryNode)) {
-        nodes.push({ name: categoryNode });
+        nodes.push({
+          name: categoryNode,
+          itemStyle: { color: categoryColor }
+        });
         nodeNameSet.add(categoryNode);
-        nodeColorIndex.set(categoryNode, primaryIndex);
 
         links.push({
           source: rootNode,
@@ -129,10 +106,11 @@ export function SankeyChart({ transactions, type }: SankeyChartProps) {
         // Create unique node name: "一级分类 - 二级分类"
         const uniqueSubNode = `${category} - ${subCategory}`;
         if (!nodeNameSet.has(uniqueSubNode)) {
-          nodes.push({ name: uniqueSubNode });
+          nodes.push({
+            name: uniqueSubNode,
+            itemStyle: { color: categoryColor }
+          });
           nodeNameSet.add(uniqueSubNode);
-          // Secondary nodes use same color as their parent
-          nodeColorIndex.set(uniqueSubNode, primaryIndex);
         }
 
         links.push({
@@ -182,36 +160,10 @@ export function SankeyChart({ transactions, type }: SankeyChartProps) {
           data: nodes,
           links: indexedLinks,
           itemStyle: {
-            color: (params: SankeyItemStyleParams) => {
-              const nodeName = params.name;
-              // Root node gets the total color (green for income, red for expense)
-              if (nodeName === rootNode) {
-                return totalColor;
-              }
-              // Get the color index for this node
-              const colorIdx = nodeColorIndex.get(nodeName);
-              if (colorIdx !== undefined && colorIdx >= 0) {
-                return colors[colorIdx % colors.length];
-              }
-              // Fallback to a default color
-              return colors[0];
-            },
             borderColor: 'hsl(var(--background))'
           },
           lineStyle: {
-            color: (params: SankeyLineStyleParams) => {
-              // Find the source node's color
-              const sourceNode = nodes[params.data.source];
-              if (!sourceNode) return 'hsl(var(--muted-foreground))';
-              if (sourceNode.name === rootNode) return totalColor;
-              // Get color from nodeColorIndex
-              const colorIdx = nodeColorIndex.get(sourceNode.name);
-              if (colorIdx !== undefined && colorIdx >= 0) {
-                return colors[colorIdx % colors.length];
-              }
-              return 'hsl(var(--muted-foreground))';
-            },
-            opacity: 0.3
+            opacity: 0.4
           },
           label: {
             position: 'right',
