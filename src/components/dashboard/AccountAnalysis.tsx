@@ -156,6 +156,17 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
     'hsl(var(--chart-5))',
   ];
 
+  // Top 20 accounts by transaction count
+  const topTransactionCounts = useMemo(() => {
+    return accountData
+      .map(acc => ({
+        name: acc.name,
+        count: acc.transactionCount
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 20);
+  }, [accountData]);
+
   if (transactions.length === 0) {
     return (
       <Card>
@@ -253,6 +264,7 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
                   <Tooltip
                     formatter={(value: number) => [`¥${value.toLocaleString()}`, '金额']}
                     contentStyle={tooltipStyle.contentStyle}
+                    itemStyle={{ color: 'hsl(var(--foreground))' }}
                   />
                   <Legend
                     verticalAlign="bottom"
@@ -270,52 +282,77 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
           </CardContent>
         </Card>
 
-        {/* Account Summary Cards */}
+        {/* Top 20 Transaction Counts */}
         <Card>
           <CardHeader>
-            <CardTitle>账户概览</CardTitle>
-            <CardDescription>各账户详细信息</CardDescription>
+            <CardTitle>交易次数排行</CardTitle>
+            <CardDescription>Top 20 账户交易频率</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {accountData.map((acc, i) => (
-                <div key={acc.name} className="p-4 rounded-lg bg-muted/50">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="w-3 h-3 rounded-full" 
-                        style={{ backgroundColor: colors[i % colors.length] }}
-                      />
-                      <span className="font-semibold">{acc.name}</span>
-                    </div>
-                    <Badge variant={acc.balance >= 0 ? 'default' : 'destructive'}>
-                      {acc.balance >= 0 ? '+' : ''}¥{acc.balance.toLocaleString()}
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <p className="text-muted-foreground">收入</p>
-                      <p className={`font-medium ${incomeColorClass}`}>
-                        ¥{acc.income.toLocaleString()}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">支出</p>
-                      <p className={`font-medium ${expenseColorClass}`}>
-                        ¥{acc.expense.toLocaleString()}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">交易数</p>
-                      <p className="font-medium">{acc.transactionCount}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={topTransactionCounts} layout="vertical" margin={{ top: 10, right: 30, bottom: 10, left: 10 }}>
+                  <CartesianGrid {...gridStyle} />
+                  <XAxis type="number" {...xAxisStyle} />
+                  <YAxis type="category" dataKey="name" width={100} {...yAxisStyle} />
+                  <Tooltip
+                    formatter={(value: number) => [value, '交易次数']}
+                    contentStyle={tooltipStyle.contentStyle}
+                    itemStyle={{ color: 'hsl(var(--foreground))' }}
+                  />
+                  <Bar dataKey="count" fill={expenseColorHex} radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Account Overview - Full Width, 2 Columns */}
+      <Card>
+        <CardHeader>
+          <CardTitle>账户概览</CardTitle>
+          <CardDescription>各账户详细信息</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {accountData.map((acc, i) => (
+              <div key={acc.name} className="p-4 rounded-lg bg-muted/50">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: colors[i % colors.length] }}
+                    />
+                    <span className="font-semibold">{acc.name}</span>
+                  </div>
+                  <Badge variant={acc.balance >= 0 ? 'default' : 'destructive'}>
+                    {acc.balance >= 0 ? '+' : ''}¥{acc.balance.toLocaleString()}
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">收入</p>
+                    <p className={`font-medium ${incomeColorClass}`}>
+                      ¥{acc.income.toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">支出</p>
+                    <p className={`font-medium ${expenseColorClass}`}>
+                      ¥{acc.expense.toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">交易数</p>
+                    <p className="font-medium">{acc.transactionCount}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Detailed Table */}
       <Card>
