@@ -10,11 +10,12 @@ import {
   ReferenceLine,
   Area,
   ComposedChart,
-  Bar
+  Bar,
+  Cell
 } from 'recharts';
 import { MonthlyData } from '@/types/transaction';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import { useSettings } from '@/contexts/SettingsContext';
+import { useSettings, getIncomeColorHex, getExpenseColorHex } from '@/contexts/SettingsContext';
 import { Badge } from '@/components/ui/badge';
 import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, formatCurrencyK } from '@/lib/chart-config';
 
@@ -25,6 +26,8 @@ interface SavingsRateChartProps {
 export function SavingsRateChart({ data }: SavingsRateChartProps) {
   const { settings } = useSettings();
   const targetSavingsRate = settings.targetSavingsRate;
+  const incomeColorHex = getIncomeColorHex(settings.colorScheme);
+  const expenseColorHex = getExpenseColorHex(settings.colorScheme);
 
   const chartData = data.map(item => ({
     ...item,
@@ -157,14 +160,20 @@ export function SavingsRateChart({ data }: SavingsRateChartProps) {
                   position: 'insideTopRight'
                 }}
               />
-              <Bar 
+              <Bar
                 yAxisId="right"
-                dataKey="savings" 
-                fill="hsl(var(--chart-2))" 
-                opacity={0.5}
+                dataKey="savings"
+                opacity={0.6}
                 radius={[4, 4, 0, 0]}
-              />
-              <Line 
+              >
+                {chartData.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={entry.savings >= 0 ? incomeColorHex : expenseColorHex}
+                  />
+                ))}
+              </Bar>
+              <Line
                 yAxisId="left"
                 type="monotone" 
                 dataKey="savingsRate" 
