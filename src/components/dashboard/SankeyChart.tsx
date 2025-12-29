@@ -104,13 +104,18 @@ export function SankeyChart({ transactions, type }: SankeyChartProps) {
     // Track node names for index-based links
     const nodeNameSet = new Set<string>([rootNode]);
 
-    let colorIndex = 0;
+    // Track which primary category index each node belongs to
+    const nodeColorIndex = new Map<string, number>();
+    nodeColorIndex.set(rootNode, -1); // Root node gets special color
+
+    let primaryIndex = 0;
     primaryMap.forEach((data, category) => {
       // Use category with index as unique identifier for display
       const categoryNode = category;
       if (!nodeNameSet.has(categoryNode)) {
         nodes.push({ name: categoryNode });
         nodeNameSet.add(categoryNode);
+        nodeColorIndex.set(categoryNode, primaryIndex);
 
         links.push({
           source: rootNode,
@@ -126,6 +131,8 @@ export function SankeyChart({ transactions, type }: SankeyChartProps) {
         if (!nodeNameSet.has(uniqueSubNode)) {
           nodes.push({ name: uniqueSubNode });
           nodeNameSet.add(uniqueSubNode);
+          // Secondary nodes use same color as their parent
+          nodeColorIndex.set(uniqueSubNode, primaryIndex);
         }
 
         links.push({
@@ -135,7 +142,7 @@ export function SankeyChart({ transactions, type }: SankeyChartProps) {
         });
       });
 
-      colorIndex++;
+      primaryIndex++;
     });
 
     // Map node names to indices for ECharts
@@ -177,22 +184,17 @@ export function SankeyChart({ transactions, type }: SankeyChartProps) {
           itemStyle: {
             color: (params: SankeyItemStyleParams) => {
               const nodeName = params.name;
+              // Root node gets the total color (green for income, red for expense)
               if (nodeName === rootNode) {
                 return totalColor;
               }
-              // Use consistent colors based on primary category
-              const primaryIndex = Array.from(primaryMap.keys()).findIndex(cat => {
-                const categoryNode = cat;
-                return nodeName === categoryNode || nodeNameSet.has(nodeName) &&
-                       nodes.some(n => n.name === nodeName && links.some(l =>
-                         (l.source === categoryNode || l.target === categoryNode) &&
-                         (l.source === nodeName || l.target === nodeName)
-                       ));
-              });
-              if (primaryIndex >= 0) {
-                return colors[primaryIndex % colors.length];
+              // Get the color index for this node
+              const colorIdx = nodeColorIndex.get(nodeName);
+              if (colorIdx !== undefined && colorIdx >= 0) {
+                return colors[colorIdx % colors.length];
               }
-              return colors[colorIndex % colors.length];
+              // Fallback to a default color
+              return colors[0];
             },
             borderColor: 'hsl(var(--background))'
           },
