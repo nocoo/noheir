@@ -75,7 +75,7 @@ export function SavingsRateChart({ data }: SavingsRateChartProps) {
                 {savingsGap >= 0 ? '+' : ''}¥{Math.abs(savingsGap).toLocaleString()}
               </Badge>
               <p className="text-xs text-muted-foreground">
-                {savingsGap >= 0 ? '超出目标' : '距目标'}
+                {savingsGap >= 0 ? '超额完成' : '还差'}
               </p>
             </div>
           </div>
