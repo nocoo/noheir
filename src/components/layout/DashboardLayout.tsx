@@ -1,7 +1,8 @@
 import { ReactNode, useState } from 'react';
-import { 
-  Upload, 
+import {
+  Upload,
   CheckCircle,
+  Database,
   LayoutDashboard,
   TrendingUp,
   TrendingDown,
@@ -28,8 +29,8 @@ const navGroups = [
   {
     title: '数据管理',
     items: [
+      { id: 'manage', label: '数据管理', icon: Database },
       { id: 'import', label: '数据导入', icon: Upload },
-      { id: 'quality', label: '数据质量', icon: CheckCircle },
     ]
   },
   {

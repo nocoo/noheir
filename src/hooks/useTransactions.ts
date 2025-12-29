@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Transaction, CategorySummary, MonthlyData, YearlyComparison } from '@/types/transaction';
 import {
   CleanedTransaction,
@@ -8,6 +8,16 @@ import {
 } from '@/types/data';
 import { createDataLayerManager, DataLayerManager } from '@/lib/dataLayer';
 import { parseCSVFile } from '@/lib/csvParser';
+import {
+  saveTransactionsForYear,
+  getAllStoredYears,
+  getTransactionsForYear,
+  deleteYear,
+  clearAllData,
+  exportAllData,
+  importData,
+  StoredYearData
+} from '@/lib/storage';
 
 // Convert CleanedTransaction to Transaction for backward compatibility
 function toTransaction(ct: CleanedTransaction): Transaction {
@@ -25,25 +35,46 @@ function toTransaction(ct: CleanedTransaction): Transaction {
   };
 }
 
-// Sample data for initial demonstration
-const sampleTransactions: Transaction[] = [
-  { id: '1', date: '2024-01-15', year: 2024, month: 1, primaryCategory: '餐饮', secondaryCategory: '外卖', amount: 85, account: '微信', type: 'expense' },
-  { id: '2', date: '2024-01-20', year: 2024, month: 1, primaryCategory: '交通', secondaryCategory: '地铁', amount: 50, account: '支付宝', type: 'expense' },
-  { id: '3', date: '2024-02-05', year: 2024, month: 2, primaryCategory: '收入', secondaryCategory: '工资', amount: 15000, account: '银行卡', type: 'income' },
-  { id: '4', date: '2024-02-10', year: 2024, month: 2, primaryCategory: '购物', secondaryCategory: '服装', amount: 500, account: '信用卡', type: 'expense' },
-  { id: '5', date: '2024-03-01', year: 2024, month: 3, primaryCategory: '住房', secondaryCategory: '房租', amount: 3500, account: '银行卡', type: 'expense' },
-];
-
 export function useTransactions() {
   const manager = useMemo(() => createDataLayerManager(), []);
-  const [transactions, setTransactions] = useState<Transaction[]>(sampleTransactions);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [storedYearsData, setStoredYearsData] = useState<StoredYearData[]>([]);
   const [selectedYear, setSelectedYear] = useState<number>(2024);
   const [comparisonYears, setComparisonYears] = useState<number[]>([2023, 2024]);
   const [isValidating, setIsValidating] = useState(false);
   const [validationResults, setValidationResults] = useState<TransactionValidation[] | null>(null);
   const [qualityMetrics, setQualityMetrics] = useState<DataQualityMetrics | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load data from CSV file
+  // Load all stored years data on mount
+  useEffect(() => {
+    loadStoredData();
+  }, []);
+
+  // Load data from IndexedDB
+  const loadStoredData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const storedData = await getAllStoredYears();
+      setStoredYearsData(storedData);
+
+      // Flatten all transactions
+      const allTransactions = storedData.flatMap(d => d.transactions);
+      setTransactions(allTransactions);
+
+      // Set selected year to most recent if available
+      if (storedData.length > 0) {
+        const years = storedData.map(d => d.year).sort((a, b) => b - a);
+        setSelectedYear(years[0]);
+      }
+    } catch (error) {
+      console.error('Failed to load stored data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Load data from CSV file and save to IndexedDB
   const loadFromFile = useCallback(async (file: File): Promise<{
     success: boolean;
     transactions: ParsedTransaction[];
@@ -74,11 +105,21 @@ export function useTransactions() {
         });
 
         const transactionList = cleaned.map(toTransaction);
-        setTransactions(transactionList);
 
-        // Update selected year to available data
-        const years = metrics?.years || [2024];
-        setSelectedYear(years[0]);
+        // Determine year from transactions
+        const year = transactionList[0]?.year || new Date().getFullYear();
+
+        // Save to IndexedDB (replaces existing data for this year)
+        await saveTransactionsForYear(year, transactionList, {
+          fileName: file.name,
+          fileSize: file.size
+        });
+
+        // Reload stored data
+        await loadStoredData();
+
+        // Set selected year
+        setSelectedYear(year);
       }
 
       return {
@@ -93,26 +134,94 @@ export function useTransactions() {
     } finally {
       setIsValidating(false);
     }
-  }, [manager]);
+  }, [manager, loadStoredData]);
 
-  // Add transactions
-  const addTransactions = useCallback((newTransactions: Transaction[]) => {
-    setTransactions(prev => [...prev, ...newTransactions]);
+  // Delete a year's data
+  const deleteYearData = useCallback(async (year: number) => {
+    try {
+      await deleteYear(year);
+      await loadStoredData();
+
+      // Update selected year if needed
+      const remainingYears = storedYearsData.filter(d => d.year !== year).map(d => d.year);
+      if (year === selectedYear && remainingYears.length > 0) {
+        setSelectedYear(Math.max(...remainingYears));
+      }
+    } catch (error) {
+      console.error('Failed to delete year data:', error);
+      throw error;
+    }
+  }, [selectedYear, storedYearsData, loadStoredData]);
+
+  // Clear all data
+  const clearAll = useCallback(async () => {
+    try {
+      await clearAllData();
+      await loadStoredData();
+    } catch (error) {
+      console.error('Failed to clear data:', error);
+      throw error;
+    }
+  }, [loadStoredData]);
+
+  // Export data
+  const exportData = useCallback(async () => {
+    try {
+      const jsonData = await exportAllData();
+      const blob = new Blob([jsonData], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `finance-data-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to export data:', error);
+      throw error;
+    }
   }, []);
 
-  // Clear all transactions
-  const clearTransactions = useCallback(() => {
-    setTransactions(sampleTransactions);
-    setValidationResults(null);
-    setQualityMetrics(null);
-    manager.reset();
-  }, [manager]);
+  // Get quality metrics for a specific year
+  const getQualityForYear = useCallback(async (year: number) => {
+    const yearData = storedYearsData.find(d => d.year === year);
+    if (!yearData) return null;
 
-  // Get available years
+    // Convert Transaction to ParsedTransaction for validation
+    const parsedTransactions: ParsedTransaction[] = yearData.transactions.map((t, idx) => ({
+      id: t.id,
+      date: t.date,
+      year: t.year,
+      month: t.month,
+      day: new Date(t.date).getDate(),
+      primaryCategory: t.primaryCategory,
+      secondaryCategory: t.secondaryCategory,
+      amount: t.amount,
+      type: t.type,
+      account: t.account,
+      currency: 'CNY',
+      tags: [],
+      note: t.description,
+      rawIndex: idx
+    }));
+
+    // Validate
+    manager.loadRaw(parsedTransactions);
+    const validations = manager.validate();
+    const metrics = manager.getMetrics();
+
+    return {
+      year,
+      metrics,
+      validations
+    };
+  }, [storedYearsData, manager]);
+
+  // Get available years from stored data
   const availableYears = useMemo(() => {
-    const years = [...new Set(transactions.map(t => t.year))];
-    return years.sort((a, b) => b - a);
-  }, [transactions]);
+    return storedYearsData.map(d => d.year).sort((a, b) => b - a);
+  }, [storedYearsData]);
 
   // Filter transactions by selected year
   const filteredTransactions = useMemo(() => {
@@ -215,8 +324,14 @@ export function useTransactions() {
 
     // Data management
     loadFromFile,
-    addTransactions,
-    clearTransactions,
+    deleteYearData,
+    clearAll,
+    exportData,
+    storedYearsData,
+    getQualityForYear,
+
+    // Loading state
+    isLoading,
 
     // Validation state
     isValidating,

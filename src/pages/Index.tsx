@@ -7,6 +7,7 @@ import { CategoryBreakdown } from '@/components/dashboard/CategoryBreakdown';
 import { TransactionTable } from '@/components/dashboard/TransactionTable';
 import { DataImport } from '@/components/dashboard/DataImport';
 import { DataQuality } from '@/components/dashboard/DataQuality';
+import { DataManagement } from '@/components/dashboard/DataManagement';
 import { IncomeAnalysis } from '@/components/dashboard/IncomeAnalysis';
 import { ExpenseAnalysis } from '@/components/dashboard/ExpenseAnalysis';
 import { AccountAnalysis } from '@/components/dashboard/AccountAnalysis';
@@ -24,7 +25,10 @@ import { Wallet, TrendingUp, TrendingDown, PiggyBank, Percent, Activity } from '
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState('import');
+  const [activeTab, setActiveTab] = useState('manage');
+  const [qualityViewYear, setQualityViewYear] = useState<number | null>(null);
+  const [qualityData, setQualityData] = useState<{ year: number; metrics: any; validations: any[] } | null>(null);
+
   const {
     transactions,
     allTransactions,
@@ -40,6 +44,12 @@ const Index = () => {
     setComparisonYears,
     availableYears,
     loadFromFile,
+    deleteYearData,
+    clearAll,
+    exportData,
+    storedYearsData,
+    isLoading,
+    getQualityForYear,
     isValidating,
     validationResults,
     qualityMetrics,
@@ -48,6 +58,33 @@ const Index = () => {
   const savingsRate = useMemo(() => {
     return totalIncome > 0 ? ((totalIncome - totalExpense) / totalIncome) * 100 : 0;
   }, [totalIncome, totalExpense]);
+
+  // Handle load file with auto-show quality
+  const handleLoadFile = async (file: File) => {
+    const result = await loadFromFile(file);
+    if (result.success && qualityMetrics) {
+      // Switch to quality view after successful import
+      setActiveTab('import');
+    }
+    return result;
+  };
+
+  // Handle view quality for a specific year
+  const handleViewQuality = async (year: number) => {
+    if (year === 0) {
+      setQualityViewYear(null);
+      setQualityData(null);
+    } else {
+      setQualityViewYear(year);
+      const data = await getQualityForYear(year);
+      setQualityData(data);
+    }
+  };
+
+  // Handle go to import
+  const handleGoToImport = () => {
+    setActiveTab('import');
+  };
 
   const previousYearCategoryData = useMemo(() => {
     const prevYear = selectedYear - 1;
@@ -77,8 +114,22 @@ const Index = () => {
           </div>
           <DataImport
             isLoading={isValidating}
-            onLoadFile={loadFromFile}
+            onLoadFile={handleLoadFile}
           />
+
+          {/* Show quality after import */}
+          {qualityMetrics && qualityMetrics.totalRecords > 0 && (
+            <>
+              <div>
+                <h2 className="text-xl font-semibold mt-8">数据质量评估</h2>
+                <p className="text-muted-foreground text-sm">刚刚导入的数据质量检查结果</p>
+              </div>
+              <DataQuality
+                metrics={qualityMetrics}
+                validations={validationResults}
+              />
+            </>
+          )}
         </div>
       )}
 
@@ -93,6 +144,19 @@ const Index = () => {
             validations={validationResults}
           />
         </div>
+      )}
+
+      {activeTab === 'manage' && (
+        <DataManagement
+          storedYearsData={storedYearsData}
+          isLoading={isLoading}
+          onDeleteYear={deleteYearData}
+          onClearAll={clearAll}
+          onExport={exportData}
+          onGoToImport={handleGoToImport}
+          onViewQuality={handleViewQuality}
+          qualityData={qualityData}
+        />
       )}
 
       {activeTab === 'overview' && (
