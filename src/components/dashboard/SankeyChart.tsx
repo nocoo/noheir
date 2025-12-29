@@ -88,6 +88,7 @@ export function SankeyChart({ transactions, type }: SankeyChartProps) {
 
     let colorIndex = 0;
     primaryMap.forEach((data, category) => {
+      // Use category with index as unique identifier for display
       const categoryNode = category;
       if (!nodeNameSet.has(categoryNode)) {
         nodes.push({ name: categoryNode });
@@ -100,16 +101,18 @@ export function SankeyChart({ transactions, type }: SankeyChartProps) {
         });
       }
 
-      // Add secondary category nodes
+      // Add secondary category nodes with unique names
       data.secondary.forEach((value, subCategory) => {
-        if (!nodeNameSet.has(subCategory)) {
-          nodes.push({ name: subCategory });
-          nodeNameSet.add(subCategory);
+        // Create unique node name: "一级分类 - 二级分类"
+        const uniqueSubNode = `${category} - ${subCategory}`;
+        if (!nodeNameSet.has(uniqueSubNode)) {
+          nodes.push({ name: uniqueSubNode });
+          nodeNameSet.add(uniqueSubNode);
         }
 
         links.push({
           source: categoryNode,
-          target: subCategory,
+          target: uniqueSubNode,
           value
         });
       });
