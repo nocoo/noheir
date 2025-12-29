@@ -195,7 +195,7 @@ export function parseCSV(content: string): {
       }
 
       // Determine transaction type
-      let type: 'income' | 'expense' | 'transfer' = isTransfer ? 'transfer' : determineTransactionType(inflow, outflow);
+      const type: 'income' | 'expense' | 'transfer' = isTransfer ? 'transfer' : determineTransactionType(inflow, outflow);
 
       // Special handling for "余额调整" - map to 对账收入/对账支出 based on type
       if (tertiaryCategory === '余额调整' && type !== 'transfer') {
