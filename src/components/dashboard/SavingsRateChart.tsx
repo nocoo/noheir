@@ -13,8 +13,8 @@ import {
   Bar
 } from 'recharts';
 import { MonthlyData } from '@/types/transaction';
-import { TrendingUp, TrendingDown, Minus, Target } from 'lucide-react';
-import { useSettings, getIncomeColor, getExpenseColor } from '@/contexts/SettingsContext';
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { useSettings } from '@/contexts/SettingsContext';
 import { Badge } from '@/components/ui/badge';
 import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, formatCurrencyK } from '@/lib/chart-config';
 
@@ -25,8 +25,6 @@ interface SavingsRateChartProps {
 export function SavingsRateChart({ data }: SavingsRateChartProps) {
   const { settings } = useSettings();
   const targetSavingsRate = settings.targetSavingsRate;
-  const incomeColorClass = getIncomeColor(settings.colorScheme);
-  const expenseColorClass = getExpenseColor(settings.colorScheme);
 
   const chartData = data.map(item => ({
     ...item,
@@ -44,7 +42,9 @@ export function SavingsRateChart({ data }: SavingsRateChartProps) {
 
   // Calculate difference from target
   const avgDiff = avgSavingsRate - targetSavingsRate;
-  const lastMonthDiff = chartData.length > 0 ? chartData[chartData.length - 1].savingsRate - targetSavingsRate : 0;
+  const totalIncome = chartData.reduce((sum, d) => sum + d.income, 0);
+  const targetSavingsAmount = totalIncome * (targetSavingsRate / 100);
+  const savingsGap = totalSavings - targetSavingsAmount;
 
   return (
     <Card className="col-span-full">
@@ -67,7 +67,17 @@ export function SavingsRateChart({ data }: SavingsRateChartProps) {
           </div>
           <div className="p-4 rounded-lg bg-accent border border-border">
             <p className="text-sm text-muted-foreground">累计储蓄</p>
-            <p className="text-2xl font-bold text-accent-foreground">¥{totalSavings.toLocaleString()}</p>
+            <div className="flex items-baseline gap-2">
+              <p className="text-2xl font-bold text-accent-foreground">¥{totalSavings.toLocaleString()}</p>
+            </div>
+            <div className="flex items-center gap-2 mt-1">
+              <Badge variant={savingsGap >= 0 ? "default" : "destructive"} className="text-xs">
+                {savingsGap >= 0 ? '+' : ''}¥{Math.abs(savingsGap).toLocaleString()}
+              </Badge>
+              <p className="text-xs text-muted-foreground">
+                {savingsGap >= 0 ? '超出目标' : '距目标'}
+              </p>
+            </div>
           </div>
           <div className="p-4 rounded-lg bg-card border border-border">
             <p className="text-sm text-muted-foreground flex items-center gap-1">
@@ -82,33 +92,6 @@ export function SavingsRateChart({ data }: SavingsRateChartProps) {
             </p>
             <p className="text-lg font-semibold">{worstMonth?.month}</p>
             <p className="text-sm text-destructive">{worstMonth?.savingsRate.toFixed(1)}%</p>
-          </div>
-        </div>
-
-        {/* Target Comparison */}
-        <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/30">
-          <div className="flex items-center gap-3">
-            <Target className="h-5 w-5 text-primary" />
-            <div>
-              <p className="text-sm text-muted-foreground">目标储蓄率</p>
-              <p className="text-lg font-semibold">{targetSavingsRate}%</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="text-sm text-muted-foreground">与目标差距</p>
-            <div className="flex items-center gap-2">
-              <p className={`text-2xl font-bold ${avgDiff >= 0 ? incomeColorClass : expenseColorClass}`}>
-                {avgDiff >= 0 ? '+' : ''}{avgDiff.toFixed(1)}%
-              </p>
-              {avgDiff >= 0 ? (
-                <TrendingUp className={`h-5 w-5 ${incomeColorClass}`} />
-              ) : (
-                <TrendingDown className={`h-5 w-5 ${expenseColorClass}`} />
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {avgDiff >= 0 ? '超出目标' : '低于目标'}
-            </p>
           </div>
         </div>
 
