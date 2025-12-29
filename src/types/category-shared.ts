@@ -41,3 +41,24 @@ export interface AccountData {
   value: number;
   percentage: number;
 }
+
+/**
+ * Recharts chart types for type-safe chart component usage
+ */
+export interface PieLabelEntry {
+  name: string;
+  value: number;
+  percentage: number;
+}
+
+export interface LegendPayloadEntry {
+  payload: {
+    percentage: number;
+  };
+}
+
+export interface ChartDataPoint {
+  name: string;
+  value: number;
+  [key: string]: string | number;
+}

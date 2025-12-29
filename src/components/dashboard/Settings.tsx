@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import type { LucideIcon } from 'lucide-react';
 
 export function Settings() {
   const { settings, updateTheme, updateColorScheme, updateTargetSavingsRate } = useSettings();
@@ -34,7 +35,7 @@ export function Settings() {
   }: {
     title: string;
     mappings: Record<string, string[]>;
-    icon: any;
+    icon: LucideIcon;
   }) => (
     <Card>
       <CardHeader>

@@ -13,6 +13,7 @@ import { AccountAnalysis } from '@/components/dashboard/AccountAnalysis';
 import { Settings } from '@/components/dashboard/Settings';
 import { SankeyChart } from '@/components/dashboard/SankeyChart';
 import { YearSelector } from '@/components/dashboard/YearSelector';
+import type { DataQualityMetrics, TransactionValidation } from '@/types/data';
 import { IncomeExpenseComparison } from '@/components/dashboard/IncomeExpenseComparison';
 import { SavingsRateChart } from '@/components/dashboard/SavingsRateChart';
 import { BalanceWaterfall } from '@/components/dashboard/BalanceWaterfall';
@@ -26,7 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 const Index = () => {
   const [activeTab, setActiveTab] = useState('manage');
   const [qualityViewYear, setQualityViewYear] = useState<number | null>(null);
-  const [qualityData, setQualityData] = useState<{ year: number; metrics: any; validations: any[] } | null>(null);
+  const [qualityData, setQualityData] = useState<{ year: number; metrics: DataQualityMetrics; validations: TransactionValidation[] } | null>(null);
 
   const {
     transactions,

@@ -14,6 +14,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { StoredYearData } from '@/lib/storage';
+import type { DataQualityMetrics, TransactionValidation } from '@/types/data';
 import { DataQuality } from '@/components/dashboard/DataQuality';
 import { useSettings, getIncomeColor, getIncomeColorHex, getExpenseColor, getExpenseColorHex } from '@/contexts/SettingsContext';
 import {
@@ -40,7 +41,7 @@ interface DataManagementProps {
   onExport: () => void;
   onGoToImport: () => void;
   onViewQuality: (year: number) => void;
-  qualityData?: { year: number; metrics: any; validations: any[] } | null;
+  qualityData?: { year: number; metrics: DataQualityMetrics; validations: TransactionValidation[] } | null;
 }
 
 export function DataManagement({

@@ -5,6 +5,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataQualityMetrics, TransactionValidation } from '@/types/data';
 import { useSettings, getIncomeColor, getExpenseColor } from '@/contexts/SettingsContext';
+import type { LucideIcon } from 'lucide-react';
+import type { VariantProps } from 'class-variance-authority';
+import { badgeVariants } from '@/components/ui/badge';
+
+type BadgeVariant = VariantProps<typeof badgeVariants>['variant'];
 import {
   CheckCircle,
   AlertTriangle,
@@ -67,7 +72,7 @@ export function DataQuality({ metrics, validations, onFilterChange }: DataQualit
     return '数据质量较差';
   };
 
-  const getSeverityColor = (severity: string) => {
+  const getSeverityColor = (severity: string): BadgeVariant => {
     switch (severity) {
       case 'valid': return 'default';
       case 'warning': return 'secondary';
@@ -347,7 +352,7 @@ export function DataQuality({ metrics, validations, onFilterChange }: DataQualit
                     <div key={idx} className="p-3 border rounded-lg">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <Badge variant={getSeverityColor(v.severity) as any}>
+                          <Badge variant={getSeverityColor(v.severity)}>
                             {getSeverityLabel(v.severity)}
                           </Badge>
                           <span className="text-sm font-medium">
@@ -391,7 +396,7 @@ function CompletenessBar({
 }: {
   name: string;
   percentage: number;
-  icon: any;
+  icon: LucideIcon;
   issues?: number;
 }) {
   const getColor = (p: number) => {

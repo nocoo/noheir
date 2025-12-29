@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Transaction } from '@/types/transaction';
 import { StatCard } from './StatCard';
 import { useSettings, getIncomeColor, getIncomeColorHex, getExpenseColor, getExpenseColorHex } from '@/contexts/SettingsContext';
+import type { PieLabelEntry, LegendPayloadEntry } from '@/types/category-shared';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line, Legend
@@ -253,7 +254,7 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
                     outerRadius={90}
                     paddingAngle={2}
                     dataKey="value"
-                    label={(entry: any) => `${entry.name} ${entry.percentage.toFixed(0)}%`}
+                    label={(entry: PieLabelEntry) => `${entry.name} ${entry.percentage.toFixed(0)}%`}
                     labelLine={false}
                     labelStyle={{ fontSize: '11px', fontWeight: 500 }}
                   >
@@ -270,7 +271,7 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
                     verticalAlign="bottom"
                     height={60}
                     iconType="circle"
-                    formatter={(value, entry: any) => (
+                    formatter={(value, entry: LegendPayloadEntry) => (
                       <span style={{ color: 'hsl(var(--foreground))', fontSize: '12px' }}>
                         {value} ({entry.payload.percentage.toFixed(1)}%)
                       </span>

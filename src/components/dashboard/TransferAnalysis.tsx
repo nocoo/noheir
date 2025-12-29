@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Transaction, MonthlyData } from '@/types/transaction';
 import { StatCard } from './StatCard';
 import { useSettings, getExpenseColor, getExpenseColorHex } from '@/contexts/SettingsContext';
+import type { PieLabelEntry } from '@/types/category-shared';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, AreaChart, Area
@@ -213,7 +214,7 @@ export function TransferAnalysis({ transactions, monthlyData }: TransferAnalysis
                     outerRadius={100}
                     paddingAngle={2}
                     dataKey="value"
-                    label={(entry: any) => `${entry.name} ${entry.percentage.toFixed(0)}%`}
+                    label={(entry: PieLabelEntry) => `${entry.name} ${entry.percentage.toFixed(0)}%`}
                     labelLine={false}
                     labelStyle={{ fontSize: '12px', fontWeight: 500 }}
                   >
