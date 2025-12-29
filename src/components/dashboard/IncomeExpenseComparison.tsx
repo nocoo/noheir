@@ -12,6 +12,7 @@ import {
 } from 'recharts';
 import { MonthlyData } from '@/types/transaction';
 import { useSettings, getIncomeColorHex, getExpenseColorHex } from '@/contexts/SettingsContext';
+import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, legendStyle, formatCurrencyK } from '@/lib/chart-config';
 
 interface IncomeExpenseComparisonProps {
   data: MonthlyData[];
@@ -44,24 +45,17 @@ export function IncomeExpenseComparison({ data }: IncomeExpenseComparisonProps) 
                   <stop offset="95%" stopColor={expenseColorHex} stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <CartesianGrid {...gridStyle} />
               <XAxis
                 dataKey="month"
-                tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
-                axisLine={{ stroke: 'hsl(var(--border))' }}
+                {...xAxisStyle}
               />
               <YAxis
-                tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
-                axisLine={{ stroke: 'hsl(var(--border))' }}
-                tickFormatter={(value) => `¥${(value / 1000).toFixed(0)}k`}
+                {...yAxisStyle}
+                tickFormatter={formatCurrencyK}
               />
               <Tooltip
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: 'var(--radius)',
-                  color: 'hsl(var(--foreground))'
-                }}
+                contentStyle={tooltipStyle.contentStyle}
                 formatter={(value: number, name: string) => [
                   `¥${value.toLocaleString()}`,
                   name === 'income' ? '收入' : '支出'

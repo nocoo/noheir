@@ -12,6 +12,7 @@ import {
 } from 'recharts';
 import { MonthlyData } from '@/types/transaction';
 import { useSettings, getIncomeColor, getIncomeColorHex, getExpenseColor, getExpenseColorHex } from '@/contexts/SettingsContext';
+import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, formatCurrencyK } from '@/lib/chart-config';
 
 interface BalanceWaterfallProps {
   data: MonthlyData[];
@@ -45,28 +46,21 @@ export function BalanceWaterfall({ data }: BalanceWaterfallProps) {
       <CardContent>
         <div className="h-[350px]">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart 
-              data={waterfallData} 
+            <BarChart
+              data={waterfallData}
               margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis 
-                dataKey="month" 
-                tick={{ fill: 'hsl(var(--foreground))', fontSize: 11 }}
-                axisLine={{ stroke: 'hsl(var(--border))' }}
+              <CartesianGrid {...gridStyle} />
+              <XAxis
+                dataKey="month"
+                {...xAxisStyle}
               />
-              <YAxis 
-                tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
-                axisLine={{ stroke: 'hsl(var(--border))' }}
-                tickFormatter={(value) => `¥${(value / 1000).toFixed(0)}k`}
+              <YAxis
+                {...yAxisStyle}
+                tickFormatter={formatCurrencyK}
               />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'hsl(var(--card))', 
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: 'var(--radius)',
-                  color: 'hsl(var(--foreground))'
-                }}
+              <Tooltip
+                contentStyle={tooltipStyle.contentStyle}
                 formatter={(value: number, name: string) => {
                   if (name === 'balance') return [`¥${value.toLocaleString()}`, '月结余'];
                   if (name === 'cumulative') return [`¥${value.toLocaleString()}`, '累计结余'];

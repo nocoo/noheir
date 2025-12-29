@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { CategorySummary } from '@/types/transaction';
+import { tooltipStyle, legendStyle } from '@/lib/chart-config';
 
 interface CategoryPieChartProps {
   data: CategorySummary[];
@@ -71,11 +72,7 @@ export function CategoryPieChart({ data, title = '支出分类占比' }: Categor
                 ))}
               </Pie>
               <Tooltip
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: 'var(--radius)'
-                }}
+                contentStyle={tooltipStyle.contentStyle}
                 formatter={(value: number, name: string, props: any) => [
                   `¥${value.toLocaleString()} (${props.payload.percentage.toFixed(1)}%)`,
                   name

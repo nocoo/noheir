@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import { YearlyComparison } from '@/types/transaction';
 import { useSettings, getIncomeColorHex, getExpenseColorHex } from '@/contexts/SettingsContext';
+import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, legendStyle, formatCurrencyK } from '@/lib/chart-config';
 
 interface YearComparisonChartProps {
   data: YearlyComparison[];
@@ -29,24 +30,20 @@ export function YearComparisonChart({ data }: YearComparisonChartProps) {
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis 
-                dataKey="year" 
-                tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
+              <CartesianGrid {...gridStyle} />
+              <XAxis
+                dataKey="year"
+                {...xAxisStyle}
               />
-              <YAxis 
-                tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
-                tickFormatter={(value) => `¥${(value / 1000).toFixed(0)}k`}
+              <YAxis
+                {...yAxisStyle}
+                tickFormatter={formatCurrencyK}
               />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'hsl(var(--card))', 
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: 'var(--radius)'
-                }}
+              <Tooltip
+                contentStyle={tooltipStyle.contentStyle}
                 formatter={(value: number) => [`¥${value.toLocaleString()}`, '']}
               />
-              <Legend />
+              <Legend {...legendStyle} />
               <Bar dataKey="收入" fill={incomeColorHex} radius={[4, 4, 0, 0]} />
               <Bar dataKey="支出" fill={expenseColorHex} radius={[4, 4, 0, 0]} />
               <Bar dataKey="结余" radius={[4, 4, 0, 0]}>

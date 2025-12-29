@@ -172,3 +172,46 @@ export function findSecondaryCategory(
 
   return null;
 }
+
+// Secondary category color mapping - vibrant, distinct colors for each category
+export const SECONDARY_CATEGORY_COLORS: Record<string, string> = {
+  // Expense categories
+  "日常吃喝": "#FF6B6B",      // Coral Red
+  "幸福家庭": "#FF8E53",      // Orange
+  "小吞金兽": "#FFA94D",      // Light Orange
+  "生活品质": "#FFD43B",      // Yellow
+  "娱乐社交": "#69DB7C",      // Soft Green
+  "公共交通": "#4DABF7",      // Light Blue
+  "交通工具": "#3B82F6",      // Blue
+  "生活缴费": "#7C3AED",      // Purple
+  "健康管理": "#EC4899",      // Pink
+  "工作垫付": "#14B8A6",      // Teal
+  "大额支出": "#8B5CF6",      // Violet
+  "系统支出": "#64748B",      // Slate
+
+  // Income categories
+  "薪资收入": "#22C55E",      // Green
+  "资助收入": "#A78BFA",      // Light Purple
+  "投资收入": "#F59E0B",      // Amber
+  "其他收入": "#6B7280",      // Gray
+};
+
+// Fallback colors for unknown categories
+const FALLBACK_COLORS = [
+  "#94A3B8", "#64748B", "#475569", "#334155", "#1E293B"
+];
+
+let colorIndex = 0;
+export const FALLBACK_COLOR_MAP: Record<string, string> = {};
+
+export function getSecondaryCategoryColor(secondaryCategory: string): string {
+  if (SECONDARY_CATEGORY_COLORS[secondaryCategory]) {
+    return SECONDARY_CATEGORY_COLORS[secondaryCategory];
+  }
+  // Assign fallback color if not already assigned
+  if (!FALLBACK_COLOR_MAP[secondaryCategory]) {
+    FALLBACK_COLOR_MAP[secondaryCategory] = FALLBACK_COLORS[colorIndex % FALLBACK_COLORS.length];
+    colorIndex++;
+  }
+  return FALLBACK_COLOR_MAP[secondaryCategory];
+}

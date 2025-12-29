@@ -16,6 +16,7 @@ import { MonthlyData } from '@/types/transaction';
 import { TrendingUp, TrendingDown, Minus, Target } from 'lucide-react';
 import { useSettings, getIncomeColor, getExpenseColor } from '@/contexts/SettingsContext';
 import { Badge } from '@/components/ui/badge';
+import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, formatCurrencyK } from '@/lib/chart-config';
 
 interface SavingsRateChartProps {
   data: MonthlyData[];
@@ -121,33 +122,25 @@ export function SavingsRateChart({ data }: SavingsRateChartProps) {
                   <stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis 
-                dataKey="month" 
-                tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
-                axisLine={{ stroke: 'hsl(var(--border))' }}
+              <CartesianGrid {...gridStyle} />
+              <XAxis
+                dataKey="month"
+                {...xAxisStyle}
               />
-              <YAxis 
+              <YAxis
                 yAxisId="left"
-                tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
-                axisLine={{ stroke: 'hsl(var(--border))' }}
+                {...yAxisStyle}
                 tickFormatter={(value) => `${value}%`}
                 domain={[-50, 100]}
               />
-              <YAxis 
+              <YAxis
                 yAxisId="right"
                 orientation="right"
-                tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
-                axisLine={{ stroke: 'hsl(var(--border))' }}
-                tickFormatter={(value) => `¥${(value / 1000).toFixed(0)}k`}
+                {...yAxisStyle}
+                tickFormatter={formatCurrencyK}
               />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'hsl(var(--card))', 
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: 'var(--radius)',
-                  color: 'hsl(var(--foreground))'
-                }}
+              <Tooltip
+                contentStyle={tooltipStyle.contentStyle}
                 formatter={(value: number, name: string) => {
                   if (name === 'savingsRate') return [`${value.toFixed(1)}%`, '储蓄率'];
                   if (name === 'savings') return [`¥${value.toLocaleString()}`, '储蓄额'];

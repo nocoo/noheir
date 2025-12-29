@@ -1,15 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  RadarChart, 
-  PolarGrid, 
-  PolarAngleAxis, 
-  PolarRadiusAxis, 
-  Radar, 
+import {
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
   ResponsiveContainer,
   Legend,
   Tooltip
 } from 'recharts';
 import { CategorySummary } from '@/types/transaction';
+import { tooltipStyle, xAxisStyle } from '@/lib/chart-config';
 
 interface ExpenseRadarProps {
   currentData: CategorySummary[];
@@ -52,21 +53,16 @@ export function ExpenseRadar({
           <ResponsiveContainer width="100%" height="100%">
             <RadarChart data={radarData} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
               <PolarGrid stroke="hsl(var(--border))" />
-              <PolarAngleAxis 
-                dataKey="category" 
-                tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
+              <PolarAngleAxis
+                dataKey="category"
+                {...xAxisStyle}
               />
-              <PolarRadiusAxis 
+              <PolarRadiusAxis
                 tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
                 tickFormatter={(value) => `${value}%`}
               />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'hsl(var(--card))', 
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: 'var(--radius)',
-                  color: 'hsl(var(--foreground))'
-                }}
+              <Tooltip
+                contentStyle={tooltipStyle.contentStyle}
                 formatter={(value: number, name: string, props: any) => {
                   const amount = name === 'current' ? props.payload.currentAmount : props.payload.previousAmount;
                   return [`${value.toFixed(1)}% (¥${amount.toLocaleString()})`, name === 'current' ? currentLabel : previousLabel];

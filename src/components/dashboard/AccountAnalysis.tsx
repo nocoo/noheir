@@ -3,13 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Transaction } from '@/types/transaction';
 import { StatCard } from './StatCard';
 import { useSettings, getIncomeColor, getIncomeColorHex, getExpenseColor, getExpenseColorHex } from '@/contexts/SettingsContext';
-import { 
+import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line, Legend
 } from 'recharts';
 import { Wallet, TrendingUp, TrendingDown, ArrowUpDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, legendStyle, formatCurrencyK } from '@/lib/chart-config';
 
 interface AccountAnalysisProps {
   transactions: Transaction[];
@@ -206,18 +207,14 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
           <div className="h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="name" />
-                <YAxis tickFormatter={(v) => `¥${(v/1000).toFixed(0)}k`} />
-                <Tooltip 
+                <CartesianGrid {...gridStyle} />
+                <XAxis dataKey="name" {...xAxisStyle} />
+                <YAxis tickFormatter={formatCurrencyK} {...yAxisStyle} />
+                <Tooltip
                   formatter={(value: number, name: string) => [`¥${value.toLocaleString()}`, name]}
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--card))', 
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
-                  }}
+                  contentStyle={tooltipStyle.contentStyle}
                 />
-                <Legend />
+                <Legend {...legendStyle} />
                 <Bar dataKey="收入" fill={incomeColorHex} radius={[4, 4, 0, 0]} />
                 <Bar dataKey="支出" fill={expenseColorHex} radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -255,11 +252,7 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
                   </Pie>
                   <Tooltip
                     formatter={(value: number) => [`¥${value.toLocaleString()}`, '金额']}
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: 'var(--radius)'
-                    }}
+                    contentStyle={tooltipStyle.contentStyle}
                   />
                   <Legend
                     verticalAlign="bottom"

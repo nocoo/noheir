@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { MonthlyData } from '@/types/transaction';
 import { useSettings, getIncomeColorHex, getExpenseColorHex } from '@/contexts/SettingsContext';
+import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, legendStyle, formatCurrencyK } from '@/lib/chart-config';
 
 interface MonthlyChartProps {
   data: MonthlyData[];
@@ -21,27 +22,20 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
         <div className="h-[350px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <CartesianGrid {...gridStyle} />
               <XAxis
                 dataKey="month"
-                tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
-                axisLine={{ stroke: 'hsl(var(--border))' }}
+                {...xAxisStyle}
               />
               <YAxis
-                tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
-                axisLine={{ stroke: 'hsl(var(--border))' }}
-                tickFormatter={(value) => `¥${(value / 1000).toFixed(0)}k`}
+                {...yAxisStyle}
+                tickFormatter={formatCurrencyK}
               />
               <Tooltip
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: 'var(--radius)',
-                  color: 'hsl(var(--foreground))'
-                }}
+                contentStyle={tooltipStyle.contentStyle}
                 formatter={(value: number) => [`¥${value.toLocaleString()}`, '']}
               />
-              <Legend />
+              <Legend {...legendStyle} />
               <Bar dataKey="income" name="收入" fill={incomeColorHex} radius={[4, 4, 0, 0]} />
               <Bar dataKey="expense" name="支出" fill={expenseColorHex} radius={[4, 4, 0, 0]} />
             </BarChart>

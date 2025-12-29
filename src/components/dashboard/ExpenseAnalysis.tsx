@@ -1,16 +1,24 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Transaction, MonthlyData } from '@/types/transaction';
 import { StatCard } from './StatCard';
 import { useSettings, getExpenseColor, getExpenseColorHex } from '@/contexts/SettingsContext';
+import { getSecondaryCategoryColor } from '@/types/category';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, Cell, PieChart, Pie, Legend, ReferenceLine
 } from 'recharts';
-import { TrendingDown, Wallet, Calendar, Layers, CreditCard, FileText, Trophy, AlertTriangle, ChevronDown, ChevronRight } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { TrendingDown, Wallet, Calendar, Layers, CreditCard, FileText, Trophy, ChevronDown, ChevronRight } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, legendStyle, formatCurrencyK } from '@/lib/chart-config';
 
 interface ExpenseAnalysisProps {
   transactions: Transaction[];
@@ -22,11 +30,24 @@ export function ExpenseAnalysis({ transactions, monthlyData }: ExpenseAnalysisPr
   const expenseColorHex = getExpenseColorHex(settings.colorScheme);
   const expenseColorClass = getExpenseColor(settings.colorScheme);
 
-  // Collapsed state for tertiary categories
-  const [collapsedTertiary, setCollapsedTertiary] = useState<Set<string>>(new Set());
+  // Collapsed state for secondary and tertiary categories - default all collapsed
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
-  const toggleTertiary = (key: string) => {
-    setCollapsedTertiary(prev => {
+  // Initialize with all categories collapsed
+  useEffect(() => {
+    const expenseTransactions = transactions.filter(t => t.type === 'expense');
+    const allKeys = new Set<string>();
+
+    expenseTransactions.forEach(t => {
+      allKeys.add(`${t.primaryCategory}-${t.secondaryCategory}`);
+      allKeys.add(`${t.primaryCategory}-${t.secondaryCategory}-${t.tertiaryCategory}`);
+    });
+
+    setCollapsed(allKeys);
+  }, [transactions]);
+
+  const toggleCollapse = (key: string) => {
+    setCollapsed(prev => {
       const next = new Set(prev);
       if (next.has(key)) {
         next.delete(key);
@@ -36,6 +57,9 @@ export function ExpenseAnalysis({ transactions, monthlyData }: ExpenseAnalysisPr
       return next;
     });
   };
+
+  // Category filter state for bar chart
+  const [selectedPrimary, setSelectedPrimary] = useState<string>('all');
 
   const expenseTransactions = useMemo(() =>
     transactions.filter(t => t.type === 'expense'),
@@ -104,13 +128,15 @@ export function ExpenseAnalysis({ transactions, monthlyData }: ExpenseAnalysisPr
       primary,
       total: data.total,
       percentage: totalExpense > 0 ? (data.total / totalExpense) * 100 : 0,
-      secondaryCategories: Array.from(data.secondaryMap.entries()).map(([secondary, secData]) => ({
-        name: secondary,
-        total: secData.total,
-        percentage: totalExpense > 0 ? (secData.total / totalExpense) * 100 : 0,
-        parent: primary,
-        tertiaryList: secData.tertiaryList.sort((a, b) => b.total - a.total)
-      }))
+      secondaryCategories: Array.from(data.secondaryMap.entries())
+        .map(([secondary, secData]) => ({
+          name: secondary,
+          total: secData.total,
+          percentage: totalExpense > 0 ? (secData.total / totalExpense) * 100 : 0,
+          parent: primary,
+          tertiaryList: secData.tertiaryList.sort((a, b) => b.total - a.total)
+        }))
+        .sort((a, b) => b.total - a.total) // Sort secondary by amount
     })).sort((a, b) => b.total - a.total);
 
     // Calculate percentages after grouping
@@ -165,7 +191,7 @@ export function ExpenseAnalysis({ transactions, monthlyData }: ExpenseAnalysisPr
     return { chartData, outerPieData, detailList: processedPrimary };
   }, [expenseTransactions, totalExpense]);
 
-  // Account data - top 5 + others
+  // Account data - top 20 accounts
   const accountData = useMemo(() => {
     const accountMap = new Map<string, number>();
     expenseTransactions.forEach(t => {
@@ -176,21 +202,8 @@ export function ExpenseAnalysis({ transactions, monthlyData }: ExpenseAnalysisPr
       .map(([name, value]) => ({ name, value, percentage: totalExpense > 0 ? (value / totalExpense) * 100 : 0 }))
       .sort((a, b) => b.value - a.value);
 
-    // Take top 5
-    const top5 = sorted.slice(0, 5);
-    const others = sorted.slice(5);
-
-    const result = [...top5];
-    if (others.length > 0) {
-      const othersTotal = others.reduce((sum, acc) => sum + acc.value, 0);
-      result.push({
-        name: '其他',
-        value: othersTotal,
-        percentage: totalExpense > 0 ? (othersTotal / totalExpense) * 100 : 0
-      });
-    }
-
-    return result;
+    // Take top 20
+    return sorted.slice(0, 20);
   }, [expenseTransactions, totalExpense]);
 
   // Top 50 expense transactions
@@ -212,11 +225,6 @@ export function ExpenseAnalysis({ transactions, monthlyData }: ExpenseAnalysisPr
       : 0,
     [monthlyExpense]
   );
-
-  const maxExpenseMonth = useMemo(() => {
-    if (monthlyData.length === 0) return null;
-    return monthlyData.reduce((max, d) => d.expense > max.expense ? d : max, monthlyData[0]);
-  }, [monthlyData]);
 
   const colors = [
     'hsl(var(--chart-1))',
@@ -263,25 +271,6 @@ export function ExpenseAnalysis({ transactions, monthlyData }: ExpenseAnalysisPr
         />
       </div>
 
-      {/* Warning for high expense month */}
-      {maxExpenseMonth && maxExpenseMonth.expense > avgMonthlyExpense * 1.5 && (
-        <Card className="border-yellow-500/50 bg-yellow-500/10">
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="h-5 w-5 text-yellow-500" />
-              <div>
-                <p className="font-medium text-yellow-700 dark:text-yellow-400">
-                  高支出提醒
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {maxExpenseMonth.month}支出 ¥{maxExpenseMonth.expense.toLocaleString()}，
-                  超出月均 {((maxExpenseMonth.expense / avgMonthlyExpense - 1) * 100).toFixed(0)}%
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Monthly Trend */}
       <Card>
@@ -302,25 +291,18 @@ export function ExpenseAnalysis({ transactions, monthlyData }: ExpenseAnalysisPr
                     <stop offset="95%" stopColor={expenseColorHex} stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <CartesianGrid {...gridStyle} />
                 <XAxis
                   dataKey="month"
-                  tick={{ fill: 'hsl(var(--foreground))', fontSize: 11 }}
-                  axisLine={{ stroke: 'hsl(var(--border))' }}
+                  {...xAxisStyle}
                 />
                 <YAxis
-                  tick={{ fill: 'hsl(var(--foreground))', fontSize: 11 }}
-                  axisLine={{ stroke: 'hsl(var(--border))' }}
-                  tickFormatter={(v) => `¥${(v/1000).toFixed(0)}k`}
+                  {...yAxisStyle}
+                  tickFormatter={formatCurrencyK}
                 />
                 <Tooltip
                   formatter={(value: number) => [`¥${value.toLocaleString()}`, '支出']}
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: 'var(--radius)',
-                    fontSize: '12px'
-                  }}
+                  contentStyle={tooltipStyle.contentStyle}
                 />
                 <ReferenceLine
                   y={avgMonthlyExpense}
@@ -342,168 +324,95 @@ export function ExpenseAnalysis({ transactions, monthlyData }: ExpenseAnalysisPr
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Category Breakdown - Nested Pie Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Layers className="h-5 w-5 text-primary" />
-              支出类别分布
-            </CardTitle>
-            <CardDescription>内圈：一级分类 | 中圈：二级分类 | 外圈：三级分类</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[350px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
-                  {/* Inner Pie - Primary Categories (一级) */}
-                  <Pie
-                    data={categoryData.chartData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={0}
-                    outerRadius={45}
-                    paddingAngle={1}
-                    dataKey="total"
-                    nameKey="primary"
-                    label={(entry: any) => entry.percentage >= 8 ? `${entry.primary}` : ''}
-                    labelLine={false}
-                    labelStyle={{ fontSize: '10px', fontWeight: 500 }}
-                  >
-                    {categoryData.chartData.map((entry, index) => (
-                      <Cell key={`inner-${entry.primary}`} fill={colors[index % colors.length]} stroke="hsl(var(--card))" strokeWidth={2} />
-                    ))}
-                  </Pie>
-
-                  {/* Middle Pie - Secondary Categories (二级) */}
-                  <Pie
-                    data={categoryData.outerPieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={47}
-                    outerRadius={75}
-                    paddingAngle={0.5}
-                    dataKey="total"
-                    nameKey="name"
-                    label={false}
-                  >
-                    {categoryData.outerPieData.map((entry, index) => {
-                      // Find parent category color
-                      const parentIndex = categoryData.chartData.findIndex(c => c.primary === entry.parent);
-                      const baseColor = parentIndex >= 0 ? colors[parentIndex % colors.length] : colors[4];
-                      // Use lighter variant for middle ring
-                      return (
-                        <Cell
-                          key={`middle-${entry.name}`}
-                          fill={baseColor}
-                          fillOpacity={0.75}
-                          stroke="hsl(var(--card))"
-                          strokeWidth={1}
-                        />
-                      );
-                    })}
-                  </Pie>
-
-                  {/* Outer Pie - Tertiary Categories (三级) */}
-                  <Pie
-                    data={categoryData.detailList.flatMap(p => p.secondaryCategories).flatMap(s => s.tertiaryList.map(t => ({ ...t, parent: s.parent })))}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={77}
-                    outerRadius={105}
-                    paddingAngle={0.3}
-                    dataKey="total"
-                    nameKey="name"
-                    label={false}
-                  >
-                    {(categoryData.detailList.flatMap(p => p.secondaryCategories).flatMap(s => s.tertiaryList.map(t => ({ ...t, parent: s.parent })))).map((entry, index) => {
-                      // Find parent category color
-                      const parentIndex = categoryData.chartData.findIndex(c => c.primary === entry.parent);
-                      const baseColor = parentIndex >= 0 ? colors[parentIndex % colors.length] : colors[4];
-                      // Use lighter variant for outer ring
-                      return (
-                        <Cell
-                          key={`outer-${entry.name}-${entry.parent}`}
-                          fill={baseColor}
-                          fillOpacity={0.5}
-                          stroke="hsl(var(--card))"
-                          strokeWidth={0.5}
-                        />
-                      );
-                    })}
-                  </Pie>
-
-                  <Tooltip
-                    formatter={(value: number, name: string) => [`¥${value.toLocaleString()}`, name]}
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: 'var(--radius)',
-                      fontSize: '12px'
-                    }}
-                  />
-                  <Legend
-                    verticalAlign="bottom"
-                    height={50}
-                    iconType="circle"
-                    formatter={(value: string) => (
-                      <span style={{ color: 'hsl(var(--foreground))', fontSize: '11px' }}>
-                        {value}
-                      </span>
-                    )}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+      {/* Category Breakdown - Horizontal Bar Chart with Filter */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Layers className="h-5 w-5 text-primary" />
+                支出类别分布
+              </CardTitle>
+              <CardDescription>横向条形图，配合筛选器查看不同层级</CardDescription>
             </div>
-          </CardContent>
-        </Card>
+            <Select value={selectedPrimary} onValueChange={setSelectedPrimary}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="选择层级" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">按一级分类</SelectItem>
+                {categoryData.detailList.map(cat => (
+                  <SelectItem key={cat.primary} value={cat.primary}>
+                    {cat.primary}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[350px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={selectedPrimary === 'all'
+                  ? categoryData.detailList.map(c => ({ name: c.primary, value: c.total }))
+                  : categoryData.detailList.find(p => p.primary === selectedPrimary)?.secondaryCategories.map(s => ({ name: s.name, value: s.total })) || []
+                }
+                layout="vertical"
+                margin={{ top: 10, right: 20, bottom: 10, left: 10 }}
+              >
+                <CartesianGrid {...gridStyle} />
+                <XAxis type="number" tickFormatter={formatCurrencyK} />
+                <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 12 }} />
+                <Tooltip
+                  formatter={(value: number) => `¥${value.toLocaleString()}`}
+                  contentStyle={tooltipStyle.contentStyle}
+                />
+                <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                  {categoryData.detailList.map((cat, index) => (
+                    <Cell key={`bar-${cat.primary}`} fill={selectedPrimary === 'all' ? colors[index % colors.length] : getSecondaryCategoryColor(categoryData.detailList.find(p => p.primary === selectedPrimary)?.secondaryCategories[index]?.name || '')} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Account Distribution - Top 5 */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5 text-primary" />
-              支付账户分布
-            </CardTitle>
-            <CardDescription>Top 5 账户支出情况</CardDescription>
-          </CardHeader>
-          <CardContent className="p-4">
-            <div className="h-[350px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={accountData} layout="vertical" margin={{ top: 5, right: 30, bottom: 5, left: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis
-                    type="number"
-                    tick={{ fill: 'hsl(var(--foreground))', fontSize: 11 }}
-                    tickFormatter={(v) => `¥${(v/1000).toFixed(0)}k`}
-                    axisLine={{ stroke: 'hsl(var(--border))' }}
-                  />
-                  <YAxis
-                    dataKey="name"
-                    type="category"
-                    width={120}
-                    tick={{ fill: 'hsl(var(--foreground))', fontSize: 10 }}
-                    axisLine={{ stroke: 'hsl(var(--border))' }}
-                  />
-                  <Tooltip
-                    formatter={(value: number, name: string, props: any) => [
-                      `¥${value.toLocaleString()} (${props.payload.percentage.toFixed(1)}%)`,
-                      '支出'
-                    ]}
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: 'var(--radius)',
-                      fontSize: '12px'
-                    }}
-                  />
-                  <Bar dataKey="value" fill={expenseColorHex} radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Account Distribution - Top 20 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CreditCard className="h-5 w-5 text-primary" />
+            支付账户分布
+          </CardTitle>
+          <CardDescription>Top 20 账户支出情况</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[350px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={accountData} layout="horizontal" margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
+                <CartesianGrid {...gridStyle} />
+                <XAxis
+                  dataKey="name"
+                  {...xAxisStyle}
+                />
+                <YAxis
+                  width={100}
+                  {...yAxisStyle}
+                  tickFormatter={formatCurrencyK}
+                />
+                <Tooltip
+                  formatter={(value: number) => `¥${value.toLocaleString()}`}
+                  labelFormatter={(label) => label}
+                  contentStyle={tooltipStyle.contentStyle}
+                />
+                <Bar dataKey="value" fill={expenseColorHex} radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Detailed Category List */}
       <Card>
@@ -516,75 +425,148 @@ export function ExpenseAnalysis({ transactions, monthlyData }: ExpenseAnalysisPr
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {categoryData.detailList.map((cat, i) => (
-              <div key={cat.primary} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+            {categoryData.detailList.map((cat, i) => {
+              const primaryColor = colors[i % colors.length];
+              return (
+                <div key={cat.primary} className="rounded-lg overflow-hidden">
+                  {/* Primary Category Row */}
+                  <div className="flex items-center gap-3 py-2 px-3 bg-muted/20">
                     <div
-                      className="w-3 h-3 rounded-sm"
-                      style={{ backgroundColor: colors[i % colors.length] }}
+                      className="w-3 h-3 rounded-sm flex-shrink-0"
+                      style={{ backgroundColor: primaryColor }}
                     />
-                    <span className="font-medium">{cat.primary}</span>
-                  </div>
-                  <div className="text-right">
-                    <span className={`font-semibold ${expenseColorClass}`}>
+                    <span className="font-medium flex-1">{cat.primary}</span>
+                    {/* Progress Bar */}
+                    <div className="w-32 flex-shrink-0">
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{
+                            width: `${cat.percentage}%`,
+                            backgroundColor: primaryColor
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <span className={`font-semibold text-right w-28 flex-shrink-0 ${expenseColorClass}`}>
                       ¥{cat.total.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
-                    <span className="text-sm text-muted-foreground ml-2">
-                      ({cat.percentage.toFixed(1)}%)
-                    </span>
                   </div>
-                </div>
-                {cat.secondaryCategories.length > 0 && (
-                  <div className="ml-5 pl-3 border-l-2 border-border space-y-2">
-                    {cat.secondaryCategories.map(sub => (
-                      <div key={sub.name} className="space-y-1">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground font-medium">{sub.name}</span>
-                          <span className="text-sm">¥{sub.total.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                        </div>
-                        {sub.tertiaryList.length > 0 && (
-                          <div className="ml-4 space-y-1">
-                            {sub.tertiaryList.map(tertiary => {
-                              const tertiaryKey = `${cat.primary}-${sub.name}-${tertiary.name}`;
-                              const isCollapsed = collapsedTertiary.has(tertiaryKey);
-                              return (
-                                <div key={tertiary.name} className="space-y-0.5">
-                                  <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">{tertiary.name}</span>
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-xs">¥{tertiary.total.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-5 w-5 p-0"
-                                        onClick={() => toggleTertiary(tertiaryKey)}
-                                      >
-                                        {isCollapsed ? (
-                                          <ChevronRight className="h-3 w-3" />
-                                        ) : (
-                                          <ChevronDown className="h-3 w-3" />
-                                        )}
-                                      </Button>
-                                    </div>
-                                  </div>
-                                  {!isCollapsed && tertiary.transactions && tertiary.transactions.map((tx, idx) => (
-                                    <div key={idx} className="flex justify-between text-xs text-muted-foreground ml-4">
-                                      <span>{tx.date}</span>
-                                      <span>¥{tx.amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                    </div>
-                                  ))}
+
+                  {/* Secondary Categories */}
+                  {cat.secondaryCategories.length > 0 && (
+                    <div className="ml-6 space-y-1">
+                      {cat.secondaryCategories.map(sub => {
+                        const secondaryKey = `${cat.primary}-${sub.name}`;
+                        const subColor = getSecondaryCategoryColor(sub.name);
+                        const isSubCollapsed = collapsed.has(secondaryKey);
+                        const subPercentage = cat.total > 0 ? (sub.total / cat.total) * 100 : 0;
+
+                        return (
+                          <div key={sub.name} className="rounded-lg overflow-hidden">
+                            {/* Secondary Category Row - Clickable */}
+                            <button
+                              onClick={() => toggleCollapse(secondaryKey)}
+                              className="w-full flex items-center gap-3 py-2 px-3 hover:bg-muted/30 transition-colors text-left"
+                            >
+                              <div className="flex-shrink-0">
+                                {isSubCollapsed ? (
+                                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                ) : (
+                                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                )}
+                              </div>
+                              <span className="text-sm text-muted-foreground font-medium flex-1">{sub.name}</span>
+                              {/* Progress Bar */}
+                              <div className="w-32 flex-shrink-0">
+                                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full rounded-full transition-all"
+                                    style={{
+                                      width: `${subPercentage}%`,
+                                      backgroundColor: subColor
+                                    }}
+                                  />
                                 </div>
-                              );
-                            })}
+                              </div>
+                              <span className="text-sm text-right w-28 flex-shrink-0">¥{sub.total.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </button>
+
+                            {/* Tertiary Categories & Transactions */}
+                            {!isSubCollapsed && sub.tertiaryList.length > 0 && (
+                              <div className="ml-8 space-y-1 mt-1">
+                                {sub.tertiaryList.map(tertiary => {
+                                  const tertiaryKey = `${cat.primary}-${sub.name}-${tertiary.name}`;
+                                  const isTertiaryCollapsed = collapsed.has(tertiaryKey);
+                                  const tertiaryPercentage = sub.total > 0 ? (tertiary.total / sub.total) * 100 : 0;
+
+                                  return (
+                                    <div key={tertiary.name} className="rounded-lg overflow-hidden">
+                                      {/* Tertiary Category Row - Clickable */}
+                                      <button
+                                        onClick={() => toggleCollapse(tertiaryKey)}
+                                        className="w-full flex items-center gap-3 py-1.5 px-3 hover:bg-muted/20 transition-colors text-left"
+                                      >
+                                        <div className="flex-shrink-0">
+                                          {isTertiaryCollapsed ? (
+                                            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                                          ) : (
+                                            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                                          )}
+                                        </div>
+                                        <span className="text-xs text-muted-foreground flex-1">{tertiary.name}</span>
+                                        {/* Progress Bar */}
+                                        <div className="w-32 flex-shrink-0">
+                                          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                                            <div
+                                              className="h-full rounded-full transition-all"
+                                              style={{
+                                                width: `${tertiaryPercentage}%`,
+                                                backgroundColor: subColor,
+                                                opacity: 0.8
+                                              }}
+                                            />
+                                          </div>
+                                        </div>
+                                        <span className="text-xs text-right w-28 flex-shrink-0">¥{tertiary.total.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                      </button>
+
+                                      {/* Transactions */}
+                                      {!isTertiaryCollapsed && tertiary.transactions && tertiary.transactions.map((tx, idx) => {
+                                        const txPercentage = tertiary.total > 0 ? (tx.amount / tertiary.total) * 100 : 0;
+                                        return (
+                                          <div key={idx} className="ml-7 flex items-center gap-3 py-1 px-3 hover:bg-muted/10 rounded transition-colors w-full">
+                                            <span className="text-xs text-muted-foreground w-20 flex-shrink-0">{tx.date}</span>
+                                            {/* Progress Bar */}
+                                            <div className="w-32 flex-shrink-0">
+                                              <div className="h-1 bg-muted rounded-full overflow-hidden">
+                                                <div
+                                                  className="h-full rounded-full transition-all"
+                                                  style={{
+                                                    width: `${txPercentage}%`,
+                                                    backgroundColor: subColor,
+                                                    opacity: 0.6
+                                                  }}
+                                                />
+                                              </div>
+                                            </div>
+                                            <span className="text-xs text-right w-28 flex-shrink-0">¥{tx.amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
@@ -608,6 +590,7 @@ export function ExpenseAnalysis({ transactions, monthlyData }: ExpenseAnalysisPr
                 <TableHead>二级分类</TableHead>
                 <TableHead>三级分类</TableHead>
                 <TableHead>账户</TableHead>
+                <TableHead>备注</TableHead>
                 <TableHead className="text-right">金额</TableHead>
               </TableRow>
             </TableHeader>
@@ -629,8 +612,9 @@ export function ExpenseAnalysis({ transactions, monthlyData }: ExpenseAnalysisPr
                   <TableCell className="text-sm">{t.date}</TableCell>
                   <TableCell>{t.primaryCategory}</TableCell>
                   <TableCell className="text-muted-foreground">{t.secondaryCategory}</TableCell>
-                  <TableCell className="text-muted-foreground text-xs">{t.tertiaryCategory}</TableCell>
+                  <TableCell className="text-muted-foreground">{t.tertiaryCategory}</TableCell>
                   <TableCell className="text-muted-foreground">{t.account}</TableCell>
+                  <TableCell className="text-muted-foreground text-sm">{t.description || '-'}</TableCell>
                   <TableCell className={`text-right font-semibold ${expenseColorClass}`}>
                     ¥{t.amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </TableCell>
