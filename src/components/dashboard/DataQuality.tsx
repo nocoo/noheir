@@ -4,6 +4,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataQualityMetrics, TransactionValidation } from '@/types/data';
+import { useSettings, getIncomeColor, getExpenseColor } from '@/contexts/SettingsContext';
 import {
   CheckCircle,
   AlertTriangle,
@@ -28,6 +29,10 @@ interface DataQualityProps {
 }
 
 export function DataQuality({ metrics, validations, onFilterChange }: DataQualityProps) {
+  const { settings } = useSettings();
+  const incomeColorClass = getIncomeColor(settings.colorScheme);
+  const expenseColorClass = getExpenseColor(settings.colorScheme);
+
   const overallScore = useMemo(() => {
     if (!metrics || metrics.totalRecords === 0) return 0;
 
@@ -242,21 +247,21 @@ export function DataQuality({ metrics, validations, onFilterChange }: DataQualit
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             <div>
               <p className="text-sm text-muted-foreground">收入笔数</p>
-              <p className="text-2xl font-bold text-green-600">{metrics.incomeCount}</p>
+              <p className={`text-2xl font-bold ${incomeColorClass}`}>{metrics.incomeCount}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">支出笔数</p>
-              <p className="text-2xl font-bold text-red-600">{metrics.expenseCount}</p>
+              <p className={`text-2xl font-bold ${expenseColorClass}`}>{metrics.expenseCount}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">总收入</p>
-              <p className="text-xl font-bold text-green-600">
+              <p className={`text-xl font-bold ${incomeColorClass}`}>
                 ¥{metrics.totalIncome.toLocaleString()}
               </p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">总支出</p>
-              <p className="text-xl font-bold text-red-600">
+              <p className={`text-xl font-bold ${expenseColorClass}`}>
                 ¥{metrics.totalExpense.toLocaleString()}
               </p>
             </div>
@@ -313,7 +318,7 @@ export function DataQuality({ metrics, validations, onFilterChange }: DataQualit
                           {v.transaction.primaryCategory} / {v.transaction.secondaryCategory}
                         </span>
                       </div>
-                      <span className={`text-sm font-semibold ${v.transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                      <span className={`text-sm font-semibold ${v.transaction.type === 'income' ? incomeColorClass : expenseColorClass}`}>
                             {v.transaction.type === 'income' ? '+' : '-'}¥{v.transaction.amount.toFixed(2)}
                           </span>
                     </div>

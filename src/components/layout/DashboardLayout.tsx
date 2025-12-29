@@ -13,7 +13,8 @@ import {
   Network,
   Menu,
   X,
-  ChevronDown
+  ChevronDown,
+  Settings as SettingsIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -54,6 +55,12 @@ const navGroups = [
     title: '对比分析',
     items: [
       { id: 'compare', label: '时段对比', icon: GitCompareArrows },
+    ]
+  },
+  {
+    title: '系统',
+    items: [
+      { id: 'settings', label: '设置', icon: SettingsIcon },
     ]
   },
 ];

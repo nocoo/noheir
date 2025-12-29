@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Transaction } from '@/types/transaction';
 import { StatCard } from './StatCard';
+import { useSettings, getIncomeColor, getIncomeColorHex, getExpenseColor, getExpenseColorHex } from '@/contexts/SettingsContext';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line, Legend
@@ -24,6 +25,12 @@ interface AccountSummary {
 }
 
 export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
+  const { settings } = useSettings();
+  const incomeColorClass = getIncomeColor(settings.colorScheme);
+  const incomeColorHex = getIncomeColorHex(settings.colorScheme);
+  const expenseColorClass = getExpenseColor(settings.colorScheme);
+  const expenseColorHex = getExpenseColorHex(settings.colorScheme);
+
   const accountData = useMemo(() => {
     const accountMap = new Map<string, AccountSummary>();
     
@@ -211,8 +218,8 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
                   }}
                 />
                 <Legend />
-                <Bar dataKey="收入" fill="hsl(142, 76%, 36%)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="支出" fill="hsl(0, 84%, 60%)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="收入" fill={incomeColorHex} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="支出" fill={expenseColorHex} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -295,13 +302,13 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
                   <div className="grid grid-cols-3 gap-4 text-sm">
                     <div>
                       <p className="text-muted-foreground">收入</p>
-                      <p className="font-medium text-green-600 dark:text-green-400">
+                      <p className={`font-medium ${incomeColorClass}`}>
                         ¥{acc.income.toLocaleString()}
                       </p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">支出</p>
-                      <p className="font-medium text-red-600 dark:text-red-400">
+                      <p className={`font-medium ${expenseColorClass}`}>
                         ¥{acc.expense.toLocaleString()}
                       </p>
                     </div>
@@ -339,13 +346,13 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
               {accountData.map(acc => (
                 <TableRow key={acc.name}>
                   <TableCell className="font-medium">{acc.name}</TableCell>
-                  <TableCell className="text-right text-green-600 dark:text-green-400">
+                  <TableCell className={`text-right ${incomeColorClass}`}>
                     ¥{acc.income.toLocaleString()}
                   </TableCell>
-                  <TableCell className="text-right text-red-600 dark:text-red-400">
+                  <TableCell className={`text-right ${expenseColorClass}`}>
                     ¥{acc.expense.toLocaleString()}
                   </TableCell>
-                  <TableCell className={`text-right font-semibold ${acc.balance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                  <TableCell className={`text-right font-semibold ${acc.balance >= 0 ? incomeColorClass : expenseColorClass}`}>
                     {acc.balance >= 0 ? '+' : ''}¥{acc.balance.toLocaleString()}
                   </TableCell>
                   <TableCell className="text-right">{acc.transactionCount}</TableCell>

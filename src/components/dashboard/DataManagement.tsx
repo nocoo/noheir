@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { StoredYearData } from '@/lib/storage';
 import { DataQuality } from '@/components/dashboard/DataQuality';
+import { useSettings, getIncomeColor, getIncomeColorHex, getExpenseColor, getExpenseColorHex } from '@/contexts/SettingsContext';
 import {
   Database,
   Calendar,
@@ -40,6 +41,12 @@ export function DataManagement({
   onViewQuality,
   qualityData
 }: DataManagementProps) {
+  const { settings } = useSettings();
+  const incomeColorClass = getIncomeColor(settings.colorScheme);
+  const incomeColorHex = getIncomeColorHex(settings.colorScheme);
+  const expenseColorClass = getExpenseColor(settings.colorScheme);
+  const expenseColorHex = getExpenseColorHex(settings.colorScheme);
+
   // Calculate totals
   const totalRecords = storedYearsData.reduce((sum, d) => sum + d.recordCount, 0);
   const totalIncome = storedYearsData.reduce((sum, d) => sum + d.metadata.totalIncome, 0);
@@ -113,11 +120,11 @@ export function DataManagement({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">总收入</p>
-                <p className="text-2xl font-bold mt-1 text-emerald-600">
+                <p className={`text-2xl font-bold mt-1 ${incomeColorClass}`}>
                   ¥{totalIncome.toLocaleString()}
                 </p>
               </div>
-              <TrendingUp className="h-8 w-8 text-emerald-500/50" />
+              <TrendingUp className="h-8 w-8" style={{ color: incomeColorHex, opacity: 0.5 }} />
             </div>
           </CardContent>
         </Card>
@@ -127,11 +134,11 @@ export function DataManagement({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">总支出</p>
-                <p className="text-2xl font-bold mt-1 text-rose-600">
+                <p className={`text-2xl font-bold mt-1 ${expenseColorClass}`}>
                   ¥{totalExpense.toLocaleString()}
                 </p>
               </div>
-              <TrendingDown className="h-8 w-8 text-rose-500/50" />
+              <TrendingDown className="h-8 w-8" style={{ color: expenseColorHex, opacity: 0.5 }} />
             </div>
           </CardContent>
         </Card>
@@ -203,15 +210,15 @@ export function DataManagement({
                           </div>
 
                           <div className="flex items-center gap-1">
-                            <TrendingUp className="h-4 w-4 text-emerald-500" />
-                            <span className="text-emerald-600">
+                            <TrendingUp className="h-4 w-4" style={{ color: incomeColorHex }} />
+                            <span className={incomeColorClass}>
                               ¥{yearData.metadata.totalIncome.toLocaleString()}
                             </span>
                           </div>
 
                           <div className="flex items-center gap-1">
-                            <TrendingDown className="h-4 w-4 text-rose-500" />
-                            <span className="text-rose-600">
+                            <TrendingDown className="h-4 w-4" style={{ color: expenseColorHex }} />
+                            <span className={expenseColorClass}>
                               ¥{yearData.metadata.totalExpense.toLocaleString()}
                             </span>
                           </div>

@@ -2,11 +2,12 @@ import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Transaction, MonthlyData } from '@/types/transaction';
 import { StatCard } from './StatCard';
+import { useSettings, getIncomeColor, getIncomeColorHex } from '@/contexts/SettingsContext';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  BarChart, Bar, Cell, PieChart, Pie, Legend
+  BarChart, Bar, Cell, PieChart, Pie, Legend, ReferenceLine
 } from 'recharts';
-import { TrendingUp, Wallet, Calendar, ArrowUp, ArrowDown, Trophy, Layers, CreditCard, FileText } from 'lucide-react';
+import { TrendingUp, Wallet, Calendar, Trophy, Layers, CreditCard, FileText } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface IncomeAnalysisProps {
@@ -15,6 +16,10 @@ interface IncomeAnalysisProps {
 }
 
 export function IncomeAnalysis({ transactions, monthlyData }: IncomeAnalysisProps) {
+  const { settings } = useSettings();
+  const incomeColorHex = getIncomeColorHex(settings.colorScheme);
+  const incomeColorClass = getIncomeColor(settings.colorScheme);
+
   const incomeTransactions = useMemo(() =>
     transactions.filter(t => t.type === 'income'),
     [transactions]
@@ -141,14 +146,6 @@ export function IncomeAnalysis({ transactions, monthlyData }: IncomeAnalysisProp
     [monthlyIncome]
   );
 
-  const incomeGrowth = useMemo(() => {
-    const validMonths = monthlyData.filter(d => d.income > 0);
-    if (validMonths.length < 2) return 0;
-    const first = validMonths[0].income;
-    const last = validMonths[validMonths.length - 1].income;
-    return first > 0 ? ((last - first) / first) * 100 : 0;
-  }, [monthlyData]);
-
   const colors = [
     'hsl(var(--chart-1))',
     'hsl(var(--chart-2))',
@@ -173,7 +170,7 @@ export function IncomeAnalysis({ transactions, monthlyData }: IncomeAnalysisProp
   return (
     <div className="space-y-6">
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard
           title="总收入"
           value={totalIncome}
@@ -190,12 +187,7 @@ export function IncomeAnalysis({ transactions, monthlyData }: IncomeAnalysisProp
           title="收入笔数"
           value={incomeTransactions.length}
           icon={Wallet}
-        />
-        <StatCard
-          title="收入增长"
-          value={`${incomeGrowth >= 0 ? '+' : ''}${incomeGrowth.toFixed(1)}%`}
-          icon={incomeGrowth >= 0 ? ArrowUp : ArrowDown}
-          variant={incomeGrowth >= 0 ? 'income' : 'expense'}
+          variant="income"
         />
       </div>
 
@@ -214,8 +206,8 @@ export function IncomeAnalysis({ transactions, monthlyData }: IncomeAnalysisProp
               <AreaChart data={monthlyData}>
                 <defs>
                   <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(142, 76%, 36%)" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="hsl(142, 76%, 36%)" stopOpacity={0}/>
+                    <stop offset="5%" stopColor={incomeColorHex} stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor={incomeColorHex} stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -234,13 +226,21 @@ export function IncomeAnalysis({ transactions, monthlyData }: IncomeAnalysisProp
                   contentStyle={{
                     backgroundColor: 'hsl(var(--card))',
                     border: '1px solid hsl(var(--border))',
-                    borderRadius: 'var(--radius)'
+                    borderRadius: 'var(--radius)',
+                    fontSize: '12px'
                   }}
+                />
+                <ReferenceLine
+                  y={avgMonthlyIncome}
+                  stroke={incomeColorHex}
+                  strokeWidth={2}
+                  strokeDasharray="5 5"
+                  label={{ value: `平均 ¥${(avgMonthlyIncome / 1000).toFixed(1)}k`, fill: incomeColorHex, fontSize: 11, position: 'right' }}
                 />
                 <Area
                   type="monotone"
                   dataKey="income"
-                  stroke="hsl(142, 76%, 36%)"
+                  stroke={incomeColorHex}
                   strokeWidth={2}
                   fill="url(#incomeGradient)"
                 />
@@ -261,16 +261,16 @@ export function IncomeAnalysis({ transactions, monthlyData }: IncomeAnalysisProp
             <CardDescription>内圈：一级分类 | 外圈：二级分类</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[380px]">
+            <div className="h-[320px]">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
                   {/* Inner Pie - Primary Categories */}
                   <Pie
                     data={categoryData.chartData}
                     cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={90}
+                    cy="45%"
+                    innerRadius={55}
+                    outerRadius={85}
                     paddingAngle={1}
                     dataKey="total"
                     nameKey="category"
@@ -287,9 +287,9 @@ export function IncomeAnalysis({ transactions, monthlyData }: IncomeAnalysisProp
                   <Pie
                     data={categoryData.outerPieData}
                     cx="50%"
-                    cy="50%"
-                    innerRadius={92}
-                    outerRadius={120}
+                    cy="45%"
+                    innerRadius={87}
+                    outerRadius={110}
                     paddingAngle={0.5}
                     dataKey="total"
                     nameKey="name"
@@ -317,12 +317,13 @@ export function IncomeAnalysis({ transactions, monthlyData }: IncomeAnalysisProp
                     contentStyle={{
                       backgroundColor: 'hsl(var(--card))',
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: 'var(--radius)'
+                      borderRadius: 'var(--radius)',
+                      fontSize: '12px'
                     }}
                   />
                   <Legend
                     verticalAlign="bottom"
-                    height={70}
+                    height={50}
                     iconType="circle"
                     formatter={(value: string) => (
                       <span style={{ color: 'hsl(var(--foreground))', fontSize: '11px' }}>
@@ -345,10 +346,10 @@ export function IncomeAnalysis({ transactions, monthlyData }: IncomeAnalysisProp
             </CardTitle>
             <CardDescription>Top 5 账户收入情况</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
+          <CardContent className="p-4">
+            <div className="h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={accountData} layout="vertical">
+                <BarChart data={accountData} layout="vertical" margin={{ top: 5, right: 30, bottom: 5, left: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis
                     type="number"
@@ -359,8 +360,8 @@ export function IncomeAnalysis({ transactions, monthlyData }: IncomeAnalysisProp
                   <YAxis
                     dataKey="name"
                     type="category"
-                    width={80}
-                    tick={{ fill: 'hsl(var(--foreground))', fontSize: 11 }}
+                    width={120}
+                    tick={{ fill: 'hsl(var(--foreground))', fontSize: 10 }}
                     axisLine={{ stroke: 'hsl(var(--border))' }}
                   />
                   <Tooltip
@@ -371,10 +372,11 @@ export function IncomeAnalysis({ transactions, monthlyData }: IncomeAnalysisProp
                     contentStyle={{
                       backgroundColor: 'hsl(var(--card))',
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: 'var(--radius)'
+                      borderRadius: 'var(--radius)',
+                      fontSize: '12px'
                     }}
                   />
-                  <Bar dataKey="value" fill="hsl(142, 76%, 36%)" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="value" fill={incomeColorHex} radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -404,7 +406,7 @@ export function IncomeAnalysis({ transactions, monthlyData }: IncomeAnalysisProp
                     <span className="font-medium">{cat.category}</span>
                   </div>
                   <div className="text-right">
-                    <span className="font-semibold text-green-600 dark:text-green-400">
+                    <span className={`font-semibold ${incomeColorClass}`}>
                       ¥{cat.total.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                     <span className="text-sm text-muted-foreground ml-2">
@@ -468,7 +470,7 @@ export function IncomeAnalysis({ transactions, monthlyData }: IncomeAnalysisProp
                   <TableCell>{t.primaryCategory}</TableCell>
                   <TableCell className="text-muted-foreground">{t.secondaryCategory}</TableCell>
                   <TableCell className="text-muted-foreground">{t.account}</TableCell>
-                  <TableCell className="text-right font-semibold text-green-600 dark:text-green-400">
+                  <TableCell className={`text-right font-semibold ${incomeColorClass}`}>
                     ¥{t.amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </TableCell>
                 </TableRow>

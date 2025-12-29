@@ -11,6 +11,7 @@ import { DataManagement } from '@/components/dashboard/DataManagement';
 import { IncomeAnalysis } from '@/components/dashboard/IncomeAnalysis';
 import { ExpenseAnalysis } from '@/components/dashboard/ExpenseAnalysis';
 import { AccountAnalysis } from '@/components/dashboard/AccountAnalysis';
+import { Settings } from '@/components/dashboard/Settings';
 import { SankeyChart } from '@/components/dashboard/SankeyChart';
 import { YearSelector } from '@/components/dashboard/YearSelector';
 import { IncomeExpenseComparison } from '@/components/dashboard/IncomeExpenseComparison';
@@ -292,6 +293,16 @@ const Index = () => {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {activeTab === 'settings' && (
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-2xl font-bold">系统设置</h1>
+            <p className="text-muted-foreground">个性化您的财务管理体验</p>
+          </div>
+          <Settings />
         </div>
       )}
     </DashboardLayout>
