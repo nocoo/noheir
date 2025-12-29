@@ -47,11 +47,6 @@ export function useTransactions() {
   const [qualityMetrics, setQualityMetrics] = useState<DataQualityMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load all stored years data on mount
-  useEffect(() => {
-    loadStoredData();
-  }, []);
-
   // Load data from IndexedDB
   const loadStoredData = useCallback(async () => {
     setIsLoading(true);
@@ -74,6 +69,11 @@ export function useTransactions() {
       setIsLoading(false);
     }
   }, []);
+
+  // Load all stored years data on mount
+  useEffect(() => {
+    loadStoredData();
+  }, [loadStoredData]);
 
   // Load data from CSV file and save to IndexedDB
   const loadFromFile = useCallback(async (file: File): Promise<{
