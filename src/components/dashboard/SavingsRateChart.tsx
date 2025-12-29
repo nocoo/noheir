@@ -46,6 +46,16 @@ export function SavingsRateChart({ data }: SavingsRateChartProps) {
   const targetSavingsAmount = totalIncome * (targetSavingsRate / 100);
   const savingsGap = totalSavings - targetSavingsAmount;
 
+  // Debug: log values to understand the issue
+  console.log('Savings Gap Debug:', {
+    totalSavings,
+    totalIncome,
+    targetSavingsRate,
+    targetSavingsAmount,
+    savingsGap,
+    isGapPositive: savingsGap >= 0
+  });
+
   return (
     <Card className="col-span-full">
       <CardHeader>
