@@ -65,14 +65,32 @@ export function SankeyChart({ transactions, type }: SankeyChartProps) {
       );
     });
 
+    // Rich color palette for Sankey categories
     const colors = [
       getIncomeColorHex(settings.colorScheme),
       getExpenseColorHex(settings.colorScheme),
-      'hsl(var(--chart-1))',
-      'hsl(var(--chart-2))',
-      'hsl(var(--chart-3))',
-      'hsl(var(--chart-4))',
-      'hsl(var(--chart-5))',
+      'hsl(var(--chart-1))',  // Blue
+      'hsl(var(--chart-2))',  // Cyan
+      'hsl(var(--chart-3))',  // Indigo
+      'hsl(var(--chart-4))',  // Violet
+      'hsl(var(--chart-5))',  // Purple
+      '#06b6d4', // Cyan-500
+      '#0ea5e9', // Sky-500
+      '#3b82f6', // Blue-500
+      '#6366f1', // Indigo-500
+      '#8b5cf6', // Violet-500
+      '#a855f7', // Purple-500
+      '#d946ef', // Fuchsia-500
+      '#ec4899', // Pink-500
+      '#f43f5e', // Rose-500
+      '#ef4444', // Red-500
+      '#f97316', // Orange-500
+      '#f59e0b', // Amber-500
+      '#eab308', // Yellow-500
+      '#84cc16', // Lime-500
+      '#22c55e', // Green-500
+      '#10b981', // Emerald-500
+      '#14b8a6', // Teal-500
     ];
 
     // Build nodes and links for ECharts Sankey
