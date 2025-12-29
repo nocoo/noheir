@@ -87,7 +87,7 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
       )}>
         <div className="flex items-center justify-between h-16 px-4 border-b border-border">
           {sidebarOpen && (
-            <h1 className="text-lg font-bold text-foreground">财务管理</h1>
+            <h1 className="text-lg font-bold text-foreground">貔貅记账数据分析</h1>
           )}
           <Button 
             variant="ghost" 
@@ -149,7 +149,7 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
         )}>
           {sidebarOpen && (
             <p className="text-xs text-muted-foreground text-center">
-              个人财务信息管理系统
+              貔貅记账数据分析系统
             </p>
           )}
         </div>

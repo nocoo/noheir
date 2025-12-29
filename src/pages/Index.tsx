@@ -304,7 +304,7 @@ const Index = () => {
         <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-bold">系统设置</h1>
-            <p className="text-muted-foreground">个性化您的财务管理体验</p>
+            <p className="text-muted-foreground">个性化您的貔貅记账数据分析体验</p>
           </div>
           <Settings />
         </div>
