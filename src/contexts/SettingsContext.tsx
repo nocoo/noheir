@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
+import { supabase } from '@/lib/supabase';
 
 export type Theme = 'light' | 'dark' | 'system';
 export type ColorScheme = 'default' | 'swapped';
@@ -8,6 +9,7 @@ interface Settings {
   colorScheme: ColorScheme;
   targetSavingsRate: number;
   activeIncomeCategories: string[];
+  siteName: string;
 }
 
 interface SettingsContextType {
@@ -18,6 +20,7 @@ interface SettingsContextType {
   updateActiveIncomeCategories: (categories: string[]) => void;
   toggleActiveIncomeCategory: (category: string) => void;
   isCategoryActiveIncome: (category: string) => boolean;
+  updateSiteName: (name: string) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -27,21 +30,24 @@ const DEFAULT_SETTINGS: Settings = {
   colorScheme: 'default',
   targetSavingsRate: 60,
   activeIncomeCategories: [],
+  siteName: '个人财务管理',
 };
 
 const STORAGE_KEY = 'finance-settings';
 
 // Load settings from localStorage
-const loadFromLocalStorage = (): Settings | null => {
+const loadFromLocalStorage = (): Settings => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      return JSON.parse(stored);
+      const parsed = JSON.parse(stored);
+      // Merge with DEFAULT_SETTINGS to ensure all fields exist
+      return { ...DEFAULT_SETTINGS, ...parsed };
     }
   } catch (err) {
     console.error('Failed to load settings from localStorage:', err);
   }
-  return null;
+  return DEFAULT_SETTINGS;
 };
 
 // Save settings to localStorage
@@ -55,9 +61,46 @@ const saveToLocalStorage = (settings: Settings) => {
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   // Initialize from localStorage first for instant load
-  const [settings, setSettings] = useState<Settings>(() => {
-    return loadFromLocalStorage() || DEFAULT_SETTINGS;
-  });
+  const [settings, setSettings] = useState<Settings>(() => loadFromLocalStorage());
+
+  // Track if we've already synced from Supabase (only sync once per session)
+  const hasSyncedFromSupabase = useRef(false);
+
+  // Sync siteName and other settings from Supabase when user logs in
+  useEffect(() => {
+    if (hasSyncedFromSupabase.current) return;
+
+    const syncFromSupabase = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      const { data: settingsData, error } = await supabase
+        .from('settings')
+        .select('*')
+        .eq('owner_id', session.user.id)
+        .maybeSingle();
+
+      if (!error && settingsData) {
+        hasSyncedFromSupabase.current = true;
+
+        // Sync site_name
+        if (settingsData.site_name) {
+          setSettings(prev => ({ ...prev, siteName: settingsData.site_name }));
+        }
+
+        // Sync other settings
+        if (settingsData.settings) {
+          setSettings(prev => ({
+            ...prev,
+            ...(settingsData.settings.targetSavingsRate !== undefined && { targetSavingsRate: settingsData.settings.targetSavingsRate }),
+            ...(settingsData.settings.activeIncomeCategories && { activeIncomeCategories: settingsData.settings.activeIncomeCategories }),
+          }));
+        }
+      }
+    };
+
+    syncFromSupabase();
+  }, []);
 
   // Save to localStorage whenever settings change
   useEffect(() => {
@@ -78,6 +121,13 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
     root.classList.add(effectiveTheme);
   }, [settings.theme]);
+
+  // Update document title based on siteName
+  useEffect(() => {
+    if (settings.siteName) {
+      document.title = settings.siteName;
+    }
+  }, [settings.siteName]);
 
   const updateTheme = (theme: Theme) => {
     setSettings(prev => ({ ...prev, theme }));
@@ -109,6 +159,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     return settings.activeIncomeCategories.includes(category);
   };
 
+  const updateSiteName = (name: string) => {
+    setSettings(prev => ({ ...prev, siteName: name }));
+  };
+
   return (
     <SettingsContext.Provider
       value={{
@@ -119,6 +173,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         updateActiveIncomeCategories,
         toggleActiveIncomeCategory,
         isCategoryActiveIncome,
+        updateSiteName,
       }}
     >
       {children}

@@ -1,4 +1,6 @@
 import { ReactNode, useState } from 'react';
+import { useSettings } from '@/contexts/SettingsContext';
+import { APP_VERSION } from '@/lib/version-generated';
 import {
   Upload,
   CheckCircle,
@@ -71,6 +73,7 @@ const navGroups = [
 ];
 
 export function DashboardLayout({ children, activeTab, onTabChange }: DashboardLayoutProps) {
+  const { settings } = useSettings();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [openGroups, setOpenGroups] = useState<string[]>(navGroups.map(g => g.title));
 
@@ -97,7 +100,7 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
               sidebarOpen ? "flex-1 px-2 opacity-100" : "w-0 opacity-0"
             )}>
               <LayoutDashboard className="h-5 w-5 text-primary shrink-0" />
-              <h1 className="text-lg font-bold text-foreground whitespace-nowrap">个人财务管理</h1>
+              <h1 className="text-lg font-bold text-foreground whitespace-nowrap">{settings.siteName}</h1>
             </div>
             <Button
               variant="ghost"
@@ -161,9 +164,10 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
           {sidebarOpen && (
             <div className="shrink-0 border-t border-border bg-card p-4 space-y-3">
               <LoginButton />
-              <p className="text-xs text-muted-foreground text-center">
-                个人财务管理系统
-              </p>
+              <div className="text-xs text-muted-foreground text-center space-y-1">
+                <p>{settings.siteName}</p>
+                <p className="text-[10px] opacity-70">{APP_VERSION}</p>
+              </div>
             </div>
           )}
         </div>
