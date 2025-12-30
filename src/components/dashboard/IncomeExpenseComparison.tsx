@@ -13,6 +13,7 @@ import {
 import { MonthlyData } from '@/types/transaction';
 import { useSettings, getIncomeColorHex, getExpenseColorHex } from '@/contexts/SettingsContext';
 import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, legendStyle, formatCurrencyK, formatCurrencyFull } from '@/lib/chart-config';
+import { TrendingUp } from 'lucide-react';
 
 interface IncomeExpenseComparisonProps {
   data: MonthlyData[];
@@ -29,7 +30,10 @@ export function IncomeExpenseComparison({ data }: IncomeExpenseComparisonProps) 
   return (
     <Card className="col-span-full">
       <CardHeader>
-        <CardTitle>收支趋势对比</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-primary" />
+          收支趋势对比
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[400px]">
@@ -61,7 +65,7 @@ export function IncomeExpenseComparison({ data }: IncomeExpenseComparisonProps) 
                   name === 'income' ? '收入' : '支出'
                 ]}
               />
-              <Legend formatter={(value) => value === 'income' ? '收入' : '支出'} />
+              <Legend {...legendStyle} formatter={(value) => value === 'income' ? '收入' : '支出'} />
               {avgIncome > 0 && (
                 <ReferenceLine
                   y={avgIncome}

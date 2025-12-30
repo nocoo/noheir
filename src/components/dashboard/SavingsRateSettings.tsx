@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react';
-import { useSiteMetadata } from '@/hooks/useSiteMetadata';
+import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 
 export function SavingsRateSettings() {
   const { user } = useAuth();
-  const { data, loading, updateSingleSetting } = useSiteMetadata();
+  const { data, loading, updateSingleSetting } = useSupabaseSettings();
   const { settings: contextSettings, updateTargetSavingsRate } = useSettings();
 
   // Debounce ref for slider - must be before any conditional returns

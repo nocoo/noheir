@@ -1,83 +1,129 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Transaction, CategorySummary, MonthlyData, YearlyComparison } from '@/types/transaction';
 import {
-  CleanedTransaction,
   ParsedTransaction,
   DataQualityMetrics,
   TransactionValidation
 } from '@/types/data';
-import { createDataLayerManager, DataLayerManager } from '@/lib/dataLayer';
+import { DataLayerManager, createDataLayerManager } from '@/lib/dataLayer';
 import { parseCSVFile } from '@/lib/csvParser';
-import {
-  saveTransactionsForYear,
-  getAllStoredYears,
-  getTransactionsForYear,
-  deleteYear,
-  clearAllData,
-  exportAllData,
-  importData,
-  StoredYearData
-} from '@/lib/storage';
+import { useSupabaseTransactions } from '@/hooks/useSupabaseTransactions';
+import { useAuth } from '@/contexts/AuthContext';
 
-// Convert CleanedTransaction to Transaction for backward compatibility
-function toTransaction(ct: CleanedTransaction): Transaction {
-  return {
-    id: ct.id,
-    date: ct.date,
-    year: ct.year,
-    month: ct.month,
-    primaryCategory: ct.primaryCategory,
-    secondaryCategory: ct.secondaryCategory,
-    tertiaryCategory: ct.tertiaryCategory,
-    amount: ct.amount,
-    account: ct.account,
-    description: ct.note,
-    type: ct.type
+// Re-export StoredYearData type for components
+export interface StoredYearData {
+  year: number;
+  transactions: Transaction[];
+  recordCount: number;
+  importedAt: string;
+  updatedAt: string;
+  metadata: {
+    fileName?: string;
+    fileSize?: number;
+    totalIncome: number;
+    totalExpense: number;
   };
 }
 
 export function useTransactions() {
+  const { user } = useAuth();
+  const supabaseTx = useSupabaseTransactions();
   const manager = useMemo(() => createDataLayerManager(), []);
+
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [storedYearsData, setStoredYearsData] = useState<StoredYearData[]>([]);
-  const [selectedYear, setSelectedYear] = useState<number>(2024);
-  const [comparisonYears, setComparisonYears] = useState<number[]>([2023, 2024]);
+  const [selectedYear, setSelectedYear] = useState<number | null>(null);
+  const [comparisonYears, setComparisonYears] = useState<number[]>([]);
   const [isValidating, setIsValidating] = useState(false);
   const [validationResults, setValidationResults] = useState<TransactionValidation[] | null>(null);
   const [qualityMetrics, setQualityMetrics] = useState<DataQualityMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load data from IndexedDB
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Load data from Supabase with incremental strategy
   const loadStoredData = useCallback(async () => {
+    if (!user) {
+      setTransactions([]);
+      setStoredYearsData([]);
+      setSelectedYear(null);
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const storedData = await getAllStoredYears();
-      setStoredYearsData(storedData);
+      // Step 1: Load latest year only for fast initial render
+      const latestData = await supabaseTx.loadLatestYearOnly();
 
-      // Flatten all transactions
-      const allTransactions = storedData.flatMap(d => d.transactions);
-      setTransactions(allTransactions);
-
-      // Set selected year to most recent if available
-      if (storedData.length > 0) {
-        const years = storedData.map(d => d.year).sort((a, b) => b - a);
-        setSelectedYear(years[0]);
+      if (!latestData) {
+        // No data at all
+        setTransactions([]);
+        setStoredYearsData([]);
+        setSelectedYear(null);
+        setIsLoading(false);
+        return;
       }
+
+      const { year: latestYear, transactions: latestTransactions } = latestData;
+
+      // Set up initial state with latest year
+      setSelectedYear(latestYear);
+      setTransactions(latestTransactions);
+
+      const initialStoredData: StoredYearData[] = [{
+        year: latestYear,
+        transactions: latestTransactions,
+        recordCount: latestTransactions.length,
+        importedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        metadata: {
+          totalIncome: latestTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0),
+          totalExpense: latestTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0),
+        },
+      }];
+      setStoredYearsData(initialStoredData);
+
+      // Set loading to false now so UI renders quickly
+      setIsLoading(false);
+
+      // Step 2: Load remaining years in background
+      setTimeout(async () => {
+        try {
+          const remainingData = await supabaseTx.loadRemainingYears(latestYear);
+
+          // Merge with initial data
+          const allData = [...initialStoredData, ...remainingData];
+          const allTransactions = allData.flatMap(d => d.transactions);
+
+          setStoredYearsData(allData);
+          setTransactions(allTransactions);
+
+          // Update comparison years if not set
+          if (comparisonYears.length === 0) {
+            const years = allData.map(d => d.year).sort((a, b) => b - a);
+            setComparisonYears(years.slice(0, 2));
+          }
+        } catch (error) {
+          console.error('Failed to load remaining years:', error);
+          // Don't throw - we already have the latest year displayed
+        }
+      }, 100);
+
     } catch (error) {
-      console.error('Failed to load stored data:', error);
-    } finally {
+      console.error('Failed to load data from Supabase:', error);
+      setTransactions([]);
+      setStoredYearsData([]);
+      setSelectedYear(null);
       setIsLoading(false);
     }
-  }, []); // Empty deps - only run once on mount
+  }, [user, supabaseTx, comparisonYears.length]);
 
-  // Load all stored years data on mount
+  // Load data on mount and when user changes
   useEffect(() => {
     loadStoredData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run on mount
+  }, [user]);
 
-  // Load data from CSV file and save to IndexedDB
+  // Load data from CSV file and upload to Supabase
   const loadFromFile = useCallback(async (file: File): Promise<{
     success: boolean;
     transactions: ParsedTransaction[];
@@ -89,93 +135,91 @@ export function useTransactions() {
     try {
       const result = await parseCSVFile(file);
 
-      if (result.transactions.length > 0) {
-        // Load into data layer manager
-        manager.loadRaw(result.transactions);
-
-        // Validate
-        const validations = manager.validate();
-        setValidationResults(validations);
-
-        const metrics = manager.getMetrics();
-        setQualityMetrics(metrics);
-
-        // Clean and convert to Transaction format
-        const cleaned = manager.clean({
-          includeCritical: false,
-          includeErrors: true,
-          includeWarnings: true
-        });
-
-        const transactionList = cleaned.map(toTransaction);
-
-        // Determine year from transactions
-        const year = transactionList[0]?.year || new Date().getFullYear();
-
-        // Save to IndexedDB (replaces existing data for this year)
-        await saveTransactionsForYear(year, transactionList, {
-          fileName: file.name,
-          fileSize: file.size
-        });
-
-        // Reload stored data
-        await loadStoredData();
-
-        // Set selected year
-        setSelectedYear(year);
+      if (result.transactions.length === 0) {
+        return result;
       }
 
-      return {
-        success: result.transactions.length > 0,
-        transactions: result.transactions,
-        errors: result.errors,
-        warnings: result.warnings
-      };
+      // Load into data layer manager for validation
+      manager.loadRaw(result.transactions);
+      const validations = manager.validate();
+      setValidationResults(validations);
+
+      const metrics = manager.getMetrics();
+      setQualityMetrics(metrics);
+
+      return result;
     } catch (error) {
       console.error('Failed to load CSV file:', error);
       throw error;
     } finally {
       setIsValidating(false);
     }
-  }, [manager, loadStoredData]);
+  }, [manager]);
 
   // Delete a year's data
   const deleteYearData = useCallback(async (year: number) => {
     try {
-      await deleteYear(year);
+      await supabaseTx.deleteYearData(year);
       await loadStoredData();
-
-      // Update selected year if needed
-      const remainingYears = storedYearsData.filter(d => d.year !== year).map(d => d.year);
-      if (year === selectedYear && remainingYears.length > 0) {
-        setSelectedYear(Math.max(...remainingYears));
-      }
     } catch (error) {
       console.error('Failed to delete year data:', error);
       throw error;
     }
-  }, [selectedYear, storedYearsData, loadStoredData]);
+  }, [supabaseTx, loadStoredData]);
 
   // Clear all data
   const clearAll = useCallback(async () => {
     try {
-      await clearAllData();
+      await supabaseTx.clearAllData();
       await loadStoredData();
     } catch (error) {
       console.error('Failed to clear data:', error);
       throw error;
     }
-  }, [loadStoredData]);
+  }, [supabaseTx, loadStoredData]);
 
-  // Export data
+  // Export data (convert to CSV)
   const exportData = useCallback(async () => {
     try {
-      const jsonData = await exportAllData();
-      const blob = new Blob([jsonData], { type: 'application/json' });
+      // Get all transactions from Supabase
+      const allData = await supabaseTx.loadAllYears();
+      const allTransactions = allData.flatMap(d => d.transactions);
+
+      if (allTransactions.length === 0) {
+        throw new Error('没有数据可以导出');
+      }
+
+      // Convert to CSV format
+      const headers = ['日期', '交易分类', '交易类型', '流入金额', '流出金额', '币种', '资金账户', '标签', '备注'];
+      const rows = allTransactions.map(t => {
+        let inflow = '0.00';
+        let outflow = '0.00';
+
+        if (t.type === 'income') {
+          inflow = t.amount.toFixed(2);
+        } else if (t.type === 'expense') {
+          outflow = t.amount.toFixed(2);
+        }
+
+        return [
+          t.date,
+          t.primaryCategory,
+          t.tertiaryCategory,
+          inflow,
+          outflow,
+          '人民币',
+          t.account,
+          '',
+          t.description || ''
+        ].join(',');
+      });
+
+      const csv = [headers.join(','), ...rows].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `finance-data-${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `finance-data-${new Date().toISOString().split('T')[0]}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -184,7 +228,7 @@ export function useTransactions() {
       console.error('Failed to export data:', error);
       throw error;
     }
-  }, []);
+  }, [supabaseTx]);
 
   // Get quality metrics for a specific year
   const getQualityForYear = useCallback(async (year: number) => {
@@ -200,13 +244,15 @@ export function useTransactions() {
       day: new Date(t.date).getDate(),
       primaryCategory: t.primaryCategory,
       secondaryCategory: t.secondaryCategory,
+      tertiaryCategory: t.tertiaryCategory,
       amount: t.amount,
       type: t.type,
       account: t.account,
       currency: 'CNY',
       tags: [],
       note: t.description,
-      rawIndex: idx
+      rawIndex: idx,
+      hasSecondaryMapping: true
     }));
 
     // Validate
@@ -228,11 +274,13 @@ export function useTransactions() {
 
   // Filter transactions by selected year
   const filteredTransactions = useMemo(() => {
+    if (selectedYear === null) return [];
     return transactions.filter(t => t.year === selectedYear);
   }, [transactions, selectedYear]);
 
   // Monthly data for selected year
   const monthlyData: MonthlyData[] = useMemo(() => {
+    if (selectedYear === null) return [];
     const months = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
     return months.map((month, index) => {
       const monthTransactions = filteredTransactions.filter(t => t.month === index + 1);
@@ -240,10 +288,11 @@ export function useTransactions() {
       const expense = monthTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
       return { month, income, expense, balance: income - expense };
     });
-  }, [filteredTransactions]);
+  }, [filteredTransactions, selectedYear]);
 
   // Category breakdown for selected year
   const categoryData: CategorySummary[] = useMemo(() => {
+    if (selectedYear === null) return [];
     const expenses = filteredTransactions.filter(t => t.type === 'expense');
     const totalExpense = expenses.reduce((sum, t) => sum + t.amount, 0);
 
@@ -264,7 +313,7 @@ export function useTransactions() {
       percentage: totalExpense > 0 ? (data.total / totalExpense) * 100 : 0,
       subcategories: Array.from(data.subcategories.entries()).map(([name, total]) => ({ name, total }))
     })).sort((a, b) => b.total - a.total);
-  }, [filteredTransactions]);
+  }, [filteredTransactions, selectedYear]);
 
   // Yearly comparison
   const yearlyComparison: YearlyComparison[] = useMemo(() => {
@@ -315,7 +364,7 @@ export function useTransactions() {
     // Data
     transactions: filteredTransactions,
     allTransactions: transactions,
-    transferTransactions, // Transfer transactions for analysis
+    transferTransactions,
     monthlyData,
     categoryData,
     yearlyComparison,
@@ -334,6 +383,7 @@ export function useTransactions() {
 
     // Data management
     loadFromFile,
+    loadStoredData,
     deleteYearData,
     clearAll,
     exportData,

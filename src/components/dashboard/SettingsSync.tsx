@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useSiteMetadata } from '@/hooks/useSiteMetadata';
+import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -9,7 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
  */
 export function SettingsSync() {
   const { user } = useAuth();
-  const { data, loading } = useSiteMetadata();
+  const { data, loading } = useSupabaseSettings();
   const { updateTargetSavingsRate, updateActiveIncomeCategories } = useSettings();
 
   // Track if we've already synced the initial settings

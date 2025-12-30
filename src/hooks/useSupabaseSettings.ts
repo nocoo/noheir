@@ -11,7 +11,7 @@ interface UserSettings {
   activeIncomeCategories: string[];
 }
 
-interface SiteMetadata {
+interface DatabaseSettings {
   id: number;
   owner_id: string;
   site_name: string;
@@ -19,17 +19,17 @@ interface SiteMetadata {
   created_at: string;
 }
 
-interface UseSiteMetadataReturn {
-  data: SiteMetadata | null;
+interface UseSupabaseSettingsReturn {
+  data: DatabaseSettings | null;
   loading: boolean;
   error: PostgrestError | null;
-  createMetadata: (siteName: string, settings?: UserSettings) => Promise<SiteMetadata>;
-  updateSiteName: (siteName: string) => Promise<SiteMetadata>;
-  updateSettings: (settings: Partial<UserSettings>) => Promise<SiteMetadata>;
+  createMetadata: (siteName: string, settings?: UserSettings) => Promise<DatabaseSettings>;
+  updateSiteName: (siteName: string) => Promise<DatabaseSettings>;
+  updateSettings: (settings: Partial<UserSettings>) => Promise<DatabaseSettings>;
   updateSingleSetting: <K extends keyof UserSettings>(
     key: K,
     value: UserSettings[K]
-  ) => Promise<SiteMetadata>;
+  ) => Promise<DatabaseSettings>;
 }
 
 const DEFAULT_SETTINGS: UserSettings = {
@@ -39,9 +39,9 @@ const DEFAULT_SETTINGS: UserSettings = {
   activeIncomeCategories: [],
 };
 
-export function useSiteMetadata(): UseSiteMetadataReturn {
+export function useSupabaseSettings(): UseSupabaseSettingsReturn {
   const { user } = useAuth();
-  const [data, setData] = useState<SiteMetadata | null>(null);
+  const [data, setData] = useState<DatabaseSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<PostgrestError | null>(null);
 
@@ -58,7 +58,7 @@ export function useSiteMetadata(): UseSiteMetadataReturn {
       setError(null);
 
       const { data, error } = await supabase
-        .from('site_metadata')
+        .from('settings')
         .select('*')
         .eq('owner_id', user.id)
         .maybeSingle();
@@ -77,13 +77,13 @@ export function useSiteMetadata(): UseSiteMetadataReturn {
   const createMetadata = async (
     siteName: string,
     settings: UserSettings = DEFAULT_SETTINGS
-  ): Promise<SiteMetadata> => {
+  ): Promise<DatabaseSettings> => {
     if (!user) {
       throw new Error('User not authenticated');
     }
 
     const { data, error } = await supabase
-      .from('site_metadata')
+      .from('settings')
       .insert({
         owner_id: user.id,
         site_name: siteName,
@@ -100,13 +100,13 @@ export function useSiteMetadata(): UseSiteMetadataReturn {
     return data;
   };
 
-  const updateSiteName = async (siteName: string): Promise<SiteMetadata> => {
+  const updateSiteName = async (siteName: string): Promise<DatabaseSettings> => {
     if (!user) {
       throw new Error('User not authenticated');
     }
 
     const { data, error } = await supabase
-      .from('site_metadata')
+      .from('settings')
       .update({ site_name: siteName })
       .eq('owner_id', user.id)
       .select()
@@ -122,7 +122,7 @@ export function useSiteMetadata(): UseSiteMetadataReturn {
 
   const updateSettings = async (
     settingsUpdate: Partial<UserSettings>
-  ): Promise<SiteMetadata> => {
+  ): Promise<DatabaseSettings> => {
     if (!user) {
       throw new Error('User not authenticated');
     }
@@ -132,7 +132,7 @@ export function useSiteMetadata(): UseSiteMetadataReturn {
     const newSettings = { ...currentSettings, ...settingsUpdate };
 
     const { data: updatedData, error } = await supabase
-      .from('site_metadata')
+      .from('settings')
       .update({ settings: newSettings })
       .eq('owner_id', user.id)
       .select()
@@ -149,7 +149,7 @@ export function useSiteMetadata(): UseSiteMetadataReturn {
   const updateSingleSetting = async <K extends keyof UserSettings>(
     key: K,
     value: UserSettings[K]
-  ): Promise<SiteMetadata> => {
+  ): Promise<DatabaseSettings> => {
     return updateSettings({ [key]: value });
   };
 

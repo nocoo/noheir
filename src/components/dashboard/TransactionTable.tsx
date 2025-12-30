@@ -5,6 +5,7 @@ import { Transaction } from '@/types/transaction';
 import { cn } from '@/lib/utils';
 import { formatCurrencyFull } from '@/lib/chart-config';
 import { useSettings, getIncomeColor, getExpenseColor } from '@/contexts/SettingsContext';
+import { List } from 'lucide-react';
 
 interface TransactionTableProps {
   transactions: Transaction[];
@@ -19,7 +20,10 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
   return (
     <Card className="col-span-full">
       <CardHeader>
-        <CardTitle>最近交易记录</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <List className="h-5 w-5 text-primary" />
+          最近交易记录
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <Table>
@@ -29,13 +33,14 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
               <TableHead>一级分类</TableHead>
               <TableHead>二级分类</TableHead>
               <TableHead>账户</TableHead>
+              <TableHead>描述</TableHead>
               <TableHead className="text-right">金额</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {recentTransactions.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                   暂无交易记录，请导入数据
                 </TableCell>
               </TableRow>
@@ -48,6 +53,9 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                   </TableCell>
                   <TableCell className="text-muted-foreground">{transaction.secondaryCategory}</TableCell>
                   <TableCell>{transaction.account}</TableCell>
+                  <TableCell className="text-muted-foreground text-sm max-w-[200px] truncate" title={transaction.description}>
+                    {transaction.description || '-'}
+                  </TableCell>
                   <TableCell className={cn(
                     'text-right font-medium',
                     transaction.type === 'income' ? incomeColorClass : expenseColorClass

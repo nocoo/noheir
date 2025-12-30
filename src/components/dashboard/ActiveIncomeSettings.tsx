@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { useSiteMetadata } from '@/hooks/useSiteMetadata';
+import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -20,7 +20,7 @@ const INCOME_CATEGORIES_GROUPED = getIncomeCategoriesGrouped();
 
 export function ActiveIncomeSettings() {
   const { user } = useAuth();
-  const { data, loading, updateSingleSetting } = useSiteMetadata();
+  const { data, loading, updateSingleSetting } = useSupabaseSettings();
   const { settings: contextSettings, updateActiveIncomeCategories } = useSettings();
   const [showSelector, setShowSelector] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());

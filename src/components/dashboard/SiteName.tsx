@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSiteMetadata } from '@/hooks/useSiteMetadata';
+import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,9 +11,9 @@ import { toast } from 'sonner';
 
 const DEFAULT_SITE_NAME = '个人财务管理';
 
-export function SiteMetadata() {
+export function SiteName() {
   const { user } = useAuth();
-  const { data, loading, error, createMetadata, updateSiteName } = useSiteMetadata();
+  const { data, loading, error, createMetadata, updateSiteName } = useSupabaseSettings();
   const [siteName, setSiteName] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);

@@ -8,7 +8,7 @@ import { X } from 'lucide-react';
 interface PeriodSelectorProps {
   mode: 'monthly' | 'yearly';
   onModeChange: (mode: 'monthly' | 'yearly') => void;
-  selectedYear: number;
+  selectedYear: number | null;
   selectedMonth?: number;
   comparisonPeriods: string[];
   availableYears: number[];
@@ -45,6 +45,17 @@ export function PeriodSelector({
   onAddComparison,
   onRemoveComparison,
 }: PeriodSelectorProps) {
+  // Handle null selectedYear
+  if (selectedYear === null) {
+    return (
+      <Card>
+        <CardContent className="pt-4">
+          <p className="text-sm text-muted-foreground">暂无数据</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const getCurrentPeriod = () => {
     if (mode === 'yearly') return `${selectedYear}`;
     return `${selectedYear}-${selectedMonth.toString().padStart(2, '0')}`;

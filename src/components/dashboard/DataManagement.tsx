@@ -13,7 +13,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { StoredYearData } from '@/lib/storage';
+import { StoredYearData } from '@/hooks/useTransactions';
 import { formatCurrencyFull } from '@/lib/chart-config';
 import type { DataQualityMetrics, TransactionValidation } from '@/types/data';
 import { DataQuality } from '@/components/dashboard/DataQuality';
@@ -26,10 +26,8 @@ import {
   TrendingDown,
   Download,
   Trash2,
-  RefreshCw,
-  HardDrive,
+  Cloud,
   Clock,
-  Upload,
   ChevronRight,
   AlertTriangle
 } from 'lucide-react';
@@ -107,26 +105,18 @@ export function DataManagement({
     });
   };
 
-  // Format file size
-  const formatFileSize = (bytes?: number) => {
-    if (!bytes) return '-';
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="space-y-4">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/10 rounded-lg">
-            <Database className="h-6 w-6 text-primary" />
+            <Cloud className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold">数据管理</h2>
+            <h2 className="text-2xl font-bold">云端数据管理</h2>
             <p className="text-muted-foreground text-sm">
-              查看和管理本地存储的财务数据
+              查看和管理存储在云端的财务数据
             </p>
           </div>
         </div>
@@ -190,12 +180,12 @@ export function DataManagement({
       {/* Actions */}
       <div className="flex gap-3">
         <Button onClick={onGoToImport} variant="default" className="gap-2">
-          <Upload className="h-4 w-4" />
+          <Cloud className="h-4 w-4" />
           导入新数据
         </Button>
         <Button onClick={onExport} variant="outline" className="gap-2">
           <Download className="h-4 w-4" />
-          导出备份数据
+          导出 CSV
         </Button>
         <Button onClick={handleClearAllClick} variant="destructive" className="gap-2" disabled={storedYearsData.length === 0}>
           <Trash2 className="h-4 w-4" />
@@ -218,12 +208,11 @@ export function DataManagement({
         <CardContent>
           {isLoading ? (
             <div className="flex items-center justify-center py-12 text-muted-foreground">
-              <RefreshCw className="h-6 w-6 animate-spin mr-2" />
-              加载中...
+              正在加载数据...
             </div>
           ) : storedYearsData.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <Cloud className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>暂无数据</p>
               <p className="text-sm mt-1">请在"数据导入"页面上传 CSV 文件</p>
             </div>
@@ -271,22 +260,14 @@ export function DataManagement({
                       {/* Metadata */}
                       <div className="flex items-center gap-6 text-xs text-muted-foreground pl-2">
                         <div className="flex items-center gap-1">
-                          <HardDrive className="h-3 w-3" />
-                          <span>{yearData.metadata.fileName || '未知文件'}</span>
-                          <span>({formatFileSize(yearData.metadata.fileSize)})</span>
+                          <Cloud className="h-3 w-3" />
+                          <span>云端存储</span>
                         </div>
 
                         <div className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
                           <span>导入: {formatDate(yearData.importedAt)}</span>
                         </div>
-
-                        {yearData.updatedAt !== yearData.importedAt && (
-                          <div className="flex items-center gap-1">
-                            <RefreshCw className="h-3 w-3" />
-                            <span>更新: {formatDate(yearData.updatedAt)}</span>
-                          </div>
-                        )}
                       </div>
                     </div>
 
@@ -346,11 +327,11 @@ export function DataManagement({
       <Card className="bg-muted/50 border-dashed">
         <CardContent className="p-6">
           <div className="flex gap-4">
-            <Database className="h-5 w-5 text-muted-foreground mt-0.5" />
+            <Cloud className="h-5 w-5 text-muted-foreground mt-0.5" />
             <div className="text-sm text-muted-foreground space-y-2">
               <p>
                 <span className="font-medium">数据存储方式：</span>
-                所有数据存储在浏览器的 IndexedDB 中，完全本地化，不会上传到任何服务器。
+                所有数据存储在 Supabase 云端数据库中，支持多设备同步访问。
               </p>
               <p>
                 <span className="font-medium">数据导入规则：</span>
@@ -358,7 +339,7 @@ export function DataManagement({
               </p>
               <p>
                 <span className="font-medium">建议操作：</span>
-                定期使用"导出备份数据"功能，将数据导出为 JSON 文件保存到本地，以防浏览器清理缓存导致数据丢失。
+                定期使用"导出 CSV"功能，将数据导出为 CSV 文件保存到本地，作为数据备份。
               </p>
             </div>
           </div>
@@ -374,12 +355,12 @@ export function DataManagement({
               <AlertDialogTitle>确认清空所有数据？</AlertDialogTitle>
             </div>
             <AlertDialogDescription className="space-y-2">
-              <p>此操作将删除所有已存储的年份数据，操作无法撤销。</p>
+              <p>此操作将删除云端的所有数据，操作无法撤销。</p>
               <p className="text-sm text-muted-foreground">
                 将删除 {storedYearsData.length} 个年份的数据，共 {totalRecords.toLocaleString()} 条记录。
               </p>
               <p className="text-sm font-medium text-destructive">
-                建议在执行此操作前先使用"导出备份数据"功能备份您的数据。
+                建议在执行此操作前先使用"导出 CSV"功能备份您的数据。
               </p>
             </AlertDialogDescription>
           </AlertDialogHeader>

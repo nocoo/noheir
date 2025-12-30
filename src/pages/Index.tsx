@@ -45,31 +45,18 @@ const Index = () => {
     comparisonYears,
     setComparisonYears,
     availableYears,
-    loadFromFile,
     deleteYearData,
     clearAll,
     exportData,
     storedYearsData,
     isLoading,
+    loadStoredData,
     getQualityForYear,
-    isValidating,
-    validationResults,
-    qualityMetrics,
   } = useTransactions();
 
   const savingsRate = useMemo(() => {
     return totalIncome > 0 ? ((totalIncome - totalExpense) / totalIncome) * 100 : 0;
   }, [totalIncome, totalExpense]);
-
-  // Handle load file with auto-show quality
-  const handleLoadFile = async (file: File) => {
-    const result = await loadFromFile(file);
-    if (result.success && qualityMetrics) {
-      // Switch to quality view after successful import
-      setActiveTab('import');
-    }
-    return result;
-  };
 
   // Handle view quality for a specific year
   const handleViewQuality = async (year: number) => {
@@ -89,10 +76,11 @@ const Index = () => {
   };
 
   const previousYearCategoryData = useMemo(() => {
+    if (selectedYear === null) return [];
     const prevYear = selectedYear - 1;
     const prevYearTransactions = allTransactions.filter(t => t.year === prevYear && t.type === 'expense');
     const totalExpense = prevYearTransactions.reduce((sum, t) => sum + t.amount, 0);
-    
+
     const categoryMap = new Map<string, number>();
     prevYearTransactions.forEach(t => {
       categoryMap.set(t.primaryCategory, (categoryMap.get(t.primaryCategory) || 0) + t.amount);
@@ -114,24 +102,7 @@ const Index = () => {
             <h1 className="text-2xl font-bold">数据导入</h1>
             <p className="text-muted-foreground">上传交易数据文件开始分析</p>
           </div>
-          <DataImport
-            isLoading={isValidating}
-            onLoadFile={handleLoadFile}
-          />
-
-          {/* Show quality after import */}
-          {qualityMetrics && qualityMetrics.totalRecords > 0 && (
-            <>
-              <div>
-                <h2 className="text-xl font-semibold mt-8">数据质量评估</h2>
-                <p className="text-muted-foreground text-sm">刚刚导入的数据质量检查结果</p>
-              </div>
-              <DataQuality
-                metrics={qualityMetrics}
-                validations={validationResults}
-              />
-            </>
-          )}
+          <DataImport onUploadComplete={loadStoredData} />
         </div>
       )}
 
@@ -141,10 +112,14 @@ const Index = () => {
             <h1 className="text-2xl font-bold">数据质量评估</h1>
             <p className="text-muted-foreground">检查数据完整性和有效性</p>
           </div>
-          <DataQuality
-            metrics={qualityMetrics}
-            validations={validationResults}
-          />
+          {qualityData ? (
+            <DataQuality
+              metrics={qualityData.metrics}
+              validations={qualityData.validations}
+            />
+          ) : (
+            <p className="text-muted-foreground">请在"数据管理"页面选择年份查看质量评估</p>
+          )}
         </div>
       )}
 
@@ -181,13 +156,19 @@ const Index = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <PaymentHeatmap transactions={allTransactions} />
-            <IncomeExpenseHeatmap transactions={allTransactions} />
+            <PaymentHeatmap transactions={transactions} year={selectedYear} />
+            <IncomeExpenseHeatmap transactions={transactions} year={selectedYear} />
           </div>
 
           <IncomeExpenseComparison data={monthlyData} />
 
-          <FinancialHealthScore totalIncome={totalIncome} totalExpense={totalExpense} savingsRate={savingsRate} monthlyData={monthlyData} />
+          <FinancialHealthScore
+            totalIncome={totalIncome}
+            totalExpense={totalExpense}
+            savingsRate={savingsRate}
+            monthlyData={monthlyData}
+            year={selectedYear}
+          />
 
           <TransactionTable transactions={transactions} />
         </div>
