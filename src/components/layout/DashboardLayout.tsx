@@ -18,7 +18,9 @@ import {
   Settings as SettingsIcon,
   ArrowUpRight,
   ArrowDownRight,
-  Target
+  Target,
+  Package,
+  Coins
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -39,7 +41,7 @@ const navGroups = [
     ]
   },
   {
-    title: '深入分析',
+    title: '现金流分析',
     items: [
       { id: 'savings', label: '储蓄率', icon: Percent },
       { id: 'freedom', label: '财务自由', icon: Target },
@@ -49,12 +51,15 @@ const navGroups = [
       { id: 'account', label: '账户分析', icon: Wallet },
       { id: 'flow-income', label: '收入流向', icon: ArrowUpRight },
       { id: 'flow-expense', label: '支出流向', icon: ArrowDownRight },
+      { id: 'compare', label: '时段对比', icon: GitCompareArrows },
     ]
   },
   {
-    title: '对比分析',
+    title: '存量资金管理',
     items: [
-      { id: 'compare', label: '时段对比', icon: GitCompareArrows },
+      { id: 'capital-dashboard', label: '资金总览', icon: LayoutDashboard },
+      { id: 'products', label: '产品表', icon: Package },
+      { id: 'funds', label: '资金表', icon: Coins },
     ]
   },
   {

@@ -23,6 +23,9 @@ import { FinancialHealthScore } from '@/components/dashboard/FinancialHealthScor
 import { YearComparisonChart } from '@/components/dashboard/YearComparisonChart';
 import { MultiYearSelector } from '@/components/dashboard/MultiYearSelector';
 import { FinancialFreedomAnalysis } from '@/components/dashboard/FinancialFreedomAnalysis';
+import { ProductsLibrary } from '@/components/assets/ProductsLibrary';
+import { CapitalUnitsManager } from '@/components/assets/CapitalUnitsManager';
+import { CapitalDashboard } from '@/components/assets/CapitalDashboard';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoadingPage } from '@/components/pages/LoadingPage';
@@ -313,6 +316,28 @@ const Index = () => {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {activeTab === 'capital-dashboard' && <CapitalDashboard />}
+
+      {activeTab === 'products' && (
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-2xl font-bold">产品表</h1>
+            <p className="text-muted-foreground">管理理财产品信息</p>
+          </div>
+          <ProductsLibrary />
+        </div>
+      )}
+
+      {activeTab === 'funds' && (
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-2xl font-bold">资金表</h1>
+            <p className="text-muted-foreground">管理资金分配情况</p>
+          </div>
+          <CapitalUnitsManager />
         </div>
       )}
 

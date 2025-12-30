@@ -143,7 +143,7 @@ Financial Color System:
 
     /* ========== Primary: Blue (Dark Mode) ========== */
     --primary: 217 91% 60%;          /* Blue-500 */
-    --primary-foreground: 222 47% 11%; /* Slate-900 */
+    --primary-foreground: 0 0% 100%;  /* White */
     --primary-hover: 217 91% 65%;    /* Blue-400 */
     --primary-light: 217 91% 15%;    /* Blue-950 */
     --primary-dark: 217 91% 55%;     /* Blue-600 */
@@ -215,7 +215,7 @@ Financial Color System:
     --sidebar-background: 224 71% 4%; /* Slate-950 */
     --sidebar-foreground: 210 40% 98%; /* Slate-50 */
     --sidebar-primary: 217 91% 60%;  /* Blue-500 */
-    --sidebar-primary-foreground: 222 47% 11%; /* Slate-900 */
+    --sidebar-primary-foreground: 0 0% 100%; /* White */
     --sidebar-accent: 215 20% 30%;   /* Slate-700 */
     --sidebar-accent-foreground: 210 40% 98%; /* Slate-50 */
     --sidebar-border: 215 20% 30%;   /* Slate-700 */
