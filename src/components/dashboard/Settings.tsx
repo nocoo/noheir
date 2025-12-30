@@ -223,9 +223,9 @@ export function Settings() {
           </div>
           <p className="text-sm text-muted-foreground">
             建议储蓄率在 30%-70% 之间，当前设置：<span className={cn(
-              settings.targetSavingsRate >= 50 ? 'text-green-600 dark:text-green-400 font-semibold' :
+              settings.targetSavingsRate >= 50 ? 'text-income font-semibold' :
               settings.targetSavingsRate >= 30 ? 'text-yellow-600 dark:text-yellow-400 font-semibold' :
-              'text-red-600 dark:text-red-400 font-semibold'
+              'text-expense font-semibold'
             )}>
               {settings.targetSavingsRate < 30 ? '偏低' : settings.targetSavingsRate > 70 ? '偏高' : '合理'}
             </span>

@@ -55,15 +55,15 @@ export function DataQuality({ metrics, validations, onFilterChange }: DataQualit
   }, [metrics]);
 
   const getScoreColor = (percentage: number) => {
-    if (percentage >= 90) return 'text-green-600 dark:text-green-400';
+    if (percentage >= 90) return 'text-income';
     if (percentage >= 70) return 'text-yellow-600 dark:text-yellow-400';
-    return 'text-red-600 dark:text-red-400';
+    return 'text-expense';
   };
 
   const getScoreBgColor = (percentage: number) => {
-    if (percentage >= 90) return 'bg-green-500';
+    if (percentage >= 90) return 'bg-income';
     if (percentage >= 70) return 'bg-yellow-500';
-    return 'bg-red-500';
+    return 'bg-expense';
   };
 
   const getScoreLabel = (percentage: number) => {
@@ -132,7 +132,7 @@ export function DataQuality({ metrics, validations, onFilterChange }: DataQualit
                   <Layers className="h-3 w-3" />
                   {metrics.totalRecords} 条记录
                 </Badge>
-                <Badge variant="outline" className="gap-1 text-green-600">
+                <Badge variant="outline" className="gap-1 text-income">
                   <CheckCircle className="h-3 w-3" />
                   {metrics.validRecords} 正常
                 </Badge>
@@ -339,7 +339,7 @@ export function DataQuality({ metrics, validations, onFilterChange }: DataQualit
           </CardHeader>
           <CardContent>
             {validations.filter(v => v.severity !== 'valid').length === 0 ? (
-              <div className="text-center py-8 text-green-600 dark:text-green-400">
+              <div className="text-center py-8 text-income">
                 <CheckCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
                 <p>所有数据校验通过，无异常记录</p>
               </div>
@@ -370,7 +370,7 @@ export function DataQuality({ metrics, validations, onFilterChange }: DataQualit
                       {(v.errors.length > 0 || v.warnings.length > 0) && (
                         <div className="text-xs space-y-1">
                           {v.errors.map((err, i) => (
-                            <p key={i} className="text-red-600">• {err}</p>
+                            <p key={i} className="text-expense">• {err}</p>
                           ))}
                           {v.warnings.map((warn, i) => (
                             <p key={i} className="text-yellow-600">• {warn}</p>
@@ -401,9 +401,9 @@ function CompletenessBar({
   issues?: number;
 }) {
   const getColor = (p: number) => {
-    if (p >= 95) return 'bg-green-500';
+    if (p >= 95) return 'bg-income';
     if (p >= 80) return 'bg-yellow-500';
-    return 'bg-red-500';
+    return 'bg-expense';
   };
 
   return (
@@ -442,9 +442,9 @@ function IntegrityCard({
   const percentage = total > 0 ? (count / total) * 100 : 0;
 
   const colors = {
-    success: 'text-green-600',
+    success: 'text-income',
     warning: 'text-yellow-600',
-    error: 'text-red-600'
+    error: 'text-expense'
   };
 
   return (

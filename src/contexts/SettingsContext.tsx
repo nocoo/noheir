@@ -92,19 +92,31 @@ export function useSettings() {
   return context;
 }
 
-// Helper to get colors based on scheme
+// Helper to get colors based on scheme using semantic CSS variables
 export function getIncomeColor(scheme: ColorScheme): string {
-  return scheme === 'swapped' ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400';
+  return scheme === 'swapped' ? 'text-expense' : 'text-income';
 }
 
 export function getExpenseColor(scheme: ColorScheme): string {
-  return scheme === 'swapped' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
+  return scheme === 'swapped' ? 'text-income' : 'text-expense';
 }
 
+// HSL format for CSS/style attributes
+export function getIncomeColorHsl(scheme: ColorScheme): string {
+  return scheme === 'swapped' ? 'hsl(var(--expense))' : 'hsl(var(--income))';
+}
+
+export function getExpenseColorHsl(scheme: ColorScheme): string {
+  return scheme === 'swapped' ? 'hsl(var(--income))' : 'hsl(var(--expense))';
+}
+
+// Hex format for ECharts and other libraries that require hex values
 export function getIncomeColorHex(scheme: ColorScheme): string {
-  return scheme === 'swapped' ? 'hsl(0, 72%, 50%)' : 'hsl(142, 76%, 36%)';
+  // Emerald-600 for income: #059669
+  return scheme === 'swapped' ? '#e11d48' : '#059669';
 }
 
 export function getExpenseColorHex(scheme: ColorScheme): string {
-  return scheme === 'swapped' ? 'hsl(142, 76%, 36%)' : 'hsl(0, 72%, 50%)';
+  // Rose-600 for expense: #e11d48
+  return scheme === 'swapped' ? '#059669' : '#e11d48';
 }

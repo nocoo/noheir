@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Transaction, MonthlyData } from '@/types/transaction';
 import { StatCard } from './StatCard';
-import { useSettings, getExpenseColor, getExpenseColorHex } from '@/contexts/SettingsContext';
+import { useSettings, getExpenseColor, getExpenseColorHsl } from '@/contexts/SettingsContext';
 import type { PieLabelEntry } from '@/types/category-shared';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -19,10 +19,10 @@ interface TransferAnalysisProps {
 
 export function TransferAnalysis({ transactions, monthlyData }: TransferAnalysisProps) {
   const { settings } = useSettings();
-  const expenseColorHex = getExpenseColorHex(settings.colorScheme);
+  const expenseColorHsl = getExpenseColorHsl(settings.colorScheme);
   const expenseColorClass = getExpenseColor(settings.colorScheme);
-  const incomeColorHex = getExpenseColorHex(settings.colorScheme) === '#22c55e' ? '#3b82f6' : '#22c55e';
-  const incomeColorClass = getExpenseColor(settings.colorScheme) === '#22c55e' ? 'text-blue-500' : 'text-green-500';
+  const incomeColorHsl = getExpenseColor(settings.colorScheme) === 'text-income' ? 'hsl(var(--primary))' : 'hsl(var(--income))';
+  const incomeColorClass = getExpenseColor(settings.colorScheme) === 'text-income' ? 'text-primary' : 'text-income';
 
   const transferTransactions = useMemo(() =>
     transactions.filter(t => t.type === 'transfer'),
@@ -171,8 +171,8 @@ export function TransferAnalysis({ transactions, monthlyData }: TransferAnalysis
               <AreaChart data={monthlyTransferData}>
                 <defs>
                   <linearGradient id="transferGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={expenseColorHex} stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor={expenseColorHex} stopOpacity={0}/>
+                    <stop offset="5%" stopColor={expenseColorHsl} stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor={expenseColorHsl} stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid {...gridStyle} />
@@ -185,7 +185,7 @@ export function TransferAnalysis({ transactions, monthlyData }: TransferAnalysis
                 <Area
                   type="monotone"
                   dataKey="总转账"
-                  stroke={expenseColorHex}
+                  stroke={expenseColorHsl}
                   strokeWidth={2}
                   fill="url(#transferGradient)"
                 />
@@ -252,7 +252,7 @@ export function TransferAnalysis({ transactions, monthlyData }: TransferAnalysis
                     contentStyle={tooltipStyle.contentStyle}
                     itemStyle={{ color: 'hsl(var(--foreground))' }}
                   />
-                  <Bar dataKey="amount" fill={expenseColorHex} radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="amount" fill={expenseColorHsl} radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

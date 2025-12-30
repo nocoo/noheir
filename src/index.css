@@ -5,150 +5,118 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here.
 All colors MUST be HSL.
+
+Financial Color System:
+- Primary: Blue/Indigo (信任、专业)
+- Income: Emerald (收入 - 稳重绿色)
+- Expense: Rose (支出 - 现代红色)
+- Neutral: Slate (文字、边框、背景)
 */
 
 @layer base {
   :root {
-    --background: 0 0% 96%;
-    --foreground: 0 0% 9%;
+    /* ========== Base Colors (Slate-based) ========== */
+    --background: 210 40% 98%;       /* Slate-50 */
+    --foreground: 222 47% 11%;       /* Slate-900 */
 
-    --card: 0 0% 98%;
-    --card-foreground: 0 0% 9%;
+    --card: 0 0% 100%;               /* White */
+    --card-foreground: 222 47% 11%;  /* Slate-900 */
 
-    --popover: 0 0% 89%;
-    --popover-foreground: 0 0% 9%;
+    --popover: 210 40% 96%;          /* Slate-100 */
+    --popover-foreground: 222 47% 11%; /* Slate-900 */
 
-    --primary: 20 90% 48%;
-    --primary-foreground: 33 100% 96%;
+    /* ========== Primary: Blue (专业、信任) ========== */
+    --primary: 221 83% 53%;          /* Blue-600 */
+    --primary-foreground: 210 40% 98%; /* Slate-50 */
+    --primary-hover: 221 83% 48%;    /* Blue-700 */
+    --primary-light: 221 83% 97%;    /* Blue-50 */
+    --primary-dark: 221 83% 60%;     /* Blue-500 */
 
-    --secondary: 0 0% 32%;
-    --secondary-foreground: 0 0% 98%;
+    /* ========== Secondary ========== */
+    --secondary: 210 40% 96%;        /* Slate-100 */
+    --secondary-foreground: 222 47% 11%; /* Slate-900 */
 
-    --muted: 0 0% 63%;
-    --muted-foreground: 0 0% 9%;
+    /* ========== Muted ========== */
+    --muted: 210 40% 96%;            /* Slate-100 */
+    --muted-foreground: 215 16% 47%; /* Slate-500 */
 
-    --accent: 47 100% 96%;
-    --accent-foreground: 37 92% 50%;
+    /* ========== Accent ========== */
+    --accent: 210 40% 96%;           /* Slate-100 */
+    --accent-foreground: 222 47% 11%; /* Slate-900 */
 
-    --destructive: 0 72% 50%;
-    --destructive-foreground: 0 85% 97%;
+    /* ========== Destructive ========== */
+    --destructive: 0 84% 60%;        /* Red-500 */
+    --destructive-foreground: 210 40% 98%; /* Slate-50 */
 
-    --border: 0 0% 83%;
-    --input: 0 0% 83%;
-    --ring: 20 90% 48%;
+    /* ========== Border & Input ========== */
+    --border: 214 32% 91%;           /* Slate-200 */
+    --input: 214 32% 91%;            /* Slate-200 */
+    --ring: 221 83% 53%;             /* Blue-600 */
 
-    --radius: 0.75rem;
+    /* ========== NEW: Financial Colors ========== */
 
-    --sidebar-background: 0 0% 98%;
+    /* Income: Emerald (稳重绿色) */
+    --income: 160 84% 39%;            /* Emerald-600 */
+    --income-foreground: 210 40% 98%; /* Slate-50 */
+    --income-bg: 160 84% 97%;        /* Emerald-50 */
+    --income-dark: 160 84% 45%;      /* Emerald-500 */
+    --income-light: 160 84% 95%;     /* Emerald-100 */
 
-    --sidebar-foreground: 0 0% 9%;
+    /* Expense: Rose (现代红色) */
+    --expense: 350 89% 60%;          /* Rose-600 */
+    --expense-foreground: 210 40% 98%; /* Slate-50 */
+    --expense-bg: 350 89% 97%;       /* Rose-50 */
+    --expense-dark: 350 89% 65%;     /* Rose-500 */
+    --expense-light: 350 89% 95%;    /* Rose-100 */
 
-    --sidebar-primary: 20 90% 48%;
+    /* Semantic Text Colors */
+    --text-main: 222 47% 11%;        /* Slate-900 */
+    --text-secondary: 215 16% 47%;   /* Slate-500 */
+    --text-muted: 215 20% 65%;       /* Slate-400 */
+    --text-income: 160 84% 39%;      /* Emerald-600 */
+    --text-expense: 350 89% 60%;     /* Rose-600 */
 
-    --sidebar-primary-foreground: 33 100% 96%;
+    /* Semantic Backgrounds */
+    --bg-main: 210 40% 98%;          /* Slate-50 */
+    --bg-surface: 0 0% 100%;         /* White */
+    --bg-alt: 210 40% 96%;           /* Slate-100 */
 
-    --sidebar-accent: 0 0% 32%;
+    /* ========== Chart Colors (金融色系) ========== */
+    --chart-1: 160 84% 39%;           /* Emerald (income) */
+    --chart-2: 350 89% 60%;           /* Rose (expense) */
+    --chart-3: 221 83% 53%;           /* Blue (primary) */
+    --chart-4: 45 93% 47%;            /* Yellow/Amber */
+    --chart-5: 262 83% 58%;           /* Purple */
 
-    --sidebar-accent-foreground: 0 0% 98%;
+    /* ========== Sidebar ========== */
+    --sidebar-background: 0 0% 100%;  /* White */
+    --sidebar-foreground: 222 47% 11%; /* Slate-900 */
+    --sidebar-primary: 221 83% 53%;   /* Blue-600 */
+    --sidebar-primary-foreground: 210 40% 98%; /* Slate-50 */
+    --sidebar-accent: 210 40% 96%;    /* Slate-100 */
+    --sidebar-accent-foreground: 222 47% 11%; /* Slate-900 */
+    --sidebar-border: 214 32% 91%;   /* Slate-200 */
+    --sidebar-ring: 221 83% 53%;      /* Blue-600 */
 
-    --sidebar-border: 0 0% 83%;
+    /* ========== Legacy Sidebar ========== */
+    --sidebar: 0 0% 100%;
 
-    --sidebar-ring: 20 90% 48%;
-
-    --chart-1: 27 95% 60%;
-
-    --chart-2: 43 96% 56%;
-
-    --chart-3: 47 95% 53%;
-
-    --chart-4: 24 94% 53%;
-
-    --chart-5: 0 0% 45%;
-
-    --sidebar: 0 0% 98%;
-
-    --font-sans: 'Roboto', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
-
-    --font-serif: 'Libre Caslon Text', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
-
-    --font-mono: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-
-    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-
-    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-
-    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-
-    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-
-    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-
-    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
-
-    --tracking-normal: 0em;
-
-    --spacing: 0.25rem;
-
+    /* ========== Heatmap Colors (保留原GitHub风格) ========== */
     --heatmap-0: #ebedf0;
     --heatmap-1: #c6e48b;
     --heatmap-2: #7bc96f;
     --heatmap-3: #239a3b;
     --heatmap-4: #196127;
-  }
 
-  .dark {
-    --background: 0 0% 9%;
-    --foreground: 0 0% 98%;
+    /* ========== Other ========== */
+    --radius: 0.75rem;
 
-    --card: 0 0% 14%;
-    --card-foreground: 0 0% 98%;
+    --font-sans: 'Roboto', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+    --font-serif: 'Libre Caslon Text', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+    --font-mono: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
 
-    --popover: 0 0% 25%;
-    --popover-foreground: 0 0% 98%;
-
-    --primary: 27 95% 60%;
-    --primary-foreground: 12 81% 14%;
-
-    --secondary: 0 0% 45%;
-    --secondary-foreground: 0 0% 98%;
-
-    --muted: 0 0% 45%;
-    --muted-foreground: 0 0% 98%;
-
-    --accent: 20 91% 14%;
-    --accent-foreground: 43 96% 56%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 85% 97%;
-
-    --border: 0 0% 32%;
-    --input: 0 0% 32%;
-    --ring: 27 95% 60%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 27 95% 60%;
-    --sidebar-primary-foreground: 12 81% 14%;
-    --sidebar-accent: 43 96% 56%;
-    --sidebar-accent-foreground: 20 91% 14%;
-    --sidebar-border: 0 0% 32%;
-    --sidebar-ring: 27 95% 60%;
-    --chart-1: 30 97% 72%;
-    --chart-2: 45 96% 64%;
-    --chart-3: 48 96% 76%;
-    --chart-4: 27 95% 60%;
-    --chart-5: 0 0% 45%;
-    --sidebar: 0 0% 14%;
-    --heatmap-0: #161b22;
-    --heatmap-1: #0e4429;
-    --heatmap-2: #006d32;
-    --heatmap-3: #26a641;
-    --heatmap-4: #39d353;
     --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
     --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
     --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
@@ -157,6 +125,113 @@ All colors MUST be HSL.
     --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
     --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
     --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+
+    --tracking-normal: 0em;
+    --spacing: 0.25rem;
+  }
+
+  .dark {
+    /* ========== Base Colors (Dark Mode) ========== */
+    --background: 222 47% 11%;       /* Slate-900 */
+    --foreground: 210 40% 98%;       /* Slate-50 */
+
+    --card: 224 71% 4%;              /* Slate-950 / Slate-800 */
+    --card-foreground: 210 40% 98%;  /* Slate-50 */
+
+    --popover: 224 71% 4%;           /* Slate-950 */
+    --popover-foreground: 210 40% 98%; /* Slate-50 */
+
+    /* ========== Primary: Blue (Dark Mode) ========== */
+    --primary: 217 91% 60%;          /* Blue-500 */
+    --primary-foreground: 222 47% 11%; /* Slate-900 */
+    --primary-hover: 217 91% 65%;    /* Blue-400 */
+    --primary-light: 217 91% 15%;    /* Blue-950 */
+    --primary-dark: 217 91% 55%;     /* Blue-600 */
+
+    /* ========== Secondary (Dark Mode) ========== */
+    --secondary: 215 20% 30%;        /* Slate-700 */
+    --secondary-foreground: 210 40% 98%; /* Slate-50 */
+
+    /* ========== Muted (Dark Mode) ========== */
+    --muted: 215 20% 30%;            /* Slate-700 */
+    --muted-foreground: 215 20% 65%; /* Slate-400 */
+
+    /* ========== Accent (Dark Mode) ========== */
+    --accent: 215 20% 30%;           /* Slate-700 */
+    --accent-foreground: 210 40% 98%; /* Slate-50 */
+
+    /* ========== Destructive (Dark Mode) ========== */
+    --destructive: 0 72% 50%;        /* Red-600 */
+    --destructive-foreground: 210 40% 98%; /* Slate-50 */
+
+    /* ========== Border & Input (Dark Mode) ========== */
+    --border: 215 20% 30%;           /* Slate-700 */
+    --input: 215 20% 30%;            /* Slate-700 */
+    --ring: 217 91% 60%;             /* Blue-500 */
+
+    /* ========== NEW: Financial Colors (Dark Mode) ========== */
+
+    /* Income: Emerald (Dark Mode) */
+    --income: 160 84% 45%;           /* Emerald-500 (更亮) */
+    --income-foreground: 222 47% 11%; /* Slate-900 */
+    --income-bg: 160 84% 10%;        /* Emerald-950 */
+    --income-dark: 160 84% 50%;      /* Emerald-400 */
+    --income-light: 160 84% 20%;     /* Emerald-900 */
+
+    /* Expense: Rose (Dark Mode) */
+    --expense: 350 89% 65%;          /* Rose-500 (更亮) */
+    --expense-foreground: 222 47% 11%; /* Slate-900 */
+    --expense-bg: 350 89% 10%;       /* Rose-950 */
+    --expense-dark: 350 89% 70%;     /* Rose-400 */
+    --expense-light: 350 89% 20%;    /* Rose-900 */
+
+    /* Semantic Text Colors (Dark Mode) */
+    --text-main: 210 40% 98%;        /* Slate-50 */
+    --text-secondary: 215 20% 65%;   /* Slate-400 */
+    --text-muted: 215 20% 50%;       /* Slate-500 */
+    --text-income: 160 84% 50%;      /* Emerald-400 */
+    --text-expense: 350 89% 65%;     /* Rose-500 */
+
+    /* Semantic Backgrounds (Dark Mode) */
+    --bg-main: 222 47% 11%;          /* Slate-900 */
+    --bg-surface: 224 71% 4%;        /* Slate-950 */
+    --bg-alt: 215 20% 20%;           /* Slate-800 */
+
+    /* ========== Chart Colors (Dark Mode) ========== */
+    --chart-1: 160 84% 50%;           /* Emerald (brighter) */
+    --chart-2: 350 89% 70%;           /* Rose (brighter) */
+    --chart-3: 217 91% 65%;           /* Blue (brighter) */
+    --chart-4: 45 93% 57%;            /* Yellow (brighter) */
+    --chart-5: 262 83% 68%;           /* Purple (brighter) */
+
+    /* ========== Heatmap Colors (Dark Mode - GitHub style) ========== */
+    --heatmap-0: #161b22;
+    --heatmap-1: #0e4429;
+    --heatmap-2: #006d32;
+    --heatmap-3: #26a641;
+    --heatmap-4: #39d353;
+
+    /* ========== Sidebar (Dark Mode) ========== */
+    --sidebar-background: 224 71% 4%; /* Slate-950 */
+    --sidebar-foreground: 210 40% 98%; /* Slate-50 */
+    --sidebar-primary: 217 91% 60%;  /* Blue-500 */
+    --sidebar-primary-foreground: 222 47% 11%; /* Slate-900 */
+    --sidebar-accent: 215 20% 30%;   /* Slate-700 */
+    --sidebar-accent-foreground: 210 40% 98%; /* Slate-50 */
+    --sidebar-border: 215 20% 30%;   /* Slate-700 */
+    --sidebar-ring: 217 91% 60%;     /* Blue-500 */
+
+    --sidebar: 224 71% 4%;
+
+    /* ========== Shadows (Dark Mode) ========== */
+    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.3);
+    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.3);
+    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.4), 0 1px 2px -1px hsl(0 0% 0% / 0.4);
+    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.4), 0 1px 2px -1px hsl(0 0% 0% / 0.4);
+    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.4), 0 2px 4px -1px hsl(0 0% 0% / 0.4);
+    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.4), 0 4px 6px -1px hsl(0 0% 0% / 0.4);
+    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.4), 0 8px 10px -1px hsl(0 0% 0% / 0.4);
+    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.6);
   }
 }
 

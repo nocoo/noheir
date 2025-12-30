@@ -15,6 +15,7 @@ export default {
   	},
   	extend: {
   		colors: {
+  			// Base shadcn/ui colors (保持兼容)
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
   			ring: 'hsl(var(--ring))',
@@ -22,7 +23,11 @@ export default {
   			foreground: 'hsl(var(--foreground))',
   			primary: {
   				DEFAULT: 'hsl(var(--primary))',
-  				foreground: 'hsl(var(--primary-foreground))'
+  				foreground: 'hsl(var(--primary-foreground))',
+  				// Primary variants
+  				hover: 'hsl(var(--primary-hover))',
+  				light: 'hsl(var(--primary-light))',
+  				dark: 'hsl(var(--primary-dark))'
   			},
   			secondary: {
   				DEFAULT: 'hsl(var(--secondary))',
@@ -57,7 +62,56 @@ export default {
   				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
-  			}
+  			},
+
+  			// ========== NEW: Financial Color System ==========
+  			// Income color (Emerald - 稳重的收入色)
+  			income: {
+  				DEFAULT: 'hsl(var(--income))',
+  				foreground: 'hsl(var(--income-foreground))',
+  				bg: 'hsl(var(--income-bg))',
+  				dark: 'hsl(var(--income-dark))',
+  				light: 'hsl(var(--income-light))'
+  			},
+
+  			// Expense color (Rose - 现代的支出色)
+  			expense: {
+  				DEFAULT: 'hsl(var(--expense))',
+  				foreground: 'hsl(var(--expense-foreground))',
+  				bg: 'hsl(var(--expense-bg))',
+  				dark: 'hsl(var(--expense-dark))',
+  				light: 'hsl(var(--expense-light))'
+  			},
+
+  			// Semantic text colors (Slate based)
+  			text: {
+  				main: 'hsl(var(--text-main))',
+  				secondary: 'hsl(var(--text-secondary))',
+  				muted: 'hsl(var(--text-muted))',
+  				income: 'hsl(var(--text-income))',
+  				expense: 'hsl(var(--text-expense))'
+  			},
+
+  			// Semantic background colors
+  			bg: {
+  				main: 'hsl(var(--bg-main))',
+  				surface: 'hsl(var(--bg-surface))',
+  				alt: 'hsl(var(--bg-alt))'
+  			},
+
+  			// Chart colors (保留兼容性，重新映射为金融色系)
+  			'chart-1': 'hsl(var(--chart-1))',
+  			'chart-2': 'hsl(var(--chart-2))',
+  			'chart-3': 'hsl(var(--chart-3))',
+  			'chart-4': 'hsl(var(--chart-4))',
+  			'chart-5': 'hsl(var(--chart-5))',
+
+  			// Heatmap colors (保留原有)
+  			'heatmap-0': 'hsl(var(--heatmap-0))',
+  			'heatmap-1': 'hsl(var(--heatmap-1))',
+  			'heatmap-2': 'hsl(var(--heatmap-2))',
+  			'heatmap-3': 'hsl(var(--heatmap-3))',
+  			'heatmap-4': 'hsl(var(--heatmap-4))'
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
