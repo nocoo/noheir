@@ -185,10 +185,11 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
     <div className="space-y-6">
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatCard 
-          title="账户数量" 
-          value={accountData.length} 
+        <StatCard
+          title="账户数量"
+          value={accountData.length}
           icon={Wallet}
+          showCurrency={false}
         />
         <StatCard 
           title="总资金流动" 

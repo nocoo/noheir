@@ -177,7 +177,7 @@ const Index = () => {
             <StatCard title="结余" value={balance} icon={PiggyBank} variant="balance" />
             <StatCard title="储蓄率" value={`${savingsRate.toFixed(1)}%`} icon={Percent} />
             <StatCard title="月均支出" value={Math.round(totalExpense / 12)} icon={Activity} />
-            <StatCard title="交易笔数" value={transactions.length} icon={Wallet} />
+            <StatCard title="交易笔数" value={transactions.length} icon={Wallet} showCurrency={false} />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
