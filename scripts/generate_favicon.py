@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate a favicon for 貔貅记账 (Pixiu Accounting)
+Generate a favicon for 个人财务管理 (Personal Finance Management)
 Design: A stylized coin/chart symbol representing financial tracking
 """
 
