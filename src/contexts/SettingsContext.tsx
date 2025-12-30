@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 
 export type Theme = 'light' | 'dark' | 'system';
 export type ColorScheme = 'default' | 'swapped';
@@ -6,8 +6,8 @@ export type ColorScheme = 'default' | 'swapped';
 interface Settings {
   theme: Theme;
   colorScheme: ColorScheme;
-  targetSavingsRate: number; // 目标储蓄率，0-100
-  activeIncomeCategories: string[]; // 主动收入的三级分类名称列表
+  targetSavingsRate: number;
+  activeIncomeCategories: string[];
 }
 
 interface SettingsContextType {
@@ -25,31 +25,44 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
   colorScheme: 'default',
-  targetSavingsRate: 60, // 默认60%
-  activeIncomeCategories: [], // 默认空列表，表示所有收入都是被动收入
+  targetSavingsRate: 60,
+  activeIncomeCategories: [],
 };
 
-const SETTINGS_KEY = 'finance-analyzer-settings';
+const STORAGE_KEY = 'finance-settings';
+
+// Load settings from localStorage
+const loadFromLocalStorage = (): Settings | null => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (err) {
+    console.error('Failed to load settings from localStorage:', err);
+  }
+  return null;
+};
+
+// Save settings to localStorage
+const saveToLocalStorage = (settings: Settings) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  } catch (err) {
+    console.error('Failed to save settings to localStorage:', err);
+  }
+};
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
+  // Initialize from localStorage first for instant load
   const [settings, setSettings] = useState<Settings>(() => {
-    const stored = localStorage.getItem(SETTINGS_KEY);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored) as Partial<Settings>;
-        // Merge with defaults to handle missing fields
-        return {
-          theme: parsed.theme ?? DEFAULT_SETTINGS.theme,
-          colorScheme: parsed.colorScheme ?? DEFAULT_SETTINGS.colorScheme,
-          targetSavingsRate: parsed.targetSavingsRate ?? DEFAULT_SETTINGS.targetSavingsRate,
-          activeIncomeCategories: parsed.activeIncomeCategories ?? DEFAULT_SETTINGS.activeIncomeCategories,
-        };
-      } catch {
-        return DEFAULT_SETTINGS;
-      }
-    }
-    return DEFAULT_SETTINGS;
+    return loadFromLocalStorage() || DEFAULT_SETTINGS;
   });
+
+  // Save to localStorage whenever settings change
+  useEffect(() => {
+    saveToLocalStorage(settings);
+  }, [settings]);
 
   // Apply theme to document
   useEffect(() => {
@@ -65,11 +78,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
     root.classList.add(effectiveTheme);
   }, [settings.theme]);
-
-  // Save to localStorage
-  useEffect(() => {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-  }, [settings]);
 
   const updateTheme = (theme: Theme) => {
     setSettings(prev => ({ ...prev, theme }));
@@ -102,7 +110,17 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <SettingsContext.Provider value={{ settings, updateTheme, updateColorScheme, updateTargetSavingsRate, updateActiveIncomeCategories, toggleActiveIncomeCategory, isCategoryActiveIncome }}>
+    <SettingsContext.Provider
+      value={{
+        settings,
+        updateTheme,
+        updateColorScheme,
+        updateTargetSavingsRate,
+        updateActiveIncomeCategories,
+        toggleActiveIncomeCategory,
+        isCategoryActiveIncome,
+      }}
+    >
       {children}
     </SettingsContext.Provider>
   );
@@ -136,11 +154,9 @@ export function getExpenseColorHsl(scheme: ColorScheme): string {
 
 // Hex format for ECharts and other libraries that require hex values
 export function getIncomeColorHex(scheme: ColorScheme): string {
-  // Emerald-600 for income: #059669
   return scheme === 'swapped' ? '#e11d48' : '#059669';
 }
 
 export function getExpenseColorHex(scheme: ColorScheme): string {
-  // Rose-600 for expense: #e11d48
   return scheme === 'swapped' ? '#059669' : '#e11d48';
 }

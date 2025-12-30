@@ -1,32 +1,53 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSiteMetadata } from '@/hooks/useSiteMetadata';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Globe } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
+const DEFAULT_SITE_NAME = '个人财务管理';
+
 export function SiteMetadata() {
   const { user } = useAuth();
-  const { data, loading, error, createMetadata, updateMetadata } = useSiteMetadata();
+  const { data, loading, error, createMetadata, updateSiteName } = useSiteMetadata();
   const [siteName, setSiteName] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [autoCreated, setAutoCreated] = useState(false);
 
-  // Initialize site name from data
-  useState(() => {
+  // Auto-create default metadata for new users
+  useEffect(() => {
+    if (user && !loading && !data && !error && !autoCreated) {
+      const autoCreate = async () => {
+        setAutoCreated(true);
+        try {
+          await createMetadata(DEFAULT_SITE_NAME);
+          toast.success('已自动创建默认配置');
+        } catch (err) {
+          // Silently fail - user can manually create later
+          console.error('Auto-create failed:', err);
+        }
+      };
+      autoCreate();
+    }
+  }, [user, loading, data, error, autoCreated, createMetadata]);
+
+  // Sync site name from data
+  useEffect(() => {
     if (data?.site_name) {
       setSiteName(data.site_name);
     }
-  });
+  }, [data]);
 
   if (!user) {
     return (
       <Card>
         <CardContent className="pt-6">
-          <p className="text-muted-foreground text-center">请先登录以查看元数据</p>
+          <p className="text-muted-foreground text-center">请先登录以查看站点设置</p>
         </CardContent>
       </Card>
     );
@@ -61,11 +82,11 @@ export function SiteMetadata() {
     setIsSaving(true);
     try {
       if (data) {
-        await updateMetadata({ site_name: siteName });
-        toast.success('元数据已更新');
+        await updateSiteName(siteName);
+        toast.success('站点名称已更新');
       } else {
         await createMetadata(siteName);
-        toast.success('元数据已创建');
+        toast.success('站点配置已创建');
       }
       setIsEditing(false);
     } catch (err) {
@@ -83,45 +104,26 @@ export function SiteMetadata() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>站点元数据</CardTitle>
-        <CardDescription>管理您的站点配置信息</CardDescription>
+        <CardTitle className="flex items-center gap-2">
+          <Globe className="h-5 w-5 text-primary" />
+          站点设置
+        </CardTitle>
+        <CardDescription>配置您的站点基本信息</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {data ? (
+      <CardContent className="space-y-4">
+        {data || !isEditing ? (
           <>
-            <div className="space-y-4">
-              <div>
-                <Label>站点名称</Label>
-                {isEditing ? (
-                  <Input
-                    value={siteName}
-                    onChange={(e) => setSiteName(e.target.value)}
-                    placeholder="输入站点名称"
-                    className="mt-1.5"
-                  />
-                ) : (
-                  <p className="text-lg font-semibold mt-1.5">{data.site_name}</p>
-                )}
-              </div>
-
-              <div>
-                <Label>用户 ID</Label>
-                <p className="text-sm font-mono text-muted-foreground mt-1.5">{data.owner_id}</p>
-              </div>
-
-              <div>
-                <Label>设置 (JSON)</Label>
-                <pre className="text-xs bg-muted p-3 rounded-md mt-1.5 overflow-x-auto">
-                  {JSON.stringify(data.settings, null, 2)}
-                </pre>
-              </div>
-
-              <div>
-                <Label>创建时间</Label>
-                <p className="text-sm text-muted-foreground mt-1.5">
-                  {new Date(data.created_at).toLocaleString('zh-CN')}
-                </p>
-              </div>
+            <div className="space-y-2">
+              <Label>站点名称</Label>
+              {isEditing ? (
+                <Input
+                  value={siteName}
+                  onChange={(e) => setSiteName(e.target.value)}
+                  placeholder="输入站点名称"
+                />
+              ) : (
+                <p className="text-lg font-semibold">{data?.site_name || '未设置'}</p>
+              )}
             </div>
 
             <div className="flex gap-2">
@@ -136,13 +138,15 @@ export function SiteMetadata() {
                   </Button>
                 </>
               ) : (
-                <Button onClick={() => setIsEditing(true)}>编辑</Button>
+                <Button onClick={() => setIsEditing(true)}>
+                  {data ? '编辑' : '设置站点名称'}
+                </Button>
               )}
             </div>
           </>
         ) : (
           <div className="space-y-4">
-            <p className="text-muted-foreground">暂无元数据，请创建</p>
+            <p className="text-muted-foreground">首次使用，请设置您的站点名称</p>
             <Input
               placeholder="输入站点名称"
               value={siteName}
@@ -150,7 +154,7 @@ export function SiteMetadata() {
             />
             <Button onClick={handleSave} disabled={isSaving || !siteName.trim()}>
               {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              创建
+              创建配置
             </Button>
           </div>
         )}

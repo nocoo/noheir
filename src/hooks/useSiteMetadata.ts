@@ -2,12 +2,20 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { PostgrestError } from '@supabase/supabase-js';
+import type { Theme, ColorScheme } from '@/contexts/SettingsContext';
+
+interface UserSettings {
+  theme: Theme;
+  colorScheme: ColorScheme;
+  targetSavingsRate: number;
+  activeIncomeCategories: string[];
+}
 
 interface SiteMetadata {
   id: number;
   owner_id: string;
   site_name: string;
-  settings: Record<string, any>;
+  settings: UserSettings;
   created_at: string;
 }
 
@@ -15,9 +23,21 @@ interface UseSiteMetadataReturn {
   data: SiteMetadata | null;
   loading: boolean;
   error: PostgrestError | null;
-  createMetadata: (siteName: string, settings?: Record<string, any>) => Promise<SiteMetadata>;
-  updateMetadata: (updates: Partial<Pick<SiteMetadata, 'site_name' | 'settings'>>) => Promise<SiteMetadata>;
+  createMetadata: (siteName: string, settings?: UserSettings) => Promise<SiteMetadata>;
+  updateSiteName: (siteName: string) => Promise<SiteMetadata>;
+  updateSettings: (settings: Partial<UserSettings>) => Promise<SiteMetadata>;
+  updateSingleSetting: <K extends keyof UserSettings>(
+    key: K,
+    value: UserSettings[K]
+  ) => Promise<SiteMetadata>;
 }
+
+const DEFAULT_SETTINGS: UserSettings = {
+  theme: 'system',
+  colorScheme: 'default',
+  targetSavingsRate: 60,
+  activeIncomeCategories: [],
+};
 
 export function useSiteMetadata(): UseSiteMetadataReturn {
   const { user } = useAuth();
@@ -56,7 +76,7 @@ export function useSiteMetadata(): UseSiteMetadataReturn {
 
   const createMetadata = async (
     siteName: string,
-    settings: Record<string, any> = {}
+    settings: UserSettings = DEFAULT_SETTINGS
   ): Promise<SiteMetadata> => {
     if (!user) {
       throw new Error('User not authenticated');
@@ -80,16 +100,14 @@ export function useSiteMetadata(): UseSiteMetadataReturn {
     return data;
   };
 
-  const updateMetadata = async (
-    updates: Partial<Pick<SiteMetadata, 'site_name' | 'settings'>>
-  ): Promise<SiteMetadata> => {
+  const updateSiteName = async (siteName: string): Promise<SiteMetadata> => {
     if (!user) {
       throw new Error('User not authenticated');
     }
 
     const { data, error } = await supabase
       .from('site_metadata')
-      .update(updates)
+      .update({ site_name: siteName })
       .eq('owner_id', user.id)
       .select()
       .single();
@@ -102,5 +120,46 @@ export function useSiteMetadata(): UseSiteMetadataReturn {
     return data;
   };
 
-  return { data, loading, error, createMetadata, updateMetadata };
+  const updateSettings = async (
+    settingsUpdate: Partial<UserSettings>
+  ): Promise<SiteMetadata> => {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    // Merge with existing settings
+    const currentSettings = data?.settings || DEFAULT_SETTINGS;
+    const newSettings = { ...currentSettings, ...settingsUpdate };
+
+    const { data: updatedData, error } = await supabase
+      .from('site_metadata')
+      .update({ settings: newSettings })
+      .eq('owner_id', user.id)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    setData(updatedData);
+    return updatedData;
+  };
+
+  const updateSingleSetting = async <K extends keyof UserSettings>(
+    key: K,
+    value: UserSettings[K]
+  ): Promise<SiteMetadata> => {
+    return updateSettings({ [key]: value });
+  };
+
+  return {
+    data,
+    loading,
+    error,
+    createMetadata,
+    updateSiteName,
+    updateSettings,
+    updateSingleSetting,
+  };
 }
