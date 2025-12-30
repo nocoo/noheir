@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Background circle -->
+  <circle cx="32" cy="32" r="30" fill="#059669"/>
+
+  <!-- Coin outer ring -->
+  <circle cx="32" cy="32" r="26" fill="none" stroke="#10B981" stroke-width="2"/>
+
+  <!-- Inner circle -->
+  <circle cx="32" cy="32" r="20" fill="#065F46"/>
+
+  <!-- Chinese Yuan symbol (¥) -->
+  <g fill="#34D399">
+    <!-- Vertical line -->
+    <rect x="30" y="18" width="4" height="28" rx="1"/>
+    <!-- Top horizontal line -->
+    <rect x="20" y="22" width="24" height="3" rx="1"/>
+    <!-- Middle horizontal line -->
+    <rect x="22" y="28" width="20" height="3" rx="1"/>
+    <!-- Bottom legs -->
+    <polygon points="30,40 28,46 32,46 36,46 34,40"/>
+  </g>
+
+  <!-- Decorative dots -->
+  <circle cx="16" cy="32" r="2" fill="#10B981" opacity="0.8"/>
+  <circle cx="48" cy="32" r="2" fill="#10B981" opacity="0.8"/>
+  <circle cx="32" cy="16" r="2" fill="#10B981" opacity="0.8"/>
+  <circle cx="32" cy="48" r="2" fill="#10B981" opacity="0.8"/>
+</svg>
