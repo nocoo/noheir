@@ -24,11 +24,15 @@ import { YearComparisonChart } from '@/components/dashboard/YearComparisonChart'
 import { MultiYearSelector } from '@/components/dashboard/MultiYearSelector';
 import { FinancialFreedomAnalysis } from '@/components/dashboard/FinancialFreedomAnalysis';
 import { useTransactions } from '@/hooks/useTransactions';
+import { useAuth } from '@/contexts/AuthContext';
+import { LoadingPage } from '@/components/pages/LoadingPage';
+import { LoginPage } from '@/components/pages/LoginPage';
 import { Wallet, TrendingUp, TrendingDown, PiggyBank, Percent, Activity } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 
 const Index = () => {
+  const { user, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [qualityViewYear, setQualityViewYear] = useState<number | null>(null);
   const [qualityData, setQualityData] = useState<{ year: number; metrics: DataQualityMetrics; validations: TransactionValidation[] } | null>(null);
@@ -55,6 +59,16 @@ const Index = () => {
     loadStoredData,
     getQualityForYear,
   } = useTransactions();
+
+  // Show Loading page when auth is loading or data is loading for the first time
+  if (authLoading || (user && isLoading)) {
+    return <LoadingPage />;
+  }
+
+  // Show Login page when user is not authenticated
+  if (!user) {
+    return <LoginPage />;
+  }
 
   const savingsRate = useMemo(() => {
     return totalIncome > 0 ? ((totalIncome - totalExpense) / totalIncome) * 100 : 0;

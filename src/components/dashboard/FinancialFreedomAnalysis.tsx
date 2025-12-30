@@ -301,9 +301,17 @@ export function FinancialFreedomAnalysis({ transactions, year }: FinancialFreedo
                     step={5}
                     className="w-full"
                   />
-                  <div className="flex justify-between text-xs text-muted-foreground">
+                  <div className="flex justify-between text-xs text-muted-foreground px-1">
                     <span>0%</span>
+                    <span>10%</span>
+                    <span>20%</span>
+                    <span>30%</span>
+                    <span>40%</span>
                     <span>50%</span>
+                    <span>60%</span>
+                    <span>70%</span>
+                    <span>80%</span>
+                    <span>90%</span>
                     <span>100%</span>
                   </div>
                 </div>
@@ -374,10 +382,19 @@ export function FinancialFreedomAnalysis({ transactions, year }: FinancialFreedo
                     step={5}
                     className="w-full"
                   />
-                  <div className="flex justify-between text-xs text-muted-foreground">
+                  <div className="flex justify-between text-xs text-muted-foreground px-1">
                     <span>0%</span>
+                    <span>10%</span>
+                    <span>20%</span>
+                    <span>30%</span>
+                    <span>40%</span>
                     <span>50%</span>
+                    <span>60%</span>
+                    <span>70%</span>
+                    <span>80%</span>
+                    <span>90%</span>
                     <span>100%</span>
+                    <span>150%</span>
                     <span>200%</span>
                   </div>
                 </div>

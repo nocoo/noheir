@@ -1,18 +1,12 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { LogOut, LogIn } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 
 export function LoginButton() {
-  const { user, loading, signInWithGoogle, signOut } = useAuth();
+  const { user, signOut } = useAuth();
 
-  if (loading) {
-    return (
-      <Button variant="outline" disabled className="w-full">
-        加载中...
-      </Button>
-    );
-  }
-
+  // Only show logout button when user is logged in
+  // Login is handled by the full-screen LoginPage
   if (user) {
     return (
       <div className="space-y-2 w-full">
@@ -27,10 +21,6 @@ export function LoginButton() {
     );
   }
 
-  return (
-    <Button size="sm" onClick={signInWithGoogle} className="w-full">
-      <LogIn className="mr-2 h-4 w-4" />
-      Google 登录
-    </Button>
-  );
+  // Not logged in - don't show anything (LoginPage will handle it)
+  return null;
 }

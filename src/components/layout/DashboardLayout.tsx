@@ -39,11 +39,11 @@ const navGroups = [
   {
     title: '深入分析',
     items: [
+      { id: 'savings', label: '储蓄率', icon: Percent },
+      { id: 'freedom', label: '财务自由', icon: Target },
       { id: 'income', label: '收入分析', icon: TrendingUp },
       { id: 'expense', label: '支出分析', icon: TrendingDown },
       { id: 'transfer', label: '转账分析', icon: ArrowRightLeft },
-      { id: 'savings', label: '储蓄率', icon: Percent },
-      { id: 'freedom', label: '财务自由', icon: Target },
       { id: 'account', label: '账户分析', icon: Wallet },
       { id: 'flow-income', label: '收入流向', icon: ArrowUpRight },
       { id: 'flow-expense', label: '支出流向', icon: ArrowDownRight },
