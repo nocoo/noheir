@@ -82,8 +82,14 @@ function classifyUnitStatus(unit: UnitDisplay): WaffleStatus {
   if (unit.status === '计划中') return 'archived';
   if (unit.status === '筹集中') return 'archived';
 
-  // 闲置：已成立但没有关联产品
+  // 闲置判断1：已成立但没有关联产品
   if (unit.status === '已成立' && !unit.product) return 'idle';
+
+  // 闲置判断2：已成立且关联的是"现金+"类产品
+  if (unit.status === '已成立' && unit.product?.type === '现金+') return 'idle';
+
+  // 闲置判断3：已到期（需要提醒更新数据）
+  if (unit.status === '已成立' && unit.is_overdue) return 'idle';
 
   // 检查锁定期
   if (unit.end_date) {
@@ -105,8 +111,8 @@ function classifyUnitStatus(unit: UnitDisplay): WaffleStatus {
     return 'locked-medium';
   }
 
-  // 已成立但无到期日，视为闲置
-  return 'idle';
+  // 已成立、有产品、无到期日（如随时可赎回产品）视为短期锁定
+  return 'locked-short';
 }
 
 // ============================================================================
@@ -410,18 +416,28 @@ export function WarehouseWaffleChart({ units }: WarehouseWaffleChartProps) {
 
         {/* Warning for idle units */}
         {stats.idle > 0 && (
-          <div className="flex items-center gap-2 text-sm text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20 px-3 py-2 rounded-lg border border-rose-200 dark:border-rose-900">
-            <span>⚠️</span>
-            <span>
-              有 <strong>{stats.idle}</strong> 个资金单元闲置中，总金额{' '}
-              <strong>
-                {formatCurrencyFull(
-                  waffleData
-                    .filter(u => u.waffleStatus === 'idle')
-                    .reduce((sum, u) => sum + u.amount, 0)
-                )}
-              </strong>
-            </span>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20 px-3 py-2 rounded-lg border border-rose-200 dark:border-rose-900">
+              <span>⚠️</span>
+              <span>
+                有 <strong>{stats.idle}</strong> 个资金单元闲置中，总金额{' '}
+                <strong>
+                  {formatCurrencyFull(
+                    waffleData
+                      .filter(u => u.waffleStatus === 'idle')
+                      .reduce((sum, u) => sum + u.amount, 0)
+                  )}
+                </strong>
+              </span>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              <p><strong>闲置判定标准：</strong></p>
+              <ul className="list-disc list-inside space-y-1 ml-2">
+                <li>未关联产品（资金到位但未投放）</li>
+                <li>关联的是"现金+"类产品（流动性高，需再配置）</li>
+                <li>已到期产品（需要更新数据或自动续期）</li>
+              </ul>
+            </div>
           </div>
         )}
       </div>
