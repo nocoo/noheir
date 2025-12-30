@@ -4,9 +4,8 @@ import { useState } from 'react';
 import { formatCurrencyFull } from '@/lib/chart-config';
 import { useSettings, getIncomeColorHsl, getExpenseColorHsl } from '@/contexts/SettingsContext';
 
-interface ActivityHeatmapProps {
+interface IncomeExpenseHeatmapProps {
   transactions: Transaction[];
-  year: number;
 }
 
 interface DayInfo {
@@ -33,7 +32,7 @@ const EXPENSE_COLORS = [
   'hsl(var(--expense))',     // 高支出 - Rose-600
 ];
 
-export function ActivityHeatmap({ transactions, year }: ActivityHeatmapProps) {
+export function IncomeExpenseHeatmap({ transactions }: IncomeExpenseHeatmapProps) {
   const { settings } = useSettings();
   const [tooltip, setTooltip] = useState<{ x: number; y: number; content: string } | null>(null);
 
@@ -41,7 +40,6 @@ export function ActivityHeatmap({ transactions, year }: ActivityHeatmapProps) {
   const dailyData = new Map<string, DayInfo>();
 
   for (const t of transactions) {
-    if (t.year !== year) continue;
     const dateObj = new Date(t.date);
     const day = dateObj.getDate();
     const dateKey = `${String(t.month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -82,8 +80,9 @@ export function ActivityHeatmap({ transactions, year }: ActivityHeatmapProps) {
     return 4;
   };
 
-  // Get the first day of the year
-  const startDate = new Date(year, 0, 1);
+  // Get the first day of the current year
+  const currentYear = new Date().getFullYear();
+  const startDate = new Date(currentYear, 0, 1);
   const startDay = startDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
 
   // Create weeks array with full day info
@@ -92,15 +91,15 @@ export function ActivityHeatmap({ transactions, year }: ActivityHeatmapProps) {
 
   // Add empty cells for days before Jan 1
   for (let i = 0; i < startDay; i++) {
-    currentWeek.push({ date: new Date(year, 0, 1 - (startDay - i)), info: null });
+    currentWeek.push({ date: new Date(currentYear, 0, 1 - (startDay - i)), info: null });
   }
 
   // Add all days of the year (handle leap years)
-  const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+  const isLeapYear = (currentYear % 4 === 0 && currentYear % 100 !== 0) || currentYear % 400 === 0;
   const daysInYear = isLeapYear ? 366 : 365;
 
   for (let day = 1; day <= daysInYear; day++) {
-    const date = new Date(year, 0, day);
+    const date = new Date(currentYear, 0, day);
     const month = date.getMonth() + 1;
     const dayOfMonth = date.getDate();
 
@@ -124,7 +123,7 @@ export function ActivityHeatmap({ transactions, year }: ActivityHeatmapProps) {
   const handleMouseEnter = (dayData: { date: Date; info: DayInfo | null }, e: React.MouseEvent) => {
     const rect = (e.target as HTMLElement).getBoundingClientRect();
     const date = dayData.date;
-    const dateStr = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+    const dateStr = `${date.getMonth() + 1}月${date.getDate()}日`;
 
     let content = '';
     if (dayData.info) {
@@ -163,7 +162,7 @@ export function ActivityHeatmap({ transactions, year }: ActivityHeatmapProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>年度活动热力图 ({year}年)</CardTitle>
+        <CardTitle>收支热力图 ({currentYear}年)</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">

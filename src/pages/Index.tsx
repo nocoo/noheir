@@ -14,7 +14,8 @@ import { Settings } from '@/components/dashboard/Settings';
 import { SankeyChart } from '@/components/dashboard/SankeyChart';
 import { YearSelector } from '@/components/dashboard/YearSelector';
 import type { DataQualityMetrics, TransactionValidation } from '@/types/data';
-import { ActivityHeatmap } from '@/components/dashboard/ActivityHeatmap';
+import { PaymentHeatmap } from '@/components/dashboard/PaymentHeatmap';
+import { IncomeExpenseHeatmap } from '@/components/dashboard/IncomeExpenseHeatmap';
 import { IncomeExpenseComparison } from '@/components/dashboard/IncomeExpenseComparison';
 import { SavingsRateChart } from '@/components/dashboard/SavingsRateChart';
 import { BalanceWaterfall } from '@/components/dashboard/BalanceWaterfall';
@@ -179,7 +180,10 @@ const Index = () => {
             <StatCard title="交易笔数" value={transactions.length} icon={Wallet} />
           </div>
 
-          <ActivityHeatmap transactions={allTransactions} year={selectedYear} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <PaymentHeatmap transactions={allTransactions} />
+            <IncomeExpenseHeatmap transactions={allTransactions} />
+          </div>
 
           <IncomeExpenseComparison data={monthlyData} />
 
