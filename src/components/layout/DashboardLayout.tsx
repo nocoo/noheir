@@ -1,18 +1,21 @@
 import { ReactNode, useState } from 'react';
-import { 
-  Upload, 
+import {
+  Upload,
   CheckCircle,
+  Database,
   LayoutDashboard,
   TrendingUp,
   TrendingDown,
-  PieChart,
+  ArrowRightLeft,
   Percent,
   Wallet,
   GitCompareArrows,
   Network,
   Menu,
-  X,
-  ChevronDown
+  ChevronDown,
+  Settings as SettingsIcon,
+  ArrowUpRight,
+  ArrowDownRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -26,33 +29,40 @@ interface DashboardLayoutProps {
 
 const navGroups = [
   {
-    title: '数据管理',
-    items: [
-      { id: 'import', label: '数据导入', icon: Upload },
-      { id: 'quality', label: '数据质量', icon: CheckCircle },
-    ]
-  },
-  {
-    title: '分析概览',
+    title: '总览',
     items: [
       { id: 'overview', label: '总览', icon: LayoutDashboard },
     ]
   },
   {
-    title: '详细分析',
+    title: '深入分析',
     items: [
       { id: 'income', label: '收入分析', icon: TrendingUp },
       { id: 'expense', label: '支出分析', icon: TrendingDown },
-      { id: 'category', label: '分类分析', icon: PieChart },
+      { id: 'transfer', label: '转账分析', icon: ArrowRightLeft },
       { id: 'savings', label: '储蓄率', icon: Percent },
       { id: 'account', label: '账户分析', icon: Wallet },
-      { id: 'flow', label: '资金流向', icon: Network },
+      { id: 'flow-income', label: '收入流向', icon: ArrowUpRight },
+      { id: 'flow-expense', label: '支出流向', icon: ArrowDownRight },
     ]
   },
   {
     title: '对比分析',
     items: [
       { id: 'compare', label: '时段对比', icon: GitCompareArrows },
+    ]
+  },
+  {
+    title: '数据管理',
+    items: [
+      { id: 'manage', label: '数据管理', icon: Database },
+      { id: 'import', label: '数据导入', icon: Upload },
+    ]
+  },
+  {
+    title: '系统',
+    items: [
+      { id: 'settings', label: '设置', icon: SettingsIcon },
     ]
   },
 ];
@@ -62,7 +72,7 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
   const [openGroups, setOpenGroups] = useState<string[]>(navGroups.map(g => g.title));
 
   const toggleGroup = (title: string) => {
-    setOpenGroups(prev => 
+    setOpenGroups(prev =>
       prev.includes(title) ? prev.filter(g => g !== title) : [...prev, title]
     );
   };
@@ -74,36 +84,48 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
         'fixed lg:static inset-y-0 left-0 z-50 flex flex-col bg-card border-r border-border transition-all duration-300',
         sidebarOpen ? 'w-64' : 'w-0 lg:w-16'
       )}>
-        <div className="flex items-center justify-between h-16 px-4 border-b border-border">
-          {sidebarOpen && (
-            <h1 className="text-lg font-bold text-foreground">财务管理</h1>
-          )}
-          <Button 
-            variant="ghost" 
+        <div className={cn(
+          "flex items-center h-16 border-b border-border overflow-hidden",
+          sidebarOpen ? "px-2" : "lg:justify-center lg:px-2"
+        )}>
+          <div className={cn(
+            "flex items-center gap-3 overflow-hidden transition-all duration-300",
+            sidebarOpen ? "flex-1 px-2 opacity-100" : "w-0 opacity-0"
+          )}>
+            <LayoutDashboard className="h-5 w-5 text-primary shrink-0" />
+            <h1 className="text-lg font-bold text-foreground whitespace-nowrap">个人财务管理</h1>
+          </div>
+          <Button
+            variant="ghost"
             size="icon"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="ml-auto"
+            className={cn(
+              "shrink-0 transition-all duration-300",
+              sidebarOpen ? "h-8 px-3" : "lg:h-9 lg:w-9"
+            )}
           >
-            {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            <Menu className={cn(
+              sidebarOpen ? "h-4 w-4" : "lg:h-5 lg:w-5"
+            )} />
           </Button>
         </div>
-        
+
         <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
           {navGroups.map(group => (
-            <Collapsible 
+            <Collapsible
               key={group.title}
               open={openGroups.includes(group.title)}
               onOpenChange={() => toggleGroup(group.title)}
             >
               {sidebarOpen && (
                 <CollapsibleTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    className="w-full justify-between px-3 py-2 h-8 text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-between px-3 py-2 h-auto text-xs font-semibold text-muted-foreground uppercase tracking-wider"
                   >
-                    {group.title}
+                    <span>{group.title}</span>
                     <ChevronDown className={cn(
-                      "h-4 w-4 transition-transform",
+                      "h-4 w-4 transition-transform duration-200 shrink-0",
                       openGroups.includes(group.title) && "rotate-180"
                     )} />
                   </Button>
@@ -120,7 +142,10 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
                     )}
                     onClick={() => onTabChange(item.id)}
                   >
-                    <item.icon className="h-4 w-4 shrink-0" />
+                    <item.icon className={cn(
+                      "h-4 w-4 shrink-0",
+                      activeTab === item.id ? "text-primary-foreground" : "text-muted-foreground"
+                    )} />
                     {sidebarOpen && <span className="text-sm">{item.label}</span>}
                   </Button>
                 ))}
@@ -135,7 +160,7 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
         )}>
           {sidebarOpen && (
             <p className="text-xs text-muted-foreground text-center">
-              个人财务信息管理系统
+              个人财务管理系统
             </p>
           )}
         </div>
@@ -150,7 +175,7 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
 
       {/* Mobile Overlay */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />

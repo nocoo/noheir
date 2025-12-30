@@ -1,22 +1,36 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   Cell,
   ReferenceLine
 } from 'recharts';
 import { MonthlyData } from '@/types/transaction';
+import { useSettings, getIncomeColor, getIncomeColorHex, getExpenseColor, getExpenseColorHex } from '@/contexts/SettingsContext';
+import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, formatCurrencyK, formatCurrencyFull } from '@/lib/chart-config';
+
+interface TooltipPayload {
+  payload?: {
+    isPositive: boolean;
+  };
+}
 
 interface BalanceWaterfallProps {
   data: MonthlyData[];
 }
 
 export function BalanceWaterfall({ data }: BalanceWaterfallProps) {
+  const { settings } = useSettings();
+  const incomeColorClass = getIncomeColor(settings.colorScheme);
+  const incomeColorHex = getIncomeColorHex(settings.colorScheme);
+  const expenseColorClass = getExpenseColor(settings.colorScheme);
+  const expenseColorHex = getExpenseColorHex(settings.colorScheme);
+
   let cumulativeBalance = 0;
   const waterfallData = data.map((item, index) => {
     const prevBalance = cumulativeBalance;
@@ -38,52 +52,52 @@ export function BalanceWaterfall({ data }: BalanceWaterfallProps) {
       <CardContent>
         <div className="h-[350px]">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart 
-              data={waterfallData} 
+            <BarChart
+              data={waterfallData}
               margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis 
-                dataKey="month" 
-                tick={{ fill: 'hsl(var(--foreground))', fontSize: 11 }}
-                axisLine={{ stroke: 'hsl(var(--border))' }}
+              <CartesianGrid {...gridStyle} />
+              <XAxis
+                dataKey="month"
+                {...xAxisStyle}
               />
-              <YAxis 
-                tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
-                axisLine={{ stroke: 'hsl(var(--border))' }}
-                tickFormatter={(value) => `¥${(value / 1000).toFixed(0)}k`}
+              <YAxis
+                {...yAxisStyle}
+                tickFormatter={formatCurrencyK}
               />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'hsl(var(--card))', 
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: 'var(--radius)',
-                  color: 'hsl(var(--foreground))'
-                }}
-                formatter={(value: number, name: string) => {
-                  if (name === 'balance') return [`¥${value.toLocaleString()}`, '月结余'];
-                  if (name === 'cumulative') return [`¥${value.toLocaleString()}`, '累计结余'];
+              <Tooltip
+                contentStyle={tooltipStyle.contentStyle}
+                itemStyle={{ color: 'hsl(var(--foreground))' }}
+                formatter={(value: number, name: string, props: TooltipPayload) => {
+                  if (name === 'balance') {
+                    const color = props.payload?.isPositive ? incomeColorHex : expenseColorHex;
+                    return [
+                      <span style={{ color }}>{formatCurrencyFull(value)}</span>,
+                      '月结余'
+                    ];
+                  }
+                  if (name === 'cumulative') return [formatCurrencyFull(value), '累计结余'];
                   return [value, name];
                 }}
               />
               <ReferenceLine y={0} stroke="hsl(var(--border))" strokeWidth={2} />
               <Bar dataKey="balance" radius={[4, 4, 0, 0]}>
                 {waterfallData.map((entry, index) => (
-                  <Cell 
-                    key={`cell-${index}`} 
-                    fill={entry.isPositive ? 'hsl(var(--primary))' : 'hsl(var(--destructive))'} 
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={entry.isPositive ? incomeColorHex : expenseColorHex}
                   />
                 ))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
-        
+
         {/* Cumulative Balance Display */}
         <div className="mt-4 flex items-center justify-center gap-2 p-3 bg-accent/50 rounded-lg">
           <span className="text-sm text-muted-foreground">年度累计结余:</span>
-          <span className={`text-xl font-bold ${cumulativeBalance >= 0 ? 'text-primary' : 'text-destructive'}`}>
-            ¥{cumulativeBalance.toLocaleString()}
+          <span className={`text-xl font-bold ${cumulativeBalance >= 0 ? incomeColorClass : expenseColorClass}`}>
+            {formatCurrencyFull(cumulativeBalance)}
           </span>
         </div>
       </CardContent>

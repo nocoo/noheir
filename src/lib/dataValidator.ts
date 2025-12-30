@@ -44,7 +44,9 @@ export function validateDate(dateStr: string): FieldValidation {
  */
 export function validateCategory(
   primary: string,
-  secondary: string
+  secondary: string,
+  tertiary: string,
+  hasMapping: boolean
 ): FieldValidation {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -53,8 +55,16 @@ export function validateCategory(
     errors.push('一级分类为空');
   }
 
-  if (!secondary || secondary.trim() === '') {
-    warnings.push('二级分类为空');
+  if (!tertiary || tertiary.trim() === '') {
+    warnings.push('三级分类为空');
+  }
+
+  if (!hasMapping) {
+    warnings.push(`三级分类"${tertiary}"未找到对应的二级分类映射`);
+  }
+
+  if (!secondary || secondary.trim() === '' || secondary === '未分类') {
+    warnings.push('二级分类为空或未映射');
   }
 
   return { field: 'category', isValid: errors.length === 0, errors, warnings };
@@ -63,7 +73,7 @@ export function validateCategory(
 /**
  * Validate amount
  */
-export function validateAmount(amount: number, type: 'income' | 'expense'): FieldValidation {
+export function validateAmount(amount: number, type: 'income' | 'expense' | 'transfer'): FieldValidation {
   const errors: string[] = [];
   const warnings: string[] = [];
 
@@ -130,7 +140,12 @@ export function validateTransaction(transaction: ParsedTransaction): Transaction
 
   // Validate all fields
   fields.date = validateDate(transaction.date);
-  fields.category = validateCategory(transaction.primaryCategory, transaction.secondaryCategory);
+  fields.category = validateCategory(
+    transaction.primaryCategory,
+    transaction.secondaryCategory,
+    transaction.tertiaryCategory,
+    transaction.hasSecondaryMapping
+  );
   fields.amount = validateAmount(transaction.amount, transaction.type);
   fields.account = validateAccount(transaction.account);
   fields.currency = validateCurrency(transaction.currency);
@@ -195,16 +210,17 @@ export function calculateQualityMetrics(
   const futureDates = allDates.filter(d => d > now).length;
   const missingDates = validations.filter(v => !v.fields.date.isValid).length;
 
-  // Check for duplicates (same date, account, and amount)
-  const signatures = validations.map(v =>
-    `${v.transaction.date}-${v.transaction.account}-${v.transaction.amount}`
-  );
-  const uniqueSignatures = new Set(signatures);
-  const duplicateCount = signatures.length - uniqueSignatures.size;
-
   // Negative and zero amounts
   const negativeAmounts = validations.filter(v => v.transaction.amount < 0).length;
   const zeroAmounts = validations.filter(v => v.transaction.amount === 0).length;
+
+  // Category mapping checks
+  const missingSecondaryMappings = validations.filter(v => !v.transaction.hasSecondaryMapping).length;
+  const unmappedTertiaryCategories = [...new Set(
+    validations
+      .filter(v => !v.transaction.hasSecondaryMapping)
+      .map(v => v.transaction.tertiaryCategory)
+  )].sort();
 
   // Statistics
   const years = [...new Set(validations.map(v => v.transaction.year))].sort((a, b) => b - a);
@@ -212,6 +228,7 @@ export function calculateQualityMetrics(
   const accounts = [...new Set(validations.map(v => v.transaction.account))];
   const primaryCategories = [...new Set(validations.map(v => v.transaction.primaryCategory))];
   const secondaryCategories = [...new Set(validations.map(v => v.transaction.secondaryCategory))];
+  const tertiaryCategories = [...new Set(validations.map(v => v.transaction.tertiaryCategory))];
   const currencies = [...new Set(validations.map(v => v.transaction.currency))];
 
   const incomeRecords = validations.filter(v => v.transaction.type === 'income');
@@ -243,17 +260,19 @@ export function calculateQualityMetrics(
     categoryCompleteness,
     amountCompleteness,
     accountCompleteness,
-    duplicateCount,
     missingDates,
     futureDates,
     negativeAmounts,
     zeroAmounts,
+    missingSecondaryMappings,
+    unmappedTertiaryCategories,
     dateRange,
     years,
     months: months.map(m => parseInt(m.split('-')[1])),
     accounts,
     primaryCategories,
     secondaryCategories,
+    tertiaryCategories,
     currencies,
     incomeCount,
     expenseCount,

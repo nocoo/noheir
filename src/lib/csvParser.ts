@@ -1,4 +1,5 @@
 import { ParsedTransaction, RawCSVRow } from '@/types/data';
+import { findSecondaryCategory, DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from '@/types/category';
 
 /**
  * Parse a CSV line, handling quoted fields with commas
@@ -90,6 +91,13 @@ function determineTransactionType(inflow: number, outflow: number): 'income' | '
 }
 
 /**
+ * Check if a tertiary category is a transfer type
+ */
+function isTransferType(tertiaryCategory: string): boolean {
+  return tertiaryCategory === '转账' || tertiaryCategory === '信用卡还款';
+}
+
+/**
  * Parse CSV content and return array of parsed transactions
  *
  * Expected CSV format:
@@ -141,7 +149,19 @@ export function parseCSV(content: string): {
     try {
       const dateStr = values[0] || '';
       const primaryCategory = values[1] || '未分类';
-      const secondaryCategory = values[2] || '未分类';
+      let tertiaryCategory = values[2] || '未分类'; // Column 交易类型 is actually tertiary
+
+      // Auto-extract tertiary category if it contains "/" (e.g., "理财收入 / JY040205...")
+      if (tertiaryCategory.includes('/')) {
+        const extracted = tertiaryCategory.split('/')[0].trim();
+        if (extracted) {
+          tertiaryCategory = extracted;
+        }
+      }
+
+      // Check if this is a transfer type (转账, 信用卡还款)
+      const isTransfer = isTransferType(tertiaryCategory);
+
       const inflowStr = values[3] || '0.00';
       const outflowStr = values[4] || '0.00';
       const currency = values[5] || '人民币';
@@ -175,7 +195,38 @@ export function parseCSV(content: string): {
       }
 
       // Determine transaction type
-      const type = determineTransactionType(inflow, outflow);
+      const type: 'income' | 'expense' | 'transfer' = isTransfer ? 'transfer' : determineTransactionType(inflow, outflow);
+
+      // Special handling for "余额调整" - map to 对账收入/对账支出 based on type
+      if (tertiaryCategory === '余额调整' && type !== 'transfer') {
+        tertiaryCategory = type === 'income' ? '对账收入' : '对账支出';
+      }
+
+      // Map tertiary category to secondary category (skip mapping for transfers)
+      let hasMapping = true;
+      let secondaryCategory = '转账';
+      if (type !== 'transfer') {
+        const secondary = findSecondaryCategory(primaryCategory, tertiaryCategory, type);
+        hasMapping = secondary !== null;
+        secondaryCategory = secondary || '未分类';
+      }
+
+      // If the tertiary category is actually a secondary category name (not in tertiary list),
+      // use the first tertiary category from that secondary category (skip for transfers)
+      if (type !== 'transfer' && !hasMapping) {
+        const mappings = type === 'income' ? DEFAULT_INCOME_CATEGORIES : DEFAULT_EXPENSE_CATEGORIES;
+        if (mappings[tertiaryCategory]) {
+          // tertiaryCategory is actually a secondary category name
+          secondaryCategory = tertiaryCategory;
+          // Use the first tertiary category from this secondary
+          const firstTertiary = mappings[tertiaryCategory][0];
+          if (firstTertiary) {
+            tertiaryCategory = firstTertiary;
+          }
+          // Update hasMapping since we successfully mapped it
+          hasMapping = true;
+        }
+      }
 
       // Parse tags
       const tags = parseTags(tagsStr);
@@ -189,13 +240,15 @@ export function parseCSV(content: string): {
         day: dateParts.day,
         primaryCategory,
         secondaryCategory,
+        tertiaryCategory,
         amount,
         type,
         account,
         currency,
         tags,
         note: note || undefined,
-        rawIndex: i + 1
+        rawIndex: i + 1,
+        hasSecondaryMapping: hasMapping
       };
 
       transactions.push(transaction);
@@ -247,8 +300,16 @@ export function transactionsToCSV(transactions: ParsedTransaction[]): string {
   const headers = ['日期', '交易分类', '交易类型', '流入金额', '流出金额', '币种', '资金账户', '标签', '备注'];
 
   const rows = transactions.map(t => {
-    const inflow = t.type === 'income' ? t.amount.toFixed(2) : '0.00';
-    const outflow = t.type === 'expense' ? t.amount.toFixed(2) : '0.00';
+    let inflow = '0.00';
+    let outflow = '0.00';
+
+    if (t.type === 'income') {
+      inflow = t.amount.toFixed(2);
+    } else if (t.type === 'expense') {
+      outflow = t.amount.toFixed(2);
+    }
+    // For transfer type, both remain 0.00 (could be enhanced to store original amounts)
+
     const tags = t.tags.join(',');
     const note = t.note || '';
 
@@ -263,7 +324,7 @@ export function transactionsToCSV(transactions: ParsedTransaction[]): string {
     return [
       escape(t.date),
       escape(t.primaryCategory),
-      escape(t.secondaryCategory),
+      escape(t.tertiaryCategory), // Column 交易类型 stores tertiary category
       inflow,
       outflow,
       escape(t.currency),

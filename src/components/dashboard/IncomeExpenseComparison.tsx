@@ -1,22 +1,28 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
   ResponsiveContainer,
-  ReferenceLine 
+  ReferenceLine
 } from 'recharts';
 import { MonthlyData } from '@/types/transaction';
+import { useSettings, getIncomeColorHex, getExpenseColorHex } from '@/contexts/SettingsContext';
+import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, legendStyle, formatCurrencyK, formatCurrencyFull } from '@/lib/chart-config';
 
 interface IncomeExpenseComparisonProps {
   data: MonthlyData[];
 }
 
 export function IncomeExpenseComparison({ data }: IncomeExpenseComparisonProps) {
+  const { settings } = useSettings();
+  const incomeColorHex = getIncomeColorHex(settings.colorScheme);
+  const expenseColorHex = getExpenseColorHex(settings.colorScheme);
+
   const avgIncome = data.reduce((sum, d) => sum + d.income, 0) / data.filter(d => d.income > 0).length || 0;
   const avgExpense = data.reduce((sum, d) => sum + d.expense, 0) / data.filter(d => d.expense > 0).length || 0;
 
@@ -31,65 +37,58 @@ export function IncomeExpenseComparison({ data }: IncomeExpenseComparisonProps) 
             <AreaChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
               <defs>
                 <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                  <stop offset="5%" stopColor={incomeColorHex} stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor={incomeColorHex} stopOpacity={0}/>
                 </linearGradient>
                 <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(var(--chart-5))" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="hsl(var(--chart-5))" stopOpacity={0}/>
+                  <stop offset="5%" stopColor={expenseColorHex} stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor={expenseColorHex} stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis 
-                dataKey="month" 
-                tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
-                axisLine={{ stroke: 'hsl(var(--border))' }}
+              <CartesianGrid {...gridStyle} />
+              <XAxis
+                dataKey="month"
+                {...xAxisStyle}
               />
-              <YAxis 
-                tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
-                axisLine={{ stroke: 'hsl(var(--border))' }}
-                tickFormatter={(value) => `¥${(value / 1000).toFixed(0)}k`}
+              <YAxis
+                {...yAxisStyle}
+                tickFormatter={formatCurrencyK}
               />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'hsl(var(--card))', 
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: 'var(--radius)',
-                  color: 'hsl(var(--foreground))'
-                }}
+              <Tooltip
+                contentStyle={tooltipStyle.contentStyle}
                 formatter={(value: number, name: string) => [
-                  `¥${value.toLocaleString()}`, 
+                  formatCurrencyFull(value),
                   name === 'income' ? '收入' : '支出'
                 ]}
               />
               <Legend formatter={(value) => value === 'income' ? '收入' : '支出'} />
               {avgIncome > 0 && (
-                <ReferenceLine 
-                  y={avgIncome} 
-                  stroke="hsl(var(--primary))" 
-                  strokeDasharray="5 5" 
-                  label={{ value: `平均收入 ¥${avgIncome.toLocaleString()}`, fill: 'hsl(var(--primary))', fontSize: 11 }}
+                <ReferenceLine
+                  y={avgIncome}
+                  stroke={incomeColorHex}
+                  strokeDasharray="5 5"
+                  label={{ value: `平均收入 ${formatCurrencyFull(avgIncome)}`, fill: incomeColorHex, fontSize: 11 }}
                 />
               )}
               {avgExpense > 0 && (
-                <ReferenceLine 
-                  y={avgExpense} 
-                  stroke="hsl(var(--chart-5))" 
-                  strokeDasharray="5 5" 
-                  label={{ value: `平均支出 ¥${avgExpense.toLocaleString()}`, fill: 'hsl(var(--chart-5))', fontSize: 11 }}
+                <ReferenceLine
+                  y={avgExpense}
+                  stroke={expenseColorHex}
+                  strokeDasharray="5 5"
+                  label={{ value: `平均支出 ${formatCurrencyFull(avgExpense)}`, fill: expenseColorHex, fontSize: 11 }}
                 />
               )}
-              <Area 
-                type="monotone" 
-                dataKey="income" 
-                stroke="hsl(var(--primary))" 
+              <Area
+                type="monotone"
+                dataKey="income"
+                stroke={incomeColorHex}
                 strokeWidth={2}
                 fill="url(#incomeGradient)"
               />
-              <Area 
-                type="monotone" 
-                dataKey="expense" 
-                stroke="hsl(var(--chart-5))" 
+              <Area
+                type="monotone"
+                dataKey="expense"
+                stroke={expenseColorHex}
                 strokeWidth={2}
                 fill="url(#expenseGradient)"
               />

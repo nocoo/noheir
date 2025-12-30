@@ -2,20 +2,23 @@ import { useState, useMemo } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { MonthlyChart } from '@/components/dashboard/MonthlyChart';
-import { CategoryPieChart } from '@/components/dashboard/CategoryPieChart';
-import { CategoryBreakdown } from '@/components/dashboard/CategoryBreakdown';
 import { TransactionTable } from '@/components/dashboard/TransactionTable';
 import { DataImport } from '@/components/dashboard/DataImport';
 import { DataQuality } from '@/components/dashboard/DataQuality';
+import { DataManagement } from '@/components/dashboard/DataManagement';
 import { IncomeAnalysis } from '@/components/dashboard/IncomeAnalysis';
 import { ExpenseAnalysis } from '@/components/dashboard/ExpenseAnalysis';
+import { TransferAnalysis } from '@/components/dashboard/TransferAnalysis';
 import { AccountAnalysis } from '@/components/dashboard/AccountAnalysis';
+import { Settings } from '@/components/dashboard/Settings';
 import { SankeyChart } from '@/components/dashboard/SankeyChart';
 import { YearSelector } from '@/components/dashboard/YearSelector';
+import type { DataQualityMetrics, TransactionValidation } from '@/types/data';
+import { PaymentHeatmap } from '@/components/dashboard/PaymentHeatmap';
+import { IncomeExpenseHeatmap } from '@/components/dashboard/IncomeExpenseHeatmap';
 import { IncomeExpenseComparison } from '@/components/dashboard/IncomeExpenseComparison';
 import { SavingsRateChart } from '@/components/dashboard/SavingsRateChart';
 import { BalanceWaterfall } from '@/components/dashboard/BalanceWaterfall';
-import { ExpenseRadar } from '@/components/dashboard/ExpenseRadar';
 import { FinancialHealthScore } from '@/components/dashboard/FinancialHealthScore';
 import { YearComparisonChart } from '@/components/dashboard/YearComparisonChart';
 import { MultiYearSelector } from '@/components/dashboard/MultiYearSelector';
@@ -24,7 +27,10 @@ import { Wallet, TrendingUp, TrendingDown, PiggyBank, Percent, Activity } from '
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState('import');
+  const [activeTab, setActiveTab] = useState('overview');
+  const [qualityViewYear, setQualityViewYear] = useState<number | null>(null);
+  const [qualityData, setQualityData] = useState<{ year: number; metrics: DataQualityMetrics; validations: TransactionValidation[] } | null>(null);
+
   const {
     transactions,
     allTransactions,
@@ -40,6 +46,12 @@ const Index = () => {
     setComparisonYears,
     availableYears,
     loadFromFile,
+    deleteYearData,
+    clearAll,
+    exportData,
+    storedYearsData,
+    isLoading,
+    getQualityForYear,
     isValidating,
     validationResults,
     qualityMetrics,
@@ -48,6 +60,33 @@ const Index = () => {
   const savingsRate = useMemo(() => {
     return totalIncome > 0 ? ((totalIncome - totalExpense) / totalIncome) * 100 : 0;
   }, [totalIncome, totalExpense]);
+
+  // Handle load file with auto-show quality
+  const handleLoadFile = async (file: File) => {
+    const result = await loadFromFile(file);
+    if (result.success && qualityMetrics) {
+      // Switch to quality view after successful import
+      setActiveTab('import');
+    }
+    return result;
+  };
+
+  // Handle view quality for a specific year
+  const handleViewQuality = async (year: number) => {
+    if (year === 0) {
+      setQualityViewYear(null);
+      setQualityData(null);
+    } else {
+      setQualityViewYear(year);
+      const data = await getQualityForYear(year);
+      setQualityData(data);
+    }
+  };
+
+  // Handle go to import
+  const handleGoToImport = () => {
+    setActiveTab('import');
+  };
 
   const previousYearCategoryData = useMemo(() => {
     const prevYear = selectedYear - 1;
@@ -77,8 +116,22 @@ const Index = () => {
           </div>
           <DataImport
             isLoading={isValidating}
-            onLoadFile={loadFromFile}
+            onLoadFile={handleLoadFile}
           />
+
+          {/* Show quality after import */}
+          {qualityMetrics && qualityMetrics.totalRecords > 0 && (
+            <>
+              <div>
+                <h2 className="text-xl font-semibold mt-8">数据质量评估</h2>
+                <p className="text-muted-foreground text-sm">刚刚导入的数据质量检查结果</p>
+              </div>
+              <DataQuality
+                metrics={qualityMetrics}
+                validations={validationResults}
+              />
+            </>
+          )}
         </div>
       )}
 
@@ -93,6 +146,19 @@ const Index = () => {
             validations={validationResults}
           />
         </div>
+      )}
+
+      {activeTab === 'manage' && (
+        <DataManagement
+          storedYearsData={storedYearsData}
+          isLoading={isLoading}
+          onDeleteYear={deleteYearData}
+          onClearAll={clearAll}
+          onExport={exportData}
+          onGoToImport={handleGoToImport}
+          onViewQuality={handleViewQuality}
+          qualityData={qualityData}
+        />
       )}
 
       {activeTab === 'overview' && (
@@ -114,12 +180,14 @@ const Index = () => {
             <StatCard title="交易笔数" value={transactions.length} icon={Wallet} />
           </div>
 
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <PaymentHeatmap transactions={allTransactions} />
+            <IncomeExpenseHeatmap transactions={allTransactions} />
+          </div>
+
           <IncomeExpenseComparison data={monthlyData} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <CategoryPieChart data={categoryData} />
-            <FinancialHealthScore totalIncome={totalIncome} totalExpense={totalExpense} savingsRate={savingsRate} monthlyData={monthlyData} />
-          </div>
+          <FinancialHealthScore totalIncome={totalIncome} totalExpense={totalExpense} savingsRate={savingsRate} monthlyData={monthlyData} />
 
           <TransactionTable transactions={transactions} />
         </div>
@@ -151,20 +219,16 @@ const Index = () => {
         </div>
       )}
 
-      {activeTab === 'category' && (
+      {activeTab === 'transfer' && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold">分类分析</h1>
-              <p className="text-muted-foreground">按分类查看收支明细</p>
+              <h1 className="text-2xl font-bold">转账分析</h1>
+              <p className="text-muted-foreground">转账和信用卡还款记录分析</p>
             </div>
             <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ExpenseRadar currentData={categoryData} previousData={previousYearCategoryData.length > 0 ? previousYearCategoryData : undefined} currentLabel={`${selectedYear}年`} previousLabel={`${selectedYear - 1}年`} />
-            <CategoryBreakdown data={categoryData} />
-          </div>
-          <CategoryPieChart data={categoryData} />
+          <TransferAnalysis transactions={transactions} monthlyData={monthlyData} />
         </div>
       )}
 
@@ -195,16 +259,28 @@ const Index = () => {
         </div>
       )}
 
-      {activeTab === 'flow' && (
+      {activeTab === 'flow-income' && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold">资金流向</h1>
-              <p className="text-muted-foreground">可视化收入支出流向分类</p>
+              <h1 className="text-2xl font-bold">收入流向</h1>
+              <p className="text-muted-foreground">可视化收入从来源到分类的分布</p>
             </div>
             <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
           </div>
           <SankeyChart transactions={transactions} type="income" />
+        </div>
+      )}
+
+      {activeTab === 'flow-expense' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold">支出流向</h1>
+              <p className="text-muted-foreground">可视化支出从分类到用途的分布</p>
+            </div>
+            <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
+          </div>
           <SankeyChart transactions={transactions} type="expense" />
         </div>
       )}
@@ -228,6 +304,16 @@ const Index = () => {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {activeTab === 'settings' && (
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-2xl font-bold">系统设置</h1>
+            <p className="text-muted-foreground">个性化您的个人财务管理体验</p>
+          </div>
+          <Settings />
         </div>
       )}
     </DashboardLayout>

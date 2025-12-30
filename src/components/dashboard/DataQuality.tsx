@@ -4,6 +4,13 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataQualityMetrics, TransactionValidation } from '@/types/data';
+import { useSettings, getIncomeColor, getExpenseColor } from '@/contexts/SettingsContext';
+import type { LucideIcon } from 'lucide-react';
+import type { VariantProps } from 'class-variance-authority';
+import { badgeVariants } from '@/components/ui/badge';
+import { formatCurrencyFull } from '@/lib/chart-config';
+
+type BadgeVariant = VariantProps<typeof badgeVariants>['variant'];
 import {
   CheckCircle,
   AlertTriangle,
@@ -28,6 +35,10 @@ interface DataQualityProps {
 }
 
 export function DataQuality({ metrics, validations, onFilterChange }: DataQualityProps) {
+  const { settings } = useSettings();
+  const incomeColorClass = getIncomeColor(settings.colorScheme);
+  const expenseColorClass = getExpenseColor(settings.colorScheme);
+
   const overallScore = useMemo(() => {
     if (!metrics || metrics.totalRecords === 0) return 0;
 
@@ -44,15 +55,15 @@ export function DataQuality({ metrics, validations, onFilterChange }: DataQualit
   }, [metrics]);
 
   const getScoreColor = (percentage: number) => {
-    if (percentage >= 90) return 'text-green-600 dark:text-green-400';
+    if (percentage >= 90) return 'text-income';
     if (percentage >= 70) return 'text-yellow-600 dark:text-yellow-400';
-    return 'text-red-600 dark:text-red-400';
+    return 'text-expense';
   };
 
   const getScoreBgColor = (percentage: number) => {
-    if (percentage >= 90) return 'bg-green-500';
+    if (percentage >= 90) return 'bg-income';
     if (percentage >= 70) return 'bg-yellow-500';
-    return 'bg-red-500';
+    return 'bg-expense';
   };
 
   const getScoreLabel = (percentage: number) => {
@@ -62,7 +73,7 @@ export function DataQuality({ metrics, validations, onFilterChange }: DataQualit
     return '数据质量较差';
   };
 
-  const getSeverityColor = (severity: string) => {
+  const getSeverityColor = (severity: string): BadgeVariant => {
     switch (severity) {
       case 'valid': return 'default';
       case 'warning': return 'secondary';
@@ -121,7 +132,7 @@ export function DataQuality({ metrics, validations, onFilterChange }: DataQualit
                   <Layers className="h-3 w-3" />
                   {metrics.totalRecords} 条记录
                 </Badge>
-                <Badge variant="outline" className="gap-1 text-green-600">
+                <Badge variant="outline" className="gap-1 text-income">
                   <CheckCircle className="h-3 w-3" />
                   {metrics.validRecords} 正常
                 </Badge>
@@ -177,16 +188,10 @@ export function DataQuality({ metrics, validations, onFilterChange }: DataQualit
       <Card>
         <CardHeader>
           <CardTitle>数据完整性检查</CardTitle>
-          <CardDescription>检测重复、异常数据等问题</CardDescription>
+          <CardDescription>检测异常数据问题</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <IntegrityCard
-              label="重复记录"
-              count={metrics.duplicateCount}
-              total={metrics.totalRecords}
-              type={metrics.duplicateCount > 0 ? 'warning' : 'success'}
-            />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <IntegrityCard
               label="无效日期"
               count={metrics.missingDates}
@@ -208,6 +213,42 @@ export function DataQuality({ metrics, validations, onFilterChange }: DataQualit
           </div>
         </CardContent>
       </Card>
+
+      {/* Category Mapping Warning */}
+      {metrics.missingSecondaryMappings > 0 && (
+        <Card className="border-orange-500/50 bg-orange-500/10">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-orange-700 dark:text-orange-400">
+              <AlertTriangle className="h-5 w-5" />
+              分类映射缺失
+            </CardTitle>
+            <CardDescription>部分三级分类未找到对应的二级分类映射</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-muted-foreground">缺失映射的记录数：</span>
+                <span className="font-semibold text-orange-700 dark:text-orange-400">
+                  {metrics.missingSecondaryMappings} / {metrics.totalRecords}
+                </span>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">未映射的三级分类：</p>
+                <div className="flex flex-wrap gap-2">
+                  {metrics.unmappedTertiaryCategories.map((cat) => (
+                    <Badge key={cat} variant="outline" className="text-xs border-orange-500/50 text-orange-700 dark:text-orange-400">
+                      {cat}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                提示：请在"设置"→"分类映射"中查看完整的二级→三级分类关系，或添加缺失的映射
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Basic Statistics */}
       <Card>
@@ -242,22 +283,22 @@ export function DataQuality({ metrics, validations, onFilterChange }: DataQualit
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             <div>
               <p className="text-sm text-muted-foreground">收入笔数</p>
-              <p className="text-2xl font-bold text-green-600">{metrics.incomeCount}</p>
+              <p className={`text-2xl font-bold ${incomeColorClass}`}>{metrics.incomeCount}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">支出笔数</p>
-              <p className="text-2xl font-bold text-red-600">{metrics.expenseCount}</p>
+              <p className={`text-2xl font-bold ${expenseColorClass}`}>{metrics.expenseCount}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">总收入</p>
-              <p className="text-xl font-bold text-green-600">
-                ¥{metrics.totalIncome.toLocaleString()}
+              <p className={`text-xl font-bold ${incomeColorClass}`}>
+                {formatCurrencyFull(metrics.totalIncome)}
               </p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">总支出</p>
-              <p className="text-xl font-bold text-red-600">
-                ¥{metrics.totalExpense.toLocaleString()}
+              <p className={`text-xl font-bold ${expenseColorClass}`}>
+                {formatCurrencyFull(metrics.totalExpense)}
               </p>
             </div>
           </div>
@@ -294,43 +335,53 @@ export function DataQuality({ metrics, validations, onFilterChange }: DataQualit
         <Card>
           <CardHeader>
             <CardTitle>校验详情</CardTitle>
-            <CardDescription>各记录的详细校验结果（前100条）</CardDescription>
+            <CardDescription>仅显示有异常的记录（共 {validations.filter(v => v.severity !== 'valid').length} 条）</CardDescription>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[400px]">
-              <div className="space-y-2">
-                {validations.slice(0, 100).map((v, idx) => (
-                  <div key={idx} className="p-3 border rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Badge variant={getSeverityColor(v.severity) as any}>
-                          {getSeverityLabel(v.severity)}
-                        </Badge>
-                        <span className="text-sm font-medium">
-                          {v.transaction.date}
-                        </span>
-                        <span className="text-sm text-muted-foreground">
-                          {v.transaction.primaryCategory} / {v.transaction.secondaryCategory}
-                        </span>
-                      </div>
-                      <span className={`text-sm font-semibold ${v.transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                            {v.transaction.type === 'income' ? '+' : '-'}¥{v.transaction.amount.toFixed(2)}
-                          </span>
-                    </div>
-                    {(v.errors.length > 0 || v.warnings.length > 0) && (
-                      <div className="text-xs space-y-1">
-                        {v.errors.map((err, i) => (
-                          <p key={i} className="text-red-600">• {err}</p>
-                        ))}
-                        {v.warnings.map((warn, i) => (
-                          <p key={i} className="text-yellow-600">• {warn}</p>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
+            {validations.filter(v => v.severity !== 'valid').length === 0 ? (
+              <div className="text-center py-8 text-income">
+                <CheckCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p>所有数据校验通过，无异常记录</p>
               </div>
-            </ScrollArea>
+            ) : (
+              <ScrollArea className="h-[400px]">
+                <div className="space-y-2">
+                  {validations
+                    .filter(v => v.severity !== 'valid')
+                    .slice(0, 100)
+                    .map((v, idx) => (
+                    <div key={idx} className="p-3 border rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Badge variant={getSeverityColor(v.severity)}>
+                            {getSeverityLabel(v.severity)}
+                          </Badge>
+                          <span className="text-sm font-medium">
+                            {v.transaction.date}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {v.transaction.primaryCategory} / {v.transaction.secondaryCategory}
+                          </span>
+                        </div>
+                        <span className={`text-sm font-semibold ${v.transaction.type === 'income' ? incomeColorClass : expenseColorClass}`}>
+                              {v.transaction.type === 'income' ? '+' : '-'}{formatCurrencyFull(v.transaction.amount)}
+                            </span>
+                      </div>
+                      {(v.errors.length > 0 || v.warnings.length > 0) && (
+                        <div className="text-xs space-y-1">
+                          {v.errors.map((err, i) => (
+                            <p key={i} className="text-expense">• {err}</p>
+                          ))}
+                          {v.warnings.map((warn, i) => (
+                            <p key={i} className="text-yellow-600">• {warn}</p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
           </CardContent>
         </Card>
       )}
@@ -346,13 +397,13 @@ function CompletenessBar({
 }: {
   name: string;
   percentage: number;
-  icon: any;
+  icon: LucideIcon;
   issues?: number;
 }) {
   const getColor = (p: number) => {
-    if (p >= 95) return 'bg-green-500';
+    if (p >= 95) return 'bg-income';
     if (p >= 80) return 'bg-yellow-500';
-    return 'bg-red-500';
+    return 'bg-expense';
   };
 
   return (
@@ -391,9 +442,9 @@ function IntegrityCard({
   const percentage = total > 0 ? (count / total) * 100 : 0;
 
   const colors = {
-    success: 'text-green-600',
+    success: 'text-income',
     warning: 'text-yellow-600',
-    error: 'text-red-600'
+    error: 'text-expense'
   };
 
   return (

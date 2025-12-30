@@ -3,12 +3,13 @@ export interface Transaction {
   date: string;
   year: number;
   month: number;
-  primaryCategory: string;
-  secondaryCategory: string;
+  primaryCategory: string;   // 一级分类
+  secondaryCategory: string; // 二级分类
+  tertiaryCategory: string;  // 三级分类
   amount: number;
   account: string;
   description?: string;
-  type: 'income' | 'expense';
+  type: 'income' | 'expense' | 'transfer';
 }
 
 export interface CategorySummary {

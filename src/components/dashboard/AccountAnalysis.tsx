@@ -2,13 +2,16 @@ import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Transaction } from '@/types/transaction';
 import { StatCard } from './StatCard';
-import { 
+import { useSettings, getIncomeColor, getIncomeColorHex, getExpenseColor, getExpenseColorHex } from '@/contexts/SettingsContext';
+import type { PieLabelEntry, LegendPayloadEntry } from '@/types/category-shared';
+import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line, Legend
 } from 'recharts';
 import { Wallet, TrendingUp, TrendingDown, ArrowUpDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, legendStyle, formatCurrencyK, formatCurrencyFull } from '@/lib/chart-config';
 
 interface AccountAnalysisProps {
   transactions: Transaction[];
@@ -24,6 +27,12 @@ interface AccountSummary {
 }
 
 export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
+  const { settings } = useSettings();
+  const incomeColorClass = getIncomeColor(settings.colorScheme);
+  const incomeColorHex = getIncomeColorHex(settings.colorScheme);
+  const expenseColorClass = getExpenseColor(settings.colorScheme);
+  const expenseColorHex = getExpenseColorHex(settings.colorScheme);
+
   const accountData = useMemo(() => {
     const accountMap = new Map<string, AccountSummary>();
     
@@ -67,13 +76,39 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
     [accountData]
   );
 
-  const pieData = useMemo(() => 
-    accountData.map(acc => ({
+  const pieData = useMemo(() => {
+    const total = accountData.reduce((sum, acc) => sum + acc.income + acc.expense, 0);
+    const THRESHOLD = 5; // 5% threshold
+
+    // Group small accounts into "其他"
+    const major = accountData.filter(acc => {
+      const value = acc.income + acc.expense;
+      return (value / total) * 100 >= THRESHOLD;
+    });
+
+    const othersTotal = accountData
+      .filter(acc => {
+        const value = acc.income + acc.expense;
+        return (value / total) * 100 < THRESHOLD;
+      })
+      .reduce((sum, acc) => sum + acc.income + acc.expense, 0);
+
+    const result = major.map(acc => ({
       name: acc.name,
-      value: acc.income + acc.expense
-    })),
-    [accountData]
-  );
+      value: acc.income + acc.expense,
+      percentage: ((acc.income + acc.expense) / total) * 100,
+    }));
+
+    if (othersTotal > 0) {
+      result.push({
+        name: '其他',
+        value: othersTotal,
+        percentage: (othersTotal / total) * 100,
+      });
+    }
+
+    return result;
+  }, [accountData]);
 
   const monthlyByAccount = useMemo(() => {
     const monthMap = new Map<string, Map<string, { income: number; expense: number }>>();
@@ -121,6 +156,17 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
     'hsl(var(--chart-4))',
     'hsl(var(--chart-5))',
   ];
+
+  // Top 20 accounts by transaction count
+  const topTransactionCounts = useMemo(() => {
+    return accountData
+      .map(acc => ({
+        name: acc.name,
+        count: acc.transactionCount
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 20);
+  }, [accountData]);
 
   if (transactions.length === 0) {
     return (
@@ -173,20 +219,16 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
           <div className="h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="name" />
-                <YAxis tickFormatter={(v) => `¥${(v/1000).toFixed(0)}k`} />
-                <Tooltip 
-                  formatter={(value: number, name: string) => [`¥${value.toLocaleString()}`, name]}
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--card))', 
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
-                  }}
+                <CartesianGrid {...gridStyle} />
+                <XAxis dataKey="name" {...xAxisStyle} />
+                <YAxis tickFormatter={formatCurrencyK} {...yAxisStyle} />
+                <Tooltip
+                  formatter={(value: number, name: string) => [formatCurrencyFull(value), name]}
+                  contentStyle={tooltipStyle.contentStyle}
                 />
-                <Legend />
-                <Bar dataKey="收入" fill="hsl(142, 76%, 36%)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="支出" fill="hsl(0, 84%, 60%)" radius={[4, 4, 0, 0]} />
+                <Legend {...legendStyle} />
+                <Bar dataKey="收入" fill={incomeColorHex} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="支出" fill={expenseColorHex} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -201,30 +243,39 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
             <CardDescription>各账户交易活跃度</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
+            <div className="h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
+                <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                   <Pie
                     data={pieData}
                     cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
+                    cy="45%"
+                    innerRadius={50}
+                    outerRadius={90}
                     paddingAngle={2}
                     dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    label={(entry: PieLabelEntry) => `${entry.name} ${entry.percentage.toFixed(0)}%`}
+                    labelLine={false}
+                    labelStyle={{ fontSize: '11px', fontWeight: 500 }}
                   >
                     {pieData.map((entry, index) => (
                       <Cell key={entry.name} fill={colors[index % colors.length]} />
                     ))}
                   </Pie>
-                  <Tooltip 
-                    formatter={(value: number) => [`¥${value.toLocaleString()}`, '金额']}
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
+                  <Tooltip
+                    formatter={(value: number) => [formatCurrencyFull(value), '金额']}
+                    contentStyle={tooltipStyle.contentStyle}
+                    itemStyle={{ color: 'hsl(var(--foreground))' }}
+                  />
+                  <Legend
+                    verticalAlign="bottom"
+                    height={60}
+                    iconType="circle"
+                    formatter={(value, entry: LegendPayloadEntry) => (
+                      <span style={{ color: 'hsl(var(--foreground))', fontSize: '12px' }}>
+                        {value} ({entry.payload.percentage.toFixed(1)}%)
+                      </span>
+                    )}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -232,52 +283,77 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
           </CardContent>
         </Card>
 
-        {/* Account Summary Cards */}
+        {/* Top 20 Transaction Counts */}
         <Card>
           <CardHeader>
-            <CardTitle>账户概览</CardTitle>
-            <CardDescription>各账户详细信息</CardDescription>
+            <CardTitle>交易次数排行</CardTitle>
+            <CardDescription>Top 20 账户交易频率</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {accountData.map((acc, i) => (
-                <div key={acc.name} className="p-4 rounded-lg bg-muted/50">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="w-3 h-3 rounded-full" 
-                        style={{ backgroundColor: colors[i % colors.length] }}
-                      />
-                      <span className="font-semibold">{acc.name}</span>
-                    </div>
-                    <Badge variant={acc.balance >= 0 ? 'default' : 'destructive'}>
-                      {acc.balance >= 0 ? '+' : ''}¥{acc.balance.toLocaleString()}
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <p className="text-muted-foreground">收入</p>
-                      <p className="font-medium text-green-600 dark:text-green-400">
-                        ¥{acc.income.toLocaleString()}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">支出</p>
-                      <p className="font-medium text-red-600 dark:text-red-400">
-                        ¥{acc.expense.toLocaleString()}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">交易数</p>
-                      <p className="font-medium">{acc.transactionCount}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={topTransactionCounts} layout="vertical" margin={{ top: 10, right: 30, bottom: 10, left: 10 }}>
+                  <CartesianGrid {...gridStyle} />
+                  <XAxis type="number" {...xAxisStyle} />
+                  <YAxis type="category" dataKey="name" width={100} {...yAxisStyle} />
+                  <Tooltip
+                    formatter={(value: number) => [value, '交易次数']}
+                    contentStyle={tooltipStyle.contentStyle}
+                    itemStyle={{ color: 'hsl(var(--foreground))' }}
+                  />
+                  <Bar dataKey="count" fill={expenseColorHex} radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Account Overview - Full Width, 2 Columns */}
+      <Card>
+        <CardHeader>
+          <CardTitle>账户概览</CardTitle>
+          <CardDescription>各账户详细信息</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {accountData.map((acc, i) => (
+              <div key={acc.name} className="p-4 rounded-lg bg-muted/50">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: colors[i % colors.length] }}
+                    />
+                    <span className="font-semibold">{acc.name}</span>
+                  </div>
+                  <Badge variant={acc.balance >= 0 ? 'default' : 'destructive'}>
+                    {acc.balance >= 0 ? '+' : ''}{formatCurrencyFull(acc.balance)}
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">收入</p>
+                    <p className={`font-medium ${incomeColorClass}`}>
+                      {formatCurrencyFull(acc.income)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">支出</p>
+                    <p className={`font-medium ${expenseColorClass}`}>
+                      {formatCurrencyFull(acc.expense)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">交易数</p>
+                    <p className="font-medium">{acc.transactionCount}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Detailed Table */}
       <Card>
@@ -301,14 +377,14 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
               {accountData.map(acc => (
                 <TableRow key={acc.name}>
                   <TableCell className="font-medium">{acc.name}</TableCell>
-                  <TableCell className="text-right text-green-600 dark:text-green-400">
-                    ¥{acc.income.toLocaleString()}
+                  <TableCell className={`text-right ${incomeColorClass}`}>
+                    {formatCurrencyFull(acc.income)}
                   </TableCell>
-                  <TableCell className="text-right text-red-600 dark:text-red-400">
-                    ¥{acc.expense.toLocaleString()}
+                  <TableCell className={`text-right ${expenseColorClass}`}>
+                    {formatCurrencyFull(acc.expense)}
                   </TableCell>
-                  <TableCell className={`text-right font-semibold ${acc.balance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                    {acc.balance >= 0 ? '+' : ''}¥{acc.balance.toLocaleString()}
+                  <TableCell className={`text-right font-semibold ${acc.balance >= 0 ? incomeColorClass : expenseColorClass}`}>
+                    {acc.balance >= 0 ? '+' : ''}{formatCurrencyFull(acc.balance)}
                   </TableCell>
                   <TableCell className="text-right">{acc.transactionCount}</TableCell>
                   <TableCell className="text-right">

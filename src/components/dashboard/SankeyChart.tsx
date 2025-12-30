@@ -1,32 +1,33 @@
 import { useMemo } from 'react';
+import ReactECharts from 'echarts-for-react';
+import type { EChartsOption } from 'echarts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Transaction } from '@/types/transaction';
+import { useSettings, getIncomeColorHex, getExpenseColorHex } from '@/contexts/SettingsContext';
+import { formatCurrencyFull } from '@/lib/chart-config';
+
+// ECharts Sankey label callback parameter types
+interface SankeyLabelParams {
+  name: string;
+  value: number;
+}
 
 interface SankeyChartProps {
   transactions: Transaction[];
   type: 'income' | 'expense';
 }
 
-interface SankeyNode {
-  name: string;
-  value: number;
-  color: string;
-}
-
-interface SankeyLink {
-  source: string;
-  target: string;
-  value: number;
-}
-
 export function SankeyChart({ transactions, type }: SankeyChartProps) {
-  const { nodes, links, total } = useMemo(() => {
+  const { settings } = useSettings();
+  const totalColor = type === 'income' ? getIncomeColorHex(settings.colorScheme) : getExpenseColorHex(settings.colorScheme);
+
+  const { option, total } = useMemo(() => {
     const filtered = transactions.filter(t => t.type === type);
     const total = filtered.reduce((sum, t) => sum + t.amount, 0);
-    
-    // Group by primary category
+
+    // Group by primary -> secondary category
     const primaryMap = new Map<string, { total: number; secondary: Map<string, number> }>();
-    
+
     filtered.forEach(t => {
       if (!primaryMap.has(t.primaryCategory)) {
         primaryMap.set(t.primaryCategory, { total: 0, secondary: new Map() });
@@ -34,122 +35,173 @@ export function SankeyChart({ transactions, type }: SankeyChartProps) {
       const primary = primaryMap.get(t.primaryCategory)!;
       primary.total += t.amount;
       primary.secondary.set(
-        t.secondaryCategory, 
+        t.secondaryCategory,
         (primary.secondary.get(t.secondaryCategory) || 0) + t.amount
       );
     });
 
+    // Rich color palette for Sankey categories (all direct hex values for ECharts)
     const colors = [
-      'hsl(var(--chart-1))',
-      'hsl(var(--chart-2))',
-      'hsl(var(--chart-3))',
-      'hsl(var(--chart-4))',
-      'hsl(var(--chart-5))',
+      getIncomeColorHex(settings.colorScheme),
+      getExpenseColorHex(settings.colorScheme),
+      '#3b82f6', // Blue-500
+      '#06b6d4', // Cyan-500
+      '#0ea5e9', // Sky-500
+      '#6366f1', // Indigo-500
+      '#8b5cf6', // Violet-500
+      '#a855f7', // Purple-500
+      '#d946ef', // Fuchsia-500
+      '#ec4899', // Pink-500
+      '#f43f5e', // Rose-500
+      '#ef4444', // Red-500
+      '#f97316', // Orange-500
+      '#f59e0b', // Amber-500
+      '#eab308', // Yellow-500
+      '#84cc16', // Lime-500
+      '#22c55e', // Green-500
+      '#10b981', // Emerald-500
+      '#14b8a6', // Teal-500
+      '#0891b2', // Cyan-600
+      '#0284c7', // Sky-600
+      '#2563eb', // Blue-600
+      '#4f46e5', // Indigo-600
+      '#7c3aed', // Violet-600
     ];
 
-    const nodes: SankeyNode[] = [];
-    const links: SankeyLink[] = [];
-    
-    // Add total node
-    nodes.push({
-      name: type === 'income' ? '总收入' : '总支出',
-      value: total,
-      color: type === 'income' ? 'hsl(142, 76%, 36%)' : 'hsl(0, 84%, 60%)'
-    });
+    // Build nodes and links for ECharts Sankey
+    // Node type with optional itemStyle for direct color assignment
+    const nodes: Array<{ name: string; itemStyle?: { color: string } }> = [];
+    const links: Array<{ source: string | number; target: string | number; value: number }> = [];
 
-    // Add primary category nodes and links
-    let colorIndex = 0;
+    // Add root node
+    const rootNode = type === 'income' ? '总收入' : '总支出';
+    nodes.push({ name: rootNode, itemStyle: { color: totalColor } });
+
+    // Track node names for index-based links
+    const nodeNameSet = new Set<string>([rootNode]);
+
+    let primaryIndex = 0;
     primaryMap.forEach((data, category) => {
-      nodes.push({
-        name: category,
-        value: data.total,
-        color: colors[colorIndex % colors.length]
-      });
-      
-      links.push({
-        source: type === 'income' ? '总收入' : '总支出',
-        target: category,
-        value: data.total
-      });
+      // Skip first 2 colors (income/expense theme colors)
+      const colorIndex = primaryIndex + 2;
+      const categoryColor = colors[colorIndex % colors.length];
 
-      // Add secondary category nodes and links
-      data.secondary.forEach((value, subCategory) => {
-        const subName = `${category}-${subCategory}`;
+      // Use category with index as unique identifier for display
+      const categoryNode = category;
+      if (!nodeNameSet.has(categoryNode)) {
         nodes.push({
-          name: subName,
-          value,
-          color: colors[colorIndex % colors.length]
+          name: categoryNode,
+          itemStyle: { color: categoryColor }
         });
-        
+        nodeNameSet.add(categoryNode);
+
         links.push({
-          source: category,
-          target: subName,
+          source: rootNode,
+          target: categoryNode,
+          value: data.total
+        });
+      }
+
+      // Add secondary category nodes with unique names
+      data.secondary.forEach((value, subCategory) => {
+        // Create unique node name: "一级分类 - 二级分类"
+        const uniqueSubNode = `${category} - ${subCategory}`;
+        if (!nodeNameSet.has(uniqueSubNode)) {
+          nodes.push({
+            name: uniqueSubNode,
+            itemStyle: { color: categoryColor }
+          });
+          nodeNameSet.add(uniqueSubNode);
+        }
+
+        links.push({
+          source: categoryNode,
+          target: uniqueSubNode,
           value
         });
       });
 
-      colorIndex++;
+      primaryIndex++;
     });
 
-    return { nodes, links, total };
-  }, [transactions, type]);
-
-  // Calculate layout positions
-  const layout = useMemo(() => {
-    const width = 800;
-    const height = 500;
-    const nodeWidth = 20;
-    const padding = 40;
-    
-    // Group nodes by level
-    const totalNode = nodes.find(n => n.name === (type === 'income' ? '总收入' : '总支出'));
-    const primaryNodes = nodes.filter(n => 
-      links.some(l => l.source === (type === 'income' ? '总收入' : '总支出') && l.target === n.name)
-    );
-    const secondaryNodes = nodes.filter(n => 
-      n !== totalNode && !primaryNodes.includes(n)
-    );
-
-    // Calculate positions
-    const positions = new Map<string, { x: number; y: number; height: number }>();
-    
-    // Total node (left)
-    if (totalNode) {
-      positions.set(totalNode.name, {
-        x: padding,
-        y: height / 2 - (height - 2 * padding) / 2,
-        height: height - 2 * padding
-      });
-    }
-
-    // Primary nodes (middle)
-    const primaryTotal = primaryNodes.reduce((s, n) => s + n.value, 0);
-    let primaryY = padding;
-    primaryNodes.forEach(node => {
-      const nodeHeight = ((node.value / primaryTotal) * (height - 2 * padding - primaryNodes.length * 10));
-      positions.set(node.name, {
-        x: width / 2 - nodeWidth / 2,
-        y: primaryY,
-        height: Math.max(nodeHeight, 20)
-      });
-      primaryY += nodeHeight + 10;
+    // Map node names to indices for ECharts
+    const nodeIndexMap = new Map<string, number>();
+    nodes.forEach((node, index) => {
+      nodeIndexMap.set(node.name, index);
     });
 
-    // Secondary nodes (right)
-    let secondaryY = padding;
-    const secondaryTotal = secondaryNodes.reduce((s, n) => s + n.value, 0);
-    secondaryNodes.forEach(node => {
-      const nodeHeight = ((node.value / secondaryTotal) * (height - 2 * padding - secondaryNodes.length * 5));
-      positions.set(node.name, {
-        x: width - padding - nodeWidth,
-        y: secondaryY,
-        height: Math.max(nodeHeight, 15)
-      });
-      secondaryY += nodeHeight + 5;
-    });
+    // Convert links to use indices
+    const indexedLinks = links.map(link => ({
+      source: nodeIndexMap.get(link.source as string)!,
+      target: nodeIndexMap.get(link.target as string)!,
+      value: link.value
+    }));
 
-    return { width, height, nodeWidth, positions, primaryNodes, secondaryNodes };
-  }, [nodes, links, type]);
+    const option = {
+      tooltip: {
+        trigger: 'item',
+        triggerOn: 'mousemove',
+        formatter: (params: { dataType: string; name: string; value: number; data?: { source: string; target: string; value: number } }) => {
+          if (params.dataType === 'node') {
+            return `${params.name}: ${formatCurrencyFull(params.value)}`;
+          }
+          if (params.dataType === 'edge' && params.data) {
+            return `${params.data.source} → ${params.data.target}: ${formatCurrencyFull(params.data.value)}`;
+          }
+          return '';
+        }
+      },
+      series: [
+        {
+          type: 'sankey',
+          layout: 'none',
+          emphasis: {
+            focus: 'adjacency'
+          },
+          data: nodes,
+          links: indexedLinks,
+          itemStyle: {
+            borderColor: 'hsl(var(--background))'
+          },
+          lineStyle: {
+            opacity: 0.4
+          },
+          label: {
+            position: 'right',
+            fontSize: 11,
+            formatter: (params: SankeyLabelParams) => {
+              const value = params.value;
+              const percentage = ((value / total) * 100).toFixed(1);
+              return `${params.name}\n${formatCurrencyFull(value)}\n${percentage}%`;
+            }
+          },
+          levels: [{
+            depth: 0,
+            itemStyle: {
+              color: totalColor,
+              borderColor: 'hsl(var(--background))'
+            },
+            label: {
+              fontSize: 12,
+              fontWeight: 'bold'
+            }
+          }, {
+            depth: 1,
+            label: {
+              fontSize: 11
+            }
+          }, {
+            depth: 2,
+            label: {
+              fontSize: 10
+            }
+          }]
+        }
+      ]
+    };
+
+    return { option, total };
+  }, [transactions, type, totalColor, settings]);
 
   if (transactions.length === 0 || total === 0) {
     return (
@@ -172,112 +224,15 @@ export function SankeyChart({ transactions, type }: SankeyChartProps) {
       <CardHeader>
         <CardTitle>{type === 'income' ? '收入' : '支出'}流向图</CardTitle>
         <CardDescription>
-          总{type === 'income' ? '收入' : '支出'}: ¥{total.toLocaleString()}
+          总{type === 'income' ? '收入' : '支出'}: {formatCurrencyFull(total)}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          <svg 
-            viewBox={`0 0 ${layout.width} ${layout.height}`}
-            className="w-full min-w-[600px]"
-            style={{ maxHeight: '500px' }}
-          >
-            {/* Draw links */}
-            {links.map((link, i) => {
-              const sourcePos = layout.positions.get(link.source);
-              const targetPos = layout.positions.get(link.target);
-              if (!sourcePos || !targetPos) return null;
-
-              const sourceX = sourcePos.x + layout.nodeWidth;
-              const sourceY = sourcePos.y + sourcePos.height / 2;
-              const targetX = targetPos.x;
-              const targetY = targetPos.y + targetPos.height / 2;
-
-              const path = `M ${sourceX} ${sourceY} 
-                           C ${sourceX + (targetX - sourceX) / 2} ${sourceY},
-                             ${sourceX + (targetX - sourceX) / 2} ${targetY},
-                             ${targetX} ${targetY}`;
-
-              const node = nodes.find(n => n.name === link.target);
-              const opacity = 0.3 + (link.value / total) * 0.4;
-
-              return (
-                <g key={i}>
-                  <path
-                    d={path}
-                    fill="none"
-                    stroke={node?.color || 'hsl(var(--muted-foreground))'}
-                    strokeWidth={Math.max(2, (link.value / total) * 30)}
-                    strokeOpacity={opacity}
-                    className="transition-all hover:stroke-opacity-80"
-                  />
-                </g>
-              );
-            })}
-
-            {/* Draw nodes */}
-            {nodes.map((node, i) => {
-              const pos = layout.positions.get(node.name);
-              if (!pos) return null;
-
-              const displayName = node.name.includes('-') 
-                ? node.name.split('-')[1] 
-                : node.name;
-
-              return (
-                <g key={i}>
-                  <rect
-                    x={pos.x}
-                    y={pos.y}
-                    width={layout.nodeWidth}
-                    height={pos.height}
-                    fill={node.color}
-                    rx={4}
-                    className="transition-all hover:opacity-80"
-                  />
-                  <text
-                    x={pos.x + layout.nodeWidth + 8}
-                    y={pos.y + pos.height / 2}
-                    dy="0.35em"
-                    fontSize="11"
-                    fill="currentColor"
-                    className="text-foreground"
-                  >
-                    {displayName}
-                  </text>
-                  <text
-                    x={pos.x + layout.nodeWidth + 8}
-                    y={pos.y + pos.height / 2 + 14}
-                    dy="0.35em"
-                    fontSize="9"
-                    fill="currentColor"
-                    className="text-muted-foreground"
-                  >
-                    ¥{node.value.toLocaleString()}
-                  </text>
-                </g>
-              );
-            })}
-          </svg>
-        </div>
-
-        {/* Legend */}
-        <div className="mt-4 pt-4 border-t border-border">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {layout.primaryNodes.map((node, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <div 
-                  className="w-3 h-3 rounded-sm" 
-                  style={{ backgroundColor: node.color }}
-                />
-                <span className="text-sm">{node.name}</span>
-                <span className="text-sm text-muted-foreground ml-auto">
-                  {((node.value / total) * 100).toFixed(1)}%
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <ReactECharts
+          option={option}
+          style={{ height: 'calc(100vh - 240px)', width: '100%' }}
+          opts={{ renderer: 'svg' }}
+        />
       </CardContent>
     </Card>
   );
