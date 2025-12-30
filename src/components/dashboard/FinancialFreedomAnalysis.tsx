@@ -18,7 +18,6 @@ import {
 } from 'lucide-react';
 import { Transaction } from '@/types/transaction';
 import { useSettings } from '@/contexts/SettingsContext';
-import { DEFAULT_INCOME_CATEGORIES } from '@/types/category';
 import { formatCurrencyFull } from '@/lib/chart-config';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -38,20 +37,9 @@ interface ScenarioResult {
 
 export function FinancialFreedomAnalysis({ transactions, year }: FinancialFreedomAnalysisProps) {
   const { settings } = useSettings();
+  // activeIncomeCategories stores tertiary category names (e.g., "工资", "补贴")
+  // Income not in this list is considered passive income
   const activeIncomeCategories = settings.activeIncomeCategories || [];
-
-  // Get all income tertiary categories from active income secondary categories
-  const getActiveIncomeTertiaryCategories = (): string[] => {
-    const categories: string[] = [];
-    for (const [secondary, tertiaries] of Object.entries(DEFAULT_INCOME_CATEGORIES)) {
-      if (activeIncomeCategories.includes(secondary)) {
-        categories.push(...tertiaries);
-      }
-    }
-    return categories;
-  };
-
-  const activeIncomeTertiaryCategories = getActiveIncomeTertiaryCategories();
 
   // Calculate income breakdown
   const calculateIncomeBreakdown = () => {
@@ -67,8 +55,8 @@ export function FinancialFreedomAnalysis({ transactions, year }: FinancialFreedo
       .forEach(t => {
         totalIncome += t.amount;
 
-        const isActive = activeIncomeTertiaryCategories.includes(t.tertiaryCategory) ||
-                        activeIncomeCategories.includes(t.secondaryCategory);
+        // Check if this tertiary category is set as active income
+        const isActive = activeIncomeCategories.includes(t.tertiaryCategory);
 
         if (isActive) {
           activeIncome += t.amount;
