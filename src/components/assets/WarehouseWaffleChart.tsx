@@ -122,8 +122,8 @@ function WaffleCell({ unit, index }: WaffleCellProps) {
         <TooltipTrigger asChild>
           <div
             className={cn(
-              'aspect-square rounded-md transition-all duration-200 cursor-pointer',
-              'border border-border/50 hover:scale-110 hover:shadow-lg hover:z-10',
+              'h-8 rounded-sm transition-all duration-200 cursor-pointer',
+              'border border-border/50 hover:scale-110 hover:shadow-md hover:z-10',
               getStatusColor(unit.waffleStatus)
             )}
             onMouseEnter={() => setIsHovered(true)}
@@ -306,7 +306,7 @@ export function WarehouseWaffleChart({ units }: WarehouseWaffleChartProps) {
         <div className="space-y-1">
           <h3 className="text-lg font-semibold">仓库视图</h3>
           <p className="text-sm text-muted-foreground">
-            每个方块代表一个资金单元 ({formatCurrencyFull(50000)})
+            每个方块代表一个资金单元，共 {stats.total} 个单元
           </p>
         </div>
 
@@ -346,40 +346,23 @@ export function WarehouseWaffleChart({ units }: WarehouseWaffleChartProps) {
         </div>
       )}
 
-      {/* Waffle Grid - 10x10 max */}
-      <div className="flex justify-center py-4">
+      {/* Waffle Grid - All units */}
+      <div className="py-4">
         <div
-          className="grid gap-2 p-6 bg-muted/30 rounded-lg border"
+          className="grid gap-1.5 p-4 bg-muted/30 rounded-lg border w-full"
           style={{
-            gridTemplateColumns: 'repeat(10, minmax(3rem, 5vw))',
-            gridTemplateRows: 'repeat(10, minmax(3rem, 5vw))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(2rem, 1fr))',
           }}
         >
-          {waffleData.slice(0, 100).map((unit, index) => (
+          {waffleData.map((unit, index) => (
             <WaffleCell
               key={unit.id}
               unit={unit}
               index={index}
             />
           ))}
-
-          {/* Fill empty cells if less than 100 */}
-          {waffleData.length < 100 &&
-            Array.from({ length: 100 - waffleData.length }).map((_, index) => (
-              <div
-                key={`empty-${index}`}
-                className="w-full h-full rounded-md bg-border/30 border border-dashed border-border/50"
-              />
-            ))}
         </div>
       </div>
-
-      {/* More than 100 indicator */}
-      {waffleData.length > 100 && (
-        <div className="text-center text-xs text-muted-foreground">
-          显示前 100 个单元，共 {waffleData.length} 个
-        </div>
-      )}
     </div>
   );
 }
