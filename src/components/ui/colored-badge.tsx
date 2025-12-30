@@ -30,7 +30,6 @@ interface ColoredBadgeProps {
 export function ColoredBadge({ label, variant = 'auto', className }: ColoredBadgeProps) {
   const { bg, text } = getLabelColorClasses(label);
 
-  // 总是使用自定义颜色模式（支持20色）
   return (
     <Badge
       variant="outline"
