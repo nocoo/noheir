@@ -7,6 +7,7 @@ interface Settings {
   theme: Theme;
   colorScheme: ColorScheme;
   targetSavingsRate: number; // 目标储蓄率，0-100
+  activeIncomeCategories: string[]; // 主动收入的三级分类名称列表
 }
 
 interface SettingsContextType {
@@ -14,6 +15,9 @@ interface SettingsContextType {
   updateTheme: (theme: Theme) => void;
   updateColorScheme: (scheme: ColorScheme) => void;
   updateTargetSavingsRate: (rate: number) => void;
+  updateActiveIncomeCategories: (categories: string[]) => void;
+  toggleActiveIncomeCategory: (category: string) => void;
+  isCategoryActiveIncome: (category: string) => boolean;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -22,6 +26,7 @@ const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
   colorScheme: 'default',
   targetSavingsRate: 60, // 默认60%
+  activeIncomeCategories: [], // 默认空列表，表示所有收入都是被动收入
 };
 
 const SETTINGS_KEY = 'finance-analyzer-settings';
@@ -37,6 +42,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           theme: parsed.theme ?? DEFAULT_SETTINGS.theme,
           colorScheme: parsed.colorScheme ?? DEFAULT_SETTINGS.colorScheme,
           targetSavingsRate: parsed.targetSavingsRate ?? DEFAULT_SETTINGS.targetSavingsRate,
+          activeIncomeCategories: parsed.activeIncomeCategories ?? DEFAULT_SETTINGS.activeIncomeCategories,
         };
       } catch {
         return DEFAULT_SETTINGS;
@@ -77,8 +83,26 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setSettings(prev => ({ ...prev, targetSavingsRate: rate }));
   };
 
+  const updateActiveIncomeCategories = (categories: string[]) => {
+    setSettings(prev => ({ ...prev, activeIncomeCategories: categories }));
+  };
+
+  const toggleActiveIncomeCategory = (category: string) => {
+    setSettings(prev => {
+      const isActive = prev.activeIncomeCategories.includes(category);
+      const newCategories = isActive
+        ? prev.activeIncomeCategories.filter(c => c !== category)
+        : [...prev.activeIncomeCategories, category];
+      return { ...prev, activeIncomeCategories: newCategories };
+    });
+  };
+
+  const isCategoryActiveIncome = (category: string) => {
+    return settings.activeIncomeCategories.includes(category);
+  };
+
   return (
-    <SettingsContext.Provider value={{ settings, updateTheme, updateColorScheme, updateTargetSavingsRate }}>
+    <SettingsContext.Provider value={{ settings, updateTheme, updateColorScheme, updateTargetSavingsRate, updateActiveIncomeCategories, toggleActiveIncomeCategory, isCategoryActiveIncome }}>
       {children}
     </SettingsContext.Provider>
   );

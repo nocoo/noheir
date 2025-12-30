@@ -4,16 +4,28 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { useSettings, getIncomeColorHex, getExpenseColorHex } from '@/contexts/SettingsContext';
 import { DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from '@/types/category';
-import { Sun, Moon, Monitor, Palette, Layers, ChevronDown, ChevronRight, Target } from 'lucide-react';
+import { Sun, Moon, Monitor, Palette, Layers, ChevronDown, ChevronRight, Target, DollarSign, TrendingUp, Check } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import type { LucideIcon } from 'lucide-react';
 
+// Get all income tertiary categories
+const getAllIncomeTertiaryCategories = (): string[] => {
+  const allCategories: string[] = [];
+  Object.values(DEFAULT_INCOME_CATEGORIES).forEach(tertiaryList => {
+    allCategories.push(...tertiaryList);
+  });
+  return allCategories.sort();
+};
+
+const ALL_INCOME_TERTIARY = getAllIncomeTertiaryCategories();
+
 export function Settings() {
-  const { settings, updateTheme, updateColorScheme, updateTargetSavingsRate } = useSettings();
+  const { settings, updateTheme, updateColorScheme, updateTargetSavingsRate, toggleActiveIncomeCategory, isCategoryActiveIncome } = useSettings();
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [showActiveIncomeSelector, setShowActiveIncomeSelector] = useState(false);
 
   const toggleCategory = (category: string) => {
     setExpandedCategories(prev => {
@@ -187,6 +199,92 @@ export function Settings() {
           <p className="text-sm text-muted-foreground mt-2">
             {settings.colorScheme === 'default' ? '默认：收入为绿色，支出为红色' : '切换：收入为红色，支出为绿色'}
           </p>
+        </CardContent>
+      </Card>
+
+      {/* Active vs Passive Income Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-primary" />
+            收入类型分类
+          </CardTitle>
+          <CardDescription>设置哪些收入分类为主动收入（需付出时间/劳动），默认所有收入为被动收入</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>主动收入分类</Label>
+              <p className="text-sm text-muted-foreground">
+                已选择 {settings.activeIncomeCategories.length} / {ALL_INCOME_TERTIARY.length} 个分类
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowActiveIncomeSelector(!showActiveIncomeSelector)}
+            >
+              {showActiveIncomeSelector ? '收起' : '选择分类'}
+            </Button>
+          </div>
+
+          {showActiveIncomeSelector && (
+            <div className="border rounded-lg p-4 space-y-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                <DollarSign className="h-4 w-4" />
+                <span>点击分类以切换主动/被动收入状态</span>
+              </div>
+              <ScrollArea className="h-[300px] pr-4">
+                <div className="grid grid-cols-2 gap-2">
+                  {ALL_INCOME_TERTIARY.map((category) => {
+                    const isActive = isCategoryActiveIncome(category);
+                    return (
+                      <button
+                        key={category}
+                        onClick={() => toggleActiveIncomeCategory(category)}
+                        className={cn(
+                          "flex items-center gap-2 p-2 rounded-md border text-left transition-colors hover:bg-muted/50",
+                          isActive && "bg-primary/10 border-primary"
+                        )}
+                      >
+                        <div className={cn(
+                          "w-4 h-4 rounded-sm border flex items-center justify-center",
+                          isActive ? "bg-primary border-primary" : "border-muted-foreground"
+                        )}>
+                          {isActive && <Check className="h-3 w-3 text-primary-foreground" />}
+                        </div>
+                        <span className="text-sm">{category}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            </div>
+          )}
+
+          {settings.activeIncomeCategories.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {settings.activeIncomeCategories.slice(0, 10).map((category) => (
+                <Badge key={category} variant="default" className="gap-1">
+                  <TrendingUp className="h-3 w-3" />
+                  {category}
+                </Badge>
+              ))}
+              {settings.activeIncomeCategories.length > 10 && (
+                <Badge variant="secondary">
+                  +{settings.activeIncomeCategories.length - 10} 更多
+                </Badge>
+              )}
+            </div>
+          )}
+
+          <div className="p-3 bg-muted/50 rounded-lg text-sm space-y-1">
+            <p className="font-medium">📌 收入类型说明</p>
+            <ul className="text-muted-foreground space-y-1 pl-4">
+              <li>• <span className="text-primary font-medium">主动收入</span>：需要持续投入时间和劳动获得的收入（如工资、补贴）</li>
+              <li>• <span className="text-muted-foreground font-medium">被动收入</span>：无需持续劳动即可获得的收入（如投资收益、房租、理财）</li>
+            </ul>
+          </div>
         </CardContent>
       </Card>
 
