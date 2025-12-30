@@ -84,8 +84,8 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
         'fixed lg:static inset-y-0 left-0 z-50 flex flex-col bg-card border-r border-border transition-all duration-300',
         sidebarOpen ? 'w-64' : 'w-0 lg:w-16'
       )}>
-        <div className="flex items-center h-16 border-b border-border">
-          <div className="flex items-center gap-3 flex-1 px-4">
+        <div className="flex items-center h-16 px-2 border-b border-border">
+          <div className="flex items-center gap-3 flex-1 px-2">
             {sidebarOpen && (
               <>
                 <LayoutDashboard className="h-5 w-5 text-primary shrink-0" />
@@ -93,17 +93,16 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
               </>
             )}
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className={cn(
-              "shrink-0 mr-4",
-              !sidebarOpen && "lg:mx-4 lg:mr-0"
-            )}
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
+          <div className="pr-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="shrink-0"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
 
         <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
