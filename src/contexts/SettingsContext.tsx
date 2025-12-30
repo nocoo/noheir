@@ -10,6 +10,8 @@ interface Settings {
   targetSavingsRate: number;
   activeIncomeCategories: string[];
   siteName: string;
+  minReturnRate: number;      // 保底收益率 (%)
+  maxReturnRate: number;      // 风险收益率阈值 (%)
 }
 
 interface SettingsContextType {
@@ -21,6 +23,8 @@ interface SettingsContextType {
   toggleActiveIncomeCategory: (category: string) => void;
   isCategoryActiveIncome: (category: string) => boolean;
   updateSiteName: (name: string) => void;
+  updateMinReturnRate: (rate: number) => void;
+  updateMaxReturnRate: (rate: number) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -31,6 +35,8 @@ const DEFAULT_SETTINGS: Settings = {
   targetSavingsRate: 60,
   activeIncomeCategories: [],
   siteName: '个人财务管理',
+  minReturnRate: 1.25,
+  maxReturnRate: 4.0,
 };
 
 const STORAGE_KEY = 'finance-settings';
@@ -163,6 +169,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setSettings(prev => ({ ...prev, siteName: name }));
   };
 
+  const updateMinReturnRate = (rate: number) => {
+    setSettings(prev => ({ ...prev, minReturnRate: rate }));
+  };
+
+  const updateMaxReturnRate = (rate: number) => {
+    setSettings(prev => ({ ...prev, maxReturnRate: rate }));
+  };
+
   return (
     <SettingsContext.Provider
       value={{
@@ -174,6 +188,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         toggleActiveIncomeCategory,
         isCategoryActiveIncome,
         updateSiteName,
+        updateMinReturnRate,
+        updateMaxReturnRate,
       }}
     >
       {children}
@@ -214,4 +230,37 @@ export function getIncomeColorHex(scheme: ColorScheme): string {
 
 export function getExpenseColorHex(scheme: ColorScheme): string {
   return scheme === 'swapped' ? '#059669' : '#e11d48';
+}
+
+// Return rate status based on settings
+export type ReturnRateStatus = 'low' | 'normal' | 'high';
+
+export function getReturnRateStatus(rate: number, settings: Settings): ReturnRateStatus {
+  if (rate < settings.minReturnRate) return 'low';
+  if (rate > settings.maxReturnRate) return 'high';
+  return 'normal';
+}
+
+export function getReturnRateColor(status: ReturnRateStatus): string {
+  switch (status) {
+    case 'low':
+      return 'text-amber-600 dark:text-amber-400';      // 过低 - 黄色警告
+    case 'high':
+      return 'text-rose-600 dark:text-rose-400';        // 过高 - 红色风险
+    case 'normal':
+    default:
+      return 'text-emerald-600 dark:text-emerald-400';  // 正常 - 绿色
+  }
+}
+
+export function getReturnRateBgColor(status: ReturnRateStatus): string {
+  switch (status) {
+    case 'low':
+      return 'bg-amber-50 dark:bg-amber-500/10';
+    case 'high':
+      return 'bg-rose-50 dark:bg-rose-500/10';
+    case 'normal':
+    default:
+      return 'bg-emerald-50 dark:bg-emerald-500/10';
+  }
 }

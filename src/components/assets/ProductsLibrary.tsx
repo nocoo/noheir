@@ -5,8 +5,10 @@
  */
 
 import { useState, useMemo, useEffect } from 'react';
-import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from '@/hooks/useAssets';
-import { Plus, Pencil, Trash2, Banknote, Filter, X, Info } from 'lucide-react';
+import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct, useUnitsDisplay } from '@/hooks/useAssets';
+import { formatCurrencyFull } from '@/lib/chart-config';
+import { Plus, Pencil, Trash2, Banknote, Filter, X, Info, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { useSettings, getReturnRateStatus, getReturnRateColor } from '@/contexts/SettingsContext';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -34,7 +36,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { ChannelBadge, CategoryBadge } from '@/components/ui/colored-badge';
+import { ChannelBadge, CategoryBadge, StatusBadge } from '@/components/ui/colored-badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import type {
   FinancialProduct,
@@ -42,7 +45,6 @@ import type {
   UpdateFinancialProductInput,
   ProductChannel,
   ProductCategory,
-  ProductStatus,
   Currency,
 } from '@/types/assets';
 
@@ -72,23 +74,18 @@ const CATEGORY_OPTIONS: { value: ProductCategory; label: string }[] = [
   { value: '现金+', label: '现金+' },
 ];
 
-const CURRENCY_OPTIONS: { value: Currency; label: string }[] = [
-  { value: 'CNY', label: '人民币 CNY' },
-  { value: 'USD', label: '美元 USD' },
-  { value: 'HKD', label: '港币 HKD' },
-];
-
-const STATUS_OPTIONS: { value: ProductStatus; label: string }[] = [
-  { value: '投资中', label: '投资中' },
-  { value: '已退出', label: '已退出' },
-];
-
 // Currency emoji mapping
 const CURRENCY_EMOJI: Record<Currency, string> = {
   CNY: '🇨🇳',
   USD: '🇺🇸',
   HKD: '🇭🇰',
 };
+
+const CURRENCY_OPTIONS: { value: Currency; label: string }[] = [
+  { value: 'CNY', label: '人民币 CNY' },
+  { value: 'USD', label: '美元 USD' },
+  { value: 'HKD', label: '港币 HKD' },
+];
 
 // Filter options
 const FILTER_CHANNEL_OPTIONS = [
@@ -101,14 +98,15 @@ const FILTER_CATEGORY_OPTIONS = [
   ...CATEGORY_OPTIONS,
 ];
 
-const FILTER_STATUS_OPTIONS = [
-  { value: 'all' as const, label: '全部状态' },
-  ...STATUS_OPTIONS,
-];
-
 const FILTER_CURRENCY_OPTIONS = [
   { value: 'all' as const, label: '全部币种' },
   ...CURRENCY_OPTIONS,
+];
+
+const FILTER_INVEST_STATUS_OPTIONS = [
+  { value: 'all' as const, label: '全部状态' },
+  { value: '投资中' as const, label: '投资中' },
+  { value: '已退出' as const, label: '已退出' },
 ];
 
 interface ProductFormProps {
@@ -127,7 +125,6 @@ function ProductForm({ product, open, onClose, onSubmit, isPending }: ProductFor
     category: '定期存款',
     currency: 'CNY',
     lock_period_days: 0,
-    status: '投资中',
   });
 
   // Sync formData when product prop changes
@@ -141,7 +138,6 @@ function ProductForm({ product, open, onClose, onSubmit, isPending }: ProductFor
         currency: product.currency,
         lock_period_days: product.lock_period_days,
         annual_return_rate: product.annual_return_rate,
-        status: product.status,
       });
     } else {
       setFormData({
@@ -150,7 +146,6 @@ function ProductForm({ product, open, onClose, onSubmit, isPending }: ProductFor
         category: '定期存款',
         currency: 'CNY',
         lock_period_days: 0,
-        status: '投资中',
       });
     }
   }, [product, open]);
@@ -297,28 +292,6 @@ function ProductForm({ product, open, onClose, onSubmit, isPending }: ProductFor
                 placeholder="例如：3.50"
               />
             </div>
-
-            {/* Status */}
-            {isEdit && (
-              <div className="space-y-2">
-                <Label htmlFor="status">状态</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value: ProductStatus) => updateField('status', value)}
-                >
-                  <SelectTrigger id="status">
-                    <SelectValue placeholder="选择状态" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {STATUS_OPTIONS.map(option => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
@@ -373,6 +346,8 @@ function DeleteConfirmDialog({
 
 export function ProductsLibrary() {
   const { data: products, isLoading } = useProducts();
+  const { data: units } = useUnitsDisplay();
+  const { settings } = useSettings();
   const createMutation = useCreateProduct();
   const updateMutation = useUpdateProduct();
   const deleteMutation = useDeleteProduct();
@@ -380,9 +355,14 @@ export function ProductsLibrary() {
   // Filter state
   const [filterChannel, setFilterChannel] = useState<ProductChannel | 'all'>('all');
   const [filterCategory, setFilterCategory] = useState<ProductCategory | 'all'>('all');
-  const [filterStatus, setFilterStatus] = useState<ProductStatus | 'all'>('all');
   const [filterCurrency, setFilterCurrency] = useState<Currency | 'all'>('all');
+  const [filterInvestStatus, setFilterInvestStatus] = useState<'all' | '投资中' | '已退出'>('all');
   const [showFilters, setShowFilters] = useState(false);
+
+  // Sort state
+  type SortField = 'name' | 'channel' | 'category' | 'investStatus' | 'totalCapital' | 'lockPeriod' | 'annualReturn';
+  const [sortField, setSortField] = useState<SortField>('investStatus');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const [formDialog, setFormDialog] = useState<{
     open: boolean;
@@ -399,29 +379,141 @@ export function ProductsLibrary() {
     let count = 0;
     if (filterChannel !== 'all') count++;
     if (filterCategory !== 'all') count++;
-    if (filterStatus !== 'all') count++;
     if (filterCurrency !== 'all') count++;
+    if (filterInvestStatus !== 'all') count++;
     return count;
-  }, [filterChannel, filterCategory, filterStatus, filterCurrency]);
+  }, [filterChannel, filterCategory, filterCurrency, filterInvestStatus]);
 
-  // Filtered products with useMemo
+  // Calculate product metrics from units
+  const productMetrics = useMemo(() => {
+    if (!products || !units) return {};
+
+    const metrics: Record<string, {
+      totalCapital: number;
+      activeUnitsCount: number;
+      dailyReturn: number;
+    }> = {};
+
+    products.forEach(product => {
+      const productUnits = units.filter(unit => unit.product_id === product.id && unit.status === '已成立');
+      const totalCapital = productUnits.reduce((sum, unit) => sum + unit.amount, 0);
+      const activeUnitsCount = productUnits.length;
+
+      // Calculate daily return: (annual_rate / 100) * total_capital / 365
+      const dailyReturn = product.annual_return_rate
+        ? (product.annual_return_rate / 100) * totalCapital / 365
+        : 0;
+
+      metrics[product.id] = {
+        totalCapital,
+        activeUnitsCount,
+        dailyReturn,
+      };
+    });
+
+    return metrics;
+  }, [products, units]);
+
+  // Filtered and sorted products with useMemo
   const filteredProducts = useMemo(() => {
     if (!products) return [];
-    return products.filter(product => {
+
+    // First filter
+    let result = products.filter(product => {
       if (filterChannel !== 'all' && product.channel !== filterChannel) return false;
       if (filterCategory !== 'all' && product.category !== filterCategory) return false;
-      if (filterStatus !== 'all' && product.status !== filterStatus) return false;
       if (filterCurrency !== 'all' && product.currency !== filterCurrency) return false;
+
+      // Filter by investment status
+      const metrics = productMetrics[product.id];
+      const hasActiveUnits = metrics && metrics.activeUnitsCount > 0;
+      const investStatus = hasActiveUnits ? '投资中' : '已退出';
+      if (filterInvestStatus !== 'all' && investStatus !== filterInvestStatus) return false;
+
       return true;
     });
-  }, [products, filterChannel, filterCategory, filterStatus, filterCurrency]);
+
+    // Then sort
+    result.sort((a, b) => {
+      let compareA, compareB;
+
+      switch (sortField) {
+        case 'name':
+          compareA = a.name;
+          compareB = b.name;
+          break;
+        case 'channel':
+          compareA = a.channel;
+          compareB = b.channel;
+          break;
+        case 'category':
+          compareA = a.category;
+          compareB = b.category;
+          break;
+        case 'investStatus':
+          const metricsA = productMetrics[a.id];
+          const metricsB = productMetrics[b.id];
+          compareA = metricsA && metricsA.activeUnitsCount > 0 ? '投资中' : '已退出';
+          compareB = metricsB && metricsB.activeUnitsCount > 0 ? '投资中' : '已退出';
+          break;
+        case 'totalCapital':
+          compareA = productMetrics[a.id]?.totalCapital || 0;
+          compareB = productMetrics[b.id]?.totalCapital || 0;
+          break;
+        case 'lockPeriod':
+          compareA = a.lock_period_days;
+          compareB = b.lock_period_days;
+          break;
+        case 'annualReturn':
+          compareA = a.annual_return_rate || 0;
+          compareB = b.annual_return_rate || 0;
+          break;
+        default:
+          compareA = a.name;
+          compareB = b.name;
+      }
+
+      if (typeof compareA === 'string' && typeof compareB === 'string') {
+        return sortOrder === 'asc'
+          ? compareA.localeCompare(compareB, 'zh-CN')
+          : compareB.localeCompare(compareA, 'zh-CN');
+      }
+
+      if (typeof compareA === 'number' && typeof compareB === 'number') {
+        return sortOrder === 'asc' ? compareA - compareB : compareB - compareA;
+      }
+
+      return 0;
+    });
+
+    return result;
+  }, [products, filterChannel, filterCategory, filterCurrency, filterInvestStatus, productMetrics, sortField, sortOrder]);
+
+  // Handle sort
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  // Get sort icon
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) return <ArrowUpDown className="w-4 h-4 inline ml-1" />;
+    return sortOrder === 'asc'
+      ? <ArrowUp className="w-4 h-4 inline ml-1" />
+      : <ArrowDown className="w-4 h-4 inline ml-1" />;
+  };
 
   // Reset filters
   const resetFilters = () => {
     setFilterChannel('all');
     setFilterCategory('all');
-    setFilterStatus('all');
     setFilterCurrency('all');
+    setFilterInvestStatus('all');
+    setShowFilters(false);
   };
 
   const handleCreate = (data: CreateFinancialProductInput) => {
@@ -504,7 +596,7 @@ export function ProductsLibrary() {
               重置
             </Button>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             {/* Channel Filter */}
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">销售渠道</Label>
@@ -545,18 +637,18 @@ export function ProductsLibrary() {
               </Select>
             </div>
 
-            {/* Status Filter */}
+            {/* Investment Status Filter */}
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">状态</Label>
+              <Label className="text-xs text-muted-foreground">投资状态</Label>
               <Select
-                value={filterStatus}
-                onValueChange={(value: ProductStatus | 'all') => setFilterStatus(value)}
+                value={filterInvestStatus}
+                onValueChange={(value: 'all' | '投资中' | '已退出') => setFilterInvestStatus(value)}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {FILTER_STATUS_OPTIONS.map(option => (
+                  {FILTER_INVEST_STATUS_OPTIONS.map(option => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
@@ -596,17 +688,85 @@ export function ProductsLibrary() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>产品名称</TableHead>
-                    <TableHead>渠道</TableHead>
-                    <TableHead>类别</TableHead>
-                    <TableHead className="text-right">锁定期</TableHead>
-                    <TableHead className="text-right">年化</TableHead>
+                    <TableHead>
+                      <button
+                        onClick={() => handleSort('investStatus')}
+                        className="flex items-center hover:text-foreground transition-colors"
+                      >
+                        投资状态
+                        {getSortIcon('investStatus')}
+                      </button>
+                    </TableHead>
+                    <TableHead>
+                      <button
+                        onClick={() => handleSort('name')}
+                        className="flex items-center hover:text-foreground transition-colors"
+                      >
+                        产品名称
+                        {getSortIcon('name')}
+                      </button>
+                    </TableHead>
+                    <TableHead>
+                      <button
+                        onClick={() => handleSort('channel')}
+                        className="flex items-center hover:text-foreground transition-colors"
+                      >
+                        渠道
+                        {getSortIcon('channel')}
+                      </button>
+                    </TableHead>
+                    <TableHead>
+                      <button
+                        onClick={() => handleSort('category')}
+                        className="flex items-center hover:text-foreground transition-colors"
+                      >
+                        类别
+                        {getSortIcon('category')}
+                      </button>
+                    </TableHead>
+                    <TableHead className="text-right">
+                      <button
+                        onClick={() => handleSort('totalCapital')}
+                        className="flex items-center hover:text-foreground transition-colors"
+                      >
+                        资金量
+                        {getSortIcon('totalCapital')}
+                      </button>
+                    </TableHead>
+                    <TableHead className="text-right">
+                      <button
+                        onClick={() => handleSort('lockPeriod')}
+                        className="flex items-center hover:text-foreground transition-colors"
+                      >
+                        锁定期
+                        {getSortIcon('lockPeriod')}
+                      </button>
+                    </TableHead>
+                    <TableHead className="text-right">
+                      <button
+                        onClick={() => handleSort('annualReturn')}
+                        className="flex items-center hover:text-foreground transition-colors"
+                      >
+                        年化
+                        {getSortIcon('annualReturn')}
+                      </button>
+                    </TableHead>
                     <TableHead className="text-right">操作</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredProducts.map(product => (
                     <TableRow key={product.id}>
+                      {/* Investment Status */}
+                      <TableCell>
+                        {(() => {
+                          const metrics = productMetrics[product.id];
+                          const hasActiveUnits = metrics && metrics.activeUnitsCount > 0;
+                          return hasActiveUnits
+                            ? <StatusBadge status="投资中" />
+                            : <StatusBadge status="已退出" />;
+                        })()}
+                      </TableCell>
                       {/* Product Name with info icon */}
                       <TableCell className="font-medium">
                         <span className="flex items-center gap-1.5">
@@ -629,15 +789,53 @@ export function ProductsLibrary() {
                       <TableCell>
                         <CategoryBadge category={product.category} />
                       </TableCell>
+                      {/* Total Capital with Currency Symbol */}
+                      <TableCell className="text-right">
+                        {(() => {
+                          const amount = productMetrics[product.id]?.totalCapital || 0;
+                          const currencySymbol = {
+                            CNY: '¥',
+                            USD: '$',
+                            HKD: 'HK$',
+                          }[product.currency];
+                          return `${currencySymbol}${amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                        })()}
+                      </TableCell>
                       {/* Lock Period */}
                       <TableCell className="text-right">
                         {product.lock_period_days > 0 ? `${product.lock_period_days} 天` : '-'}
                       </TableCell>
-                      {/* Annual Return Rate */}
+                      {/* Annual Return Rate with Daily Return Tooltip */}
                       <TableCell className="text-right">
-                        {product.annual_return_rate
-                          ? `${product.annual_return_rate.toFixed(2)}%`
-                          : '-'}
+                        {product.annual_return_rate ? (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span
+                                  className={cn(
+                                    "cursor-help underline decoration-dotted underline-offset-2",
+                                    getReturnRateColor(getReturnRateStatus(product.annual_return_rate, settings))
+                                  )}
+                                >
+                                  {product.annual_return_rate.toFixed(2)}%
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>
+                                  {(() => {
+                                    const dailyReturn = productMetrics[product.id]?.dailyReturn || 0;
+                                    const currencySymbol = {
+                                      CNY: '¥',
+                                      USD: '$',
+                                      HKD: 'HK$',
+                                    }[product.currency];
+                                    return `日收益估算: ${currencySymbol}${dailyReturn.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                                  })()}
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ) : '-'}
                       </TableCell>
                       {/* Actions */}
                       <TableCell className="text-right">

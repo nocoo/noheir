@@ -46,7 +46,7 @@ export function ColoredBadge({ label, variant = 'auto', className }: ColoredBadg
 }
 
 /**
- * 资金单元编号标签（基于首字母着色）
+ * 资金单元番号标签（基于首字母着色）
  * 例如：A01, A02 显示相同颜色
  */
 export function UnitCodeBadge({ unitCode, className }: { unitCode: string; className?: string }) {

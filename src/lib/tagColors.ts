@@ -156,7 +156,7 @@ export function getLabelColorHex(label: string): string {
 }
 
 /**
- * 提取资金单元编号首字母用于颜色映射
+ * 提取资金单元番号首字母用于颜色映射
  * 例如：A01, A02 → "A", B01 → "B"
  */
 export function getUnitCodePrefix(unitCode: string): string {
@@ -165,7 +165,7 @@ export function getUnitCodePrefix(unitCode: string): string {
 }
 
 /**
- * 获取资金单元编号的颜色（基于首字母）
+ * 获取资金单元番号的颜色（基于首字母）
  * 确保同一首字母的所有单元显示相同颜色
  */
 export function getUnitCodeColor(unitCode: string): 'default' | 'secondary' | 'outline' {
@@ -174,7 +174,7 @@ export function getUnitCodeColor(unitCode: string): 'default' | 'secondary' | 'o
 }
 
 /**
- * 获取资金单元编号的颜色类（基于首字母）
+ * 获取资金单元番号的颜色类（基于首字母）
  */
 export function getUnitCodeColorClasses(unitCode: string): {
   bg: string;

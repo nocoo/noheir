@@ -361,7 +361,7 @@ function UnitForm({ unit, open, onClose, onSubmit, isPending }: UnitFormProps) {
             {/* Unit Code */}
             <div className="space-y-2">
               <Label htmlFor="unit_code">
-                单元编号 <span className="text-expense">*</span>
+                番号 <span className="text-expense">*</span>
               </Label>
               {isEdit ? (
                 // Edit mode: show existing code
@@ -675,6 +675,7 @@ export function CapitalUnitsManager() {
     setFilterStatus('all');
     setFilterStrategy('all');
     setFilterTactics('all');
+    setShowFilters(false);
   };
 
   const [formDialog, setFormDialog] = useState<{
@@ -876,7 +877,7 @@ export function CapitalUnitsManager() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>单元编号</TableHead>
+                <TableHead>番号</TableHead>
                 <TableHead className="text-right">金额</TableHead>
                 <TableHead>币种</TableHead>
                 <TableHead>策略</TableHead>
