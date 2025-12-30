@@ -1,8 +1,9 @@
 /**
  * Warehouse Waffle Chart Component
  *
- * "The Warehouse View" - Visualizes capital units as a 10x10 grid (100 units max)
- * Each cell represents one capital unit (50k) with color-coded status
+ * "The Warehouse View" - Visualizes capital units as a grid
+ * Each cell represents one capital unit with color-coded status
+ * Supports filtering by strategy or viewing all
  */
 
 import { useState, useMemo } from 'react';
@@ -13,9 +14,29 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import type { UnitDisplay, UnitStatus, Currency } from '@/types/assets';
+import type { UnitDisplay, UnitStatus, Currency, InvestmentStrategy } from '@/types/assets';
 import { formatCurrencyFull } from '@/lib/chart-config';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+type ViewMode = 'all' | 'strategy';
+type WaffleStatus =
+  | 'idle'           // 🔴 红色 - 闲置 (已成立但无产品)
+  | 'locked-long'    // 🟢 深绿 - 锁定 > 1 年
+  | 'locked-short'   // 🟢 浅绿 - 锁定 < 3 个月
+  | 'locked-medium'  // 🟡 黄色 - 锁定 3个月-1年
+  | 'archived';      // ⚪️ 灰色 - 已归档/已消费
 
 // Currency emoji
 const CURRENCY_EMOJI: Record<Currency, string> = {
@@ -261,12 +282,28 @@ interface WarehouseWaffleChartProps {
 }
 
 export function WarehouseWaffleChart({ units }: WarehouseWaffleChartProps) {
+  const [viewMode, setViewMode] = useState<ViewMode>('all');
+  const [selectedStrategy, setSelectedStrategy] = useState<InvestmentStrategy | 'all'>('all');
+
   // Classify units by status
   const waffleData = useMemo(() => {
-    return units.map(unit => ({
+    const classified = units.map(unit => ({
       ...unit,
       waffleStatus: classifyUnitStatus(unit),
     }));
+
+    // Filter by view mode and strategy
+    if (viewMode === 'strategy' && selectedStrategy !== 'all') {
+      return classified.filter(unit => unit.strategy === selectedStrategy);
+    }
+
+    return classified;
+  }, [units, viewMode, selectedStrategy]);
+
+  // Get available strategies
+  const availableStrategies = useMemo(() => {
+    const strategies = new Set(units.map(u => u.strategy));
+    return Array.from(strategies);
   }, [units]);
 
   // Calculate statistics
@@ -306,11 +343,51 @@ export function WarehouseWaffleChart({ units }: WarehouseWaffleChartProps) {
         <div className="space-y-1">
           <h3 className="text-lg font-semibold">仓库视图</h3>
           <p className="text-sm text-muted-foreground">
-            每个方块代表一个资金单元，共 {stats.total} 个单元
+            每个方块代表一个资金单元
+            {viewMode === 'strategy' && selectedStrategy !== 'all' && ` · ${selectedStrategy}`}
+            ，共 {stats.total} 个单元
           </p>
         </div>
 
         <div className="flex items-center gap-4">
+          {/* View Mode Toggle */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant={viewMode === 'all' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => {
+                setViewMode('all');
+                setSelectedStrategy('all');
+              }}
+            >
+              全部视图
+            </Button>
+            <Button
+              variant={viewMode === 'strategy' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('strategy')}
+            >
+              按战略分组
+            </Button>
+          </div>
+
+          {/* Strategy Selector */}
+          {viewMode === 'strategy' && (
+            <Select value={selectedStrategy} onValueChange={(v) => setSelectedStrategy(v as InvestmentStrategy | 'all')}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="选择战略" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部战略</SelectItem>
+                {availableStrategies.map(strategy => (
+                  <SelectItem key={strategy} value={strategy}>
+                    {STRATEGY_ICONS[strategy]} {strategy}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
           <div className="text-right">
             <p className="text-2xl font-bold">
               {stats.deployed} <span className="text-sm font-normal text-muted-foreground">/ {stats.total}</span>
