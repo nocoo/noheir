@@ -84,25 +84,30 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
         'fixed lg:static inset-y-0 left-0 z-50 flex flex-col bg-card border-r border-border transition-all duration-300',
         sidebarOpen ? 'w-64' : 'w-0 lg:w-16'
       )}>
-        <div className="flex items-center h-16 px-2 border-b border-border">
-          <div className="flex items-center gap-3 flex-1 px-2">
-            {sidebarOpen && (
-              <>
-                <LayoutDashboard className="h-5 w-5 text-primary shrink-0" />
-                <h1 className="text-lg font-bold text-foreground">个人财务管理</h1>
-              </>
+        <div className={cn(
+          "flex items-center h-16 border-b border-border overflow-hidden",
+          sidebarOpen ? "px-2" : "lg:justify-center lg:px-2"
+        )}>
+          <div className={cn(
+            "flex items-center gap-3 overflow-hidden transition-all duration-300",
+            sidebarOpen ? "flex-1 px-2 opacity-100" : "w-0 opacity-0"
+          )}>
+            <LayoutDashboard className="h-5 w-5 text-primary shrink-0" />
+            <h1 className="text-lg font-bold text-foreground whitespace-nowrap">个人财务管理</h1>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className={cn(
+              "shrink-0 transition-all duration-300",
+              sidebarOpen ? "h-8 px-3" : "lg:h-9 lg:w-9"
             )}
-          </div>
-          <div className="pr-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="shrink-0"
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-          </div>
+          >
+            <Menu className={cn(
+              sidebarOpen ? "h-4 w-4" : "lg:h-5 lg:w-5"
+            )} />
+          </Button>
         </div>
 
         <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
