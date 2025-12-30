@@ -28,32 +28,16 @@ interface ColoredBadgeProps {
  * 使用20色哈希算法，确保相同标签颜色一致
  */
 export function ColoredBadge({ label, variant = 'auto', className }: ColoredBadgeProps) {
-  const badgeVariant = variant === 'auto' ? getTagColor(label) : variant;
   const { bg, text } = getLabelColorClasses(label);
 
-  // 使用 variant 模式
-  if (variant === 'auto') {
-    return (
-      <Badge
-        variant={badgeVariant}
-        className={cn(
-          'font-normal',
-          className
-        )}
-      >
-        {label}
-      </Badge>
-    );
-  }
-
-  // 使用自定义颜色模式（支持20色）
+  // 总是使用自定义颜色模式（支持20色）
   return (
     <Badge
       variant="outline"
       className={cn(
         bg,
         text,
-        'border-transparent',
+        'border-transparent font-normal',
         className
       )}
     >
