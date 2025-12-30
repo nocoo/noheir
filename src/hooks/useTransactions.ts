@@ -48,6 +48,7 @@ export function useTransactions() {
   const [isLoading, setIsLoading] = useState(true);
 
   // Load data from IndexedDB
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const loadStoredData = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -68,12 +69,13 @@ export function useTransactions() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, []); // Empty deps - only run once on mount
 
   // Load all stored years data on mount
   useEffect(() => {
     loadStoredData();
-  }, [loadStoredData]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run on mount
 
   // Load data from CSV file and save to IndexedDB
   const loadFromFile = useCallback(async (file: File): Promise<{

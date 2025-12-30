@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, formatCurrencyK } from '@/lib/chart-config';
+import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, formatCurrencyK, formatCurrencyFull } from '@/lib/chart-config';
 
 export interface CategoryDistributionChartProps {
   title: string;
@@ -74,7 +74,7 @@ export function CategoryDistributionChart({
               <XAxis type="number" {...xAxisStyle} tickFormatter={formatCurrencyK} />
               <YAxis type="category" dataKey="name" width={100} {...yAxisStyle} />
               <Tooltip
-                formatter={(value: number) => [`¥${value.toLocaleString()}`, '金额']}
+                formatter={(value: number) => [formatCurrencyFull(value), '金额']}
                 contentStyle={tooltipStyle.contentStyle}
                 itemStyle={{ color: tooltipColor }}
               />

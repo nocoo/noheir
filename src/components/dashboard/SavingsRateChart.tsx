@@ -17,7 +17,7 @@ import { MonthlyData } from '@/types/transaction';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { useSettings, getIncomeColorHex, getExpenseColorHex } from '@/contexts/SettingsContext';
 import { Badge } from '@/components/ui/badge';
-import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, formatCurrencyK } from '@/lib/chart-config';
+import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, formatCurrencyK, formatCurrencyFull } from '@/lib/chart-config';
 
 interface SavingsRateChartProps {
   data: MonthlyData[];
@@ -78,11 +78,11 @@ export function SavingsRateChart({ data }: SavingsRateChartProps) {
           <div className="p-4 rounded-lg bg-accent border border-border">
             <p className="text-sm text-muted-foreground">累计储蓄</p>
             <div className="flex items-baseline gap-2">
-              <p className="text-2xl font-bold text-accent-foreground">¥{totalSavings.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-accent-foreground">{formatCurrencyFull(totalSavings)}</p>
             </div>
             <div className="flex items-center gap-2 mt-1">
               <Badge variant={savingsGap >= 0 ? "default" : "destructive"} className="text-xs">
-                {savingsGap >= 0 ? '+' : ''}¥{Math.abs(savingsGap).toLocaleString()}
+                {savingsGap >= 0 ? '+' : ''}{formatCurrencyFull(Math.abs(savingsGap))}
               </Badge>
               <p className="text-xs text-muted-foreground">
                 {savingsGap >= 0 ? '超额完成' : '还差'}
@@ -144,7 +144,7 @@ export function SavingsRateChart({ data }: SavingsRateChartProps) {
                       '储蓄率'
                     ];
                   }
-                  if (name === 'savings') return [`¥${value.toLocaleString()}`, '储蓄额'];
+                  if (name === 'savings') return [formatCurrencyFull(value), '储蓄额'];
                   return [value, name];
                 }}
               />

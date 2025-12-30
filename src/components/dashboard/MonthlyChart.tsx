@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { MonthlyData } from '@/types/transaction';
 import { useSettings, getIncomeColorHex, getExpenseColorHex } from '@/contexts/SettingsContext';
-import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, legendStyle, formatCurrencyK } from '@/lib/chart-config';
+import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, legendStyle, formatCurrencyK, formatCurrencyFull } from '@/lib/chart-config';
 
 interface MonthlyChartProps {
   data: MonthlyData[];
@@ -33,7 +33,7 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
               />
               <Tooltip
                 contentStyle={tooltipStyle.contentStyle}
-                formatter={(value: number) => [`¥${value.toLocaleString()}`, '']}
+                formatter={(value: number) => [formatCurrencyFull(value), '']}
               />
               <Legend {...legendStyle} />
               <Bar dataKey="income" name="收入" fill={incomeColorHex} radius={[4, 4, 0, 0]} />

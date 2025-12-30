@@ -4,7 +4,7 @@ import {
 } from 'recharts';
 import { CreditCard } from 'lucide-react';
 import { AccountData } from '@/types/category-shared';
-import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, formatCurrencyK } from '@/lib/chart-config';
+import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, formatCurrencyK, formatCurrencyFull } from '@/lib/chart-config';
 
 interface TooltipPayload {
   payload: {
@@ -62,7 +62,7 @@ export function AccountDistributionChart({
               />
               <Tooltip
                 formatter={(value: number, name: string, props: TooltipPayload) => [
-                  `¥${value.toLocaleString()}${props.payload.percentage ? ` (${props.payload.percentage.toFixed(1)}%)` : ''}`,
+                  `${formatCurrencyFull(value)}${props.payload.percentage ? ` (${props.payload.percentage.toFixed(1)}%)` : ''}`,
                   '金额'
                 ]}
                 contentStyle={tooltipStyle.contentStyle}

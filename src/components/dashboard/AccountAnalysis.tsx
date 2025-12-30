@@ -11,7 +11,7 @@ import {
 import { Wallet, TrendingUp, TrendingDown, ArrowUpDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, legendStyle, formatCurrencyK } from '@/lib/chart-config';
+import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, legendStyle, formatCurrencyK, formatCurrencyFull } from '@/lib/chart-config';
 
 interface AccountAnalysisProps {
   transactions: Transaction[];
@@ -223,7 +223,7 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
                 <XAxis dataKey="name" {...xAxisStyle} />
                 <YAxis tickFormatter={formatCurrencyK} {...yAxisStyle} />
                 <Tooltip
-                  formatter={(value: number, name: string) => [`¥${value.toLocaleString()}`, name]}
+                  formatter={(value: number, name: string) => [formatCurrencyFull(value), name]}
                   contentStyle={tooltipStyle.contentStyle}
                 />
                 <Legend {...legendStyle} />
@@ -263,7 +263,7 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value: number) => [`¥${value.toLocaleString()}`, '金额']}
+                    formatter={(value: number) => [formatCurrencyFull(value), '金额']}
                     contentStyle={tooltipStyle.contentStyle}
                     itemStyle={{ color: 'hsl(var(--foreground))' }}
                   />
@@ -328,20 +328,20 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
                     <span className="font-semibold">{acc.name}</span>
                   </div>
                   <Badge variant={acc.balance >= 0 ? 'default' : 'destructive'}>
-                    {acc.balance >= 0 ? '+' : ''}¥{acc.balance.toLocaleString()}
+                    {acc.balance >= 0 ? '+' : ''}{formatCurrencyFull(acc.balance)}
                   </Badge>
                 </div>
                 <div className="grid grid-cols-3 gap-4 text-sm">
                   <div>
                     <p className="text-muted-foreground">收入</p>
                     <p className={`font-medium ${incomeColorClass}`}>
-                      ¥{acc.income.toLocaleString()}
+                      {formatCurrencyFull(acc.income)}
                     </p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">支出</p>
                     <p className={`font-medium ${expenseColorClass}`}>
-                      ¥{acc.expense.toLocaleString()}
+                      {formatCurrencyFull(acc.expense)}
                     </p>
                   </div>
                   <div>
@@ -378,13 +378,13 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
                 <TableRow key={acc.name}>
                   <TableCell className="font-medium">{acc.name}</TableCell>
                   <TableCell className={`text-right ${incomeColorClass}`}>
-                    ¥{acc.income.toLocaleString()}
+                    {formatCurrencyFull(acc.income)}
                   </TableCell>
                   <TableCell className={`text-right ${expenseColorClass}`}>
-                    ¥{acc.expense.toLocaleString()}
+                    {formatCurrencyFull(acc.expense)}
                   </TableCell>
                   <TableCell className={`text-right font-semibold ${acc.balance >= 0 ? incomeColorClass : expenseColorClass}`}>
-                    {acc.balance >= 0 ? '+' : ''}¥{acc.balance.toLocaleString()}
+                    {acc.balance >= 0 ? '+' : ''}{formatCurrencyFull(acc.balance)}
                   </TableCell>
                   <TableCell className="text-right">{acc.transactionCount}</TableCell>
                   <TableCell className="text-right">

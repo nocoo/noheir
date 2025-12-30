@@ -12,7 +12,7 @@ import {
 } from 'recharts';
 import { MonthlyData } from '@/types/transaction';
 import { useSettings, getIncomeColorHex, getExpenseColorHex } from '@/contexts/SettingsContext';
-import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, legendStyle, formatCurrencyK } from '@/lib/chart-config';
+import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, legendStyle, formatCurrencyK, formatCurrencyFull } from '@/lib/chart-config';
 
 interface IncomeExpenseComparisonProps {
   data: MonthlyData[];
@@ -57,7 +57,7 @@ export function IncomeExpenseComparison({ data }: IncomeExpenseComparisonProps) 
               <Tooltip
                 contentStyle={tooltipStyle.contentStyle}
                 formatter={(value: number, name: string) => [
-                  `¥${value.toLocaleString()}`,
+                  formatCurrencyFull(value),
                   name === 'income' ? '收入' : '支出'
                 ]}
               />
@@ -67,7 +67,7 @@ export function IncomeExpenseComparison({ data }: IncomeExpenseComparisonProps) 
                   y={avgIncome}
                   stroke={incomeColorHex}
                   strokeDasharray="5 5"
-                  label={{ value: `平均收入 ¥${avgIncome.toLocaleString()}`, fill: incomeColorHex, fontSize: 11 }}
+                  label={{ value: `平均收入 ${formatCurrencyFull(avgIncome)}`, fill: incomeColorHex, fontSize: 11 }}
                 />
               )}
               {avgExpense > 0 && (
@@ -75,7 +75,7 @@ export function IncomeExpenseComparison({ data }: IncomeExpenseComparisonProps) 
                   y={avgExpense}
                   stroke={expenseColorHex}
                   strokeDasharray="5 5"
-                  label={{ value: `平均支出 ¥${avgExpense.toLocaleString()}`, fill: expenseColorHex, fontSize: 11 }}
+                  label={{ value: `平均支出 ${formatCurrencyFull(avgExpense)}`, fill: expenseColorHex, fontSize: 11 }}
                 />
               )}
               <Area

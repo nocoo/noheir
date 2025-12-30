@@ -10,7 +10,7 @@ import {
 } from 'recharts';
 import { ArrowRightLeft, CreditCard, Calendar, Wallet, TrendingUp } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, legendStyle, formatCurrencyK } from '@/lib/chart-config';
+import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, legendStyle, formatCurrencyK, formatCurrencyFull } from '@/lib/chart-config';
 
 interface TransferAnalysisProps {
   transactions: Transaction[];
@@ -179,7 +179,7 @@ export function TransferAnalysis({ transactions, monthlyData }: TransferAnalysis
                 <XAxis dataKey="month" {...xAxisStyle} />
                 <YAxis {...yAxisStyle} tickFormatter={formatCurrencyK} />
                 <Tooltip
-                  formatter={(value: number, name: string) => [`¥${value.toLocaleString()}`, name]}
+                  formatter={(value: number, name: string) => [formatCurrencyFull(value), name]}
                   contentStyle={tooltipStyle.contentStyle}
                 />
                 <Area
@@ -223,7 +223,7 @@ export function TransferAnalysis({ transactions, monthlyData }: TransferAnalysis
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value: number) => [`¥${value.toLocaleString()}`, '金额']}
+                    formatter={(value: number) => [formatCurrencyFull(value), '金额']}
                     contentStyle={tooltipStyle.contentStyle}
                     itemStyle={{ color: 'hsl(var(--foreground))' }}
                   />
@@ -248,7 +248,7 @@ export function TransferAnalysis({ transactions, monthlyData }: TransferAnalysis
                   <XAxis type="number" {...xAxisStyle} tickFormatter={formatCurrencyK} />
                   <YAxis type="category" dataKey="name" width={120} {...yAxisStyle} />
                   <Tooltip
-                    formatter={(value: number) => [`¥${value.toLocaleString()}`, '转账金额']}
+                    formatter={(value: number) => [formatCurrencyFull(value), '转账金额']}
                     contentStyle={tooltipStyle.contentStyle}
                     itemStyle={{ color: 'hsl(var(--foreground))' }}
                   />
@@ -277,7 +277,7 @@ export function TransferAnalysis({ transactions, monthlyData }: TransferAnalysis
                 <XAxis dataKey="month" {...xAxisStyle} />
                 <YAxis {...yAxisStyle} tickFormatter={formatCurrencyK} />
                 <Tooltip
-                  formatter={(value: number) => [`¥${value.toLocaleString()}`, '']}
+                  formatter={(value: number) => [formatCurrencyFull(value), '']}
                   contentStyle={tooltipStyle.contentStyle}
                   itemStyle={{ color: 'hsl(var(--foreground))' }}
                 />
@@ -318,7 +318,7 @@ export function TransferAnalysis({ transactions, monthlyData }: TransferAnalysis
                     <TableCell className="text-muted-foreground">{t.secondaryCategory || '-'}</TableCell>
                     <TableCell className="text-muted-foreground text-sm">{t.description || '-'}</TableCell>
                     <TableCell className={`text-right font-semibold ${expenseColorClass}`}>
-                      ¥{t.amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {formatCurrencyFull(t.amount)}
                     </TableCell>
                   </TableRow>
                 ))}

@@ -14,6 +14,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { StoredYearData } from '@/lib/storage';
+import { formatCurrencyFull } from '@/lib/chart-config';
 import type { DataQualityMetrics, TransactionValidation } from '@/types/data';
 import { DataQuality } from '@/components/dashboard/DataQuality';
 import { useSettings, getIncomeColor, getIncomeColorHex, getExpenseColor, getExpenseColorHex } from '@/contexts/SettingsContext';
@@ -163,7 +164,7 @@ export function DataManagement({
               <div>
                 <p className="text-sm text-muted-foreground">总收入</p>
                 <p className={`text-2xl font-bold mt-1 ${incomeColorClass}`}>
-                  ¥{totalIncome.toLocaleString()}
+                  {formatCurrencyFull(totalIncome)}
                 </p>
               </div>
               <TrendingUp className="h-8 w-8" style={{ color: incomeColorHex, opacity: 0.5 }} />
@@ -177,7 +178,7 @@ export function DataManagement({
               <div>
                 <p className="text-sm text-muted-foreground">总支出</p>
                 <p className={`text-2xl font-bold mt-1 ${expenseColorClass}`}>
-                  ¥{totalExpense.toLocaleString()}
+                  {formatCurrencyFull(totalExpense)}
                 </p>
               </div>
               <TrendingDown className="h-8 w-8" style={{ color: expenseColorHex, opacity: 0.5 }} />
@@ -254,14 +255,14 @@ export function DataManagement({
                           <div className="flex items-center gap-1">
                             <TrendingUp className="h-4 w-4" style={{ color: incomeColorHex }} />
                             <span className={incomeColorClass}>
-                              ¥{yearData.metadata.totalIncome.toLocaleString()}
+                              {formatCurrencyFull(yearData.metadata.totalIncome)}
                             </span>
                           </div>
 
                           <div className="flex items-center gap-1">
                             <TrendingDown className="h-4 w-4" style={{ color: expenseColorHex }} />
                             <span className={expenseColorClass}>
-                              ¥{yearData.metadata.totalExpense.toLocaleString()}
+                              {formatCurrencyFull(yearData.metadata.totalExpense)}
                             </span>
                           </div>
                         </div>

@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { LucideIcon } from 'lucide-react';
 import { useSettings, getIncomeColor, getIncomeColorHex, getExpenseColor, getExpenseColorHex } from '@/contexts/SettingsContext';
+import { formatCurrencyFull } from '@/lib/chart-config';
 
 interface StatCardProps {
   title: string;
@@ -61,7 +62,7 @@ export function StatCard({ title, value, icon: Icon, trend, variant = 'default',
       </CardHeader>
       <CardContent>
         <div className={cn('text-2xl font-bold', getValueColor())}>
-          {typeof value === 'number' ? (showCurrency ? `¥${value.toLocaleString()}` : value.toLocaleString()) : value}
+          {typeof value === 'number' ? (showCurrency ? formatCurrencyFull(value) : value.toLocaleString()) : value}
         </div>
         {trend && (
           <p className={cn(

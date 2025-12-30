@@ -8,6 +8,7 @@ import { useSettings, getIncomeColor, getExpenseColor } from '@/contexts/Setting
 import type { LucideIcon } from 'lucide-react';
 import type { VariantProps } from 'class-variance-authority';
 import { badgeVariants } from '@/components/ui/badge';
+import { formatCurrencyFull } from '@/lib/chart-config';
 
 type BadgeVariant = VariantProps<typeof badgeVariants>['variant'];
 import {
@@ -291,13 +292,13 @@ export function DataQuality({ metrics, validations, onFilterChange }: DataQualit
             <div>
               <p className="text-sm text-muted-foreground">总收入</p>
               <p className={`text-xl font-bold ${incomeColorClass}`}>
-                ¥{metrics.totalIncome.toLocaleString()}
+                {formatCurrencyFull(metrics.totalIncome)}
               </p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">总支出</p>
               <p className={`text-xl font-bold ${expenseColorClass}`}>
-                ¥{metrics.totalExpense.toLocaleString()}
+                {formatCurrencyFull(metrics.totalExpense)}
               </p>
             </div>
           </div>
@@ -363,7 +364,7 @@ export function DataQuality({ metrics, validations, onFilterChange }: DataQualit
                           </span>
                         </div>
                         <span className={`text-sm font-semibold ${v.transaction.type === 'income' ? incomeColorClass : expenseColorClass}`}>
-                              {v.transaction.type === 'income' ? '+' : '-'}¥{v.transaction.amount.toFixed(2)}
+                              {v.transaction.type === 'income' ? '+' : '-'}{formatCurrencyFull(v.transaction.amount)}
                             </span>
                       </div>
                       {(v.errors.length > 0 || v.warnings.length > 0) && (

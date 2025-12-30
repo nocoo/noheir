@@ -94,6 +94,12 @@ All colors MUST be HSL.
     --tracking-normal: 0em;
 
     --spacing: 0.25rem;
+
+    --heatmap-0: #ebedf0;
+    --heatmap-1: #c6e48b;
+    --heatmap-2: #7bc96f;
+    --heatmap-3: #239a3b;
+    --heatmap-4: #196127;
   }
 
   .dark {
@@ -138,6 +144,11 @@ All colors MUST be HSL.
     --chart-4: 27 95% 60%;
     --chart-5: 0 0% 45%;
     --sidebar: 0 0% 14%;
+    --heatmap-0: #161b22;
+    --heatmap-1: #0e4429;
+    --heatmap-2: #006d32;
+    --heatmap-3: #26a641;
+    --heatmap-4: #39d353;
     --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
     --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
     --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);

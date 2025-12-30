@@ -4,6 +4,7 @@ import type { EChartsOption } from 'echarts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Transaction } from '@/types/transaction';
 import { useSettings, getIncomeColorHex, getExpenseColorHex } from '@/contexts/SettingsContext';
+import { formatCurrencyFull } from '@/lib/chart-config';
 
 // ECharts Sankey label callback parameter types
 interface SankeyLabelParams {
@@ -142,10 +143,10 @@ export function SankeyChart({ transactions, type }: SankeyChartProps) {
         triggerOn: 'mousemove',
         formatter: (params: { dataType: string; name: string; value: number; data?: { source: string; target: string; value: number } }) => {
           if (params.dataType === 'node') {
-            return `${params.name}: ¥${params.value.toLocaleString()}`;
+            return `${params.name}: ${formatCurrencyFull(params.value)}`;
           }
           if (params.dataType === 'edge' && params.data) {
-            return `${params.data.source} → ${params.data.target}: ¥${params.data.value.toLocaleString()}`;
+            return `${params.data.source} → ${params.data.target}: ${formatCurrencyFull(params.data.value)}`;
           }
           return '';
         }
@@ -171,7 +172,7 @@ export function SankeyChart({ transactions, type }: SankeyChartProps) {
             formatter: (params: SankeyLabelParams) => {
               const value = params.value;
               const percentage = ((value / total) * 100).toFixed(1);
-              return `${params.name}\n¥${value.toLocaleString()}\n${percentage}%`;
+              return `${params.name}\n${formatCurrencyFull(value)}\n${percentage}%`;
             }
           },
           levels: [{
@@ -223,7 +224,7 @@ export function SankeyChart({ transactions, type }: SankeyChartProps) {
       <CardHeader>
         <CardTitle>{type === 'income' ? '收入' : '支出'}流向图</CardTitle>
         <CardDescription>
-          总{type === 'income' ? '收入' : '支出'}: ¥{total.toLocaleString()}
+          总{type === 'income' ? '收入' : '支出'}: {formatCurrencyFull(total)}
         </CardDescription>
       </CardHeader>
       <CardContent>

@@ -49,17 +49,17 @@ export const formatCurrency = (value: number): string => {
 };
 
 /**
- * 金额格式化器 - 简化格式（k为单位）
+ * 金额格式化器 - 简化格式（k为单位），保留2位小数
  */
 export const formatCurrencyK = (value: number): string => {
-  return `¥${(value / 1000).toFixed(0)}k`;
+  return `¥${(value / 1000).toFixed(2)}k`;
 };
 
 /**
- * 金额格式化器 - 带一位小数的k格式
+ * 金额格式化器 - 标准完整格式（始终显示2位小数）
  */
-export const formatCurrencyK1 = (value: number): string => {
-  return `¥${(value / 1000).toFixed(1)}k`;
+export const formatCurrencyFull = (value: number): string => {
+  return `¥${value.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
 /**

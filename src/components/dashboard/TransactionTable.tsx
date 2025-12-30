@@ -3,12 +3,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Transaction } from '@/types/transaction';
 import { cn } from '@/lib/utils';
+import { formatCurrencyFull } from '@/lib/chart-config';
+import { useSettings, getIncomeColor, getExpenseColor } from '@/contexts/SettingsContext';
 
 interface TransactionTableProps {
   transactions: Transaction[];
 }
 
 export function TransactionTable({ transactions }: TransactionTableProps) {
+  const { settings } = useSettings();
+  const incomeColorClass = getIncomeColor(settings.colorScheme);
+  const expenseColorClass = getExpenseColor(settings.colorScheme);
   const recentTransactions = transactions.slice(0, 10);
 
   return (
@@ -45,9 +50,9 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                   <TableCell>{transaction.account}</TableCell>
                   <TableCell className={cn(
                     'text-right font-medium',
-                    transaction.type === 'income' ? 'text-primary' : 'text-foreground'
+                    transaction.type === 'income' ? incomeColorClass : expenseColorClass
                   )}>
-                    {transaction.type === 'income' ? '+' : '-'}¥{transaction.amount.toLocaleString()}
+                    {transaction.type === 'income' ? '+' : '-'}{formatCurrencyFull(transaction.amount)}
                   </TableCell>
                 </TableRow>
               ))

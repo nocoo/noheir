@@ -127,7 +127,7 @@ export function CategoryDetailList({
                                 />
                               </div>
                             </div>
-                            <span className="text-sm text-right w-28 flex-shrink-0">¥{sub.total.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            <span className={`text-sm text-right w-28 flex-shrink-0 ${colorClass}`}>¥{sub.total.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           </button>
 
                           {/* Tertiary Categories & Transactions */}
@@ -166,7 +166,7 @@ export function CategoryDetailList({
                                           />
                                         </div>
                                       </div>
-                                      <span className="text-sm text-right w-28 flex-shrink-0">¥{tertiary.total.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                      <span className={`text-sm text-right w-28 flex-shrink-0 ${colorClass}`}>¥{tertiary.total.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                     </button>
 
                                     {/* Transactions */}
@@ -189,7 +189,7 @@ export function CategoryDetailList({
                                               />
                                             </div>
                                           </div>
-                                          <span className="text-sm text-right w-28 flex-shrink-0">¥{tx.amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                          <span className={`text-sm text-right w-28 flex-shrink-0 ${colorClass}`}>¥{tx.amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                         </div>
                                       );
                                     })}

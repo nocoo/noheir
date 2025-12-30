@@ -14,6 +14,7 @@ import { Settings } from '@/components/dashboard/Settings';
 import { SankeyChart } from '@/components/dashboard/SankeyChart';
 import { YearSelector } from '@/components/dashboard/YearSelector';
 import type { DataQualityMetrics, TransactionValidation } from '@/types/data';
+import { ActivityHeatmap } from '@/components/dashboard/ActivityHeatmap';
 import { IncomeExpenseComparison } from '@/components/dashboard/IncomeExpenseComparison';
 import { SavingsRateChart } from '@/components/dashboard/SavingsRateChart';
 import { BalanceWaterfall } from '@/components/dashboard/BalanceWaterfall';
@@ -178,6 +179,8 @@ const Index = () => {
             <StatCard title="交易笔数" value={transactions.length} icon={Wallet} />
           </div>
 
+          <ActivityHeatmap transactions={allTransactions} year={selectedYear} />
+
           <IncomeExpenseComparison data={monthlyData} />
 
           <FinancialHealthScore totalIncome={totalIncome} totalExpense={totalExpense} savingsRate={savingsRate} monthlyData={monthlyData} />
@@ -304,7 +307,7 @@ const Index = () => {
         <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-bold">系统设置</h1>
-            <p className="text-muted-foreground">个性化您的貔貅记账数据分析体验</p>
+            <p className="text-muted-foreground">个性化您的个人财务管理体验</p>
           </div>
           <Settings />
         </div>

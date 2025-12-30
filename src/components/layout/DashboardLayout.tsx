@@ -30,20 +30,13 @@ interface DashboardLayoutProps {
 
 const navGroups = [
   {
-    title: '数据管理',
-    items: [
-      { id: 'manage', label: '数据管理', icon: Database },
-      { id: 'import', label: '数据导入', icon: Upload },
-    ]
-  },
-  {
-    title: '分析概览',
+    title: '总览',
     items: [
       { id: 'overview', label: '总览', icon: LayoutDashboard },
     ]
   },
   {
-    title: '详细分析',
+    title: '深入分析',
     items: [
       { id: 'income', label: '收入分析', icon: TrendingUp },
       { id: 'expense', label: '支出分析', icon: TrendingDown },
@@ -58,6 +51,13 @@ const navGroups = [
     title: '对比分析',
     items: [
       { id: 'compare', label: '时段对比', icon: GitCompareArrows },
+    ]
+  },
+  {
+    title: '数据管理',
+    items: [
+      { id: 'manage', label: '数据管理', icon: Database },
+      { id: 'import', label: '数据导入', icon: Upload },
     ]
   },
   {
@@ -87,7 +87,7 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
       )}>
         <div className="flex items-center justify-between h-16 px-4 border-b border-border">
           {sidebarOpen && (
-            <h1 className="text-lg font-bold text-foreground">貔貅记账数据分析</h1>
+            <h1 className="text-lg font-bold text-foreground">个人财务管理</h1>
           )}
           <Button 
             variant="ghost" 
@@ -149,7 +149,7 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
         )}>
           {sidebarOpen && (
             <p className="text-xs text-muted-foreground text-center">
-              貔貅记账数据分析系统
+              个人财务管理系统
             </p>
           )}
         </div>

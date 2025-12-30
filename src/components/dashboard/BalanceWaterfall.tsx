@@ -12,7 +12,7 @@ import {
 } from 'recharts';
 import { MonthlyData } from '@/types/transaction';
 import { useSettings, getIncomeColor, getIncomeColorHex, getExpenseColor, getExpenseColorHex } from '@/contexts/SettingsContext';
-import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, formatCurrencyK } from '@/lib/chart-config';
+import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, formatCurrencyK, formatCurrencyFull } from '@/lib/chart-config';
 
 interface TooltipPayload {
   payload?: {
@@ -72,11 +72,11 @@ export function BalanceWaterfall({ data }: BalanceWaterfallProps) {
                   if (name === 'balance') {
                     const color = props.payload?.isPositive ? incomeColorHex : expenseColorHex;
                     return [
-                      <span style={{ color }}>¥{value.toLocaleString()}</span>,
+                      <span style={{ color }}>{formatCurrencyFull(value)}</span>,
                       '月结余'
                     ];
                   }
-                  if (name === 'cumulative') return [`¥${value.toLocaleString()}`, '累计结余'];
+                  if (name === 'cumulative') return [formatCurrencyFull(value), '累计结余'];
                   return [value, name];
                 }}
               />
@@ -97,7 +97,7 @@ export function BalanceWaterfall({ data }: BalanceWaterfallProps) {
         <div className="mt-4 flex items-center justify-center gap-2 p-3 bg-accent/50 rounded-lg">
           <span className="text-sm text-muted-foreground">年度累计结余:</span>
           <span className={`text-xl font-bold ${cumulativeBalance >= 0 ? incomeColorClass : expenseColorClass}`}>
-            ¥{cumulativeBalance.toLocaleString()}
+            {formatCurrencyFull(cumulativeBalance)}
           </span>
         </div>
       </CardContent>

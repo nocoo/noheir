@@ -4,7 +4,7 @@ import {
 } from 'recharts';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { MonthlyData } from '@/types/transaction';
-import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, formatCurrencyK } from '@/lib/chart-config';
+import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, formatCurrencyK, formatCurrencyFull } from '@/lib/chart-config';
 
 export interface MonthlyTrendChartProps {
   title: string;
@@ -56,7 +56,7 @@ export function MonthlyTrendChart({
                 tickFormatter={formatCurrencyK}
               />
               <Tooltip
-                formatter={(value: number) => [`¥${value.toLocaleString()}`, dataKey === 'income' ? '收入' : '支出']}
+                formatter={(value: number) => [formatCurrencyFull(value), dataKey === 'income' ? '收入' : '支出']}
                 contentStyle={tooltipStyle.contentStyle}
               />
               <ReferenceLine
@@ -64,7 +64,7 @@ export function MonthlyTrendChart({
                 stroke={colorHex}
                 strokeWidth={2}
                 strokeDasharray="5 5"
-                label={{ value: `平均 ¥${(averageValue / 1000).toFixed(1)}k`, fill: colorHex, fontSize: 11, position: 'right' }}
+                label={{ value: `平均 ${formatCurrencyFull(averageValue)}`, fill: colorHex, fontSize: 11, position: 'right' }}
               />
               <Area
                 type="monotone"
