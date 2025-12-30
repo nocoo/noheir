@@ -21,7 +21,7 @@ export function WarehouseView() {
   }
 
   return (
-    <div className="h-full flex flex-col space-y-6">
+    <div className="h-full flex flex-col space-y-6 overflow-hidden">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shrink-0">
         <div>
@@ -37,7 +37,7 @@ export function WarehouseView() {
 
       {/* Waffle Chart */}
       {units && units.length > 0 && (
-        <div className="flex-1 flex flex-col space-y-4 min-h-0">
+        <div className="flex-1 flex flex-col space-y-4 min-h-0 overflow-hidden">
           <div className="text-sm text-muted-foreground bg-muted/50 p-4 rounded-lg border shrink-0">
             <p className="font-medium mb-2">📦 视角与价值</p>
             <ul className="space-y-1 list-disc list-inside">
@@ -46,7 +46,7 @@ export function WarehouseView() {
               <li><strong>颜色编码：</strong>红色=闲置警报，绿色=锁定中，灰色=已归档</li>
             </ul>
           </div>
-          <div className="flex-1 min-h-0">
+          <div className="flex-1 min-h-0 overflow-auto">
             <WarehouseWaffleChart units={units} />
           </div>
         </div>

@@ -300,9 +300,9 @@ export function WarehouseWaffleChart({ units }: WarehouseWaffleChartProps) {
   }
 
   return (
-    <div className="border rounded-xl p-6 space-y-4 h-full flex flex-col">
+    <div className="border rounded-xl p-6 space-y-4">
       {/* Header */}
-      <div className="flex items-start justify-between flex-wrap gap-4 shrink-0">
+      <div className="flex items-start justify-between flex-wrap gap-4">
         <div className="space-y-1">
           <h3 className="text-lg font-semibold">仓库视图</h3>
           <p className="text-sm text-muted-foreground">
@@ -325,13 +325,13 @@ export function WarehouseWaffleChart({ units }: WarehouseWaffleChartProps) {
       </div>
 
       {/* Legend */}
-      <div className="shrink-0">
+      <div>
         <WaffleLegend data={waffleData} />
       </div>
 
       {/* Warning for idle units */}
       {stats.idle > 0 && (
-        <div className="flex items-center gap-2 text-sm text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20 px-3 py-2 rounded-lg border border-rose-200 dark:border-rose-900 shrink-0">
+        <div className="flex items-center gap-2 text-sm text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20 px-3 py-2 rounded-lg border border-rose-200 dark:border-rose-900">
           <span>⚠️</span>
           <span>
             有 <strong>{stats.idle}</strong> 个资金单元闲置中，总金额{' '}
@@ -346,13 +346,13 @@ export function WarehouseWaffleChart({ units }: WarehouseWaffleChartProps) {
         </div>
       )}
 
-      {/* Waffle Grid - 10x10 max, fills remaining space */}
-      <div className="flex-1 flex items-center justify-center min-h-0">
+      {/* Waffle Grid - 10x10 max */}
+      <div className="flex justify-center py-4">
         <div
-          className="grid gap-2 p-6 bg-muted/30 rounded-lg border w-full h-full max-w-4xl max-h-[60vh]"
+          className="grid gap-2 p-6 bg-muted/30 rounded-lg border"
           style={{
-            gridTemplateColumns: 'repeat(10, 1fr)',
-            gridTemplateRows: 'repeat(10, 1fr)',
+            gridTemplateColumns: 'repeat(10, minmax(3rem, 5vw))',
+            gridTemplateRows: 'repeat(10, minmax(3rem, 5vw))',
           }}
         >
           {waffleData.slice(0, 100).map((unit, index) => (
@@ -376,7 +376,7 @@ export function WarehouseWaffleChart({ units }: WarehouseWaffleChartProps) {
 
       {/* More than 100 indicator */}
       {waffleData.length > 100 && (
-        <div className="text-center text-xs text-muted-foreground shrink-0">
+        <div className="text-center text-xs text-muted-foreground">
           显示前 100 个单元，共 {waffleData.length} 个
         </div>
       )}
