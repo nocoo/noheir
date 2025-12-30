@@ -171,26 +171,26 @@ Financial Color System:
 
     /* ========== NEW: Financial Colors (Dark Mode) ========== */
 
-    /* Income: Emerald (Dark Mode) */
-    --income: 160 84% 45%;           /* Emerald-500 (更亮) */
-    --income-foreground: 222 47% 11%; /* Slate-900 */
-    --income-bg: 160 84% 10%;        /* Emerald-950 */
-    --income-dark: 160 84% 50%;      /* Emerald-400 */
-    --income-light: 160 84% 20%;     /* Emerald-900 */
+    /* Income: Emerald (Dark Mode) - 更亮以提升可读性 */
+    --income: 160 100% 50%;          /* Emerald-400 (最亮易读) */
+    --income-foreground: 160 100% 10%; /* Emerald-950 */
+    --income-bg: 160 84% 15%;        /* Emerald-950 + 更亮背景 */
+    --income-dark: 160 100% 45%;     /* Emerald-500 */
+    --income-light: 160 84% 25%;     /* Emerald-800 */
 
-    /* Expense: Rose (Dark Mode) */
-    --expense: 350 89% 65%;          /* Rose-500 (更亮) */
-    --expense-foreground: 222 47% 11%; /* Slate-900 */
-    --expense-bg: 350 89% 10%;       /* Rose-950 */
-    --expense-dark: 350 89% 70%;     /* Rose-400 */
-    --expense-light: 350 89% 20%;    /* Rose-900 */
+    /* Expense: Rose (Dark Mode) - 更亮以提升可读性 */
+    --expense: 350 100% 65%;         /* Rose-400 (最亮易读) */
+    --expense-foreground: 350 100% 15%; /* Rose-950 */
+    --expense-bg: 350 89% 15%;       /* Rose-950 + 更亮背景 */
+    --expense-dark: 350 100% 60%;    /* Rose-500 */
+    --expense-light: 350 89% 25%;    /* Rose-800 */
 
     /* Semantic Text Colors (Dark Mode) */
     --text-main: 210 40% 98%;        /* Slate-50 */
     --text-secondary: 215 20% 65%;   /* Slate-400 */
     --text-muted: 215 20% 50%;       /* Slate-500 */
-    --text-income: 160 84% 50%;      /* Emerald-400 */
-    --text-expense: 350 89% 65%;     /* Rose-500 */
+    --text-income: 160 100% 55%;     /* Emerald-350 (更亮) */
+    --text-expense: 350 100% 70%;    /* Rose-350 (更亮) */
 
     /* Semantic Backgrounds (Dark Mode) */
     --bg-main: 222 47% 11%;          /* Slate-900 */
