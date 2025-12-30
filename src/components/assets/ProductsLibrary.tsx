@@ -34,8 +34,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { ChannelBadge, CategoryBadge } from '@/components/ui/colored-badge';
 import { cn } from '@/lib/utils';
-import { getTagColor } from '@/lib/tagColors';
 import type {
   FinancialProduct,
   CreateFinancialProductInput,
@@ -623,15 +623,11 @@ export function ProductsLibrary() {
                       </TableCell>
                       {/* Channel - Badge */}
                       <TableCell>
-                        <Badge variant={getTagColor(product.channel)}>
-                          {product.channel}
-                        </Badge>
+                        <ChannelBadge channel={product.channel} />
                       </TableCell>
                       {/* Category - Badge */}
                       <TableCell>
-                        <Badge variant={getTagColor(product.category)}>
-                          {product.category}
-                        </Badge>
+                        <CategoryBadge category={product.category} />
                       </TableCell>
                       {/* Lock Period */}
                       <TableCell className="text-right">

@@ -43,6 +43,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import {
+  UnitCodeBadge,
+  StrategyBadge,
+  TacticsBadge,
+  StatusBadge,
+} from '@/components/ui/colored-badge';
 import type {
   CapitalUnit,
   FinancialProduct,
@@ -886,13 +892,19 @@ export function CapitalUnitsManager() {
                 const displayStatus = getDisplayStatus(unit);
                 return (
                   <TableRow key={unit.id}>
-                    <TableCell className="font-medium">{unit.unit_code}</TableCell>
+                    <TableCell className="font-medium">
+                      <UnitCodeBadge unitCode={unit.unit_code} />
+                    </TableCell>
                     <TableCell className="text-right">{formatCurrencyFull(unit.amount)}</TableCell>
                     <TableCell>{unit.currency}</TableCell>
-                    <TableCell>{unit.strategy}</TableCell>
-                    <TableCell>{unit.tactics}</TableCell>
                     <TableCell>
-                      <Badge variant={displayStatus.variant}>{displayStatus.status}</Badge>
+                      <StrategyBadge strategy={unit.strategy} />
+                    </TableCell>
+                    <TableCell>
+                      <TacticsBadge tactics={unit.tactics} />
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge status={displayStatus.status} />
                     </TableCell>
                     <TableCell>
                       {unit.product ? (
