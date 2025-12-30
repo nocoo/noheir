@@ -27,7 +27,7 @@ import { Wallet, TrendingUp, TrendingDown, PiggyBank, Percent, Activity } from '
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState('manage');
+  const [activeTab, setActiveTab] = useState('overview');
   const [qualityViewYear, setQualityViewYear] = useState<number | null>(null);
   const [qualityData, setQualityData] = useState<{ year: number; metrics: DataQualityMetrics; validations: TransactionValidation[] } | null>(null);
 

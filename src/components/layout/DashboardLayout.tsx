@@ -12,7 +12,8 @@ import {
   GitCompareArrows,
   Network,
   Menu,
-  X,
+  ChevronLeft,
+  ChevronRight,
   ChevronDown,
   Settings as SettingsIcon,
   ArrowUpRight,
@@ -73,7 +74,7 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
   const [openGroups, setOpenGroups] = useState<string[]>(navGroups.map(g => g.title));
 
   const toggleGroup = (title: string) => {
-    setOpenGroups(prev => 
+    setOpenGroups(prev =>
       prev.includes(title) ? prev.filter(g => g !== title) : [...prev, title]
     );
   };
@@ -85,36 +86,46 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
         'fixed lg:static inset-y-0 left-0 z-50 flex flex-col bg-card border-r border-border transition-all duration-300',
         sidebarOpen ? 'w-64' : 'w-0 lg:w-16'
       )}>
-        <div className="flex items-center justify-between h-16 px-4 border-b border-border">
+        <div className="flex items-center h-16 px-4 border-b border-border gap-3">
           {sidebarOpen && (
-            <h1 className="text-lg font-bold text-foreground">个人财务管理</h1>
+            <>
+              <LayoutDashboard className="h-5 w-5 text-primary shrink-0" />
+              <h1 className="text-lg font-bold text-foreground">个人财务管理</h1>
+            </>
           )}
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="icon"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="ml-auto"
+            className={cn(
+              "ml-auto shrink-0",
+              !sidebarOpen && "lg:mx-auto"
+            )}
           >
-            {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {sidebarOpen ? (
+              <ChevronLeft className="h-5 w-5" />
+            ) : (
+              <ChevronRight className="h-5 w-5" />
+            )}
           </Button>
         </div>
-        
+
         <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
           {navGroups.map(group => (
-            <Collapsible 
+            <Collapsible
               key={group.title}
               open={openGroups.includes(group.title)}
               onOpenChange={() => toggleGroup(group.title)}
             >
               {sidebarOpen && (
                 <CollapsibleTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    className="w-full justify-between px-3 py-2 h-8 text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-between px-3 py-2 h-auto text-xs font-semibold text-muted-foreground uppercase tracking-wider"
                   >
-                    {group.title}
+                    <span>{group.title}</span>
                     <ChevronDown className={cn(
-                      "h-4 w-4 transition-transform",
+                      "h-4 w-4 transition-transform duration-200 shrink-0",
                       openGroups.includes(group.title) && "rotate-180"
                     )} />
                   </Button>
@@ -164,7 +175,7 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
 
       {/* Mobile Overlay */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
