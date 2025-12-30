@@ -11,6 +11,7 @@ import { ExpenseAnalysis } from '@/components/dashboard/ExpenseAnalysis';
 import { TransferAnalysis } from '@/components/dashboard/TransferAnalysis';
 import { AccountAnalysis } from '@/components/dashboard/AccountAnalysis';
 import { Settings } from '@/components/dashboard/Settings';
+import { SiteMetadata } from '@/components/dashboard/SiteMetadata';
 import { SankeyChart } from '@/components/dashboard/SankeyChart';
 import { YearSelector } from '@/components/dashboard/YearSelector';
 import type { DataQualityMetrics, TransactionValidation } from '@/types/data';
@@ -314,6 +315,7 @@ const Index = () => {
             <p className="text-muted-foreground">个性化您的个人财务管理体验</p>
           </div>
           <Settings />
+          <SiteMetadata />
         </div>
       )}
     </DashboardLayout>
