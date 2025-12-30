@@ -26,6 +26,7 @@ import { FinancialFreedomAnalysis } from '@/components/dashboard/FinancialFreedo
 import { ProductsLibrary } from '@/components/assets/ProductsLibrary';
 import { CapitalUnitsManager } from '@/components/assets/CapitalUnitsManager';
 import { CapitalDashboard } from '@/components/assets/CapitalDashboard';
+import { WarehouseView } from '@/components/assets/WarehouseView';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoadingPage } from '@/components/pages/LoadingPage';
@@ -320,6 +321,8 @@ const Index = () => {
       )}
 
       {activeTab === 'capital-dashboard' && <CapitalDashboard />}
+
+      {activeTab === 'warehouse' && <WarehouseView />}
 
       {activeTab === 'products' && (
         <div className="space-y-6">

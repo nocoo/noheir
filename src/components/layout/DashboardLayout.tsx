@@ -20,7 +20,8 @@ import {
   ArrowDownRight,
   Target,
   Package,
-  Coins
+  Coins,
+  Boxes,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -58,6 +59,7 @@ const navGroups = [
     title: '存量资金管理',
     items: [
       { id: 'capital-dashboard', label: '资金总览', icon: LayoutDashboard },
+      { id: 'warehouse', label: '仓库视图', icon: Boxes },
       { id: 'products', label: '产品表', icon: Package },
       { id: 'funds', label: '资金表', icon: Coins },
     ]

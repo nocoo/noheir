@@ -83,10 +83,9 @@ function classifyUnitStatus(unit: UnitDisplay): WaffleStatus {
 interface WaffleCellProps {
   unit: WaffleUnit;
   index: number;
-  onClick?: (unit: UnitDisplay) => void;
 }
 
-function WaffleCell({ unit, index, onClick }: WaffleCellProps) {
+function WaffleCell({ unit, index }: WaffleCellProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   const getStatusColor = (status: WaffleStatus): string => {
@@ -125,10 +124,8 @@ function WaffleCell({ unit, index, onClick }: WaffleCellProps) {
             className={cn(
               'aspect-square rounded-md transition-all duration-200 cursor-pointer',
               'border border-border/50 hover:scale-110 hover:shadow-lg hover:z-10',
-              getStatusColor(unit.waffleStatus),
-              onClick && 'hover:ring-2 hover:ring-primary'
+              getStatusColor(unit.waffleStatus)
             )}
-            onClick={() => onClick?.(unit)}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           />
@@ -261,10 +258,9 @@ function WaffleLegend({ data }: WaffleLegendProps) {
 
 interface WarehouseWaffleChartProps {
   units: UnitDisplay[];
-  onUnitClick?: (unitId: string) => void;
 }
 
-export function WarehouseWaffleChart({ units, onUnitClick }: WarehouseWaffleChartProps) {
+export function WarehouseWaffleChart({ units }: WarehouseWaffleChartProps) {
   // Classify units by status
   const waffleData = useMemo(() => {
     return units.map(unit => ({
@@ -363,7 +359,6 @@ export function WarehouseWaffleChart({ units, onUnitClick }: WarehouseWaffleChar
               key={unit.id}
               unit={unit}
               index={index}
-              onClick={() => onUnitClick?.(unit.id)}
             />
           ))}
 

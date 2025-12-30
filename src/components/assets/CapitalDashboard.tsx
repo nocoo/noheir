@@ -19,7 +19,6 @@ import {
   Layers,
   Filter,
 } from 'lucide-react';
-import { WarehouseWaffleChart } from './WarehouseWaffleChart';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -862,14 +861,6 @@ export function CapitalDashboard() {
           />
         )}
       </div>
-
-      {/* Warehouse Waffle Chart */}
-      {units && units.length > 0 && (
-        <WarehouseWaffleChart
-          units={units}
-          onUnitClick={setSelectedUnit}
-        />
-      )}
 
       {/* Unit Matrix - Full Width */}
       {units && (
