@@ -295,28 +295,39 @@ interface WarehouseWaffleChartProps {
 
 export function WarehouseWaffleChart({ units }: WarehouseWaffleChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('all');
-  const [selectedStrategy, setSelectedStrategy] = useState<InvestmentStrategy | 'all'>('all');
 
   // Classify units by status
   const waffleData = useMemo(() => {
-    const classified = units.map(unit => ({
+    return units.map(unit => ({
       ...unit,
       waffleStatus: classifyUnitStatus(unit),
     }));
-
-    // Filter by view mode and strategy
-    if (viewMode === 'strategy' && selectedStrategy !== 'all') {
-      return classified.filter(unit => unit.strategy === selectedStrategy);
-    }
-
-    return classified;
-  }, [units, viewMode, selectedStrategy]);
-
-  // Get available strategies
-  const availableStrategies = useMemo(() => {
-    const strategies = new Set(units.map(u => u.strategy));
-    return Array.from(strategies);
   }, [units]);
+
+  // Group units by strategy
+  const strategyGroups = useMemo(() => {
+    const groups: Record<InvestmentStrategy, typeof waffleData> = {} as any;
+
+    waffleData.forEach(unit => {
+      if (!groups[unit.strategy]) {
+        groups[unit.strategy] = [];
+      }
+      groups[unit.strategy].push(unit);
+    });
+
+    // Sort by predefined strategy order
+    const strategyOrder: InvestmentStrategy[] = [
+      '远期理财', '美元资产', '36存单', '长期理财', '中期理财', '短期理财', '进攻计划', '麻麻理财'
+    ];
+
+    return strategyOrder
+      .filter(strategy => groups[strategy]?.length > 0)
+      .map(strategy => ({
+        strategy,
+        units: groups[strategy],
+        count: groups[strategy].length,
+      }));
+  }, [waffleData]);
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -349,109 +360,140 @@ export function WarehouseWaffleChart({ units }: WarehouseWaffleChartProps) {
   }
 
   return (
-    <div className="border rounded-xl p-6 space-y-4">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between flex-wrap gap-4">
-        <div className="space-y-1">
-          <h3 className="text-lg font-semibold">仓库视图</h3>
-          <p className="text-sm text-muted-foreground">
-            每个方块代表一个资金单元
-            {viewMode === 'strategy' && selectedStrategy !== 'all' && ` · ${selectedStrategy}`}
-            ，共 {stats.total} 个单元
-          </p>
+      <div className="border rounded-xl p-6 space-y-4">
+        <div className="flex items-start justify-between flex-wrap gap-4">
+          <div className="space-y-1">
+            <h3 className="text-lg font-semibold">仓库视图</h3>
+            <p className="text-sm text-muted-foreground">
+              每个方块代表一个资金单元，共 {stats.total} 个单元
+            </p>
+          </div>
+
+          <div className="flex items-center gap-4">
+            {/* View Mode Toggle */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant={viewMode === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('all')}
+              >
+                全部视图
+              </Button>
+              <Button
+                variant={viewMode === 'strategy' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('strategy')}
+              >
+                按战略分组
+              </Button>
+            </div>
+
+            <div className="text-right">
+              <p className="text-2xl font-bold">
+                {stats.deployed} <span className="text-sm font-normal text-muted-foreground">/ {stats.total}</span>
+              </p>
+              <p className="text-xs text-muted-foreground">已投放单元</p>
+            </div>
+            <div className="text-right">
+              <p className="text-2xl font-bold">{stats.utilizationRate}%</p>
+              <p className="text-xs text-muted-foreground">资金利用率</p>
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          {/* View Mode Toggle */}
-          <div className="flex items-center gap-2">
-            <Button
-              variant={viewMode === 'all' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => {
-                setViewMode('all');
-                setSelectedStrategy('all');
+        {/* Legend */}
+        <div>
+          <WaffleLegend data={waffleData} />
+        </div>
+
+        {/* Warning for idle units */}
+        {stats.idle > 0 && (
+          <div className="flex items-center gap-2 text-sm text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20 px-3 py-2 rounded-lg border border-rose-200 dark:border-rose-900">
+            <span>⚠️</span>
+            <span>
+              有 <strong>{stats.idle}</strong> 个资金单元闲置中，总金额{' '}
+              <strong>
+                {formatCurrencyFull(
+                  waffleData
+                    .filter(u => u.waffleStatus === 'idle')
+                    .reduce((sum, u) => sum + u.amount, 0)
+                )}
+              </strong>
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* All View - Single Warehouse */}
+      {viewMode === 'all' && (
+        <div className="border rounded-xl p-6 space-y-4">
+          <div className="py-4">
+            <div
+              className="grid gap-1.5 p-4 bg-muted/30 rounded-lg border w-full"
+              style={{
+                gridTemplateColumns: 'repeat(auto-fill, minmax(2rem, 1fr))',
               }}
             >
-              全部视图
-            </Button>
-            <Button
-              variant={viewMode === 'strategy' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('strategy')}
-            >
-              按战略分组
-            </Button>
+              {waffleData.map((unit, index) => (
+                <WaffleCell
+                  key={unit.id}
+                  unit={unit}
+                  index={index}
+                />
+              ))}
+            </div>
           </div>
-
-          {/* Strategy Selector */}
-          {viewMode === 'strategy' && (
-            <Select value={selectedStrategy} onValueChange={(v) => setSelectedStrategy(v as InvestmentStrategy | 'all')}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="选择战略" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部战略</SelectItem>
-                {availableStrategies.map(strategy => (
-                  <SelectItem key={strategy} value={strategy}>
-                    {STRATEGY_ICONS[strategy]} {strategy}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-
-          <div className="text-right">
-            <p className="text-2xl font-bold">
-              {stats.deployed} <span className="text-sm font-normal text-muted-foreground">/ {stats.total}</span>
-            </p>
-            <p className="text-xs text-muted-foreground">已投放单元</p>
-          </div>
-          <div className="text-right">
-            <p className="text-2xl font-bold">{stats.utilizationRate}%</p>
-            <p className="text-xs text-muted-foreground">资金利用率</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Legend */}
-      <div>
-        <WaffleLegend data={waffleData} />
-      </div>
-
-      {/* Warning for idle units */}
-      {stats.idle > 0 && (
-        <div className="flex items-center gap-2 text-sm text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20 px-3 py-2 rounded-lg border border-rose-200 dark:border-rose-900">
-          <span>⚠️</span>
-          <span>
-            有 <strong>{stats.idle}</strong> 个资金单元闲置中，总金额{' '}
-            <strong>
-              {formatCurrencyFull(
-                waffleData
-                  .filter(u => u.waffleStatus === 'idle')
-                  .reduce((sum, u) => sum + u.amount, 0)
-              )}
-            </strong>
-          </span>
         </div>
       )}
 
-      {/* Waffle Grid - All units */}
-      <div className="py-4">
-        <div
-          className="grid gap-1.5 p-4 bg-muted/30 rounded-lg border w-full"
-          style={{
-            gridTemplateColumns: 'repeat(auto-fill, minmax(2rem, 1fr))',
-          }}
-        >
-          {waffleData.map((unit, index) => (
-            <WaffleCell
-              key={unit.id}
-              unit={unit}
-              index={index}
-            />
-          ))}
+      {/* Strategy View - Multiple Warehouses */}
+      {viewMode === 'strategy' && (
+        <div className="space-y-6">
+          {strategyGroups.map(({ strategy, units: strategyUnits, count }) => {
+            const groupStats = {
+              total: count,
+              idle: strategyUnits.filter(u => u.waffleStatus === 'idle').length,
+              deployed: strategyUnits.filter(u => u.waffleStatus !== 'idle' && u.waffleStatus !== 'archived').length,
+            };
+
+            return (
+              <div key={strategy} className="border rounded-xl p-6 space-y-4">
+                {/* Strategy Header */}
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <h4 className="text-lg font-semibold flex items-center gap-2">
+                      {STRATEGY_ICONS[strategy]} {strategy}
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      {count} 个资金单元 · {groupStats.deployed} 已投放 · {groupStats.idle} 闲置
+                    </p>
+                  </div>
+                </div>
+
+                {/* Strategy Grid */}
+                <div className="py-4">
+                  <div
+                    className="grid gap-1.5 p-4 bg-muted/30 rounded-lg border w-full"
+                    style={{
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(2rem, 1fr))',
+                    }}
+                  >
+                    {strategyUnits.map((unit, index) => (
+                      <WaffleCell
+                        key={unit.id}
+                        unit={unit}
+                        index={index}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
-      </div>
+      )}
     </div>
   );
 }
