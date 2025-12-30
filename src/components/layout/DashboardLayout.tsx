@@ -15,7 +15,8 @@ import {
   ChevronDown,
   Settings as SettingsIcon,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  Target
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -42,6 +43,7 @@ const navGroups = [
       { id: 'expense', label: '支出分析', icon: TrendingDown },
       { id: 'transfer', label: '转账分析', icon: ArrowRightLeft },
       { id: 'savings', label: '储蓄率', icon: Percent },
+      { id: 'freedom', label: '财务自由', icon: Target },
       { id: 'account', label: '账户分析', icon: Wallet },
       { id: 'flow-income', label: '收入流向', icon: ArrowUpRight },
       { id: 'flow-expense', label: '支出流向', icon: ArrowDownRight },

@@ -41,8 +41,11 @@ export function SavingsRateChart({ data }: SavingsRateChartProps) {
     savings: item.income - item.expense,
   }));
 
-  const avgSavingsRate = chartData.reduce((sum, d) => sum + d.savingsRate, 0) / chartData.filter(d => d.income > 0).length || 0;
-  const totalSavings = chartData.reduce((sum, d) => sum + d.savings, 0);
+  // Calculate annual savings rate (total savings / total income)
+  const totalIncome = chartData.reduce((sum, d) => sum + d.income, 0);
+  const totalExpense = chartData.reduce((sum, d) => sum + d.expense, 0);
+  const totalSavings = totalIncome - totalExpense;
+  const annualSavingsRate = totalIncome > 0 ? (totalSavings / totalIncome) * 100 : 0;
   const bestMonth = chartData.reduce((best, curr) => curr.savingsRate > best.savingsRate ? curr : best, chartData[0]);
   const worstMonth = chartData.reduce((worst, curr) =>
     curr.income > 0 && curr.savingsRate < worst.savingsRate ? curr : worst,
@@ -50,11 +53,9 @@ export function SavingsRateChart({ data }: SavingsRateChartProps) {
   );
 
   // Calculate difference from target
-  const avgDiff = avgSavingsRate - targetSavingsRate;
-  const totalIncome = chartData.reduce((sum, d) => sum + d.income, 0);
-  // Calculate savings gap based on avgSavingsRate diff to keep consistency
-  // This shows: if avg rate is 4.9% below target, how much amount is that
-  const savingsGap = totalIncome * (avgDiff / 100);
+  const savingsRateDiff = annualSavingsRate - targetSavingsRate;
+  // Calculate savings gap based on annualSavingsRate diff
+  const savingsGap = totalIncome * (savingsRateDiff / 100);
 
   return (
     <Card className="col-span-full">
@@ -66,11 +67,11 @@ export function SavingsRateChart({ data }: SavingsRateChartProps) {
         {/* Summary Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
-            <p className="text-sm text-muted-foreground">平均储蓄率</p>
+            <p className="text-sm text-muted-foreground">年度储蓄率</p>
             <div className="flex items-baseline gap-2">
-              <p className="text-2xl font-bold text-primary">{avgSavingsRate.toFixed(1)}%</p>
-              <Badge variant={avgDiff >= 0 ? "default" : "destructive"} className="text-xs">
-                {avgDiff >= 0 ? '+' : ''}{avgDiff.toFixed(1)}%
+              <p className="text-2xl font-bold text-primary">{annualSavingsRate.toFixed(1)}%</p>
+              <Badge variant={savingsRateDiff >= 0 ? "default" : "destructive"} className="text-xs">
+                {savingsRateDiff >= 0 ? '+' : ''}{savingsRateDiff.toFixed(1)}%
               </Badge>
             </div>
             <p className="text-xs text-muted-foreground mt-1">目标: {targetSavingsRate}%</p>
@@ -156,10 +157,10 @@ export function SavingsRateChart({ data }: SavingsRateChartProps) {
               />
               <ReferenceLine
                 yAxisId="left"
-                y={avgSavingsRate}
+                y={annualSavingsRate}
                 stroke="hsl(var(--primary))"
                 strokeDasharray="5 5"
-                label={{ value: `平均 ${avgSavingsRate.toFixed(1)}%`, fill: 'hsl(var(--primary))', fontSize: 11 }}
+                label={{ value: `年度 ${annualSavingsRate.toFixed(1)}%`, fill: 'hsl(var(--primary))', fontSize: 11 }}
               />
               <ReferenceLine
                 yAxisId="left"

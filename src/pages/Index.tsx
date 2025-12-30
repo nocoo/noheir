@@ -22,9 +22,11 @@ import { BalanceWaterfall } from '@/components/dashboard/BalanceWaterfall';
 import { FinancialHealthScore } from '@/components/dashboard/FinancialHealthScore';
 import { YearComparisonChart } from '@/components/dashboard/YearComparisonChart';
 import { MultiYearSelector } from '@/components/dashboard/MultiYearSelector';
+import { FinancialFreedomAnalysis } from '@/components/dashboard/FinancialFreedomAnalysis';
 import { useTransactions } from '@/hooks/useTransactions';
 import { Wallet, TrendingUp, TrendingDown, PiggyBank, Percent, Activity } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -224,6 +226,19 @@ const Index = () => {
           </div>
           <SavingsRateChart data={monthlyData} />
           <BalanceWaterfall data={monthlyData} />
+        </div>
+      )}
+
+      {activeTab === 'freedom' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold">财务自由分析</h1>
+              <p className="text-muted-foreground">基于被动收入的财务自由度评估</p>
+            </div>
+            <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
+          </div>
+          <FinancialFreedomAnalysis transactions={transactions} year={selectedYear} />
         </div>
       )}
 
