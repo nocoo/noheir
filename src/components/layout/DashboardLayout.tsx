@@ -12,8 +12,6 @@ import {
   GitCompareArrows,
   Network,
   Menu,
-  ChevronLeft,
-  ChevronRight,
   ChevronDown,
   Settings as SettingsIcon,
   ArrowUpRight,
@@ -103,9 +101,9 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
             )}
           >
             {sidebarOpen ? (
-              <ChevronLeft className="h-5 w-5" />
+              <Menu className="h-5 w-5" />
             ) : (
-              <ChevronRight className="h-5 w-5" />
+              <Menu className="h-5 w-5" />
             )}
           </Button>
         </div>
