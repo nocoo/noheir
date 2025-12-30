@@ -16,14 +16,30 @@ import {
   Coins,
   Eye,
   EyeOff,
+  Layers,
+  Filter,
 } from 'lucide-react';
+import { WarehouseWaffleChart } from './WarehouseWaffleChart';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { formatCurrencyFull } from '@/lib/chart-config';
-import type { InvestmentStrategy, Currency, UnitStatus } from '@/types/assets';
+import type { InvestmentStrategy, Currency, UnitStatus, InvestmentTactics } from '@/types/assets';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+type GroupByOption = 'strategy' | 'tactics' | 'status' | 'currency';
 
 // ============================================================================
 // TYPES & HELPERS
@@ -216,17 +232,17 @@ function StrategyChart({ data, totalAssets, onStrategyClick, selectedStrategy }:
         )}
       </div>
 
-      <div className="flex items-center gap-6">
+      <div className="flex items-stretch gap-6">
         {/* Chart */}
-        <div className="w-48 h-48 flex-shrink-0">
+        <div className="w-[60%] min-h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={chartData}
                 cx="50%"
                 cy="50%"
-                innerRadius={50}
-                outerRadius={80}
+                innerRadius={60}
+                outerRadius={100}
                 paddingAngle={2}
                 dataKey="value"
                 onClick={(entry) => onStrategyClick?.(
@@ -250,7 +266,7 @@ function StrategyChart({ data, totalAssets, onStrategyClick, selectedStrategy }:
         </div>
 
         {/* Legend */}
-        <div className="flex-1 space-y-2">
+        <div className="w-[40%] space-y-2">
           {chartData.map((item) => (
             <div
               key={item.name}
@@ -440,6 +456,8 @@ interface UnitMatrixProps {
 }
 
 function UnitMatrix({ units, selectedStrategy, onUnitClick }: UnitMatrixProps) {
+  const [groupBy, setGroupBy] = useState<GroupByOption>('strategy');
+
   // Calculate progress for locked units
   const unitsWithProgress = useMemo(() => {
     return units.map(unit => {
@@ -457,28 +475,88 @@ function UnitMatrix({ units, selectedStrategy, onUnitClick }: UnitMatrixProps) {
     });
   }, [units]);
 
-  // Filter by selected strategy
+  // Filter by selected strategy (from chart)
   const filteredUnits = selectedStrategy
     ? unitsWithProgress.filter(u => u.strategy === selectedStrategy)
     : unitsWithProgress;
 
-  // Sort: idle first, then by end_date
-  const sortedUnits = [...filteredUnits].sort((a, b) => {
-    if (a.status === '已成立' && b.status !== '已成立') return -1;
-    if (a.status !== '已成立' && b.status === '已成立') return 1;
-    if (a.days_until_maturity !== undefined && b.days_until_maturity !== undefined) {
-      return a.days_until_maturity - b.days_until_maturity;
-    }
-    return 0;
-  });
+  // Group by selected option
+  const groupedUnits = useMemo(() => {
+    const groups: Record<string, typeof filteredUnits> = {};
+
+    filteredUnits.forEach(unit => {
+      let key: string;
+      switch (groupBy) {
+        case 'strategy':
+          key = unit.strategy;
+          break;
+        case 'tactics':
+          key = unit.tactics;
+          break;
+        case 'status':
+          key = unit.status;
+          break;
+        case 'currency':
+          key = unit.currency;
+          break;
+        default:
+          key = '未分类';
+      }
+
+      if (!groups[key]) {
+        groups[key] = [];
+      }
+      groups[key].push(unit);
+    });
+
+    // Sort groups by name
+    const sortedEntries = Object.entries(groups).sort((a, b) => {
+      // Custom order for strategy
+      if (groupBy === 'strategy') {
+        const strategyOrder: InvestmentStrategy[] = [
+          '远期理财', '美元资产', '36存单', '长期理财', '中期理财', '短期理财', '进攻计划', '麻麻理财'
+        ];
+        const aIndex = strategyOrder.indexOf(a[0] as InvestmentStrategy);
+        const bIndex = strategyOrder.indexOf(b[0] as InvestmentStrategy);
+        if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+        if (aIndex !== -1) return -1;
+        if (bIndex !== -1) return 1;
+      }
+      return a[0].localeCompare(b[0], 'zh-CN');
+    });
+
+    // Sort units within each group by unit_code
+    sortedEntries.forEach(([_, units]) => {
+      units.sort((a, b) => a.unit_code.localeCompare(b.unit_code, 'zh-CN', { numeric: true }));
+    });
+
+    return sortedEntries;
+  }, [filteredUnits, groupBy]);
 
   // Count based on product association (idle = no product, invested = has product)
-  const idleCount = sortedUnits.filter(u => !u.product && u.status === '已成立').length;
-  const investedCount = sortedUnits.filter(u => u.product && u.status === '已成立').length;
+  const idleCount = filteredUnits.filter(u => !u.product && u.status === '已成立').length;
+  const investedCount = filteredUnits.filter(u => u.product && u.status === '已成立').length;
+
+  const getGroupIcon = (key: string) => {
+    if (groupBy === 'strategy') {
+      return STRATEGY_ICONS[key as InvestmentStrategy] || '📊';
+    }
+    if (groupBy === 'currency') {
+      return CURRENCY_EMOJI[key as Currency] || '💰';
+    }
+    return '📁';
+  };
+
+  const getGroupColor = (key: string) => {
+    if (groupBy === 'strategy') {
+      return STRATEGY_COLORS[key as InvestmentStrategy] || '#6b7280';
+    }
+    return undefined;
+  };
 
   return (
     <div className="border rounded-xl p-6 space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <h3 className="text-lg font-semibold">
           资金矩阵
           {selectedStrategy && (
@@ -487,36 +565,82 @@ function UnitMatrix({ units, selectedStrategy, onUnitClick }: UnitMatrixProps) {
             </span>
           )}
         </h3>
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          <span>已投放: {investedCount}</span>
-          <span>待投放: {idleCount}</span>
+
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>已投放: {investedCount}</span>
+            <span>待投放: {idleCount}</span>
+          </div>
+
+          <Select value={groupBy} onValueChange={(v) => setGroupBy(v as GroupByOption)}>
+            <SelectTrigger className="w-32">
+              <Filter className="w-4 h-4 mr-2" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="strategy">按战略</SelectItem>
+              <SelectItem value="tactics">按战术</SelectItem>
+              <SelectItem value="status">按状态</SelectItem>
+              <SelectItem value="currency">按币种</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
-      {sortedUnits.length === 0 ? (
+      {filteredUnits.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <Coins className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>没有符合条件的资金单元</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {sortedUnits.map(unit => (
-            <UnitCard
-              key={unit.id}
-              unit_code={unit.unit_code}
-              amount={unit.amount}
-              currency={unit.currency}
-              status={unit.status}
-              strategy={unit.strategy}
-              tactics={unit.tactics}
-              product_name={unit.product?.name}
-              end_date={unit.end_date || undefined}
-              days_until_maturity={unit.days_until_maturity}
-              is_overdue={unit.is_overdue}
-              progress={unit.progress}
-              onClick={() => onUnitClick(unit.id)}
-            />
-          ))}
+        <div className="space-y-6">
+          {groupedUnits.map(([groupKey, groupUnits]) => {
+            const groupTotal = groupUnits.reduce((sum, u) => sum + u.amount, 0);
+            const groupColor = getGroupColor(groupKey);
+
+            return (
+              <div key={groupKey} className="space-y-3">
+                {/* Group Header */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {groupColor && (
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: groupColor }} />
+                    )}
+                    <span className="text-lg font-semibold">
+                      {getGroupIcon(groupKey)} {groupKey}
+                    </span>
+                    <Badge variant="secondary" className="text-xs">
+                      {groupUnits.length} 个单元
+                    </Badge>
+                  </div>
+                  <span className="text-sm font-medium">
+                    {formatCurrencyFull(groupTotal)}
+                  </span>
+                </div>
+
+                {/* Group Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {groupUnits.map(unit => (
+                    <UnitCard
+                      key={unit.id}
+                      unit_code={unit.unit_code}
+                      amount={unit.amount}
+                      currency={unit.currency}
+                      status={unit.status}
+                      strategy={unit.strategy}
+                      tactics={unit.tactics}
+                      product_name={unit.product?.name}
+                      end_date={unit.end_date || undefined}
+                      days_until_maturity={unit.days_until_maturity}
+                      is_overdue={unit.is_overdue}
+                      progress={unit.progress}
+                      onClick={() => onUnitClick(unit.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -721,7 +845,7 @@ export function CapitalDashboard() {
       />
 
       {/* Strategy Chart & Timeline Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="space-y-6">
         {dashboardData?.strategy_allocation && (
           <StrategyChart
             data={dashboardData.strategy_allocation}
@@ -738,6 +862,14 @@ export function CapitalDashboard() {
           />
         )}
       </div>
+
+      {/* Warehouse Waffle Chart */}
+      {units && units.length > 0 && (
+        <WarehouseWaffleChart
+          units={units}
+          onUnitClick={setSelectedUnit}
+        />
+      )}
 
       {/* Unit Matrix - Full Width */}
       {units && (

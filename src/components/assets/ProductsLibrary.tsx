@@ -6,7 +6,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from '@/hooks/useAssets';
-import { Plus, Pencil, Trash2, Banknote, Filter, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Banknote, Filter, X, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -35,6 +35,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { getTagColor } from '@/lib/tagColors';
 import type {
   FinancialProduct,
   CreateFinancialProductInput,
@@ -87,39 +88,6 @@ const CURRENCY_EMOJI: Record<Currency, string> = {
   CNY: '🇨🇳',
   USD: '🇺🇸',
   HKD: '🇭🇰',
-};
-
-// Channel badge color variant
-const getChannelVariant = (channel: ProductChannel): 'default' | 'secondary' | 'outline' => {
-  const variants: Record<ProductChannel, 'default' | 'secondary' | 'outline'> = {
-    '招商银行': 'default',
-    '平安银行': 'secondary',
-    '微众银行': 'outline',
-    '支付宝': 'default',
-    '招银香港': 'secondary',
-    '光大永明': 'outline',
-    '中信建投': 'default',
-  };
-  return variants[channel];
-};
-
-// Category badge color variant
-const getCategoryVariant = (category: ProductCategory): 'default' | 'secondary' | 'outline' => {
-  const variants: Record<ProductCategory, 'default' | 'secondary' | 'outline'> = {
-    '养老年金': 'default',
-    '储蓄保险': 'secondary',
-    '混债基金': 'outline',
-    '债券基金': 'default',
-    '货币基金': 'secondary',
-    '股票基金': 'outline',
-    '指数基金': 'default',
-    '宽基指数': 'secondary',
-    '私募基金': 'outline',
-    '定期存款': 'default',
-    '理财产品': 'secondary',
-    '现金+': 'outline',
-  };
-  return variants[category];
 };
 
 // Filter options
@@ -628,43 +596,42 @@ export function ProductsLibrary() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-24">代码</TableHead>
                     <TableHead>产品名称</TableHead>
                     <TableHead>渠道</TableHead>
                     <TableHead>类别</TableHead>
-                    <TableHead>币种</TableHead>
                     <TableHead className="text-right">锁定期</TableHead>
-                    <TableHead className="text-right">年化收益率</TableHead>
+                    <TableHead className="text-right">年化</TableHead>
                     <TableHead className="text-right">操作</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredProducts.map(product => (
                     <TableRow key={product.id}>
-                      {/* Code - monospace font, first column */}
-                      <TableCell className="font-mono text-sm text-muted-foreground">
-                        {product.code || '-'}
+                      {/* Product Name with info icon */}
+                      <TableCell className="font-medium">
+                        <span className="flex items-center gap-1.5">
+                          {product.name}
+                          {product.code && (
+                            <span
+                              className="inline-flex items-center justify-center w-4 h-4 text-xs text-muted-foreground cursor-help"
+                              title={`产品代码: ${product.code}`}
+                            >
+                              <Info className="w-3 h-3" />
+                            </span>
+                          )}
+                        </span>
                       </TableCell>
-                      {/* Product Name */}
-                      <TableCell className="font-medium">{product.name}</TableCell>
                       {/* Channel - Badge */}
                       <TableCell>
-                        <Badge variant={getChannelVariant(product.channel)}>
+                        <Badge variant={getTagColor(product.channel)}>
                           {product.channel}
                         </Badge>
                       </TableCell>
                       {/* Category - Badge */}
                       <TableCell>
-                        <Badge variant={getCategoryVariant(product.category)}>
+                        <Badge variant={getTagColor(product.category)}>
                           {product.category}
                         </Badge>
-                      </TableCell>
-                      {/* Currency - with emoji */}
-                      <TableCell>
-                        <span className="flex items-center gap-1">
-                          <span>{CURRENCY_EMOJI[product.currency]}</span>
-                          <span>{product.currency}</span>
-                        </span>
                       </TableCell>
                       {/* Lock Period */}
                       <TableCell className="text-right">

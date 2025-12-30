@@ -28,7 +28,9 @@ export function LoadingPage() {
         {/* Loading Text */}
         <div className="space-y-2 text-center">
           <h1 className="text-2xl font-bold">个人财务管理</h1>
-          <p className="text-muted-foreground">加载数据中{dots}</p>
+          <p className="text-muted-foreground">
+            <span className="inline-block min-w-[3ch] text-center">{dots}</span>
+          </p>
         </div>
 
         {/* Progress Bar */}
