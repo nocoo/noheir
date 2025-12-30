@@ -60,21 +60,11 @@ const Index = () => {
     getQualityForYear,
   } = useTransactions();
 
-  // Show Loading page when auth is loading or data is loading for the first time
-  if (authLoading || (user && isLoading)) {
-    return <LoadingPage />;
-  }
-
-  // Show Login page when user is not authenticated
-  if (!user) {
-    return <LoginPage />;
-  }
-
+  // All hooks must be called before any early returns
   const savingsRate = useMemo(() => {
     return totalIncome > 0 ? ((totalIncome - totalExpense) / totalIncome) * 100 : 0;
   }, [totalIncome, totalExpense]);
 
-  // Handle view quality for a specific year
   const handleViewQuality = async (year: number) => {
     if (year === 0) {
       setQualityViewYear(null);
@@ -86,7 +76,6 @@ const Index = () => {
     }
   };
 
-  // Handle go to import
   const handleGoToImport = () => {
     setActiveTab('import');
   };
@@ -109,6 +98,16 @@ const Index = () => {
       subcategories: []
     }));
   }, [allTransactions, selectedYear]);
+
+  // Show Loading page when auth is loading or data is loading for the first time
+  if (authLoading || (user && isLoading)) {
+    return <LoadingPage />;
+  }
+
+  // Show Login page when user is not authenticated
+  if (!user) {
+    return <LoginPage />;
+  }
 
   return (
     <DashboardLayout activeTab={activeTab} onTabChange={setActiveTab}>
