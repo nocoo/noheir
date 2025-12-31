@@ -1,19 +1,15 @@
 import { useEffect, useRef } from 'react';
 import * as echarts from 'echarts';
 import { Transaction } from '@/types/transaction';
+import { useSettings, getIncomeColorHex, getExpenseColorHex } from '@/contexts/SettingsContext';
 
 interface RigiditySankeyProps {
   transactions: Transaction[];
   totalIncome: number;
 }
 
-// Fixed expense categories (should match the algorithm)
-const FIXED_EXPENSE_CATEGORIES = new Set([
-  '房贷', '房租', '保险', '物业费', '水电燃气',
-  'Mortgage', 'Rent', 'Insurance', 'Property Fee', 'Utilities'
-]);
-
 export function RigiditySankey({ transactions, totalIncome }: RigiditySankeyProps) {
+  const { settings } = useSettings();
   const chartRef = useRef<HTMLDivElement>(null);
   const chartInstance = useRef<echarts.ECharts | null>(null);
 
@@ -25,69 +21,222 @@ export function RigiditySankey({ transactions, totalIncome }: RigiditySankeyProp
       chartInstance.current = echarts.init(chartRef.current);
     }
 
-    // Calculate expense breakdown
-    const expenseByCategory = new Map<string, number>();
+    // Get colors from settings
+    const incomeColor = getIncomeColorHex(settings.colorScheme);
+    const expenseColor = getExpenseColorHex(settings.colorScheme);
+    const savingsColor = '#3b82f6'; // Blue for savings
+    const fixedColor = '#e11d48'; // Rose-600 for fixed
+    const flexibleColor = '#fb7185'; // Rose-400 for flexible
+
+    // Rich color palette for primary categories
+    const categoryColors = [
+      '#ef4444', // red-500
+      '#f97316', // orange-500
+      '#eab308', // yellow-500
+      '#22c55e', // green-500
+      '#06b6d4', // cyan-500
+      '#3b82f6', // blue-500
+      '#8b5cf6', // violet-500
+      '#d946ef', // fuchsia-500
+      '#f43f5e', // rose-500
+      '#ec4899', // pink-500
+    ];
+
+    // Get color for primary category based on hash
+    const getCategoryColor = (category: string, isFixed: boolean): string => {
+      let hash = 0;
+      for (let i = 0; i < category.length; i++) {
+        hash = category.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const index = Math.abs(hash) % categoryColors.length;
+      return categoryColors[index];
+    };
+
+    // Fixed expense categories (tertiary level)
+    const fixedCategoriesSet = new Set(settings.fixedExpenseCategories);
+
+    // Calculate expenses: group by (primary, tertiary) with fixed/flexible flag
+    const expenseData = new Map<string, {
+      primary: string;
+      tertiary: string;
+      amount: number;
+      isFixed: boolean;
+    }>();
+
+    let totalExpense = 0;
     let totalFixed = 0;
     let totalFlexible = 0;
+
+    // Primary category breakdown by fixed/flexible
+    const primaryFixedAmount = new Map<string, number>();
+    const primaryFlexibleAmount = new Map<string, number>();
 
     const safeTransactions = transactions || [];
     for (const t of safeTransactions) {
       if (t.type === 'expense') {
-        const current = expenseByCategory.get(t.primaryCategory) || 0;
-        expenseByCategory.set(t.primaryCategory, current + t.amount);
+        totalExpense += t.amount;
 
-        if (FIXED_EXPENSE_CATEGORIES.has(t.primaryCategory)) {
+        const isFixed = fixedCategoriesSet.has(t.tertiaryCategory);
+        if (isFixed) {
           totalFixed += t.amount;
+          const current = primaryFixedAmount.get(t.primaryCategory) || 0;
+          primaryFixedAmount.set(t.primaryCategory, current + t.amount);
         } else {
           totalFlexible += t.amount;
+          const current = primaryFlexibleAmount.get(t.primaryCategory) || 0;
+          primaryFlexibleAmount.set(t.primaryCategory, current + t.amount);
+        }
+
+        const key = `${t.primaryCategory}|${t.tertiaryCategory}|${isFixed}`;
+        const existing = expenseData.get(key);
+        if (existing) {
+          existing.amount += t.amount;
+        } else {
+          expenseData.set(key, {
+            primary: t.primaryCategory,
+            tertiary: t.tertiaryCategory,
+            amount: t.amount,
+            isFixed,
+          });
         }
       }
     }
 
-    // Get top 5 expense categories
-    const topCategories = Array.from(expenseByCategory.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
+    const totalSavings = Math.max(0, totalIncome - totalExpense);
 
-    const totalExpense = totalFixed + totalFlexible;
+    // Build nodes and links
+    const nodes: any[] = [];
+    const links: any[] = [];
 
-    // Build sankey nodes and links
-    const nodes = [
-      { name: '总收入', itemStyle: { color: '#059669' } },
-      { name: '总支出', itemStyle: { color: '#e11d48' } },
-      { name: '刚性支出', itemStyle: { color: '#f43f5e' } },
-      { name: '弹性支出', itemStyle: { color: '#fb7185' } },
-      ...topCategories.map(([cat]) => ({
-        name: cat,
-        itemStyle: { color: '#fecdd3' },
-      })),
-    ];
+    // Level 1: Total Income
+    nodes.push({ name: '总收入', itemStyle: { color: incomeColor } });
 
-    const links = [
-      {
+    // Level 2: Total Expense and Total Savings
+    nodes.push({ name: '总支出', itemStyle: { color: expenseColor } });
+    links.push({
+      source: '总收入',
+      target: '总支出',
+      value: totalExpense,
+      lineStyle: { color: expenseColor, opacity: 0.5 },
+    });
+
+    if (totalSavings > 0) {
+      nodes.push({ name: '总储蓄', itemStyle: { color: savingsColor } });
+      links.push({
         source: '总收入',
-        target: '总支出',
-        value: totalExpense,
-      },
-      {
+        target: '总储蓄',
+        value: totalSavings,
+        lineStyle: { color: savingsColor, opacity: 0.5 },
+      });
+    }
+
+    // Level 3: Fixed Expense and Flexible Expense
+    if (totalFixed > 0) {
+      nodes.push({ name: '刚性支出', itemStyle: { color: fixedColor } });
+      links.push({
         source: '总支出',
         target: '刚性支出',
         value: totalFixed,
-        lineStyle: { color: '#f43f5e', opacity: 0.6 },
-      },
-      {
+        lineStyle: { color: fixedColor, opacity: 0.5 },
+      });
+    }
+    if (totalFlexible > 0) {
+      nodes.push({ name: '弹性支出', itemStyle: { color: flexibleColor } });
+      links.push({
         source: '总支出',
         target: '弹性支出',
         value: totalFlexible,
-        lineStyle: { color: '#fb7185', opacity: 0.6 },
-      },
-      ...topCategories.map(([cat, amount]) => ({
-        source: FIXED_EXPENSE_CATEGORIES.has(cat) ? '刚性支出' : '弹性支出',
-        target: cat,
-        value: amount,
-        lineStyle: { opacity: 0.4 },
-      })),
-    ];
+        lineStyle: { color: flexibleColor, opacity: 0.5 },
+      });
+    }
+
+    // Level 4: Primary categories (split by fixed/flexible)
+    // Get all unique primary categories that have either fixed or flexible expenses
+    const allPrimaries = new Set([
+      ...primaryFixedAmount.keys(),
+      ...primaryFlexibleAmount.keys(),
+    ]);
+
+    for (const primary of allPrimaries) {
+      const fixedAmt = primaryFixedAmount.get(primary) || 0;
+      const flexibleAmt = primaryFlexibleAmount.get(primary) || 0;
+
+      if (fixedAmt > 0) {
+        const nodeName = `${primary}(刚)`;
+        const color = getCategoryColor(primary, true);
+        nodes.push({
+          name: nodeName,
+          itemStyle: { color },
+        });
+        links.push({
+          source: '刚性支出',
+          target: nodeName,
+          value: fixedAmt,
+          lineStyle: { color, opacity: 0.4 },
+        });
+      }
+
+      if (flexibleAmt > 0) {
+        const nodeName = `${primary}(弹)`;
+        const color = getCategoryColor(primary, false);
+        nodes.push({
+          name: nodeName,
+          itemStyle: { color },
+        });
+        links.push({
+          source: '弹性支出',
+          target: nodeName,
+          value: flexibleAmt,
+          lineStyle: { color, opacity: 0.4 },
+        });
+      }
+    }
+
+    // Level 5: Tertiary categories
+    // Track which parent nodes were actually created in Level 4
+    const createdParentNodes = new Set<string>();
+    for (const primary of allPrimaries) {
+      const fixedAmt = primaryFixedAmount.get(primary) || 0;
+      const flexibleAmt = primaryFlexibleAmount.get(primary) || 0;
+      if (fixedAmt > 0) {
+        createdParentNodes.add(`${primary}(刚)`);
+      }
+      if (flexibleAmt > 0) {
+        createdParentNodes.add(`${primary}(弹)`);
+      }
+    }
+
+    const tertiaryEntries = Array.from(expenseData.values())
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 30); // Limit to top 30
+
+    for (const entry of tertiaryEntries) {
+      const parentName = `${entry.primary}(${entry.isFixed ? '刚' : '弹'})`;
+
+      // Only add link if parent node exists
+      if (!createdParentNodes.has(parentName)) {
+        continue;
+      }
+
+      // Use unique node name: primary + tertiary to avoid duplicates
+      const uniqueNodeName = `${entry.primary}·${entry.tertiary}`;
+
+      // Use lighter shade of parent category color
+      const parentColor = getCategoryColor(entry.primary, entry.isFixed);
+
+      nodes.push({
+        name: uniqueNodeName,
+        itemStyle: {
+          color: parentColor,
+        },
+      });
+      links.push({
+        source: parentName,
+        target: uniqueNodeName,
+        value: entry.amount,
+        lineStyle: { color: parentColor, opacity: 0.3 },
+      });
+    }
 
     const option: echarts.EChartsOption = {
       tooltip: {
@@ -95,18 +244,27 @@ export function RigiditySankey({ transactions, totalIncome }: RigiditySankeyProp
         triggerOn: 'mousemove',
         formatter: (params: any) => {
           if (params.dataType === 'edge') {
+            // Clean up display names (remove suffixes)
+            const sourceName = params.data.source.replace('(刚)', '').replace('(弹)', '').replace('·', ' · ');
+            let targetName = params.data.target;
+            if (targetName.includes('·')) {
+              targetName = targetName.replace('·', ' · ');
+            } else {
+              targetName = targetName.replace('(刚)', '').replace('(弹)', '');
+            }
             const percent = totalIncome > 0
               ? ((params.data.value / totalIncome) * 100).toFixed(1)
               : '0.0';
             return `
               <div style="padding: 8px;">
-                <div>${params.data.source} → ${params.data.target}</div>
+                <div>${sourceName} → ${targetName}</div>
                 <div>金额: ¥${params.data.value.toLocaleString()}</div>
                 <div>占收入: ${percent}%</div>
               </div>
             `;
           }
-          return params.name;
+          // Clean up node names
+          return params.name.replace('(刚)', '').replace('(弹)', '').replace('·', ' · ');
         },
       },
       series: [
@@ -115,10 +273,10 @@ export function RigiditySankey({ transactions, totalIncome }: RigiditySankeyProp
           layout: 'none',
           data: nodes,
           links: links,
-          top: '10%',
-          right: '10%',
-          bottom: '10%',
-          left: '10%',
+          top: '5%',
+          right: '5%',
+          bottom: '5%',
+          left: '5%',
           emphasis: {
             focus: 'adjacency',
           },
@@ -126,8 +284,8 @@ export function RigiditySankey({ transactions, totalIncome }: RigiditySankeyProp
             curveness: 0.5,
           },
           label: {
-            color: '#334155', // text-main color
-            fontSize: 12,
+            color: 'hsl(var(--text-main))',
+            fontSize: 11,
           },
         },
       ],
@@ -144,7 +302,7 @@ export function RigiditySankey({ transactions, totalIncome }: RigiditySankeyProp
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [transactions, totalIncome]);
+  }, [transactions, totalIncome, settings.fixedExpenseCategories, settings.colorScheme]);
 
   useEffect(() => {
     return () => {
@@ -153,6 +311,6 @@ export function RigiditySankey({ transactions, totalIncome }: RigiditySankeyProp
   }, []);
 
   return (
-    <div ref={chartRef} className="w-full h-[320px]" />
+    <div ref={chartRef} className="w-full h-[400px]" />
   );
 }
