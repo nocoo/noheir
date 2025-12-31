@@ -6,6 +6,7 @@ import { TransactionTable } from '@/components/dashboard/TransactionTable';
 import { DataImport } from '@/components/dashboard/DataImport';
 import { DataQuality } from '@/components/dashboard/DataQuality';
 import { DataManagement } from '@/components/dashboard/DataManagement';
+import { FlowAnalysis } from '@/components/dashboard/FlowAnalysis';
 import { IncomeAnalysis } from '@/components/dashboard/IncomeAnalysis';
 import { ExpenseAnalysis } from '@/components/dashboard/ExpenseAnalysis';
 import { TransferAnalysis } from '@/components/dashboard/TransferAnalysis';
@@ -277,30 +278,13 @@ const Index = () => {
         </div>
       )}
 
-      {activeTab === 'flow-income' && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold">收入流向</h1>
-              <p className="text-muted-foreground">可视化收入从来源到分类的分布</p>
-            </div>
-            <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
-          </div>
-          <SankeyChart transactions={transactions} type="income" />
-        </div>
-      )}
-
-      {activeTab === 'flow-expense' && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold">支出流向</h1>
-              <p className="text-muted-foreground">可视化支出从分类到用途的分布</p>
-            </div>
-            <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
-          </div>
-          <SankeyChart transactions={transactions} type="expense" />
-        </div>
+      {activeTab === 'flow' && (
+        <FlowAnalysis
+          transactions={transactions}
+          selectedYear={selectedYear}
+          availableYears={availableYears}
+          onYearChange={setSelectedYear}
+        />
       )}
 
       {activeTab === 'compare' && (

@@ -53,8 +53,7 @@ const navGroups = [
       { id: 'expense', label: '支出分析', icon: TrendingDown },
       { id: 'transfer', label: '转账分析', icon: ArrowRightLeft },
       { id: 'account', label: '账户分析', icon: Wallet },
-      { id: 'flow-income', label: '收入流向', icon: ArrowUpRight },
-      { id: 'flow-expense', label: '支出流向', icon: ArrowDownRight },
+      { id: 'flow', label: '流向分析', icon: Network },
       { id: 'compare', label: '时段对比', icon: GitCompareArrows },
     ]
   },

@@ -1,17 +1,6 @@
-import { useEffect, useState } from 'react';
 import { Wallet } from 'lucide-react';
 
 export function LoadingPage() {
-  const [dots, setDots] = useState('');
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setDots(prev => prev.length >= 3 ? '' : prev + '.');
-    }, 500);
-
-    return () => clearInterval(interval);
-  }, []);
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
       <div className="flex flex-col items-center gap-6">
@@ -26,11 +15,8 @@ export function LoadingPage() {
         </div>
 
         {/* Loading Text */}
-        <div className="space-y-2 text-center">
+        <div className="text-center">
           <h1 className="text-2xl font-bold">个人财务管理</h1>
-          <p className="text-muted-foreground">
-            <span className="inline-block min-w-[3ch] text-center">{dots}</span>
-          </p>
         </div>
 
         {/* Progress Bar */}

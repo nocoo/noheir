@@ -183,17 +183,6 @@ export function IncomeHeatmap({ transactions, year }: IncomeHeatmapProps) {
             </div>
           </div>
 
-          {/* Legend */}
-          <div className="flex items-center justify-end gap-2">
-            <div className="flex items-center">
-              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: COLORS[0] }}></div>
-              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: COLORS[1] }}></div>
-              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: COLORS[2] }}></div>
-              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: COLORS[3] }}></div>
-              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: COLORS[4] }}></div>
-            </div>
-          </div>
-
           {/* Stats */}
           <div className="flex justify-end gap-6 text-sm text-muted-foreground">
             <div>
