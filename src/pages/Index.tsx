@@ -32,6 +32,7 @@ import { LiquidityLadder } from '@/components/assets/LiquidityLadder';
 import { FinancialHealthPage } from '@/pages/FinancialHealthPage';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSettings } from '@/contexts/SettingsContext';
 import { LoadingPage } from '@/components/pages/LoadingPage';
 import { LoginPage } from '@/components/pages/LoginPage';
 import { TrendingUp, TrendingDown, PiggyBank, Percent, HeartPulse } from 'lucide-react';
@@ -66,6 +67,8 @@ const Index = () => {
     loadStoredData,
     getQualityForYear,
   } = useTransactions();
+
+  const { settings } = useSettings();
 
   // All hooks must be called before any early returns
   const savingsRate = useMemo(() => {
@@ -172,7 +175,7 @@ const Index = () => {
             <StatCard title="总收入" value={totalIncome} icon={TrendingUp} variant="income" />
             <StatCard title="总支出" value={totalExpense} icon={TrendingDown} variant="expense" />
             <StatCard title="结余" value={balance} icon={PiggyBank} variant="balance" />
-            <StatCard title="储蓄率" value={`${savingsRate.toFixed(1)}%`} icon={Percent} variant="savings" savingsValue={savingsRate} />
+            <StatCard title="储蓄率" value={`${savingsRate.toFixed(1)}%`} icon={Percent} variant="savings" savingsValue={savingsRate} targetSavingsRate={settings.targetSavingsRate} />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -296,15 +299,25 @@ const Index = () => {
           <MultiYearSelector selectedYears={comparisonYears} availableYears={availableYears} onChange={setComparisonYears} />
           <YearComparisonChart data={yearlyComparison} />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {yearlyComparison.map(year => (
-              <div key={year.year} className="space-y-4">
-                <h3 className="text-lg font-semibold border-b border-border pb-2">{year.year} 年</h3>
-                <StatCard title="总收入" value={year.totalIncome} icon={TrendingUp} variant="income" />
-                <StatCard title="总支出" value={year.totalExpense} icon={TrendingDown} variant="expense" />
-                <StatCard title="结余" value={year.balance} icon={PiggyBank} variant="balance" />
-                <StatCard title="储蓄率" value={year.totalIncome > 0 ? `${((year.balance / year.totalIncome) * 100).toFixed(1)}%` : '0%'} icon={Percent} />
-              </div>
-            ))}
+            {yearlyComparison.map(year => {
+              const yearSavingsRate = year.totalIncome > 0 ? (year.balance / year.totalIncome) * 100 : 0;
+              return (
+                <div key={year.year} className="space-y-4">
+                  <h3 className="text-lg font-semibold border-b border-border pb-2">{year.year} 年</h3>
+                  <StatCard title="总收入" value={year.totalIncome} icon={TrendingUp} variant="income" />
+                  <StatCard title="总支出" value={year.totalExpense} icon={TrendingDown} variant="expense" />
+                  <StatCard title="结余" value={year.balance} icon={PiggyBank} variant="balance" />
+                  <StatCard
+                    title="储蓄率"
+                    value={`${yearSavingsRate.toFixed(1)}%`}
+                    icon={Percent}
+                    variant="savings"
+                    savingsValue={yearSavingsRate}
+                    targetSavingsRate={settings.targetSavingsRate}
+                  />
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

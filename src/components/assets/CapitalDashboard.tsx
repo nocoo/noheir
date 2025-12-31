@@ -12,6 +12,7 @@ import {
   AlertCircle,
   Eye,
   EyeOff,
+  Calendar,
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Button } from '@/components/ui/button';
@@ -499,15 +500,15 @@ function StrategyChart({ data, totalAssets, onStrategyClick, selectedStrategy }:
 
       <div className="flex items-stretch gap-4">
         {/* Chart */}
-        <div className="w-[70%] h-[280px]">
+        <div className="w-[70%] h-[220px]">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={chartData}
                 cx="50%"
                 cy="50%"
-                innerRadius={65}
-                outerRadius={120}
+                innerRadius={50}
+                outerRadius={90}
                 paddingAngle={2}
                 dataKey="value"
                 onClick={(entry) => onStrategyClick?.(

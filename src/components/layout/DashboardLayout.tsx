@@ -69,16 +69,11 @@ const navGroups = [
     ]
   },
   {
-    title: '数据管理',
-    items: [
-      { id: 'manage', label: '数据管理', icon: Database },
-      { id: 'import', label: '数据导入', icon: Upload },
-    ]
-  },
-  {
     title: '系统',
     items: [
       { id: 'settings', label: '设置', icon: SettingsIcon },
+      { id: 'manage', label: '数据管理', icon: Database },
+      { id: 'import', label: '数据导入', icon: Upload },
     ]
   },
 ];
@@ -99,78 +94,84 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
       {/* Sidebar */}
       <aside className={cn(
         'fixed inset-y-0 left-0 z-50 flex bg-card border-r border-border transition-all duration-300',
-        sidebarOpen ? 'w-64' : 'w-0'
+        sidebarOpen ? 'w-64' : 'w-14'
       )}>
         <div className="flex flex-col h-full">
           <div className={cn(
-            "flex items-center h-16 border-b border-border overflow-hidden shrink-0",
-            sidebarOpen ? "px-2" : ""
+            "flex items-center h-14 border-b border-border shrink-0",
+            sidebarOpen ? "px-3 justify-between" : "px-2 justify-center"
           )}>
-            <div className={cn(
-              "flex items-center gap-3 overflow-hidden transition-all duration-300",
-              sidebarOpen ? "flex-1 px-2 opacity-100" : "w-0 opacity-0"
-            )}>
-              <LayoutDashboard className="h-5 w-5 text-primary shrink-0" />
-              <h1 className="text-lg font-bold text-foreground whitespace-nowrap">{settings.siteName}</h1>
-            </div>
+            {sidebarOpen && (
+              <div className="flex items-center gap-2 overflow-hidden">
+                <LayoutDashboard className="h-4 w-4 text-primary shrink-0" />
+                <h1 className="text-base font-bold text-foreground whitespace-nowrap">{settings.siteName}</h1>
+              </div>
+            )}
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className={cn(
-                "shrink-0 transition-all duration-300",
-                sidebarOpen ? "h-8 px-3" : ""
-              )}
+              className="shrink-0 h-7 w-7"
             >
-              <Menu className={cn(
-                sidebarOpen ? "h-4 w-4" : ""
-              )} />
+              <Menu className="h-3.5 w-3.5" />
             </Button>
           </div>
 
-          <nav className="flex-1 p-2 space-y-1 overflow-y-auto min-h-0">
-            {navGroups.map(group => (
-              <Collapsible
-                key={group.title}
-                open={openGroups.includes(group.title)}
-                onOpenChange={() => toggleGroup(group.title)}
-              >
-                {sidebarOpen && (
+          <nav className={cn(
+            "flex-1 overflow-y-auto min-h-0",
+            sidebarOpen ? "px-2 py-2 space-y-1" : "py-2 space-y-0.5 mx-2"
+          )}>
+            {sidebarOpen ? (
+              // 展开状态：带分组
+              navGroups.map(group => (
+                <Collapsible
+                  key={group.title}
+                  open={openGroups.includes(group.title)}
+                  onOpenChange={() => toggleGroup(group.title)}
+                >
                   <CollapsibleTrigger asChild>
                     <Button
                       variant="ghost"
-                      className="w-full justify-between px-3 py-2 h-auto text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                      className="w-full justify-between px-2 py-1.5 h-auto text-xs font-semibold text-muted-foreground uppercase tracking-wider"
                     >
                       <span>{group.title}</span>
                       <ChevronDown className={cn(
-                        "h-4 w-4 transition-transform duration-200 shrink-0",
+                        "h-3 w-3 transition-transform duration-200 shrink-0",
                         openGroups.includes(group.title) && "rotate-180"
                       )} />
                     </Button>
                   </CollapsibleTrigger>
-                )}
-                <CollapsibleContent className="space-y-1">
-                  {group.items.map(item => (
-                    <Button
-                      key={item.id}
-                      variant={activeTab === item.id ? 'default' : 'ghost'}
-                      className={cn(
-                        'w-full justify-start gap-3 transition-all',
-                        !sidebarOpen && 'justify-center px-2'
-                      )}
-                      onClick={() => onTabChange(item.id)}
-                      data-value={item.id}
-                    >
-                      <item.icon className={cn(
-                        "h-4 w-4 shrink-0",
-                        activeTab === item.id ? "text-primary-foreground" : "text-muted-foreground"
-                      )} />
-                      {sidebarOpen && <span className="text-sm">{item.label}</span>}
-                    </Button>
-                  ))}
-                </CollapsibleContent>
-              </Collapsible>
-            ))}
+                  <CollapsibleContent className="space-y-0.5">
+                    {group.items.map(item => (
+                      <Button
+                        key={item.id}
+                        variant={activeTab === item.id ? 'default' : 'ghost'}
+                        className="w-full justify-start gap-2 px-2 h-9"
+                        onClick={() => onTabChange(item.id)}
+                        data-value={item.id}
+                      >
+                        <item.icon className="h-4 w-4 shrink-0" />
+                        <span className="text-sm">{item.label}</span>
+                      </Button>
+                    ))}
+                  </CollapsibleContent>
+                </Collapsible>
+              ))
+            ) : (
+              // 收缩状态：显示所有导航项
+              navGroups.flatMap(group => group.items).map(item => (
+                <Button
+                  key={item.id}
+                  variant={activeTab === item.id ? 'default' : 'ghost'}
+                  className="w-full justify-center px-1 h-9"
+                  onClick={() => onTabChange(item.id)}
+                  data-value={item.id}
+                  title={item.label}
+                >
+                  <item.icon className="h-4 w-4 shrink-0" />
+                </Button>
+              ))
+            )}
           </nav>
 
           {sidebarOpen && (
@@ -185,22 +186,10 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
         </div>
       </aside>
 
-      {/* Desktop Sidebar Toggle (visible when sidebar is closed) */}
-      {!sidebarOpen && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="fixed top-4 left-4 z-40 h-9 w-9"
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
-      )}
-
       {/* Main Content */}
       <main className={cn(
         "min-h-screen transition-all duration-300",
-        sidebarOpen ? "lg:ml-64" : "lg:ml-0"
+        sidebarOpen ? "lg:ml-64" : "lg:ml-14"
       )}>
         <div className="p-6 lg:p-8">
           {children}

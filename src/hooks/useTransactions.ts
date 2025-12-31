@@ -317,30 +317,32 @@ export function useTransactions() {
 
   // Yearly comparison
   const yearlyComparison: YearlyComparison[] = useMemo(() => {
-    return comparisonYears.map(year => {
-      const yearTransactions = transactions.filter(t => t.year === year);
-      const totalIncome = yearTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-      const totalExpense = yearTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+    return comparisonYears
+      .map(year => {
+        const yearTransactions = transactions.filter(t => t.year === year);
+        const totalIncome = yearTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+        const totalExpense = yearTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
 
-      const expenses = yearTransactions.filter(t => t.type === 'expense');
-      const categoryMap = new Map<string, number>();
-      expenses.forEach(t => {
-        categoryMap.set(t.primaryCategory, (categoryMap.get(t.primaryCategory) || 0) + t.amount);
-      });
+        const expenses = yearTransactions.filter(t => t.type === 'expense');
+        const categoryMap = new Map<string, number>();
+        expenses.forEach(t => {
+          categoryMap.set(t.primaryCategory, (categoryMap.get(t.primaryCategory) || 0) + t.amount);
+        });
 
-      return {
-        year,
-        totalIncome,
-        totalExpense,
-        balance: totalIncome - totalExpense,
-        categoryBreakdown: Array.from(categoryMap.entries()).map(([category, total]) => ({
-          category,
-          total,
-          percentage: totalExpense > 0 ? (total / totalExpense) * 100 : 0,
-          subcategories: []
-        }))
-      };
-    });
+        return {
+          year,
+          totalIncome,
+          totalExpense,
+          balance: totalIncome - totalExpense,
+          categoryBreakdown: Array.from(categoryMap.entries()).map(([category, total]) => ({
+            category,
+            total,
+            percentage: totalExpense > 0 ? (total / totalExpense) * 100 : 0,
+            subcategories: []
+          }))
+        };
+      })
+      .sort((a, b) => a.year - b.year); // Sort by year ascending
   }, [transactions, comparisonYears]);
 
   // Summary statistics

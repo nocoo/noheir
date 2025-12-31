@@ -302,7 +302,6 @@ export function TransferAnalysis({ transactions, monthlyData }: TransferAnalysis
               <TableRow>
                 <TableHead>日期</TableHead>
                 <TableHead>账户</TableHead>
-                <TableHead>二级分类</TableHead>
                 <TableHead>备注</TableHead>
                 <TableHead className="text-right">金额</TableHead>
               </TableRow>
@@ -315,7 +314,6 @@ export function TransferAnalysis({ transactions, monthlyData }: TransferAnalysis
                   <TableRow key={t.id}>
                     <TableCell className="text-sm">{t.date}</TableCell>
                     <TableCell>{t.account}</TableCell>
-                    <TableCell className="text-muted-foreground">{t.secondaryCategory || '-'}</TableCell>
                     <TableCell className="text-muted-foreground text-sm">{t.description || '-'}</TableCell>
                     <TableCell className={`text-right font-semibold ${expenseColorClass}`}>
                       {formatCurrencyFull(t.amount)}
