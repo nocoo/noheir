@@ -4,6 +4,13 @@ import { supabase } from '@/lib/supabase';
 export type Theme = 'light' | 'dark' | 'system';
 export type ColorScheme = 'default' | 'swapped';
 
+export interface AIConfig {
+  enabled: boolean;           // 是否启用 AI 功能
+  apiKey: string;             // API Key
+  baseURL: string;            // API Base URL
+  modelName: string;          // 模型名称
+}
+
 interface Settings {
   theme: Theme;
   colorScheme: ColorScheme;
@@ -13,6 +20,7 @@ interface Settings {
   siteName: string;
   minReturnRate: number;      // 保底收益率 (%)
   maxReturnRate: number;      // 风险收益率阈值 (%)
+  aiConfig: AIConfig;         // AI 配置
 }
 
 interface SettingsContextType {
@@ -29,6 +37,8 @@ interface SettingsContextType {
   updateSiteName: (name: string) => void;
   updateMinReturnRate: (rate: number) => void;
   updateMaxReturnRate: (rate: number) => void;
+  updateAIConfig: (config: AIConfig) => void;
+  updateAIEnabled: (enabled: boolean) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -42,6 +52,12 @@ const DEFAULT_SETTINGS: Settings = {
   siteName: '个人财务管理',
   minReturnRate: 1.25,
   maxReturnRate: 4.0,
+  aiConfig: {
+    enabled: false,
+    apiKey: '',
+    baseURL: 'https://api.aihubmix.com/v1',
+    modelName: 'gpt-4o-mini',
+  },
 };
 
 const STORAGE_KEY = 'finance-settings';
@@ -201,6 +217,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setSettings(prev => ({ ...prev, maxReturnRate: rate }));
   };
 
+  const updateAIConfig = (config: AIConfig) => {
+    setSettings(prev => ({ ...prev, aiConfig: config }));
+  };
+
+  const updateAIEnabled = (enabled: boolean) => {
+    setSettings(prev => ({ ...prev, aiConfig: { ...prev.aiConfig, enabled } }));
+  };
+
   return (
     <SettingsContext.Provider
       value={{
@@ -217,6 +241,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         updateSiteName,
         updateMinReturnRate,
         updateMaxReturnRate,
+        updateAIConfig,
+        updateAIEnabled,
       }}
     >
       {children}

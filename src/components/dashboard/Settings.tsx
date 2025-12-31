@@ -5,6 +5,7 @@ import { SavingsRateSettings } from '@/components/dashboard/SavingsRateSettings'
 import { ActiveIncomeSettings } from '@/components/dashboard/ActiveIncomeSettings';
 import { FixedExpenseSettings } from '@/components/dashboard/FixedExpenseSettings';
 import { ReturnRateSettings } from '@/components/dashboard/ReturnRateSettings';
+import { AISettings } from '@/components/dashboard/AISettings';
 
 export function Settings() {
   return (
@@ -15,6 +16,7 @@ export function Settings() {
       <ActiveIncomeSettings />
       <FixedExpenseSettings />
       <ReturnRateSettings />
+      <AISettings />
     </div>
   );
 }
