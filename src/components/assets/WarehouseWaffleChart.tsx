@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { StatusBadge } from '@/components/ui/colored-badge';
 import type { UnitDisplay, UnitStatus, Currency, InvestmentStrategy } from '@/types/assets';
 import { formatCurrencyFull } from '@/lib/chart-config';
 
@@ -153,18 +154,6 @@ function WaffleCell({ unit, index, onUnitClick }: WaffleCellProps) {
     }
   };
 
-  const getStatusLabel = (status: WaffleStatus): string => {
-    switch (status) {
-      case 'idle': return '闲置';
-      case 'locked-long': return '长期锁定';
-      case 'locked-short': return '短期锁定';
-      case 'locked-medium': return '中期锁定';
-      case 'planned': return '待筹集';
-      case 'archived': return '已归档';
-      default: return '未知';
-    }
-  };
-
   return (
     <TooltipProvider>
       <Tooltip open={isHovered} onOpenChange={setIsHovered}>
@@ -188,9 +177,7 @@ function WaffleCell({ unit, index, onUnitClick }: WaffleCellProps) {
           <div className="space-y-1">
             <div className="flex items-center justify-between gap-4">
               <span className="font-bold text-lg">{unit.unit_code}</span>
-              <Badge variant="outline" className="text-xs">
-                {getStatusLabel(unit.waffleStatus)}
-              </Badge>
+              <StatusBadge status={unit.status} />
             </div>
 
             <div className="flex items-baseline gap-1 text-sm">
