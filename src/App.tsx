@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AssetsDataProvider } from "@/contexts/AssetsDataContext";
+import { ChatBubble } from "@/components/ai/ChatBubble";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -26,6 +27,7 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
+            <ChatBubble />
           </TooltipProvider>
         </AssetsDataProvider>
       </SettingsProvider>
