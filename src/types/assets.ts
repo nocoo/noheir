@@ -80,14 +80,6 @@ export type UnitStatus =
   | '筹集中'   // Raising
   | '已归档';  // Archived
 
-/**
- * Product Status - Investment status
- * Matches: status text check (status in (...))
- */
-export type ProductStatus =
-  | '投资中'
-  | '已退出';
-
 // ============================================================================
 // CURRENCY TYPE
 // ============================================================================
@@ -126,9 +118,6 @@ export interface FinancialProduct {
   lock_period_days: number;      // Lock period in days (default: 0)
   annual_return_rate?: number;   // Annual return rate (e.g., 3.50 for 3.50%)
 
-  // Status (ENUM - CHECK constraint)
-  status: ProductStatus;         // Default: '投资中'
-
   // Timestamps
   created_at: string;            // timestamptz
 }
@@ -144,7 +133,6 @@ export interface CreateFinancialProductInput {
   currency?: Currency;
   lock_period_days?: number;
   annual_return_rate?: number;
-  status?: ProductStatus;
 }
 
 /**
@@ -158,7 +146,6 @@ export interface UpdateFinancialProductInput {
   currency?: Currency;
   lock_period_days?: number;
   annual_return_rate?: number;
-  status?: ProductStatus;
 }
 
 // ============================================================================

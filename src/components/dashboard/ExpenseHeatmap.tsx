@@ -2,56 +2,68 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Transaction } from '@/types/transaction';
 import { useState, useMemo } from 'react';
 import { formatCurrencyFull } from '@/lib/chart-config';
-import { Activity } from 'lucide-react';
-import { useSettings, getIncomeColor, getExpenseColor } from '@/contexts/SettingsContext';
+import { useSettings, ColorScheme } from '@/contexts/SettingsContext';
+import { TrendingDown } from 'lucide-react';
 
-interface PaymentHeatmapProps {
+interface ExpenseHeatmapProps {
   transactions: Transaction[];
   year: number;
 }
 
 interface DayInfo {
   count: number;
-  income: number;
-  expense: number;
+  amount: number;
 }
 
-// Green color palette - 5 levels for transaction density
-const COLORS = ['#ebedf0', '#c6e48b', '#7bc96f', '#239a3b', '#196127'];
+// GitHub-style green gradient palette
+const GREEN_PALETTE = [
+  '#ebedf0',  // 无数据 - 浅灰
+  '#9be9a8',  // 低 - 浅绿
+  '#40c463',  // 中低
+  '#30a14e',  // 中高
+  '#216e39',  // 高 - 深绿
+];
 
-export function PaymentHeatmap({ transactions, year }: PaymentHeatmapProps) {
+// GitHub-style red gradient palette
+const RED_PALETTE = [
+  '#ebedf0',  // 无数据 - 浅灰
+  '#ffc1cc',  // 低 - 浅红
+  '#ff8fab',  // 中低
+  '#f43f5e',  // 中高
+  '#be123c',  // 高 - 深红
+];
+
+export function ExpenseHeatmap({ transactions, year }: ExpenseHeatmapProps) {
   const { settings } = useSettings();
   const [tooltip, setTooltip] = useState<{ x: number; y: number; content: string } | null>(null);
-  const incomeColorClass = getIncomeColor(settings.colorScheme);
-  const expenseColorClass = getExpenseColor(settings.colorScheme);
 
-  // Aggregate data by date - use useMemo to recalculate when transactions or year changes
+  // Select color palette based on color scheme (swapped = green for expense)
+  const COLORS = settings.colorScheme === 'swapped' ? GREEN_PALETTE : RED_PALETTE;
+
+  // Aggregate expense data by date
   const dailyData = useMemo(() => {
     const data = new Map<string, DayInfo>();
 
     for (const t of transactions) {
-      // Only process transactions for the selected year
-      if (t.year !== year) continue;
+      // Only process expense transactions for the selected year
+      if (t.year !== year || t.type !== 'expense') continue;
 
       const dateObj = new Date(t.date);
       const day = dateObj.getDate();
       const dateKey = `${String(t.month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
-      const existing = data.get(dateKey) || { count: 0, income: 0, expense: 0 };
+      const existing = data.get(dateKey) || { count: 0, amount: 0 };
       existing.count += 1;
-      if (t.type === 'income') {
-        existing.income += t.amount;
-      } else if (t.type === 'expense') {
-        existing.expense += t.amount;
-      }
+      existing.amount += t.amount;
       data.set(dateKey, existing);
     }
 
     return data;
   }, [transactions, year]);
 
-  const counts = Array.from(dailyData.values()).map(d => d.count);
-  const maxCount = counts.length > 0 ? Math.max(...counts) : 1;
+  // Calculate max amount for color levels
+  const amounts = Array.from(dailyData.values()).map(d => d.amount);
+  const maxAmount = amounts.length > 0 ? Math.max(...amounts) : 1;
   const totalDays = dailyData.size;
 
   // Get the first day of the selected year
@@ -80,12 +92,12 @@ export function PaymentHeatmap({ transactions, year }: PaymentHeatmapProps) {
       // Key format: MM-DD to match what we stored
       const dateKey = `${String(month).padStart(2, '0')}-${String(dayOfMonth).padStart(2, '0')}`;
       const info = dailyData.get(dateKey) || null;
-      const count = info?.count || 0;
+      const amount = info?.amount || 0;
 
-      // Calculate color level based on count
+      // Calculate color level based on amount
       let level = 0;
-      if (count > 0) {
-        const ratio = count / maxCount;
+      if (amount > 0) {
+        const ratio = amount / maxAmount;
         if (ratio <= 0.25) level = 1;
         else if (ratio <= 0.5) level = 2;
         else if (ratio <= 0.75) level = 3;
@@ -106,7 +118,7 @@ export function PaymentHeatmap({ transactions, year }: PaymentHeatmapProps) {
     }
 
     return weeksArray;
-  }, [year, dailyData, maxCount, startDay]);
+  }, [year, dailyData, maxAmount, startDay]);
 
   const handleMouseEnter = (dayData: { level: number; date: Date; info: DayInfo | null }, e: React.MouseEvent) => {
     const rect = (e.target as HTMLElement).getBoundingClientRect();
@@ -117,15 +129,13 @@ export function PaymentHeatmap({ transactions, year }: PaymentHeatmapProps) {
     if (dayData.info) {
       content = `
         <div class="font-semibold">${dateStr}</div>
-        <div class="text-sm text-muted-foreground mb-1">${dayData.info.count} 笔交易</div>
-        ${dayData.info.income > 0 ? `<div class="${incomeColorClass} text-xs">+${formatCurrencyFull(dayData.info.income)}</div>` : '<div class="text-xs text-muted-foreground">无收入</div>'}
-        ${dayData.info.expense > 0 ? `<div class="${expenseColorClass} text-xs">-${formatCurrencyFull(dayData.info.expense)}</div>` : '<div class="text-xs text-muted-foreground">无支出</div>'}
-        ${dayData.info.income > 0 && dayData.info.expense > 0 ? `<div class="text-xs text-muted-foreground mt-1">净收支: ${formatCurrencyFull(dayData.info.income - dayData.info.expense)}</div>` : ''}
+        <div class="text-sm text-muted-foreground mb-1">${dayData.info.count} 笔支出</div>
+        <div class="text-expense text-xs">-${formatCurrencyFull(dayData.info.amount)}</div>
       `;
     } else {
       content = `
         <div class="font-semibold">${dateStr}</div>
-        <div class="text-sm text-muted-foreground">无交易</div>
+        <div class="text-sm text-muted-foreground">无支出</div>
       `;
     }
 
@@ -140,14 +150,16 @@ export function PaymentHeatmap({ transactions, year }: PaymentHeatmapProps) {
     setTooltip(null);
   };
 
+  // Calculate totals for stats
   const totalCounts = Array.from(dailyData.values()).reduce((sum, d) => sum + d.count, 0);
+  const totalAmount = Array.from(dailyData.values()).reduce((sum, d) => sum + d.amount, 0);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Activity className="h-5 w-5 text-primary" />
-          支付热力图
+          <TrendingDown className="h-5 w-5 text-expense" />
+          支出热力图
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -172,8 +184,7 @@ export function PaymentHeatmap({ transactions, year }: PaymentHeatmapProps) {
           </div>
 
           {/* Legend */}
-          <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-            <span>少</span>
+          <div className="flex items-center justify-end gap-2">
             <div className="flex items-center">
               <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: COLORS[0] }}></div>
               <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: COLORS[1] }}></div>
@@ -181,7 +192,6 @@ export function PaymentHeatmap({ transactions, year }: PaymentHeatmapProps) {
               <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: COLORS[3] }}></div>
               <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: COLORS[4] }}></div>
             </div>
-            <span>多</span>
           </div>
 
           {/* Stats */}
@@ -191,12 +201,12 @@ export function PaymentHeatmap({ transactions, year }: PaymentHeatmapProps) {
               <span className="font-semibold">{totalDays.toLocaleString()}</span>
             </div>
             <div>
-              <span>单日最多: </span>
-              <span className="font-semibold">{maxCount.toLocaleString()} 笔</span>
+              <span>单日最高: </span>
+              <span className="font-semibold text-expense">{formatCurrencyFull(maxAmount)}</span>
             </div>
             <div>
-              <span>总交易: </span>
-              <span className="font-semibold">{totalCounts.toLocaleString()} 笔</span>
+              <span>总支出: </span>
+              <span className="font-semibold text-expense">{formatCurrencyFull(totalAmount)}</span>
             </div>
           </div>
         </div>

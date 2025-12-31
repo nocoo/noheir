@@ -20,7 +20,10 @@ import {
   ArrowDownRight,
   Target,
   Package,
-  Coins
+  Coins,
+  Boxes,
+  PieChart,
+  HeartPulse,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -38,6 +41,7 @@ const navGroups = [
     title: '总览',
     items: [
       { id: 'overview', label: '总览', icon: LayoutDashboard },
+      { id: 'financial-health', label: '财务健康', icon: HeartPulse },
     ]
   },
   {
@@ -58,6 +62,9 @@ const navGroups = [
     title: '存量资金管理',
     items: [
       { id: 'capital-dashboard', label: '资金总览', icon: LayoutDashboard },
+      { id: 'warehouse', label: '仓库视图', icon: Boxes },
+      { id: 'strategy-sunburst', label: '策略透视', icon: PieChart },
+      { id: 'liquidity-ladder', label: '流动性梯队', icon: TrendingUp },
       { id: 'products', label: '产品表', icon: Package },
       { id: 'funds', label: '资金表', icon: Coins },
     ]
@@ -153,6 +160,7 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
                         !sidebarOpen && 'justify-center px-2'
                       )}
                       onClick={() => onTabChange(item.id)}
+                      data-value={item.id}
                     >
                       <item.icon className={cn(
                         "h-4 w-4 shrink-0",

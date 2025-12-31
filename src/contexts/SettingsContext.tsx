@@ -9,7 +9,10 @@ interface Settings {
   colorScheme: ColorScheme;
   targetSavingsRate: number;
   activeIncomeCategories: string[];
+  fixedExpenseCategories: string[];  // 固定支出分类
   siteName: string;
+  minReturnRate: number;      // 保底收益率 (%)
+  maxReturnRate: number;      // 风险收益率阈值 (%)
 }
 
 interface SettingsContextType {
@@ -20,7 +23,12 @@ interface SettingsContextType {
   updateActiveIncomeCategories: (categories: string[]) => void;
   toggleActiveIncomeCategory: (category: string) => void;
   isCategoryActiveIncome: (category: string) => boolean;
+  updateFixedExpenseCategories: (categories: string[]) => void;
+  toggleFixedExpenseCategory: (category: string) => void;
+  isCategoryFixedExpense: (category: string) => boolean;
   updateSiteName: (name: string) => void;
+  updateMinReturnRate: (rate: number) => void;
+  updateMaxReturnRate: (rate: number) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -30,7 +38,10 @@ const DEFAULT_SETTINGS: Settings = {
   colorScheme: 'default',
   targetSavingsRate: 60,
   activeIncomeCategories: [],
+  fixedExpenseCategories: [],
   siteName: '个人财务管理',
+  minReturnRate: 1.25,
+  maxReturnRate: 4.0,
 };
 
 const STORAGE_KEY = 'finance-settings';
@@ -94,6 +105,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
             ...prev,
             ...(settingsData.settings.targetSavingsRate !== undefined && { targetSavingsRate: settingsData.settings.targetSavingsRate }),
             ...(settingsData.settings.activeIncomeCategories && { activeIncomeCategories: settingsData.settings.activeIncomeCategories }),
+            ...(settingsData.settings.fixedExpenseCategories && { fixedExpenseCategories: settingsData.settings.fixedExpenseCategories }),
           }));
         }
       }
@@ -159,8 +171,34 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     return settings.activeIncomeCategories.includes(category);
   };
 
+  const updateFixedExpenseCategories = (categories: string[]) => {
+    setSettings(prev => ({ ...prev, fixedExpenseCategories: categories }));
+  };
+
+  const toggleFixedExpenseCategory = (category: string) => {
+    setSettings(prev => {
+      const isFixed = prev.fixedExpenseCategories.includes(category);
+      const newCategories = isFixed
+        ? prev.fixedExpenseCategories.filter(c => c !== category)
+        : [...prev.fixedExpenseCategories, category];
+      return { ...prev, fixedExpenseCategories: newCategories };
+    });
+  };
+
+  const isCategoryFixedExpense = (category: string) => {
+    return settings.fixedExpenseCategories.includes(category);
+  };
+
   const updateSiteName = (name: string) => {
     setSettings(prev => ({ ...prev, siteName: name }));
+  };
+
+  const updateMinReturnRate = (rate: number) => {
+    setSettings(prev => ({ ...prev, minReturnRate: rate }));
+  };
+
+  const updateMaxReturnRate = (rate: number) => {
+    setSettings(prev => ({ ...prev, maxReturnRate: rate }));
   };
 
   return (
@@ -173,7 +211,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         updateActiveIncomeCategories,
         toggleActiveIncomeCategory,
         isCategoryActiveIncome,
+        updateFixedExpenseCategories,
+        toggleFixedExpenseCategory,
+        isCategoryFixedExpense,
         updateSiteName,
+        updateMinReturnRate,
+        updateMaxReturnRate,
       }}
     >
       {children}
@@ -214,4 +257,37 @@ export function getIncomeColorHex(scheme: ColorScheme): string {
 
 export function getExpenseColorHex(scheme: ColorScheme): string {
   return scheme === 'swapped' ? '#059669' : '#e11d48';
+}
+
+// Return rate status based on settings
+export type ReturnRateStatus = 'low' | 'normal' | 'high';
+
+export function getReturnRateStatus(rate: number, settings: Settings): ReturnRateStatus {
+  if (rate < settings.minReturnRate) return 'low';
+  if (rate > settings.maxReturnRate) return 'high';
+  return 'normal';
+}
+
+export function getReturnRateColor(status: ReturnRateStatus): string {
+  switch (status) {
+    case 'low':
+      return 'text-amber-600 dark:text-amber-400';      // 过低 - 黄色警告
+    case 'high':
+      return 'text-rose-600 dark:text-rose-400';        // 过高 - 红色风险
+    case 'normal':
+    default:
+      return 'text-emerald-600 dark:text-emerald-400';  // 正常 - 绿色
+  }
+}
+
+export function getReturnRateBgColor(status: ReturnRateStatus): string {
+  switch (status) {
+    case 'low':
+      return 'bg-amber-50 dark:bg-amber-500/10';
+    case 'high':
+      return 'bg-rose-50 dark:bg-rose-500/10';
+    case 'normal':
+    default:
+      return 'bg-emerald-50 dark:bg-emerald-500/10';
+  }
 }

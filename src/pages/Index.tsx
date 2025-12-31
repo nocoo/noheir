@@ -14,23 +14,26 @@ import { Settings } from '@/components/dashboard/Settings';
 import { SankeyChart } from '@/components/dashboard/SankeyChart';
 import { YearSelector } from '@/components/dashboard/YearSelector';
 import type { DataQualityMetrics, TransactionValidation } from '@/types/data';
-import { PaymentHeatmap } from '@/components/dashboard/PaymentHeatmap';
-import { IncomeExpenseHeatmap } from '@/components/dashboard/IncomeExpenseHeatmap';
+import { ExpenseHeatmap } from '@/components/dashboard/ExpenseHeatmap';
+import { IncomeHeatmap } from '@/components/dashboard/IncomeHeatmap';
 import { IncomeExpenseComparison } from '@/components/dashboard/IncomeExpenseComparison';
 import { SavingsRateChart } from '@/components/dashboard/SavingsRateChart';
 import { BalanceWaterfall } from '@/components/dashboard/BalanceWaterfall';
-import { FinancialHealthScore } from '@/components/dashboard/FinancialHealthScore';
 import { YearComparisonChart } from '@/components/dashboard/YearComparisonChart';
 import { MultiYearSelector } from '@/components/dashboard/MultiYearSelector';
 import { FinancialFreedomAnalysis } from '@/components/dashboard/FinancialFreedomAnalysis';
 import { ProductsLibrary } from '@/components/assets/ProductsLibrary';
 import { CapitalUnitsManager } from '@/components/assets/CapitalUnitsManager';
 import { CapitalDashboard } from '@/components/assets/CapitalDashboard';
+import { WarehouseView } from '@/components/assets/WarehouseView';
+import { StrategySunburst } from '@/components/assets/StrategySunburst';
+import { LiquidityLadder } from '@/components/assets/LiquidityLadder';
+import { FinancialHealthPage } from '@/pages/FinancialHealthPage';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoadingPage } from '@/components/pages/LoadingPage';
 import { LoginPage } from '@/components/pages/LoginPage';
-import { Wallet, TrendingUp, TrendingDown, PiggyBank, Percent, Activity } from 'lucide-react';
+import { TrendingUp, TrendingDown, PiggyBank, Percent, HeartPulse } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 
@@ -164,29 +167,19 @@ const Index = () => {
             <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard title="总收入" value={totalIncome} icon={TrendingUp} variant="income" />
             <StatCard title="总支出" value={totalExpense} icon={TrendingDown} variant="expense" />
             <StatCard title="结余" value={balance} icon={PiggyBank} variant="balance" />
-            <StatCard title="储蓄率" value={`${savingsRate.toFixed(1)}%`} icon={Percent} />
-            <StatCard title="月均支出" value={Math.round(totalExpense / 12)} icon={Activity} />
-            <StatCard title="交易笔数" value={transactions.length} icon={Wallet} showCurrency={false} />
+            <StatCard title="储蓄率" value={`${savingsRate.toFixed(1)}%`} icon={Percent} variant="savings" savingsValue={savingsRate} />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <PaymentHeatmap transactions={transactions} year={selectedYear} />
-            <IncomeExpenseHeatmap transactions={transactions} year={selectedYear} />
+            <ExpenseHeatmap transactions={transactions} year={selectedYear} />
+            <IncomeHeatmap transactions={transactions} year={selectedYear} />
           </div>
 
           <IncomeExpenseComparison data={monthlyData} />
-
-          <FinancialHealthScore
-            totalIncome={totalIncome}
-            totalExpense={totalExpense}
-            savingsRate={savingsRate}
-            monthlyData={monthlyData}
-            year={selectedYear}
-          />
 
           <TransactionTable transactions={transactions} />
         </div>
@@ -229,6 +222,19 @@ const Index = () => {
           </div>
           <TransferAnalysis transactions={transactions} monthlyData={monthlyData} />
         </div>
+      )}
+
+      {activeTab === 'financial-health' && (
+        <FinancialHealthPage
+          transactions={transactions}
+          totalIncome={totalIncome}
+          totalExpense={totalExpense}
+          savingsRate={savingsRate}
+          monthlyData={monthlyData}
+          selectedYear={selectedYear}
+          availableYears={availableYears}
+          onYearChange={setSelectedYear}
+        />
       )}
 
       {activeTab === 'savings' && (
@@ -320,6 +326,12 @@ const Index = () => {
       )}
 
       {activeTab === 'capital-dashboard' && <CapitalDashboard />}
+
+      {activeTab === 'warehouse' && <WarehouseView />}
+
+      {activeTab === 'strategy-sunburst' && <StrategySunburst />}
+
+      {activeTab === 'liquidity-ladder' && <LiquidityLadder />}
 
       {activeTab === 'products' && (
         <div className="space-y-6">

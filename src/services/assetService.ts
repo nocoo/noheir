@@ -368,11 +368,12 @@ export async function deleteUnit(id: string): Promise<void> {
 
 /**
  * Deploy (invest) a unit to a product
- * This changes status to '锁定期' and links the product
+ * This links the product and sets investment dates
+ * Status remains '已成立' - lock period is indicated by end_date presence
  */
 export async function deployUnit(
   unitId: string,
-  input: DeployUnitInput
+  input: DeployUnitInput & { strategy?: InvestmentStrategy; tactics?: InvestmentTactics }
 ): Promise<CapitalUnit> {
   try {
     // Verify unit exists and is in '已成立' status
@@ -392,15 +393,26 @@ export async function deployUnit(
       );
     }
 
-    // Update unit with product and dates
+    // Prepare update data
+    const updateData: any = {
+      product_id: input.product_id,
+      start_date: input.start_date,
+      end_date: input.end_date,
+      status: '已成立',
+    };
+
+    // Add strategy and tactics if provided
+    if (input.strategy) {
+      updateData.strategy = input.strategy;
+    }
+    if (input.tactics) {
+      updateData.tactics = input.tactics;
+    }
+
+    // Update unit with product, dates, and optionally strategy/tactics
     const { data, error } = await supabase
       .from('capital_units')
-      .update({
-        product_id: input.product_id,
-        start_date: input.start_date,
-        end_date: input.end_date,
-        status: '锁定期',
-      })
+      .update(updateData)
       .eq('id', unitId)
       .select()
       .single();
