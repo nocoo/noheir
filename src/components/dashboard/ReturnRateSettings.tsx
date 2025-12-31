@@ -35,7 +35,6 @@ export function ReturnRateSettings() {
             step={0.05}
             value={[settings.minReturnRate]}
             onValueChange={(value) => updateMinReturnRate(value[0])}
-            className="max-w-md"
           />
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>0%</span>
@@ -62,7 +61,6 @@ export function ReturnRateSettings() {
             step={0.1}
             value={[settings.maxReturnRate]}
             onValueChange={(value) => updateMaxReturnRate(value[0])}
-            className="max-w-md"
           />
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>0%</span>

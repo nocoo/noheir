@@ -9,6 +9,7 @@ interface Settings {
   colorScheme: ColorScheme;
   targetSavingsRate: number;
   activeIncomeCategories: string[];
+  fixedExpenseCategories: string[];  // 固定支出分类
   siteName: string;
   minReturnRate: number;      // 保底收益率 (%)
   maxReturnRate: number;      // 风险收益率阈值 (%)
@@ -22,6 +23,9 @@ interface SettingsContextType {
   updateActiveIncomeCategories: (categories: string[]) => void;
   toggleActiveIncomeCategory: (category: string) => void;
   isCategoryActiveIncome: (category: string) => boolean;
+  updateFixedExpenseCategories: (categories: string[]) => void;
+  toggleFixedExpenseCategory: (category: string) => void;
+  isCategoryFixedExpense: (category: string) => boolean;
   updateSiteName: (name: string) => void;
   updateMinReturnRate: (rate: number) => void;
   updateMaxReturnRate: (rate: number) => void;
@@ -34,6 +38,7 @@ const DEFAULT_SETTINGS: Settings = {
   colorScheme: 'default',
   targetSavingsRate: 60,
   activeIncomeCategories: [],
+  fixedExpenseCategories: [],
   siteName: '个人财务管理',
   minReturnRate: 1.25,
   maxReturnRate: 4.0,
@@ -100,6 +105,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
             ...prev,
             ...(settingsData.settings.targetSavingsRate !== undefined && { targetSavingsRate: settingsData.settings.targetSavingsRate }),
             ...(settingsData.settings.activeIncomeCategories && { activeIncomeCategories: settingsData.settings.activeIncomeCategories }),
+            ...(settingsData.settings.fixedExpenseCategories && { fixedExpenseCategories: settingsData.settings.fixedExpenseCategories }),
           }));
         }
       }
@@ -165,6 +171,24 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     return settings.activeIncomeCategories.includes(category);
   };
 
+  const updateFixedExpenseCategories = (categories: string[]) => {
+    setSettings(prev => ({ ...prev, fixedExpenseCategories: categories }));
+  };
+
+  const toggleFixedExpenseCategory = (category: string) => {
+    setSettings(prev => {
+      const isFixed = prev.fixedExpenseCategories.includes(category);
+      const newCategories = isFixed
+        ? prev.fixedExpenseCategories.filter(c => c !== category)
+        : [...prev.fixedExpenseCategories, category];
+      return { ...prev, fixedExpenseCategories: newCategories };
+    });
+  };
+
+  const isCategoryFixedExpense = (category: string) => {
+    return settings.fixedExpenseCategories.includes(category);
+  };
+
   const updateSiteName = (name: string) => {
     setSettings(prev => ({ ...prev, siteName: name }));
   };
@@ -187,6 +211,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         updateActiveIncomeCategories,
         toggleActiveIncomeCategory,
         isCategoryActiveIncome,
+        updateFixedExpenseCategories,
+        toggleFixedExpenseCategory,
+        isCategoryFixedExpense,
         updateSiteName,
         updateMinReturnRate,
         updateMaxReturnRate,

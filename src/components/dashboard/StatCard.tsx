@@ -12,11 +12,12 @@ interface StatCardProps {
     value: number;
     isPositive: boolean;
   };
-  variant?: 'default' | 'income' | 'expense' | 'balance';
+  variant?: 'default' | 'income' | 'expense' | 'balance' | 'savings';
   showCurrency?: boolean;
+  savingsValue?: number; // For savings variant to determine color
 }
 
-export function StatCard({ title, value, icon: Icon, trend, variant = 'default', showCurrency = true }: StatCardProps) {
+export function StatCard({ title, value, icon: Icon, trend, variant = 'default', showCurrency = true, savingsValue }: StatCardProps) {
   const { settings } = useSettings();
   const incomeColorClass = getIncomeColor(settings.colorScheme);
   const incomeColorHex = getIncomeColorHex(settings.colorScheme);
@@ -26,17 +27,38 @@ export function StatCard({ title, value, icon: Icon, trend, variant = 'default',
   // For balance variant, determine if it's positive or negative
   const isBalancePositive = variant === 'balance' && typeof value === 'number' && value >= 0;
 
+  // For savings variant, determine color based on savings rate
+  const getSavingsColor = () => {
+    const rate = savingsValue ?? 0;
+    if (rate >= 30) return 'text-emerald-600'; // 优秀 - 绿色
+    if (rate >= 20) return 'text-green-600'; // 良好 - 浅绿
+    if (rate >= 10) return 'text-yellow-600'; // 一般 - 黄色
+    if (rate >= 0) return 'text-orange-600'; // 较差 - 橙色
+    return 'text-red-600'; // 危险 - 红色
+  };
+
+  const getSavingsBorderColor = () => {
+    const rate = savingsValue ?? 0;
+    if (rate >= 30) return '#059669'; // emerald-600
+    if (rate >= 20) return '#16a34a'; // green-600
+    if (rate >= 10) return '#ca8a04'; // yellow-600
+    if (rate >= 0) return '#ea580c'; // orange-600
+    return '#dc2626'; // red-600
+  };
+
   const variantStyles = {
     default: 'border-border',
     income: '',
     expense: '',
     balance: '',
+    savings: '',
   };
 
   const getValueColor = () => {
     if (variant === 'income') return incomeColorClass;
     if (variant === 'expense') return expenseColorClass;
     if (variant === 'balance') return isBalancePositive ? incomeColorClass : expenseColorClass;
+    if (variant === 'savings') return getSavingsColor();
     return '';
   };
 
@@ -44,10 +66,11 @@ export function StatCard({ title, value, icon: Icon, trend, variant = 'default',
     if (variant === 'income') return incomeColorHex;
     if (variant === 'expense') return expenseColorHex;
     if (variant === 'balance') return isBalancePositive ? incomeColorHex : expenseColorHex;
+    if (variant === 'savings') return getSavingsBorderColor();
     return '';
   };
 
-  const borderStyle = variant === 'income' || variant === 'expense' || variant === 'balance'
+  const borderStyle = variant === 'income' || variant === 'expense' || variant === 'balance' || variant === 'savings'
     ? { borderLeftColor: getBorderColor(), borderLeftWidth: '4px' }
     : {};
 

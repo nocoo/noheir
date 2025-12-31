@@ -36,6 +36,7 @@ type WaffleStatus =
   | 'locked-long'    // 🟢 深绿 - 锁定 > 1 年
   | 'locked-short'   // 🟢 浅绿 - 锁定 < 3 个月
   | 'locked-medium'  // 🟡 黄色 - 锁定 3个月-1年
+  | 'planned'        // 🔵 蓝色 - 计划中
   | 'archived';      // ⚪️ 灰色 - 已归档/已消费
 
 // Currency emoji
@@ -66,6 +67,7 @@ type WaffleStatus =
   | 'locked-long'    // 🟢 深绿 - 锁定 > 1 年
   | 'locked-short'   // 🟢 浅绿 - 锁定 < 3 个月
   | 'locked-medium'  // 🟡 黄色 - 锁定 3个月-1年
+  | 'planned'        // 🔵 蓝色 - 计划中
   | 'archived';      // ⚪️ 灰色 - 已归档/已消费
 
 interface WaffleUnit extends UnitDisplay {
@@ -77,16 +79,20 @@ interface WaffleUnit extends UnitDisplay {
 // ============================================================================
 
 function classifyUnitStatus(unit: UnitDisplay): WaffleStatus {
+  // 计划中 - 单独显示为蓝色
+  if (unit.status === '计划中') return 'planned';
+
+  // 筹集中
+  if (unit.status === '筹集中') return 'archived';
+
   // 已归档
   if (unit.status === '已归档') return 'archived';
-  if (unit.status === '计划中') return 'archived';
-  if (unit.status === '筹集中') return 'archived';
 
   // 闲置判断1：已成立但没有关联产品
   if (unit.status === '已成立' && !unit.product) return 'idle';
 
   // 闲置判断2：已成立且关联的是"现金+"类产品
-  if (unit.status === '已成立' && unit.product?.type === '现金+') return 'idle';
+  if (unit.status === '已成立' && unit.product?.category === '现金+') return 'idle';
 
   // 闲置判断3：已到期（需要提醒更新数据）
   if (unit.status === '已成立' && unit.is_overdue) return 'idle';
@@ -99,7 +105,7 @@ function classifyUnitStatus(unit: UnitDisplay): WaffleStatus {
     const totalDays = Math.max(1, Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
 
     // 已过期或即将过期（< 7天）视为短期
-    if (daysUntilMaturity !== undefined && daysUntilMaturity < 7) return 'locked-short';
+    if (daysUntilMaturity !== undefined && daysUntilMaturity < 0) return 'idle';
 
     // 锁定超过1年
     if (totalDays > 365) return 'locked-long';
@@ -122,9 +128,10 @@ function classifyUnitStatus(unit: UnitDisplay): WaffleStatus {
 interface WaffleCellProps {
   unit: WaffleUnit;
   index: number;
+  onUnitClick?: (unit: WaffleUnit) => void;
 }
 
-function WaffleCell({ unit, index }: WaffleCellProps) {
+function WaffleCell({ unit, index, onUnitClick }: WaffleCellProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   const getStatusColor = (status: WaffleStatus): string => {
@@ -137,6 +144,8 @@ function WaffleCell({ unit, index }: WaffleCellProps) {
         return 'bg-emerald-400 dark:bg-emerald-500 hover:bg-emerald-500 dark:hover:bg-emerald-400';
       case 'locked-medium':
         return 'bg-amber-500 dark:bg-amber-600 hover:bg-amber-600 dark:hover:bg-amber-500';
+      case 'planned':
+        return 'bg-blue-500 dark:bg-blue-600 hover:bg-blue-600 dark:hover:bg-blue-500';
       case 'archived':
         return 'bg-slate-300 dark:bg-slate-700 hover:bg-slate-400 dark:hover:bg-slate-600';
       default:
@@ -150,6 +159,7 @@ function WaffleCell({ unit, index }: WaffleCellProps) {
       case 'locked-long': return '长期锁定';
       case 'locked-short': return '短期锁定';
       case 'locked-medium': return '中期锁定';
+      case 'planned': return '计划中';
       case 'archived': return '已归档';
       default: return '未知';
     }
@@ -165,6 +175,7 @@ function WaffleCell({ unit, index }: WaffleCellProps) {
               'border border-border/50 hover:scale-110 hover:shadow-md hover:z-10',
               getStatusColor(unit.waffleStatus)
             )}
+            onClick={() => onUnitClick?.(unit)}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           />
@@ -232,6 +243,7 @@ function WaffleLegend({ data }: WaffleLegendProps) {
       lockedLong: data.filter(u => u.waffleStatus === 'locked-long').length,
       lockedShort: data.filter(u => u.waffleStatus === 'locked-short').length,
       lockedMedium: data.filter(u => u.waffleStatus === 'locked-medium').length,
+      planned: data.filter(u => u.waffleStatus === 'planned').length,
       archived: data.filter(u => u.waffleStatus === 'archived').length,
     };
   }, [data]);
@@ -266,6 +278,13 @@ function WaffleLegend({ data }: WaffleLegendProps) {
       emoji: '🟢',
     },
     {
+      status: 'planned' as WaffleStatus,
+      label: '计划中',
+      color: 'bg-blue-500 dark:bg-blue-600',
+      count: stats.planned,
+      emoji: '🔵',
+    },
+    {
       status: 'archived' as WaffleStatus,
       label: '已归档',
       color: 'bg-slate-300 dark:bg-slate-700',
@@ -297,20 +316,23 @@ function WaffleLegend({ data }: WaffleLegendProps) {
 
 interface WarehouseWaffleChartProps {
   units: UnitDisplay[];
+  onUnitClick?: (unit: UnitDisplay) => void;
 }
 
-export function WarehouseWaffleChart({ units }: WarehouseWaffleChartProps) {
+export function WarehouseWaffleChart({ units, onUnitClick }: WarehouseWaffleChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('all');
 
-  // Classify units by status
+  // Classify units by status and sort by unit_code
   const waffleData = useMemo(() => {
-    return units.map(unit => ({
-      ...unit,
-      waffleStatus: classifyUnitStatus(unit),
-    }));
+    return units
+      .map(unit => ({
+        ...unit,
+        waffleStatus: classifyUnitStatus(unit),
+      }))
+      .sort((a, b) => a.unit_code.localeCompare(b.unit_code, 'zh-CN'));
   }, [units]);
 
-  // Group units by strategy
+  // Group units by strategy and sort by unit_code within each group
   const strategyGroups = useMemo(() => {
     const groups: Record<InvestmentStrategy, typeof waffleData> = {} as any;
 
@@ -319,6 +341,11 @@ export function WarehouseWaffleChart({ units }: WarehouseWaffleChartProps) {
         groups[unit.strategy] = [];
       }
       groups[unit.strategy].push(unit);
+    });
+
+    // Sort units within each strategy group by unit_code
+    Object.keys(groups).forEach(strategy => {
+      groups[strategy].sort((a, b) => a.unit_code.localeCompare(b.unit_code, 'zh-CN'));
     });
 
     // Sort by predefined strategy order
@@ -457,6 +484,7 @@ export function WarehouseWaffleChart({ units }: WarehouseWaffleChartProps) {
                   key={unit.id}
                   unit={unit}
                   index={index}
+                  onUnitClick={onUnitClick}
                 />
               ))}
             </div>
@@ -501,6 +529,7 @@ export function WarehouseWaffleChart({ units }: WarehouseWaffleChartProps) {
                         key={unit.id}
                         unit={unit}
                         index={index}
+                        onUnitClick={onUnitClick}
                       />
                     ))}
                   </div>

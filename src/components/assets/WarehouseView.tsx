@@ -5,12 +5,77 @@
  * with waffle chart showing inventory status at a glance
  */
 
-import { useUnitsDisplay } from '@/hooks/useAssets';
+import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useUnitsDisplay, useUpdateUnit, useDeployUnit, useRecallUnit, useProducts } from '@/hooks/useAssets';
 import { WarehouseWaffleChart } from './WarehouseWaffleChart';
+import { UnifiedEditDeployDialog } from './CapitalUnitsManager';
 import { Boxes } from 'lucide-react';
+import type { UnitDisplayInfo, UpdateCapitalUnitInput, DeployUnitInput } from '@/types/assets';
+import { toast } from 'sonner';
 
 export function WarehouseView() {
   const { data: units, isLoading } = useUnitsDisplay();
+  const { data: products } = useProducts();
+  const queryClient = useQueryClient();
+  const updateMutation = useUpdateUnit();
+  const deployMutation = useDeployUnit();
+  const recallMutation = useRecallUnit();
+
+  const [editDeployDialog, setEditDeployDialog] = useState<{
+    open: boolean;
+    unit?: UnitDisplayInfo;
+  }>({ open: false });
+
+  const handleUnitClick = (unit: UnitDisplayInfo) => {
+    setEditDeployDialog({ open: true, unit });
+  };
+
+  const handleCloseDialog = () => {
+    setEditDeployDialog({ open: false });
+  };
+
+  const handleUnitUpdate = (data: UpdateCapitalUnitInput) => {
+    if (!editDeployDialog.unit) return;
+
+    updateMutation.mutate(
+      { id: editDeployDialog.unit.id, input: data },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['assets'] });
+          setEditDeployDialog({ open: false });
+          toast.success('资金单元已更新');
+        },
+      }
+    );
+  };
+
+  const handleDeployConfirm = (data: DeployUnitInput) => {
+    if (!editDeployDialog.unit) return;
+
+    deployMutation.mutate(
+      { unitId: editDeployDialog.unit.id, input: data },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['assets'] });
+          setEditDeployDialog({ open: false });
+          toast.success('资金已投放');
+        },
+      }
+    );
+  };
+
+  const handleRecall = () => {
+    if (!editDeployDialog.unit) return;
+
+    recallMutation.mutate(editDeployDialog.unit.id, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['assets'] });
+        setEditDeployDialog({ open: false });
+        toast.success('资金已召回');
+      },
+    });
+  };
 
   if (isLoading) {
     return (
@@ -44,13 +109,26 @@ export function WarehouseView() {
               <li><strong>宏观视角：</strong>将资金单元视为"集装箱"，一眼看到整体库存状态</li>
               <li><strong>核心问题：</strong>快速识别闲置资金，回答"我有多少弹药在睡觉？"</li>
               <li><strong>颜色编码：</strong>红色=闲置警报，绿色=锁定中，灰色=已归档</li>
+              <li><strong>点击方块：</strong>编辑资金信息和投放配置</li>
             </ul>
           </div>
           <div className="flex-1 min-h-0 overflow-auto">
-            <WarehouseWaffleChart units={units} />
+            <WarehouseWaffleChart units={units} onUnitClick={handleUnitClick} />
           </div>
         </div>
       )}
+
+      {/* Edit/Deploy Dialog */}
+      <UnifiedEditDeployDialog
+        open={editDeployDialog.open}
+        onClose={handleCloseDialog}
+        onUnitUpdate={handleUnitUpdate}
+        onDeployConfirm={handleDeployConfirm}
+        onRecall={handleRecall}
+        unit={editDeployDialog.unit || null}
+        products={products || []}
+        isPending={updateMutation.isPending || deployMutation.isPending}
+      />
     </div>
   );
 }

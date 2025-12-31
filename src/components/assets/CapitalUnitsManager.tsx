@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
+import { format } from 'date-fns';
 import {
   useUnitsDisplay,
   useCreateUnit,
@@ -15,7 +16,8 @@ import {
   useArchiveUnit,
   useProducts,
 } from '@/hooks/useAssets';
-import { Plus, Pencil, Trash2, Coins, ArrowRight, Undo, Archive, Filter, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Coins, ArrowRight, Undo, Archive, Filter, X, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -433,6 +435,407 @@ function UnitForm({ unit, open, onClose, onSubmit, isPending }: UnitFormProps) {
   );
 }
 
+/**
+ * Unified Edit & Deploy Dialog
+ * Left panel: Edit unit information
+ * Right panel: Edit deployment information
+ */
+interface UnifiedEditDeployDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onUnitUpdate: (data: UpdateCapitalUnitInput) => void;
+  onDeployConfirm: (data: DeployUnitInput) => void;
+  onRecall: () => void;
+  unit: UnitDisplayInfo | null;
+  products: FinancialProduct[];
+  isPending?: boolean;
+}
+
+function UnifiedEditDeployDialog({
+  open,
+  onClose,
+  onUnitUpdate,
+  onDeployConfirm,
+  onRecall,
+  unit,
+  products,
+  isPending,
+}: UnifiedEditDeployDialogProps) {
+  // Unit info state
+  const [formData, setFormData] = useState<UpdateCapitalUnitInput>({
+    strategy: unit?.strategy || '长期理财',
+    tactics: unit?.tactics || '稳健理财',
+    status: unit?.status || '已成立',
+  });
+
+  // Deploy info state
+  const [productId, setProductId] = useState<string>(unit?.product_id || '');
+  const [startDate, setStartDate] = useState<string>(
+    unit?.start_date || format(new Date(), 'yyyy-MM-dd')
+  );
+  const [endDate, setEndDate] = useState<string>(
+    unit?.end_date || ''
+  );
+
+  // Sync form data when unit changes
+  useEffect(() => {
+    if (unit) {
+      setFormData({
+        strategy: unit.strategy,
+        tactics: unit.tactics,
+        status: unit.status,
+      });
+      setProductId(unit.product_id || '');
+      setStartDate(unit.start_date || format(new Date(), 'yyyy-MM-dd'));
+      setEndDate(unit.end_date || '');
+    }
+  }, [unit]);
+
+  // Auto-calculate end date based on product lock period
+  const handleStartDateChange = (date: string) => {
+    setStartDate(date);
+    const product = products.find(p => p.id === productId);
+    if (product && product.lock_period_days > 0) {
+      const start = new Date(date);
+      const end = new Date(start);
+      end.setDate(end.getDate() + product.lock_period_days);
+      setEndDate(format(end, 'yyyy-MM-dd'));
+    }
+  };
+
+  // Update end date when product changes
+  const handleProductChange = (id: string) => {
+    setProductId(id);
+    if (startDate) {
+      const product = products.find(p => p.id === id);
+      if (product && product.lock_period_days > 0) {
+        const start = new Date(startDate);
+        const end = new Date(start);
+        end.setDate(end.getDate() + product.lock_period_days);
+        setEndDate(format(end, 'yyyy-MM-dd'));
+      }
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Update unit info
+    onUnitUpdate(formData);
+
+    // Update deployment info if product is selected
+    if (productId) {
+      onDeployConfirm({
+        product_id: productId,
+        start_date: startDate,
+        end_date: endDate,
+      });
+    } else if (!isPending) {
+      // No product selected, just close after unit update
+      onClose();
+    }
+  };
+
+  const updateField = <K extends keyof UpdateCapitalUnitInput>(
+    key: K,
+    value: UpdateCapitalUnitInput[K]
+  ) => {
+    setFormData(prev => ({ ...prev, [key]: value }));
+  };
+
+  const isDeployed = !!unit?.end_date;
+
+  // All products are available (no status filter needed)
+  const availableProducts = products.slice().sort((a, b) => {
+    const channelCompare = a.channel.localeCompare(b.channel, 'zh-CN');
+    if (channelCompare !== 0) return channelCompare;
+    return a.name.localeCompare(b.name, 'zh-CN');
+  });
+
+  if (!unit) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>编辑资金单元 - {unit.unit_code}</DialogTitle>
+          <DialogDescription>
+            修改资金单元信息和投放配置
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+            {/* Left Panel - Unit Information */}
+            <div className="space-y-4 border-r pr-6">
+              <h3 className="font-semibold text-lg">资金信息</h3>
+
+              {/* Unit Code (readonly) */}
+              <div className="space-y-2">
+                <Label>番号</Label>
+                <Input
+                  value={unit.unit_code}
+                  disabled
+                  className="font-mono bg-muted"
+                />
+              </div>
+
+              {/* Amount (readonly) */}
+              <div className="space-y-2">
+                <Label>金额</Label>
+                <div className="text-sm font-medium">{formatCurrencyFull(unit.amount)}</div>
+              </div>
+
+              {/* Currency (readonly) */}
+              <div className="space-y-2">
+                <Label>币种</Label>
+                <Input
+                  value={unit.currency}
+                  disabled
+                  className="bg-muted"
+                />
+              </div>
+
+              {/* Strategy */}
+              <div className="space-y-2">
+                <Label htmlFor="edit_strategy">
+                  投资策略 <span className="text-expense">*</span>
+                </Label>
+                <Select
+                  value={formData.strategy}
+                  onValueChange={(value: InvestmentStrategy) => updateField('strategy', value)}
+                >
+                  <SelectTrigger id="edit_strategy">
+                    <SelectValue placeholder="选择投资策略" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STRATEGY_OPTIONS.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Tactics */}
+              <div className="space-y-2">
+                <Label htmlFor="edit_tactics">
+                  投资战术 <span className="text-expense">*</span>
+                </Label>
+                <Select
+                  value={formData.tactics}
+                  onValueChange={(value: InvestmentTactics) => updateField('tactics', value)}
+                >
+                  <SelectTrigger id="edit_tactics">
+                    <SelectValue placeholder="选择投资战术" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TACTICS_OPTIONS.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Status */}
+              <div className="space-y-2">
+                <Label htmlFor="edit_status">状态</Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value: UnitStatus) => updateField('status', value)}
+                >
+                  <SelectTrigger id="edit_status">
+                    <SelectValue placeholder="选择状态" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUS_OPTIONS.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Created At (readonly) */}
+              <div className="space-y-2 pt-4 border-t">
+                <Label>创建时间</Label>
+                <div className="text-sm text-muted-foreground">
+                  {format(new Date(unit.created_at), 'yyyy-MM-dd HH:mm:ss')}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Panel - Deployment Information */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-lg">投放配置</h3>
+                <div className="flex gap-2">
+                  {/* Quick Actions */}
+                  {isDeployed && (
+                    <>
+                      {/* Renew button - for expired units */}
+                      {unit.end_date && new Date(unit.end_date) <= new Date() && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            // Set start date to the expiration date
+                            if (unit.end_date) {
+                              const newStartDate = unit.end_date;
+                              setStartDate(newStartDate);
+                              // Auto-calculate end date based on current product
+                              if (productId) {
+                                const product = products.find(p => p.id === productId);
+                                if (product && product.lock_period_days > 0) {
+                                  const start = new Date(newStartDate);
+                                  const end = new Date(start);
+                                  end.setDate(end.getDate() + product.lock_period_days);
+                                  setEndDate(format(end, 'yyyy-MM-dd'));
+                                }
+                              }
+                            }
+                          }}
+                          disabled={isPending}
+                          className="text-income hover:text-income hover:bg-income/10"
+                        >
+                          <ArrowRight className="h-4 w-4 mr-1" />
+                          续作
+                        </Button>
+                      )}
+
+                      {/* Recall button */}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          onRecall();
+                        }}
+                        disabled={isPending}
+                      >
+                        <Undo className="h-4 w-4 mr-1" />
+                        召回
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Product Selection */}
+              <div className="space-y-2">
+                <Label htmlFor="deploy_product">
+                  选择产品
+                </Label>
+                <Select value={productId} onValueChange={handleProductChange}>
+                  <SelectTrigger id="deploy_product">
+                    <SelectValue placeholder="选择要投放的产品" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableProducts.map(product => (
+                      <SelectItem key={product.id} value={product.id}>
+                        {product.channel} - {product.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {productId && (
+                  <div className="text-xs text-muted-foreground">
+                    {(() => {
+                      const product = products.find(p => p.id === productId);
+                      if (!product) return null;
+                      return (
+                        <div className="space-y-1">
+                          <div>类别: {product.category}</div>
+                          <div>锁定期: {product.lock_period_days} 天</div>
+                          {product.annual_return_rate && (
+                            <div>年化: {product.annual_return_rate}%</div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+              </div>
+
+              {/* Start Date */}
+              <div className="space-y-2">
+                <Label htmlFor="deploy_start_date">
+                  开始日期
+                </Label>
+                <Input
+                  id="deploy_start_date"
+                  type="date"
+                  value={startDate}
+                  onChange={e => handleStartDateChange(e.target.value)}
+                />
+              </div>
+
+              {/* End Date */}
+              <div className="space-y-2">
+                <Label htmlFor="deploy_end_date">
+                  结束日期
+                </Label>
+                <Input
+                  id="deploy_end_date"
+                  type="date"
+                  value={endDate}
+                  onChange={e => setEndDate(e.target.value)}
+                  min={startDate}
+                />
+                {endDate && startDate && (
+                  <div className="text-xs text-muted-foreground">
+                    {(() => {
+                      const start = new Date(startDate);
+                      const end = new Date(endDate);
+                      const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+                      return `投资期限: ${days} 天`;
+                    })()}
+                  </div>
+                )}
+              </div>
+
+              {/* Current Deployment Info */}
+              {unit.product && (
+                <div className="space-y-2 pt-4 border-t">
+                  <Label>当前投放</Label>
+                  <div className="text-sm space-y-1">
+                    <div><strong>产品:</strong> {unit.product.channel} - {unit.product.name}</div>
+                    {unit.start_date && <div><strong>开始:</strong> {unit.start_date}</div>}
+                    {unit.end_date && (
+                      <div>
+                        <strong>结束:</strong> {unit.end_date}
+                        {unit.end_date && new Date(unit.end_date) <= new Date() && (
+                          <span className="ml-2 text-xs text-expense">(已到期)</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter className="border-t pt-4">
+            <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
+              取消
+            </Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? '保存中...' : '保存更改'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 interface DeleteConfirmDialogProps {
   open: boolean;
   onClose: () => void;
@@ -459,138 +862,6 @@ function DeleteConfirmDialog({ open, onClose, onConfirm, unitCode, isPending }: 
             {isPending ? '删除中...' : '确认删除'}
           </Button>
         </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-interface DeployDialogProps {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: (data: DeployUnitInput) => void;
-  unitCode: string;
-  products: FinancialProduct[];
-  isPending?: boolean;
-}
-
-function DeployDialog({ open, onClose, onConfirm, unitCode, products, isPending }: DeployDialogProps) {
-  const [productId, setProductId] = useState<string>('');
-  const [startDate, setStartDate] = useState<string>('');
-  const [endDate, setEndDate] = useState<string>('');
-
-  // Auto-set end_date based on product lock period when start date changes
-  const handleStartDateChange = (date: string) => {
-    setStartDate(date);
-    const product = products.find(p => p.id === productId);
-    if (product && product.lock_period_days > 0) {
-      const start = new Date(date);
-      const end = new Date(start);
-      end.setDate(end.getDate() + product.lock_period_days);
-      setEndDate(end.toISOString().split('T')[0]);
-    } else if (!endDate) {
-      // Default to 1 year later if no lock period
-      const start = new Date(date);
-      const end = new Date(start);
-      end.setFullYear(end.getFullYear() + 1);
-      setEndDate(end.toISOString().split('T')[0]);
-    }
-  };
-
-  // Update end_date when product changes
-  const handleProductChange = (id: string) => {
-    setProductId(id);
-    if (startDate) {
-      const product = products.find(p => p.id === id);
-      if (product && product.lock_period_days > 0) {
-        const start = new Date(startDate);
-        const end = new Date(start);
-        end.setDate(end.getDate() + product.lock_period_days);
-        setEndDate(end.toISOString().split('T')[0]);
-      }
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!productId) return;
-    onConfirm({
-      product_id: productId,
-      start_date: startDate,
-      end_date: endDate,
-    });
-  };
-
-  // Filter available products (only those with status '投资中')
-  const availableProducts = products.filter(p => p.status === '投资中');
-
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>投放资金</DialogTitle>
-          <DialogDescription>
-            将资金单元 <span className="font-semibold">"{unitCode}"</span> 投放到理财产品
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-4">
-            {/* Product Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="product">
-                选择产品 <span className="text-expense">*</span>
-              </Label>
-              <Select value={productId} onValueChange={handleProductChange} required>
-                <SelectTrigger id="product">
-                  <SelectValue placeholder="选择要投放的产品" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableProducts.map(product => (
-                    <SelectItem key={product.id} value={product.id}>
-                      {product.name} ({product.channel})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Start Date */}
-            <div className="space-y-2">
-              <Label htmlFor="start_date">
-                开始日期 <span className="text-expense">*</span>
-              </Label>
-              <Input
-                id="start_date"
-                type="date"
-                value={startDate}
-                onChange={e => handleStartDateChange(e.target.value)}
-                required
-              />
-            </div>
-
-            {/* End Date */}
-            <div className="space-y-2">
-              <Label htmlFor="end_date">
-                结束日期 <span className="text-expense">*</span>
-              </Label>
-              <Input
-                id="end_date"
-                type="date"
-                value={endDate}
-                onChange={e => setEndDate(e.target.value)}
-                required
-                min={startDate}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
-              取消
-            </Button>
-            <Button type="submit" disabled={isPending || !productId}>
-              {isPending ? '投放中...' : '确认投放'}
-            </Button>
-          </DialogFooter>
-        </form>
       </DialogContent>
     </Dialog>
   );
@@ -634,6 +905,8 @@ function ArchiveConfirmDialog({
   );
 }
 
+export { UnifiedEditDeployDialog };
+
 export function CapitalUnitsManager() {
   const { data: units, isLoading } = useUnitsDisplay();
   const { data: products } = useProducts();
@@ -650,16 +923,96 @@ export function CapitalUnitsManager() {
   const [filterTactics, setFilterTactics] = useState<InvestmentTactics | 'all'>('all');
   const [showFilters, setShowFilters] = useState(false);
 
-  // Filtered units
+  // Sort state
+  type UnitSortField = 'unit_code' | 'amount' | 'currency' | 'strategy' | 'tactics' | 'status' | 'remaining_days';
+  const [sortField, setSortField] = useState<UnitSortField>('unit_code');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+  // Filtered and sorted units
   const filteredUnits = useMemo(() => {
     if (!units) return [];
-    return units.filter(unit => {
+
+    // First filter
+    let result = units.filter(unit => {
       if (filterStatus !== 'all' && unit.status !== filterStatus) return false;
       if (filterStrategy !== 'all' && unit.strategy !== filterStrategy) return false;
       if (filterTactics !== 'all' && unit.tactics !== filterTactics) return false;
       return true;
     });
-  }, [units, filterStatus, filterStrategy, filterTactics]);
+
+    // Then sort
+    result.sort((a, b) => {
+      let compareA, compareB;
+
+      switch (sortField) {
+        case 'unit_code':
+          compareA = a.unit_code;
+          compareB = b.unit_code;
+          break;
+        case 'amount':
+          compareA = a.amount;
+          compareB = b.amount;
+          break;
+        case 'currency':
+          compareA = a.currency;
+          compareB = b.currency;
+          break;
+        case 'strategy':
+          compareA = a.strategy;
+          compareB = b.strategy;
+          break;
+        case 'tactics':
+          compareA = a.tactics;
+          compareB = b.tactics;
+          break;
+        case 'status':
+          compareA = a.status;
+          compareB = b.status;
+          break;
+        case 'remaining_days':
+          const daysA = a.days_until_maturity ?? Infinity;
+          const daysB = b.days_until_maturity ?? Infinity;
+          compareA = daysA;
+          compareB = daysB;
+          break;
+        default:
+          compareA = a.unit_code;
+          compareB = b.unit_code;
+      }
+
+      if (typeof compareA === 'string' && typeof compareB === 'string') {
+        return sortOrder === 'asc'
+          ? compareA.localeCompare(compareB, 'zh-CN')
+          : compareB.localeCompare(compareA, 'zh-CN');
+      }
+
+      if (typeof compareA === 'number' && typeof compareB === 'number') {
+        return sortOrder === 'asc' ? compareA - compareB : compareB - compareA;
+      }
+
+      return 0;
+    });
+
+    return result;
+  }, [units, filterStatus, filterStrategy, filterTactics, sortField, sortOrder]);
+
+  // Handle sort
+  const handleSort = (field: UnitSortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  // Get sort icon
+  const getSortIcon = (field: UnitSortField) => {
+    if (sortField !== field) return <ArrowUpDown className="w-4 h-4 inline ml-1" />;
+    return sortOrder === 'asc'
+      ? <ArrowUp className="w-4 h-4 inline ml-1" />
+      : <ArrowDown className="w-4 h-4 inline ml-1" />;
+  };
 
   // Active filters count
   const activeFilterCount = useMemo(() => {
@@ -688,9 +1041,10 @@ export function CapitalUnitsManager() {
     unit?: CapitalUnit;
   }>({ open: false });
 
-  const [deployDialog, setDeployDialog] = useState<{
+  // Unified edit/deploy dialog
+  const [editDeployDialog, setEditDeployDialog] = useState<{
     open: boolean;
-    unit?: CapitalUnit;
+    unit?: UnitDisplayInfo;
   }>({ open: false });
 
   const [archiveDialog, setArchiveDialog] = useState<{
@@ -727,16 +1081,47 @@ export function CapitalUnitsManager() {
     });
   };
 
-  const handleDeploy = (data: DeployUnitInput) => {
-    if (!deployDialog.unit) return;
-    deployMutation.mutate(
-      { unitId: deployDialog.unit.id, input: data },
-      {
-        onSuccess: () => {
-          setDeployDialog({ open: false });
+  // Unified handler for edit/deploy
+  const handleEditDeploy = (unitData: UpdateCapitalUnitInput, deployData?: DeployUnitInput) => {
+    if (!editDeployDialog.unit) return;
+
+    // If there's deployment data with a product, ONLY deploy with strategy/tactics
+    if (deployData && deployData.product_id) {
+      deployMutation.mutate(
+        {
+          unitId: editDeployDialog.unit.id,
+          input: {
+            ...deployData,
+            strategy: unitData.strategy,
+            tactics: unitData.tactics,
+          }
         },
-      }
-    );
+        {
+          onSuccess: () => {
+            setEditDeployDialog({ open: false });
+          },
+        }
+      );
+    } else {
+      // Only update unit info (no deployment change)
+      updateMutation.mutate(
+        { id: editDeployDialog.unit.id, input: unitData },
+        {
+          onSuccess: () => {
+            setEditDeployDialog({ open: false });
+          },
+        }
+      );
+    }
+  };
+
+  const handleRecallFromDialog = () => {
+    if (!editDeployDialog.unit) return;
+    recallMutation.mutate(editDeployDialog.unit.id, {
+      onSuccess: () => {
+        setEditDeployDialog({ open: false });
+      },
+    });
   };
 
   const handleRecall = (unitId: string) => {
@@ -877,14 +1262,52 @@ export function CapitalUnitsManager() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>番号</TableHead>
-                <TableHead className="text-right">金额</TableHead>
-                <TableHead>币种</TableHead>
-                <TableHead>策略</TableHead>
-                <TableHead>战术</TableHead>
-                <TableHead>状态</TableHead>
+                <TableHead>
+                  <button
+                    onClick={() => handleSort('unit_code')}
+                    className="flex items-center hover:text-foreground transition-colors"
+                  >
+                    番号
+                    {getSortIcon('unit_code')}
+                  </button>
+                </TableHead>
+                <TableHead>
+                  <button
+                    onClick={() => handleSort('strategy')}
+                    className="flex items-center hover:text-foreground transition-colors"
+                  >
+                    策略
+                    {getSortIcon('strategy')}
+                  </button>
+                </TableHead>
+                <TableHead>
+                  <button
+                    onClick={() => handleSort('tactics')}
+                    className="flex items-center hover:text-foreground transition-colors"
+                  >
+                    战术
+                    {getSortIcon('tactics')}
+                  </button>
+                </TableHead>
+                <TableHead>
+                  <button
+                    onClick={() => handleSort('status')}
+                    className="flex items-center hover:text-foreground transition-colors"
+                  >
+                    状态
+                    {getSortIcon('status')}
+                  </button>
+                </TableHead>
                 <TableHead>关联产品</TableHead>
-                <TableHead className="text-right">剩余天数</TableHead>
+                <TableHead className="text-right">
+                  <button
+                    onClick={() => handleSort('remaining_days')}
+                    className="flex items-center hover:text-foreground transition-colors"
+                  >
+                    剩余天数
+                    {getSortIcon('remaining_days')}
+                  </button>
+                </TableHead>
                 <TableHead className="text-right">操作</TableHead>
               </TableRow>
             </TableHeader>
@@ -894,10 +1317,28 @@ export function CapitalUnitsManager() {
                 return (
                   <TableRow key={unit.id}>
                     <TableCell className="font-medium">
-                      <UnitCodeBadge unitCode={unit.unit_code} />
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="cursor-help underline decoration-dotted underline-offset-2">
+                              <UnitCodeBadge unitCode={unit.unit_code} />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>
+                              {(() => {
+                                const currencySymbol = {
+                                  CNY: '¥',
+                                  USD: '$',
+                                  HKD: 'HK$',
+                                }[unit.currency];
+                                return `${currencySymbol}${unit.amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                              })()}
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </TableCell>
-                    <TableCell className="text-right">{formatCurrencyFull(unit.amount)}</TableCell>
-                    <TableCell>{unit.currency}</TableCell>
                     <TableCell>
                       <StrategyBadge strategy={unit.strategy} />
                     </TableCell>
@@ -940,51 +1381,14 @@ export function CapitalUnitsManager() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      {/* Edit button - always available */}
+                      {/* Unified Edit/Deploy button */}
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => setFormDialog({ open: true, unit })}
+                        onClick={() => setEditDeployDialog({ open: true, unit })}
                       >
                         <Pencil className="w-4 h-4" />
                       </Button>
-
-                      {/* Deploy button - only for units without end_date (idle) */}
-                      {!unit.end_date && unit.status === '已成立' && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-income hover:text-income hover:bg-income/10"
-                          onClick={() => setDeployDialog({ open: true, unit })}
-                        >
-                          <ArrowRight className="w-4 h-4" />
-                        </Button>
-                      )}
-
-                      {/* Recall button - only for units with end_date (locked/invested) */}
-                      {unit.end_date && unit.status === '已成立' && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleRecall(unit.id)}
-                          title="回收资金"
-                        >
-                          <Undo className="w-4 h-4" />
-                        </Button>
-                      )}
-
-                      {/* Archive button - only for non-archived units */}
-                      {unit.status !== '已归档' && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-orange-500 hover:text-orange-500 hover:bg-orange-500/10"
-                          onClick={() => setArchiveDialog({ open: true, unit })}
-                          title="归档"
-                        >
-                          <Archive className="w-4 h-4" />
-                        </Button>
-                      )}
 
                       {/* Delete button - only for archived units */}
                       {unit.status === '已归档' && (
@@ -1036,14 +1440,16 @@ export function CapitalUnitsManager() {
         isPending={deleteMutation.isPending}
       />
 
-      {/* Deploy Dialog */}
-      <DeployDialog
-        open={deployDialog.open}
-        onClose={() => setDeployDialog({ open: false })}
-        onConfirm={handleDeploy}
-        unitCode={deployDialog.unit?.unit_code || ''}
+      {/* Unified Edit/Deploy Dialog */}
+      <UnifiedEditDeployDialog
+        open={editDeployDialog.open}
+        onClose={() => setEditDeployDialog({ open: false })}
+        onUnitUpdate={(data) => handleEditDeploy(data)}
+        onDeployConfirm={(data) => handleEditDeploy({}, data)}
+        onRecall={handleRecallFromDialog}
+        unit={editDeployDialog.unit || null}
         products={products || []}
-        isPending={deployMutation.isPending}
+        isPending={updateMutation.isPending || deployMutation.isPending}
       />
 
       {/* Archive Confirm Dialog */}
