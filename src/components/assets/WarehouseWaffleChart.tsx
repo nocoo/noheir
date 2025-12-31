@@ -145,7 +145,7 @@ function WaffleCell({ unit, index, onUnitClick }: WaffleCellProps) {
       case 'locked-medium':
         return 'bg-amber-500 dark:bg-amber-600 hover:bg-amber-600 dark:hover:bg-amber-500';
       case 'planned':
-        return 'bg-blue-500 dark:bg-blue-600 hover:bg-blue-600 dark:hover:bg-blue-500';
+        return 'bg-slate-400 dark:bg-slate-600 hover:bg-slate-500 dark:hover:bg-slate-500';
       case 'archived':
         return 'bg-slate-300 dark:bg-slate-700 hover:bg-slate-400 dark:hover:bg-slate-600';
       default:
@@ -159,7 +159,7 @@ function WaffleCell({ unit, index, onUnitClick }: WaffleCellProps) {
       case 'locked-long': return '长期锁定';
       case 'locked-short': return '短期锁定';
       case 'locked-medium': return '中期锁定';
-      case 'planned': return '计划中';
+      case 'planned': return '待筹集';
       case 'archived': return '已归档';
       default: return '未知';
     }
@@ -201,6 +201,10 @@ function WaffleCell({ unit, index, onUnitClick }: WaffleCellProps) {
             {unit.product ? (
               <div className="text-xs text-muted-foreground">
                 产品: {unit.product.name}
+              </div>
+            ) : unit.status === '计划中' ? (
+              <div className="text-xs text-muted-foreground">
+                ⏳ 待筹集
               </div>
             ) : (
               <div className="text-xs text-rose-600 dark:text-rose-400">
@@ -279,10 +283,10 @@ function WaffleLegend({ data }: WaffleLegendProps) {
     },
     {
       status: 'planned' as WaffleStatus,
-      label: '计划中',
-      color: 'bg-blue-500 dark:bg-blue-600',
+      label: '待筹集',
+      color: 'bg-slate-400 dark:bg-slate-600',
       count: stats.planned,
-      emoji: '🔵',
+      emoji: '⚪',
     },
     {
       status: 'archived' as WaffleStatus,
