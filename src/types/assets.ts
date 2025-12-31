@@ -220,11 +220,13 @@ export interface UpdateCapitalUnitInput {
 /**
  * Input type for deploying (investing) a unit
  * Links an idle unit to a product with investment dates
+ *
+ * NOTE: end_date is NO LONGER accepted as input
+ * It is computed on the frontend as: start_date + product.lock_period_days
  */
 export interface DeployUnitInput {
   product_id: string;            // Target product
   start_date: string;            // Investment start date (YYYY-MM-DD)
-  end_date: string;              // Expected maturity date (YYYY-MM-DD)
 }
 
 /**

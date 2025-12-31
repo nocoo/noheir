@@ -61,6 +61,40 @@ function daysBetween(date1: Date, date2: Date): number {
   return Math.round((date2.getTime() - date1.getTime()) / oneDay);
 }
 
+/**
+ * Calculate available_date for a capital unit
+ *
+ * The available_date is when the unit becomes available for new deployment.
+ * Formula: start_date + product.lock_period_days
+ *
+ * Rules:
+ * - If no product: undefined (idle, available immediately)
+ * - If no start_date: undefined
+ * - If lock_period_days = 0: undefined (available immediately, e.g., "现金+")
+ * - Otherwise: start_date + lock_period_days
+ *
+ * @param startDate - The start_date from the unit
+ * @param product - The associated financial product
+ * @returns Available date in YYYY-MM-DD format, or undefined if immediately available
+ */
+function calculateAvailableDate(
+  startDate: string | undefined | null,
+  product: FinancialProduct | null
+): string | undefined {
+  // No product or no start date = idle/undefined = immediately available
+  if (!startDate || !product) return undefined;
+
+  // Zero lock period = immediately available (e.g., "现金+" products)
+  if (product.lock_period_days <= 0) return undefined;
+
+  // Calculate: start_date + lock_period_days
+  const start = new Date(startDate);
+  const available = new Date(start);
+  available.setDate(available.getDate() + product.lock_period_days);
+
+  return available.toISOString().split('T')[0]; // YYYY-MM-DD
+}
+
 // ============================================================================
 // FINANCIAL PRODUCTS API
 // ============================================================================
@@ -169,6 +203,9 @@ export async function deleteProduct(id: string): Promise<void> {
 /**
  * Fetch all capital units for the current user
  * Optionally includes joined product details
+ *
+ * NOTE: end_date is now computed on the frontend as available_date
+ * Formula: start_date + product.lock_period_days
  */
 export async function fetchUnits(withProducts: boolean = true): Promise<CapitalUnitWithProduct[]> {
   try {
@@ -185,22 +222,25 @@ export async function fetchUnits(withProducts: boolean = true): Promise<CapitalU
 
       // Transform the result to match CapitalUnitWithProduct interface
       // The RPC returns product as a JSONB object
-      return (data || []).map((row: any) => ({
-        id: row.id,
-        user_id: row.user_id,
-        unit_code: row.unit_code,
-        amount: row.amount,
-        currency: row.currency,
-        status: row.status,
-        strategy: row.strategy,
-        tactics: row.tactics,
-        product_id: row.product_id,
-        start_date: row.start_date,
-        end_date: row.end_date,
-        created_at: row.created_at,
-        // Parse product from JSONB
-        product: row.product as FinancialProduct | null,
-      }));
+      return (data || []).map((row: any) => {
+        const product = row.product as FinancialProduct | null;
+        return {
+          id: row.id,
+          user_id: row.user_id,
+          unit_code: row.unit_code,
+          amount: row.amount,
+          currency: row.currency,
+          status: row.status,
+          strategy: row.strategy,
+          tactics: row.tactics,
+          product_id: row.product_id,
+          start_date: row.start_date,
+          // Compute end_date from start_date + lock_period_days
+          end_date: calculateAvailableDate(row.start_date, product),
+          created_at: row.created_at,
+          product,
+        };
+      });
     }
 
     const { data, error } = await query.order('created_at', { ascending: false });
@@ -369,7 +409,9 @@ export async function deleteUnit(id: string): Promise<void> {
 /**
  * Deploy (invest) a unit to a product
  * This links the product and sets investment dates
- * Status remains '已成立' - lock period is indicated by end_date presence
+ *
+ * NOTE: end_date is NO LONGER stored in the database
+ * It is computed on the frontend as: start_date + product.lock_period_days
  */
 export async function deployUnit(
   unitId: string,
@@ -397,7 +439,6 @@ export async function deployUnit(
     const updateData: any = {
       product_id: input.product_id,
       start_date: input.start_date,
-      end_date: input.end_date,
       status: '已成立',
     };
 
@@ -410,6 +451,7 @@ export async function deployUnit(
     }
 
     // Update unit with product, dates, and optionally strategy/tactics
+    // end_date is computed on frontend: start_date + product.lock_period_days
     const { data, error } = await supabase
       .from('capital_units')
       .update(updateData)
@@ -428,6 +470,9 @@ export async function deployUnit(
 /**
  * Recall (settle) a unit from a product
  * This clears the product link and resets status to '已成立'
+ *
+ * NOTE: end_date is NO LONGER stored in the database
+ * It is computed on the frontend as: start_date + product.lock_period_days
  */
 export async function recallUnit(unitId: string): Promise<CapitalUnit> {
   try {
@@ -436,7 +481,6 @@ export async function recallUnit(unitId: string): Promise<CapitalUnit> {
       .update({
         product_id: null,
         start_date: null,
-        end_date: null,
         status: '已成立',
       })
       .eq('id', unitId)
@@ -452,6 +496,9 @@ export async function recallUnit(unitId: string): Promise<CapitalUnit> {
 
 /**
  * Archive a unit (soft delete via status change)
+ *
+ * NOTE: end_date is NO LONGER stored in the database
+ * It is computed on the frontend as: start_date + product.lock_period_days
  */
 export async function archiveUnit(unitId: string): Promise<CapitalUnit> {
   try {
@@ -461,7 +508,6 @@ export async function archiveUnit(unitId: string): Promise<CapitalUnit> {
         status: '已归档',
         product_id: null,
         start_date: null,
-        end_date: null,
       })
       .eq('id', unitId)
       .select()
@@ -481,6 +527,9 @@ export async function archiveUnit(unitId: string): Promise<CapitalUnit> {
 /**
  * Capital Overview - Single query for all dashboard data
  * Combines dashboard metrics and unit display info in one API call
+ *
+ * NOTE: end_date is now computed on the frontend as available_date
+ * Formula: start_date + product.lock_period_days
  */
 export interface CapitalOverviewData {
   dashboard: AssetDashboard;
@@ -503,6 +552,11 @@ export async function fetchCapitalOverview(): Promise<CapitalOverviewData> {
 
     // Transform raw data to units with display info
     const units: UnitDisplayInfo[] = (data || []).map((row: any) => {
+      const product = row.product as FinancialProduct | null;
+
+      // Compute end_date from start_date + lock_period_days
+      const endDate = calculateAvailableDate(row.start_date, product);
+
       const unit: CapitalUnitWithProduct = {
         id: row.id,
         user_id: row.user_id,
@@ -514,18 +568,18 @@ export async function fetchCapitalOverview(): Promise<CapitalOverviewData> {
         tactics: row.tactics,
         product_id: row.product_id,
         start_date: row.start_date,
-        end_date: row.end_date,
+        end_date: endDate, // Computed, not from database
         created_at: row.created_at,
-        product: row.product as FinancialProduct | null,
+        product,
       };
 
       // Calculate display info
       let days_until_maturity: number | undefined;
       let is_overdue = false;
 
-      if (unit.end_date) {
-        const endDate = new Date(unit.end_date);
-        days_until_maturity = daysBetween(today, endDate);
+      if (endDate) {
+        const endDateObj = new Date(endDate);
+        days_until_maturity = daysBetween(today, endDateObj);
         is_overdue = days_until_maturity < 0;
       }
 
@@ -629,17 +683,21 @@ export async function fetchUnitsDisplayInfo(
   const today = new Date();
 
   return units.map(unit => {
+    // Compute end_date from start_date + lock_period_days
+    const endDate = calculateAvailableDate(unit.start_date, unit.product);
+
     let days_until_maturity: number | undefined;
     let is_overdue = false;
 
-    if (unit.end_date) {
-      const endDate = new Date(unit.end_date);
-      days_until_maturity = daysBetween(today, endDate);
+    if (endDate) {
+      const endDateObj = new Date(endDate);
+      days_until_maturity = daysBetween(today, endDateObj);
       is_overdue = days_until_maturity < 0;
     }
 
     return {
       ...unit,
+      end_date: endDate, // Override with computed value
       days_until_maturity,
       is_overdue,
     };

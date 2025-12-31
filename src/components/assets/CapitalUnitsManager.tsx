@@ -473,9 +473,6 @@ function UnifiedEditDeployDialog({
   const [startDate, setStartDate] = useState<string>(
     unit?.start_date || format(new Date(), 'yyyy-MM-dd')
   );
-  const [endDate, setEndDate] = useState<string>(
-    unit?.end_date || ''
-  );
 
   // Sync form data when unit changes
   useEffect(() => {
@@ -487,35 +484,19 @@ function UnifiedEditDeployDialog({
       });
       setProductId(unit.product_id || '');
       setStartDate(unit.start_date || format(new Date(), 'yyyy-MM-dd'));
-      setEndDate(unit.end_date || '');
     }
   }, [unit]);
 
-  // Auto-calculate end date based on product lock period
-  const handleStartDateChange = (date: string) => {
-    setStartDate(date);
+  // Calculate available date (computed, not editable)
+  const computedAvailableDate = (() => {
+    if (!productId || !startDate) return undefined;
     const product = products.find(p => p.id === productId);
-    if (product && product.lock_period_days > 0) {
-      const start = new Date(date);
-      const end = new Date(start);
-      end.setDate(end.getDate() + product.lock_period_days);
-      setEndDate(format(end, 'yyyy-MM-dd'));
-    }
-  };
-
-  // Update end date when product changes
-  const handleProductChange = (id: string) => {
-    setProductId(id);
-    if (startDate) {
-      const product = products.find(p => p.id === id);
-      if (product && product.lock_period_days > 0) {
-        const start = new Date(startDate);
-        const end = new Date(start);
-        end.setDate(end.getDate() + product.lock_period_days);
-        setEndDate(format(end, 'yyyy-MM-dd'));
-      }
-    }
-  };
+    if (!product || product.lock_period_days <= 0) return undefined;
+    const start = new Date(startDate);
+    const available = new Date(start);
+    available.setDate(available.getDate() + product.lock_period_days);
+    return format(available, 'yyyy-MM-dd');
+  })();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -528,7 +509,7 @@ function UnifiedEditDeployDialog({
       onDeployConfirm({
         product_id: productId,
         start_date: startDate,
-        end_date: endDate,
+        // end_date is computed on frontend, not sent to database
       });
     } else if (!isPending) {
       // No product selected, just close after unit update
@@ -687,18 +668,7 @@ function UnifiedEditDeployDialog({
                             e.preventDefault();
                             // Set start date to the expiration date
                             if (unit.end_date) {
-                              const newStartDate = unit.end_date;
-                              setStartDate(newStartDate);
-                              // Auto-calculate end date based on current product
-                              if (productId) {
-                                const product = products.find(p => p.id === productId);
-                                if (product && product.lock_period_days > 0) {
-                                  const start = new Date(newStartDate);
-                                  const end = new Date(start);
-                                  end.setDate(end.getDate() + product.lock_period_days);
-                                  setEndDate(format(end, 'yyyy-MM-dd'));
-                                }
-                              }
+                              setStartDate(unit.end_date);
                             }
                           }}
                           disabled={isPending}
@@ -733,7 +703,7 @@ function UnifiedEditDeployDialog({
                 <Label htmlFor="deploy_product">
                   选择产品
                 </Label>
-                <Select value={productId} onValueChange={handleProductChange}>
+                <Select value={productId} onValueChange={setProductId}>
                   <SelectTrigger id="deploy_product">
                     <SelectValue placeholder="选择要投放的产品" />
                   </SelectTrigger>
@@ -773,30 +743,34 @@ function UnifiedEditDeployDialog({
                   id="deploy_start_date"
                   type="date"
                   value={startDate}
-                  onChange={e => handleStartDateChange(e.target.value)}
+                  onChange={e => setStartDate(e.target.value)}
                 />
               </div>
 
-              {/* End Date */}
+              {/* Available Date (Computed, Read-only) */}
               <div className="space-y-2">
-                <Label htmlFor="deploy_end_date">
-                  结束日期
+                <Label htmlFor="deploy_available_date">
+                  可用日期
                 </Label>
                 <Input
-                  id="deploy_end_date"
-                  type="date"
-                  value={endDate}
-                  onChange={e => setEndDate(e.target.value)}
-                  min={startDate}
+                  id="deploy_available_date"
+                  value={computedAvailableDate || '随时可用'}
+                  disabled
+                  className="bg-muted"
                 />
-                {endDate && startDate && (
+                {computedAvailableDate && startDate && (
                   <div className="text-xs text-muted-foreground">
                     {(() => {
-                      const start = new Date(startDate);
-                      const end = new Date(endDate);
-                      const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-                      return `投资期限: ${days} 天`;
+                      const product = products.find(p => p.id === productId);
+                      if (!product) return null;
+                      const days = product.lock_period_days;
+                      return `投资期限: ${days} 天 (开始日期 + 锁定期)`;
                     })()}
+                  </div>
+                )}
+                {!computedAvailableDate && productId && (
+                  <div className="text-xs text-muted-foreground">
+                    该产品无锁定期，资金随时可用
                   </div>
                 )}
               </div>
@@ -810,7 +784,7 @@ function UnifiedEditDeployDialog({
                     {unit.start_date && <div><strong>开始:</strong> {unit.start_date}</div>}
                     {unit.end_date && (
                       <div>
-                        <strong>结束:</strong> {unit.end_date}
+                        <strong>可用:</strong> {unit.end_date}
                         {unit.end_date && new Date(unit.end_date) <= new Date() && (
                           <span className="ml-2 text-xs text-expense">(已到期)</span>
                         )}
