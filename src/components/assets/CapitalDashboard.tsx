@@ -10,16 +10,19 @@ import {
   Wallet,
   TrendingUp,
   AlertCircle,
-  Eye,
-  EyeOff,
   Calendar,
 } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { formatCurrencyFull } from '@/lib/chart-config';
 import type { InvestmentStrategy, Currency, UnitStatus } from '@/types/assets';
+import { DistributionPieChart } from './DistributionPieChart';
+import {
+  STRATEGY_COLORS,
+  CURRENCY_COLORS,
+  STATUS_COLORS,
+  MATURITY_COLORS,
+} from '@/lib/colorPalette';
 
 // ============================================================================
 // TYPES & HELPERS
@@ -33,18 +36,6 @@ interface StatCardProps {
   variant?: 'default' | 'warning' | 'success';
   action?: { label: string; count: number };
 }
-
-// Strategy colors for visualization
-const STRATEGY_COLORS: Record<InvestmentStrategy, string> = {
-  '远期理财': '#3b82f6',  // blue
-  '美元资产': '#8b5cf6',  // purple
-  '36存单': '#06b6d4',    // cyan
-  '长期理财': '#10b981',  // emerald
-  '短期理财': '#f59e0b',  // amber
-  '中期理财': '#f97316',  // orange
-  '进攻计划': '#ef4444',  // red
-  '麻麻理财': '#ec4899',  // pink
-};
 
 // Strategy icons mapping
 const STRATEGY_ICONS: Record<InvestmentStrategy, string> = {
@@ -159,410 +150,18 @@ function ActionBar({
 // CURRENCY DISTRIBUTION CHART
 // ============================================================================
 
-interface CurrencyChartProps {
-  data: Array<{
-    currency: Currency;
-    amount: number;
-    percentage: number;
-  }>;
-}
-
-const CURRENCY_COLORS: Record<Currency, string> = {
-  CNY: '#ef4444',  // red
-  USD: '#3b82f6',  // blue
-  HKD: '#f59e0b',  // amber
-};
-
-function CurrencyChart({ data }: CurrencyChartProps) {
-  const chartData = data.map(item => ({
-    name: item.currency,
-    value: item.amount,
-    percentage: item.percentage,
-    color: CURRENCY_COLORS[item.currency],
-    emoji: CURRENCY_EMOJI[item.currency],
-  }));
-
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
-          <p className="font-semibold">{data.emoji} {data.name}</p>
-          <p className="text-sm text-muted-foreground">
-            {formatCurrencyFull(data.value)} ({data.percentage.toFixed(1)}%)
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
-
-  return (
-    <div className="border rounded-xl p-6 space-y-4">
-      <h3 className="text-lg font-semibold">币种分布</h3>
-
-      <div className="flex items-stretch gap-4">
-        {/* Chart */}
-        <div className="w-[70%] h-[220px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={chartData}
-                cx="50%"
-                cy="50%"
-                innerRadius={50}
-                outerRadius={90}
-                paddingAngle={2}
-                dataKey="value"
-              >
-                {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip content={<CustomTooltip />} />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Legend */}
-        <div className="w-[30%] space-y-1.5">
-          {chartData.map((item) => (
-            <div
-              key={item.name}
-              className="flex items-center justify-between gap-2 p-1.5 rounded whitespace-nowrap"
-            >
-              <div className="flex items-center gap-1.5 min-w-0">
-                <div
-                  className="w-2.5 h-2.5 rounded-full shrink-0"
-                  style={{ backgroundColor: item.color }}
-                />
-                <p className="text-sm font-medium truncate">{item.emoji} {item.name}</p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0 text-right">
-                <p className="text-xs text-muted-foreground">{item.percentage.toFixed(1)}%</p>
-                <p className="text-sm font-bold">{formatCurrencyFull(item.value)}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ============================================================================
 // STATUS DISTRIBUTION CHART
 // ============================================================================
-
-interface StatusChartProps {
-  data: Array<{
-    status: UnitStatus;
-    amount: number;
-    percentage: number;
-  }>;
-}
-
-const STATUS_COLORS: Record<UnitStatus, string> = {
-  '已成立': '#10b981',  // emerald
-  '计划中': '#3b82f6',  // blue
-  '筹集中': '#f59e0b',  // amber
-  '已归档': '#6b7280',  // gray
-};
-
-function StatusChart({ data }: StatusChartProps) {
-  const chartData = data.map(item => ({
-    name: item.status,
-    value: item.amount,
-    percentage: item.percentage,
-    color: STATUS_COLORS[item.status],
-  }));
-
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
-          <p className="font-semibold">{data.name}</p>
-          <p className="text-sm text-muted-foreground">
-            {formatCurrencyFull(data.value)} ({data.percentage.toFixed(1)}%)
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
-
-  return (
-    <div className="border rounded-xl p-6 space-y-4">
-      <h3 className="text-lg font-semibold">状态分布</h3>
-
-      <div className="flex items-stretch gap-4">
-        {/* Chart */}
-        <div className="w-[70%] h-[220px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={chartData}
-                cx="50%"
-                cy="50%"
-                innerRadius={50}
-                outerRadius={90}
-                paddingAngle={2}
-                dataKey="value"
-              >
-                {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip content={<CustomTooltip />} />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Legend */}
-        <div className="w-[30%] space-y-1.5">
-          {chartData.map((item) => (
-            <div
-              key={item.name}
-              className="flex items-center justify-between gap-2 p-1.5 rounded whitespace-nowrap"
-            >
-              <div className="flex items-center gap-1.5 min-w-0">
-                <div
-                  className="w-2.5 h-2.5 rounded-full shrink-0"
-                  style={{ backgroundColor: item.color }}
-                />
-                <p className="text-sm font-medium truncate">{item.name}</p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0 text-right">
-                <p className="text-xs text-muted-foreground">{item.percentage.toFixed(1)}%</p>
-                <p className="text-sm font-bold">{formatCurrencyFull(item.value)}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ============================================================================
 // MATURITY DISTRIBUTION CHART
 // ============================================================================
 
-interface MaturityChartProps {
-  data: Array<{
-    period: string;
-    amount: number;
-    percentage: number;
-  }>;
-}
-
-const MATURITY_COLORS: Record<string, string> = {
-  '已到期': '#ef4444',    // red
-  '7天内': '#f97316',     // orange
-  '30天内': '#f59e0b',    // amber
-  '90天内': '#3b82f6',    // blue
-  '90天以上': '#10b981',  // emerald
-};
-
-function MaturityChart({ data }: MaturityChartProps) {
-  const chartData = data.map(item => ({
-    name: item.period,
-    value: item.amount,
-    percentage: item.percentage,
-    color: MATURITY_COLORS[item.period],
-  }));
-
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
-          <p className="font-semibold">{data.name}</p>
-          <p className="text-sm text-muted-foreground">
-            {formatCurrencyFull(data.value)} ({data.percentage.toFixed(1)}%)
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
-
-  return (
-    <div className="border rounded-xl p-6 space-y-4">
-      <h3 className="text-lg font-semibold">到期时间分布</h3>
-
-      <div className="flex items-stretch gap-4">
-        {/* Chart */}
-        <div className="w-[70%] h-[220px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={chartData}
-                cx="50%"
-                cy="50%"
-                innerRadius={50}
-                outerRadius={90}
-                paddingAngle={2}
-                dataKey="value"
-              >
-                {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip content={<CustomTooltip />} />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Legend */}
-        <div className="w-[30%] space-y-1.5">
-          {chartData.map((item) => (
-            <div
-              key={item.name}
-              className="flex items-center justify-between gap-2 p-1.5 rounded whitespace-nowrap"
-            >
-              <div className="flex items-center gap-1.5 min-w-0">
-                <div
-                  className="w-2.5 h-2.5 rounded-full shrink-0"
-                  style={{ backgroundColor: item.color }}
-                />
-                <p className="text-sm font-medium truncate">{item.name}</p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0 text-right">
-                <p className="text-xs text-muted-foreground">{item.percentage.toFixed(1)}%</p>
-                <p className="text-sm font-bold">{formatCurrencyFull(item.value)}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ============================================================================
 // STRATEGY ALLOCATION CHART
 // ============================================================================
 
-interface StrategyChartProps {
-  data: Array<{
-    strategy: InvestmentStrategy;
-    total_amount: number;
-    unit_count: number;
-    percentage: number;
-  }>;
-  totalAssets: number;
-  onStrategyClick?: (strategy: InvestmentStrategy | null) => void;
-  selectedStrategy: InvestmentStrategy | null;
-}
-
-function StrategyChart({ data, totalAssets, onStrategyClick, selectedStrategy }: StrategyChartProps) {
-  const chartData = data.map(item => ({
-    name: item.strategy,
-    value: item.total_amount,
-    count: item.unit_count,
-    percentage: item.percentage,
-    color: STRATEGY_COLORS[item.strategy],
-  }));
-
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
-          <p className="font-semibold">{data.name}</p>
-          <p className="text-sm text-muted-foreground">
-            {formatCurrencyFull(data.value)} ({data.percentage.toFixed(1)}%)
-          </p>
-          <p className="text-xs text-muted-foreground">{data.count} 个单元</p>
-        </div>
-      );
-    }
-    return null;
-  };
-
-  return (
-    <div className="border rounded-xl p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">策略分布</h3>
-        {selectedStrategy && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onStrategyClick?.(null)}
-          >
-            <EyeOff className="w-4 h-4 mr-1" />
-            清除筛选
-          </Button>
-        )}
-      </div>
-
-      <div className="flex items-stretch gap-4">
-        {/* Chart */}
-        <div className="w-[70%] h-[220px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={chartData}
-                cx="50%"
-                cy="50%"
-                innerRadius={50}
-                outerRadius={90}
-                paddingAngle={2}
-                dataKey="value"
-                onClick={(entry) => onStrategyClick?.(
-                  selectedStrategy === entry.name ? null : entry.name as InvestmentStrategy
-                )}
-                className="cursor-pointer"
-              >
-                {chartData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={entry.color}
-                    stroke={selectedStrategy && selectedStrategy !== entry.name ? 'transparent' : 'white'}
-                    strokeWidth={2}
-                    opacity={selectedStrategy && selectedStrategy !== entry.name ? 0.3 : 1}
-                  />
-                ))}
-              </Pie>
-              <Tooltip content={<CustomTooltip />} />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Legend */}
-        <div className="w-[30%] space-y-1.5">
-          {chartData.map((item) => (
-            <div
-              key={item.name}
-              className={cn(
-                "flex items-center justify-between gap-2 p-1.5 rounded cursor-pointer transition-colors whitespace-nowrap",
-                selectedStrategy && selectedStrategy !== item.name ? "opacity-30" : "hover:bg-muted/50",
-                !selectedStrategy && "hover:bg-muted/50"
-              )}
-              onClick={() => onStrategyClick?.(
-                selectedStrategy === item.name ? null : item.name as InvestmentStrategy
-              )}
-            >
-              <div className="flex items-center gap-1.5 min-w-0">
-                <div
-                  className="w-2.5 h-2.5 rounded-full shrink-0"
-                  style={{ backgroundColor: item.color }}
-                />
-                <p className="text-sm font-medium truncate">{item.name}</p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0 text-right">
-                <p className="text-xs text-muted-foreground">{item.percentage.toFixed(1)}%</p>
-                <p className="text-sm font-bold">{formatCurrencyFull(item.value)}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ============================================================================
 // MAIN DASHBOARD COMPONENT
@@ -705,22 +304,52 @@ export function CapitalDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Strategy Distribution */}
         {dashboardData?.strategy_allocation && (
-          <StrategyChart
-            data={dashboardData.strategy_allocation}
-            totalAssets={totalAssetsAll}
-            selectedStrategy={selectedStrategy}
-            onStrategyClick={setSelectedStrategy}
+          <DistributionPieChart
+            title="策略分布"
+            data={dashboardData.strategy_allocation.map(item => ({
+              name: item.strategy,
+              value: item.total_amount,
+              percentage: item.percentage,
+              color: STRATEGY_COLORS[item.strategy]
+            }))}
+            selected={selectedStrategy}
+            onClick={setSelectedStrategy}
+            showAction={true}
           />
         )}
 
         {/* Currency Distribution */}
-        <CurrencyChart data={currencyDistribution} />
+        <DistributionPieChart
+          title="币种分布"
+          data={currencyDistribution.map(item => ({
+            name: `${CURRENCY_EMOJI[item.currency]} ${item.currency}`,
+            value: item.amount,
+            percentage: item.percentage,
+            color: CURRENCY_COLORS[item.currency]
+          }))}
+        />
 
         {/* Status Distribution */}
-        <StatusChart data={statusDistribution} />
+        <DistributionPieChart
+          title="状态分布"
+          data={statusDistribution.map(item => ({
+            name: item.status,
+            value: item.amount,
+            percentage: item.percentage,
+            color: STATUS_COLORS[item.status]
+          }))}
+        />
 
         {/* Maturity Distribution */}
-        <MaturityChart data={maturityDistribution} />
+        <DistributionPieChart
+          title="到期时间分布"
+          data={maturityDistribution.map(item => ({
+            name: item.period,
+            value: item.amount,
+            percentage: item.percentage,
+            color: MATURITY_COLORS[item.period]
+          }))}
+        />
       </div>
     </div>
   );
