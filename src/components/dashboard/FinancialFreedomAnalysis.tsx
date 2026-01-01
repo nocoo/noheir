@@ -3,7 +3,6 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -13,8 +12,7 @@ import {
   Calculator,
   CheckCircle2,
   ArrowDown,
-  ArrowUp,
-  Minus
+  ArrowUp
 } from 'lucide-react';
 import { Transaction } from '@/types/transaction';
 import { useSettings } from '@/contexts/SettingsContext';

@@ -9,17 +9,13 @@ interface StatCardProps {
   title: string;
   value: string | number;
   icon: LucideIcon;
-  trend?: {
-    value: number;
-    isPositive: boolean;
-  };
   variant?: 'default' | 'income' | 'expense' | 'balance' | 'savings';
   showCurrency?: boolean;
-  savingsValue?: number; // For savings variant to determine color
-  targetSavingsRate?: number; // For savings variant to calculate gap
+  savingsValue?: number;
+  targetSavingsRate?: number;
 }
 
-export function StatCard({ title, value, icon: Icon, trend, variant = 'default', showCurrency = true, savingsValue, targetSavingsRate }: StatCardProps) {
+export function StatCard({ title, value, icon: Icon, variant = 'default', showCurrency = true, savingsValue, targetSavingsRate }: StatCardProps) {
   const { settings } = useSettings();
   const incomeColorClass = getIncomeColor(settings.colorScheme);
   const incomeColorHex = getIncomeColorHex(settings.colorScheme);
@@ -108,14 +104,6 @@ export function StatCard({ title, value, icon: Icon, trend, variant = 'default',
         <div className={cn('text-2xl font-bold', getValueColor())}>
           {typeof value === 'number' ? (showCurrency ? formatCurrencyFull(value) : value.toLocaleString()) : value}
         </div>
-        {trend && (
-          <p className={cn(
-            'text-xs mt-1',
-            trend.isPositive ? incomeColorClass : expenseColorClass
-          )}>
-            {trend.isPositive ? '+' : ''}{trend.value}% 较上期
-          </p>
-        )}
       </CardContent>
     </Card>
   );

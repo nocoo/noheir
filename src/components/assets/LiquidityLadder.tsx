@@ -7,14 +7,14 @@
 
 import { useMemo } from 'react';
 import { useUnitsDisplay } from '@/hooks/useAssets';
-import { useSettings, getIncomeColorHex } from '@/contexts/SettingsContext';
+import { useSettings } from '@/contexts/SettingsContext';
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts/core';
 import { TooltipComponent, GridComponent, MarkLineComponent } from 'echarts/components';
 import { BarChart } from 'echarts/charts';
 import { CanvasRenderer } from 'echarts/renderers';
 import { formatCurrencyFull } from '@/lib/chart-config';
-import { format, addMonths, startOfMonth, isBefore, isAfter, isEqual } from 'date-fns';
+import { format, addMonths, startOfMonth, isBefore } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 
 echarts.use([TooltipComponent, GridComponent, MarkLineComponent, BarChart, CanvasRenderer]);

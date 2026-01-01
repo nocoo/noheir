@@ -7,16 +7,13 @@ import { DataImport } from '@/components/dashboard/DataImport';
 import { DataQuality } from '@/components/dashboard/DataQuality';
 import { DataManagement } from '@/components/dashboard/DataManagement';
 import { FlowAnalysis } from '@/components/dashboard/FlowAnalysis';
-import { IncomeAnalysis } from '@/components/dashboard/IncomeAnalysis';
-import { ExpenseAnalysis } from '@/components/dashboard/ExpenseAnalysis';
+import { TransactionAnalysis } from '@/components/dashboard/TransactionAnalysis';
 import { TransferAnalysis } from '@/components/dashboard/TransferAnalysis';
 import { AccountAnalysis } from '@/components/dashboard/AccountAnalysis';
 import { Settings } from '@/components/dashboard/Settings';
-import { SankeyChart } from '@/components/dashboard/SankeyChart';
 import { YearSelector } from '@/components/dashboard/YearSelector';
 import type { DataQualityMetrics, TransactionValidation } from '@/types/data';
-import { ExpenseHeatmap } from '@/components/dashboard/ExpenseHeatmap';
-import { IncomeHeatmap } from '@/components/dashboard/IncomeHeatmap';
+import { TransactionHeatmap } from '@/components/dashboard/TransactionHeatmap';
 import { IncomeExpenseComparison } from '@/components/dashboard/IncomeExpenseComparison';
 import { SavingsRateChart } from '@/components/dashboard/SavingsRateChart';
 import { BalanceWaterfall } from '@/components/dashboard/BalanceWaterfall';
@@ -35,9 +32,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { LoadingPage } from '@/components/pages/LoadingPage';
 import { LoginPage } from '@/components/pages/LoginPage';
-import { TrendingUp, TrendingDown, PiggyBank, Percent, HeartPulse } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { cn } from '@/lib/utils';
+import { TrendingUp, TrendingDown, PiggyBank, Percent } from 'lucide-react';
 
 const Index = () => {
   const { user, loading: authLoading } = useAuth();
@@ -89,25 +84,6 @@ const Index = () => {
   const handleGoToImport = () => {
     setActiveTab('import');
   };
-
-  const previousYearCategoryData = useMemo(() => {
-    if (selectedYear === null) return [];
-    const prevYear = selectedYear - 1;
-    const prevYearTransactions = allTransactions.filter(t => t.year === prevYear && t.type === 'expense');
-    const totalExpense = prevYearTransactions.reduce((sum, t) => sum + t.amount, 0);
-
-    const categoryMap = new Map<string, number>();
-    prevYearTransactions.forEach(t => {
-      categoryMap.set(t.primaryCategory, (categoryMap.get(t.primaryCategory) || 0) + t.amount);
-    });
-
-    return Array.from(categoryMap.entries()).map(([category, total]) => ({
-      category,
-      total,
-      percentage: totalExpense > 0 ? (total / totalExpense) * 100 : 0,
-      subcategories: []
-    }));
-  }, [allTransactions, selectedYear]);
 
   // Show Loading page when auth is loading or data is loading for the first time
   if (authLoading || (user && isLoading)) {
@@ -179,8 +155,8 @@ const Index = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ExpenseHeatmap transactions={transactions} year={selectedYear} />
-            <IncomeHeatmap transactions={transactions} year={selectedYear} />
+            <TransactionHeatmap transactions={transactions} year={selectedYear} type="expense" />
+            <TransactionHeatmap transactions={transactions} year={selectedYear} type="income" />
           </div>
 
           <IncomeExpenseComparison data={monthlyData} />
@@ -198,7 +174,7 @@ const Index = () => {
             </div>
             <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
           </div>
-          <IncomeAnalysis transactions={transactions} monthlyData={monthlyData} />
+          <TransactionAnalysis transactions={transactions} monthlyData={monthlyData} type="income" />
         </div>
       )}
 
@@ -211,7 +187,7 @@ const Index = () => {
             </div>
             <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
           </div>
-          <ExpenseAnalysis transactions={transactions} monthlyData={monthlyData} />
+          <TransactionAnalysis transactions={transactions} monthlyData={monthlyData} type="expense" />
         </div>
       )}
 
