@@ -9,6 +9,7 @@ import { useTransactions } from "@/hooks/useTransactions";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/contexts/SettingsContext";
 import { formatCurrencyFull } from "@/lib/chart-config";
+import { supabase } from "@/lib/supabase";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -16,7 +17,7 @@ const SYSTEM_PROMPT = `你是一个专业的财务分析助手，帮助用户了
 
 ## 回答结构
 
-**第一部分：直接回答**
+**第一部分：答案**
 先用一句话或简短段落直接回答用户的问题，给出基本事实
 
 **第二部分：关键发现（Bullet Point）**
@@ -36,6 +37,11 @@ const SYSTEM_PROMPT = `你是一个专业的财务分析助手，帮助用户了
 4. **突出对比和趋势**：同比/环比变化、异常值、占比等
 5. **简洁有力**：每条 bullet point 尽量一行，最多两行
 
+## 工具选择策略
+
+- **本地数据搜索** (search_transactions): 适合查询当前加载年份的统计类问题
+- **数据库搜索** (search_transactions_supabase): 适合关键词搜索、跨年查询、精确查找具体交易
+
 ## 示例
 
 用户："2024年8月餐饮支出多少？"
@@ -48,11 +54,25 @@ const SYSTEM_PROMPT = `你是一个专业的财务分析助手，帮助用户了
 
 **总结：** 8月餐饮支出较高，主要因周末外卖增加
 
-可用的工具：
+## 可用工具
+
+**统计类工具（使用本地缓存数据）**:
 - get_financial_health: 获取整体财务状况
 - get_monthly_summary: 获取月度收支汇总
 - get_category_analysis: 按分类统计收入或支出
-- search_transactions: 搜索交易记录`;
+- search_transactions: 搜索当前已加载年份的交易记录
+
+**搜索类工具（使用 Supabase 数据库）**:
+- search_transactions_supabase: 模糊搜索交易记录，支持关键词、分类、时间、账户、标签、金额等多维度搜索
+  - keyword: 在备注、分类、账户中模糊搜索
+  - categories: 按分类筛选（支持多个）
+  - type: 收入/支出/转账
+  - accounts: 按账户筛选（支持多个）
+  - tags: 按标签筛选（支持多个）
+  - startDate/endDate: 日期范围
+  - minAmount/maxAmount: 金额范围
+  - limit: 返回结果数量（默认50，最大500）
+`;
 
 
 // Tool definitions for function calling
@@ -112,7 +132,7 @@ const TOOLS = [
     type: "function" as const,
     function: {
       name: "search_transactions",
-      description: "搜索符合条件的交易记录",
+      description: "搜索符合条件的交易记录（使用本地缓存数据）",
       parameters: {
         type: "object" as const,
         properties: {
@@ -144,6 +164,63 @@ const TOOLS = [
         required: []
       }
     }
+  },
+  {
+    type: "function" as const,
+    function: {
+      name: "search_transactions_supabase",
+      description: "使用 Supabase 数据库模糊搜索交易记录，支持关键词搜索和多维度筛选",
+      parameters: {
+        type: "object" as const,
+        properties: {
+          keyword: {
+            type: "string" as const,
+            description: "搜索关键词，在备注、分类、账户中模糊匹配"
+          },
+          categories: {
+            type: "array" as const,
+            items: { type: "string" as const },
+            description: "按一级分类筛选，如['餐饮', '交通']"
+          },
+          type: {
+            type: "string" as const,
+            enum: ["income", "expense", "transfer"],
+            description: "交易类型：income（收入）、expense（支出）、transfer（转账）"
+          },
+          accounts: {
+            type: "array" as const,
+            items: { type: "string" as const },
+            description: "按账户筛选，如['招商银行', '支付宝']"
+          },
+          tags: {
+            type: "array" as const,
+            items: { type: "string" as const },
+            description: "按标签筛选，如['旅游', '餐饮']"
+          },
+          startDate: {
+            type: "string" as const,
+            description: "开始日期，格式：YYYY-MM-DD"
+          },
+          endDate: {
+            type: "string" as const,
+            description: "结束日期，格式：YYYY-MM-DD"
+          },
+          minAmount: {
+            type: "number" as const,
+            description: "最小金额"
+          },
+          maxAmount: {
+            type: "number" as const,
+            description: "最大金额"
+          },
+          limit: {
+            type: "number" as const,
+            description: "返回结果数量限制，默认 50，最大 500"
+          }
+        },
+        required: []
+      }
+    }
   }
 ];
 
@@ -168,7 +245,8 @@ const TOOL_NAMES: Record<string, string> = {
   "get_financial_health": "财务健康概览",
   "get_monthly_summary": "月度收支汇总",
   "get_category_analysis": "分类统计分析",
-  "search_transactions": "交易记录搜索"
+  "search_transactions": "本地搜索交易记录",
+  "search_transactions_supabase": "数据库模糊搜索"
 };
 
 export function ChatBubble() {
@@ -341,6 +419,90 @@ export function ChatBubble() {
             total: results.length,
             transactions: formatted
           });
+          break;
+        }
+
+        case "search_transactions_supabase": {
+          // Input validation and sanitization
+          const {
+            keyword = null,
+            categories = null,
+            type = null,
+            accounts = null,
+            tags = null,
+            startDate = null,
+            endDate = null,
+            minAmount = null,
+            maxAmount = null,
+            limit = 50
+          } = args;
+
+          // Validate and sanitize inputs
+          const sanitizedLimit = Math.min(Math.max(1, Number(limit) || 50), 500);
+
+          // Validate date format (YYYY-MM-DD)
+          const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+          if (startDate && !dateRegex.test(startDate)) {
+            result = JSON.stringify({ error: "开始日期格式错误，应为 YYYY-MM-DD" });
+            break;
+          }
+          if (endDate && !dateRegex.test(endDate)) {
+            result = JSON.stringify({ error: "结束日期格式错误，应为 YYYY-MM-DD" });
+            break;
+          }
+
+          // Validate type enum
+          const validTypes = ['income', 'expense', 'transfer'];
+          if (type && !validTypes.includes(type)) {
+            result = JSON.stringify({ error: `交易类型错误，应为: ${validTypes.join(', ')}` });
+            break;
+          }
+
+          // Sanitize keyword (prevent SQL injection - though RPC handles this, we still validate)
+          const sanitizedKeyword = keyword ? String(keyword).trim().slice(0, 200) : null;
+
+          try {
+            const { data: searchResults, error } = await supabase.rpc('search_transactions_fuzzy', {
+              p_keyword: sanitizedKeyword,
+              p_categories: categories,
+              p_type: type,
+              p_accounts: accounts,
+              p_tags: tags,
+              p_start_date: startDate,
+              p_end_date: endDate,
+              p_min_amount: minAmount,
+              p_max_amount: maxAmount,
+              p_limit: sanitizedLimit,
+              p_offset: 0
+            });
+
+            if (error) {
+              console.error('Supabase RPC error:', error);
+              result = JSON.stringify({ error: `搜索失败: ${error.message}` });
+              break;
+            }
+
+            const formatted = searchResults?.map(t => ({
+              date: t.date,
+              category: t.primary_category,
+              subCategory: t.secondary_category,
+              amount: formatCurrencyFull(Number(t.amount)),
+              type: t.type === 'income' ? '收入' : t.type === 'expense' ? '支出' : '转账',
+              account: t.account,
+              currency: t.currency,
+              tags: t.tags,
+              note: t.note,
+              matchedField: t.matched_field
+            })) || [];
+
+            result = JSON.stringify({
+              total: formatted.length,
+              limit: sanitizedLimit,
+              transactions: formatted
+            });
+          } catch (e: any) {
+            result = JSON.stringify({ error: `搜索异常: ${e.message}` });
+          }
           break;
         }
 
