@@ -62,6 +62,7 @@ const navGroups = [
     title: '存量资金管理',
     items: [
       { id: 'capital-dashboard', label: '资金总览', icon: LayoutDashboard },
+      { id: 'capital-decisions', label: '资金决策', icon: Target },
       { id: 'warehouse', label: '仓库视图', icon: Boxes },
       { id: 'strategy-sunburst', label: '策略透视', icon: PieChart },
       { id: 'liquidity-ladder', label: '流动性梯队', icon: TrendingUp },

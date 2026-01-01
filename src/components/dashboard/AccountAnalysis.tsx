@@ -8,10 +8,12 @@ import {
   PieChart, Pie, Cell, LineChart, Line, Legend
 } from 'recharts';
 import { Wallet, TrendingUp, TrendingDown, ArrowUpDown } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, legendStyle, formatCurrencyK, formatCurrencyFull } from '@/lib/chart-config';
 import { ChartCard } from '@/components/shared';
+import { gridContainer, gridItem } from '@/lib/animations';
 
 interface AccountAnalysisProps {
   transactions: Transaction[];
@@ -179,31 +181,44 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
   return (
     <div className="space-y-6">
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatCard
-          title="账户数量"
-          value={accountData.length}
-          icon={Wallet}
-          showCurrency={false}
-        />
-        <StatCard 
-          title="总资金流动" 
-          value={totalFlow} 
-          icon={ArrowUpDown}
-        />
-        <StatCard 
-          title="净流入" 
-          value={accountData.reduce((s, a) => s + a.income, 0)} 
-          icon={TrendingUp}
-          variant="income"
-        />
-        <StatCard 
-          title="净流出" 
-          value={accountData.reduce((s, a) => s + a.expense, 0)} 
-          icon={TrendingDown}
-          variant="expense"
-        />
-      </div>
+      <motion.div
+        variants={gridContainer}
+        initial="initial"
+        animate="animate"
+        className="grid grid-cols-1 md:grid-cols-4 gap-4"
+      >
+        <motion.div variants={gridItem}>
+          <StatCard
+            title="账户数量"
+            value={accountData.length}
+            icon={Wallet}
+            showCurrency={false}
+          />
+        </motion.div>
+        <motion.div variants={gridItem}>
+          <StatCard
+            title="总资金流动"
+            value={totalFlow}
+            icon={ArrowUpDown}
+          />
+        </motion.div>
+        <motion.div variants={gridItem}>
+          <StatCard
+            title="净流入"
+            value={accountData.reduce((s, a) => s + a.income, 0)}
+            icon={TrendingUp}
+            variant="income"
+          />
+        </motion.div>
+        <motion.div variants={gridItem}>
+          <StatCard
+            title="净流出"
+            value={accountData.reduce((s, a) => s + a.expense, 0)}
+            icon={TrendingDown}
+            variant="expense"
+          />
+        </motion.div>
+      </motion.div>
 
       {/* Account Comparison */}
       <ChartCard

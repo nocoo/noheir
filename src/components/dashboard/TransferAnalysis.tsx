@@ -8,9 +8,11 @@ import {
   PieChart, Pie, Cell, Legend, AreaChart, Area
 } from 'recharts';
 import { ArrowRightLeft, CreditCard, Calendar, Wallet, TrendingUp } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, legendStyle, formatCurrencyK, formatCurrencyFull } from '@/lib/chart-config';
 import { ChartCard } from '@/components/shared';
+import { gridContainer, gridItem } from '@/lib/animations';
 
 interface TransferAnalysisProps {
   transactions: Transaction[];
@@ -129,32 +131,45 @@ export function TransferAnalysis({ transactions, monthlyData }: TransferAnalysis
   return (
     <div className="space-y-6">
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatCard
-          title="总转账金额"
-          value={totalTransferAmount}
-          icon={ArrowRightLeft}
-          variant="expense"
-        />
-        <StatCard
-          title="转账笔数"
-          value={transferTransactions.length}
-          icon={Wallet}
-          showCurrency={false}
-        />
-        <StatCard
-          title="信用卡还款"
-          value={creditCardRepaymentAmount}
-          icon={CreditCard}
-          variant="expense"
-        />
-        <StatCard
-          title="其他转账"
-          value={totalTransferAmount - creditCardRepaymentAmount}
-          icon={TrendingUp}
-          variant="expense"
-        />
-      </div>
+      <motion.div
+        variants={gridContainer}
+        initial="initial"
+        animate="animate"
+        className="grid grid-cols-1 md:grid-cols-4 gap-4"
+      >
+        <motion.div variants={gridItem}>
+          <StatCard
+            title="总转账金额"
+            value={totalTransferAmount}
+            icon={ArrowRightLeft}
+            variant="expense"
+          />
+        </motion.div>
+        <motion.div variants={gridItem}>
+          <StatCard
+            title="转账笔数"
+            value={transferTransactions.length}
+            icon={Wallet}
+            showCurrency={false}
+          />
+        </motion.div>
+        <motion.div variants={gridItem}>
+          <StatCard
+            title="信用卡还款"
+            value={creditCardRepaymentAmount}
+            icon={CreditCard}
+            variant="expense"
+          />
+        </motion.div>
+        <motion.div variants={gridItem}>
+          <StatCard
+            title="其他转账"
+            value={totalTransferAmount - creditCardRepaymentAmount}
+            icon={TrendingUp}
+            variant="expense"
+          />
+        </motion.div>
+      </motion.div>
 
       {/* Monthly Trend */}
       <ChartCard

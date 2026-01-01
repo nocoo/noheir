@@ -12,6 +12,7 @@ import {
   AlertCircle,
   Calendar,
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { formatCurrencyFull } from '@/lib/chart-config';
@@ -23,6 +24,7 @@ import {
   STATUS_COLORS,
   MATURITY_COLORS,
 } from '@/lib/colorPalette';
+import { fadeInUp, gridContainer, gridItem } from '@/lib/animations';
 
 // ============================================================================
 // TYPES & HELPERS
@@ -68,10 +70,12 @@ function StatCard({ title, value, subtitle, icon: Icon, variant, action }: StatC
   };
 
   return (
-    <div className={cn(
-      'border rounded-xl p-5 space-y-3 transition-all hover:shadow-md',
-      variantStyles[variant || 'default']
-    )}>
+    <motion.div
+      whileHover={{ y: -2, transition: { duration: 0.15 } }}
+      className={cn(
+        'border rounded-xl p-5 space-y-3 transition-all hover:shadow-md',
+        variantStyles[variant || 'default']
+      )}>
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-muted-foreground">{title}</span>
         <Icon className="w-5 h-5 text-muted-foreground" />
@@ -88,7 +92,7 @@ function StatCard({ title, value, subtitle, icon: Icon, variant, action }: StatC
           </span>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
 
@@ -112,37 +116,43 @@ function ActionBar({
   incomingCount,
 }: ActionBarProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {/* Total Assets Card */}
-      <StatCard
-        title="总资产"
-        value={formatCurrencyFull(totalAssetsAll)}
-        subtitle={Object.entries(totalAssets)
-          .filter(([_, amount]) => amount > 0)
-          .map(([currency, amount]) => `${CURRENCY_EMOJI[currency as Currency]} ${formatCurrencyFull(amount)}`)
-          .join(' · ') || '-'}
-        icon={Wallet}
-      />
+    <motion.div
+      variants={gridContainer}
+      initial="initial"
+      animate="animate"
+      className="grid grid-cols-1 md:grid-cols-3 gap-4"
+    >
+      <motion.div variants={gridItem}>
+        <StatCard
+          title="总资产"
+          value={formatCurrencyFull(totalAssetsAll)}
+          subtitle={Object.entries(totalAssets)
+            .filter(([_, amount]) => amount > 0)
+            .map(([currency, amount]) => `${CURRENCY_EMOJI[currency as Currency]} ${formatCurrencyFull(amount)}`)
+            .join(' · ') || '-'}
+          icon={Wallet}
+        />
+      </motion.div>
 
-      {/* Deployment Rate Card */}
-      <StatCard
-        title="资金利用率"
-        value={`${deploymentRate.toFixed(1)}%`}
-        subtitle={`${(100 - deploymentRate).toFixed(1)}% 待投放`}
-        icon={TrendingUp}
-        variant={idleCount > 0 ? 'warning' : 'success'}
-        action={idleCount > 0 ? { label: '待投放', count: idleCount } : undefined}
-      />
+      <motion.div variants={gridItem}>
+        <StatCard
+          title="资金利用率"
+          value={`${deploymentRate.toFixed(1)}%`}
+          subtitle={`${(100 - deploymentRate).toFixed(1)}% 待投放`}
+          icon={TrendingUp}
+        />
+      </motion.div>
 
-      {/* Incoming Liquidity Card */}
-      <StatCard
-        title="即将到期 (30天)"
-        value={formatCurrencyFull(incomingLiquidity)}
-        subtitle={`${incomingCount} 个资金单元`}
-        icon={Calendar}
-        variant={incomingCount > 0 ? 'default' : 'default'}
-      />
-    </div>
+      <motion.div variants={gridItem}>
+        <StatCard
+          title="即将到期 (30天)"
+          value={formatCurrencyFull(incomingLiquidity)}
+          subtitle={`${incomingCount} 个资金单元`}
+          icon={Calendar}
+          variant={incomingCount > 0 ? 'default' : 'default'}
+        />
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -280,7 +290,13 @@ export function CapitalDashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial="initial"
+      animate="animate"
+      variants={fadeInUp}
+      transition={{ duration: 0.3 }}
+      className="space-y-6"
+    >
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -301,56 +317,69 @@ export function CapitalDashboard() {
       />
 
       {/* Charts Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <motion.div
+        variants={gridContainer}
+        initial="initial"
+        animate="animate"
+        className="grid grid-cols-1 md:grid-cols-2 gap-6"
+      >
         {/* Strategy Distribution */}
         {dashboardData?.strategy_allocation && (
-          <DistributionPieChart
-            title="策略分布"
-            data={dashboardData.strategy_allocation.map(item => ({
-              name: item.strategy,
-              value: item.total_amount,
-              percentage: item.percentage,
-              color: STRATEGY_COLORS[item.strategy]
-            }))}
-            selected={selectedStrategy}
-            onClick={setSelectedStrategy}
-            showAction={true}
-          />
+          <motion.div variants={gridItem}>
+            <DistributionPieChart
+              title="策略分布"
+              data={dashboardData.strategy_allocation.map(item => ({
+                name: item.strategy,
+                value: item.total_amount,
+                percentage: item.percentage,
+                color: STRATEGY_COLORS[item.strategy]
+              }))}
+              selected={selectedStrategy}
+              onClick={setSelectedStrategy}
+              showAction={true}
+            />
+          </motion.div>
         )}
 
         {/* Currency Distribution */}
-        <DistributionPieChart
-          title="币种分布"
-          data={currencyDistribution.map(item => ({
-            name: `${CURRENCY_EMOJI[item.currency]} ${item.currency}`,
-            value: item.amount,
-            percentage: item.percentage,
-            color: CURRENCY_COLORS[item.currency]
-          }))}
-        />
+        <motion.div variants={gridItem}>
+          <DistributionPieChart
+            title="币种分布"
+            data={currencyDistribution.map(item => ({
+              name: `${CURRENCY_EMOJI[item.currency]} ${item.currency}`,
+              value: item.amount,
+              percentage: item.percentage,
+              color: CURRENCY_COLORS[item.currency]
+            }))}
+          />
+        </motion.div>
 
         {/* Status Distribution */}
-        <DistributionPieChart
-          title="状态分布"
-          data={statusDistribution.map(item => ({
-            name: item.status,
-            value: item.amount,
-            percentage: item.percentage,
-            color: STATUS_COLORS[item.status]
-          }))}
-        />
+        <motion.div variants={gridItem}>
+          <DistributionPieChart
+            title="状态分布"
+            data={statusDistribution.map(item => ({
+              name: item.status,
+              value: item.amount,
+              percentage: item.percentage,
+              color: STATUS_COLORS[item.status]
+            }))}
+          />
+        </motion.div>
 
         {/* Maturity Distribution */}
-        <DistributionPieChart
-          title="到期时间分布"
-          data={maturityDistribution.map(item => ({
-            name: item.period,
-            value: item.amount,
-            percentage: item.percentage,
-            color: MATURITY_COLORS[item.period]
-          }))}
-        />
-      </div>
-    </div>
+        <motion.div variants={gridItem}>
+          <DistributionPieChart
+            title="到期时间分布"
+            data={maturityDistribution.map(item => ({
+              name: item.period,
+              value: item.amount,
+              percentage: item.percentage,
+              color: MATURITY_COLORS[item.period]
+            }))}
+          />
+        </motion.div>
+      </motion.div>
+    </motion.div>
   );
 }

@@ -3,8 +3,10 @@ import { Transaction, MonthlyData } from '@/types/transaction';
 import { StatCard } from './StatCard';
 import { useSettings, getIncomeColor, getIncomeColorHex, getExpenseColor, getExpenseColorHex } from '@/contexts/SettingsContext';
 import { TrendingUp, TrendingDown, Wallet, Calendar } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { CategoryDetailList, TopTransactionsTable, MonthlyTrendChart, AccountDistributionChart, CategoryDistributionChart } from './shared';
 import { useCategoryData, useAccountData } from '@/hooks/useCategoryData';
+import { gridContainer, gridItem } from '@/lib/animations';
 
 type TransactionType = 'income' | 'expense';
 
@@ -98,27 +100,38 @@ export function TransactionAnalysis({ transactions, monthlyData, type }: Transac
   return (
     <div className="space-y-6">
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatCard
-          title={labels.total}
-          value={totalAmount}
-          icon={icon}
-          variant={variant}
-        />
-        <StatCard
-          title={labels.monthly}
-          value={Math.round(avgMonthly)}
-          icon={Calendar}
-          variant={variant}
-        />
-        <StatCard
-          title={labels.count}
-          value={filteredTransactions.length}
-          icon={Wallet}
-          variant={variant}
-          showCurrency={false}
-        />
-      </div>
+      <motion.div
+        variants={gridContainer}
+        initial="initial"
+        animate="animate"
+        className="grid grid-cols-1 md:grid-cols-3 gap-4"
+      >
+        <motion.div variants={gridItem}>
+          <StatCard
+            title={labels.total}
+            value={totalAmount}
+            icon={icon}
+            variant={variant}
+          />
+        </motion.div>
+        <motion.div variants={gridItem}>
+          <StatCard
+            title={labels.monthly}
+            value={Math.round(avgMonthly)}
+            icon={Calendar}
+            variant={variant}
+          />
+        </motion.div>
+        <motion.div variants={gridItem}>
+          <StatCard
+            title={labels.count}
+            value={filteredTransactions.length}
+            icon={Wallet}
+            variant={variant}
+            showCurrency={false}
+          />
+        </motion.div>
+      </motion.div>
 
       {/* Monthly Trend - Shared Component */}
       <MonthlyTrendChart

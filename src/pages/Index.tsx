@@ -23,6 +23,7 @@ import { FinancialFreedomAnalysis } from '@/components/dashboard/FinancialFreedo
 import { ProductsLibrary } from '@/components/assets/ProductsLibrary';
 import { CapitalUnitsManager } from '@/components/assets/CapitalUnitsManager';
 import { CapitalDashboard } from '@/components/assets/CapitalDashboard';
+import { CapitalDecisions } from '@/components/assets/CapitalDecisions';
 import { WarehouseView } from '@/components/assets/WarehouseView';
 import { StrategySunburst } from '@/components/assets/StrategySunburst';
 import { LiquidityLadder } from '@/components/assets/LiquidityLadder';
@@ -33,6 +34,8 @@ import { useSettings } from '@/contexts/SettingsContext';
 import { LoadingPage } from '@/components/pages/LoadingPage';
 import { LoginPage } from '@/components/pages/LoginPage';
 import { TrendingUp, TrendingDown, PiggyBank, Percent } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { fadeInUp, gridContainer, gridItem } from '@/lib/animations';
 
 const Index = () => {
   const { user, loading: authLoading } = useAuth();
@@ -98,17 +101,31 @@ const Index = () => {
   return (
     <DashboardLayout activeTab={activeTab} onTabChange={setActiveTab}>
       {activeTab === 'import' && (
-        <div className="space-y-6">
+        <motion.div
+          key="import"
+          initial="initial"
+          animate="animate"
+          variants={fadeInUp}
+          transition={{ duration: 0.25 }}
+          className="space-y-6"
+        >
           <div>
             <h1 className="text-2xl font-bold">数据导入</h1>
             <p className="text-muted-foreground">上传交易数据文件开始分析</p>
           </div>
           <DataImport onUploadComplete={loadStoredData} />
-        </div>
+        </motion.div>
       )}
 
       {activeTab === 'quality' && (
-        <div className="space-y-6">
+        <motion.div
+          key="quality"
+          initial="initial"
+          animate="animate"
+          variants={fadeInUp}
+          transition={{ duration: 0.25 }}
+          className="space-y-6"
+        >
           <div>
             <h1 className="text-2xl font-bold">数据质量评估</h1>
             <p className="text-muted-foreground">检查数据完整性和有效性</p>
@@ -121,24 +138,39 @@ const Index = () => {
           ) : (
             <p className="text-muted-foreground">请在"数据管理"页面选择年份查看质量评估</p>
           )}
-        </div>
+        </motion.div>
       )}
 
       {activeTab === 'manage' && (
-        <DataManagement
-          storedYearsData={storedYearsData}
-          isLoading={isLoading}
-          onDeleteYear={deleteYearData}
-          onClearAll={clearAll}
-          onExport={exportData}
-          onGoToImport={handleGoToImport}
-          onViewQuality={handleViewQuality}
-          qualityData={qualityData}
-        />
+        <motion.div
+          key="manage"
+          initial="initial"
+          animate="animate"
+          variants={fadeInUp}
+          transition={{ duration: 0.25 }}
+        >
+          <DataManagement
+            storedYearsData={storedYearsData}
+            isLoading={isLoading}
+            onDeleteYear={deleteYearData}
+            onClearAll={clearAll}
+            onExport={exportData}
+            onGoToImport={handleGoToImport}
+            onViewQuality={handleViewQuality}
+            qualityData={qualityData}
+          />
+        </motion.div>
       )}
 
       {activeTab === 'overview' && (
-        <div className="space-y-6">
+        <motion.div
+          key="overview"
+          initial="initial"
+          animate="animate"
+          variants={fadeInUp}
+          transition={{ duration: 0.25 }}
+          className="space-y-6"
+        >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold">财务概览</h1>
@@ -147,12 +179,25 @@ const Index = () => {
             <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard title="总收入" value={totalIncome} icon={TrendingUp} variant="income" />
-            <StatCard title="总支出" value={totalExpense} icon={TrendingDown} variant="expense" />
-            <StatCard title="结余" value={balance} icon={PiggyBank} variant="balance" />
-            <StatCard title="储蓄率" value={`${savingsRate.toFixed(1)}%`} icon={Percent} variant="savings" savingsValue={savingsRate} targetSavingsRate={settings.targetSavingsRate} />
-          </div>
+          <motion.div
+            variants={gridContainer}
+            initial="initial"
+            animate="animate"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+          >
+            <motion.div variants={gridItem}>
+              <StatCard title="总收入" value={totalIncome} icon={TrendingUp} variant="income" />
+            </motion.div>
+            <motion.div variants={gridItem}>
+              <StatCard title="总支出" value={totalExpense} icon={TrendingDown} variant="expense" />
+            </motion.div>
+            <motion.div variants={gridItem}>
+              <StatCard title="结余" value={balance} icon={PiggyBank} variant="balance" />
+            </motion.div>
+            <motion.div variants={gridItem}>
+              <StatCard title="储蓄率" value={`${savingsRate.toFixed(1)}%`} icon={Percent} variant="savings" savingsValue={savingsRate} targetSavingsRate={settings.targetSavingsRate} />
+            </motion.div>
+          </motion.div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <TransactionHeatmap transactions={transactions} year={selectedYear} type="expense" />
@@ -162,11 +207,18 @@ const Index = () => {
           <IncomeExpenseComparison data={monthlyData} />
 
           <TransactionTable transactions={transactions} />
-        </div>
+        </motion.div>
       )}
 
       {activeTab === 'income' && (
-        <div className="space-y-6">
+        <motion.div
+          key="income"
+          initial="initial"
+          animate="animate"
+          variants={fadeInUp}
+          transition={{ duration: 0.25 }}
+          className="space-y-6"
+        >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold">收入分析</h1>
@@ -175,11 +227,18 @@ const Index = () => {
             <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
           </div>
           <TransactionAnalysis transactions={transactions} monthlyData={monthlyData} type="income" />
-        </div>
+        </motion.div>
       )}
 
       {activeTab === 'expense' && (
-        <div className="space-y-6">
+        <motion.div
+          key="expense"
+          initial="initial"
+          animate="animate"
+          variants={fadeInUp}
+          transition={{ duration: 0.25 }}
+          className="space-y-6"
+        >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold">支出分析</h1>
@@ -188,11 +247,18 @@ const Index = () => {
             <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
           </div>
           <TransactionAnalysis transactions={transactions} monthlyData={monthlyData} type="expense" />
-        </div>
+        </motion.div>
       )}
 
       {activeTab === 'transfer' && (
-        <div className="space-y-6">
+        <motion.div
+          key="transfer"
+          initial="initial"
+          animate="animate"
+          variants={fadeInUp}
+          transition={{ duration: 0.25 }}
+          className="space-y-6"
+        >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold">转账分析</h1>
@@ -201,24 +267,39 @@ const Index = () => {
             <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
           </div>
           <TransferAnalysis transactions={transactions} monthlyData={monthlyData} />
-        </div>
+        </motion.div>
       )}
 
       {activeTab === 'financial-health' && (
-        <FinancialHealthPage
-          transactions={transactions}
-          totalIncome={totalIncome}
-          totalExpense={totalExpense}
-          savingsRate={savingsRate}
-          monthlyData={monthlyData}
-          selectedYear={selectedYear}
-          availableYears={availableYears}
-          onYearChange={setSelectedYear}
-        />
+        <motion.div
+          key="financial-health"
+          initial="initial"
+          animate="animate"
+          variants={fadeInUp}
+          transition={{ duration: 0.25 }}
+        >
+          <FinancialHealthPage
+            transactions={transactions}
+            totalIncome={totalIncome}
+            totalExpense={totalExpense}
+            savingsRate={savingsRate}
+            monthlyData={monthlyData}
+            selectedYear={selectedYear}
+            availableYears={availableYears}
+            onYearChange={setSelectedYear}
+          />
+        </motion.div>
       )}
 
       {activeTab === 'savings' && (
-        <div className="space-y-6">
+        <motion.div
+          key="savings"
+          initial="initial"
+          animate="animate"
+          variants={fadeInUp}
+          transition={{ duration: 0.25 }}
+          className="space-y-6"
+        >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold">储蓄率分析</h1>
@@ -228,11 +309,18 @@ const Index = () => {
           </div>
           <SavingsRateChart data={monthlyData} />
           <BalanceWaterfall data={monthlyData} />
-        </div>
+        </motion.div>
       )}
 
       {activeTab === 'freedom' && (
-        <div className="space-y-6">
+        <motion.div
+          key="freedom"
+          initial="initial"
+          animate="animate"
+          variants={fadeInUp}
+          transition={{ duration: 0.25 }}
+          className="space-y-6"
+        >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold">财务自由分析</h1>
@@ -241,11 +329,18 @@ const Index = () => {
             <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
           </div>
           <FinancialFreedomAnalysis transactions={transactions} year={selectedYear} />
-        </div>
+        </motion.div>
       )}
 
       {activeTab === 'account' && (
-        <div className="space-y-6">
+        <motion.div
+          key="account"
+          initial="initial"
+          animate="animate"
+          variants={fadeInUp}
+          transition={{ duration: 0.25 }}
+          className="space-y-6"
+        >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold">账户分析</h1>
@@ -254,31 +349,51 @@ const Index = () => {
             <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
           </div>
           <AccountAnalysis transactions={transactions} />
-        </div>
+        </motion.div>
       )}
 
       {activeTab === 'flow' && (
-        <FlowAnalysis
-          transactions={transactions}
-          selectedYear={selectedYear}
-          availableYears={availableYears}
-          onYearChange={setSelectedYear}
-        />
+        <motion.div
+          key="flow"
+          initial="initial"
+          animate="animate"
+          variants={fadeInUp}
+          transition={{ duration: 0.25 }}
+        >
+          <FlowAnalysis
+            transactions={transactions}
+            selectedYear={selectedYear}
+            availableYears={availableYears}
+            onYearChange={setSelectedYear}
+          />
+        </motion.div>
       )}
 
       {activeTab === 'compare' && (
-        <div className="space-y-6">
+        <motion.div
+          key="compare"
+          initial="initial"
+          animate="animate"
+          variants={fadeInUp}
+          transition={{ duration: 0.25 }}
+          className="space-y-6"
+        >
           <div>
             <h1 className="text-2xl font-bold">时段对比</h1>
             <p className="text-muted-foreground">跨年度/月度财务数据对比分析</p>
           </div>
           <MultiYearSelector selectedYears={comparisonYears} availableYears={availableYears} onChange={setComparisonYears} />
           <YearComparisonChart data={yearlyComparison} />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <motion.div
+            variants={gridContainer}
+            initial="initial"
+            animate="animate"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+          >
             {yearlyComparison.map(year => {
               const yearSavingsRate = year.totalIncome > 0 ? (year.balance / year.totalIncome) * 100 : 0;
               return (
-                <div key={year.year} className="space-y-4">
+                <motion.div key={year.year} variants={gridItem} className="space-y-4">
                   <h3 className="text-lg font-semibold border-b border-border pb-2">{year.year} 年</h3>
                   <StatCard title="总收入" value={year.totalIncome} icon={TrendingUp} variant="income" />
                   <StatCard title="总支出" value={year.totalExpense} icon={TrendingDown} variant="expense" />
@@ -291,49 +406,122 @@ const Index = () => {
                     savingsValue={yearSavingsRate}
                     targetSavingsRate={settings.targetSavingsRate}
                   />
-                </div>
+                </motion.div>
               );
             })}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
 
-      {activeTab === 'capital-dashboard' && <CapitalDashboard />}
+      {activeTab === 'capital-dashboard' && (
+        <motion.div
+          key="capital-dashboard"
+          initial="initial"
+          animate="animate"
+          variants={fadeInUp}
+          transition={{ duration: 0.25 }}
+        >
+          <CapitalDashboard />
+        </motion.div>
+      )}
 
-      {activeTab === 'warehouse' && <WarehouseView />}
+      {activeTab === 'capital-decisions' && (
+        <motion.div
+          key="capital-decisions"
+          initial="initial"
+          animate="animate"
+          variants={fadeInUp}
+          transition={{ duration: 0.25 }}
+        >
+          <CapitalDecisions />
+        </motion.div>
+      )}
 
-      {activeTab === 'strategy-sunburst' && <StrategySunburst />}
+      {activeTab === 'warehouse' && (
+        <motion.div
+          key="warehouse"
+          initial="initial"
+          animate="animate"
+          variants={fadeInUp}
+          transition={{ duration: 0.25 }}
+        >
+          <WarehouseView />
+        </motion.div>
+      )}
 
-      {activeTab === 'liquidity-ladder' && <LiquidityLadder />}
+      {activeTab === 'strategy-sunburst' && (
+        <motion.div
+          key="strategy-sunburst"
+          initial="initial"
+          animate="animate"
+          variants={fadeInUp}
+          transition={{ duration: 0.25 }}
+        >
+          <StrategySunburst />
+        </motion.div>
+      )}
+
+      {activeTab === 'liquidity-ladder' && (
+        <motion.div
+          key="liquidity-ladder"
+          initial="initial"
+          animate="animate"
+          variants={fadeInUp}
+          transition={{ duration: 0.25 }}
+        >
+          <LiquidityLadder />
+        </motion.div>
+      )}
 
       {activeTab === 'products' && (
-        <div className="space-y-6">
+        <motion.div
+          key="products"
+          initial="initial"
+          animate="animate"
+          variants={fadeInUp}
+          transition={{ duration: 0.25 }}
+          className="space-y-6"
+        >
           <div>
             <h1 className="text-2xl font-bold">产品表</h1>
             <p className="text-muted-foreground">管理理财产品信息</p>
           </div>
           <ProductsLibrary />
-        </div>
+        </motion.div>
       )}
 
       {activeTab === 'funds' && (
-        <div className="space-y-6">
+        <motion.div
+          key="funds"
+          initial="initial"
+          animate="animate"
+          variants={fadeInUp}
+          transition={{ duration: 0.25 }}
+          className="space-y-6"
+        >
           <div>
             <h1 className="text-2xl font-bold">资金表</h1>
             <p className="text-muted-foreground">管理资金分配情况</p>
           </div>
           <CapitalUnitsManager />
-        </div>
+        </motion.div>
       )}
 
       {activeTab === 'settings' && (
-        <div className="space-y-6">
+        <motion.div
+          key="settings"
+          initial="initial"
+          animate="animate"
+          variants={fadeInUp}
+          transition={{ duration: 0.25 }}
+          className="space-y-6"
+        >
           <div>
             <h1 className="text-2xl font-bold">系统设置</h1>
             <p className="text-muted-foreground">个性化您的个人财务管理体验</p>
           </div>
           <Settings />
-        </div>
+        </motion.div>
       )}
     </DashboardLayout>
   );

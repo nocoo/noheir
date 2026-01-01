@@ -7,6 +7,7 @@
  */
 
 import { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import {
   Tooltip,
   TooltipContent,
@@ -26,6 +27,7 @@ import { cn } from '@/lib/utils';
 import { StatusBadge } from '@/components/ui/colored-badge';
 import type { UnitDisplay, UnitStatus, Currency, InvestmentStrategy } from '@/types/assets';
 import { formatCurrencyFull } from '@/lib/chart-config';
+import { staggerFastContainer, staggerFastItem } from '@/lib/animations';
 
 // ============================================================================
 // TYPES
@@ -158,20 +160,27 @@ function WaffleCell({ unit, index, onUnitClick }: WaffleCellProps) {
     <TooltipProvider>
       <Tooltip open={isHovered} onOpenChange={setIsHovered}>
         <TooltipTrigger asChild>
-          <div
+          <motion.div
+            variants={staggerFastItem}
+            whileHover={{ scale: 1.1, zIndex: 10, transition: { duration: 0.15 } }}
+            whileTap={{ scale: 0.95 }}
             className={cn(
-              'h-8 rounded-sm transition-all duration-200 cursor-pointer',
-              'border border-border/50 hover:scale-110 hover:shadow-md hover:z-10',
+              'h-12 rounded-sm transition-all duration-200 cursor-pointer relative',
+              'border border-border/50 hover:shadow-md',
               getStatusColor(unit.waffleStatus)
             )}
             onClick={() => onUnitClick?.(unit)}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
-          />
+          >
+            <span className="absolute inset-0 flex items-center justify-center text-[10px] font-medium text-white/90 dark:text-white/95 pointer-events-none">
+              {unit.unit_code}
+            </span>
+          </motion.div>
         </TooltipTrigger>
         <TooltipContent
           side="top"
-          className="max-w-xs space-y-2"
+          className="max-w-xs space-y-2 bg-white dark:bg-slate-900"
           sideOffset={10}
         >
           <div className="space-y-1">
@@ -462,25 +471,24 @@ export function WarehouseWaffleChart({ units, onUnitClick }: WarehouseWaffleChar
 
       {/* All View - Single Warehouse */}
       {viewMode === 'all' && (
-        <div className="border rounded-xl p-6 space-y-4">
-          <div className="py-4">
-            <div
-              className="grid gap-1.5 p-4 bg-muted/30 rounded-lg border w-full"
-              style={{
-                gridTemplateColumns: 'repeat(auto-fill, minmax(2rem, 1fr))',
-              }}
-            >
-              {waffleData.map((unit, index) => (
-                <WaffleCell
-                  key={unit.id}
-                  unit={unit}
-                  index={index}
-                  onUnitClick={onUnitClick}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
+        <motion.div
+          variants={staggerFastContainer}
+          initial="initial"
+          animate="animate"
+          className="grid gap-1.5 p-4 bg-muted/30 rounded-lg border w-full"
+          style={{
+            gridTemplateColumns: 'repeat(auto-fill, minmax(3.5rem, 1fr))',
+          }}
+        >
+          {waffleData.map((unit, index) => (
+            <WaffleCell
+              key={unit.id}
+              unit={unit}
+              index={index}
+              onUnitClick={onUnitClick}
+            />
+          ))}
+        </motion.div>
       )}
 
       {/* Strategy View - Multiple Warehouses */}
@@ -494,9 +502,15 @@ export function WarehouseWaffleChart({ units, onUnitClick }: WarehouseWaffleChar
             };
 
             return (
-              <div key={strategy} className="border rounded-xl p-6 space-y-4">
+              <motion.div
+                key={strategy}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25 }}
+                className="space-y-3"
+              >
                 {/* Strategy Header */}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between px-1">
                   <div className="space-y-1">
                     <h4 className="text-lg font-semibold flex items-center gap-2">
                       {STRATEGY_ICONS[strategy]} {strategy}
@@ -508,24 +522,25 @@ export function WarehouseWaffleChart({ units, onUnitClick }: WarehouseWaffleChar
                 </div>
 
                 {/* Strategy Grid */}
-                <div className="py-4">
-                  <div
-                    className="grid gap-1.5 p-4 bg-muted/30 rounded-lg border w-full"
-                    style={{
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(2rem, 1fr))',
-                    }}
-                  >
-                    {strategyUnits.map((unit, index) => (
-                      <WaffleCell
-                        key={unit.id}
-                        unit={unit}
-                        index={index}
-                        onUnitClick={onUnitClick}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
+                <motion.div
+                  variants={staggerFastContainer}
+                  initial="initial"
+                  animate="animate"
+                  className="grid gap-1.5 p-4 bg-muted/30 rounded-lg border w-full"
+                  style={{
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(3.5rem, 1fr))',
+                  }}
+                >
+                  {strategyUnits.map((unit, index) => (
+                    <WaffleCell
+                      key={unit.id}
+                      unit={unit}
+                      index={index}
+                      onUnitClick={onUnitClick}
+                    />
+                  ))}
+                </motion.div>
+              </motion.div>
             );
           })}
         </div>
