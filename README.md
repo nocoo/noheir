@@ -1,8 +1,10 @@
-# Welcome to your Lovable project
+<div align="center">
+  <img src="public/logo/logo-128.png" alt="Finance Analyzer Logo" width="128" height="128">
+  <h1>个人财务管理</h1>
+  <p>专业的个人财务管理工具，支持收支分析、储蓄率追踪、多账户管理</p>
+</div>
 
 ## Project info
-
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
 
 ## How can I edit this code?
 

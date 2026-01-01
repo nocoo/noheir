@@ -1,7 +1,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Wallet, LogIn } from 'lucide-react';
+import { LogIn } from 'lucide-react';
 
 export function LoginPage() {
   const { signInWithGoogle } = useAuth();
@@ -15,8 +15,8 @@ export function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-4 text-center">
           {/* Logo */}
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary">
-            <Wallet className="h-8 w-8 text-primary-foreground" />
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary overflow-hidden">
+            <img src="/logo/logo-64.png" alt="Logo" className="h-14 w-14" />
           </div>
 
           <div className="space-y-2">

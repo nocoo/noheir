@@ -1,5 +1,3 @@
-import { Wallet } from 'lucide-react';
-
 export function LoadingPage() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
@@ -7,10 +5,10 @@ export function LoadingPage() {
         {/* Animated Logo */}
         <div className="relative">
           <div className="absolute inset-0 animate-ping opacity-20">
-            <div className="h-20 w-20 rounded-full bg-primary" />
+            <img src="/logo/logo-64.png" alt="Logo" className="h-16 w-16" />
           </div>
-          <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-primary">
-            <Wallet className="h-10 w-10 text-primary-foreground" />
+          <div className="relative">
+            <img src="/logo/logo-64.png" alt="Logo" className="h-16 w-16" />
           </div>
         </div>
 

@@ -103,7 +103,7 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
           )}>
             {sidebarOpen && (
               <div className="flex items-center gap-2 overflow-hidden">
-                <LayoutDashboard className="h-4 w-4 text-primary shrink-0" />
+                <img src="/logo/logo-64.png" alt="Logo" className="h-8 w-8 shrink-0" />
                 <h1 className="text-base font-bold text-foreground whitespace-nowrap">{settings.siteName}</h1>
               </div>
             )}
