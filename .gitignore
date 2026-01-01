@@ -26,3 +26,9 @@ dist-ssr
 # User data
 data/
 *.csv
+
+# Supabase temporary files
+supabase/.temp/
+
+# Temporary scripts
+scripts/get-schema.ts
