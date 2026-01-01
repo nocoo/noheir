@@ -7,6 +7,8 @@ import { SettingsProvider } from "@/contexts/SettingsContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AssetsDataProvider } from "@/contexts/AssetsDataContext";
 import { ChatBubble } from "@/components/ai/ChatBubble";
+import { TermsPage } from "@/components/pages/TermsPage";
+import { PrivacyPage } from "@/components/pages/PrivacyPage";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -23,6 +25,9 @@ const App = () => (
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<Index />} />
+                {/* Public routes - no authentication required */}
+                <Route path="/terms" element={<TermsPage />} />
+                <Route path="/privacy" element={<PrivacyPage />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

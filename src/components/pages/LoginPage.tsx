@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LogIn, Loader2 } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 export function LoginPage() {
   const { signInWithGoogle } = useAuth();
@@ -88,7 +89,14 @@ export function LoginPage() {
           </Button>
 
           <p className="text-xs text-center text-muted-foreground pt-2">
-            点击登录即表示您同意我们的服务条款和隐私政策
+            点击登录即表示您同意我们的{' '}
+            <Link to="/terms" className="text-primary hover:underline">
+              服务条款
+            </Link>
+            {' '}和{' '}
+            <Link to="/privacy" className="text-primary hover:underline">
+              隐私政策
+            </Link>
           </p>
         </CardContent>
       </Card>

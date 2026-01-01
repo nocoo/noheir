@@ -1,4 +1,5 @@
 import { ReactNode, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useSettings } from '@/contexts/SettingsContext';
 import { APP_VERSION } from '@/lib/version-generated';
 import {
@@ -178,8 +179,19 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
             <div className="shrink-0 border-t border-border bg-card p-4 space-y-3">
               <LoginButton />
               <div className="text-xs text-muted-foreground text-center space-y-1">
-                <p>{settings.siteName}</p>
-                <p className="text-[10px] opacity-70">{APP_VERSION}</p>
+                <a
+                  href="https://github.com/nocoo/noheir"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-primary transition-colors"
+                >
+                  <p className="text-[10px] opacity-70">{APP_VERSION}</p>
+                </a>
+                <div className="flex justify-center gap-2 text-[10px] opacity-70">
+                  <Link to="/terms" className="hover:text-primary transition-colors">服务条款</Link>
+                  <span>•</span>
+                  <Link to="/privacy" className="hover:text-primary transition-colors">隐私政策</Link>
+                </div>
               </div>
             </div>
           )}

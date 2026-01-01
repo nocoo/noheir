@@ -1,5 +1,5 @@
 -- Initial Schema
--- Generated from Supabase Cloud: finance-manager (ovglfjkumvzxyhklohst)
+-- Generated from Supabase Cloud
 -- Date: 2025-01-01
 
 -- ============================================================================
