@@ -16,6 +16,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
     // 获取当前 session
@@ -23,6 +24,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      setInitializing(false);
     });
 
     // 监听 auth 状态变化
@@ -32,6 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      setInitializing(false);
     });
 
     return () => subscription.unsubscribe();
@@ -59,6 +62,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.auth.signOut();
     return { error };
   };
+
+  // Show blue background during auth initialization to prevent white flash
+  if (initializing) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary">
+        <div className="w-6 h-6 border-4 border-white/10 border-t-white/40 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider value={{ user, session, loading, signInWithGoogle, signOut }}>

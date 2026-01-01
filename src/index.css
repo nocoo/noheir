@@ -243,6 +243,11 @@ Financial Color System:
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Prevent flash during auth state transitions */
+  #root {
+    min-height: 100vh;
+  }
 }
 
 /* Loading Animation */

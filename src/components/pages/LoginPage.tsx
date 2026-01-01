@@ -1,13 +1,21 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { LogIn } from 'lucide-react';
+import { LogIn, Loader2 } from 'lucide-react';
+import { useState } from 'react';
 
 export function LoginPage() {
   const { signInWithGoogle } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
-    await signInWithGoogle();
+    setIsLoading(true);
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      setIsLoading(false);
+    }
+    // Note: Don't reset isLoading here because the page will redirect to Google OAuth
   };
 
   return (
@@ -64,9 +72,19 @@ export function LoginPage() {
             onClick={handleLogin}
             size="lg"
             className="w-full"
+            disabled={isLoading}
           >
-            <LogIn className="mr-2 h-5 w-5" />
-            使用 Google 登录
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                登录中...
+              </>
+            ) : (
+              <>
+                <LogIn className="mr-2 h-5 w-5" />
+                使用 Google 登录
+              </>
+            )}
           </Button>
 
           <p className="text-xs text-center text-muted-foreground pt-2">
