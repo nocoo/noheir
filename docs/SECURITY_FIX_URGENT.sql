@@ -7,7 +7,7 @@
 -- 2. Fixes default privileges for future tables
 --
 -- EXECUTION:
--- 1. Go to: https://supabase.com/dashboard/project/ovglfjkumvzxyhklohst/sql/new
+-- 1. Go to: https://supabase.com/dashboard/project/YOUR_PROJECT_REF/sql/new
 -- 2. Paste this entire script
 -- 3. Click "Run"
 --

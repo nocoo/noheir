@@ -3,7 +3,7 @@
 This document describes the Supabase PostgreSQL database schema for the Personal Finance Management application.
 
 **Project**: finance-manager
-**Reference**: ovglfjkumvzxyhklohst
+**Reference**: YOUR_PROJECT_REF
 **Last Updated**: 2025-01-01
 
 ---
@@ -545,7 +545,7 @@ supabase db push   # Push to remote
 Configure environment variables in `.env.local`:
 
 ```env
-VITE_SUPABASE_URL=https://ovglfjkumvzxyhklohst.supabase.co
+VITE_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
