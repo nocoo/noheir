@@ -239,3 +239,61 @@ export const formatNewType = (value: number): string => {
   return formattedString;
 };
 ```
+
+---
+
+## 7. Supabase CLI 使用规范
+
+### 7.1 核心原则
+
+**只读操作** - 可以直接执行，无需确认：
+- 检查 schema：`supabase db dump --schema public`
+- 查看状态：`supabase status`
+- 列出 migrations：`supabase migration list`
+- 审计权限：`grep GRANT dump.sql`
+
+**写操作** - 必须经过用户确认：
+- 修改 schema：`supabase db push`
+- 应用 migration：`supabase db reset`
+- 执行 SQL：直接在数据库执行修改语句
+- 修改权限：`GRANT`/`REVOKE` 操作
+
+### 7.2 常用只读命令
+
+```bash
+# 获取完整 schema
+supabase db dump --schema public
+
+# 检查 RLS 策略
+supabase db dump | grep "CREATE POLICY"
+
+# 验证权限配置
+supabase db dump | grep "GRANT.*TO \"anon\""
+
+# 查看当前状态
+supabase status
+```
+
+### 7.3 写操作流程
+
+对于任何修改数据库的操作：
+
+1. **生成 SQL 文件** - 创建 migration 或修复脚本
+2. **展示给用户** - 说明将要执行的修改
+3. **等待确认** - 用户确认后才能执行
+4. **验证结果** - 执行后验证修改是否生效
+
+### 7.4 安全审计
+
+定期检查数据库安全配置：
+
+```bash
+# 1. Dump schema
+supabase db dump --schema public > /tmp/current_schema.sql
+
+# 2. 检查 anon 权限 (应该只有 USAGE)
+grep "GRANT.*TO \"anon\"" /tmp/current_schema.sql
+
+# 3. 检查 RLS 策略 (每个表应该有 4 个)
+grep "CREATE POLICY" /tmp/current_schema.sql | wc -l
+```
