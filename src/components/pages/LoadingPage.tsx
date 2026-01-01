@@ -1,25 +1,15 @@
 export function LoadingPage() {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
-      <div className="flex flex-col items-center gap-6">
-        {/* Animated Logo */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary animate-in fade-in duration-300">
+      <div className="flex flex-col items-center gap-8">
+        {/* Logo - 200% size */}
+        <div className="relative animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <img src="/logo/logo-128.png" alt="Logo" className="h-32 w-32" />
+        </div>
+
+        {/* Spinning Indicator */}
         <div className="relative">
-          <div className="absolute inset-0 animate-ping opacity-20">
-            <img src="/logo/logo-64.png" alt="Logo" className="h-16 w-16" />
-          </div>
-          <div className="relative">
-            <img src="/logo/logo-64.png" alt="Logo" className="h-16 w-16" />
-          </div>
-        </div>
-
-        {/* Loading Text */}
-        <div className="text-center">
-          <h1 className="text-2xl font-bold">个人财务管理</h1>
-        </div>
-
-        {/* Progress Bar */}
-        <div className="w-64 h-1 bg-muted rounded-full overflow-hidden">
-          <div className="h-full bg-primary animate-[loading_1.5s_ease-in-out_infinite] rounded-full" />
+          <div className="w-12 h-12 border-4 border-white/20 border-t-white/80 rounded-full animate-spin" />
         </div>
       </div>
     </div>
