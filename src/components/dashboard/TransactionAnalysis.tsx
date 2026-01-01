@@ -147,7 +147,7 @@ export function TransactionAnalysis({ transactions, monthlyData, type }: Transac
           description={labels.accountDesc}
           accountData={accountData}
           colorHex={colorHex}
-          layout={isIncome ? 'vertical' : 'horizontal'}
+          layout="vertical"
         />
       </div>
 
