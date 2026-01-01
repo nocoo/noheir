@@ -2,7 +2,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { formatCurrencyFull } from '@/lib/chart-config';
+import { PieTooltip } from '@/lib/chart-tooltip';
 
 interface DistributionData {
   name: string;
@@ -26,21 +26,6 @@ export function DistributionPieChart({
   selected,
   showAction = false
 }: DistributionPieChartProps) {
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
-          <p className="font-semibold">{data.name}</p>
-          <p className="text-sm text-muted-foreground">
-            {formatCurrencyFull(data.value)} ({data.percentage.toFixed(1)}%)
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
-
   return (
     <div className="border rounded-xl p-6 space-y-4">
       <div className="flex items-center justify-between">
@@ -85,7 +70,7 @@ export function DistributionPieChart({
                   />
                 ))}
               </Pie>
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<PieTooltip />} />
             </PieChart>
           </ResponsiveContainer>
         </div>
