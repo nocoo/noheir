@@ -28,11 +28,11 @@ Financial Color System:
     --popover-foreground: 222 47% 11%; /* Slate-900 */
 
     /* ========== Primary: Logo Blue (专业、信任) ========== */
-    --primary: 220 43% 41%;          /* Logo Blue #3b5894 */
+    --primary: 219 43% 41%;          /* Logo Blue #3b5a95 */
     --primary-foreground: 210 40% 98%; /* Slate-50 */
-    --primary-hover: 220 43% 36%;    /* Darker logo blue */
-    --primary-light: 220 28% 95%;    /* Very light blue */
-    --primary-dark: 221 51% 45%;     /* Medium dark */
+    --primary-hover: 219 43% 36%;    /* Darker logo blue */
+    --primary-light: 219 28% 95%;    /* Very light blue */
+    --primary-dark: 219 51% 45%;     /* Medium dark */
 
     /* ========== Secondary ========== */
     --secondary: 210 40% 96%;        /* Slate-100 */
@@ -53,7 +53,7 @@ Financial Color System:
     /* ========== Border & Input ========== */
     --border: 214 32% 91%;           /* Slate-200 */
     --input: 214 32% 91%;            /* Slate-200 */
-    --ring: 220 43% 41%;             /* Logo Blue */
+    --ring: 219 43% 41%;             /* Logo Blue */
 
     /* ========== NEW: Financial Colors ========== */
 
@@ -93,12 +93,12 @@ Financial Color System:
     /* ========== Sidebar ========== */
     --sidebar-background: 0 0% 100%;  /* White */
     --sidebar-foreground: 222 47% 11%; /* Slate-900 */
-    --sidebar-primary: 220 43% 41%;   /* Logo Blue */
+    --sidebar-primary: 219 43% 41%;   /* Logo Blue */
     --sidebar-primary-foreground: 210 40% 98%; /* Slate-50 */
     --sidebar-accent: 210 40% 96%;    /* Slate-100 */
     --sidebar-accent-foreground: 222 47% 11%; /* Slate-900 */
     --sidebar-border: 214 32% 91%;   /* Slate-200 */
-    --sidebar-ring: 220 43% 41%;      /* Logo Blue */
+    --sidebar-ring: 219 43% 41%;      /* Logo Blue */
 
     /* ========== Legacy Sidebar ========== */
     --sidebar: 0 0% 100%;
@@ -142,11 +142,11 @@ Financial Color System:
     --popover-foreground: 210 40% 98%; /* Slate-50 */
 
     /* ========== Primary: Logo Blue (Dark Mode) ========== */
-    --primary: 220 53% 55%;          /* Lighter logo blue for dark mode */
+    --primary: 219 53% 55%;          /* Lighter logo blue for dark mode */
     --primary-foreground: 0 0% 100%;  /* White */
-    --primary-hover: 220 53% 60%;    /* Even lighter */
-    --primary-light: 220 43% 20%;    /* Very dark logo blue */
-    --primary-dark: 220 53% 50%;     /* Medium */
+    --primary-hover: 219 53% 60%;    /* Even lighter */
+    --primary-light: 219 43% 20%;    /* Very dark logo blue */
+    --primary-dark: 219 53% 50%;     /* Medium */
 
     /* ========== Secondary (Dark Mode) ========== */
     --secondary: 215 20% 30%;        /* Slate-700 */
@@ -167,7 +167,7 @@ Financial Color System:
     /* ========== Border & Input (Dark Mode) ========== */
     --border: 215 20% 30%;           /* Slate-700 */
     --input: 215 20% 30%;            /* Slate-700 */
-    --ring: 220 53% 55%;             /* Logo Blue (lighter for dark mode) */
+    --ring: 219 53% 55%;             /* Logo Blue (lighter for dark mode) */
 
     /* ========== NEW: Financial Colors (Dark Mode) ========== */
 
@@ -214,12 +214,12 @@ Financial Color System:
     /* ========== Sidebar (Dark Mode) ========== */
     --sidebar-background: 224 71% 4%; /* Slate-950 */
     --sidebar-foreground: 210 40% 98%; /* Slate-50 */
-    --sidebar-primary: 220 53% 55%;  /* Logo Blue (lighter for dark mode) */
+    --sidebar-primary: 219 53% 55%;  /* Logo Blue (lighter for dark mode) */
     --sidebar-primary-foreground: 0 0% 100%; /* White */
     --sidebar-accent: 215 20% 30%;   /* Slate-700 */
     --sidebar-accent-foreground: 210 40% 98%; /* Slate-50 */
     --sidebar-border: 215 20% 30%;   /* Slate-700 */
-    --sidebar-ring: 220 53% 55%;     /* Logo Blue (lighter for dark mode) */
+    --sidebar-ring: 219 53% 55%;     /* Logo Blue (lighter for dark mode) */
 
     --sidebar: 224 71% 4%;
 
