@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Transaction } from '@/types/transaction';
 import { StatCard } from './StatCard';
 import { useSettings, getIncomeColor, getIncomeColorHex, getExpenseColor, getExpenseColorHex } from '@/contexts/SettingsContext';
@@ -12,6 +11,7 @@ import { Wallet, TrendingUp, TrendingDown, ArrowUpDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, legendStyle, formatCurrencyK, formatCurrencyFull } from '@/lib/chart-config';
+import { ChartCard } from '@/components/shared';
 
 interface AccountAnalysisProps {
   transactions: Transaction[];
@@ -170,14 +170,9 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
 
   if (transactions.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>账户分析</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8 text-muted-foreground">暂无数据</div>
-        </CardContent>
-      </Card>
+      <ChartCard title="账户分析">
+        <div className="text-center py-8 text-muted-foreground">暂无数据</div>
+      </ChartCard>
     );
   }
 
@@ -211,12 +206,10 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
       </div>
 
       {/* Account Comparison */}
-      <Card>
-        <CardHeader>
-          <CardTitle>账户收支对比</CardTitle>
-          <CardDescription>各账户收入支出情况</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <ChartCard
+        title="账户收支对比"
+        description="各账户收入支出情况"
+      >
           <div className="h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData}>
@@ -233,17 +226,14 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </CardContent>
-      </Card>
+      </ChartCard>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Transaction Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle>交易量分布</CardTitle>
-            <CardDescription>各账户交易活跃度</CardDescription>
-          </CardHeader>
-          <CardContent>
+        <ChartCard
+          title="交易量分布"
+          description="各账户交易活跃度"
+        >
             <div className="h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
@@ -281,16 +271,13 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
                 </PieChart>
               </ResponsiveContainer>
             </div>
-          </CardContent>
-        </Card>
+        </ChartCard>
 
         {/* Top 20 Transaction Counts */}
-        <Card>
-          <CardHeader>
-            <CardTitle>交易次数排行</CardTitle>
-            <CardDescription>Top 20 账户交易频率</CardDescription>
-          </CardHeader>
-          <CardContent>
+        <ChartCard
+          title="交易次数排行"
+          description="Top 20 账户交易频率"
+        >
             <div className="h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={topTransactionCounts} layout="vertical" margin={{ top: 10, right: 30, bottom: 10, left: 10 }}>
@@ -306,17 +293,14 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-          </CardContent>
-        </Card>
+        </ChartCard>
       </div>
 
       {/* Account Overview - Full Width, 2 Columns */}
-      <Card>
-        <CardHeader>
-          <CardTitle>账户概览</CardTitle>
-          <CardDescription>各账户详细信息</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <ChartCard
+        title="账户概览"
+        description="各账户详细信息"
+      >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {accountData.map((acc, i) => (
               <div key={acc.name} className="p-4 rounded-lg bg-muted/50">
@@ -353,16 +337,13 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
+      </ChartCard>
 
       {/* Detailed Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>账户明细表</CardTitle>
-          <CardDescription>完整的账户数据统计</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <ChartCard
+        title="账户明细表"
+        description="完整的账户数据统计"
+      >
           <Table>
             <TableHeader>
               <TableRow>
@@ -395,8 +376,7 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
               ))}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
+      </ChartCard>
     </div>
   );
 }

@@ -1,10 +1,10 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine
 } from 'recharts';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { MonthlyData } from '@/types/transaction';
 import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, formatCurrencyK, formatCurrencyFull } from '@/lib/chart-config';
+import { ChartCard } from '@/components/shared';
 
 export interface MonthlyTrendChartProps {
   title: string;
@@ -28,15 +28,11 @@ export function MonthlyTrendChart({
   const gradientId = `${dataKey}Gradient`;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Icon className="h-5 w-5 text-primary" />
-          {title}
-        </CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent>
+    <ChartCard
+      title={title}
+      description={description}
+      icon={Icon}
+    >
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={monthlyData}>
@@ -76,7 +72,6 @@ export function MonthlyTrendChart({
             </AreaChart>
           </ResponsiveContainer>
         </div>
-      </CardContent>
-    </Card>
+    </ChartCard>
   );
 }

@@ -6,6 +6,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct, useUnitsDisplay } from '@/hooks/useAssets';
+import { useFilteredAndSorted } from '@/hooks/useFilteredAndSorted';
 import { formatCurrencyFull } from '@/lib/chart-config';
 import { Plus, Pencil, Trash2, Banknote, Filter, X, Info, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { useSettings, getReturnRateStatus, getReturnRateColor } from '@/contexts/SettingsContext';
@@ -414,80 +415,51 @@ export function ProductsLibrary() {
     return metrics;
   }, [products, units]);
 
-  // Filtered and sorted products with useMemo
-  const filteredProducts = useMemo(() => {
-    if (!products) return [];
+  // Filtered and sorted products
+  const filteredProducts = useFilteredAndSorted({
+    items: products,
+    filters: {
+      channel: filterChannel,
+      category: filterCategory,
+      currency: filterCurrency,
+      investStatus: filterInvestStatus,
+    },
+    sort: {
+      field: sortField,
+      order: sortOrder,
+    },
+    customFilter: (product, filters) => {
+      // Handle basic filters
+      if (filters.channel !== 'all' && product.channel !== filters.channel) return false;
+      if (filters.category !== 'all' && product.category !== filters.category) return false;
+      if (filters.currency !== 'all' && product.currency !== filters.currency) return false;
 
-    // First filter
-    let result = products.filter(product => {
-      if (filterChannel !== 'all' && product.channel !== filterChannel) return false;
-      if (filterCategory !== 'all' && product.category !== filterCategory) return false;
-      if (filterCurrency !== 'all' && product.currency !== filterCurrency) return false;
-
-      // Filter by investment status
+      // Handle investStatus filter
       const metrics = productMetrics[product.id];
       const hasActiveUnits = metrics && metrics.activeUnitsCount > 0;
       const investStatus = hasActiveUnits ? '投资中' : '已退出';
-      if (filterInvestStatus !== 'all' && investStatus !== filterInvestStatus) return false;
+      if (filters.investStatus !== 'all' && investStatus !== filters.investStatus) return false;
 
       return true;
-    });
-
-    // Then sort
-    result.sort((a, b) => {
-      let compareA, compareB;
-
-      switch (sortField) {
-        case 'name':
-          compareA = a.name;
-          compareB = b.name;
-          break;
-        case 'channel':
-          compareA = a.channel;
-          compareB = b.channel;
-          break;
-        case 'category':
-          compareA = a.category;
-          compareB = b.category;
-          break;
-        case 'investStatus':
-          const metricsA = productMetrics[a.id];
-          const metricsB = productMetrics[b.id];
-          compareA = metricsA && metricsA.activeUnitsCount > 0 ? '投资中' : '已退出';
-          compareB = metricsB && metricsB.activeUnitsCount > 0 ? '投资中' : '已退出';
-          break;
-        case 'totalCapital':
-          compareA = productMetrics[a.id]?.totalCapital || 0;
-          compareB = productMetrics[b.id]?.totalCapital || 0;
-          break;
-        case 'lockPeriod':
-          compareA = a.lock_period_days;
-          compareB = b.lock_period_days;
-          break;
-        case 'annualReturn':
-          compareA = a.annual_return_rate || 0;
-          compareB = b.annual_return_rate || 0;
-          break;
-        default:
-          compareA = a.name;
-          compareB = b.name;
+    },
+    getValueCallback: (product, field) => {
+      // Custom handling for special fields
+      if (field === 'investStatus') {
+        const metrics = productMetrics[product.id];
+        return metrics && metrics.activeUnitsCount > 0 ? '投资中' : '已退出';
       }
-
-      if (typeof compareA === 'string' && typeof compareB === 'string') {
-        return sortOrder === 'asc'
-          ? compareA.localeCompare(compareB, 'zh-CN')
-          : compareB.localeCompare(compareA, 'zh-CN');
+      if (field === 'totalCapital') {
+        return productMetrics[product.id]?.totalCapital || 0;
       }
-
-      if (typeof compareA === 'number' && typeof compareB === 'number') {
-        return sortOrder === 'asc' ? compareA - compareB : compareB - compareA;
+      if (field === 'lockPeriod') {
+        return product.lock_period_days;
       }
-
-      return 0;
-    });
-
-    return result;
-  }, [products, filterChannel, filterCategory, filterCurrency, filterInvestStatus, productMetrics, sortField, sortOrder]);
+      if (field === 'annualReturn') {
+        return product.annual_return_rate || 0;
+      }
+      return product[field];
+    },
+  });
 
   // Handle sort
   const handleSort = (field: SortField) => {

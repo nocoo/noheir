@@ -1,10 +1,10 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { CreditCard } from 'lucide-react';
 import { AccountData } from '@/types/category-shared';
 import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, formatCurrencyK, formatCurrencyFull } from '@/lib/chart-config';
+import { ChartCard } from '@/components/shared';
 
 interface TooltipPayload {
   payload: {
@@ -30,15 +30,11 @@ export function AccountDistributionChart({
   const isVertical = layout === 'vertical';
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <CreditCard className="h-5 w-5 text-primary" />
-          {title}
-        </CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent>
+    <ChartCard
+      title={title}
+      description={description}
+      icon={CreditCard}
+    >
         <div className="h-[350px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
@@ -75,7 +71,6 @@ export function AccountDistributionChart({
             </BarChart>
           </ResponsiveContainer>
         </div>
-      </CardContent>
-    </Card>
+    </ChartCard>
   );
 }

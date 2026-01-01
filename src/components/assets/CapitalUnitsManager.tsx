@@ -16,6 +16,7 @@ import {
   useArchiveUnit,
   useProducts,
 } from '@/hooks/useAssets';
+import { useFilteredAndSorted } from '@/hooks/useFilteredAndSorted';
 import { Plus, Pencil, Trash2, Coins, ArrowRight, Undo, Archive, Filter, X, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
@@ -903,72 +904,25 @@ export function CapitalUnitsManager() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   // Filtered and sorted units
-  const filteredUnits = useMemo(() => {
-    if (!units) return [];
-
-    // First filter
-    let result = units.filter(unit => {
-      if (filterStatus !== 'all' && unit.status !== filterStatus) return false;
-      if (filterStrategy !== 'all' && unit.strategy !== filterStrategy) return false;
-      if (filterTactics !== 'all' && unit.tactics !== filterTactics) return false;
-      return true;
-    });
-
-    // Then sort
-    result.sort((a, b) => {
-      let compareA, compareB;
-
-      switch (sortField) {
-        case 'unit_code':
-          compareA = a.unit_code;
-          compareB = b.unit_code;
-          break;
-        case 'amount':
-          compareA = a.amount;
-          compareB = b.amount;
-          break;
-        case 'currency':
-          compareA = a.currency;
-          compareB = b.currency;
-          break;
-        case 'strategy':
-          compareA = a.strategy;
-          compareB = b.strategy;
-          break;
-        case 'tactics':
-          compareA = a.tactics;
-          compareB = b.tactics;
-          break;
-        case 'status':
-          compareA = a.status;
-          compareB = b.status;
-          break;
-        case 'remaining_days':
-          const daysA = a.days_until_maturity ?? Infinity;
-          const daysB = b.days_until_maturity ?? Infinity;
-          compareA = daysA;
-          compareB = daysB;
-          break;
-        default:
-          compareA = a.unit_code;
-          compareB = b.unit_code;
+  const filteredUnits = useFilteredAndSorted({
+    items: units,
+    filters: {
+      status: filterStatus,
+      strategy: filterStrategy,
+      tactics: filterTactics,
+    },
+    sort: {
+      field: sortField,
+      order: sortOrder,
+    },
+    getValueCallback: (item, field) => {
+      // Custom handling for remaining_days field
+      if (field === 'remaining_days') {
+        return item.days_until_maturity ?? Infinity;
       }
-
-      if (typeof compareA === 'string' && typeof compareB === 'string') {
-        return sortOrder === 'asc'
-          ? compareA.localeCompare(compareB, 'zh-CN')
-          : compareB.localeCompare(compareA, 'zh-CN');
-      }
-
-      if (typeof compareA === 'number' && typeof compareB === 'number') {
-        return sortOrder === 'asc' ? compareA - compareB : compareB - compareA;
-      }
-
-      return 0;
-    });
-
-    return result;
-  }, [units, filterStatus, filterStrategy, filterTactics, sortField, sortOrder]);
+      return item[field];
+    },
+  });
 
   // Handle sort
   const handleSort = (field: UnitSortField) => {

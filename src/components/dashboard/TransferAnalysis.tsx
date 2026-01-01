@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Transaction, MonthlyData } from '@/types/transaction';
 import { StatCard } from './StatCard';
 import { useSettings, getExpenseColor, getExpenseColorHsl } from '@/contexts/SettingsContext';
@@ -11,6 +10,7 @@ import {
 import { ArrowRightLeft, CreditCard, Calendar, Wallet, TrendingUp } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, legendStyle, formatCurrencyK, formatCurrencyFull } from '@/lib/chart-config';
+import { ChartCard } from '@/components/shared';
 
 interface TransferAnalysisProps {
   transactions: Transaction[];
@@ -157,15 +157,11 @@ export function TransferAnalysis({ transactions, monthlyData }: TransferAnalysis
       </div>
 
       {/* Monthly Trend */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-primary" />
-            月度转账趋势
-          </CardTitle>
-          <CardDescription>每月转账金额变化</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <ChartCard
+        title="月度转账趋势"
+        description="每月转账金额变化"
+        icon={Calendar}
+      >
           <div className="h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={monthlyTransferData}>
@@ -192,17 +188,14 @@ export function TransferAnalysis({ transactions, monthlyData }: TransferAnalysis
               </AreaChart>
             </ResponsiveContainer>
           </div>
-        </CardContent>
-      </Card>
+      </ChartCard>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Category Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle>转账分类分布</CardTitle>
-            <CardDescription>信用卡还款 vs 其他转账</CardDescription>
-          </CardHeader>
-          <CardContent>
+        <ChartCard
+          title="转账分类分布"
+          description="信用卡还款 vs 其他转账"
+        >
             <div className="h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
@@ -231,16 +224,13 @@ export function TransferAnalysis({ transactions, monthlyData }: TransferAnalysis
                 </PieChart>
               </ResponsiveContainer>
             </div>
-          </CardContent>
-        </Card>
+        </ChartCard>
 
         {/* Transfer by Account */}
-        <Card>
-          <CardHeader>
-            <CardTitle>账户转账统计</CardTitle>
-            <CardDescription>各账户转账金额排行</CardDescription>
-          </CardHeader>
-          <CardContent>
+        <ChartCard
+          title="账户转账统计"
+          description="各账户转账金额排行"
+        >
             <div className="h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={transferByAccount.slice(0, 10)} layout="vertical" margin={{ top: 10, right: 30, bottom: 10, left: 10 }}>
@@ -256,20 +246,15 @@ export function TransferAnalysis({ transactions, monthlyData }: TransferAnalysis
                 </BarChart>
               </ResponsiveContainer>
             </div>
-          </CardContent>
-        </Card>
+        </ChartCard>
       </div>
 
       {/* Monthly Transfer Details */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-primary" />
-            月度转账明细
-          </CardTitle>
-          <CardDescription>每月转账及信用卡还款详情</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <ChartCard
+        title="月度转账明细"
+        description="每月转账及信用卡还款详情"
+        icon={Calendar}
+      >
           <div className="h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthlyTransferData} margin={{ top: 20, right: 30, bottom: 20, left: 20 }}>
@@ -287,16 +272,13 @@ export function TransferAnalysis({ transactions, monthlyData }: TransferAnalysis
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </CardContent>
-      </Card>
+      </ChartCard>
 
       {/* Transfer Detail Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>转账明细表</CardTitle>
-          <CardDescription>所有转账记录详情</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <ChartCard
+        title="转账明细表"
+        description="所有转账记录详情"
+      >
           <Table>
             <TableHeader>
               <TableRow>
@@ -322,8 +304,7 @@ export function TransferAnalysis({ transactions, monthlyData }: TransferAnalysis
                 ))}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
+      </ChartCard>
     </div>
   );
 }

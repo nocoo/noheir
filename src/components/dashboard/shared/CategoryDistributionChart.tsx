@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
@@ -13,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, formatCurrencyK, formatCurrencyFull } from '@/lib/chart-config';
+import { ChartCard } from '@/components/shared';
 
 export interface CategoryDistributionChartProps {
   title: string;
@@ -37,32 +37,26 @@ export function CategoryDistributionChart({
     : detailList.find(p => p.primary === selectedPrimary)?.secondaryCategories.map(s => ({ name: s.name, value: s.total })) || [];
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Layers className="h-5 w-5 text-primary" />
-              {title}
-            </CardTitle>
-            <CardDescription>{description}</CardDescription>
-          </div>
-          <Select value={selectedPrimary} onValueChange={setSelectedPrimary}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="选择层级" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">按一级分类</SelectItem>
-              {detailList.map(cat => (
-                <SelectItem key={cat.primary} value={cat.primary}>
-                  {cat.primary}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </CardHeader>
-      <CardContent>
+    <ChartCard
+      title={title}
+      description={description}
+      icon={Layers}
+      actions={
+        <Select value={selectedPrimary} onValueChange={setSelectedPrimary}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="选择层级" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">按一级分类</SelectItem>
+            {detailList.map(cat => (
+              <SelectItem key={cat.primary} value={cat.primary}>
+                {cat.primary}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      }
+    >
         <div className="h-[350px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
@@ -86,7 +80,6 @@ export function CategoryDistributionChart({
             </BarChart>
           </ResponsiveContainer>
         </div>
-      </CardContent>
-    </Card>
+    </ChartCard>
   );
 }
