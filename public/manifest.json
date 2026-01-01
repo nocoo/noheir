@@ -1,6 +1,6 @@
 {
-  "name": "个人财务管理",
-  "short_name": "财务管理",
+  "name": "noheir",
+  "short_name": "noheir",
   "description": "专业的个人财务管理工具，支持收支分析、储蓄率追踪、多账户管理",
   "start_url": "/",
   "display": "standalone",

@@ -11,7 +11,7 @@ export function LoginPage() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary p-4 animate-in fade-in duration-300">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-4 text-center">
           {/* Logo */}
