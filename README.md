@@ -150,26 +150,7 @@ npm run dev
 
 ## 部署指南
 
-### 部署 Supabase Edge Functions (可选)
-
-如果你需要 AI 聊天功能，部署 chat-agent 函数：
-
-```bash
-# 登录 Supabase
-supabase login
-
-# 链接项目
-supabase link --project-ref <YOUR_PROJECT_REF>
-
-# 部署函数
-supabase functions deploy chat-agent
-
-# 设置 AI API 密钥（在 Supabase Dashboard 中操作）
-# Settings → Edge Functions → chat-agent → Add env var
-# AIHUBMIX_API_KEY=your-api-key
-```
-
-### 部署前端
+### 前端部署
 
 #### Vercel (推荐)
 
@@ -219,7 +200,6 @@ noheir/
 │   ├── pages/         # 页面组件
 │   └── types/         # TypeScript 类型定义
 ├── supabase/
-│   ├── functions/     # Edge Functions
 │   └── migrations/    # 数据库迁移文件
 └── package.json
 ```
@@ -279,10 +259,10 @@ formatCurrencyK(1234.5)     // "¥1.23k"
 
 ### AI 聊天功能不可用
 
-如果需要 AI 功能：
-1. 确保 Edge Functions 已部署
-2. 检查 `AIHUBMIX_API_KEY` 环境变量已设置
-3. 查看 Edge Functions 日志排查错误
+项目采用 BYOM (Bring Your Own Model) 方案，AI 助手需要用户自行配置：
+1. 在设置中启用 AI 助手
+2. 配置你的 AI API (支持 OpenAI 兼容接口)
+3. API Key 仅存储在本地浏览器中，不会上传到服务器
 
 ## 贡献指南
 
