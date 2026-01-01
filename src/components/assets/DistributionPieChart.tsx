@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PieTooltip } from '@/lib/chart-tooltip';
+import { formatCurrencyFull } from '@/lib/chart-config';
 
 interface DistributionData {
   name: string;
