@@ -438,3 +438,34 @@ export function getReturnRateBgColor(status: ReturnRateStatus): string {
       return 'bg-emerald-50 dark:bg-emerald-500/10';
   }
 }
+
+// Savings rate status based on target comparison
+export type SavingsRateStatus = 'below' | 'met' | 'exceeded';
+
+export function getSavingsRateStatus(currentRate: number, targetRate: number): SavingsRateStatus {
+  if (currentRate >= targetRate + 10) return 'exceeded';  // 超出目标 10%+
+  if (currentRate >= targetRate) return 'met';            // 达成目标
+  return 'below';                                          // 未达成
+}
+
+export function getSavingsRateColor(status: SavingsRateStatus): string {
+  switch (status) {
+    case 'below':
+      return 'text-expense';           // 未达成 - 红色
+    case 'met':
+      return 'text-income';            // 达成 - 绿色
+    case 'exceeded':
+      return 'text-emerald-600 dark:text-emerald-400';  // 超出 - 更鲜艳的绿色
+  }
+}
+
+export function getSavingsRateColorHex(status: SavingsRateStatus): string {
+  switch (status) {
+    case 'below':
+      return '#e11d48';  // Red-600
+    case 'met':
+      return '#059669';  // Emerald-600
+    case 'exceeded':
+      return '#22c55e';  // Green-500 (更亮)
+  }
+}

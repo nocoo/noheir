@@ -15,8 +15,9 @@ import {
 } from 'recharts';
 import { MonthlyData } from '@/types/transaction';
 import { TrendingUp, TrendingDown } from 'lucide-react';
-import { useSettings, getIncomeColorHex, getExpenseColorHex } from '@/contexts/SettingsContext';
+import { useSettings, getIncomeColorHex, getExpenseColorHex, getSavingsRateStatus, getSavingsRateColor } from '@/contexts/SettingsContext';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, formatCurrencyK, formatCurrencyFull } from '@/lib/chart-config';
 
 interface SavingsRateChartProps {
@@ -57,6 +58,10 @@ export function SavingsRateChart({ data }: SavingsRateChartProps) {
   // Calculate savings gap based on annualSavingsRate diff
   const savingsGap = totalIncome * (savingsRateDiff / 100);
 
+  // Determine savings rate status and colors
+  const savingsRateStatus = getSavingsRateStatus(annualSavingsRate, targetSavingsRate);
+  const savingsRateColorClass = getSavingsRateColor(savingsRateStatus);
+
   return (
     <Card className="col-span-full">
       <CardHeader>
@@ -66,10 +71,15 @@ export function SavingsRateChart({ data }: SavingsRateChartProps) {
       <CardContent className="space-y-6">
         {/* Summary Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+          <div className={cn(
+            "p-4 rounded-lg border transition-colors",
+            savingsRateStatus === 'below' && "bg-destructive/10 border-destructive/30",
+            savingsRateStatus === 'met' && "bg-income/10 border-income/30",
+            savingsRateStatus === 'exceeded' && "bg-emerald-500/10 border-emerald-500/30"
+          )}>
             <p className="text-sm text-muted-foreground">年度储蓄率</p>
             <div className="flex items-baseline gap-2">
-              <p className="text-2xl font-bold text-primary">{annualSavingsRate.toFixed(1)}%</p>
+              <p className={cn("text-2xl font-bold", savingsRateColorClass)}>{annualSavingsRate.toFixed(1)}%</p>
               <Badge variant={savingsRateDiff >= 0 ? "default" : "destructive"} className="text-xs">
                 {savingsRateDiff >= 0 ? '+' : ''}{savingsRateDiff.toFixed(1)}%
               </Badge>

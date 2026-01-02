@@ -2,9 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { LucideIcon, Info } from 'lucide-react';
-import { useSettings, getIncomeColor, getIncomeColorHex, getExpenseColor, getExpenseColorHex } from '@/contexts/SettingsContext';
+import { useSettings, getIncomeColor, getIncomeColorHex, getExpenseColor, getExpenseColorHex, getSavingsRateStatus, getSavingsRateColor, getSavingsRateColorHex } from '@/contexts/SettingsContext';
 import { formatCurrencyFull } from '@/lib/chart-config';
-import { getScoreRatingColors } from '@/lib/colorPalette';
 
 interface StatCardProps {
   title: string;
@@ -26,17 +25,17 @@ export function StatCard({ title, value, icon: Icon, variant = 'default', showCu
   // For balance variant, determine if it's positive or negative
   const isBalancePositive = variant === 'balance' && typeof value === 'number' && value >= 0;
 
-  // For savings variant, determine color based on savings rate
+  // For savings variant, determine color based on savings rate vs target
   const getSavingsColor = () => {
-    const rate = savingsValue ?? 0;
-    const colors = getScoreRatingColors(rate);
-    return colors.text;
+    if (savingsValue === undefined || targetSavingsRate === undefined) return '';
+    const status = getSavingsRateStatus(savingsValue, targetSavingsRate);
+    return getSavingsRateColor(status);
   };
 
   const getSavingsBorderColor = () => {
-    const rate = savingsValue ?? 0;
-    const colors = getScoreRatingColors(rate);
-    return colors.hex;
+    if (savingsValue === undefined || targetSavingsRate === undefined) return '';
+    const status = getSavingsRateStatus(savingsValue, targetSavingsRate);
+    return getSavingsRateColorHex(status);
   };
 
   const variantStyles = {
