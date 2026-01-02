@@ -273,9 +273,10 @@ input[type="date"] {
   color-scheme: dark;
 }
 
-/* Date input calendar icon color */
+/* Date input calendar icon color - Light mode */
 input[type="date"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
+  filter: invert(0);
   opacity: 0.6;
   transition: opacity 0.2s;
 }
@@ -284,22 +285,34 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   opacity: 1;
 }
 
-/* Dark mode calendar icon - use lighter color for visibility */
+/* Dark mode calendar icon - stronger filters for better visibility */
 .dark input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(1);
-  opacity: 0.7;
+  /* Invert + brightness boost to ensure icon is visible on dark backgrounds */
+  filter: invert(1) brightness(1.5);
+  opacity: 0.8;
 }
 
 .dark input[type="date"]::-webkit-calendar-picker-indicator:hover {
   opacity: 1;
 }
 
-/* Firefox date picker icon */
+/* Firefox date picker icon - Light mode */
 input[type="date"]::-moz-calendar-picker-indicator {
   cursor: pointer;
+  filter: invert(0);
   opacity: 0.6;
 }
 
 input[type="date"]::-moz-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* Firefox dark mode */
+.dark input[type="date"]::-moz-calendar-picker-indicator {
+  filter: invert(1) brightness(1.5);
+  opacity: 0.8;
+}
+
+.dark input[type="date"]::-moz-calendar-picker-indicator:hover {
   opacity: 1;
 }
