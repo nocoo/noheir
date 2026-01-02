@@ -71,6 +71,8 @@ export interface ParsedTransfer {
   outflowAmount: number;
   currency: string;
   account: string;
+  fromAccount?: string;  // Source account (parsed from "A → B")
+  toAccount?: string;    // Destination account (parsed from "A → B")
   tags: string[];
   note?: string;
   rawIndex: number;

@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react';
 import { Transaction } from '@/types/transaction';
+import { Transfer } from '@/types/data';
 import { useSettings } from '@/contexts/SettingsContext';
+import { getLabelColorClasses } from '@/lib/tagColors';
 import {
   Select,
   SelectContent,
@@ -20,6 +22,7 @@ import { YearSelector } from '@/components/dashboard/YearSelector';
 
 interface AccountDetailProps {
   transactions: Transaction[];
+  transfers: Transfer[];
   selectedYear: number;
   availableYears: number[];
   onYearChange: (year: number) => void;
@@ -36,7 +39,36 @@ interface TransactionWithBalance extends Transaction {
   balance: number;
 }
 
-export function AccountDetail({ transactions: allTransactions, selectedYear, availableYears, onYearChange }: AccountDetailProps) {
+interface DisplayEntry {
+  id: string;
+  date: string;
+  primaryCategory?: string;
+  secondaryCategory?: string;
+  tertiaryCategory?: string;
+  type: 'income' | 'expense' | 'transfer';
+  amount: number;
+  balance: number;
+  note?: string;
+}
+
+// Unified entry for balance calculation (from Transaction or Transfer)
+interface BalanceEntry {
+  id: string;
+  date: string;
+  year: number;
+  month: number;
+  day: number;
+  account: string;
+  type: 'income' | 'expense' | 'transfer';
+  amount: number; // For income/expense: positive amount; For transfer: inflow - outflow
+  primaryCategory?: string;
+  secondaryCategory?: string;
+  tertiaryCategory?: string;
+  description?: string;
+  originalData: Transaction | Transfer; // Keep reference for display
+}
+
+export function AccountDetail({ transactions: allTransactions, transfers, selectedYear, availableYears, onYearChange }: AccountDetailProps) {
   const { settings } = useSettings();
   const [selectedAccount, setSelectedAccount] = useState<string>('');
 
@@ -45,11 +77,88 @@ export function AccountDetail({ transactions: allTransactions, selectedYear, ava
     return allTransactions.filter(t => t.year === selectedYear);
   }, [allTransactions, selectedYear]);
 
-  // Extract unique accounts from all transactions
+  // Merge transactions and transfers into unified balance entries
+  const allBalanceEntries = useMemo(() => {
+    const entries: BalanceEntry[] = [];
+
+    // Add transactions
+    allTransactions.forEach(t => {
+      entries.push({
+        id: `tx-${t.id}`,
+        date: t.date,
+        year: t.year,
+        month: t.month,
+        day: new Date(t.date).getDate(),
+        account: t.account,
+        type: t.type,
+        amount: t.type === 'income' ? t.amount : -t.amount,
+        primaryCategory: t.primaryCategory,
+        secondaryCategory: t.secondaryCategory,
+        tertiaryCategory: t.tertiaryCategory,
+        description: t.description,
+        originalData: t,
+      });
+    });
+
+    // Add transfers - split into fromAccount and toAccount entries
+    transfers.forEach(t => {
+      const inflow = t.inflow_amount || 0;
+      const outflow = t.outflow_amount || 0;
+
+      // Parse account names from the raw account field
+      // Format: "平安银行-私行卡7777 → 支付宝-家庭基金"
+      const accountParts = t.account.split('→').map(s => s.trim());
+      const fromAccount = accountParts[0] || t.account;
+      const toAccount = accountParts[1] || t.account;
+
+      // Add entry for FROM account (money going out)
+      if (outflow > 0 && fromAccount) {
+        entries.push({
+          id: `tf-from-${t.id}`,
+          date: t.date,
+          year: t.year,
+          month: t.month,
+          day: t.day,
+          account: fromAccount,
+          type: 'transfer',
+          amount: -outflow,  // Negative: money leaving fromAccount
+          primaryCategory: t.primary_category || undefined,
+          secondaryCategory: t.secondary_category,
+          tertiaryCategory: `转出 → ${toAccount}`,
+          description: t.note || undefined,
+          originalData: t,
+        });
+      }
+
+      // Add entry for TO account (money coming in)
+      if (inflow > 0 && toAccount) {
+        entries.push({
+          id: `tf-to-${t.id}`,
+          date: t.date,
+          year: t.year,
+          month: t.month,
+          day: t.day,
+          account: toAccount,
+          type: 'transfer',
+          amount: inflow,  // Positive: money entering toAccount
+          primaryCategory: t.primary_category || undefined,
+          secondaryCategory: t.secondary_category,
+          tertiaryCategory: `转入 ← ${fromAccount}`,
+          description: t.note || undefined,
+          originalData: t,
+        });
+      }
+    });
+
+    // Sort by date
+    return entries.sort((a, b) => a.date.localeCompare(b.date));
+  }, [allTransactions, transfers]);
+
+  // Extract unique accounts from all balance entries
   const uniqueAccounts = useMemo(() => {
-    const accounts = new Set(allTransactions.map(t => t.account));
+    const accounts = new Set(allBalanceEntries.map(e => e.account));
     return Array.from(accounts).sort();
-  }, [allTransactions]);
+  }, [allBalanceEntries]);
 
   // Group accounts by type
   const accountsByType = useMemo(() => {
@@ -75,18 +184,18 @@ export function AccountDetail({ transactions: allTransactions, selectedYear, ava
   }, [uniqueAccounts, settings.accountTypes]);
 
   // Calculate daily balance for selected account (for the entire year)
-  const { dailyBalances, transactionsWithBalance, summary } = useMemo(() => {
+  const { dailyBalances, displayEntries, summary } = useMemo(() => {
     if (!selectedAccount) {
-      return { dailyBalances: [], transactionsWithBalance: [], summary: null };
+      return { dailyBalances: [], displayEntries: [], summary: null };
     }
 
-    // Get all transactions for this account (from all data), sorted by date
-    const accountTransactions = allTransactions
-      .filter(t => t.account === selectedAccount)
+    // Get all balance entries for this account (from all data), sorted by date
+    const accountEntries = allBalanceEntries
+      .filter(e => e.account === selectedAccount)
       .sort((a, b) => a.date.localeCompare(b.date));
 
-    if (accountTransactions.length === 0) {
-      return { dailyBalances: [], transactionsWithBalance: [], summary: null };
+    if (accountEntries.length === 0) {
+      return { dailyBalances: [], displayEntries: [], summary: null };
     }
 
     // Get balance anchor for this account
@@ -102,30 +211,25 @@ export function AccountDetail({ transactions: allTransactions, selectedYear, ava
     // Calculate daily balances for the selected year
     const balanceMap = new Map<string, DailyBalance>();
     let currentBalance = anchorBalance;
-    let passedAnchor = !anchor; // If no anchor, all transactions count
 
-    // Process all transactions to get to the start of the year
-    for (const t of accountTransactions) {
-      if (t.date < yearStartDate) {
+    // Process all entries to get to the start of the year
+    for (const entry of accountEntries) {
+      if (entry.date < yearStartDate) {
         // Before selected year, just track balance
-        if (t.date === anchor?.date) {
-          // Skip transactions on anchor date
+        if (entry.date === anchor?.date) {
+          // Skip entries on anchor date
           continue;
         }
-        if (t.type === 'income') {
-          currentBalance += t.amount;
-        } else if (t.type === 'expense') {
-          currentBalance -= t.amount;
-        }
+        currentBalance += entry.amount;
         continue;
       }
 
-      if (t.date > `${selectedYear}-12-31`) {
+      if (entry.date > `${selectedYear}-12-31`) {
         break; // Past selected year
       }
 
       // Within selected year
-      const date = t.date;
+      const date = entry.date;
       if (!balanceMap.has(date)) {
         balanceMap.set(date, {
           date,
@@ -136,74 +240,75 @@ export function AccountDetail({ transactions: allTransactions, selectedYear, ava
       }
 
       const dayData = balanceMap.get(date)!;
-      if (t.type === 'income') {
-        currentBalance += t.amount;
-        dayData.income += t.amount;
-      } else if (t.type === 'expense') {
-        currentBalance -= t.amount;
-        dayData.expense += t.amount;
+      currentBalance += entry.amount;
+
+      // Track income/expense separately for display
+      if (entry.type === 'income') {
+        dayData.income += Math.abs(entry.amount);
+      } else if (entry.type === 'expense') {
+        dayData.expense += Math.abs(entry.amount);
       }
+
       dayData.balance = currentBalance;
     }
 
     // Convert to array and sort by date
     const dailyBalances = Array.from(balanceMap.values()).sort((a, b) => a.date.localeCompare(b.date));
 
-    // Add balance to each transaction for the selected year
-    const transactionsWithBalance: TransactionWithBalance[] = [];
+    // Add balance to each entry for the selected year (including transfers)
+    const displayEntries: DisplayEntry[] = [];
     let balance = anchorBalance;
-    let processedStart = false;
 
-    // First, process all transactions before selected year to get starting balance
-    for (const t of accountTransactions) {
-      if (t.date < yearStartDate) {
-        if (t.date === anchor?.date) continue;
-        if (t.type === 'income') {
-          balance += t.amount;
-        } else if (t.type === 'expense') {
-          balance -= t.amount;
-        }
+    // First, process all entries before selected year to get starting balance
+    for (const entry of accountEntries) {
+      if (entry.date < yearStartDate) {
+        if (entry.date === anchor?.date) continue;
+        balance += entry.amount;
         continue;
       }
 
-      if (t.date > `${selectedYear}-12-31`) {
+      if (entry.date > `${selectedYear}-12-31`) {
         break; // Past selected year
       }
 
       // Within selected year
-      if (t.type === 'income') {
-        balance += t.amount;
-      } else if (t.type === 'expense') {
-        balance -= t.amount;
-      }
+      balance += entry.amount;
 
-      transactionsWithBalance.push({
-        ...t,
+      // Add all entries to display list (including transfers)
+      displayEntries.push({
+        id: entry.id,
+        date: entry.date,
+        primaryCategory: entry.primaryCategory,
+        secondaryCategory: entry.secondaryCategory,
+        tertiaryCategory: entry.tertiaryCategory,
+        type: entry.type,
+        amount: Math.abs(entry.amount),
         balance,
+        note: entry.description,
       });
     }
 
     // Calculate summary for selected year
-    const yearTransactions = accountTransactions.filter(
-      t => t.year === selectedYear && t.date !== anchor?.date
+    const yearEntries = accountEntries.filter(
+      e => e.year === selectedYear && e.date !== anchor?.date
     );
-    const income = yearTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-    const expense = yearTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-    const finalBalance = transactionsWithBalance.length > 0
-      ? transactionsWithBalance[transactionsWithBalance.length - 1].balance
+    const income = yearEntries.filter(e => e.type === 'income').reduce((sum, e) => sum + Math.abs(e.amount), 0);
+    const expense = yearEntries.filter(e => e.type === 'expense').reduce((sum, e) => sum + Math.abs(e.amount), 0);
+    const finalBalance = displayEntries.length > 0
+      ? displayEntries[displayEntries.length - 1].balance
       : balance;
 
     const summary = {
       totalIncome: income,
       totalExpense: expense,
-      transactionCount: yearTransactions.length,
+      transactionCount: displayEntries.length,
       initialBalance: anchorBalance,
       finalBalance,
       hasAnchor: !!anchor,
     };
 
-    return { dailyBalances, transactionsWithBalance, summary };
-  }, [selectedAccount, allTransactions, settings.balanceAnchors, selectedYear]);
+    return { dailyBalances, displayEntries, summary };
+  }, [selectedAccount, allBalanceEntries, settings.balanceAnchors, selectedYear]);
 
   // Get account type
   const accountType = settings.accountTypes?.find(c => c.accountName === selectedAccount)?.type || 'unclassified';
@@ -362,7 +467,7 @@ export function AccountDetail({ transactions: allTransactions, selectedYear, ava
             <CardHeader>
               <CardTitle>交易明细</CardTitle>
               <CardDescription>
-                {selectedAccount} 的 {transactionsWithBalance.length} 条交易记录
+                {selectedAccount} 的 {displayEntries.length} 条交易记录
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -377,33 +482,52 @@ export function AccountDetail({ transactions: allTransactions, selectedYear, ava
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {transactionsWithBalance.map((t) => (
-                    <TableRow key={t.id}>
-                      <TableCell>{t.date}</TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{t.primaryCategory}</div>
-                          <div className="text-xs text-muted-foreground">{t.secondaryCategory}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={t.type === 'income' ? 'default' : 'secondary'}
-                          className={t.type === 'income' ? getIncomeColor(settings.colorScheme) : getExpenseColor(settings.colorScheme)}
-                        >
-                          {t.type === 'income' ? '收入' : '支出'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className={`text-right font-medium ${
-                        t.type === 'income' ? getIncomeColor(settings.colorScheme) : getExpenseColor(settings.colorScheme)
-                      }`}>
-                        {t.type === 'income' ? '+' : '-'}{formatCurrencyFull(t.amount)}
-                      </TableCell>
-                      <TableCell className="text-right font-semibold">
-                        {formatCurrencyFull(t.balance)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {displayEntries.map((entry) => {
+                    // Get color for badge based on type
+                    const typeColor = entry.type === 'income'
+                      ? getLabelColorClasses('收入')
+                      : entry.type === 'expense'
+                      ? getLabelColorClasses('支出')
+                      : getLabelColorClasses('转账');
+
+                    // Get color for amount based on amount sign
+                    const amountColor = entry.amount > 0
+                      ? getIncomeColor(settings.colorScheme)
+                      : entry.amount < 0
+                      ? getExpenseColor(settings.colorScheme)
+                      : 'text-muted-foreground';
+
+                    const typeLabel = entry.type === 'income' ? '收入' : entry.type === 'expense' ? '支出' : '转账';
+
+                    // Show prefix based on amount sign (not type)
+                    const amountPrefix = entry.amount > 0 ? '+' : entry.amount < 0 ? '-' : '';
+
+                    return (
+                      <TableRow key={entry.id}>
+                        <TableCell>{entry.date}</TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{entry.primaryCategory || '-'}</div>
+                            <div className="text-xs text-muted-foreground">{entry.secondaryCategory || entry.tertiaryCategory || '-'}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className={`${typeColor.bg} ${typeColor.text} border-0`}
+                          >
+                            {typeLabel}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className={`text-right font-medium ${amountColor}`}>
+                          {amountPrefix}{formatCurrencyFull(entry.amount)}
+                        </TableCell>
+                        <TableCell className="text-right font-semibold">
+                          {formatCurrencyFull(entry.balance)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </CardContent>

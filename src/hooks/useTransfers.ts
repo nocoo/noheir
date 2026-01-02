@@ -133,6 +133,11 @@ export function useTransfers() {
       // Parse tags
       const tags = row.tags ? row.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
 
+      // Parse account field: "平安银行-私行卡7777 → 支付宝-家庭基金"
+      const accountParts = row.account.split('→').map(s => s.trim());
+      const fromAccount = accountParts[0] || row.account;
+      const toAccount = accountParts[1] || row.account;
+
       transfers.push({
         date: row.date,
         year,
@@ -144,7 +149,9 @@ export function useTransfers() {
         inflowAmount,
         outflowAmount,
         currency: row.currency,
-        account: row.account,
+        account: row.account, // Keep original for reference
+        fromAccount,  // New field: source account
+        toAccount,    // New field: destination account
         tags,
         note: row.note || undefined,
         rawIndex: i,
@@ -152,7 +159,7 @@ export function useTransfers() {
     }
 
     if (filteredCount > 0) {
-      console.log(`Filtered out ${filteredCount} "转账 / 优惠抵扣" records`);
+      // Filtered out ${filteredCount} "转账 / 优惠抵扣" records
     }
 
     return transfers;

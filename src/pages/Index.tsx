@@ -32,6 +32,7 @@ import { StrategySunburst } from '@/components/assets/StrategySunburst';
 import { LiquidityLadder } from '@/components/assets/LiquidityLadder';
 import { FinancialHealthPage } from '@/pages/FinancialHealthPage';
 import { useTransactions } from '@/hooks/useTransactions';
+import { useTransfers } from '@/hooks/useTransfers';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { LoadingPage } from '@/components/pages/LoadingPage';
@@ -68,6 +69,8 @@ const Index = () => {
     loadStoredData,
     getQualityForYear,
   } = useTransactions();
+
+  const { transfers } = useTransfers();
 
   const { settings } = useSettings();
 
@@ -370,6 +373,32 @@ const Index = () => {
         >
           <FlowAnalysis
             transactions={transactions}
+            selectedYear={selectedYear}
+            availableYears={availableYears}
+            onYearChange={setSelectedYear}
+          />
+        </motion.div>
+      )}
+
+      {activeTab === 'account-detail' && (
+        <motion.div
+          key="account-detail"
+          initial="initial"
+          animate="animate"
+          variants={fadeInUp}
+          transition={{ duration: 0.25 }}
+          className="space-y-6"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold">账户详情</h1>
+              <p className="text-muted-foreground">查看单个账户的金额变化和交易明细（含转账）</p>
+            </div>
+            <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
+          </div>
+          <AccountDetail
+            transactions={allTransactions}
+            transfers={transfers}
             selectedYear={selectedYear}
             availableYears={availableYears}
             onYearChange={setSelectedYear}
