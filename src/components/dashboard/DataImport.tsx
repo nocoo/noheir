@@ -207,10 +207,10 @@ export function DataImport({ onUploadComplete }: DataImportProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5" />
-            数据导入
+            导入收支流水
           </CardTitle>
           <CardDescription>
-            上传 CSV 文件导入交易数据到云端
+            上传收支流水 CSV 文件到云端
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -239,10 +239,10 @@ export function DataImport({ onUploadComplete }: DataImportProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Upload className="h-5 w-5" />
-          数据导入
+          导入收支流水
         </CardTitle>
         <CardDescription>
-          上传 CSV 文件导入交易数据到云端
+          上传收支流水 CSV 文件到云端
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -284,12 +284,20 @@ export function DataImport({ onUploadComplete }: DataImportProps) {
               )}
             </div>
           ) : step === 'done' ? (
-            <div className="flex flex-col items-center gap-2">
-              <CheckCircle2 className="h-10 w-10 text-income" />
-              <p className="font-medium">导入成功！</p>
-              <Button variant="outline" size="sm" onClick={handleRetry} className="mt-2">
-                导入更多数据
-              </Button>
+            <div className="space-y-6 text-center py-8">
+              <CheckCircle2 className="h-16 w-16 text-green-600 mx-auto" />
+              <h3 className="text-2xl font-bold text-green-600">导入成功！</h3>
+              <p className="text-muted-foreground">
+                已成功导入 {parsedTransactions.length} 条收支记录到 {csvYear} 年
+              </p>
+              <div className="flex justify-center gap-3">
+                <Button onClick={handleRetry} variant="outline">
+                  继续导入
+                </Button>
+                <Button onClick={() => window.location.hash = '#manage'}>
+                  前往数据管理
+                </Button>
+              </div>
             </div>
           ) : step === 'error' ? (
             <div className="flex flex-col items-center gap-2">

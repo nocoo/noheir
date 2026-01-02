@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useSettings, AccountType } from '@/contexts/SettingsContext';
@@ -157,16 +157,7 @@ export function AccountTypeSettings() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <CreditCard className="h-5 w-5" />
-          账户类型设置
-        </CardTitle>
-        <CardDescription>
-          为每个账户标记类型，便于后续财务分析
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 pt-6">
         {/* Stats Overview */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           {stats.map(({ type, count, config }) => {

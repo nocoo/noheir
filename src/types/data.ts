@@ -17,6 +17,66 @@ export interface RawCSVRow {
 }
 
 /**
+ * Raw Transfer CSV row structure
+ * 日期,收支大类,交易分类,交易类型,流入金额,流出金额,币种,资金账户,标签,备注
+ */
+export interface RawTransferCSVRow {
+  date: string;           // YYYY-MM-DD
+  primaryCategory: string; // 收支大类 (可为空)
+  secondaryCategory: string; // 交易分类 (固定为"转账")
+  transactionType: string; // 交易类型
+  inflow: string;         // 流入金额
+  outflow: string;        // 流出金额
+  currency: string;       // 币种
+  account: string;        // 资金账户 (格式: "账户A → 账户B")
+  tags: string;           // 标签 (comma separated)
+  note: string;           // 备注
+}
+
+/**
+ * Transfer record (from Supabase)
+ */
+export interface Transfer {
+  id: string;
+  user_id: string;
+  date: string;
+  year: number;
+  month: number;
+  day: number;
+  primary_category: string | null;
+  secondary_category: string;
+  transaction_type: string;
+  inflow_amount: number;
+  outflow_amount: number;
+  currency: string;
+  account: string;
+  tags: string[];
+  note: string | null;
+  raw_index: number | null;
+  created_at: string;
+}
+
+/**
+ * Parsed transfer for processing
+ */
+export interface ParsedTransfer {
+  date: string;
+  year: number;
+  month: number;
+  day: number;
+  primaryCategory: string | null;
+  secondaryCategory: string;
+  transactionType: string;
+  inflowAmount: number;
+  outflowAmount: number;
+  currency: string;
+  account: string;
+  tags: string[];
+  note?: string;
+  rawIndex: number;
+}
+
+/**
  * Parsed transaction with validation status
  */
 export interface ParsedTransaction {
@@ -168,4 +228,14 @@ export interface ImportSession {
     validated: TransactionValidation[];
     cleaned: CleanedTransaction[];
   };
+}
+
+/**
+ * Year data completeness status
+ */
+export interface YearDataStatus {
+  year: number;
+  hasTransactions: boolean;
+  hasTransfers: boolean;
+  isComplete: boolean; // Both transactions and transfers exist
 }

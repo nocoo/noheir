@@ -4,6 +4,7 @@ import { StatCard } from '@/components/dashboard/StatCard';
 import { MonthlyChart } from '@/components/dashboard/MonthlyChart';
 import { TransactionTable } from '@/components/dashboard/TransactionTable';
 import { DataImport } from '@/components/dashboard/DataImport';
+import { TransferImportPage } from '@/components/dashboard/TransferImportPage';
 import { DataQuality } from '@/components/dashboard/DataQuality';
 import { DataManagement } from '@/components/dashboard/DataManagement';
 import { FlowAnalysis } from '@/components/dashboard/FlowAnalysis';
@@ -90,6 +91,14 @@ const Index = () => {
     setActiveTab('import');
   };
 
+  const handleGoToTransferImport = () => {
+    setActiveTab('transfer-import');
+  };
+
+  const handleGoToManage = () => {
+    setActiveTab('manage');
+  };
+
   // Show Loading page when auth is loading or data is loading for the first time
   if (authLoading || (user && isLoading)) {
     return <LoadingPage />;
@@ -112,10 +121,23 @@ const Index = () => {
           className="space-y-6"
         >
           <div>
-            <h1 className="text-2xl font-bold">数据导入</h1>
-            <p className="text-muted-foreground">上传交易数据文件开始分析</p>
+            <h1 className="text-2xl font-bold">导入收支流水</h1>
+            <p className="text-muted-foreground">上传收支流水 CSV 文件</p>
           </div>
           <DataImport onUploadComplete={loadStoredData} />
+        </motion.div>
+      )}
+
+      {activeTab === 'transfer-import' && (
+        <motion.div
+          key="transfer-import"
+          initial="initial"
+          animate="animate"
+          variants={fadeInUp}
+          transition={{ duration: 0.25 }}
+          className="space-y-6"
+        >
+          <TransferImportPage onNavigateToManage={handleGoToManage} />
         </motion.div>
       )}
 
@@ -158,6 +180,7 @@ const Index = () => {
             onClearAll={clearAll}
             onExport={exportData}
             onGoToImport={handleGoToImport}
+            onGoToTransferImport={handleGoToTransferImport}
             onViewQuality={handleViewQuality}
             qualityData={qualityData}
           />

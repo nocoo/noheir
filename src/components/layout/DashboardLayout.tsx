@@ -84,7 +84,6 @@ const navGroups = [
       { id: 'ai-settings', label: 'AI设置', icon: Sparkles },
       { id: 'account-types', label: '账户设置', icon: CreditCard },
       { id: 'manage', label: '数据管理', icon: Database },
-      { id: 'import', label: '数据导入', icon: Upload },
     ]
   },
 ];
