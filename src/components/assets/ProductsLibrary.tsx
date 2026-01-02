@@ -396,7 +396,10 @@ export function ProductsLibrary() {
     }> = {};
 
     products.forEach(product => {
-      const productUnits = units.filter(unit => unit.product_id === product.id && unit.status === '已成立');
+      // Include both '筹集中' (raising) and '已成立' (established) units as active
+      const productUnits = units.filter(unit =>
+        unit.product_id === product.id && (unit.status === '已成立' || unit.status === '筹集中')
+      );
       const totalCapital = productUnits.reduce((sum, unit) => sum + unit.amount, 0);
       const activeUnitsCount = productUnits.length;
 
