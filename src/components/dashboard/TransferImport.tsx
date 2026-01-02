@@ -1,9 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTransfers } from '@/hooks/useTransfers';
 import { ParsedTransfer } from '@/types/data';
@@ -18,14 +15,13 @@ import {
   Calendar,
   X,
 } from 'lucide-react';
+import { ImportUI, type ImportStep, type StepInfo } from '@/components/dashboard/shared';
 
 interface TransferImportProps {
   year: number;
   onUploadComplete?: () => void;
   onClose?: () => void;
 }
-
-type ImportStep = 'idle' | 'parsing' | 'uploading' | 'done' | 'error';
 
 export function TransferImport({ year, onUploadComplete, onClose }: TransferImportProps) {
   const { user } = useAuth();
@@ -48,6 +44,48 @@ export function TransferImport({ year, onUploadComplete, onClose }: TransferImpo
     setErrorMessage(null);
     setFileName(null);
   }, []);
+
+  // Get step info for UI display
+  const getStepInfo = (): StepInfo => {
+    switch (step) {
+      case 'idle':
+        return {
+          icon: <Upload className="h-8 w-8 text-muted-foreground" />,
+          title: '拖拽或点击上传转账 CSV 文件',
+          description: `年份: ${year}`,
+        };
+      case 'parsing':
+        return {
+          icon: <Loader2 className="h-8 w-8 text-primary animate-spin" />,
+          title: '正在解析 CSV 文件...',
+          description: fileName || '',
+        };
+      case 'uploading':
+        return {
+          icon: <Loader2 className="h-8 w-8 text-primary animate-spin" />,
+          title: '正在上传到云端...',
+          description: `${parsedTransfers.length} 条记录`,
+        };
+      case 'done':
+        return {
+          icon: <CheckCircle2 className="h-8 w-8 text-green-600" />,
+          title: '导入成功！',
+          description: `已成功导入 ${parsedTransfers.length} 条转账记录`,
+        };
+      case 'error':
+        return {
+          icon: <AlertTriangle className="h-8 w-8 text-destructive" />,
+          title: '导入失败',
+          description: errorMessage || '未知错误',
+        };
+      default:
+        return {
+          icon: <Upload className="h-8 w-8 text-muted-foreground" />,
+          title: '准备中',
+          description: '',
+        };
+    }
+  };
 
   // Handle file selection
   const handleFile = async (file: File) => {
@@ -108,7 +146,15 @@ export function TransferImport({ year, onUploadComplete, onClose }: TransferImpo
       }
     } catch (error: any) {
       console.error('Transfer import error:', error);
-      setErrorMessage(error?.message || '导入失败，请重试');
+
+      // Special error message for header validation
+      const errorMsg = error?.message || '导入失败，请重试';
+      if (errorMsg.includes('表头')) {
+        setErrorMessage(`文件格式错误：您上传的可能是"收支流水"文件，请上传"转账数据"文件。`);
+      } else {
+        setErrorMessage(errorMsg);
+      }
+
       setStep('error');
     }
   };
@@ -142,44 +188,6 @@ export function TransferImport({ year, onUploadComplete, onClose }: TransferImpo
     }
   };
 
-  // Get step info
-  const getStepInfo = () => {
-    switch (step) {
-      case 'idle':
-        return {
-          icon: <Upload className="h-8 w-8 text-muted-foreground" />,
-          title: '拖拽或点击上传转账 CSV 文件',
-          description: `年份: ${year}`,
-        };
-      case 'parsing':
-        return {
-          icon: <Loader2 className="h-8 w-8 text-primary animate-spin" />,
-          title: '正在解析 CSV 文件...',
-          description: fileName || '',
-        };
-      case 'uploading':
-        return {
-          icon: <Loader2 className="h-8 w-8 text-primary animate-spin" />,
-          title: '正在上传到云端...',
-          description: `${parsedTransfers.length} 条记录`,
-        };
-      case 'done':
-        return {
-          icon: <CheckCircle2 className="h-8 w-8 text-green-600" />,
-          title: '导入成功！',
-          description: `已成功导入 ${parsedTransfers.length} 条转账记录`,
-        };
-      case 'error':
-        return {
-          icon: <AlertTriangle className="h-8 w-8 text-destructive" />,
-          title: '导入失败',
-          description: errorMessage || '未知错误',
-        };
-      default:
-        return null;
-    }
-  };
-
   const stepInfo = getStepInfo();
 
   return (
@@ -202,85 +210,45 @@ export function TransferImport({ year, onUploadComplete, onClose }: TransferImpo
           )}
         </div>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Upload Area */}
-        <div
-          className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-            isDragging
-              ? 'border-primary bg-primary/5'
-              : 'border-muted-foreground/25 hover:border-primary/50'
-          } ${step !== 'idle' && step !== 'error' ? 'pointer-events-none opacity-50' : ''}`}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv"
-            className="hidden"
-            onChange={handleFileInputChange}
-          />
-
-          {stepInfo && (
-            <div className="space-y-4">
-              <div className="flex justify-center">{stepInfo.icon}</div>
-              <div>
-                <h3 className="text-lg font-semibold">{stepInfo.title}</h3>
-                <p className="text-sm text-muted-foreground mt-1">{stepInfo.description}</p>
-              </div>
-
-              {step === 'idle' && (
-                <Button variant="outline" className="mt-4">
-                  <FileText className="h-4 w-4 mr-2" />
-                  选择文件
-                </Button>
-              )}
-
-              {step === 'uploading' && (
-                <div className="space-y-2">
-                  <Progress value={uploadProgress} />
-                  <p className="text-xs text-muted-foreground">
-                    {uploadProgress}% 完成
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* File format info */}
-        {step === 'idle' && (
-          <Alert>
-            <Calendar className="h-4 w-4" />
-            <AlertDescription className="text-sm">
+      <ImportUI
+        step={step}
+        stepInfo={stepInfo}
+        isDragging={isDragging}
+        fileName={fileName}
+        uploadProgress={uploadProgress}
+        errorMessage={errorMessage}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        onFileInputClick={() => fileInputRef.current?.click()}
+        onFileInputChange={handleFileInputChange}
+        onRetry={resetState}
+        fileInputRef={fileInputRef}
+        showFileFormatInfo={step === 'idle'}
+        fileFormatInfo={{
+          icon: Calendar,
+          content: (
+            <>
               <strong>CSV 格式要求:</strong> 日期,收支大类,交易分类,交易类型,流入金额,流出金额,币种,资金账户,标签,备注
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Error message */}
-        {step === 'error' && (
-          <div className="flex gap-3">
+            </>
+          ),
+        }}
+        errorActions={
+          <>
             <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
               重新上传
             </Button>
             <Button variant="ghost" onClick={resetState}>
               取消
             </Button>
-          </div>
-        )}
-
-        {/* Done state */}
-        {step === 'done' && (
-          <div className="flex gap-3">
-            <Button onClick={onClose}>
-              完成
-            </Button>
-          </div>
-        )}
-      </CardContent>
+          </>
+        }
+        doneActions={
+          <Button onClick={onClose}>
+            完成
+          </Button>
+        }
+      />
     </Card>
   );
 }

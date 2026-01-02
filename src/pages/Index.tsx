@@ -122,9 +122,12 @@ const Index = () => {
         >
           <div>
             <h1 className="text-2xl font-bold">导入收支流水</h1>
-            <p className="text-muted-foreground">上传收支流水 CSV 文件</p>
+            <p className="text-muted-foreground">上传收支流水 CSV 文件到云端</p>
           </div>
-          <DataImport onUploadComplete={loadStoredData} />
+          <DataImport
+            onUploadComplete={loadStoredData}
+            onNavigateToManage={handleGoToManage}
+          />
         </motion.div>
       )}
 

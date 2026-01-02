@@ -117,8 +117,15 @@ export function TransferImportPage({ onNavigateToManage }: TransferImportPagePro
       toast.success(`成功导入 ${parsedTransfers.length} 条转账记录`);
       setStep('done');
 
-      // Reload transfers data
-      await loadTransfers();
+      // Reload transfers data in background without blocking UI
+      loadTransfers().catch(console.error);
+
+      // Auto-navigate to management page after short delay
+      if (onNavigateToManage) {
+        setTimeout(() => {
+          onNavigateToManage();
+        }, 1500);
+      }
     } catch (error: any) {
       console.error('Upload error:', error);
       setErrorMessage(error?.message || '导入失败，请重试');

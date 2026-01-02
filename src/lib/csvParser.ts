@@ -115,12 +115,29 @@ export function parseCSV(content: string): {
   const headerLine = lines[0];
   const headers = parseCSVLine(headerLine);
 
-  // Validate header
+  // Validate header - strict check for required columns
   const expectedHeaders = ['日期', '交易分类', '交易类型', '流入金额', '流出金额', '币种', '资金账户', '标签', '备注'];
-  if (headers.length < 9) {
+
+  // Check if all required headers are present (allowing flexible order)
+  const missingHeaders = expectedHeaders.filter(expected => !headers.includes(expected));
+
+  if (missingHeaders.length > 0) {
+    return {
+      transactions,
+      errors: [{
+        row: 1,
+        message: `CSV 表头格式错误。缺少以下列: ${missingHeaders.join(', ')}`,
+        data: headers
+      }],
+      warnings
+    };
+  }
+
+  // Check for extra columns (warn but continue)
+  if (headers.length > 9) {
     warnings.push({
-      row: 0,
-      message: `CSV 表头列数不足 (期望 9 列，实际 ${headers.length} 列)`
+      row: 1,
+      message: `CSV 表头包含额外列 (期望 9 列，实际 ${headers.length} 列)，将忽略多余列`
     });
   }
 

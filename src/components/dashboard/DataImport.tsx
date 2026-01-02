@@ -1,19 +1,8 @@
 import { useState, useRef, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSupabaseTransactions } from '@/hooks/useSupabaseTransactions';
 import { useTransactions } from '@/hooks/useTransactions';
@@ -23,7 +12,6 @@ import { toast } from 'sonner';
 import {
   Upload,
   FileText,
-  AlertCircle,
   CheckCircle2,
   Loader2,
   AlertTriangle,
@@ -32,14 +20,14 @@ import {
   Database,
   ArrowRight,
 } from 'lucide-react';
+import { ImportUI, type ImportStep, type StepInfo } from '@/components/dashboard/shared';
 
 interface DataImportProps {
   onUploadComplete?: () => void;
+  onNavigateToManage?: () => void;
 }
 
-type ImportStep = 'idle' | 'parsing' | 'validating' | 'checking_db' | 'confirming' | 'uploading' | 'done' | 'error';
-
-export function DataImport({ onUploadComplete }: DataImportProps) {
+export function DataImport({ onUploadComplete, onNavigateToManage }: DataImportProps) {
   const { user, signInWithGoogle } = useAuth();
   const { loadStoredData } = useTransactions();
   const { checkExistingData, uploadTransactions, deleteYearData } = useSupabaseTransactions();
@@ -93,7 +81,15 @@ export function DataImport({ onUploadComplete }: DataImportProps) {
       const result = await parseCSVFile(file);
 
       if (result.errors.length > 0) {
-        setErrorMessage(`CSV 解析失败: ${result.errors[0].message}`);
+        const error = result.errors[0];
+
+        // Special error message for header validation
+        if (error.row === 1 && error.message.includes('表头')) {
+          setErrorMessage(`文件格式错误：您上传的可能是"转账数据"文件，请上传"收支流水"文件。`);
+        } else {
+          setErrorMessage(`CSV 解析失败: ${error.message}`);
+        }
+
         setStep('error');
         return;
       }
@@ -129,6 +125,60 @@ export function DataImport({ onUploadComplete }: DataImportProps) {
     }
   };
 
+  // Get step info for UI display
+  const getStepInfo = (): StepInfo => {
+    switch (step) {
+      case 'idle':
+        return {
+          icon: <Upload className="h-8 w-8 text-muted-foreground" />,
+          title: '拖拽或点击上传收支流水 CSV 文件',
+          description: '支持 CSV 格式',
+        };
+      case 'parsing':
+        return {
+          icon: <Loader2 className="h-8 w-8 text-primary animate-spin" />,
+          title: '正在解析 CSV 文件...',
+          description: fileName || '',
+        };
+      case 'validating':
+        return {
+          icon: <Loader2 className="h-8 w-8 text-primary animate-spin" />,
+          title: '正在验证数据...',
+          description: `${parsedTransactions.length} 条记录`,
+        };
+      case 'confirming':
+        return {
+          icon: <CheckCircle2 className="h-8 w-8 text-green-600" />,
+          title: '解析成功',
+          description: `${parsedTransactions.length} 条记录`,
+        };
+      case 'uploading':
+        return {
+          icon: <Loader2 className="h-8 w-8 text-primary animate-spin" />,
+          title: '正在上传到云端...',
+          description: `${parsedTransactions.length} 条记录`,
+        };
+      case 'done':
+        return {
+          icon: <CheckCircle2 className="h-8 w-8 text-green-600" />,
+          title: '导入成功！',
+          description: `已成功导入 ${parsedTransactions.length} 条收支记录`,
+        };
+      case 'error':
+        return {
+          icon: <AlertTriangle className="h-8 w-8 text-destructive" />,
+          title: '导入失败',
+          description: errorMessage || '未知错误',
+        };
+      default:
+        return {
+          icon: <Upload className="h-8 w-8 text-muted-foreground" />,
+          title: '准备中',
+          description: '',
+        };
+    }
+  };
+
   // Confirm and upload
   const handleConfirmUpload = async () => {
     if (!csvYear || parsedTransactions.length === 0) return;
@@ -152,9 +202,20 @@ export function DataImport({ onUploadComplete }: DataImportProps) {
         setStep('done');
         toast.success(`成功上传 ${result.uploaded ?? parsedTransactions.length} 条交易记录`);
 
-        // Reload data from Supabase
-        await loadStoredData();
-        onUploadComplete?.();
+        // Reload data in background without blocking UI
+        loadStoredData().catch(console.error);
+
+        // Call completion callback
+        if (onUploadComplete) {
+          onUploadComplete();
+        }
+
+        // Auto-navigate to management page after short delay
+        if (onNavigateToManage) {
+          setTimeout(() => {
+            onNavigateToManage();
+          }, 1500);
+        }
       } else {
         throw new Error(result.error || '上传失败');
       }
@@ -200,19 +261,12 @@ export function DataImport({ onUploadComplete }: DataImportProps) {
     resetState();
   };
 
+  const stepInfo = getStepInfo();
+
   // Login required UI
   if (!user) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Upload className="h-5 w-5" />
-            导入收支流水
-          </CardTitle>
-          <CardDescription>
-            上传收支流水 CSV 文件到云端
-          </CardDescription>
-        </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center justify-center py-12 space-y-4">
             <div className="p-4 bg-muted rounded-full">
@@ -236,168 +290,110 @@ export function DataImport({ onUploadComplete }: DataImportProps) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Upload className="h-5 w-5" />
-          导入收支流水
-        </CardTitle>
-        <CardDescription>
-          上传收支流水 CSV 文件到云端
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {/* Upload Area */}
-        <div
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          className={`
-            border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer
-            ${isDragging ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}
-            ${step !== 'idle' ? 'opacity-50 cursor-not-allowed' : ''}
-          `}
-          onClick={() => step === 'idle' && fileInputRef.current?.click()}
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv"
-            className="hidden"
-            onChange={handleInputChange}
-            disabled={step !== 'idle'}
-          />
-
-          {step === 'parsing' || step === 'validating' || step === 'checking_db' || step === 'uploading' ? (
-            <div className="flex flex-col items-center gap-3">
-              <Loader2 className="h-10 w-10 text-primary animate-spin" />
-              <p className="font-medium">
-                {step === 'parsing' && '正在解析 CSV 文件...'}
-                {step === 'validating' && '正在验证数据...'}
-                {step === 'checking_db' && '正在检查云端数据...'}
-                {step === 'uploading' && '正在上传到云端...'}
-              </p>
-              {step === 'uploading' && (
-                <div className="w-full max-w-xs space-y-2">
-                  <Progress value={uploadProgress} className="h-2" />
-                  <p className="text-xs text-muted-foreground">{uploadProgress}%</p>
-                </div>
-              )}
-            </div>
-          ) : step === 'done' ? (
-            <div className="space-y-6 text-center py-8">
-              <CheckCircle2 className="h-16 w-16 text-green-600 mx-auto" />
-              <h3 className="text-2xl font-bold text-green-600">导入成功！</h3>
-              <p className="text-muted-foreground">
-                已成功导入 {parsedTransactions.length} 条收支记录到 {csvYear} 年
-              </p>
-              <div className="flex justify-center gap-3">
-                <Button onClick={handleRetry} variant="outline">
-                  继续导入
-                </Button>
-                <Button onClick={() => window.location.hash = '#manage'}>
-                  前往数据管理
-                </Button>
+      <ImportUI
+        step={step}
+        stepInfo={stepInfo}
+        isDragging={isDragging}
+        fileName={fileName}
+        uploadProgress={uploadProgress}
+        errorMessage={errorMessage}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        onFileInputClick={() => fileInputRef.current?.click()}
+        onFileInputChange={handleInputChange}
+        onRetry={handleRetry}
+        fileInputRef={fileInputRef}
+        showCard={false}
+        confirmationContent={
+          <div className="space-y-4">
+            <div className="flex items-center gap-4 py-3 px-4 bg-muted rounded-lg">
+              <Badge variant="outline" className="text-lg px-3 py-1">
+                <Calendar className="h-3 w-3 mr-1" />
+                {csvYear}
+              </Badge>
+              <div className="text-sm">
+                <span className="font-medium">{parsedTransactions.length}</span> 条记录
               </div>
             </div>
-          ) : step === 'error' ? (
-            <div className="flex flex-col items-center gap-2">
-              <AlertCircle className="h-10 w-10 text-expense" />
-              <p className="font-medium">导入失败</p>
-              {errorMessage && (
-                <p className="text-sm text-muted-foreground text-center max-w-md">{errorMessage}</p>
-              )}
-              <Button variant="outline" size="sm" onClick={handleRetry} className="mt-2">
-                重试
+            {existingCount && existingCount > 0 ? (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription className="text-sm">
+                  该年份已存在 <span className="font-medium">{existingCount}</span> 条数据，
+                  上传新数据将覆盖旧数据。
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <Alert>
+                <CheckCircle2 className="h-4 w-4" />
+                <AlertDescription className="text-sm">
+                  该年份暂无数据，将创建新记录。
+                </AlertDescription>
+              </Alert>
+            )}
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={handleRetry}>
+                取消
               </Button>
-            </div>
-          ) : fileName ? (
-            <div className="flex flex-col items-center gap-2">
-              <FileText className="h-10 w-10 text-primary" />
-              <p className="font-medium">{fileName}</p>
-              <p className="text-sm text-muted-foreground">点击重新选择文件</p>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center gap-2">
-              <FileText className="h-10 w-10 text-muted-foreground" />
-              <p className="font-medium">拖拽文件到此处或点击上传</p>
-              <p className="text-sm text-muted-foreground">支持 CSV 格式</p>
-            </div>
-          )}
-        </div>
-
-        {/* Info Section */}
-        <div className="mt-4 space-y-3">
-          <Alert>
-            <Database className="h-4 w-4" />
-            <AlertDescription className="text-sm">
-              <span className="font-medium">云端存储：</span>
-              数据将安全地存储在您的个人账户中，支持多设备同步访问。
-            </AlertDescription>
-          </Alert>
-
-          <Alert>
-            <Calendar className="h-4 w-4" />
-            <AlertDescription className="text-sm">
-              <span className="font-medium">年份要求：</span>
-              CSV 文件中的所有数据必须属于同一年份。
-            </AlertDescription>
-          </Alert>
-
-          <Alert>
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription className="text-sm">
-              <span className="font-medium">覆盖规则：</span>
-              如果该年份已存在数据，上传新数据将覆盖旧数据。
-            </AlertDescription>
-          </Alert>
-        </div>
-
-        {/* Confirmation Dialog */}
-        <AlertDialog open={step === 'confirming'} onOpenChange={(open) => !open && handleRetry()}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>确认上传数据？</AlertDialogTitle>
-              <AlertDialogDescription asChild>
-                <div className="space-y-3">
-                  <p>即将上传以下数据到云端：</p>
-                  <div className="flex items-center gap-4 py-2 px-3 bg-muted rounded-lg">
-                    <Badge variant="outline" className="text-lg px-3 py-1">
-                      <Calendar className="h-3 w-3 mr-1" />
-                      {csvYear}
-                    </Badge>
-                    <div className="text-sm">
-                      <span className="font-medium">{parsedTransactions.length}</span> 条记录
-                    </div>
-                  </div>
-                  {existingCount && existingCount > 0 ? (
-                    <Alert variant="destructive">
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertDescription className="text-sm">
-                        该年份已存在 <span className="font-medium">{existingCount}</span> 条数据，
-                        上传新数据将覆盖旧数据。
-                      </AlertDescription>
-                    </Alert>
-                  ) : (
-                    <Alert>
-                      <CheckCircle2 className="h-4 w-4" />
-                      <AlertDescription className="text-sm">
-                        该年份暂无数据，将创建新记录。
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                </div>
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={handleRetry}>取消</AlertDialogCancel>
-              <AlertDialogAction onClick={handleConfirmUpload} className="gap-2">
+              <Button onClick={handleConfirmUpload} className="gap-2">
                 确认上传
                 <ArrowRight className="h-4 w-4" />
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </CardContent>
+              </Button>
+            </div>
+          </div>
+        }
+        extraContent={
+          <div className="space-y-3">
+            <Alert>
+              <Database className="h-4 w-4" />
+              <AlertDescription className="text-sm">
+                <span className="font-medium">云端存储：</span>
+                数据将安全地存储在您的个人账户中，支持多设备同步访问。
+              </AlertDescription>
+            </Alert>
+
+            <Alert>
+              <Calendar className="h-4 w-4" />
+              <AlertDescription className="text-sm">
+                <span className="font-medium">年份要求：</span>
+                CSV 文件中的所有数据必须属于同一年份。
+              </AlertDescription>
+            </Alert>
+
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription className="text-sm">
+                <span className="font-medium">覆盖规则：</span>
+                如果该年份已存在数据，上传新数据将覆盖旧数据。
+              </AlertDescription>
+            </Alert>
+          </div>
+        }
+        errorActions={
+          <>
+            <Button variant="outline" onClick={handleRetry}>
+              重试
+            </Button>
+          </>
+        }
+        doneActions={
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={handleRetry}>
+              继续导入
+            </Button>
+            <Button onClick={() => {
+              if (onNavigateToManage) {
+                onNavigateToManage();
+              } else {
+                window.location.hash = '#manage';
+              }
+            }}>
+              前往数据管理
+            </Button>
+          </div>
+        }
+      />
     </Card>
   );
 }

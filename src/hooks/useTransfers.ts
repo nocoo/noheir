@@ -83,6 +83,15 @@ export function useTransfers() {
     if (lines.length < 2) return [];
 
     const headers = lines[0].split(',').map(h => h.trim());
+
+    // Validate headers
+    const expectedHeaders = ['日期', '收支大类', '交易分类', '交易类型', '流入金额', '流出金额', '币种', '资金账户', '标签', '备注'];
+    const missingHeaders = expectedHeaders.filter(expected => !headers.includes(expected));
+
+    if (missingHeaders.length > 0) {
+      throw new Error(`CSV 表头格式错误。缺少以下列: ${missingHeaders.join(', ')}`);
+    }
+
     const transfers: ParsedTransfer[] = [];
     let filteredCount = 0;
 
@@ -194,33 +203,61 @@ export function useTransfers() {
     await loadTransfers();
   };
 
-  // Delete all transfers for a year
+  // Delete all transfers for a year with optimistic update
   const deleteYearTransfers = async (year: number): Promise<void> => {
     if (!user) throw new Error('User not authenticated');
 
-    const { error } = await supabase
-      .from('transfers')
-      .delete()
-      .eq('user_id', user.id)
-      .eq('year', year);
+    // Optimistic update: remove from local state immediately
+    const previousTransfers = transfers;
+    const previousYearsData = storedYearsData;
 
-    if (error) throw error;
+    setTransfers(prev => prev.filter(t => t.year !== year));
+    updateStoredYearsData(transfers.filter(t => t.year !== year));
 
-    await loadTransfers();
+    try {
+      const { error } = await supabase
+        .from('transfers')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('year', year);
+
+      if (error) throw error;
+    } catch (error) {
+      // Rollback on error
+      console.error('Failed to delete year transfers:', error);
+      setTransfers(previousTransfers);
+      setStoredYearsData(previousYearsData);
+      await loadTransfers();
+      throw error;
+    }
   };
 
-  // Clear all transfers
+  // Clear all transfers with optimistic update
   const clearAllTransfers = async (): Promise<void> => {
     if (!user) throw new Error('User not authenticated');
 
-    const { error } = await supabase
-      .from('transfers')
-      .delete()
-      .eq('user_id', user.id);
+    // Optimistic update: clear local state immediately
+    const previousTransfers = transfers;
+    const previousYearsData = storedYearsData;
 
-    if (error) throw error;
+    setTransfers([]);
+    setStoredYearsData([]);
 
-    await loadTransfers();
+    try {
+      const { error } = await supabase
+        .from('transfers')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+    } catch (error) {
+      // Rollback on error
+      console.error('Failed to clear all transfers:', error);
+      setTransfers(previousTransfers);
+      setStoredYearsData(previousYearsData);
+      await loadTransfers();
+      throw error;
+    }
   };
 
   // Export transfers as CSV

@@ -156,27 +156,57 @@ export function useTransactions() {
     }
   }, [manager]);
 
-  // Delete a year's data
+  // Delete a year's data with optimistic update
   const deleteYearData = useCallback(async (year: number) => {
+    // Optimistic update: remove from local state immediately
+    const previousData = storedYearsData;
+    setStoredYearsData(prev => prev.filter(d => d.year !== year));
+    setTransactions(prev => prev.filter(t => t.year !== year));
+
+    // Remove from comparison years if present
+    setComparisonYears(prev => prev.filter(y => y !== year));
+
+    // If the deleted year was selected, select another year
+    setSelectedYear(prev => {
+      if (prev === year) {
+        const remainingYears = previousData.filter(d => d.year !== year).map(d => d.year).sort((a, b) => b - a);
+        return remainingYears.length > 0 ? remainingYears[0] : null;
+      }
+      return prev;
+    });
+
     try {
       await supabaseTx.deleteYearData(year);
-      await loadStoredData();
     } catch (error) {
+      // Rollback on error
       console.error('Failed to delete year data:', error);
+      setStoredYearsData(previousData);
+      await loadStoredData();
       throw error;
     }
-  }, [supabaseTx, loadStoredData]);
+  }, [supabaseTx, loadStoredData, storedYearsData]);
 
-  // Clear all data
+  // Clear all data with optimistic update
   const clearAll = useCallback(async () => {
+    // Optimistic update: clear local state immediately
+    const previousData = storedYearsData;
+    const previousTransactions = transactions;
+    setStoredYearsData([]);
+    setTransactions([]);
+    setSelectedYear(null);
+    setComparisonYears([]);
+
     try {
       await supabaseTx.clearAllData();
-      await loadStoredData();
     } catch (error) {
+      // Rollback on error
       console.error('Failed to clear data:', error);
+      setStoredYearsData(previousData);
+      setTransactions(previousTransactions);
+      await loadStoredData();
       throw error;
     }
-  }, [supabaseTx, loadStoredData]);
+  }, [supabaseTx, loadStoredData, storedYearsData, transactions]);
 
   // Export data (convert to CSV)
   const exportData = useCallback(async () => {
