@@ -183,6 +183,9 @@ export interface CapitalUnit {
   start_date?: string;           // date, nullable
   end_date?: string;             // date, nullable
 
+  // User notes
+  note?: string;                 // User notes for this unit, nullable
+
   // Timestamps
   created_at: string;            // timestamptz
 }
@@ -200,6 +203,7 @@ export interface CreateCapitalUnitInput {
   product_id?: string;
   start_date?: string;
   end_date?: string;
+  note?: string;
 }
 
 /**
@@ -215,6 +219,7 @@ export interface UpdateCapitalUnitInput {
   product_id?: string | null;    // Set to null to recall from product
   start_date?: string | null;
   end_date?: string | null;
+  note?: string | null;
 }
 
 /**
@@ -310,7 +315,7 @@ export interface CapitalUnitWithProduct extends CapitalUnit {
  */
 export interface UnitDisplayInfo extends CapitalUnitWithProduct {
   days_until_maturity?: number;
-  is_overdue?: boolean;
+  is_available?: boolean;  // true = lock period passed (funds available + earning interest)
 }
 
 // ============================================================================

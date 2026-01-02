@@ -85,37 +85,38 @@ function classifyDecisions(units: UnitDisplay[]): DecisionItem[] {
       return;
     }
 
-    // 3. 已到期或即将到期（7天内）
-    if (unit.is_overdue) {
+    // 3. ✅ BEST: 已过锁定期（资金可用+持续产生收益）
+    if (unit.is_available) {
       decisions.push({
         unit,
-        reason: '已到期',
-        urgency: 'high',
-        details: `"${unit.product.name}"已于 ${new Date(unit.end_date!).toLocaleDateString('zh-CN')} 到期，需更新数据或续期`,
+        reason: '已可用',
+        urgency: 'low',  // No urgency - already in best state
+        details: `"${unit.product.name}"锁定期已过，资金可用且持续产生收益，可灵活再配置`,
       });
       return;
     }
 
+    // 4. 即将解锁（7天内）
     if (unit.days_until_maturity !== undefined && unit.days_until_maturity <= 7) {
       const daysText = unit.days_until_maturity === 0 ? '今日' :
                        unit.days_until_maturity === 1 ? '明日' :
                        `${unit.days_until_maturity}天后`;
       decisions.push({
         unit,
-        reason: '即将到期',
+        reason: '即将解锁',
         urgency: 'high',
-        details: `"${unit.product.name}"${daysText}到期，金额 ${formatCurrencyFull(unit.amount)}`,
+        details: `"${unit.product.name}"${daysText}解锁，金额 ${formatCurrencyFull(unit.amount)}，可规划再配置`,
       });
       return;
     }
 
-    // 4. 即将到期（30天内）
+    // 5. 即将解锁（30天内）
     if (unit.days_until_maturity !== undefined && unit.days_until_maturity <= 30) {
       decisions.push({
         unit,
-        reason: '即将到期',
+        reason: '即将解锁',
         urgency: 'medium',
-        details: `"${unit.product.name}" ${unit.days_until_maturity}天后到期，可提前规划再配置`,
+        details: `"${unit.product.name}" ${unit.days_until_maturity}天后解锁，可提前规划再配置`,
       });
       return;
     }

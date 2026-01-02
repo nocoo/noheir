@@ -13,6 +13,7 @@ interface TransactionHeatmapProps {
   year: number;
   type: TransactionType;
   colorPalette?: 'green' | 'red';  // Optional override
+  embedded?: boolean;  // If true, don't wrap in Card (for embedding in other containers)
 }
 
 interface DayInfo {
@@ -20,7 +21,7 @@ interface DayInfo {
   amount: number;
 }
 
-export function TransactionHeatmap({ transactions, year, type, colorPalette }: TransactionHeatmapProps) {
+export function TransactionHeatmap({ transactions, year, type, colorPalette, embedded = false }: TransactionHeatmapProps) {
   const { settings } = useSettings();
   const [tooltip, setTooltip] = useState<{ x: number; y: number; content: string } | null>(null);
 
@@ -172,6 +173,79 @@ export function TransactionHeatmap({ transactions, year, type, colorPalette }: T
   const title = `${isIncome ? '收入' : '支出'}热力图`;
   const typeLabel = isIncome ? '收入' : '支出';
 
+  // Content wrapper (can be embedded or in Card)
+  const content = (
+    <>
+      <div className="space-y-4">
+        {/* Heatmap */}
+        <div className="overflow-x-auto">
+          <div className="inline-flex gap-1">
+            {weeks.map((week, weekIndex) => (
+              <div key={weekIndex} className="flex flex-col gap-1">
+                {week.map((dayData, dayIndex) => (
+                  <div
+                    key={dayIndex}
+                    className="w-3 h-3 rounded-sm cursor-pointer transition-all hover:ring-2 hover:ring-primary/50"
+                    style={{ backgroundColor: COLORS[dayData.level] }}
+                    onMouseEnter={(e) => handleMouseEnter(dayData, e)}
+                    onMouseLeave={handleMouseLeave}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="flex justify-end gap-6 text-sm text-muted-foreground">
+          <div>
+            <span>活跃天数: </span>
+            <span className="font-semibold">{totalDays.toLocaleString()}</span>
+          </div>
+          <div>
+            <span>单日最高: </span>
+            <span className={`font-semibold ${colorClass}`}>{formatCurrencyFull(maxAmount)}</span>
+          </div>
+          <div>
+            <span>总{typeLabel}: </span>
+            <span className={`font-semibold ${colorClass}`}>{formatCurrencyFull(totalAmount)}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Tooltip */}
+      {tooltip && (
+        <div
+          className="fixed z-50 p-4 text-sm bg-card text-card-foreground border border-border rounded-lg shadow-lg pointer-events-none min-w-[180px]"
+          style={{
+            left: `${tooltip.x}px`,
+            top: `${tooltip.y}px`,
+            transform: 'translate(-50%, -100%)',
+          }}
+          dangerouslySetInnerHTML={{ __html: tooltip.content }}
+        />
+      )}
+    </>
+  );
+
+  // If embedded, return without Card wrapper (for warehouse view unified container)
+  if (embedded) {
+    return (
+      <div className="space-y-4">
+        {/* Embedded header */}
+        <div className="flex items-center gap-2 px-6 pt-6">
+          <Icon className={`h-5 w-5 ${colorClass}`} />
+          <h3 className="text-lg font-semibold">{title}</h3>
+        </div>
+        {/* Content */}
+        <div className="px-6 pb-6">
+          {content}
+        </div>
+      </div>
+    );
+  }
+
+  // Default: return with Card wrapper (standalone)
   return (
     <Card>
       <CardHeader>
@@ -181,55 +255,7 @@ export function TransactionHeatmap({ transactions, year, type, colorPalette }: T
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {/* Heatmap */}
-          <div className="overflow-x-auto">
-            <div className="inline-flex gap-1">
-              {weeks.map((week, weekIndex) => (
-                <div key={weekIndex} className="flex flex-col gap-1">
-                  {week.map((dayData, dayIndex) => (
-                    <div
-                      key={dayIndex}
-                      className="w-3 h-3 rounded-sm cursor-pointer transition-all hover:ring-2 hover:ring-primary/50"
-                      style={{ backgroundColor: COLORS[dayData.level] }}
-                      onMouseEnter={(e) => handleMouseEnter(dayData, e)}
-                      onMouseLeave={handleMouseLeave}
-                    />
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="flex justify-end gap-6 text-sm text-muted-foreground">
-            <div>
-              <span>活跃天数: </span>
-              <span className="font-semibold">{totalDays.toLocaleString()}</span>
-            </div>
-            <div>
-              <span>单日最高: </span>
-              <span className={`font-semibold ${colorClass}`}>{formatCurrencyFull(maxAmount)}</span>
-            </div>
-            <div>
-              <span>总{typeLabel}: </span>
-              <span className={`font-semibold ${colorClass}`}>{formatCurrencyFull(totalAmount)}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Tooltip */}
-        {tooltip && (
-          <div
-            className="fixed z-50 p-4 text-sm bg-card text-card-foreground border border-border rounded-lg shadow-lg pointer-events-none min-w-[180px]"
-            style={{
-              left: `${tooltip.x}px`,
-              top: `${tooltip.y}px`,
-              transform: 'translate(-50%, -100%)',
-            }}
-            dangerouslySetInnerHTML={{ __html: tooltip.content }}
-          />
-        )}
+        {content}
       </CardContent>
     </Card>
   );

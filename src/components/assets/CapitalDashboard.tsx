@@ -182,11 +182,14 @@ export function CapitalDashboard() {
   const { data: units, isLoading: unitsLoading } = useUnitsDisplay();
   const [selectedStrategy, setSelectedStrategy] = useState<InvestmentStrategy | null>(null);
 
-  // Calculate totals by currency
+  // Calculate totals by currency (only established/active units)
   const totalAssetsByCurrency = useMemo(() => {
     const totals: Record<string, number> = { CNY: 0, USD: 0, HKD: 0 };
     units?.forEach(u => {
-      totals[u.currency] = (totals[u.currency] || 0) + u.amount;
+      // Only count units with status = '已成立'
+      if (u.status === '已成立') {
+        totals[u.currency] = (totals[u.currency] || 0) + u.amount;
+      }
     });
     return totals;
   }, [units]);
@@ -216,12 +219,15 @@ export function CapitalDashboard() {
 
   const incomingCount = dashboardData?.upcoming_maturities.length || 0;
 
-  // Currency distribution
+  // Currency distribution (only for established units)
   const currencyDistribution = useMemo(() => {
     if (!units) return [];
     const currencyMap: Record<string, number> = {};
     units.forEach(u => {
-      currencyMap[u.currency] = (currencyMap[u.currency] || 0) + u.amount;
+      // Only count established units
+      if (u.status === '已成立') {
+        currencyMap[u.currency] = (currencyMap[u.currency] || 0) + u.amount;
+      }
     });
     return Object.entries(currencyMap).map(([currency, amount]) => ({
       currency: currency as Currency,
@@ -230,12 +236,15 @@ export function CapitalDashboard() {
     }));
   }, [units, totalAssetsAll]);
 
-  // Status distribution
+  // Status distribution (only for established units)
   const statusDistribution = useMemo(() => {
     if (!units) return [];
     const statusMap: Record<string, number> = {};
     units.forEach(u => {
-      statusMap[u.status] = (statusMap[u.status] || 0) + u.amount;
+      // Only count established units
+      if (u.status === '已成立') {
+        statusMap[u.status] = (statusMap[u.status] || 0) + u.amount;
+      }
     });
     return Object.entries(statusMap).map(([status, amount]) => ({
       status: status as UnitStatus,
@@ -257,7 +266,8 @@ export function CapitalDashboard() {
 
     units.forEach(u => {
       if (!u.end_date || u.status !== '已成立') return;
-      if (u.is_overdue) {
+      if (u.is_available) {
+        // ✅ BEST: Lock period passed - funds available + earning interest
         buckets['已到期'] += u.amount;
       } else if (u.days_until_maturity !== undefined) {
         if (u.days_until_maturity <= 7) {

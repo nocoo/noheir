@@ -257,7 +257,6 @@ export function useDeployUnit() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: assetQueryKeys.allUnits });
       queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === 'assets' });
-      toast.success('资金已投放');
     },
     onError: (error: Error) => {
       toast.error(error.message || '投放资金失败');

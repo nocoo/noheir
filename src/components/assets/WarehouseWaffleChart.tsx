@@ -35,12 +35,13 @@ import { staggerFastContainer, staggerFastItem } from '@/lib/animations';
 
 type ViewMode = 'all' | 'strategy';
 type WaffleStatus =
-  | 'idle'           // 🔴 红色 - 闲置 (已成立但无产品)
-  | 'locked-long'    // 🟢 深绿 - 锁定 > 1 年
-  | 'locked-short'   // 🟢 浅绿 - 锁定 < 3 个月
-  | 'locked-medium'  // 🟡 黄色 - 锁定 3个月-1年
-  | 'planned'        // 🔵 蓝色 - 计划中
-  | 'archived';      // ⚪️ 灰色 - 已归档/已消费
+  | 'idle-no-product'      // 🔴 红色 - 闲置（未关联产品）
+  | 'idle-cash-plus'       // 🌸 淡红 - 现金+产品
+  | 'available-earning'    // 🟢 绿色系 - 已过锁定期（可用+产生收益，按收益率深浅）
+  | 'locked-earning'       // 🔵 蓝色系 - 锁定期内（产生收益，按收益率深浅）
+  | 'planned'              // 🟡 黄色 - 计划中（资金为0）
+  | 'fundraising'          // 🟠 橙色 - 筹集中（资金逐步到位）
+  | 'archived';            // ⚪️ 灰色 - 已归档（完全消灭）
 
 // Currency emoji
 const CURRENCY_EMOJI: Record<Currency, string> = {
@@ -65,14 +66,6 @@ const STRATEGY_ICONS: Record<InvestmentStrategy, string> = {
 // TYPES
 // ============================================================================
 
-type WaffleStatus =
-  | 'idle'           // 🔴 红色 - 闲置 (已成立但无产品)
-  | 'locked-long'    // 🟢 深绿 - 锁定 > 1 年
-  | 'locked-short'   // 🟢 浅绿 - 锁定 < 3 个月
-  | 'locked-medium'  // 🟡 黄色 - 锁定 3个月-1年
-  | 'planned'        // 🔵 蓝色 - 计划中
-  | 'archived';      // ⚪️ 灰色 - 已归档/已消费
-
 interface WaffleUnit extends UnitDisplay {
   waffleStatus: WaffleStatus;
 }
@@ -82,46 +75,29 @@ interface WaffleUnit extends UnitDisplay {
 // ============================================================================
 
 function classifyUnitStatus(unit: UnitDisplay): WaffleStatus {
-  // 计划中 - 单独显示为蓝色
+  // 🟡 计划中 - 资金为0，尚未开始
   if (unit.status === '计划中') return 'planned';
 
-  // 筹集中
-  if (unit.status === '筹集中') return 'archived';
+  // 🟠 筹集中 - 资金逐步到位（如定投进行中）
+  if (unit.status === '筹集中') return 'fundraising';
 
-  // 已归档
+  // ⚪️ 已归档 - 完全消灭，不再存在
   if (unit.status === '已归档') return 'archived';
 
-  // 闲置判断1：已成立但没有关联产品
-  if (unit.status === '已成立' && !unit.product) return 'idle';
+  // ❌ WORST: 已成立但没有关联产品 → 🔴 红色
+  if (unit.status === '已成立' && !unit.product) return 'idle-no-product';
 
-  // 闲置判断2：已成立且关联的是"现金+"类产品
-  if (unit.status === '已成立' && unit.product?.category === '现金+') return 'idle';
+  // 🌸 淡红: 已成立且关联的是"现金+"类产品
+  if (unit.status === '已成立' && unit.product?.category === '现金+') return 'idle-cash-plus';
 
-  // 闲置判断3：已到期（需要提醒更新数据）
-  if (unit.status === '已成立' && unit.is_overdue) return 'idle';
+  // ✅ BEST: 已过锁定期（可用+产生收益）→ 🟢 绿色系
+  if (unit.status === '已成立' && unit.is_available) return 'available-earning';
 
-  // 检查锁定期
-  if (unit.end_date) {
-    const daysUntilMaturity = unit.days_until_maturity;
-    const today = new Date();
-    const endDate = new Date(unit.end_date);
-    const totalDays = Math.max(1, Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
+  // 🔵 蓝色系: 锁定期内（产生收益）
+  if (unit.status === '已成立' && unit.end_date) return 'locked-earning';
 
-    // 已过期或即将过期（< 7天）视为短期
-    if (daysUntilMaturity !== undefined && daysUntilMaturity < 0) return 'idle';
-
-    // 锁定超过1年
-    if (totalDays > 365) return 'locked-long';
-
-    // 锁定少于3个月
-    if (totalDays <= 90) return 'locked-short';
-
-    // 中期锁定
-    return 'locked-medium';
-  }
-
-  // 已成立、有产品、无到期日（如随时可赎回产品）视为短期锁定
-  return 'locked-short';
+  // 默认：有产品但无到期日期（如随时可赎回产品）
+  return 'available-earning';
 }
 
 // ============================================================================
@@ -137,20 +113,74 @@ interface WaffleCellProps {
 function WaffleCell({ unit, index, onUnitClick }: WaffleCellProps) {
   const [isHovered, setIsHovered] = useState(false);
 
-  const getStatusColor = (status: WaffleStatus): string => {
-    switch (status) {
-      case 'idle':
-        return 'bg-rose-500 dark:bg-rose-600 hover:bg-rose-600 dark:hover:bg-rose-500';
-      case 'locked-long':
-        return 'bg-emerald-700 dark:bg-emerald-800 hover:bg-emerald-600 dark:hover:bg-emerald-700';
-      case 'locked-short':
-        return 'bg-emerald-400 dark:bg-emerald-500 hover:bg-emerald-500 dark:hover:bg-emerald-400';
-      case 'locked-medium':
-        return 'bg-amber-500 dark:bg-amber-600 hover:bg-amber-600 dark:hover:bg-amber-500';
+  // Calculate color shade based on annual return rate
+  const getReturnRateColor = (unit: WaffleUnit): string => {
+    const rate = unit.product?.annual_return_rate;
+
+    if (rate === undefined || rate === null) {
+      // No rate info - use default color
+      if (unit.waffleStatus === 'available-earning') return 'bg-green-500 dark:bg-green-600';
+      if (unit.waffleStatus === 'locked-earning') return 'bg-blue-500 dark:bg-blue-600';
+      return '';
+    }
+
+    // Color intensity based on return rate (0-10%)
+    // Higher return = darker/more intense color
+    const intensity = Math.min(Math.max(rate / 10, 0), 1); // Normalize to 0-1
+
+    if (unit.waffleStatus === 'available-earning') {
+      // Green series: 500 → 700 (light → dark)
+      if (rate >= 8) return 'bg-green-700 dark:bg-green-800';      // High return
+      if (rate >= 5) return 'bg-green-600 dark:bg-green-700';      // Medium-high
+      if (rate >= 3) return 'bg-green-500 dark:bg-green-600';      // Medium
+      return 'bg-green-400 dark:bg-green-500';                    // Low return
+    }
+
+    if (unit.waffleStatus === 'locked-earning') {
+      // Blue series: 500 → 700 (light → dark)
+      if (rate >= 8) return 'bg-blue-700 dark:bg-blue-800';       // High return
+      if (rate >= 5) return 'bg-blue-600 dark:bg-blue-700';       // Medium-high
+      if (rate >= 3) return 'bg-blue-500 dark:bg-blue-600';       // Medium
+      return 'bg-blue-400 dark:bg-blue-500';                     // Low return
+    }
+
+    return '';
+  };
+
+  const getStatusColor = (unit: WaffleUnit): string => {
+    const { waffleStatus } = unit;
+
+    switch (waffleStatus) {
+      case 'idle-no-product':
+        // 🔴 Red - No product (worst)
+        return 'bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-600';
+
+      case 'idle-cash-plus':
+        // 🌸 Light red/pink - Cash+ products
+        return 'bg-pink-300 dark:bg-pink-400 hover:bg-pink-400 dark:hover:bg-pink-300';
+
+      case 'available-earning':
+        // 🟢 Green series - Available + earning (best)
+        // Color intensity based on return rate
+        return getReturnRateColor(unit) + ' hover:opacity-80';
+
+      case 'locked-earning':
+        // 🔵 Blue series - In lock period + earning
+        // Color intensity based on return rate
+        return getReturnRateColor(unit) + ' hover:opacity-80';
+
       case 'planned':
-        return 'bg-slate-400 dark:bg-slate-600 hover:bg-slate-500 dark:hover:bg-slate-500';
+        // ⚪️ Gray - Planned (资金为0，尚未开始)
+        return 'bg-gray-400 dark:bg-gray-500 hover:bg-gray-500 dark:hover:bg-gray-400';
+
+      case 'fundraising':
+        // 🟡 Yellow - Fundraising (资金逐步到位)
+        return 'bg-yellow-500 dark:bg-yellow-600 hover:bg-yellow-600 dark:hover:bg-yellow-500';
+
       case 'archived':
-        return 'bg-slate-300 dark:bg-slate-700 hover:bg-slate-400 dark:hover:bg-slate-600';
+        // ⚫️ Slate - Archived (完全消灭)
+        return 'bg-slate-400 dark:bg-slate-600 hover:bg-slate-500 dark:hover:bg-slate-500';
+
       default:
         return 'bg-slate-300 dark:bg-slate-700';
     }
@@ -167,7 +197,7 @@ function WaffleCell({ unit, index, onUnitClick }: WaffleCellProps) {
             className={cn(
               'h-12 rounded-sm transition-all duration-200 cursor-pointer relative',
               'border border-border/50 hover:shadow-md',
-              getStatusColor(unit.waffleStatus)
+              getStatusColor(unit)
             )}
             onClick={() => onUnitClick?.(unit)}
             onMouseEnter={() => setIsHovered(true)}
@@ -210,15 +240,27 @@ function WaffleCell({ unit, index, onUnitClick }: WaffleCellProps) {
 
             {unit.end_date && (
               <div className="text-xs text-muted-foreground">
-                到期: {new Date(unit.end_date).toLocaleDateString('zh-CN')}
+                解锁: {new Date(unit.end_date).toLocaleDateString('zh-CN')}
               </div>
             )}
 
             {unit.days_until_maturity !== undefined && unit.days_until_maturity >= 0 && (
               <div className="text-xs">
-                {unit.days_until_maturity === 0 ? '今日到期' :
-                 unit.days_until_maturity === 1 ? '明天到期' :
-                 `${unit.days_until_maturity} 天后到期`}
+                {unit.days_until_maturity === 0 ? '今日解锁' :
+                 unit.days_until_maturity === 1 ? '明天解锁' :
+                 `${unit.days_until_maturity} 天后解锁`}
+              </div>
+            )}
+
+            {unit.is_available && unit.days_until_maturity !== undefined && (
+              <div className="text-xs text-income">
+                ✅ 已可用 {Math.abs(unit.days_until_maturity)} 天
+              </div>
+            )}
+
+            {unit.note && (
+              <div className="text-xs text-muted-foreground italic pt-1 border-t">
+                📝 {unit.note}
               </div>
             )}
           </div>
@@ -239,57 +281,65 @@ interface WaffleLegendProps {
 function WaffleLegend({ data }: WaffleLegendProps) {
   const stats = useMemo(() => {
     return {
-      idle: data.filter(u => u.waffleStatus === 'idle').length,
-      lockedLong: data.filter(u => u.waffleStatus === 'locked-long').length,
-      lockedShort: data.filter(u => u.waffleStatus === 'locked-short').length,
-      lockedMedium: data.filter(u => u.waffleStatus === 'locked-medium').length,
+      idleNoProduct: data.filter(u => u.waffleStatus === 'idle-no-product').length,
+      idleCashPlus: data.filter(u => u.waffleStatus === 'idle-cash-plus').length,
+      availableEarning: data.filter(u => u.waffleStatus === 'available-earning').length,
+      lockedEarning: data.filter(u => u.waffleStatus === 'locked-earning').length,
       planned: data.filter(u => u.waffleStatus === 'planned').length,
+      fundraising: data.filter(u => u.waffleStatus === 'fundraising').length,
       archived: data.filter(u => u.waffleStatus === 'archived').length,
     };
   }, [data]);
 
   const legendItems = [
     {
-      status: 'idle' as WaffleStatus,
-      label: '闲置',
-      color: 'bg-rose-500 dark:bg-rose-600',
-      count: stats.idle,
+      status: 'idle-no-product' as WaffleStatus,
+      label: '未关联产品',
+      color: 'bg-red-600 dark:bg-red-700',
+      count: stats.idleNoProduct,
       emoji: '🔴',
     },
     {
-      status: 'locked-long' as WaffleStatus,
-      label: '长期锁定 (>1年)',
-      color: 'bg-emerald-700 dark:bg-emerald-800',
-      count: stats.lockedLong,
-      emoji: '🟢',
+      status: 'idle-cash-plus' as WaffleStatus,
+      label: '现金+产品',
+      color: 'bg-pink-300 dark:bg-pink-400',
+      count: stats.idleCashPlus,
+      emoji: '🌸',
     },
     {
-      status: 'locked-medium' as WaffleStatus,
-      label: '中期锁定 (3月-1年)',
-      color: 'bg-amber-500 dark:bg-amber-600',
-      count: stats.lockedMedium,
-      emoji: '🟡',
+      status: 'locked-earning' as WaffleStatus,
+      label: '锁定期内',
+      color: 'bg-blue-500 dark:bg-blue-600',
+      count: stats.lockedEarning,
+      emoji: '🔵',
     },
     {
-      status: 'locked-short' as WaffleStatus,
-      label: '短期锁定 (<3月)',
-      color: 'bg-emerald-400 dark:bg-emerald-500',
-      count: stats.lockedShort,
+      status: 'available-earning' as WaffleStatus,
+      label: '已可用',
+      color: 'bg-green-500 dark:bg-green-600',
+      count: stats.availableEarning,
       emoji: '🟢',
     },
     {
       status: 'planned' as WaffleStatus,
-      label: '待筹集',
-      color: 'bg-slate-400 dark:bg-slate-600',
+      label: '计划中',
+      color: 'bg-gray-400 dark:bg-gray-500',
       count: stats.planned,
-      emoji: '⚪',
+      emoji: '⚪️',
+    },
+    {
+      status: 'fundraising' as WaffleStatus,
+      label: '筹集中',
+      color: 'bg-yellow-500 dark:bg-yellow-600',
+      count: stats.fundraising,
+      emoji: '🟡',
     },
     {
       status: 'archived' as WaffleStatus,
       label: '已归档',
-      color: 'bg-slate-300 dark:bg-slate-700',
+      color: 'bg-slate-400 dark:bg-slate-600',
       count: stats.archived,
-      emoji: '⚪️',
+      emoji: '⚫️',
     },
   ];
 
@@ -365,7 +415,11 @@ export function WarehouseWaffleChart({ units, onUnitClick }: WarehouseWaffleChar
   // Calculate statistics
   const stats = useMemo(() => {
     const total = waffleData.length;
-    const idle = waffleData.filter(u => u.waffleStatus === 'idle').length;
+    const idle = waffleData.filter(u =>
+      u.waffleStatus === 'idle-no-product' ||
+      u.waffleStatus === 'idle-cash-plus' ||
+      u.waffleStatus === 'fundraising'  // 筹集中也算闲置
+    ).length;
     const deployed = total - idle;
     const utilizationRate = total > 0 ? ((deployed / total) * 100).toFixed(1) : '0.0';
 
@@ -380,22 +434,17 @@ export function WarehouseWaffleChart({ units, onUnitClick }: WarehouseWaffleChar
   // Handle empty state
   if (waffleData.length === 0) {
     return (
-      <div className="border rounded-xl p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">仓库视图</h3>
-        </div>
-        <div className="text-center py-12 text-muted-foreground">
-          <div className="text-4xl mb-4">📦</div>
-          <p>暂无资金单元</p>
-        </div>
+      <div className="text-center py-12 text-muted-foreground">
+        <div className="text-4xl mb-4">📦</div>
+        <p>暂无资金单元</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 h-full flex flex-col">
       {/* Header */}
-      <div className="border rounded-xl p-6 space-y-4">
+      <div className="space-y-4 shrink-0">
         <div className="flex items-start justify-between flex-wrap gap-4">
           <div className="space-y-1">
             <h3 className="text-lg font-semibold">仓库视图</h3>
@@ -451,7 +500,11 @@ export function WarehouseWaffleChart({ units, onUnitClick }: WarehouseWaffleChar
                 <strong>
                   {formatCurrencyFull(
                     waffleData
-                      .filter(u => u.waffleStatus === 'idle')
+                      .filter(u =>
+                        u.waffleStatus === 'idle-no-product' ||
+                        u.waffleStatus === 'idle-cash-plus' ||
+                        u.waffleStatus === 'fundraising'
+                      )
                       .reduce((sum, u) => sum + u.amount, 0)
                   )}
                 </strong>
@@ -462,7 +515,7 @@ export function WarehouseWaffleChart({ units, onUnitClick }: WarehouseWaffleChar
               <ul className="list-disc list-inside space-y-1 ml-2">
                 <li>未关联产品（资金到位但未投放）</li>
                 <li>关联的是"现金+"类产品（流动性高，需再配置）</li>
-                <li>已到期产品（需要更新数据或自动续期）</li>
+                <li>筹集中（资金逐步到位，如定投进行中）</li>
               </ul>
             </div>
           </div>
@@ -475,7 +528,7 @@ export function WarehouseWaffleChart({ units, onUnitClick }: WarehouseWaffleChar
           variants={staggerFastContainer}
           initial="initial"
           animate="animate"
-          className="grid gap-1.5 p-4 bg-muted/30 rounded-lg border w-full"
+          className="grid gap-1.5 p-4 bg-muted/30 rounded-lg border flex-1"
           style={{
             gridTemplateColumns: 'repeat(auto-fill, minmax(3.5rem, 1fr))',
           }}

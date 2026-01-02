@@ -10,13 +10,17 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useUnitsDisplay, useUpdateUnit, useDeployUnit, useRecallUnit, useProducts } from '@/hooks/useAssets';
 import { WarehouseWaffleChart } from './WarehouseWaffleChart';
 import { UnifiedEditDeployDialog } from './CapitalUnitsManager';
+import { TransactionHeatmap } from '@/components/dashboard/TransactionHeatmap';
+import { Card } from '@/components/ui/card';
 import { Boxes } from 'lucide-react';
 import type { UnitDisplayInfo, UpdateCapitalUnitInput, DeployUnitInput } from '@/types/assets';
 import { toast } from 'sonner';
+import { useTransactions } from '@/hooks/useTransactions';
 
 export function WarehouseView() {
   const { data: units, isLoading } = useUnitsDisplay();
   const { data: products } = useProducts();
+  const { data: transactions } = useTransactions();
   const queryClient = useQueryClient();
   const updateMutation = useUpdateUnit();
   const deployMutation = useDeployUnit();
@@ -59,7 +63,6 @@ export function WarehouseView() {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ['assets'] });
           setEditDeployDialog({ open: false });
-          toast.success('资金已投放');
         },
       }
     );
@@ -95,27 +98,31 @@ export function WarehouseView() {
             仓库视图
           </h1>
           <p className="text-muted-foreground">
-            可视化资金单元库存状态 - 每个方块代表一个资金单元 (5万)
+            可视化资金单元库存状态 - 每个方块代表一个资金单元
           </p>
         </div>
       </div>
 
-      {/* Waffle Chart */}
+      {/* Main Content - Single Card Container for Heatmap and Waffle Chart */}
       {units && units.length > 0 && (
-        <div className="flex-1 flex flex-col space-y-4 min-h-0 overflow-hidden">
-          <div className="text-sm text-muted-foreground bg-muted/50 p-4 rounded-lg border shrink-0">
-            <p className="font-medium mb-2">📦 视角与价值</p>
-            <ul className="space-y-1 list-disc list-inside">
-              <li><strong>宏观视角：</strong>将资金单元视为"集装箱"，一眼看到整体库存状态</li>
-              <li><strong>核心问题：</strong>快速识别闲置资金，回答"我有多少弹药在睡觉？"</li>
-              <li><strong>颜色编码：</strong>红色=闲置警报，绿色=锁定中，灰色=已归档</li>
-              <li><strong>点击方块：</strong>编辑资金信息和投放配置</li>
-            </ul>
-          </div>
-          <div className="flex-1 min-h-0 overflow-auto">
+        <Card className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          {/* Heatmap Section (if transactions exist) */}
+          {transactions && transactions.length > 0 && (
+            <div className="border-b">
+              <TransactionHeatmap
+                transactions={transactions}
+                year={new Date().getFullYear()}
+                type="expense"
+                embedded={true}
+              />
+            </div>
+          )}
+
+          {/* Waffle Chart Section */}
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden p-6">
             <WarehouseWaffleChart units={units} onUnitClick={handleUnitClick} />
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Edit/Deploy Dialog */}

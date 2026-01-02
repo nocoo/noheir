@@ -91,9 +91,9 @@ export const CURRENCY_COLORS = {
 
 export const STATUS_COLORS = {
   '已成立': UNIFIED_PALETTE.emerald,
-  '计划中': UNIFIED_PALETTE.blue,
-  '筹集中': UNIFIED_PALETTE.amber,
-  '已归档': UNIFIED_PALETTE.gray,
+  '计划中': UNIFIED_PALETTE.gray,      // 灰色 - 尚未开始
+  '筹集中': UNIFIED_PALETTE.yellow,    // 黄色 - 资金逐步到位
+  '已归档': UNIFIED_PALETTE.slate,     // 深灰色 - 完全消灭
 } as const;
 
 export const MATURITY_COLORS = {

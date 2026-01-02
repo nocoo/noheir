@@ -64,18 +64,24 @@ function daysBetween(date1: Date, date2: Date): number {
 /**
  * Calculate available_date for a capital unit
  *
- * The available_date is when the unit becomes available for new deployment.
- * Formula: start_date + product.lock_period_days
+ * The available_date is when the lock period ends (start_date + product.lock_period_days).
+ * After this date, the funds are still invested and earning interest, but become available for redeployment.
+ *
+ * IMPORTANT: This is NOT an "overdue" date - funds continue earning interest after available_date.
+ * Instead, it represents liquidity tier:
+ * - ✅ BEST: Already past available_date (funds available + earning interest)
+ * - ⚠️ OK: Before available_date (still in lock period, earning interest)
+ * - ❌ WORST: No product (completely idle, not earning anything)
  *
  * Rules:
- * - If no product: undefined (idle, available immediately)
+ * - If no product: undefined (worst tier - completely idle funds)
  * - If no start_date: undefined
  * - If lock_period_days = 0: undefined (available immediately, e.g., "现金+")
  * - Otherwise: start_date + lock_period_days
  *
  * @param startDate - The start_date from the unit
  * @param product - The associated financial product
- * @returns Available date in YYYY-MM-DD format, or undefined if immediately available
+ * @returns Available date in YYYY-MM-DD format, or undefined if immediately available or no product
  */
 function calculateAvailableDate(
   startDate: string | undefined | null,
@@ -237,6 +243,7 @@ export async function fetchUnits(withProducts: boolean = true): Promise<CapitalU
           start_date: row.start_date,
           // Compute end_date from start_date + lock_period_days
           end_date: calculateAvailableDate(row.start_date, product),
+          note: row.note,
           created_at: row.created_at,
           product,
         };
@@ -569,40 +576,46 @@ export async function fetchCapitalOverview(): Promise<CapitalOverviewData> {
         product_id: row.product_id,
         start_date: row.start_date,
         end_date: endDate, // Computed, not from database
+        note: row.note,
         created_at: row.created_at,
         product,
       };
 
       // Calculate display info
       let days_until_maturity: number | undefined;
-      let is_overdue = false;
+      let is_available = false;
 
       if (endDate) {
         const endDateObj = new Date(endDate);
         days_until_maturity = daysBetween(today, endDateObj);
-        is_overdue = days_until_maturity < 0;
+        // Available means lock period has passed (funds available for redeployment + still earning interest)
+        is_available = days_until_maturity < 0;
       }
 
       return {
         ...unit,
         days_until_maturity,
-        is_overdue,
+        is_available,
       };
     });
 
     // Calculate dashboard metrics from the same data
-    const total_units = units.length;
-    const total_assets = units.reduce((sum, u) => sum + u.amount, 0);
-    const idle_amount = units
-      .filter(u => u.status === '已成立' && !u.product)
+    // IMPORTANT: Only count units with status = '已成立' (established/active)
+    // Units with status '计划中', '筹集中', '已归档' are excluded from asset calculations
+    const activeUnits = units.filter(u => u.status === '已成立');
+
+    const total_units = activeUnits.length;
+    const total_assets = activeUnits.reduce((sum, u) => sum + u.amount, 0);
+    const idle_amount = activeUnits
+      .filter(u => !u.product)
       .reduce((sum, u) => sum + u.amount, 0);
-    const invested_amount = units
+    const invested_amount = activeUnits
       .filter(u => u.product !== null)
       .reduce((sum, u) => sum + u.amount, 0);
 
-    // Strategy allocation
+    // Strategy allocation (only for established units)
     const strategyMap = new Map<string, { amount: number; count: number }>();
-    units.forEach(u => {
+    activeUnits.forEach(u => {
       const current = strategyMap.get(u.strategy) || { amount: 0, count: 0 };
       strategyMap.set(u.strategy, {
         amount: current.amount + u.amount,
@@ -687,19 +700,20 @@ export async function fetchUnitsDisplayInfo(
     const endDate = calculateAvailableDate(unit.start_date, unit.product);
 
     let days_until_maturity: number | undefined;
-    let is_overdue = false;
+    let is_available = false;
 
     if (endDate) {
       const endDateObj = new Date(endDate);
       days_until_maturity = daysBetween(today, endDateObj);
-      is_overdue = days_until_maturity < 0;
+      // Available means lock period has passed (funds available for redeployment + still earning interest)
+      is_available = days_until_maturity < 0;
     }
 
     return {
       ...unit,
       end_date: endDate, // Override with computed value
       days_until_maturity,
-      is_overdue,
+      is_available,
     };
   });
 }

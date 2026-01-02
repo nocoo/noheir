@@ -4,7 +4,7 @@
  * CRUD interface for managing Capital Units
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { format } from 'date-fns';
 import {
   useUnitsDisplay,
@@ -18,6 +18,7 @@ import {
 } from '@/hooks/useAssets';
 import { useFilteredAndSorted } from '@/hooks/useFilteredAndSorted';
 import { Plus, Pencil, Trash2, Coins, ArrowRight, Undo, Archive, Filter, X, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { getLabelColorClasses } from '@/lib/tagColors';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import {
@@ -151,17 +152,41 @@ const getDisplayStatus = (unit: UnitDisplayInfo): { status: string; variant: 'de
   if (unit.status === '筹集中') {
     return { status: '筹集中', variant: 'outline' };
   }
-  // For '已成立' units, check if they have an end_date (locked/invested)
+  // For '已成立' units, check liquidity tier based on product lock period
   if (unit.end_date) {
-    if (unit.is_overdue) {
-      return { status: '已到期', variant: 'destructive' };
+    if (unit.is_available) {
+      // ✅ BEST: Lock period passed - funds available + earning interest
+      return { status: '已可用', variant: 'default' };
     }
     if (unit.days_until_maturity !== undefined && unit.days_until_maturity <= 7) {
-      return { status: '即将到期', variant: 'secondary' };
+      // ⚠️ OK: Near end of lock period
+      return { status: '即将解锁', variant: 'secondary' };
     }
+    // ⚠️ OK: Still in lock period
     return { status: '锁定期', variant: 'default' };
   }
+  // ❌ WORST: No product (completely idle)
   return { status: '已成立', variant: 'default' };
+};
+
+// Format relative time in human-readable format (e.g., "1年3个月后")
+const formatRelativeTime = (days: number): string => {
+  const absDays = Math.abs(days);
+
+  if (absDays < 30) {
+    return `${absDays}天`;
+  }
+
+  const years = Math.floor(absDays / 365);
+  const months = Math.floor((absDays % 365) / 30);
+  const remainingDays = absDays % 30;
+
+  const parts: string[] = [];
+  if (years > 0) parts.push(`${years}年`);
+  if (months > 0) parts.push(`${months}个月`);
+  if (remainingDays > 0 && years === 0 && months < 3) parts.push(`${remainingDays}天`);
+
+  return parts.join('');
 };
 
 interface UnitFormProps {
@@ -462,11 +487,15 @@ function UnifiedEditDeployDialog({
   products,
   isPending,
 }: UnifiedEditDeployDialogProps) {
+  // Ref for note input auto-focus
+  const noteInputRef = useRef<HTMLInputElement>(null);
+
   // Unit info state
   const [formData, setFormData] = useState<UpdateCapitalUnitInput>({
     strategy: unit?.strategy || '长期理财',
     tactics: unit?.tactics || '稳健理财',
     status: unit?.status || '已成立',
+    note: unit?.note || '',
   });
 
   // Deploy info state
@@ -482,11 +511,32 @@ function UnifiedEditDeployDialog({
         strategy: unit.strategy,
         tactics: unit.tactics,
         status: unit.status,
+        note: unit.note || '',
       });
       setProductId(unit.product_id || '');
       setStartDate(unit.start_date || format(new Date(), 'yyyy-MM-dd'));
     }
   }, [unit]);
+
+  // Auto-focus note input when dialog opens
+  useEffect(() => {
+    if (open) {
+      // Use multiple frames to ensure everything is rendered
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            if (noteInputRef.current) {
+              noteInputRef.current.focus();
+              noteInputRef.current.select();
+              console.log('Note input focused'); // Debug log
+            } else {
+              console.log('Note input ref is null'); // Debug log
+            }
+          }, 100);
+        });
+      });
+    }
+  }, [open]);
 
   // Calculate available date (computed, not editable)
   const computedAvailableDate = (() => {
@@ -538,7 +588,7 @@ function UnifiedEditDeployDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>编辑资金单元 - {unit.unit_code}</DialogTitle>
           <DialogDescription>
@@ -640,6 +690,19 @@ function UnifiedEditDeployDialog({
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              {/* Note */}
+              <div className="space-y-2">
+                <Label htmlFor="edit_note">备注</Label>
+                <Input
+                  ref={noteInputRef}
+                  id="edit_note"
+                  type="text"
+                  value={formData.note || ''}
+                  onChange={e => updateField('note', e.target.value || null)}
+                  placeholder="添加备注..."
+                />
               </div>
 
               {/* Created At (readonly) */}
@@ -780,15 +843,30 @@ function UnifiedEditDeployDialog({
               {unit.product && (
                 <div className="space-y-2 pt-4 border-t">
                   <Label>当前投放</Label>
-                  <div className="text-sm space-y-1">
-                    <div><strong>产品:</strong> {unit.product.channel} - {unit.product.name}</div>
+                  <div className="text-sm space-y-2">
+                    <div className="flex items-start gap-2">
+                      <span className="font-semibold">产品:</span>
+                      <div className="flex-1">
+                        <div>{unit.product.name}</div>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <Badge
+                            className={`text-xs ${getLabelColorClasses(unit.product.category).bg} ${getLabelColorClasses(unit.product.category).text}`}
+                          >
+                            {unit.product.category}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">{unit.product.channel}</span>
+                        </div>
+                      </div>
+                    </div>
                     {unit.start_date && <div><strong>开始:</strong> {unit.start_date}</div>}
                     {unit.end_date && (
                       <div>
                         <strong>可用:</strong> {unit.end_date}
-                        {unit.end_date && new Date(unit.end_date) <= new Date() && (
+                        {unit.is_available ? (
+                          <span className="ml-2 text-xs text-income">(已可用)</span>
+                        ) : unit.end_date && new Date(unit.end_date) <= new Date() ? (
                           <span className="ml-2 text-xs text-expense">(已到期)</span>
-                        )}
+                        ) : null}
                       </div>
                     )}
                   </div>
@@ -1232,10 +1310,11 @@ export function CapitalUnitsManager() {
                     onClick={() => handleSort('remaining_days')}
                     className="flex items-center hover:text-foreground transition-colors"
                   >
-                    剩余天数
+                    锁定期
                     {getSortIcon('remaining_days')}
                   </button>
                 </TableHead>
+                <TableHead>备注</TableHead>
                 <TableHead className="text-right">操作</TableHead>
               </TableRow>
             </TableHeader>
@@ -1288,25 +1367,64 @@ export function CapitalUnitsManager() {
                     </TableCell>
                     <TableCell className="text-right">
                       {unit.end_date && unit.days_until_maturity !== undefined ? (
-                        <span
-                          className={
-                            unit.is_overdue
-                              ? 'text-expense'
-                              : unit.days_until_maturity <= 7
-                                ? 'text-orange-500'
-                                : ''
-                          }
-                        >
-                        {unit.is_overdue
-                          ? `逾期 ${Math.abs(unit.days_until_maturity)} 天`
-                          : unit.days_until_maturity === 0
-                            ? '今日到期'
-                            : `${unit.days_until_maturity} 天`}
-                      </span>
-                    ) : (
-                      '-'
-                    )}
-                  </TableCell>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span
+                                className="cursor-help underline decoration-dotted underline-offset-2"
+                                style={{
+                                  color: unit.is_available
+                                    ? 'hsl(var(--income))'  // ✅ BEST
+                                    : unit.days_until_maturity <= 7
+                                      ? 'hsl(var(--orange-500) || #f97316)'  // ⚠️ Near unlock
+                                      : 'inherit'
+                                }}
+                              >
+                                {unit.is_available
+                                  ? `已可用 ${formatRelativeTime(unit.days_until_maturity)}`
+                                  : unit.days_until_maturity === 0
+                                    ? '今日解锁'
+                                    : formatRelativeTime(unit.days_until_maturity) + '后'}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <div className="text-sm space-y-1">
+                                <div className="font-medium">
+                                  {unit.is_available ? '✅ 已可用' : '🔒 锁定期内'}
+                                </div>
+                                <div className="text-muted-foreground">
+                                  解锁日期: {new Date(unit.end_date).toLocaleDateString('zh-CN', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric'
+                                  })}
+                                </div>
+                                <div className="text-muted-foreground">
+                                  {unit.is_available
+                                    ? `资金已可用 ${formatRelativeTime(unit.days_until_maturity)}（持续产生收益）`
+                                    : `还需 ${formatRelativeTime(unit.days_until_maturity)} 解锁`}
+                                </div>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ) : (
+                        unit.product ? (
+                          <span className="text-muted-foreground">-</span>
+                        ) : (
+                          <span className="text-muted-foreground">无产品</span>
+                        )
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {unit.note ? (
+                        <span className="text-sm text-muted-foreground truncate max-w-[200px] inline-block" title={unit.note}>
+                          {unit.note}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
                       {/* Unified Edit/Deploy button */}
