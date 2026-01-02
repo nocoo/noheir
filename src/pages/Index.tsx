@@ -11,6 +11,8 @@ import { TransactionAnalysis } from '@/components/dashboard/TransactionAnalysis'
 import { AccountAnalysis } from '@/components/dashboard/AccountAnalysis';
 import { AccountDetail } from '@/components/dashboard/AccountDetail';
 import { GeneralSettings } from '@/components/dashboard/GeneralSettings';
+import { AISettings } from '@/components/dashboard/AISettings';
+import { AccountTypeSettings } from '@/components/dashboard/AccountTypeSettings';
 import { YearSelector } from '@/components/dashboard/YearSelector';
 import type { DataQualityMetrics, TransactionValidation } from '@/types/data';
 import { TransactionHeatmap } from '@/components/dashboard/TransactionHeatmap';
@@ -497,10 +499,44 @@ const Index = () => {
           className="space-y-6"
         >
           <div>
-            <h1 className="text-2xl font-bold">系统设置</h1>
+            <h1 className="text-2xl font-bold">通用设置</h1>
             <p className="text-muted-foreground">个性化您的个人财务管理体验</p>
           </div>
-          <Settings />
+          <GeneralSettings />
+        </motion.div>
+      )}
+
+      {activeTab === 'ai-settings' && (
+        <motion.div
+          key="ai-settings"
+          initial="initial"
+          animate="animate"
+          variants={fadeInUp}
+          transition={{ duration: 0.25 }}
+          className="space-y-6"
+        >
+          <div>
+            <h1 className="text-2xl font-bold">AI 助手配置</h1>
+            <p className="text-muted-foreground">配置您的 AI 助手（BYOM - Bring Your Own Model）</p>
+          </div>
+          <AISettings />
+        </motion.div>
+      )}
+
+      {activeTab === 'account-types' && (
+        <motion.div
+          key="account-types"
+          initial="initial"
+          animate="animate"
+          variants={fadeInUp}
+          transition={{ duration: 0.25 }}
+          className="space-y-6"
+        >
+          <div>
+            <h1 className="text-2xl font-bold">账户类型设置</h1>
+            <p className="text-muted-foreground">为每个账户标记类型，便于后续财务分析</p>
+          </div>
+          <AccountTypeSettings />
         </motion.div>
       )}
     </DashboardLayout>
