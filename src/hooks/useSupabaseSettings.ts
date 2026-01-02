@@ -2,13 +2,16 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { PostgrestError } from '@supabase/supabase-js';
-import type { Theme, ColorScheme } from '@/contexts/SettingsContext';
+import type { Theme, ColorScheme, AccountTypeConfig, BalanceAnchor } from '@/contexts/SettingsContext';
 
 interface UserSettings {
   theme: Theme;
   colorScheme: ColorScheme;
   targetSavingsRate: number;
   activeIncomeCategories: string[];
+  fixedExpenseCategories: string[];
+  accountTypes: AccountTypeConfig[];
+  balanceAnchors: BalanceAnchor[];
 }
 
 interface DatabaseSettings {
@@ -37,6 +40,9 @@ const DEFAULT_SETTINGS: UserSettings = {
   colorScheme: 'default',
   targetSavingsRate: 60,
   activeIncomeCategories: [],
+  fixedExpenseCategories: [],
+  accountTypes: [],
+  balanceAnchors: [],
 };
 
 export function useSupabaseSettings(): UseSupabaseSettingsReturn {

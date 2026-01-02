@@ -90,12 +90,6 @@ function determineTransactionType(inflow: number, outflow: number): 'income' | '
   return inflow >= outflow ? 'income' : 'expense';
 }
 
-/**
- * Check if a tertiary category is a transfer type
- */
-function isTransferType(tertiaryCategory: string): boolean {
-  return tertiaryCategory === '转账' || tertiaryCategory === '信用卡还款';
-}
 
 /**
  * Parse CSV content and return array of parsed transactions
@@ -159,8 +153,6 @@ export function parseCSV(content: string): {
         }
       }
 
-      // Check if this is a transfer type (转账, 信用卡还款)
-      const isTransfer = isTransferType(tertiaryCategory);
 
       const inflowStr = values[3] || '0.00';
       const outflowStr = values[4] || '0.00';
@@ -194,26 +186,24 @@ export function parseCSV(content: string): {
         continue;
       }
 
-      // Determine transaction type
-      const type: 'income' | 'expense' | 'transfer' = isTransfer ? 'transfer' : determineTransactionType(inflow, outflow);
+      // Determine transaction type (removed transfer type - all transactions are income or expense)
+      const type: 'income' | 'expense' = determineTransactionType(inflow, outflow);
 
       // Special handling for "余额调整" - map to 对账收入/对账支出 based on type
-      if (tertiaryCategory === '余额调整' && type !== 'transfer') {
+      if (tertiaryCategory === '余额调整') {
         tertiaryCategory = type === 'income' ? '对账收入' : '对账支出';
       }
 
-      // Map tertiary category to secondary category (skip mapping for transfers)
+      // Map tertiary category to secondary category
       let hasMapping = true;
-      let secondaryCategory = '转账';
-      if (type !== 'transfer') {
-        const secondary = findSecondaryCategory(primaryCategory, tertiaryCategory, type);
-        hasMapping = secondary !== null;
-        secondaryCategory = secondary || '未分类';
-      }
+      let secondaryCategory = '未分类';
+      const secondary = findSecondaryCategory(primaryCategory, tertiaryCategory, type);
+      hasMapping = secondary !== null;
+      secondaryCategory = secondary || '未分类';
 
       // If the tertiary category is actually a secondary category name (not in tertiary list),
-      // use the first tertiary category from that secondary category (skip for transfers)
-      if (type !== 'transfer' && !hasMapping) {
+      // use the first tertiary category from that secondary category
+      if (!hasMapping) {
         const mappings = type === 'income' ? DEFAULT_INCOME_CATEGORIES : DEFAULT_EXPENSE_CATEGORIES;
         if (mappings[tertiaryCategory]) {
           // tertiaryCategory is actually a secondary category name

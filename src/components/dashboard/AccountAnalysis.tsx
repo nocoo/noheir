@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Transaction } from '@/types/transaction';
 import { StatCard } from './StatCard';
-import { useSettings, getIncomeColor, getIncomeColorHex, getExpenseColor, getExpenseColorHex } from '@/contexts/SettingsContext';
+import { useSettings, getIncomeColor, getIncomeColorHex, getExpenseColor, getExpenseColorHex, AccountType, getAccountType, ACCOUNT_TYPE_CONFIG } from '@/contexts/SettingsContext';
 import type { PieLabelEntry, LegendPayloadEntry } from '@/types/category-shared';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -14,6 +14,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, legendStyle, formatCurrencyK, formatCurrencyFull } from '@/lib/chart-config';
 import { ChartCard } from '@/components/shared';
 import { gridContainer, gridItem } from '@/lib/animations';
+import { Button } from '@/components/ui/button';
+import { CreditCard } from 'lucide-react';
 
 interface AccountAnalysisProps {
   transactions: Transaction[];
@@ -28,8 +30,30 @@ interface AccountSummary {
   categories: Map<string, number>;
 }
 
+interface AccountGroup {
+  prefix: string;
+  accounts: AccountSummary[];
+  totalIncome: number;
+  totalExpense: number;
+  totalBalance: number;
+  totalTransactions: number;
+  accountType?: AccountType;
+}
+
+type GroupByType = 'prefix' | 'type';
+
+// Helper function to extract account prefix (part before hyphen)
+function getAccountPrefix(accountName: string): string {
+  const hyphenIndex = accountName.indexOf('-');
+  if (hyphenIndex > 0) {
+    return accountName.substring(0, hyphenIndex).trim();
+  }
+  return accountName;
+}
+
 export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
   const { settings } = useSettings();
+  const [groupBy, setGroupBy] = useState<GroupByType>('type'); // 默认按类型分组
   const incomeColorClass = getIncomeColor(settings.colorScheme);
   const incomeColorHex = getIncomeColorHex(settings.colorScheme);
   const expenseColorClass = getExpenseColor(settings.colorScheme);
@@ -67,6 +91,41 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
       (b.income + b.expense) - (a.income + a.expense)
     );
   }, [transactions]);
+
+  // Group accounts by prefix or type
+  const accountGroups = useMemo(() => {
+    const groupMap = new Map<string, AccountGroup>();
+
+    accountData.forEach(acc => {
+      const groupKey = groupBy === 'type'
+        ? (settings.accountTypes?.find(c => c.accountName === acc.name)?.type || 'unclassified')
+        : getAccountPrefix(acc.name);
+
+      if (!groupMap.has(groupKey)) {
+        groupMap.set(groupKey, {
+          prefix: groupKey,
+          accounts: [],
+          totalIncome: 0,
+          totalExpense: 0,
+          totalBalance: 0,
+          totalTransactions: 0,
+          accountType: groupBy === 'type' ? groupKey as AccountType : undefined,
+        });
+      }
+
+      const group = groupMap.get(groupKey)!;
+      group.accounts.push(acc);
+      group.totalIncome += acc.income;
+      group.totalExpense += acc.expense;
+      group.totalBalance += acc.balance;
+      group.totalTransactions += acc.transactionCount;
+    });
+
+    // Sort groups by total transaction volume
+    return Array.from(groupMap.values()).sort((a, b) =>
+      (b.totalIncome + b.totalExpense) - (a.totalIncome + a.totalExpense)
+    );
+  }, [accountData, groupBy, settings.accountTypes]);
 
   const chartData = useMemo(() => 
     accountData.map(acc => ({
@@ -314,43 +373,115 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
       {/* Account Overview - Full Width, 2 Columns */}
       <ChartCard
         title="账户概览"
-        description="各账户详细信息"
+        description={groupBy === 'type' ? '各账户详细信息（按类型分组）' : '各账户详细信息（按前缀分组）'}
       >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {accountData.map((acc, i) => (
-              <div key={acc.name} className="p-4 rounded-lg bg-muted/50">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: colors[i % colors.length] }}
-                    />
-                    <span className="font-semibold">{acc.name}</span>
+          {/* Group By Toggle */}
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-sm text-muted-foreground">分组方式:</span>
+            <div className="flex gap-1">
+              <Button
+                variant={groupBy === 'type' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setGroupBy('type')}
+              >
+                <CreditCard className="h-4 w-4 mr-1" />
+                按类型
+              </Button>
+              <Button
+                variant={groupBy === 'prefix' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setGroupBy('prefix')}
+              >
+                <Wallet className="h-4 w-4 mr-1" />
+                按前缀
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            {accountGroups.map((group, groupIndex) => {
+              const typeConfig = group.accountType ? ACCOUNT_TYPE_CONFIG[group.accountType] : null;
+              const TypeIcon = typeConfig?.icon;
+
+              return (
+                <div key={group.prefix} className="space-y-3">
+                  {/* Group Header */}
+                  <div className="flex items-center justify-between px-2 pb-2 border-b">
+                    <div className="flex items-center gap-2">
+                      {typeConfig ? (
+                        <>
+                          <div className={`p-1.5 rounded ${typeConfig.color} text-white`}>
+                            <TypeIcon className="h-3 w-3" />
+                          </div>
+                          <h3 className="text-lg font-semibold">{typeConfig.label}</h3>
+                        </>
+                      ) : (
+                        <>
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: colors[groupIndex % colors.length] }}
+                          />
+                          <h3 className="text-lg font-semibold">{group.prefix}</h3>
+                        </>
+                      )}
+                      <Badge variant="outline">{group.accounts.length} 个账户</Badge>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">总收入: </span>
+                        <span className={`font-medium ${incomeColorClass}`}>
+                          {formatCurrencyFull(group.totalIncome)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">总支出: </span>
+                        <span className={`font-medium ${expenseColorClass}`}>
+                          {formatCurrencyFull(group.totalExpense)}
+                        </span>
+                      </div>
+                      <Badge variant={group.totalBalance >= 0 ? 'default' : 'destructive'}>
+                        {group.totalBalance >= 0 ? '+' : ''}{formatCurrencyFull(group.totalBalance)}
+                      </Badge>
+                    </div>
                   </div>
-                  <Badge variant={acc.balance >= 0 ? 'default' : 'destructive'}>
-                    {acc.balance >= 0 ? '+' : ''}{formatCurrencyFull(acc.balance)}
-                  </Badge>
+
+                  {/* Group Accounts */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {group.accounts.map((acc, i) => (
+                      <div key={acc.name} className="p-3 rounded-lg bg-muted/30 border">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-medium text-sm">{acc.name}</span>
+                          <Badge
+                            variant={acc.balance >= 0 ? 'default' : 'destructive'}
+                            className="text-xs"
+                          >
+                            {acc.balance >= 0 ? '+' : ''}{formatCurrencyFull(acc.balance)}
+                          </Badge>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 text-xs">
+                          <div>
+                            <p className="text-muted-foreground">收入</p>
+                            <p className={`font-medium ${incomeColorClass}`}>
+                              {formatCurrencyK(acc.income)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">支出</p>
+                            <p className={`font-medium ${expenseColorClass}`}>
+                              {formatCurrencyK(acc.expense)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">交易数</p>
+                            <p className="font-medium">{acc.transactionCount}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">收入</p>
-                    <p className={`font-medium ${incomeColorClass}`}>
-                      {formatCurrencyFull(acc.income)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">支出</p>
-                    <p className={`font-medium ${expenseColorClass}`}>
-                      {formatCurrencyFull(acc.expense)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">交易数</p>
-                    <p className="font-medium">{acc.transactionCount}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
       </ChartCard>
 

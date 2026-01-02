@@ -1,8 +1,55 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
+import { CreditCard, Wallet, Gift, TrendingUp, HelpCircle } from 'lucide-react';
 
 export type Theme = 'light' | 'dark' | 'system';
 export type ColorScheme = 'default' | 'swapped';
+
+export const ACCOUNT_TYPE_CONFIG = {
+  debit: {
+    label: '借记卡',
+    description: '现金账户，资金自由出入',
+    icon: Wallet,
+    color: 'bg-blue-500',
+  },
+  credit: {
+    label: '信用卡',
+    description: '每个月需要还款',
+    icon: CreditCard,
+    color: 'bg-red-500',
+  },
+  prepaid: {
+    label: '预付卡',
+    description: '自由转入，特定渠道消费',
+    icon: Gift,
+    color: 'bg-purple-500',
+  },
+  financial: {
+    label: '金融账户',
+    description: '金融投资',
+    icon: TrendingUp,
+    color: 'bg-green-500',
+  },
+  unclassified: {
+    label: '未分类',
+    description: '尚未分类',
+    icon: HelpCircle,
+    color: 'bg-gray-500',
+  },
+} as const;
+
+export type AccountType = 'debit' | 'credit' | 'prepaid' | 'financial' | 'unclassified';
+
+export interface AccountTypeConfig {
+  accountName: string;
+  type: AccountType;
+}
+
+export interface BalanceAnchor {
+  accountName: string;
+  date: string;  // YYYY-MM-DD
+  balance: number;
+}
 
 export interface AIConfig {
   enabled: boolean;           // 是否启用 AI 功能
@@ -21,6 +68,8 @@ interface Settings {
   minReturnRate: number;      // 保底收益率 (%)
   maxReturnRate: number;      // 风险收益率阈值 (%)
   aiConfig: AIConfig;         // AI 配置
+  accountTypes: AccountTypeConfig[];  // 账户类型配置
+  balanceAnchors: BalanceAnchor[];    // 余额锚点
 }
 
 interface SettingsContextType {
@@ -39,6 +88,12 @@ interface SettingsContextType {
   updateMaxReturnRate: (rate: number) => void;
   updateAIConfig: (config: AIConfig) => void;
   updateAIEnabled: (enabled: boolean) => void;
+  updateAccountTypes: (accountTypes: AccountTypeConfig[]) => void;
+  updateAccountType: (accountName: string, type: AccountType) => void;
+  getAccountType: (accountName: string) => AccountType;
+  updateBalanceAnchors: (anchors: BalanceAnchor[]) => void;
+  addBalanceAnchor: (anchor: BalanceAnchor) => void;
+  removeBalanceAnchor: (accountName: string, date: string) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -58,6 +113,8 @@ const DEFAULT_SETTINGS: Settings = {
     baseURL: 'https://api.aihubmix.com/v1',
     modelName: 'gpt-4o-mini',
   },
+  accountTypes: [],
+  balanceAnchors: [],
 };
 
 const STORAGE_KEY = 'finance-settings';
@@ -122,6 +179,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
             ...(settingsData.settings.targetSavingsRate !== undefined && { targetSavingsRate: settingsData.settings.targetSavingsRate }),
             ...(settingsData.settings.activeIncomeCategories && { activeIncomeCategories: settingsData.settings.activeIncomeCategories }),
             ...(settingsData.settings.fixedExpenseCategories && { fixedExpenseCategories: settingsData.settings.fixedExpenseCategories }),
+            ...(settingsData.settings.accountTypes && { accountTypes: settingsData.settings.accountTypes }),
+            ...(settingsData.settings.balanceAnchors && { balanceAnchors: settingsData.settings.balanceAnchors }),
           }));
         }
       }
@@ -225,6 +284,56 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setSettings(prev => ({ ...prev, aiConfig: { ...prev.aiConfig, enabled } }));
   };
 
+  const updateAccountTypes = (accountTypes: AccountTypeConfig[]) => {
+    setSettings(prev => ({ ...prev, accountTypes }));
+  };
+
+  const updateAccountType = (accountName: string, type: AccountType) => {
+    setSettings(prev => {
+      const existingIndex = prev.accountTypes.findIndex(acc => acc.accountName === accountName);
+      let newAccountTypes: AccountTypeConfig[];
+
+      if (existingIndex >= 0) {
+        // Update existing
+        newAccountTypes = [...prev.accountTypes];
+        newAccountTypes[existingIndex] = { accountName, type };
+      } else {
+        // Add new
+        newAccountTypes = [...prev.accountTypes, { accountName, type }];
+      }
+
+      return { ...prev, accountTypes: newAccountTypes };
+    });
+  };
+
+  const getAccountType = (accountName: string): AccountType => {
+    const config = settings.accountTypes.find(acc => acc.accountName === accountName);
+    return config?.type || 'unclassified';
+  };
+
+  const updateBalanceAnchors = (anchors: BalanceAnchor[]) => {
+    setSettings(prev => ({ ...prev, balanceAnchors: anchors }));
+  };
+
+  const addBalanceAnchor = (anchor: BalanceAnchor) => {
+    setSettings(prev => {
+      // Remove existing anchor for same account + date if exists
+      const filtered = prev.balanceAnchors.filter(
+        a => !(a.accountName === anchor.accountName && a.date === anchor.date)
+      );
+      return { ...prev, balanceAnchors: [...filtered, anchor] };
+    });
+  };
+
+  const removeBalanceAnchor = (accountName: string, date: string) => {
+    setSettings(prev => ({
+      ...prev,
+      balanceAnchors: prev.balanceAnchors.filter(
+        a => !(a.accountName === accountName && a.date === date)
+      )
+    }));
+  };
+
   return (
     <SettingsContext.Provider
       value={{
@@ -243,6 +352,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         updateMaxReturnRate,
         updateAIConfig,
         updateAIEnabled,
+        updateAccountTypes,
+        updateAccountType,
+        getAccountType,
+        updateBalanceAnchors,
+        addBalanceAnchor,
+        removeBalanceAnchor,
       }}
     >
       {children}

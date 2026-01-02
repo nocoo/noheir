@@ -1268,54 +1268,54 @@ export function CapitalUnitsManager() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>
+                <TableHead className="h-10 px-3">
                   <button
                     onClick={() => handleSort('unit_code')}
-                    className="flex items-center hover:text-foreground transition-colors"
+                    className="flex items-center hover:text-foreground transition-colors text-sm"
                   >
                     番号
                     {getSortIcon('unit_code')}
                   </button>
                 </TableHead>
-                <TableHead>
+                <TableHead className="h-10 px-3">
                   <button
                     onClick={() => handleSort('strategy')}
-                    className="flex items-center hover:text-foreground transition-colors"
+                    className="flex items-center hover:text-foreground transition-colors text-sm"
                   >
                     策略
                     {getSortIcon('strategy')}
                   </button>
                 </TableHead>
-                <TableHead>
+                <TableHead className="h-10 px-3">
                   <button
                     onClick={() => handleSort('tactics')}
-                    className="flex items-center hover:text-foreground transition-colors"
+                    className="flex items-center hover:text-foreground transition-colors text-sm"
                   >
                     战术
                     {getSortIcon('tactics')}
                   </button>
                 </TableHead>
-                <TableHead>
+                <TableHead className="h-10 px-3">
                   <button
                     onClick={() => handleSort('status')}
-                    className="flex items-center hover:text-foreground transition-colors"
+                    className="flex items-center hover:text-foreground transition-colors text-sm"
                   >
                     状态
                     {getSortIcon('status')}
                   </button>
                 </TableHead>
-                <TableHead>关联产品</TableHead>
-                <TableHead className="text-right">
+                <TableHead className="h-10 px-3">关联产品</TableHead>
+                <TableHead className="h-10 px-3 text-right">
                   <button
                     onClick={() => handleSort('remaining_days')}
-                    className="flex items-center hover:text-foreground transition-colors"
+                    className="flex items-center hover:text-foreground transition-colors text-sm"
                   >
                     锁定期
                     {getSortIcon('remaining_days')}
                   </button>
                 </TableHead>
-                <TableHead>备注</TableHead>
-                <TableHead className="text-right">操作</TableHead>
+                <TableHead className="h-10 px-3">备注</TableHead>
+                <TableHead className="h-10 px-3 text-right">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -1323,7 +1323,7 @@ export function CapitalUnitsManager() {
                 const displayStatus = getDisplayStatus(unit);
                 return (
                   <TableRow key={unit.id}>
-                    <TableCell className="font-medium">
+                    <TableCell className="py-2 px-3 font-medium">
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -1346,16 +1346,16 @@ export function CapitalUnitsManager() {
                         </Tooltip>
                       </TooltipProvider>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-2 px-3">
                       <StrategyBadge strategy={unit.strategy} />
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-2 px-3">
                       <TacticsBadge tactics={unit.tactics} />
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-2 px-3">
                       <StatusBadge status={displayStatus.status} />
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-2 px-3">
                       {unit.product ? (
                         <div>
                           <div className="text-sm">{unit.product.name}</div>
@@ -1365,7 +1365,7 @@ export function CapitalUnitsManager() {
                         <span className="text-muted-foreground">-</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="py-2 px-3 text-right">
                       {unit.end_date && unit.days_until_maturity !== undefined ? (
                         <TooltipProvider>
                           <Tooltip>
@@ -1416,7 +1416,7 @@ export function CapitalUnitsManager() {
                         )
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-2 px-3">
                       {unit.note ? (
                         <span className="text-sm text-muted-foreground truncate max-w-[200px] inline-block" title={unit.note}>
                           {unit.note}
@@ -1425,7 +1425,7 @@ export function CapitalUnitsManager() {
                         <span className="text-muted-foreground">-</span>
                       )}
                     </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="py-2 px-3 text-right">
                     <div className="flex items-center justify-end gap-1">
                       {/* Unified Edit/Deploy button */}
                       <Button

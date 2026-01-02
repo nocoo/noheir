@@ -85,14 +85,28 @@ function classifyDecisions(units: UnitDisplay[]): DecisionItem[] {
       return;
     }
 
-    // 3. ✅ BEST: 已过锁定期（资金可用+持续产生收益）
+    // 3. ✅ 已过锁定期（资金可用+持续产生收益）
     if (unit.is_available) {
-      decisions.push({
-        unit,
-        reason: '已可用',
-        urgency: 'low',  // No urgency - already in best state
-        details: `"${unit.product.name}"锁定期已过，资金可用且持续产生收益，可灵活再配置`,
-      });
+      // 检查是否在最近30天内刚解锁
+      const daysSinceUnlock = unit.days_until_maturity !== undefined ? -unit.days_until_maturity : undefined;
+
+      if (daysSinceUnlock !== undefined && daysSinceUnlock <= 30) {
+        // 刚解锁30天内，标记为中等紧急度
+        decisions.push({
+          unit,
+          reason: '刚解锁',
+          urgency: 'medium',
+          details: `"${unit.product.name}"刚解锁 ${daysSinceUnlock} 天，建议关注再配置机会`,
+        });
+      } else {
+        // 解锁超过30天，低优先级
+        decisions.push({
+          unit,
+          reason: '已可用',
+          urgency: 'low',
+          details: `"${unit.product.name}"锁定期已过，资金可用且持续产生收益，可灵活再配置`,
+        });
+      }
       return;
     }
 
@@ -452,43 +466,43 @@ export function CapitalDecisions() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>
+                  <TableHead className="h-10 px-3">
                     <button
                       onClick={() => handleSort('紧急度')}
-                      className="flex items-center hover:text-foreground transition-colors"
+                      className="flex items-center hover:text-foreground transition-colors text-sm"
                     >
                       紧急度
                       {getSortIcon('紧急度')}
                     </button>
                   </TableHead>
-                  <TableHead>
+                  <TableHead className="h-10 px-3">
                     <button
                       onClick={() => handleSort('番号')}
-                      className="flex items-center hover:text-foreground transition-colors"
+                      className="flex items-center hover:text-foreground transition-colors text-sm"
                     >
                       番号
                       {getSortIcon('番号')}
                     </button>
                   </TableHead>
-                  <TableHead>
+                  <TableHead className="h-10 px-3">
                     <button
                       onClick={() => handleSort('策略')}
-                      className="flex items-center hover:text-foreground transition-colors"
+                      className="flex items-center hover:text-foreground transition-colors text-sm"
                     >
                       策略
                       {getSortIcon('策略')}
                     </button>
                   </TableHead>
-                  <TableHead>
+                  <TableHead className="h-10 px-3">
                     <button
                       onClick={() => handleSort('说明')}
-                      className="flex items-center hover:text-foreground transition-colors"
+                      className="flex items-center hover:text-foreground transition-colors text-sm"
                     >
                       说明
                       {getSortIcon('说明')}
                     </button>
                   </TableHead>
-                  <TableHead className="text-right">操作</TableHead>
+                  <TableHead className="h-10 px-3 text-right">操作</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -502,12 +516,12 @@ export function CapitalDecisions() {
                   filteredDecisions.map(item => (
                     <TableRow key={item.unit.id}>
                       {/* 紧急度 */}
-                      <TableCell>
+                      <TableCell className="py-2 px-3">
                         <UrgencyBadge urgency={item.urgency} />
                       </TableCell>
 
                       {/* 番号 */}
-                      <TableCell className="font-medium">
+                      <TableCell className="py-2 px-3 font-medium">
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -532,17 +546,24 @@ export function CapitalDecisions() {
                       </TableCell>
 
                       {/* 策略 */}
-                      <TableCell>
+                      <TableCell className="py-2 px-3">
                         <StrategyBadge strategy={item.unit.strategy} />
                       </TableCell>
 
                       {/* 说明 */}
-                      <TableCell>
-                        <p className="text-sm text-muted-foreground">{item.details}</p>
+                      <TableCell className="py-2 px-3">
+                        <div className="space-y-0.5">
+                          <p className="text-sm text-muted-foreground">{item.details}</p>
+                          {item.unit.note && (
+                            <p className="text-xs text-muted-foreground italic">
+                              📝 {item.unit.note}
+                            </p>
+                          )}
+                        </div>
                       </TableCell>
 
                       {/* 操作 */}
-                      <TableCell className="text-right">
+                      <TableCell className="py-2 px-3 text-right">
                         <Button
                           variant="ghost"
                           size="icon"

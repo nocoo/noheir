@@ -25,6 +25,8 @@ import {
   Boxes,
   PieChart,
   HeartPulse,
+  Sparkles,
+  CreditCard,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -52,10 +54,15 @@ const navGroups = [
       { id: 'freedom', label: '财务自由', icon: Target },
       { id: 'income', label: '收入分析', icon: TrendingUp },
       { id: 'expense', label: '支出分析', icon: TrendingDown },
-      { id: 'transfer', label: '转账分析', icon: ArrowRightLeft },
-      { id: 'account', label: '账户分析', icon: Wallet },
       { id: 'flow', label: '流向分析', icon: Network },
       { id: 'compare', label: '时段对比', icon: GitCompareArrows },
+    ]
+  },
+  {
+    title: '账户管理',
+    items: [
+      { id: 'account', label: '账户总览', icon: Wallet },
+      { id: 'account-detail', label: '账户详情', icon: Wallet },
     ]
   },
   {
@@ -73,7 +80,9 @@ const navGroups = [
   {
     title: '系统',
     items: [
-      { id: 'settings', label: '设置', icon: SettingsIcon },
+      { id: 'settings', label: '通用设置', icon: SettingsIcon },
+      { id: 'ai-settings', label: 'AI设置', icon: Sparkles },
+      { id: 'account-types', label: '账户设置', icon: CreditCard },
       { id: 'manage', label: '数据管理', icon: Database },
       { id: 'import', label: '数据导入', icon: Upload },
     ]

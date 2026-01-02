@@ -660,7 +660,7 @@ export function ProductsLibrary() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>
+                    <TableHead className="h-10 px-3">
                       <button
                         onClick={() => handleSort('investStatus')}
                         className="flex items-center hover:text-foreground transition-colors"
@@ -669,7 +669,7 @@ export function ProductsLibrary() {
                         {getSortIcon('investStatus')}
                       </button>
                     </TableHead>
-                    <TableHead>
+                    <TableHead className="h-10 px-3">
                       <button
                         onClick={() => handleSort('name')}
                         className="flex items-center hover:text-foreground transition-colors"
@@ -678,7 +678,7 @@ export function ProductsLibrary() {
                         {getSortIcon('name')}
                       </button>
                     </TableHead>
-                    <TableHead>
+                    <TableHead className="h-10 px-3">
                       <button
                         onClick={() => handleSort('channel')}
                         className="flex items-center hover:text-foreground transition-colors"
@@ -687,7 +687,7 @@ export function ProductsLibrary() {
                         {getSortIcon('channel')}
                       </button>
                     </TableHead>
-                    <TableHead>
+                    <TableHead className="h-10 px-3">
                       <button
                         onClick={() => handleSort('category')}
                         className="flex items-center hover:text-foreground transition-colors"
@@ -730,7 +730,7 @@ export function ProductsLibrary() {
                   {filteredProducts.map(product => (
                     <TableRow key={product.id}>
                       {/* Investment Status */}
-                      <TableCell>
+                      <TableCell className="py-2 px-3">
                         {(() => {
                           const metrics = productMetrics[product.id];
                           const hasActiveUnits = metrics && metrics.activeUnitsCount > 0;
@@ -740,7 +740,7 @@ export function ProductsLibrary() {
                         })()}
                       </TableCell>
                       {/* Product Name with info icon */}
-                      <TableCell className="font-medium">
+                      <TableCell className="py-2 px-3 font-medium">
                         <span className="flex items-center gap-1.5">
                           {product.name}
                           {product.code && (
@@ -754,15 +754,15 @@ export function ProductsLibrary() {
                         </span>
                       </TableCell>
                       {/* Channel - Badge */}
-                      <TableCell>
+                      <TableCell className="py-2 px-3">
                         <ChannelBadge channel={product.channel} />
                       </TableCell>
                       {/* Category - Badge */}
-                      <TableCell>
+                      <TableCell className="py-2 px-3">
                         <CategoryBadge category={product.category} />
                       </TableCell>
                       {/* Total Capital with Currency Symbol */}
-                      <TableCell className="text-right">
+                      <TableCell className="py-2 px-3 text-right">
                         {(() => {
                           const amount = productMetrics[product.id]?.totalCapital || 0;
                           const currencySymbol = {
@@ -774,11 +774,11 @@ export function ProductsLibrary() {
                         })()}
                       </TableCell>
                       {/* Lock Period */}
-                      <TableCell className="text-right">
+                      <TableCell className="py-2 px-3 text-right">
                         {product.lock_period_days > 0 ? `${product.lock_period_days} 天` : '-'}
                       </TableCell>
                       {/* Annual Return Rate with Daily Return Tooltip */}
-                      <TableCell className="text-right">
+                      <TableCell className="py-2 px-3 text-right">
                         {product.annual_return_rate ? (
                           <TooltipProvider>
                             <Tooltip>
@@ -810,7 +810,7 @@ export function ProductsLibrary() {
                         ) : '-'}
                       </TableCell>
                       {/* Actions */}
-                      <TableCell className="text-right">
+                      <TableCell className="py-2 px-3 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Button
                             variant="ghost"

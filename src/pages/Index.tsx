@@ -8,9 +8,9 @@ import { DataQuality } from '@/components/dashboard/DataQuality';
 import { DataManagement } from '@/components/dashboard/DataManagement';
 import { FlowAnalysis } from '@/components/dashboard/FlowAnalysis';
 import { TransactionAnalysis } from '@/components/dashboard/TransactionAnalysis';
-import { TransferAnalysis } from '@/components/dashboard/TransferAnalysis';
 import { AccountAnalysis } from '@/components/dashboard/AccountAnalysis';
-import { Settings } from '@/components/dashboard/Settings';
+import { AccountDetail } from '@/components/dashboard/AccountDetail';
+import { GeneralSettings } from '@/components/dashboard/GeneralSettings';
 import { YearSelector } from '@/components/dashboard/YearSelector';
 import type { DataQualityMetrics, TransactionValidation } from '@/types/data';
 import { TransactionHeatmap } from '@/components/dashboard/TransactionHeatmap';
@@ -247,26 +247,6 @@ const Index = () => {
             <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
           </div>
           <TransactionAnalysis transactions={transactions} monthlyData={monthlyData} type="expense" />
-        </motion.div>
-      )}
-
-      {activeTab === 'transfer' && (
-        <motion.div
-          key="transfer"
-          initial="initial"
-          animate="animate"
-          variants={fadeInUp}
-          transition={{ duration: 0.25 }}
-          className="space-y-6"
-        >
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold">转账分析</h1>
-              <p className="text-muted-foreground">转账和信用卡还款记录分析</p>
-            </div>
-            <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
-          </div>
-          <TransferAnalysis transactions={transactions} monthlyData={monthlyData} />
         </motion.div>
       )}
 
