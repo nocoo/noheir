@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { CreditCard, Wallet, Gift, TrendingUp, HelpCircle } from 'lucide-react';
+import { UNIFIED_PALETTE } from '@/lib/colorPalette';
 
 export type Theme = 'light' | 'dark' | 'system';
 export type ColorScheme = 'default' | 'swapped';
@@ -11,30 +12,35 @@ export const ACCOUNT_TYPE_CONFIG = {
     description: '现金账户，资金自由出入',
     icon: Wallet,
     color: 'bg-blue-500',
+    colorHex: UNIFIED_PALETTE.blue,
   },
   credit: {
     label: '信用卡',
     description: '每个月需要还款',
     icon: CreditCard,
     color: 'bg-red-500',
+    colorHex: UNIFIED_PALETTE.red,
   },
   prepaid: {
     label: '预付卡',
     description: '自由转入，特定渠道消费',
     icon: Gift,
     color: 'bg-purple-500',
+    colorHex: UNIFIED_PALETTE.purple,
   },
   financial: {
     label: '金融账户',
     description: '金融投资',
     icon: TrendingUp,
     color: 'bg-green-500',
+    colorHex: UNIFIED_PALETTE.emerald,
   },
   unclassified: {
     label: '未分类',
     description: '尚未分类',
     icon: HelpCircle,
     color: 'bg-gray-500',
+    colorHex: UNIFIED_PALETTE.gray,
   },
 } as const;
 

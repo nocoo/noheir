@@ -14,6 +14,7 @@ import { ScissorsTrendChart } from '@/components/charts/ScissorsTrendChart';
 import { RigiditySankey } from '@/components/charts/RigiditySankey';
 import { YearSelector } from '@/components/dashboard/YearSelector';
 import { IncomeExpenseComparison } from '@/components/dashboard/IncomeExpenseComparison';
+import { getScoreRatingColors } from '@/lib/colorPalette';
 
 interface FinancialHealthPageProps {
   transactions: Transaction[];
@@ -123,10 +124,10 @@ export function FinancialHealthPage({
         ],
         scoringRules: (
           <ul className="space-y-1">
-            <li>• <span className="text-emerald-600">20分</span>: 收入增长快于支出增长（剪刀差为正）</li>
-            <li>• <span className="text-yellow-600">15分</span>: 收支增长基本持平</li>
-            <li>• <span className="text-orange-600">10分</span>: 支出增长略快于收入</li>
-            <li>• <span className="text-red-600">5分</span>: 支出增长明显快于收入</li>
+            <ScoreRuleItem score="20" description="收入增长快于支出增长（剪刀差为正）" />
+            <ScoreRuleItem score="15" description="收支增长基本持平" />
+            <ScoreRuleItem score="10" description="支出增长略快于收入" />
+            <ScoreRuleItem score="5" description="支出增长明显快于收入" />
           </ul>
         ),
       },
@@ -146,11 +147,11 @@ export function FinancialHealthPage({
         analysis: rigidityAnalysis,
         scoringRules: (
           <ul className="space-y-1">
-            <li>• <span className="text-emerald-600">25分</span>: 固定支出占比 ≤30%（财务结构健康）</li>
-            <li>• <span className="text-yellow-600">20分</span>: 固定支出占比 30-40%</li>
-            <li>• <span className="text-orange-600">15分</span>: 固定支出占比 40-50%</li>
-            <li>• <span className="text-red-600">10分</span>: 固定支出占比 50-60%</li>
-            <li>• <span className="text-red-700">5分</span>: 固定支出占比 &gt;60%（风险很高）</li>
+            <ScoreRuleItem score="25" description="固定支出占比 ≤30%（财务结构健康）" />
+            <ScoreRuleItem score="20" description="固定支出占比 30-40%" />
+            <ScoreRuleItem score="15" description="固定支出占比 40-50%" />
+            <ScoreRuleItem score="10" description="固定支出占比 50-60%" />
+            <ScoreRuleItem score="5" description="固定支出占比 &gt;60%（风险很高）" />
           </ul>
         ),
         settingsAlert: rigiditySettingsAlert,
@@ -175,11 +176,11 @@ export function FinancialHealthPage({
         ],
         scoringRules: (
           <ul className="space-y-1">
-            <li>• <span className="text-emerald-600">15分</span>: HHI ≤0.3（收入来源高度多元化）</li>
-            <li>• <span className="text-yellow-600">12分</span>: HHI 0.3-0.5（较多元化）</li>
-            <li>• <span className="text-orange-600">9分</span>: HHI 0.5-0.7（有一定集中度）</li>
-            <li>• <span className="text-red-600">6分</span>: HHI 0.7-0.85（高度集中）</li>
-            <li>• <span className="text-red-700">3分</span>: HHI &gt;0.85（严重依赖单一来源）</li>
+            <ScoreRuleItem score="15" description="HHI ≤0.3（收入来源高度多元化）" />
+            <ScoreRuleItem score="12" description="HHI 0.3-0.5（较多元化）" />
+            <ScoreRuleItem score="9" description="HHI 0.5-0.7（有一定集中度）" />
+            <ScoreRuleItem score="6" description="HHI 0.7-0.85（高度集中）" />
+            <ScoreRuleItem score="3" description="HHI &gt;0.85（严重依赖单一来源）" />
           </ul>
         ),
       },
@@ -204,11 +205,11 @@ export function FinancialHealthPage({
         ],
         scoringRules: (
           <ul className="space-y-1">
-            <li>• <span className="text-emerald-600">20分</span>: 从未负现金流且波动率低</li>
-            <li>• <span className="text-yellow-600">16分</span>: 偶有负流（≤10%月份）且波动适中</li>
-            <li>• <span className="text-orange-600">12分</span>: 部分月份负流（10-20%）</li>
-            <li>• <span className="text-red-600">8分</span>: 频繁负流（20-30%）</li>
-            <li>• <span className="text-red-700">4分</span>: 经常入不敷出（&gt;30%月份）</li>
+            <ScoreRuleItem score="20" description="从未负现金流且波动率低" />
+            <ScoreRuleItem score="16" description="偶有负流（≤10%月份）且波动适中" />
+            <ScoreRuleItem score="12" description="部分月份负流（10-20%）" />
+            <ScoreRuleItem score="8" description="频繁负流（20-30%）" />
+            <ScoreRuleItem score="4" description="经常入不敷出（&gt;30%月份）" />
           </ul>
         ),
       },
@@ -232,11 +233,11 @@ export function FinancialHealthPage({
         ],
         scoringRules: (
           <ul className="space-y-1">
-            <li>• <span className="text-emerald-600">20分</span>: 年度储蓄率 ≥30%</li>
-            <li>• <span className="text-yellow-600">16分</span>: 年度储蓄率 20-30%</li>
-            <li>• <span className="text-orange-600">12分</span>: 年度储蓄率 10-20%</li>
-            <li>• <span className="text-red-600">8分</span>: 年度储蓄率 0-10%</li>
-            <li>• <span className="text-red-700">0分</span>: 年度储蓄率 &lt;0%（入不敷出）</li>
+            <ScoreRuleItem score="20" description="年度储蓄率 ≥30%" />
+            <ScoreRuleItem score="16" description="年度储蓄率 20-30%" />
+            <ScoreRuleItem score="12" description="年度储蓄率 10-20%" />
+            <ScoreRuleItem score="8" description="年度储蓄率 0-10%" />
+            <ScoreRuleItem score="0" description="年度储蓄率 &lt;0%（入不敷出）" />
           </ul>
         ),
       },
@@ -245,6 +246,17 @@ export function FinancialHealthPage({
 
   const { totalScore, maxScore, grade } = healthResult;
   const scorePercentage = (totalScore / maxScore) * 100;
+
+  // Helper component for scoring rule items with unified colors
+  const ScoreRuleItem = ({ score, description }: { score: string; description: string }) => {
+    const scoreNum = parseInt(score);
+    const colors = getScoreRatingColors(scoreNum);
+    return (
+      <li>
+        • <span className={colors.text}>{score}分</span>: {description}
+      </li>
+    );
+  };
 
   const getGradeColor = () => {
     switch (grade) {

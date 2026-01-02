@@ -105,6 +105,54 @@ export const MATURITY_COLORS = {
 } as const;
 
 // ============================================================================
+// SCORE RATING COLORS (5-level scoring system)
+// ============================================================================
+/**
+ * 5-Level Score Rating System
+ *
+ * Used for scoring/grading UI components:
+ * - Excellent (优秀): 90-100 points - Emerald/Green
+ * - Good (良好): 70-89 points - Green/Cyan
+ * - Average (一般): 50-69 points - Yellow/Amber
+ * - Poor (较差): 30-49 points - Orange
+ * - Critical (危险): 0-29 points - Red/Rose
+ */
+export const SCORE_RATING_COLORS = {
+  excellent: {
+    text: 'text-emerald-600 dark:text-emerald-400',
+    bg: 'bg-emerald-50 dark:bg-emerald-950/30',
+    border: 'border-emerald-200 dark:border-emerald-800',
+    hex: '#059669', // Emerald-600
+  },
+  good: {
+    text: 'text-green-600 dark:text-green-400',
+    bg: 'bg-green-50 dark:bg-green-950/30',
+    border: 'border-green-200 dark:border-green-800',
+    hex: '#22c55e', // Green-500
+  },
+  average: {
+    text: 'text-yellow-600 dark:text-yellow-400',
+    bg: 'bg-yellow-50 dark:bg-yellow-950/30',
+    border: 'border-yellow-200 dark:border-yellow-800',
+    hex: '#ca8a04', // Yellow-600
+  },
+  poor: {
+    text: 'text-orange-600 dark:text-orange-400',
+    bg: 'bg-orange-50 dark:bg-orange-950/30',
+    border: 'border-orange-200 dark:border-orange-800',
+    hex: '#ea580c', // Orange-600
+  },
+  critical: {
+    text: 'text-red-600 dark:text-red-400',
+    bg: 'bg-red-50 dark:bg-red-950/30',
+    border: 'border-red-200 dark:border-red-800',
+    hex: '#dc2626', // Red-600
+  },
+} as const;
+
+export type ScoreRating = keyof typeof SCORE_RATING_COLORS;
+
+// ============================================================================
 // CATEGORY COLORS (Transaction Categories)
 // ============================================================================
 export const CATEGORY_COLORS = {
@@ -220,6 +268,29 @@ export function getStatusColor(status: string): string {
  */
 export function getMaturityColor(period: string): string {
   return MATURITY_COLORS[period as keyof typeof MATURITY_COLORS] || UNIFIED_PALETTE.gray;
+}
+
+/**
+ * Get score rating by percentage value (0-100)
+ * @param score - Score value (0-100)
+ * @returns Score rating key
+ */
+export function getScoreRating(score: number): ScoreRating {
+  if (score >= 90) return 'excellent';
+  if (score >= 70) return 'good';
+  if (score >= 50) return 'average';
+  if (score >= 30) return 'poor';
+  return 'critical';
+}
+
+/**
+ * Get score rating colors object
+ * @param score - Score value (0-100)
+ * @returns Color styles object (text, bg, border, hex)
+ */
+export function getScoreRatingColors(score: number) {
+  const rating = getScoreRating(score);
+  return SCORE_RATING_COLORS[rating];
 }
 
 // ============================================================================

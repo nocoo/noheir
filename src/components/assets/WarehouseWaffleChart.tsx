@@ -28,6 +28,7 @@ import { StatusBadge } from '@/components/ui/colored-badge';
 import type { UnitDisplay, UnitStatus, Currency, InvestmentStrategy } from '@/types/assets';
 import { formatCurrencyFull } from '@/lib/chart-config';
 import { staggerFastContainer, staggerFastItem } from '@/lib/animations';
+import { UNIFIED_PALETTE } from '@/lib/colorPalette';
 
 // ============================================================================
 // TYPES
@@ -42,6 +43,19 @@ type WaffleStatus =
   | 'planned'              // 🟡 黄色 - 计划中（资金为0）
   | 'fundraising'          // 🟠 橙色 - 筹集中（资金逐步到位）
   | 'archived';            // ⚪️ 灰色 - 已归档（完全消灭）
+
+// ============================================================================
+// COLOR CONSTANTS (from unified palette)
+// ============================================================================
+// All colors are derived from UNIFIED_PALETTE to ensure consistency
+const WAFFLE_COLORS = {
+  // Status colors (using palette colors)
+  idleNoProduct: UNIFIED_PALETTE.rose,        // 🔴 Rose - No product (worst)
+  idleCashPlus: '#f9a8d4',                    // 🌸 Pink-300 - Cash+ products (lighter pink)
+  planned: UNIFIED_PALETTE.gray,              // ⚪️ Gray - Planned
+  fundraising: UNIFIED_PALETTE.yellow,        // 🟡 Yellow - Fundraising
+  archived: UNIFIED_PALETTE.slate,            // ⚫️ Slate - Archived
+} as const;
 
 // Currency emoji
 const CURRENCY_EMOJI: Record<Currency, string> = {
@@ -179,37 +193,37 @@ function WaffleCell({ unit, index, onUnitClick }: WaffleCellProps) {
 
     switch (waffleStatus) {
       case 'idle-no-product':
-        // 🔴 Red - No product (worst)
-        return 'bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-600';
+        // 🔴 Rose - No product (worst) - using palette color
+        return 'bg-rose-600 dark:bg-rose-700 hover:bg-rose-700 dark:hover:bg-rose-600';
 
       case 'idle-cash-plus':
-        // 🌸 Light red/pink - Cash+ products
+        // 🌸 Light pink - Cash+ products
         return 'bg-pink-300 dark:bg-pink-400 hover:bg-pink-400 dark:hover:bg-pink-300';
 
       case 'available-earning':
         // 🟢 Green series - Available + earning (best)
-        // Color intensity based on return rate
+        // Color intensity based on return rate (using green from palette as base)
         return getReturnRateColor(unit) + ' hover:opacity-80';
 
       case 'locked-earning':
-        // 🔵 Blue series - In lock period + earning
+        // 🔵 Blue series - In lock period + earning (using blue from palette as base)
         // Color intensity based on return rate
         return getReturnRateColor(unit) + ' hover:opacity-80';
 
       case 'planned':
-        // ⚪️ Gray - Planned (资金为0，尚未开始)
-        return 'bg-gray-400 dark:bg-gray-500 hover:bg-gray-500 dark:hover:bg-gray-400';
+        // ⚪️ Gray - Planned (资金为0，尚未开始) - using palette color
+        return 'bg-gray-500 dark:bg-gray-600 hover:bg-gray-600 dark:hover:bg-gray-500';
 
       case 'fundraising':
-        // 🟡 Yellow - Fundraising (资金逐步到位)
+        // 🟡 Yellow - Fundraising (资金逐步到位) - using palette color
         return 'bg-yellow-500 dark:bg-yellow-600 hover:bg-yellow-600 dark:hover:bg-yellow-500';
 
       case 'archived':
-        // ⚫️ Slate - Archived (完全消灭)
-        return 'bg-slate-400 dark:bg-slate-600 hover:bg-slate-500 dark:hover:bg-slate-500';
+        // ⚫️ Slate - Archived (完全消灭) - using palette color
+        return 'bg-slate-500 dark:bg-slate-700 hover:bg-slate-600 dark:hover:bg-slate-600';
 
       default:
-        return 'bg-slate-300 dark:bg-slate-700';
+        return 'bg-slate-400 dark:bg-slate-700';
     }
   };
 
@@ -322,7 +336,7 @@ function WaffleLegend({ data }: WaffleLegendProps) {
     {
       status: 'idle-no-product' as WaffleStatus,
       label: '未关联产品',
-      color: 'bg-red-600 dark:bg-red-700',
+      color: 'bg-rose-600 dark:bg-rose-700',
       count: stats.idleNoProduct,
       emoji: '🔴',
     },
@@ -350,7 +364,7 @@ function WaffleLegend({ data }: WaffleLegendProps) {
     {
       status: 'planned' as WaffleStatus,
       label: '计划中',
-      color: 'bg-gray-400 dark:bg-gray-500',
+      color: 'bg-gray-500 dark:bg-gray-600',
       count: stats.planned,
       emoji: '⚪️',
     },
@@ -364,7 +378,7 @@ function WaffleLegend({ data }: WaffleLegendProps) {
     {
       status: 'archived' as WaffleStatus,
       label: '已归档',
-      color: 'bg-slate-400 dark:bg-slate-600',
+      color: 'bg-slate-500 dark:bg-slate-700',
       count: stats.archived,
       emoji: '⚫️',
     },

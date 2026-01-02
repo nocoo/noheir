@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { LucideIcon, Info } from 'lucide-react';
 import { useSettings, getIncomeColor, getIncomeColorHex, getExpenseColor, getExpenseColorHex } from '@/contexts/SettingsContext';
 import { formatCurrencyFull } from '@/lib/chart-config';
+import { getScoreRatingColors } from '@/lib/colorPalette';
 
 interface StatCardProps {
   title: string;
@@ -28,20 +29,14 @@ export function StatCard({ title, value, icon: Icon, variant = 'default', showCu
   // For savings variant, determine color based on savings rate
   const getSavingsColor = () => {
     const rate = savingsValue ?? 0;
-    if (rate >= 30) return 'text-emerald-600'; // 优秀 - 绿色
-    if (rate >= 20) return 'text-green-600'; // 良好 - 浅绿
-    if (rate >= 10) return 'text-yellow-600'; // 一般 - 黄色
-    if (rate >= 0) return 'text-orange-600'; // 较差 - 橙色
-    return 'text-red-600'; // 危险 - 红色
+    const colors = getScoreRatingColors(rate);
+    return colors.text;
   };
 
   const getSavingsBorderColor = () => {
     const rate = savingsValue ?? 0;
-    if (rate >= 30) return '#059669'; // emerald-600
-    if (rate >= 20) return '#16a34a'; // green-600
-    if (rate >= 10) return '#ca8a04'; // yellow-600
-    if (rate >= 0) return '#ea580c'; // orange-600
-    return '#dc2626'; // red-600
+    const colors = getScoreRatingColors(rate);
+    return colors.hex;
   };
 
   const variantStyles = {
