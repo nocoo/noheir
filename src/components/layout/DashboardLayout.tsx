@@ -185,22 +185,21 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
           </nav>
 
           {sidebarOpen && (
-            <div className="shrink-0 border-t border-border bg-card p-4 space-y-3">
+            <div className="shrink-0 border-t border-border bg-card px-2 pt-2 pb-3 space-y-2">
               <LoginButton />
-              <div className="text-xs text-muted-foreground text-center space-y-1">
+              <div className="text-xs text-muted-foreground text-center">
                 <a
                   href="https://github.com/nocoo/noheir"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-primary transition-colors"
                 >
-                  <p className="text-[10px] opacity-70">{APP_VERSION}</p>
+                  <span className="text-[10px] opacity-70">{APP_VERSION}</span>
                 </a>
-                <div className="flex justify-center gap-2 text-[10px] opacity-70">
-                  <Link to="/terms" className="hover:text-primary transition-colors">服务条款</Link>
-                  <span>•</span>
-                  <Link to="/privacy" className="hover:text-primary transition-colors">隐私政策</Link>
-                </div>
+                <span className="text-[10px] opacity-50 mx-1">•</span>
+                <Link to="/terms" className="hover:text-primary transition-colors text-[10px] opacity-70">服务条款</Link>
+                <span className="text-[10px] opacity-50">•</span>
+                <Link to="/privacy" className="hover:text-primary transition-colors text-[10px] opacity-70">隐私政策</Link>
               </div>
             </div>
           )}
