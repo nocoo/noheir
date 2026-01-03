@@ -3,6 +3,7 @@ import { ChevronUp, ChevronDown } from 'lucide-react';
 import { Transaction } from '@/types/transaction';
 import { Transfer } from '@/types/data';
 import { useSettings } from '@/contexts/SettingsContext';
+import { useTransfers } from '@/hooks/useTransfers';
 import { getLabelColorClasses } from '@/lib/tagColors';
 import {
   Select,
@@ -23,7 +24,6 @@ import { YearSelector } from '@/components/dashboard/YearSelector';
 
 interface AccountDetailProps {
   transactions: Transaction[];
-  transfers: Transfer[];
   selectedYear: number;
   availableYears: number[];
   onYearChange: (year: number) => void;
@@ -70,8 +70,9 @@ interface BalanceEntry {
   originalData: Transaction | Transfer; // Keep reference for display
 }
 
-export function AccountDetail({ transactions: allTransactions, transfers, selectedYear, availableYears, onYearChange }: AccountDetailProps) {
+export function AccountDetail({ transactions: allTransactions, selectedYear, availableYears, onYearChange }: AccountDetailProps) {
   const { settings } = useSettings();
+  const { transfers } = useTransfers();
   const [selectedAccount, setSelectedAccount] = useState<string>('');
   const [sortColumn, setSortColumn] = useState<keyof DisplayEntry>('date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');

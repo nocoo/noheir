@@ -32,7 +32,6 @@ import { StrategySunburst } from '@/components/assets/StrategySunburst';
 import { LiquidityLadder } from '@/components/assets/LiquidityLadder';
 import { FinancialHealthPage } from '@/pages/FinancialHealthPage';
 import { useTransactions } from '@/hooks/useTransactions';
-import { useTransfers } from '@/hooks/useTransfers';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { LoadingPage } from '@/components/pages/LoadingPage';
@@ -69,8 +68,6 @@ const Index = () => {
     loadStoredData,
     getQualityForYear,
   } = useTransactions();
-
-  const { transfers } = useTransfers();
 
   const { settings } = useSettings();
 
@@ -398,7 +395,6 @@ const Index = () => {
           </div>
           <AccountDetail
             transactions={allTransactions}
-            transfers={transfers}
             selectedYear={selectedYear}
             availableYears={availableYears}
             onYearChange={setSelectedYear}
