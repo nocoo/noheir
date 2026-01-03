@@ -1,5 +1,5 @@
 import { Transaction } from '@/types/transaction';
-import { YearSelector } from '@/components/dashboard/YearSelector';
+import { UnifiedYearSelector } from '@/components/dashboard/UnifiedYearSelector';
 import { SankeyChart } from '@/components/dashboard/SankeyChart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TrendingUp, TrendingDown } from 'lucide-react';
@@ -19,7 +19,7 @@ export function FlowAnalysis({ transactions, selectedYear, availableYears, onYea
           <h1 className="text-2xl font-bold">流向分析</h1>
           <p className="text-muted-foreground">可视化资金从来源到分类的流向分布</p>
         </div>
-        <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={onYearChange} />
+        <UnifiedYearSelector mode="single" selectedYear={selectedYear} availableYears={availableYears} onChange={onYearChange} />
       </div>
 
       <Tabs defaultValue="income" className="w-full">

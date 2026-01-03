@@ -64,10 +64,11 @@ export const PALETTE_ARRAY = [
 ] as const;
 
 // ============================================================================
-// INCOME/EXPENSE COLORS
+// INCOME/EXPENSE/BALANCE COLORS
 // ============================================================================
 export const INCOME_COLOR = '#059669';  // Emerald-600
 export const EXPENSE_COLOR = '#e11d48';  // Rose-600
+export const BALANCE_COLOR = '#14b8a6';  // Teal-500 (结余/余额 - 青色表示平衡)
 
 // ============================================================================
 // ASET-SPECIFIC COLORS (Capital Dashboard)

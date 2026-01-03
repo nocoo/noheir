@@ -14,14 +14,13 @@ import { AccountDetail } from '@/components/dashboard/AccountDetail';
 import { GeneralSettings } from '@/components/dashboard/GeneralSettings';
 import { AISettings } from '@/components/dashboard/AISettings';
 import { AccountTypesPage } from '@/components/dashboard/AccountTypesPage';
-import { YearSelector } from '@/components/dashboard/YearSelector';
+import { UnifiedYearSelector } from '@/components/dashboard/UnifiedYearSelector';
 import type { DataQualityMetrics, TransactionValidation } from '@/types/data';
 import { TransactionHeatmap } from '@/components/dashboard/TransactionHeatmap';
 import { IncomeExpenseComparison } from '@/components/dashboard/IncomeExpenseComparison';
 import { SavingsRateChart } from '@/components/dashboard/SavingsRateChart';
 import { BalanceWaterfall } from '@/components/dashboard/BalanceWaterfall';
 import { YearComparisonChart } from '@/components/dashboard/YearComparisonChart';
-import { MultiYearSelector } from '@/components/dashboard/MultiYearSelector';
 import { FinancialFreedomAnalysis } from '@/components/dashboard/FinancialFreedomAnalysis';
 import { ProductsLibrary } from '@/components/assets/ProductsLibrary';
 import { CapitalUnitsManager } from '@/components/assets/CapitalUnitsManager';
@@ -204,7 +203,7 @@ const Index = () => {
               <h1 className="text-2xl font-bold">财务概览</h1>
               <p className="text-muted-foreground">查看您的财务状况和趋势</p>
             </div>
-            <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
+            <UnifiedYearSelector mode="single" selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
           </div>
 
           <motion.div
@@ -252,7 +251,7 @@ const Index = () => {
               <h1 className="text-2xl font-bold">收入分析</h1>
               <p className="text-muted-foreground">深入了解收入来源和趋势</p>
             </div>
-            <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
+            <UnifiedYearSelector mode="single" selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
           </div>
           <TransactionAnalysis transactions={transactions} monthlyData={monthlyData} type="income" />
         </motion.div>
@@ -272,7 +271,7 @@ const Index = () => {
               <h1 className="text-2xl font-bold">支出分析</h1>
               <p className="text-muted-foreground">分析支出结构和消费习惯</p>
             </div>
-            <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
+            <UnifiedYearSelector mode="single" selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
           </div>
           <TransactionAnalysis transactions={transactions} monthlyData={monthlyData} type="expense" />
         </motion.div>
@@ -313,7 +312,7 @@ const Index = () => {
               <h1 className="text-2xl font-bold">储蓄率分析</h1>
               <p className="text-muted-foreground">追踪储蓄率和财务健康</p>
             </div>
-            <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
+            <UnifiedYearSelector mode="single" selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
           </div>
           <SavingsRateChart data={monthlyData} />
           <BalanceWaterfall data={monthlyData} />
@@ -334,7 +333,7 @@ const Index = () => {
               <h1 className="text-2xl font-bold">财务自由分析</h1>
               <p className="text-muted-foreground">基于被动收入的财务自由度评估</p>
             </div>
-            <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
+            <UnifiedYearSelector mode="single" selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
           </div>
           <FinancialFreedomAnalysis transactions={transactions} year={selectedYear} />
         </motion.div>
@@ -354,7 +353,7 @@ const Index = () => {
               <h1 className="text-2xl font-bold">账户分析</h1>
               <p className="text-muted-foreground">各账户收支情况</p>
             </div>
-            <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
+            <UnifiedYearSelector mode="single" selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
           </div>
           <AccountAnalysis transactions={transactions} />
         </motion.div>
@@ -391,7 +390,7 @@ const Index = () => {
               <h1 className="text-2xl font-bold">账户详情</h1>
               <p className="text-muted-foreground">查看单个账户的金额变化和交易明细（含转账）</p>
             </div>
-            <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
+            <UnifiedYearSelector mode="single" selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
           </div>
           <AccountDetail
             transactions={allTransactions}
@@ -415,7 +414,7 @@ const Index = () => {
             <h1 className="text-2xl font-bold">时段对比</h1>
             <p className="text-muted-foreground">跨年度/月度财务数据对比分析</p>
           </div>
-          <MultiYearSelector selectedYears={comparisonYears} availableYears={availableYears} onChange={setComparisonYears} />
+          <UnifiedYearSelector mode="multi" selectedYears={comparisonYears} availableYears={availableYears} onMultiChange={setComparisonYears} />
           <YearComparisonChart data={yearlyComparison} />
           <motion.div
             variants={gridContainer}

@@ -97,10 +97,10 @@ export function useTransactions() {
           setStoredYearsData(allData);
           setTransactions(allTransactions);
 
-          // Update comparison years if not set
+          // Update comparison years if not set (default: last 3 years, sorted ascending)
           if (comparisonYears.length === 0) {
-            const years = allData.map(d => d.year).sort((a, b) => b - a);
-            setComparisonYears(years.slice(0, 2));
+            const years = allData.map(d => d.year).sort((a, b) => b - a); // Sort descending (newest first)
+            setComparisonYears(years.slice(0, 3).sort((a, b) => a - b)); // Take last 3, sort ascending for display
           }
         } catch (error) {
           console.error('Failed to load remaining years:', error);

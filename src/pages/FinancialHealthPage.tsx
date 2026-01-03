@@ -12,7 +12,7 @@ import { FinancialHealthRadar } from '@/components/charts/FinancialHealthRadar';
 import { useSettings } from '@/contexts/SettingsContext';
 import { ScissorsTrendChart } from '@/components/charts/ScissorsTrendChart';
 import { RigiditySankey } from '@/components/charts/RigiditySankey';
-import { YearSelector } from '@/components/dashboard/YearSelector';
+import { UnifiedYearSelector } from '@/components/dashboard/UnifiedYearSelector';
 import { IncomeExpenseComparison } from '@/components/dashboard/IncomeExpenseComparison';
 import { getScoreRatingColors } from '@/lib/colorPalette';
 
@@ -56,6 +56,17 @@ export function FinancialHealthPage({
   onYearChange,
 }: FinancialHealthPageProps) {
   const { settings } = useSettings();
+
+  // Helper component for scoring rule items with unified colors
+  const ScoreRuleItem = ({ score, description }: { score: string; description: string }) => {
+    const scoreNum = parseInt(score);
+    const colors = getScoreRatingColors(scoreNum);
+    return (
+      <li>
+        • <span className={colors.text}>{score}分</span>: {description}
+      </li>
+    );
+  };
 
   // Calculate health score using the new algorithm
   const healthResult = useMemo(() => {
@@ -247,17 +258,6 @@ export function FinancialHealthPage({
   const { totalScore, maxScore, grade } = healthResult;
   const scorePercentage = (totalScore / maxScore) * 100;
 
-  // Helper component for scoring rule items with unified colors
-  const ScoreRuleItem = ({ score, description }: { score: string; description: string }) => {
-    const scoreNum = parseInt(score);
-    const colors = getScoreRatingColors(scoreNum);
-    return (
-      <li>
-        • <span className={colors.text}>{score}分</span>: {description}
-      </li>
-    );
-  };
-
   const getGradeColor = () => {
     switch (grade) {
       case 'A+':
@@ -283,7 +283,7 @@ export function FinancialHealthPage({
           <h1 className="text-2xl font-bold">财务健康分析</h1>
           <p className="text-muted-foreground">5维度反脆弱评估体系</p>
         </div>
-        <YearSelector selectedYear={selectedYear} availableYears={availableYears} onChange={onYearChange} />
+        <UnifiedYearSelector mode="single" selectedYear={selectedYear} availableYears={availableYears} onChange={onYearChange} />
       </div>
 
       {/* Overall Score Card */}

@@ -20,7 +20,6 @@ import { xAxisStyle, yAxisStyle, gridStyle, tooltipStyle, formatCurrencyK, forma
 import { getIncomeColor, getExpenseColor, getIncomeColorHex, getExpenseColorHex } from '@/contexts/SettingsContext';
 import { Wallet, TrendingUp, TrendingDown, Calendar, DollarSign } from 'lucide-react';
 import { AccountType, ACCOUNT_TYPE_CONFIG } from '@/contexts/SettingsContext';
-import { YearSelector } from '@/components/dashboard/YearSelector';
 
 interface AccountDetailProps {
   transactions: Transaction[];
@@ -46,11 +45,12 @@ interface DisplayEntry {
   primaryCategory?: string;
   secondaryCategory?: string;
   tertiaryCategory?: string;
-  type: 'income' | 'expense' | 'transfer';
+  type: 'income' | 'expense' | 'transfer' | 'anchor';
   amount: number;
   balance: number;
   balanceAfter: number;
   note?: string;
+  isAnchor?: boolean; // Mark if this entry is an anchor
 }
 
 // Unified entry for balance calculation (from Transaction or Transfer)
@@ -232,13 +232,27 @@ export function AccountDetail({ transactions: allTransactions, selectedYear, ava
     // Calculate daily balances for the selected year using all anchors
     const balanceMap = new Map<string, DailyBalance>();
 
+    // First, add all anchor dates to balanceMap so ReferenceLines can find their positions
+    displayAnchors.forEach(anchor => {
+      if (!balanceMap.has(anchor.date)) {
+        balanceMap.set(anchor.date, {
+          date: anchor.date,
+          balance: anchor.balance,
+          income: 0,
+          expense: 0,
+        });
+      }
+    });
+
     // Process entries in segments between anchors
     for (let i = 0; i < yearAnchors.length; i++) {
       const currentAnchor = yearAnchors[i];
       const nextAnchor = yearAnchors[i + 1];
 
       let segmentStartBalance = currentAnchor.balance;
-      const segmentStartDate = currentAnchor.isStarting ? yearStartDate : currentAnchor.date;
+      // For isStarting anchor, segmentStartDate should always be yearStartDate
+      // This ensures we don't skip any transactions between year start and anchor date
+      const segmentStartDate = (currentAnchor.isStarting || i === 0) ? yearStartDate : currentAnchor.date;
       const segmentEndDate = nextAnchor ? nextAnchor.date : `${selectedYear}-12-31`;
 
       // Process entries in this segment
@@ -288,8 +302,25 @@ export function AccountDetail({ transactions: allTransactions, selectedYear, ava
       const nextAnchor = yearAnchors[i + 1];
 
       let segmentBalance = currentAnchor.balance;
-      const segmentStartDate = currentAnchor.isStarting ? yearStartDate : currentAnchor.date;
+      // For isStarting anchor, segmentStartDate should always be yearStartDate
+      // This ensures we don't skip any transactions between year start and anchor date
+      const segmentStartDate = (currentAnchor.isStarting || i === 0) ? yearStartDate : currentAnchor.date;
       const segmentEndDate = nextAnchor ? nextAnchor.date : `${selectedYear}-12-31`;
+
+      // Add anchor entry if it's within the year and not a starting placeholder
+      if (!currentAnchor.isStarting && currentAnchor.date >= yearStartDate && currentAnchor.date <= `${selectedYear}-12-31`) {
+        displayEntries.push({
+          id: `anchor-${currentAnchor.date}`,
+          date: currentAnchor.date,
+          primaryCategory: '余额锚点',
+          type: 'anchor',
+          amount: 0,
+          balance: currentAnchor.balance,
+          balanceAfter: currentAnchor.balance,
+          note: `校准至 ¥${currentAnchor.balance.toFixed(2)}`,
+          isAnchor: true,
+        });
+      }
 
       for (const entry of accountEntries) {
         if (entry.date < segmentStartDate) continue;
@@ -303,6 +334,10 @@ export function AccountDetail({ transactions: allTransactions, selectedYear, ava
         segmentBalance += entry.amount;
 
         // Add all entries to display list (including transfers)
+        // For transfers, preserve the sign to show direction (negative = out, positive = in)
+        // For income/expense, use absolute value since type already indicates direction
+        const displayAmount = entry.type === 'transfer' ? entry.amount : Math.abs(entry.amount);
+
         displayEntries.push({
           id: entry.id,
           date: entry.date,
@@ -310,7 +345,7 @@ export function AccountDetail({ transactions: allTransactions, selectedYear, ava
           secondaryCategory: entry.secondaryCategory,
           tertiaryCategory: entry.tertiaryCategory,
           type: entry.type,
-          amount: Math.abs(entry.amount),
+          amount: displayAmount,
           balance: segmentBalance,
           balanceAfter: segmentBalance,
           note: entry.description,
@@ -318,8 +353,15 @@ export function AccountDetail({ transactions: allTransactions, selectedYear, ava
       }
     }
 
-    // Sort display entries by date
-    displayEntries.sort((a, b) => a.date.localeCompare(b.date));
+    // Sort display entries by date (anchors should come before transactions on the same day)
+    displayEntries.sort((a, b) => {
+      const dateCompare = a.date.localeCompare(b.date);
+      if (dateCompare !== 0) return dateCompare;
+      // On same date, anchors come first
+      if (a.isAnchor && !b.isAnchor) return -1;
+      if (!a.isAnchor && b.isAnchor) return 1;
+      return 0;
+    });
 
     // Calculate summary for selected year
     const yearEntries = accountEntries.filter(
@@ -352,13 +394,18 @@ export function AccountDetail({ transactions: allTransactions, selectedYear, ava
     if (!displayEntries.length) return [];
 
     const sorted = [...displayEntries].sort((a, b) => {
+      // Anchors always stay in chronological order, don't sort them by other columns
+      if (a.isAnchor && b.isAnchor) return a.date.localeCompare(b.date);
+      if (a.isAnchor) return -1;
+      if (b.isAnchor) return 1;
+
       let aVal: any = a[sortColumn];
       let bVal: any = b[sortColumn];
 
       // Handle special cases
       if (sortColumn === 'type') {
         // Sort by type label
-        const typeLabels = { income: '收入', expense: '支出', transfer: '转账' };
+        const typeLabels = { income: '收入', expense: '支出', transfer: '转账', anchor: '锚点' };
         aVal = typeLabels[a.type as keyof typeof typeLabels];
         bVal = typeLabels[b.type as keyof typeof typeLabels];
       } else if (sortColumn === 'primaryCategory') {
@@ -510,6 +557,8 @@ export function AccountDetail({ transactions: allTransactions, selectedYear, ava
                         dataKey="date"
                         {...xAxisStyle}
                         tickFormatter={(value) => value.substring(5)} // Show MM-DD
+                        domain={[`${selectedYear}-01-01`, `${selectedYear}-12-31`]}
+                        type="category"
                       />
                       <YAxis
                         {...yAxisStyle}
@@ -536,7 +585,7 @@ export function AccountDetail({ transactions: allTransactions, selectedYear, ava
                           strokeDasharray="4 4"
                           strokeWidth={1.5}
                           label={{
-                            value: `锚点: ¥${anchor.balance.toFixed(2)}`,
+                            value: `¥${anchor.balance.toFixed(2)}`,
                             position: 'top',
                             fill: 'hsl(var(--text-muted))',
                             fontSize: 11,
@@ -596,6 +645,35 @@ export function AccountDetail({ transactions: allTransactions, selectedYear, ava
                 </TableHeader>
                 <TableBody>
                   {sortedDisplayEntries.map((entry) => {
+                    // Handle anchor entries separately
+                    if (entry.isAnchor) {
+                      return (
+                        <TableRow key={entry.id} className="bg-muted/50 hover:bg-muted/70">
+                          <TableCell className="font-medium">{entry.date}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <DollarSign className="h-4 w-4 text-muted-foreground" />
+                              <span className="font-semibold text-foreground">{entry.primaryCategory}</span>
+                            </div>
+                            {entry.note && (
+                              <div className="text-xs text-muted-foreground mt-0.5">{entry.note}</div>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="bg-muted border-muted-foreground/50 text-muted-foreground">
+                              锚点
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right text-muted-foreground">
+                            —
+                          </TableCell>
+                          <TableCell className="text-right font-bold">
+                            {formatCurrencyFull(entry.balance)}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    }
+
                     // Get color for badge based on type
                     const typeColor = entry.type === 'income'
                       ? getLabelColorClasses('收入')
