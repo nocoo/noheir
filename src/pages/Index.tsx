@@ -13,7 +13,7 @@ import { AccountAnalysis } from '@/components/dashboard/AccountAnalysis';
 import { AccountDetail } from '@/components/dashboard/AccountDetail';
 import { GeneralSettings } from '@/components/dashboard/GeneralSettings';
 import { AISettings } from '@/components/dashboard/AISettings';
-import { AccountTypeSettings } from '@/components/dashboard/AccountTypeSettings';
+import { AccountTypesPage } from '@/components/dashboard/AccountTypesPage';
 import { YearSelector } from '@/components/dashboard/YearSelector';
 import type { DataQualityMetrics, TransactionValidation } from '@/types/data';
 import { TransactionHeatmap } from '@/components/dashboard/TransactionHeatmap';
@@ -588,10 +588,10 @@ const Index = () => {
           className="space-y-6"
         >
           <div>
-            <h1 className="text-2xl font-bold">账户类型设置</h1>
-            <p className="text-muted-foreground">为每个账户标记类型，便于后续财务分析</p>
+            <h1 className="text-2xl font-bold">账户设置</h1>
+            <p className="text-muted-foreground">设置账户类型和余额锚点</p>
           </div>
-          <AccountTypeSettings />
+          <AccountTypesPage />
         </motion.div>
       )}
     </DashboardLayout>

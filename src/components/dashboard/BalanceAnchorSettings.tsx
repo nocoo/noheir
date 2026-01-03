@@ -8,7 +8,7 @@ import { useSettings, BalanceAnchor } from '@/contexts/SettingsContext';
 import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTransactions } from '@/hooks/useTransactions';
-import { Calendar, DollarSign, Plus, Trash2, AlertCircle } from 'lucide-react';
+import { Calendar, DollarSign, Plus, Trash2, AlertCircle, Calculator, AlertTriangle } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -53,6 +53,98 @@ export function BalanceAnchorSettings() {
     return grouped;
   }, [settings.balanceAnchors]);
 
+  // Calculate theoretical balance at selected date for selected account
+  const { calculatedBalance, balanceDifference, differenceLevel } = useMemo(() => {
+    if (!selectedAccount || !selectedDate) {
+      return { calculatedBalance: null, balanceDifference: null, differenceLevel: null };
+    }
+
+    // Get all anchors for this account, sorted ascending
+    const accountAnchors = (settings.balanceAnchors || [])
+      .filter(a => a.accountName === selectedAccount && a.date <= selectedDate)
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    // Find the most recent anchor before or on the selected date
+    const baseAnchor = accountAnchors.length > 0 ? accountAnchors[accountAnchors.length - 1] : null;
+    const baseBalance = baseAnchor?.balance || 0;
+    const baseDate = baseAnchor?.date || '2000-01-01';
+
+    // Get all transactions for this account
+    const accountTransactions = transactions.filter(t => t.account === selectedAccount);
+
+    // Calculate balance from base anchor to selected date
+    let calculated = baseBalance;
+    accountTransactions.forEach(t => {
+      // Skip transactions on or before base date (they're already included in base anchor)
+      if (t.fullDate <= baseDate) return;
+      // Skip transactions after selected date
+      if (t.fullDate > selectedDate) return;
+
+      // Add transaction amount (positive for income, negative for expense)
+      calculated += t.income || 0;
+      calculated -= t.expense || 0;
+    });
+
+    const inputBalance = balance !== '' ? parseFloat(balance) : null;
+    const difference = inputBalance !== null ? Math.abs(inputBalance - calculated) : null;
+
+    // Determine warning level
+    let level: 'none' | 'info' | 'warning' | 'error' | null = null;
+    if (difference !== null) {
+      if (difference < 1) {
+        level = 'none';
+      } else if (difference < 100) {
+        level = 'info';
+      } else if (difference < 1000) {
+        level = 'warning';
+      } else {
+        level = 'error';
+      }
+    }
+
+    return {
+      calculatedBalance: calculated,
+      balanceDifference: difference,
+      differenceLevel: level
+    };
+  }, [selectedAccount, selectedDate, balance, transactions, settings.balanceAnchors]);
+
+  // Calculate difference for each existing anchor
+  const anchorDifferences = useMemo(() => {
+    const differences: Record<string, number> = {};
+
+    Object.entries(anchorsByAccount).forEach(([accountName, anchors]) => {
+      anchors.forEach(anchor => {
+        // Get all anchors for this account before this date
+        const previousAnchors = (settings.balanceAnchors || [])
+          .filter(a => a.accountName === accountName && a.date < anchor.date)
+          .sort((a, b) => a.date.localeCompare(b.date));
+
+        // Find base anchor
+        const baseAnchor = previousAnchors.length > 0 ? previousAnchors[previousAnchors.length - 1] : null;
+        const baseBalance = baseAnchor?.balance || 0;
+        const baseDate = baseAnchor?.date || '2000-01-01';
+
+        // Get all transactions for this account
+        const accountTransactions = transactions.filter(t => t.account === accountName);
+
+        // Calculate balance from base anchor to this anchor date
+        let calculated = baseBalance;
+        accountTransactions.forEach(t => {
+          if (t.fullDate <= baseDate) return;
+          if (t.fullDate > anchor.date) return;
+          calculated += t.income || 0;
+          calculated -= t.expense || 0;
+        });
+
+        const diff = Math.abs(anchor.balance - calculated);
+        differences[`${accountName}-${anchor.date}`] = diff;
+      });
+    });
+
+    return differences;
+  }, [anchorsByAccount, settings.balanceAnchors, transactions]);
+
   // Debounced database update
   const debouncedUpdateDB = useCallback((newAnchors: BalanceAnchor[]) => {
     if (timeoutRef.current) {
@@ -82,6 +174,12 @@ export function BalanceAnchorSettings() {
       return;
     }
 
+    // Check for large differences before adding
+    if (balanceDifference !== null && balanceDifference >= 1000) {
+      toast.error(`差异过大 (¥${balanceDifference.toFixed(2)})，请确认后再添加`);
+      return;
+    }
+
     const newAnchor: BalanceAnchor = {
       accountName: selectedAccount,
       date: selectedDate,
@@ -100,7 +198,7 @@ export function BalanceAnchorSettings() {
     // Reset form
     setBalance('');
     toast.success('余额锚点已添加');
-  }, [selectedAccount, selectedDate, balance, settings.balanceAnchors, addBalanceAnchor, debouncedUpdateDB]);
+  }, [selectedAccount, selectedDate, balance, settings.balanceAnchors, addBalanceAnchor, debouncedUpdateDB, balanceDifference]);
 
   const handleRemoveAnchor = useCallback((accountName: string, date: string) => {
     // Update local context
@@ -182,7 +280,7 @@ export function BalanceAnchorSettings() {
             <div className="flex items-end">
               <Button
                 onClick={handleAddAnchor}
-                disabled={!selectedAccount || !selectedDate || !balance}
+                disabled={!selectedAccount || !selectedDate || balance === ''}
                 className="w-full"
               >
                 <Plus className="h-4 w-4 mr-1" />
@@ -190,6 +288,59 @@ export function BalanceAnchorSettings() {
               </Button>
             </div>
           </div>
+
+          {/* Balance Difference Warning */}
+          {calculatedBalance !== null && (
+            <div className={`p-3 rounded border ${
+              differenceLevel === 'error' ? 'bg-destructive/10 border-destructive/30' :
+              differenceLevel === 'warning' ? 'bg-orange-500/10 border-orange-500/30' :
+              differenceLevel === 'info' ? 'bg-blue-500/10 border-blue-500/30' :
+              'bg-green-500/10 border-green-500/30'
+            }`}>
+              <div className="flex items-start gap-2">
+                <Calculator className={`h-4 w-4 mt-0.5 ${
+                  differenceLevel === 'error' ? 'text-destructive' :
+                  differenceLevel === 'warning' ? 'text-orange-500' :
+                  differenceLevel === 'info' ? 'text-blue-500' :
+                  'text-green-500'
+                }`} />
+                <div className="flex-1 text-sm">
+                  <div className="font-medium mb-1">
+                    {differenceLevel === 'error' && (
+                      <span className="flex items-center gap-1 text-destructive">
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                        差异较大，请确认
+                      </span>
+                    )}
+                    {differenceLevel === 'warning' && (
+                      <span className="flex items-center gap-1 text-orange-500">
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                        存在差异，建议核对
+                      </span>
+                    )}
+                    {differenceLevel === 'info' && (
+                      <span className="text-blue-500">存在小额差异</span>
+                    )}
+                    {differenceLevel === 'none' && (
+                      <span className="text-green-600 flex items-center gap-1">
+                        ✓ 余额一致
+                      </span>
+                    )}
+                  </div>
+                  <div className="space-y-1 text-muted-foreground">
+                    <div>根据交易记录计算: <span className="font-semibold text-foreground">¥{calculatedBalance.toFixed(2)}</span></div>
+                    {balanceDifference !== null && balanceDifference > 0 && (
+                      <div>差异金额: <span className={`font-semibold ${
+                        differenceLevel === 'error' ? 'text-destructive' :
+                        differenceLevel === 'warning' ? 'text-orange-500' :
+                        'text-foreground'
+                      }`}>¥{balanceDifference.toFixed(2)}</span></div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Existing Anchors */}
@@ -209,31 +360,45 @@ export function BalanceAnchorSettings() {
                     <Badge variant="secondary">{anchors.length} 个锚点</Badge>
                   </div>
                   <div className="grid grid-cols-1 gap-2">
-                    {anchors.map((anchor, index) => (
-                      <div
-                        key={`${anchor.accountName}-${anchor.date}-${index}`}
-                        className="flex items-center justify-between p-3 rounded border bg-card"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-2 text-sm">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium">{anchor.date}</span>
-                          </div>
-                          <div className="text-sm">
-                            <span className="text-muted-foreground">余额: </span>
-                            <span className="font-semibold">¥{anchor.balance.toFixed(2)}</span>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleRemoveAnchor(anchor.accountName, anchor.date)}
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    {anchors.map((anchor, index) => {
+                      const diff = anchorDifferences[`${anchor.accountName}-${anchor.date}`] || 0;
+                      const diffLevel = diff >= 1000 ? 'error' : diff >= 100 ? 'warning' : diff >= 1 ? 'info' : 'none';
+
+                      return (
+                        <div
+                          key={`${anchor.accountName}-${anchor.date}-${index}`}
+                          className="flex items-center justify-between p-3 rounded border bg-card"
                         >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
+                          <div className="flex items-center gap-4 flex-1">
+                            <div className="flex items-center gap-2 text-sm">
+                              <Calendar className="h-4 w-4 text-muted-foreground" />
+                              <span className="font-medium">{anchor.date}</span>
+                            </div>
+                            <div className="text-sm">
+                              <span className="text-muted-foreground">余额: </span>
+                              <span className="font-semibold">¥{anchor.balance.toFixed(2)}</span>
+                            </div>
+                            {diffLevel !== 'none' && (
+                              <div className={`text-xs px-2 py-1 rounded ${
+                                diffLevel === 'error' ? 'bg-destructive/10 text-destructive' :
+                                diffLevel === 'warning' ? 'bg-orange-500/10 text-orange-500' :
+                                'bg-blue-500/10 text-blue-500'
+                              }`}>
+                                差异: ¥{diff.toFixed(2)}
+                              </div>
+                            )}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleRemoveAnchor(anchor.accountName, anchor.date)}
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               ))}

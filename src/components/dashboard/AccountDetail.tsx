@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { ChevronUp, ChevronDown } from 'lucide-react';
 import { Transaction } from '@/types/transaction';
 import { Transfer } from '@/types/data';
 import { useSettings } from '@/contexts/SettingsContext';
@@ -12,7 +13,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { xAxisStyle, yAxisStyle, gridStyle, tooltipStyle, formatCurrencyK, formatCurrencyFull } from '@/lib/chart-config';
 import { getIncomeColor, getExpenseColor, getIncomeColorHex, getExpenseColorHex } from '@/contexts/SettingsContext';
@@ -48,6 +49,7 @@ interface DisplayEntry {
   type: 'income' | 'expense' | 'transfer';
   amount: number;
   balance: number;
+  balanceAfter: number;
   note?: string;
 }
 
@@ -71,6 +73,8 @@ interface BalanceEntry {
 export function AccountDetail({ transactions: allTransactions, transfers, selectedYear, availableYears, onYearChange }: AccountDetailProps) {
   const { settings } = useSettings();
   const [selectedAccount, setSelectedAccount] = useState<string>('');
+  const [sortColumn, setSortColumn] = useState<keyof DisplayEntry>('date');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   // Filter transactions by selected year
   const transactions = useMemo(() => {
@@ -184,9 +188,9 @@ export function AccountDetail({ transactions: allTransactions, transfers, select
   }, [uniqueAccounts, settings.accountTypes]);
 
   // Calculate daily balance for selected account (for the entire year)
-  const { dailyBalances, displayEntries, summary } = useMemo(() => {
+  const { dailyBalances, displayEntries, summary, displayAnchors } = useMemo(() => {
     if (!selectedAccount) {
-      return { dailyBalances: [], displayEntries: [], summary: null };
+      return { dailyBalances: [], displayEntries: [], summary: null, displayAnchors: [] };
     }
 
     // Get all balance entries for this account (from all data), sorted by date
@@ -201,118 +205,185 @@ export function AccountDetail({ transactions: allTransactions, transfers, select
     // Get balance anchor for this account
     const accountAnchors = settings.balanceAnchors
       ?.filter(a => a.accountName === selectedAccount)
-      .sort((a, b) => b.date.localeCompare(a.date)) || [];
+      .sort((a, b) => a.date.localeCompare(b.date)) || []; // Sort ascending
 
-    // Find the latest anchor on or before Jan 1 of selected year
+    // Define year start date first
     const yearStartDate = `${selectedYear}-01-01`;
-    const anchor = accountAnchors.find(a => a.date <= yearStartDate);
-    const anchorBalance = anchor?.balance || 0;
 
-    // Calculate daily balances for the selected year
+    // Filter anchors to only those within the selected year for display
+    const displayAnchors = accountAnchors.filter(a => a.date >= yearStartDate && a.date <= `${selectedYear}-12-31`);
+
+    // Find the latest anchor on or before Jan 1 of selected year to use as starting point
+    const startingAnchor = accountAnchors.filter(a => a.date <= yearStartDate).pop(); // Get last one before/on year start
+    const startingBalance = startingAnchor?.balance || 0;
+
+    // Collect ALL relevant anchors for the year (including starting anchor for context)
+    let yearAnchors = [
+      ...(startingAnchor ? [{ ...startingAnchor, isStarting: true }] : []),
+      ...displayAnchors.map(a => ({ ...a, isStarting: false }))
+    ].sort((a, b) => a.date.localeCompare(b.date));
+
+    // If no anchors at all, create a default starting anchor at year start with 0 balance
+    if (yearAnchors.length === 0) {
+      yearAnchors = [{ accountName: selectedAccount, date: yearStartDate, balance: 0, isStarting: true }];
+    }
+
+    // Calculate daily balances for the selected year using all anchors
     const balanceMap = new Map<string, DailyBalance>();
-    let currentBalance = anchorBalance;
 
-    // Process all entries to get to the start of the year
-    for (const entry of accountEntries) {
-      if (entry.date < yearStartDate) {
-        // Before selected year, just track balance
-        if (entry.date === anchor?.date) {
-          // Skip entries on anchor date
+    // Process entries in segments between anchors
+    for (let i = 0; i < yearAnchors.length; i++) {
+      const currentAnchor = yearAnchors[i];
+      const nextAnchor = yearAnchors[i + 1];
+
+      let segmentStartBalance = currentAnchor.balance;
+      const segmentStartDate = currentAnchor.isStarting ? yearStartDate : currentAnchor.date;
+      const segmentEndDate = nextAnchor ? nextAnchor.date : `${selectedYear}-12-31`;
+
+      // Process entries in this segment
+      for (const entry of accountEntries) {
+        if (entry.date < segmentStartDate) continue;
+        if (entry.date > segmentEndDate) break;
+
+        // Skip entry if it's exactly on the anchor date (anchor represents balance AFTER processing that day)
+        if (!currentAnchor.isStarting && entry.date === currentAnchor.date) {
           continue;
         }
-        currentBalance += entry.amount;
-        continue;
+
+        const date = entry.date;
+        if (!balanceMap.has(date)) {
+          balanceMap.set(date, {
+            date,
+            balance: segmentStartBalance,
+            income: 0,
+            expense: 0,
+          });
+        }
+
+        const dayData = balanceMap.get(date)!;
+        segmentStartBalance += entry.amount;
+
+        // Track income/expense separately for display
+        if (entry.type === 'income') {
+          dayData.income += Math.abs(entry.amount);
+        } else if (entry.type === 'expense') {
+          dayData.expense += Math.abs(entry.amount);
+        }
+
+        dayData.balance = segmentStartBalance;
       }
-
-      if (entry.date > `${selectedYear}-12-31`) {
-        break; // Past selected year
-      }
-
-      // Within selected year
-      const date = entry.date;
-      if (!balanceMap.has(date)) {
-        balanceMap.set(date, {
-          date,
-          balance: currentBalance,
-          income: 0,
-          expense: 0,
-        });
-      }
-
-      const dayData = balanceMap.get(date)!;
-      currentBalance += entry.amount;
-
-      // Track income/expense separately for display
-      if (entry.type === 'income') {
-        dayData.income += Math.abs(entry.amount);
-      } else if (entry.type === 'expense') {
-        dayData.expense += Math.abs(entry.amount);
-      }
-
-      dayData.balance = currentBalance;
     }
 
     // Convert to array and sort by date
     const dailyBalances = Array.from(balanceMap.values()).sort((a, b) => a.date.localeCompare(b.date));
 
     // Add balance to each entry for the selected year (including transfers)
+    // Using anchor-based calculation for accurate balance tracking
     const displayEntries: DisplayEntry[] = [];
-    let balance = anchorBalance;
 
-    // First, process all entries before selected year to get starting balance
-    for (const entry of accountEntries) {
-      if (entry.date < yearStartDate) {
-        if (entry.date === anchor?.date) continue;
-        balance += entry.amount;
-        continue;
+    // Process entries in segments between anchors for display entries
+    for (let i = 0; i < yearAnchors.length; i++) {
+      const currentAnchor = yearAnchors[i];
+      const nextAnchor = yearAnchors[i + 1];
+
+      let segmentBalance = currentAnchor.balance;
+      const segmentStartDate = currentAnchor.isStarting ? yearStartDate : currentAnchor.date;
+      const segmentEndDate = nextAnchor ? nextAnchor.date : `${selectedYear}-12-31`;
+
+      for (const entry of accountEntries) {
+        if (entry.date < segmentStartDate) continue;
+        if (entry.date > segmentEndDate) break;
+
+        // Skip entry if it's exactly on the anchor date
+        if (!currentAnchor.isStarting && entry.date === currentAnchor.date) {
+          continue;
+        }
+
+        segmentBalance += entry.amount;
+
+        // Add all entries to display list (including transfers)
+        displayEntries.push({
+          id: entry.id,
+          date: entry.date,
+          primaryCategory: entry.primaryCategory,
+          secondaryCategory: entry.secondaryCategory,
+          tertiaryCategory: entry.tertiaryCategory,
+          type: entry.type,
+          amount: Math.abs(entry.amount),
+          balance: segmentBalance,
+          balanceAfter: segmentBalance,
+          note: entry.description,
+        });
       }
-
-      if (entry.date > `${selectedYear}-12-31`) {
-        break; // Past selected year
-      }
-
-      // Within selected year
-      balance += entry.amount;
-
-      // Add all entries to display list (including transfers)
-      displayEntries.push({
-        id: entry.id,
-        date: entry.date,
-        primaryCategory: entry.primaryCategory,
-        secondaryCategory: entry.secondaryCategory,
-        tertiaryCategory: entry.tertiaryCategory,
-        type: entry.type,
-        amount: Math.abs(entry.amount),
-        balance,
-        note: entry.description,
-      });
     }
+
+    // Sort display entries by date
+    displayEntries.sort((a, b) => a.date.localeCompare(b.date));
 
     // Calculate summary for selected year
     const yearEntries = accountEntries.filter(
-      e => e.year === selectedYear && e.date !== anchor?.date
+      e => e.year === selectedYear
     );
     const income = yearEntries.filter(e => e.type === 'income').reduce((sum, e) => sum + Math.abs(e.amount), 0);
     const expense = yearEntries.filter(e => e.type === 'expense').reduce((sum, e) => sum + Math.abs(e.amount), 0);
     const finalBalance = displayEntries.length > 0
       ? displayEntries[displayEntries.length - 1].balance
-      : balance;
+      : startingBalance;
 
     const summary = {
       totalIncome: income,
       totalExpense: expense,
       transactionCount: displayEntries.length,
-      initialBalance: anchorBalance,
+      initialBalance: startingBalance,
       finalBalance,
-      hasAnchor: !!anchor,
+      hasAnchor: !!startingAnchor,
     };
 
-    return { dailyBalances, displayEntries, summary };
+    return { dailyBalances, displayEntries, summary, displayAnchors };
   }, [selectedAccount, allBalanceEntries, settings.balanceAnchors, selectedYear]);
 
   // Get account type
   const accountType = settings.accountTypes?.find(c => c.accountName === selectedAccount)?.type || 'unclassified';
   const typeConfig = ACCOUNT_TYPE_CONFIG[accountType];
+
+  // Sort display entries based on current sort column and direction
+  const sortedDisplayEntries = useMemo(() => {
+    if (!displayEntries.length) return [];
+
+    const sorted = [...displayEntries].sort((a, b) => {
+      let aVal: any = a[sortColumn];
+      let bVal: any = b[sortColumn];
+
+      // Handle special cases
+      if (sortColumn === 'type') {
+        // Sort by type label
+        const typeLabels = { income: '收入', expense: '支出', transfer: '转账' };
+        aVal = typeLabels[a.type as keyof typeof typeLabels];
+        bVal = typeLabels[b.type as keyof typeof typeLabels];
+      } else if (sortColumn === 'primaryCategory') {
+        aVal = a.primaryCategory || '';
+        bVal = b.primaryCategory || '';
+      }
+
+      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return sorted;
+  }, [displayEntries, sortColumn, sortDirection]);
+
+  // Handle sort column change
+  const handleSort = (column: keyof DisplayEntry) => {
+    if (sortColumn === column) {
+      // Toggle direction
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // New column, default to desc for numbers/amount, asc for text
+      setSortColumn(column);
+      setSortDirection(column === 'amount' || column === 'balanceAfter' ? 'desc' : 'asc');
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -455,6 +526,22 @@ export function AccountDetail({ transactions: allTransactions, transfers, select
                         strokeWidth={2}
                         dot={false}
                       />
+                      {/* Add reference lines for balance anchors */}
+                      {displayAnchors.map((anchor) => (
+                        <ReferenceLine
+                          key={anchor.date}
+                          x={anchor.date}
+                          stroke="hsl(var(--muted-foreground))"
+                          strokeDasharray="4 4"
+                          strokeWidth={1.5}
+                          label={{
+                            value: `锚点: ¥${anchor.balance.toFixed(2)}`,
+                            position: 'top',
+                            fill: 'hsl(var(--text-muted))',
+                            fontSize: 11,
+                          }}
+                        />
+                      ))}
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -467,22 +554,47 @@ export function AccountDetail({ transactions: allTransactions, transfers, select
             <CardHeader>
               <CardTitle>交易明细</CardTitle>
               <CardDescription>
-                {selectedAccount} 的 {displayEntries.length} 条交易记录
+                {selectedAccount} 的 {sortedDisplayEntries.length} 条交易记录
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>日期</TableHead>
-                    <TableHead>分类</TableHead>
-                    <TableHead>类型</TableHead>
-                    <TableHead className="text-right">金额</TableHead>
-                    <TableHead className="text-right">余额后</TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('date')}>
+                      <div className="flex items-center gap-1">
+                        日期
+                        {sortColumn === 'date' && (sortDirection === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />)}
+                      </div>
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('primaryCategory')}>
+                      <div className="flex items-center gap-1">
+                        分类
+                        {sortColumn === 'primaryCategory' && (sortDirection === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />)}
+                      </div>
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('type')}>
+                      <div className="flex items-center gap-1">
+                        类型
+                        {sortColumn === 'type' && (sortDirection === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />)}
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-right cursor-pointer hover:bg-muted/50" onClick={() => handleSort('amount')}>
+                      <div className="flex items-center justify-end gap-1">
+                        金额
+                        {sortColumn === 'amount' && (sortDirection === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />)}
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-right cursor-pointer hover:bg-muted/50" onClick={() => handleSort('balanceAfter')}>
+                      <div className="flex items-center justify-end gap-1">
+                        余额后
+                        {sortColumn === 'balanceAfter' && (sortDirection === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />)}
+                      </div>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {displayEntries.map((entry) => {
+                  {sortedDisplayEntries.map((entry) => {
                     // Get color for badge based on type
                     const typeColor = entry.type === 'income'
                       ? getLabelColorClasses('收入')
