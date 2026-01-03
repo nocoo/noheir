@@ -124,7 +124,7 @@ export function FinancialFreedomAnalysis({ transactions, year }: FinancialFreedo
             ) : (
               <Target className="h-8 w-8 text-expense" />
             )}
-            <span>{year}年 财务自由分析</span>
+            <span>自由度状态</span>
           </CardTitle>
           <CardDescription>
             {isFree
@@ -202,7 +202,7 @@ export function FinancialFreedomAnalysis({ transactions, year }: FinancialFreedo
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <TrendingUp className="h-4 w-4 text-primary" />
+              <TrendingUp className="h-4 w-4 text-income" />
               主动收入明细
             </CardTitle>
             <CardDescription>
@@ -210,9 +210,9 @@ export function FinancialFreedomAnalysis({ transactions, year }: FinancialFreedo
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-primary/10 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-income/10 rounded-lg">
               <span className="font-medium">主动收入总计</span>
-              <span className="text-lg font-bold text-primary">
+              <span className="text-lg font-bold text-income">
                 {formatCurrencyFull(activeIncome)}
               </span>
             </div>
@@ -231,7 +231,7 @@ export function FinancialFreedomAnalysis({ transactions, year }: FinancialFreedo
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <TrendingDown className="h-4 w-4 text-chart-2" />
+              <TrendingDown className="h-4 w-4 text-income" />
               被动收入明细
             </CardTitle>
             <CardDescription>
@@ -239,9 +239,9 @@ export function FinancialFreedomAnalysis({ transactions, year }: FinancialFreedo
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-chart-2/10 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-income/10 rounded-lg">
               <span className="font-medium">被动收入总计</span>
-              <span className="text-lg font-bold text-chart-2">
+              <span className="text-lg font-bold text-income">
                 {formatCurrencyFull(passiveIncome)}
               </span>
             </div>
@@ -327,7 +327,7 @@ export function FinancialFreedomAnalysis({ transactions, year }: FinancialFreedo
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm">当前被动收入</span>
-                    <span className="font-medium text-chart-2">
+                    <span className="font-medium text-income">
                       {formatCurrencyFull(passiveIncome)}
                     </span>
                   </div>
@@ -400,7 +400,7 @@ export function FinancialFreedomAnalysis({ transactions, year }: FinancialFreedo
                 <div className="p-4 bg-muted rounded-lg space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">当前被动收入</span>
-                    <span className="font-medium text-chart-2">
+                    <span className="font-medium text-income">
                       {formatCurrencyFull(passiveIncome)}
                     </span>
                   </div>

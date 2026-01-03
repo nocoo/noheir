@@ -440,7 +440,7 @@ export function AccountDetail({ transactions: allTransactions, selectedYear, ava
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Wallet className="h-5 w-5" />
-            账户详情
+            选择账户
           </CardTitle>
           <CardDescription>查看单个账户的金额变化和交易明细</CardDescription>
         </CardHeader>

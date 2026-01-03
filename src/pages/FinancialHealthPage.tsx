@@ -293,7 +293,7 @@ export function FinancialHealthPage({
             <div className="flex items-center gap-3">
               <HeartPulse className="h-6 w-6 text-primary" />
               <div>
-                <CardTitle className="text-xl">财务健康总分</CardTitle>
+                <CardTitle className="text-xl">综合评分</CardTitle>
                 <CardDescription>基于 {monthlyData.length} 个月数据评估</CardDescription>
               </div>
             </div>
