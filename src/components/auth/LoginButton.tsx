@@ -1,6 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { LogOut } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
 
 export function LoginButton() {
   const { user, signOut } = useAuth();
@@ -9,15 +9,13 @@ export function LoginButton() {
   // Login is handled by the full-screen LoginPage
   if (user) {
     return (
-      <div className="space-y-2 w-full">
-        <div className="text-xs text-muted-foreground text-center truncate px-1" title={user.email}>
+      <Button variant="outline" onClick={() => signOut()} className="w-full h-9 justify-between px-2">
+        <span className="text-sm truncate flex items-center gap-2">
+          <User className="h-4 w-4 shrink-0" />
           {user.email}
-        </div>
-        <Button variant="outline" size="sm" onClick={() => signOut()} className="w-full">
-          <LogOut className="mr-2 h-4 w-4" />
-          登出
-        </Button>
-      </div>
+        </span>
+        <LogOut className="h-4 w-4 shrink-0" />
+      </Button>
     );
   }
 
