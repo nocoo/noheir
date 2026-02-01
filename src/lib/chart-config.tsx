@@ -49,6 +49,14 @@ export const formatCurrency = (value: number): string => {
 };
 
 /**
+ * 日期格式化器
+ */
+export const formatDate = (date: string): string => {
+  const d = new Date(date);
+  return d.toLocaleDateString('zh-CN');
+};
+
+/**
  * 金额格式化器 - 简化格式（k为单位），保留2位小数
  */
 export const formatCurrencyK = (value: number): string => {
