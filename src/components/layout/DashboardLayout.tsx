@@ -27,6 +27,7 @@ import {
   HeartPulse,
   Sparkles,
   CreditCard,
+  Brain,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -45,6 +46,7 @@ const navGroups = [
     items: [
       { id: 'overview', label: '总览', icon: LayoutDashboard },
       { id: 'financial-health', label: '财务健康', icon: HeartPulse },
+      { id: 'ai-insight', label: 'AI洞察', icon: Brain },
     ]
   },
   {

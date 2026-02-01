@@ -30,6 +30,7 @@ import { WarehouseView } from '@/components/assets/WarehouseView';
 import { StrategySunburst } from '@/components/assets/StrategySunburst';
 import { LiquidityLadder } from '@/components/assets/LiquidityLadder';
 import { FinancialHealthPage } from '@/pages/FinancialHealthPage';
+import AIInsightPage from '@/components/dashboard/AIInsightPage';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSettings } from '@/contexts/SettingsContext';
@@ -284,17 +285,26 @@ const Index = () => {
           animate="animate"
           variants={fadeInUp}
           transition={{ duration: 0.25 }}
+          className="space-y-6"
         >
-          <FinancialHealthPage
-            transactions={transactions}
-            totalIncome={totalIncome}
-            totalExpense={totalExpense}
-            savingsRate={savingsRate}
-            monthlyData={monthlyData}
-            selectedYear={selectedYear}
-            availableYears={availableYears}
-            onYearChange={setSelectedYear}
-          />
+          <div>
+            <h1 className="text-2xl font-bold">财务健康分析</h1>
+            <p className="text-muted-foreground">全面了解您的财务状况和健康指标</p>
+          </div>
+          <FinancialHealthPage />
+        </motion.div>
+      )}
+
+      {activeTab === 'ai-insight' && (
+        <motion.div
+          key="ai-insight"
+          initial="initial"
+          animate="animate"
+          variants={fadeInUp}
+          transition={{ duration: 0.25 }}
+          className="space-y-6"
+        >
+          <AIInsightPage />
         </motion.div>
       )}
 
