@@ -26,6 +26,13 @@ interface MonthlyMaturity {
   amount: number;
 }
 
+interface TooltipAxisParam {
+  axisValue?: string | number;
+  value?: string | number;
+  seriesName?: string;
+  color?: string;
+}
+
 export function LiquidityLadder() {
   const { data: units } = useUnitsDisplay();
   const { settings } = useSettings();
@@ -141,22 +148,23 @@ export function LiquidityLadder() {
       axisPointer: {
         type: 'shadow',
       },
-      formatter: (params: any) => {
+      formatter: (params: TooltipAxisParam[]) => {
         if (!Array.isArray(params) || params.length === 0) return '';
 
-        const month = params[0].axisValue;
+        const month = String(params[0].axisValue);
         const monthDate = new Date(month + '-01');
         const monthLabel = format(monthDate, 'yyyy年M月', { locale: zhCN });
 
         let total = 0;
-        let items = params.map((param: any) => {
-          if (param.value > 0) {
-            total += param.value;
+        const items = params.map((param) => {
+          const value = Number(param.value || 0);
+          if (value > 0) {
+            total += value;
             return `
               <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
                 <span style="display: inline-block; width: 10px; height: 10px; background: ${param.color}; border-radius: 2px;"></span>
                 <span style="flex: 1;">${param.seriesName}</span>
-                <span style="font-weight: 600;">${currencySymbol}${param.value.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                <span style="font-weight: 600;">${currencySymbol}${value.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
             `;
           }

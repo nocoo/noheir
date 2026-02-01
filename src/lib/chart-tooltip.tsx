@@ -53,9 +53,21 @@ export const tooltipLabelStyle = {
 /**
  * Standard tooltip for currency values with percentage
  */
+type RechartsPayloadItem = {
+  name?: string;
+  value?: number;
+  dataKey?: string;
+  color?: string;
+  payload?: Record<string, unknown> & {
+    name?: string;
+    value?: number;
+    percentage?: number;
+  };
+};
+
 interface CurrencyPercentageTooltipProps {
   active?: boolean;
-  payload?: any[];
+  payload?: RechartsPayloadItem[];
   label?: string;
 }
 
@@ -93,7 +105,7 @@ export function CurrencyPercentageTooltip({
  */
 interface CurrencyTooltipProps {
   active?: boolean;
-  payload?: any[];
+  payload?: RechartsPayloadItem[];
   label?: string;
   valueKey?: string;
   labelKey?: string;
@@ -112,14 +124,15 @@ export function CurrencyTooltip({
 
   const data = payload[0].payload;
 
+  const labelText = label || (typeof data[labelKey] === 'string' ? data[labelKey] : undefined);
+  const value = typeof data[valueKey] === 'number' ? data[valueKey] : 0;
+
   return (
     <div style={tooltipContentStyle}>
-      {(label || data[labelKey]) && (
-        <p style={tooltipLabelStyle}>{label || data[labelKey]}</p>
-      )}
+      {labelText && <p style={tooltipLabelStyle}>{labelText}</p>}
       <div style={tooltipItemStyle}>
         <span>金额</span>
-        <span>{formatCurrencyFull(data[valueKey])}</span>
+        <span>{formatCurrencyFull(value)}</span>
       </div>
     </div>
   );
@@ -130,7 +143,7 @@ export function CurrencyTooltip({
  */
 interface PieTooltipProps {
   active?: boolean;
-  payload?: any[];
+  payload?: RechartsPayloadItem[];
 }
 
 export function PieTooltip({ active, payload }: PieTooltipProps) {
@@ -140,14 +153,17 @@ export function PieTooltip({ active, payload }: PieTooltipProps) {
 
   const data = payload[0].payload;
 
+  const name = typeof data.name === 'string' ? data.name : '';
+  const value = typeof data.value === 'number' ? data.value : 0;
+
   return (
     <div style={tooltipContentStyle}>
-      <p style={tooltipLabelStyle}>{data.name}</p>
+      <p style={tooltipLabelStyle}>{name}</p>
       <div style={tooltipItemStyle}>
         <span>金额</span>
-        <span>{formatCurrencyFull(data.value)}</span>
+        <span>{formatCurrencyFull(value)}</span>
       </div>
-      {data.percentage !== undefined && (
+      {typeof data.percentage === 'number' && (
         <div style={tooltipItemStyle}>
           <span>占比</span>
           <span>{data.percentage.toFixed(1)}%</span>
@@ -162,7 +178,7 @@ export function PieTooltip({ active, payload }: PieTooltipProps) {
  */
 interface MultiSeriesTooltipProps {
   active?: boolean;
-  payload?: any[];
+  payload?: RechartsPayloadItem[];
   label?: string;
   seriesLabels?: string[];
 }
@@ -180,7 +196,7 @@ export function MultiSeriesTooltip({
   return (
     <div style={tooltipContentStyle}>
       {label && <p style={tooltipLabelStyle}>{label}</p>}
-      {payload.map((entry: any, index: number) => (
+      {payload.map((entry, index) => (
         <div key={index} style={tooltipItemStyle}>
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span
@@ -210,10 +226,26 @@ export function MultiSeriesTooltip({
 /**
  * Standard ECharts tooltip configuration for currency values
  */
-export function createEChartsCurrencyTooltip(extraConfig: Record<string, any> = {}) {
+type EChartsTooltipParams = {
+  value?: number;
+  name?: string;
+  percent?: number;
+  data?: { value?: number; name?: string };
+};
+
+type EChartsAxisTooltipParam = {
+  axisValue?: string | number;
+  name?: string;
+  marker?: string;
+  color?: string;
+  seriesName?: string;
+  value?: number;
+};
+
+export function createEChartsCurrencyTooltip(extraConfig: Record<string, unknown> = {}) {
   return {
     trigger: 'item' as const,
-    formatter: (params: any) => {
+    formatter: (params: EChartsTooltipParams) => {
       const value = params.value || params.data?.value || 0;
       const name = params.name || params.data?.name || '';
       const percentage = params.percent !== undefined ? ` (${params.percent.toFixed(1)}%)` : '';
@@ -242,16 +274,16 @@ export function createEChartsCurrencyTooltip(extraConfig: Record<string, any> = 
 /**
  * ECharts tooltip for axis-based charts (line, bar, area)
  */
-export function createEChartsAxisTooltip(extraConfig: Record<string, any> = {}) {
+export function createEChartsAxisTooltip(extraConfig: Record<string, unknown> = {}) {
   return {
     trigger: 'axis' as const,
-    formatter: (params: any[]) => {
+    formatter: (params: EChartsAxisTooltipParam[]) => {
       if (!params || params.length === 0) return '';
 
       const axisValue = params[0].axisValue || params[0].name;
       let result = `<div style="padding: 8px 12px;"><div style="font-weight: 600; margin-bottom: 6px; font-size: 13px;">${axisValue}</div>`;
 
-      params.forEach((param: any) => {
+      params.forEach((param) => {
         const marker = param.marker
           ? `<span style="display:inline-block;margin-right:6px;border-radius:50%;width:8px;height:8px;background-color:${param.color};"></span>`
           : '';

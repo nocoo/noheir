@@ -110,7 +110,7 @@ export function StrategySunburst() {
   const option = useMemo(() => ({
     tooltip: {
       trigger: 'item',
-      formatter: (params: any) => {
+      formatter: (params: { value?: number; name?: string }) => {
         const value = params.value || 0;
         const percentage = totalAmount > 0 ? ((value / totalAmount) * 100).toFixed(2) : '0.00';
         const currencySymbol = {
@@ -121,7 +121,7 @@ export function StrategySunburst() {
 
         return `
           <div style="padding: 8px;">
-            <div style="font-weight: 600; margin-bottom: 4px;">${params.name}</div>
+            <div style="font-weight: 600; margin-bottom: 4px;">${params.name || ''}</div>
             <div style="font-size: 12px; color: #666;">
               金额: ${currencySymbol}${value.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}<br/>
               占比: ${percentage}%

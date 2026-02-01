@@ -96,9 +96,10 @@ export function TransferImportPage({ onNavigateToManage }: TransferImportPagePro
         setErrorMessage('无法从数据中提取年份信息');
         setStep('error');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Transfer import error:', error);
-      setErrorMessage(error?.message || '解析失败，请重试');
+      const message = error instanceof Error ? error.message : '解析失败，请重试';
+      setErrorMessage(message);
       setStep('error');
     }
   };
@@ -126,9 +127,10 @@ export function TransferImportPage({ onNavigateToManage }: TransferImportPagePro
           onNavigateToManage();
         }, 1500);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Upload error:', error);
-      setErrorMessage(error?.message || '导入失败，请重试');
+      const message = error instanceof Error ? error.message : '导入失败，请重试';
+      setErrorMessage(message);
       setStep('error');
     }
   };

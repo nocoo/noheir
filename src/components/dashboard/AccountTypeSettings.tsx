@@ -2,11 +2,11 @@ import { useState, useMemo, useCallback, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useSettings, AccountType } from '@/contexts/SettingsContext';
+import { useSettings, AccountType, ACCOUNT_TYPE_CONFIG } from '@/contexts/SettingsContext';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { useAuth } from '@/contexts/AuthContext';
-import { CreditCard, Wallet, Gift, TrendingUp, HelpCircle, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -18,38 +18,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
 import { toast } from 'sonner';
 
-export const ACCOUNT_TYPE_CONFIG = {
-  debit: {
-    label: '借记卡',
-    description: '现金账户，资金自由出入',
-    icon: Wallet,
-    color: 'bg-blue-500',
-  },
-  credit: {
-    label: '信用卡',
-    description: '每个月需要还款',
-    icon: CreditCard,
-    color: 'bg-red-500',
-  },
-  prepaid: {
-    label: '预付卡',
-    description: '自由转入，特定渠道消费',
-    icon: Gift,
-    color: 'bg-purple-500',
-  },
-  financial: {
-    label: '金融账户',
-    description: '金融投资',
-    icon: TrendingUp,
-    color: 'bg-green-500',
-  },
-  unclassified: {
-    label: '未分类',
-    description: '尚未分类',
-    icon: HelpCircle,
-    color: 'bg-gray-500',
-  },
-} as const;
 
 export function AccountTypeSettings() {
   const { user } = useAuth();
@@ -99,7 +67,7 @@ export function AccountTypeSettings() {
         toast.error('保存失败，请重试');
       }
     }, 1500);
-  }, [updateSingleSetting]);
+  }, [updateSingleSetting, settings]);
 
   const handleTypeChange = useCallback((accountName: string, newType: AccountType) => {
     // Immediately update local context

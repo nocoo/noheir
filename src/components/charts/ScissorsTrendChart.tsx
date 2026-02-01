@@ -76,10 +76,14 @@ export function ScissorsTrendChart({ monthlyData, regression }: ScissorsTrendCha
         axisPointer: {
           type: 'cross',
         },
-        formatter: (params: any) => {
-          let result = `<div style="padding: 4px;"><strong>${params[0].axisValue}</strong><br/>`;
-          params.forEach((param: any) => {
-            result += `${param.marker} ${param.seriesName}: ¥${param.value.toLocaleString()}<br/>`;
+        formatter: (params: unknown): string => {
+          if (!Array.isArray(params) || params.length === 0) return '';
+          const first = params[0] as { axisValue?: string | number };
+          let result = `<div style="padding: 4px;"><strong>${first.axisValue ?? ''}</strong><br/>`;
+          params.forEach((param) => {
+            const data = param as { marker?: string; seriesName?: string; value?: number };
+            const value = typeof data.value === 'number' ? data.value : 0;
+            result += `${data.marker ?? ''} ${data.seriesName ?? ''}: ¥${value.toLocaleString()}<br/>`;
           });
           result += '</div>';
           return result;
@@ -202,7 +206,7 @@ export function ScissorsTrendChart({ monthlyData, regression }: ScissorsTrendCha
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [monthlyData, regression]);
+  }, [monthlyData, regression, incomeColor, expenseColor]);
 
   useEffect(() => {
     return () => {

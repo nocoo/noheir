@@ -54,8 +54,13 @@ export function FinancialHealthRadar({ data }: FinancialHealthRadarProps) {
     const option: echarts.EChartsOption = {
       tooltip: {
         trigger: 'item',
-        formatter: (params: any) => {
-          const dim = dimensions[params.dataIndex];
+        formatter: (params: unknown): string => {
+          const dataIndex =
+            typeof params === 'object' && params !== null && 'dataIndex' in params &&
+            typeof (params as { dataIndex?: number }).dataIndex === 'number'
+              ? (params as { dataIndex: number }).dataIndex
+              : 0;
+          const dim = dimensions[dataIndex];
           return `
             <div style="padding: 8px;">
               <div style="font-weight: bold; margin-bottom: 4px;">${dim.name}</div>

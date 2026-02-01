@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Transfer, ParsedTransfer, RawTransferCSVRow } from '@/types/data';
 
@@ -19,14 +19,7 @@ export function useTransfers() {
   const [storedYearsData, setStoredYearsData] = useState<StoredTransferYearData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load transfers data from Supabase
-  useEffect(() => {
-    if (user) {
-      loadTransfers();
-    }
-  }, [user]);
-
-  const loadTransfers = async () => {
+  const loadTransfers = useCallback(async () => {
     if (!user) return;
 
     setIsLoading(true);
@@ -44,7 +37,14 @@ export function useTransfers() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user]);
+
+  // Load transfers data from Supabase
+  useEffect(() => {
+    if (user) {
+      loadTransfers();
+    }
+  }, [user, loadTransfers]);
 
   const updateStoredYearsData = (data: Transfer[]) => {
     // Group by year

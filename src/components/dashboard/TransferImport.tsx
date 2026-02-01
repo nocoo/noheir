@@ -144,11 +144,11 @@ export function TransferImport({ year, onUploadComplete, onClose }: TransferImpo
       if (onUploadComplete) {
         onUploadComplete();
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Transfer import error:', error);
 
       // Special error message for header validation
-      const errorMsg = error?.message || '导入失败，请重试';
+      const errorMsg = error instanceof Error ? error.message : '导入失败，请重试';
       if (errorMsg.includes('表头')) {
         setErrorMessage(`文件格式错误：您上传的可能是"收支流水"文件，请上传"转账数据"文件。`);
       } else {

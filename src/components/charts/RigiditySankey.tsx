@@ -95,8 +95,8 @@ export function RigiditySankey({ transactions, totalIncome }: RigiditySankeyProp
     const totalSavings = Math.max(0, totalIncome - totalExpense);
 
     // Build nodes and links
-    const nodes: any[] = [];
-    const links: any[] = [];
+    const nodes: Array<{ name: string; itemStyle?: { color: string } }> = [];
+    const links: Array<{ source: string; target: string; value: number; lineStyle?: { color: string; opacity?: number } }> = [];
 
     // Level 1: Total Income
     nodes.push({ name: '总收入', itemStyle: { color: incomeColor } });
@@ -232,35 +232,39 @@ export function RigiditySankey({ transactions, totalIncome }: RigiditySankeyProp
       tooltip: {
         trigger: 'item',
         triggerOn: 'mousemove',
-        formatter: (params: any) => {
-          if (params.dataType === 'edge') {
+        formatter: (params: unknown) => {
+          if (!params || typeof params !== 'object') return '';
+          const dataType = (params as { dataType?: string }).dataType;
+          if (dataType === 'edge') {
             // Clean up display names (remove suffixes)
-            const sourceName = params.data.source.replace('(刚)', '').replace('(弹)', '').replace('·', ' · ');
-            let targetName = params.data.target;
+            const data = (params as { data?: { source: string; target: string; value: number } }).data;
+            if (!data) return '';
+            const sourceName = data.source.replace('(刚)', '').replace('(弹)', '').replace('·', ' · ');
+            let targetName = data.target;
             if (targetName.includes('·')) {
               targetName = targetName.replace('·', ' · ');
             } else {
               targetName = targetName.replace('(刚)', '').replace('(弹)', '');
             }
             const percent = totalIncome > 0
-              ? ((params.data.value / totalIncome) * 100).toFixed(1)
+              ? ((data.value / totalIncome) * 100).toFixed(1)
               : '0.0';
             return `
               <div style="padding: 8px;">
                 <div>${sourceName} → ${targetName}</div>
-                <div>金额: ¥${params.data.value.toLocaleString()}</div>
+                <div>金额: ¥${data.value.toLocaleString()}</div>
                 <div>占收入: ${percent}%</div>
               </div>
             `;
           }
           // Clean up node names
-          return params.name.replace('(刚)', '').replace('(弹)', '').replace('·', ' · ');
+          const name = (params as { name?: string }).name || '';
+          return name.replace('(刚)', '').replace('(弹)', '').replace('·', ' · ');
         },
       },
       series: [
         {
           type: 'sankey',
-          layout: 'none',
           data: nodes,
           links: links,
           top: '5%',
@@ -277,7 +281,7 @@ export function RigiditySankey({ transactions, totalIncome }: RigiditySankeyProp
             color: 'hsl(var(--text-main))',
             fontSize: 11,
           },
-        },
+        } as echarts.SeriesOption,
       ],
     };
 

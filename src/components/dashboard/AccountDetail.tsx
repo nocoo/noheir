@@ -399,8 +399,8 @@ export function AccountDetail({ transactions: allTransactions, selectedYear, ava
       if (a.isAnchor) return -1;
       if (b.isAnchor) return 1;
 
-      let aVal: any = a[sortColumn];
-      let bVal: any = b[sortColumn];
+      let aVal = a[sortColumn];
+      let bVal = b[sortColumn];
 
       // Handle special cases
       if (sortColumn === 'type') {

@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { StatusBadge } from '@/components/ui/colored-badge';
-import type { UnitDisplay, UnitStatus, Currency, InvestmentStrategy } from '@/types/assets';
+import type { UnitDisplayInfo, UnitStatus, Currency, InvestmentStrategy } from '@/types/assets';
 import { formatCurrencyFull } from '@/lib/chart-config';
 import { staggerFastContainer, staggerFastItem } from '@/lib/animations';
 import { UNIFIED_PALETTE } from '@/lib/colorPalette';
@@ -107,7 +107,7 @@ const CHANNEL_ICONS: Record<string, string> = {
 // TYPES
 // ============================================================================
 
-interface WaffleUnit extends UnitDisplay {
+interface WaffleUnit extends UnitDisplayInfo {
   waffleStatus: WaffleStatus;
 }
 
@@ -115,7 +115,7 @@ interface WaffleUnit extends UnitDisplay {
 // STATUS CLASSIFICATION
 // ============================================================================
 
-function classifyUnitStatus(unit: UnitDisplay): WaffleStatus {
+function classifyUnitStatus(unit: UnitDisplayInfo): WaffleStatus {
   // 🟡 计划中 - 资金为0，尚未开始
   if (unit.status === '计划中') return 'planned';
 
@@ -406,8 +406,8 @@ function WaffleLegend({ data }: WaffleLegendProps) {
 // ============================================================================
 
 interface WarehouseWaffleChartProps {
-  units: UnitDisplay[];
-  onUnitClick?: (unit: UnitDisplay) => void;
+  units: UnitDisplayInfo[];
+  onUnitClick?: (unit: UnitDisplayInfo) => void;
 }
 
 export function WarehouseWaffleChart({ units, onUnitClick }: WarehouseWaffleChartProps) {
@@ -425,7 +425,16 @@ export function WarehouseWaffleChart({ units, onUnitClick }: WarehouseWaffleChar
 
   // Group units by strategy and sort by unit_code within each group
   const strategyGroups = useMemo(() => {
-    const groups: Record<InvestmentStrategy, typeof waffleData> = {} as any;
+    const groups: Record<InvestmentStrategy, WaffleUnit[]> = {
+      '远期理财': [],
+      '美元资产': [],
+      '36存单': [],
+      '长期理财': [],
+      '中期理财': [],
+      '短期理财': [],
+      '进攻计划': [],
+      '麻麻理财': [],
+    };
 
     waffleData.forEach(unit => {
       if (!groups[unit.strategy]) {
@@ -455,7 +464,7 @@ export function WarehouseWaffleChart({ units, onUnitClick }: WarehouseWaffleChar
 
   // Group units by category and sort by unit_code within each group
   const categoryGroups = useMemo(() => {
-    const groups: Record<string, typeof waffleData> = {} as any;
+    const groups: Record<string, WaffleUnit[]> = {};
 
     waffleData.forEach(unit => {
       const category = unit.product?.category || '未分类';
@@ -482,7 +491,7 @@ export function WarehouseWaffleChart({ units, onUnitClick }: WarehouseWaffleChar
 
   // Group units by channel and sort by unit_code within each group
   const channelGroups = useMemo(() => {
-    const groups: Record<string, typeof waffleData> = {} as any;
+    const groups: Record<string, WaffleUnit[]> = {};
 
     waffleData.forEach(unit => {
       const channel = unit.product?.channel || '未分类';
@@ -659,8 +668,8 @@ export function WarehouseWaffleChart({ units, onUnitClick }: WarehouseWaffleChar
           {strategyGroups.map(({ strategy, units: strategyUnits, count }) => {
             const groupStats = {
               total: count,
-              idle: strategyUnits.filter(u => u.waffleStatus === 'idle').length,
-              deployed: strategyUnits.filter(u => u.waffleStatus !== 'idle' && u.waffleStatus !== 'archived').length,
+              idle: strategyUnits.filter(u => u.waffleStatus === 'idle-no-product' || u.waffleStatus === 'idle-cash-plus').length,
+              deployed: strategyUnits.filter(u => u.waffleStatus !== 'idle-no-product' && u.waffleStatus !== 'idle-cash-plus' && u.waffleStatus !== 'archived').length,
             };
 
             return (

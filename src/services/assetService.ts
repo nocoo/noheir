@@ -25,6 +25,7 @@ import type {
   UnitSortBy,
   SortOrder,
   InvestmentStrategy,
+  InvestmentTactics,
 } from '@/types/assets';
 import { AssetServiceError } from '@/types/assets';
 
@@ -152,7 +153,6 @@ export async function createProduct(input: CreateFinancialProductInput): Promise
         // Ensure required defaults
         currency: input.currency || 'CNY',
         lock_period_days: input.lock_period_days ?? 0,
-        status: input.status || '投资中',
       })
       .select()
       .single();
@@ -228,23 +228,24 @@ export async function fetchUnits(withProducts: boolean = true): Promise<CapitalU
 
       // Transform the result to match CapitalUnitWithProduct interface
       // The RPC returns product as a JSONB object
-      return (data || []).map((row: any) => {
-        const product = row.product as FinancialProduct | null;
+      return (data || []).map((row) => {
+        const typedRow = row as CapitalUnitWithProduct & { product?: FinancialProduct | null };
+        const product = typedRow.product ?? null;
         return {
-          id: row.id,
-          user_id: row.user_id,
-          unit_code: row.unit_code,
-          amount: row.amount,
-          currency: row.currency,
-          status: row.status,
-          strategy: row.strategy,
-          tactics: row.tactics,
-          product_id: row.product_id,
-          start_date: row.start_date,
+          id: typedRow.id,
+          user_id: typedRow.user_id,
+          unit_code: typedRow.unit_code,
+          amount: typedRow.amount,
+          currency: typedRow.currency,
+          status: typedRow.status,
+          strategy: typedRow.strategy,
+          tactics: typedRow.tactics,
+          product_id: typedRow.product_id,
+          start_date: typedRow.start_date,
           // Compute end_date from start_date + lock_period_days
-          end_date: calculateAvailableDate(row.start_date, product),
-          note: row.note,
-          created_at: row.created_at,
+          end_date: calculateAvailableDate(typedRow.start_date, product),
+          note: typedRow.note,
+          created_at: typedRow.created_at,
           product,
         };
       });
@@ -443,7 +444,7 @@ export async function deployUnit(
     }
 
     // Prepare update data
-    const updateData: any = {
+    const updateData: Partial<CapitalUnit> = {
       product_id: input.product_id,
       start_date: input.start_date,
       status: '已成立',
@@ -558,26 +559,27 @@ export async function fetchCapitalOverview(): Promise<CapitalOverviewData> {
     const today = new Date();
 
     // Transform raw data to units with display info
-    const units: UnitDisplayInfo[] = (data || []).map((row: any) => {
-      const product = row.product as FinancialProduct | null;
+    const units: UnitDisplayInfo[] = (data || []).map((row) => {
+      const typedRow = row as CapitalUnitWithProduct & { product?: FinancialProduct | null };
+      const product = typedRow.product ?? null;
 
       // Compute end_date from start_date + lock_period_days
-      const endDate = calculateAvailableDate(row.start_date, product);
+      const endDate = calculateAvailableDate(typedRow.start_date, product);
 
       const unit: CapitalUnitWithProduct = {
-        id: row.id,
-        user_id: row.user_id,
-        unit_code: row.unit_code,
-        amount: row.amount,
-        currency: row.currency,
-        status: row.status,
-        strategy: row.strategy,
-        tactics: row.tactics,
-        product_id: row.product_id,
-        start_date: row.start_date,
+        id: typedRow.id,
+        user_id: typedRow.user_id,
+        unit_code: typedRow.unit_code,
+        amount: typedRow.amount,
+        currency: typedRow.currency,
+        status: typedRow.status,
+        strategy: typedRow.strategy,
+        tactics: typedRow.tactics,
+        product_id: typedRow.product_id,
+        start_date: typedRow.start_date,
         end_date: endDate, // Computed, not from database
-        note: row.note,
-        created_at: row.created_at,
+        note: typedRow.note,
+        created_at: typedRow.created_at,
         product,
       };
 

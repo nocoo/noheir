@@ -536,8 +536,9 @@ export function ChatBubble() {
               limit: sanitizedLimit,
               transactions: formatted
             });
-          } catch (e: any) {
-            result = JSON.stringify({ error: `搜索异常: ${e.message}` });
+          } catch (e: unknown) {
+            const message = e instanceof Error ? e.message : '搜索异常';
+            result = JSON.stringify({ error: `搜索异常: ${message}` });
           }
           break;
         }
@@ -549,9 +550,10 @@ export function ChatBubble() {
 
       console.log(`✅ [Tool Execution Completed] ${name}`, { result });
       return result;
-    } catch (e: any) {
-      console.error(`❌ [Tool Execution Failed] ${name}`, { error: e.message });
-      return JSON.stringify({ error: e.message || "工具执行失败" });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : '工具执行失败';
+      console.error(`❌ [Tool Execution Failed] ${name}`, { error: message });
+      return JSON.stringify({ error: message });
     }
   };
 
@@ -568,7 +570,7 @@ export function ChatBubble() {
 
     try {
       // Build messages array for API
-      const apiMessages: Array<{ role: string; content: string; tool_calls?: any[]; tool_call_id?: string }> = [
+      const apiMessages: Array<{ role: string; content: string; tool_calls?: ToolCall[]; tool_call_id?: string }> = [
         { role: 'system', content: SYSTEM_PROMPT },
         ...messages.map(m => ({ role: m.role, content: m.content })),
         { role: 'user', content: input }
@@ -605,7 +607,7 @@ export function ChatBubble() {
       let buffer = "";
 
       // Accumulated data for tool_calls
-      let accumulatedToolCalls: Map<number, any> = new Map();
+      const accumulatedToolCalls: Map<number, ToolCall> = new Map();
       let currentContent = "";
 
       while (true) {
@@ -765,8 +767,9 @@ export function ChatBubble() {
         console.log(`💡 [Direct Response] No tool calls detected, AI responded directly`);
         console.log(`📝 [AI Response Content]:`, currentContent);
       }
-    } catch (err: any) {
-      setError(err.message || "请求失败");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "请求失败";
+      setError(message);
     } finally {
       setIsLoading(false);
       setExecutingTool(null);

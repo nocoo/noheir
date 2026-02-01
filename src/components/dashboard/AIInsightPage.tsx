@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -31,7 +31,7 @@ const AIInsightPage = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [lastGenerated, setLastGenerated] = useState<string>('');
 
-  const generateInsights = async () => {
+  const generateInsights = useCallback(async () => {
     if (!allTransactions || allTransactions.length === 0) return;
 
     setIsGenerating(true);
@@ -60,7 +60,7 @@ const AIInsightPage = () => {
     } finally {
       setIsGenerating(false);
     }
-  };
+  }, [allTransactions]);
 
   const generateSummary = (payments: RecurringPayment[], insights: PaymentInsight[]): string => {
     const highPriorityCount = insights.filter(i => i.priority === 'high').length;
@@ -115,7 +115,7 @@ const AIInsightPage = () => {
 
   useEffect(() => {
     generateInsights();
-  }, [allTransactions]);
+  }, [generateInsights]);
 
   if (isLoading) {
     return (

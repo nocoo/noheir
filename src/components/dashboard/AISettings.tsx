@@ -117,9 +117,10 @@ export function AISettings() {
       } else {
         throw new Error('API 返回格式异常');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setTestStatus('error');
-      setTestError(err.message || '连接失败');
+      const message = err instanceof Error ? err.message : '连接失败';
+      setTestError(message);
       toast.error('❌ 连接失败，请检查配置');
     }
   };

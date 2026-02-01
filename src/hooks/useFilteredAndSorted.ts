@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 export interface FilterConfig {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface SortConfig {
@@ -15,10 +15,10 @@ export interface UseFilteredAndSortedOptions<T> {
   sort?: SortConfig;
   customFilter?: (item: T, filters: FilterConfig) => boolean;
   customSort?: (a: T, b: T, field: string, order: 'asc' | 'desc') => number;
-  getValueCallback?: (item: T, field: string) => any;
+  getValueCallback?: (item: T, field: string) => unknown;
 }
 
-export function useFilteredAndSorted<T extends Record<string, any>>({
+export function useFilteredAndSorted<T extends Record<string, unknown>>({
   items,
   filters = {},
   sort,
