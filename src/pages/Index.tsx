@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { MonthlyChart } from '@/components/dashboard/MonthlyChart';
@@ -33,6 +33,7 @@ import { FinancialHealthPage } from '@/pages/FinancialHealthPage';
 import AIInsightPage from '@/components/dashboard/AIInsightPage';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useSettings } from '@/contexts/SettingsContext';
 import { LoadingPage } from '@/components/pages/LoadingPage';
 import { LoginPage } from '@/components/pages/LoginPage';
@@ -40,9 +41,44 @@ import { TrendingUp, TrendingDown, PiggyBank, Percent } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { fadeInUp, gridContainer, gridItem } from '@/lib/animations';
 
+const TAB_IDS = new Set([
+  'overview',
+  'financial-health',
+  'ai-insight',
+  'savings',
+  'freedom',
+  'income',
+  'expense',
+  'flow',
+  'compare',
+  'account',
+  'account-detail',
+  'capital-dashboard',
+  'capital-decisions',
+  'warehouse',
+  'strategy-sunburst',
+  'liquidity-ladder',
+  'products',
+  'funds',
+  'settings',
+  'ai-settings',
+  'account-types',
+  'manage',
+  'import',
+  'transfer-import',
+  'quality',
+]);
+
+const getInitialTab = (tab?: string) => {
+  return tab && TAB_IDS.has(tab) ? tab : 'overview';
+};
+
 const Index = () => {
   const { user, loading: authLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState('overview');
+  const { tab } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(() => getInitialTab(tab));
   const [qualityViewYear, setQualityViewYear] = useState<number | null>(null);
   const [qualityData, setQualityData] = useState<{ year: number; metrics: DataQualityMetrics; validations: TransactionValidation[] } | null>(null);
 
@@ -87,17 +123,43 @@ const Index = () => {
     }
   };
 
+  const updateTab = (nextTab: string) => {
+    const safeTab = getInitialTab(nextTab);
+    setActiveTab(safeTab);
+    if (safeTab === 'overview') {
+      if (location.pathname !== '/') {
+        navigate('/', { replace: false });
+      }
+      return;
+    }
+    const targetPath = `/${safeTab}`;
+    if (location.pathname !== targetPath) {
+      navigate(targetPath, { replace: false });
+    }
+  };
+
   const handleGoToImport = () => {
-    setActiveTab('import');
+    updateTab('import');
   };
 
   const handleGoToTransferImport = () => {
-    setActiveTab('transfer-import');
+    updateTab('transfer-import');
   };
 
   const handleGoToManage = () => {
-    setActiveTab('manage');
+    updateTab('manage');
   };
+
+  useEffect(() => {
+    if (tab && TAB_IDS.has(tab) && tab !== activeTab) {
+      setActiveTab(tab);
+      return;
+    }
+
+    if (!tab && activeTab !== 'overview') {
+      navigate(`/${activeTab}`, { replace: true });
+    }
+  }, [tab, activeTab, navigate]);
 
   // Show Loading page when auth is loading or data is loading for the first time
   if (authLoading || (user && isLoading)) {
@@ -110,7 +172,7 @@ const Index = () => {
   }
 
   return (
-    <DashboardLayout activeTab={activeTab} onTabChange={setActiveTab}>
+    <DashboardLayout activeTab={activeTab} onTabChange={updateTab}>
       {activeTab === 'import' && (
         <motion.div
           key="import"
