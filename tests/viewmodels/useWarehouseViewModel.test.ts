@@ -32,7 +32,17 @@ describe('useWarehouseViewModel', () => {
     const { result } = renderHook(() => useWarehouseViewModel());
 
     act(() => {
-      result.current.handleUnitClick({ id: '1' } as any);
+      result.current.handleUnitClick({
+        id: '1',
+        user_id: 'u1',
+        unit_code: 'A01',
+        amount: 10,
+        currency: 'CNY',
+        status: '已成立',
+        strategy: '长期理财',
+        tactics: '稳健理财',
+        created_at: '2024-01-01',
+      });
     });
 
     expect(result.current.editDeployDialog.open).toBe(true);

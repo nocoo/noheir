@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'bun:test';
+import type { UnitDisplayInfo } from '../../src/types/assets';
 import { buildStrategyHierarchy, buildTotalAmount } from '../../src/domain/assets/strategySunburst';
 
 describe('strategySunburst domain', () => {
@@ -8,10 +9,31 @@ describe('strategySunburst domain', () => {
   });
 
   it('calculates total amount', () => {
-    const total = buildTotalAmount([
-      { status: '已成立', amount: 10 } as any,
-      { status: '计划中', amount: 20 } as any,
-    ]);
+    const units: UnitDisplayInfo[] = [
+      {
+        id: '1',
+        user_id: 'u1',
+        unit_code: 'A01',
+        amount: 10,
+        currency: 'CNY',
+        status: '已成立',
+        strategy: '长期理财',
+        tactics: '稳健理财',
+        created_at: '2024-01-01',
+      },
+      {
+        id: '2',
+        user_id: 'u1',
+        unit_code: 'A02',
+        amount: 20,
+        currency: 'CNY',
+        status: '计划中',
+        strategy: '长期理财',
+        tactics: '稳健理财',
+        created_at: '2024-01-01',
+      },
+    ];
+    const total = buildTotalAmount(units);
     expect(total).toBe(10);
   });
 });
