@@ -56,6 +56,11 @@ export function FinancialHealthPage({
   onYearChange,
 }: FinancialHealthPageProps) {
   const { settings } = useSettings();
+  const safeMonthlyData = useMemo(
+    () => (Array.isArray(monthlyData) ? monthlyData : []),
+    [monthlyData]
+  );
+  const safeTotalIncome = Number.isFinite(totalIncome) ? totalIncome : 0;
 
   // Helper component for scoring rule items with unified colors
   const ScoreRuleItem = ({ score, description }: { score: string; description: string }) => {
@@ -72,11 +77,11 @@ export function FinancialHealthPage({
   const healthResult = useMemo(() => {
     return calculateFinancialHealth(
       transactions,
-      monthlyData,
-      totalIncome,
+      safeMonthlyData,
+      safeTotalIncome,
       settings.fixedExpenseCategories
     );
-  }, [transactions, monthlyData, totalIncome, settings.fixedExpenseCategories]);
+  }, [transactions, safeMonthlyData, safeTotalIncome, settings.fixedExpenseCategories]);
 
   // Transform result into metrics for display
   const dimensions = useMemo((): DimensionAnalysis[] => {
@@ -294,7 +299,7 @@ export function FinancialHealthPage({
               <HeartPulse className="h-6 w-6 text-primary" />
               <div>
                 <CardTitle className="text-xl">综合评分</CardTitle>
-                <CardDescription>基于 {monthlyData.length} 个月数据评估</CardDescription>
+                <CardDescription>基于 {safeMonthlyData.length} 个月数据评估</CardDescription>
               </div>
             </div>
             <div className="text-right">
@@ -312,7 +317,7 @@ export function FinancialHealthPage({
       </Card>
 
       {/* Income/Expense Comparison Chart */}
-      <IncomeExpenseComparison data={monthlyData} />
+      <IncomeExpenseComparison data={safeMonthlyData} />
 
       {/* Detailed Analysis Tabs */}
       <Tabs defaultValue="dimensions" className="w-full">
@@ -453,10 +458,10 @@ export function FinancialHealthPage({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ScissorsTrendChart
-                monthlyData={monthlyData}
-                regression={healthResult.monthlyRegression}
-              />
+                <ScissorsTrendChart
+                  monthlyData={safeMonthlyData}
+                  regression={healthResult.monthlyRegression}
+                />
             </CardContent>
           </Card>
         </TabsContent>
@@ -470,9 +475,9 @@ export function FinancialHealthPage({
                 桑基图展示资金流向，识别"不得不花"的钱 vs "弹性可控"的钱
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <RigiditySankey transactions={transactions} totalIncome={totalIncome} />
-            </CardContent>
+          <CardContent>
+            <RigiditySankey transactions={transactions} totalIncome={safeTotalIncome} />
+          </CardContent>
           </Card>
         </TabsContent>
       </Tabs>

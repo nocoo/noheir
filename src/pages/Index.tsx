@@ -291,7 +291,16 @@ const Index = () => {
             <h1 className="text-2xl font-bold">财务健康分析</h1>
             <p className="text-muted-foreground">全面了解您的财务状况和健康指标</p>
           </div>
-          <FinancialHealthPage />
+          <FinancialHealthPage
+            transactions={transactions}
+            totalIncome={totalIncome}
+            totalExpense={totalExpense}
+            savingsRate={savingsRate}
+            monthlyData={monthlyData}
+            selectedYear={selectedYear}
+            availableYears={availableYears}
+            onYearChange={setSelectedYear}
+          />
         </motion.div>
       )}
 

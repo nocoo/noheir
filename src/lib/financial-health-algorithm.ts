@@ -403,16 +403,18 @@ export function calculateFinancialHealth(
   totalIncome: number,
   fixedExpenseCategories: string[] = []
 ): FinancialHealthResult {
+  const safeMonthlyData = Array.isArray(monthlyData) ? monthlyData : [];
+  const safeTotalIncome = Number.isFinite(totalIncome) ? totalIncome : 0;
   // Calculate all 5 dimensions
-  const growth = calculateGrowthScore(monthlyData);
-  const rigidity = calculateRigidityScore(transactions, totalIncome, fixedExpenseCategories);
+  const growth = calculateGrowthScore(safeMonthlyData);
+  const rigidity = calculateRigidityScore(transactions, safeTotalIncome, fixedExpenseCategories);
   const quality = calculateQualityScore(transactions);
-  const resilience = calculateResilienceScore(monthlyData);
-  const savings = calculateSavingsScore(monthlyData);
+  const resilience = calculateResilienceScore(safeMonthlyData);
+  const savings = calculateSavingsScore(safeMonthlyData);
 
   // Calculate regression trends for visualization
-  const incomeTrend = linearRegression(monthlyData.map(d => d.income));
-  const expenseTrend = linearRegression(monthlyData.map(d => d.expense));
+  const incomeTrend = linearRegression(safeMonthlyData.map(d => d.income));
+  const expenseTrend = linearRegression(safeMonthlyData.map(d => d.expense));
 
   const totalScore = growth.score + rigidity.score + quality.score + resilience.score + savings.score;
   const maxScore = 100;

@@ -33,7 +33,8 @@ function SingleYearSelector({
   disabled,
 }: Omit<UnifiedYearSelectorProps, 'mode' | 'selectedYears' | 'onMultiChange'>) {
   const value = selectedYear?.toString() ?? '';
-  const isDisabled = disabled || availableYears.length === 0;
+  const safeAvailableYears = Array.isArray(availableYears) ? availableYears : [];
+  const isDisabled = disabled || safeAvailableYears.length === 0;
 
   return (
     <div className="flex items-center gap-3">
@@ -41,11 +42,11 @@ function SingleYearSelector({
         {label}
       </Label>
       <Select value={value} onValueChange={(v) => onChange?.(parseInt(v, 10))} disabled={isDisabled}>
-        <SelectTrigger id="year-select" className={`w-[${width}]`}>
-          <SelectValue placeholder={availableYears.length === 0 ? '暂无数据' : label} />
+        <SelectTrigger id="year-select" style={{ width }}>
+          <SelectValue placeholder={safeAvailableYears.length === 0 ? '暂无数据' : label} />
         </SelectTrigger>
         <SelectContent>
-          {availableYears.map((year) => (
+          {safeAvailableYears.map((year) => (
             <SelectItem key={year} value={year.toString()}>
               {year}年
             </SelectItem>
@@ -65,6 +66,7 @@ function MultiYearSelector({
   onMultiChange,
   label = '对比年份:',
 }: Omit<UnifiedYearSelectorProps, 'mode' | 'selectedYear' | 'onChange' | 'width' | 'disabled'>) {
+  const safeAvailableYears = Array.isArray(availableYears) ? availableYears : [];
   const handleYearToggle = (year: number, checked: boolean) => {
     if (!onMultiChange) return;
 
@@ -78,7 +80,7 @@ function MultiYearSelector({
   return (
     <div className="flex items-center gap-4 flex-wrap">
       <Label className="text-sm font-medium">{label}</Label>
-      {availableYears.sort((a, b) => a - b).map((year) => (
+      {safeAvailableYears.sort((a, b) => a - b).map((year) => (
         <div key={year} className="flex items-center gap-2">
           <Checkbox
             id={`year-${year}`}
