@@ -16,7 +16,10 @@ interface FinancialFreedomViewModelParams {
 
 export function useFinancialFreedomViewModel({ transactions, year }: FinancialFreedomViewModelParams) {
   const { settings } = useSettings();
-  const activeIncomeCategories = settings.activeIncomeCategories || [];
+  const activeIncomeCategories = useMemo(
+    () => settings.activeIncomeCategories || [],
+    [settings.activeIncomeCategories]
+  );
   const [expenseReductionPercent, setExpenseReductionPercent] = useState(20);
   const [passiveIncomeIncreasePercent, setPassiveIncomeIncreasePercent] = useState(50);
 
