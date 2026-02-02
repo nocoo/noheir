@@ -5,9 +5,7 @@
  * Shows idle funds, maturing products, and other items needing attention
  */
 
-import { useState, useMemo } from 'react';
-import { useUnitsDisplay, useProducts, useUpdateUnit, useDeployUnit, useRecallUnit } from '@/hooks/useAssets';
-import type { DeployUnitInput, UpdateCapitalUnitInput } from '@/types/assets';
+import { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowUpDown, ArrowUp, ArrowDown, Pencil } from 'lucide-react';
@@ -24,127 +22,22 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { UnifiedEditDeployDialog } from './CapitalUnitsManager';
-import type { UnitDisplay, Currency, InvestmentStrategy } from '@/types/assets';
+import type { Currency, InvestmentStrategy, UnitDisplayInfo } from '@/types/assets';
+import { buildDecisionStats, buildCurrencyTooltip } from '@/domain/assets/capitalDecisions';
+import { useCapitalDecisionsViewModel } from '@/viewmodels/assets/useCapitalDecisionsViewModel';
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
 interface DecisionItem {
-  unit: UnitDisplay;
+  unit: UnitDisplayInfo;
   reason: string;
   urgency: 'high' | 'medium' | 'low';
   details: string;
 }
 
 type SortColumn = '番号' | '策略' | '紧急度' | '说明';
-type SortDirection = 'asc' | 'desc' | null;
-
-// ============================================================================
-// DECISION CLASSIFICATION
-// ============================================================================
-
-function classifyDecisions(units: UnitDisplay[]): DecisionItem[] {
-  const decisions: DecisionItem[] = [];
-  const today = new Date();
-
-  units.forEach(unit => {
-    // 0. 待成立：计划中状态，优先级低
-    if (unit.status === '计划中') {
-      decisions.push({
-        unit,
-        reason: '待成立',
-        urgency: 'low',
-        details: `资金正在筹集中，目标金额 ${formatCurrencyFull(unit.amount)}`,
-      });
-      return;
-    }
-
-    // 跳过非已成立状态
-    if (unit.status !== '已成立') return;
-
-    // 1. 闲置：未关联产品
-    if (!unit.product) {
-      decisions.push({
-        unit,
-        reason: '待投放',
-        urgency: 'high',
-        details: '资金已到位但未配置任何产品',
-      });
-      return;
-    }
-
-    // 2. 闲置：关联现金+类产品
-    if (unit.product.category === '现金+') {
-      decisions.push({
-        unit,
-        reason: '待再配置',
-        urgency: 'medium',
-        details: `当前在"${unit.product.name}"，建议配置到固定收益产品`,
-      });
-      return;
-    }
-
-    // 3. ✅ 已过锁定期（资金可用+持续产生收益）
-    if (unit.is_available) {
-      // 检查是否在最近30天内刚解锁
-      const daysSinceUnlock = unit.days_until_maturity !== undefined ? -unit.days_until_maturity : undefined;
-
-      if (daysSinceUnlock !== undefined && daysSinceUnlock <= 30) {
-        // 刚解锁30天内，标记为中等紧急度
-        decisions.push({
-          unit,
-          reason: '刚解锁',
-          urgency: 'medium',
-          details: `"${unit.product.name}"刚解锁 ${daysSinceUnlock} 天，建议关注再配置机会`,
-        });
-      } else {
-        // 解锁超过30天，低优先级
-        decisions.push({
-          unit,
-          reason: '已可用',
-          urgency: 'low',
-          details: `"${unit.product.name}"锁定期已过，资金可用且持续产生收益，可灵活再配置`,
-        });
-      }
-      return;
-    }
-
-    // 4. 即将解锁（7天内）
-    if (unit.days_until_maturity !== undefined && unit.days_until_maturity <= 7) {
-      const daysText = unit.days_until_maturity === 0 ? '今日' :
-                       unit.days_until_maturity === 1 ? '明日' :
-                       `${unit.days_until_maturity}天后`;
-      decisions.push({
-        unit,
-        reason: '即将解锁',
-        urgency: 'high',
-        details: `"${unit.product.name}"${daysText}解锁，金额 ${formatCurrencyFull(unit.amount)}，可规划再配置`,
-      });
-      return;
-    }
-
-    // 5. 即将解锁（30天内）
-    if (unit.days_until_maturity !== undefined && unit.days_until_maturity <= 30) {
-      decisions.push({
-        unit,
-        reason: '即将解锁',
-        urgency: 'medium',
-        details: `"${unit.product.name}" ${unit.days_until_maturity}天后解锁，可提前规划再配置`,
-      });
-      return;
-    }
-  });
-
-  // 按紧急程度排序
-  const urgencyOrder = { high: 0, medium: 1, low: 2 };
-  return decisions.sort((a, b) => {
-    if (urgencyOrder[a.urgency] !== urgencyOrder[b.urgency]) {
-      return urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
-    }
-    return a.unit.unit_code.localeCompare(b.unit.unit_code, 'zh-CN');
-  });
-}
 
 // ============================================================================
 // URGENCY BADGE
@@ -185,28 +78,11 @@ const CURRENCY_EMOJI: Record<Currency, string> = {
 // ============================================================================
 
 interface StatsCardsProps {
+  stats: ReturnType<typeof buildDecisionStats>;
   decisions: DecisionItem[];
 }
 
-function StatsCards({ decisions }: StatsCardsProps) {
-  const stats = useMemo(() => {
-    const byUrgency = {
-      high: decisions.filter(d => d.urgency === 'high'),
-      medium: decisions.filter(d => d.urgency === 'medium'),
-      low: decisions.filter(d => d.urgency === 'low'),
-    };
-
-    const totalAmount = decisions.reduce((sum, d) => sum + d.unit.amount, 0);
-
-    return {
-      total: decisions.length,
-      totalAmount,
-      high: byUrgency.high.length,
-      medium: byUrgency.medium.length,
-      low: byUrgency.low.length,
-      highAmount: byUrgency.high.reduce((sum, d) => sum + d.unit.amount, 0),
-    };
-  }, [decisions]);
+function StatsCards({ stats, decisions }: StatsCardsProps) {
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -296,128 +172,32 @@ function FilterButtons({ activeFilter, onFilterChange, counts }: FilterButtonsPr
 // ============================================================================
 
 export function CapitalDecisions() {
-  const { data: units, isLoading } = useUnitsDisplay();
-  const { data: products } = useProducts();
-  const updateMutation = useUpdateUnit();
-  const deployMutation = useDeployUnit();
-  const recallMutation = useRecallUnit();
+  const {
+    products,
+    isLoading,
+    decisions,
+    filteredDecisions,
+    counts,
+    activeFilter,
+    setActiveFilter,
+    sortColumn,
+    sortDirection,
+    handleSort,
+    editDeployDialog,
+    setEditDeployDialog,
+    handleEditDeploy,
+    handleRecallFromDialog,
+    updateMutation,
+    deployMutation,
+  } = useCapitalDecisionsViewModel();
 
-  const [activeFilter, setActiveFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
-  const [sortColumn, setSortColumn] = useState<SortColumn | null>(null);
-  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+  const stats = useMemo(() => buildDecisionStats(decisions), [decisions]);
 
-  // Edit dialog state
-  const [editDeployDialog, setEditDeployDialog] = useState<{
-    open: boolean;
-    unit?: UnitDisplay;
-  }>({ open: false });
-
-  const decisions = useMemo(() => {
-    if (!units) return [];
-    return classifyDecisions(units);
-  }, [units]);
-
-  const filteredDecisions = useMemo(() => {
-    let result = activeFilter === 'all' ? decisions : decisions.filter(d => d.urgency === activeFilter);
-
-    // Apply sorting
-    if (sortColumn && sortDirection) {
-      result = [...result].sort((a, b) => {
-        let compareValue = 0;
-        const urgencyOrder = { high: 0, medium: 1, low: 2 };
-        switch (sortColumn) {
-          case '番号':
-            compareValue = a.unit.unit_code.localeCompare(b.unit.unit_code, 'zh-CN');
-            break;
-          case '策略':
-            compareValue = a.unit.strategy.localeCompare(b.unit.strategy, 'zh-CN');
-            break;
-          case '紧急度':
-            compareValue = urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
-            break;
-          case '说明':
-            compareValue = a.details.localeCompare(b.details, 'zh-CN');
-            break;
-        }
-        return sortDirection === 'asc' ? compareValue : -compareValue;
-      });
-    }
-
-    return result;
-  }, [decisions, activeFilter, sortColumn, sortDirection]);
-
-  const counts = useMemo(() => ({
-    all: decisions.length,
-    high: decisions.filter(d => d.urgency === 'high').length,
-    medium: decisions.filter(d => d.urgency === 'medium').length,
-    low: decisions.filter(d => d.urgency === 'low').length,
-  }), [decisions]);
-
-  const handleSort = (column: SortColumn) => {
-    if (sortColumn === column) {
-      // Toggle direction: asc -> desc -> null
-      if (sortDirection === 'asc') {
-        setSortDirection('desc');
-      } else if (sortDirection === 'desc') {
-        setSortColumn(null);
-        setSortDirection(null);
-      }
-    } else {
-      // New column, set to asc
-      setSortColumn(column);
-      setSortDirection('asc');
-    }
-  };
-
-  // Get sort icon
   const getSortIcon = (column: SortColumn) => {
     if (sortColumn !== column) return <ArrowUpDown className="w-4 h-4 inline ml-1" />;
     return sortDirection === 'asc'
       ? <ArrowUp className="w-4 h-4 inline ml-1" />
       : <ArrowDown className="w-4 h-4 inline ml-1" />;
-  };
-
-  // Unified handler for edit/deploy
-  const handleEditDeploy = (unitData: UpdateCapitalUnitInput, deployData?: DeployUnitInput) => {
-    if (!editDeployDialog.unit) return;
-
-    // If there's deployment data with a product, ONLY deploy with strategy/tactics
-    if (deployData && deployData.product_id) {
-      deployMutation.mutate(
-        {
-          unitId: editDeployDialog.unit.id,
-          input: {
-            ...deployData,
-            strategy: unitData.strategy,
-            tactics: unitData.tactics,
-          }
-        },
-        {
-          onSuccess: () => {
-            setEditDeployDialog({ open: false });
-          },
-        }
-      );
-    } else {
-      // Only update unit info (no deployment change)
-      updateMutation.mutate(
-        { id: editDeployDialog.unit.id, input: unitData },
-        {
-          onSuccess: () => {
-            setEditDeployDialog({ open: false });
-          },
-        }
-      );
-    }
-  };
-
-  const handleRecallFromDialog = () => {
-    if (!editDeployDialog.unit) return;
-    recallMutation.mutate(editDeployDialog.unit.id, {
-      onSuccess: () => {
-        setEditDeployDialog({ open: false });
-      },
-    });
   };
 
   if (isLoading) {
@@ -450,7 +230,7 @@ export function CapitalDecisions() {
       ) : (
         <>
           {/* Stats Cards */}
-          <StatsCards decisions={decisions} />
+          <StatsCards decisions={decisions} stats={stats} />
 
           {/* Filters */}
           <div className="flex items-center justify-between">
