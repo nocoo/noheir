@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { CheckCircle2, AlertCircle, XCircle, HeartPulse, TrendingUp, Shield, Target, Zap, PiggyBank, Info, Settings } from 'lucide-react';
 import { useMemo } from 'react';
-import { Transaction } from '@/types/transaction';
-import { calculateFinancialHealth, FinancialHealthResult } from '@/lib/financial-health-algorithm';
+import type { MonthlyData, Transaction } from '@/types/transaction';
+import { FinancialHealthResult } from '@/lib/financial-health-algorithm';
 import { FinancialHealthRadar } from '@/components/charts/FinancialHealthRadar';
 import { useSettings } from '@/contexts/SettingsContext';
 import { ScissorsTrendChart } from '@/components/charts/ScissorsTrendChart';
@@ -15,13 +15,14 @@ import { RigiditySankey } from '@/components/charts/RigiditySankey';
 import { UnifiedYearSelector } from '@/components/dashboard/UnifiedYearSelector';
 import { IncomeExpenseComparison } from '@/components/dashboard/IncomeExpenseComparison';
 import { getScoreRatingColors } from '@/lib/colorPalette';
+import { useFinancialHealthViewModel } from '@/viewmodels/dashboard/useFinancialHealthViewModel';
 
 interface FinancialHealthPageProps {
   transactions: Transaction[];
   totalIncome: number;
   totalExpense: number;
   savingsRate: number;
-  monthlyData: { month: string; income: number; expense: number; balance: number }[];
+  monthlyData: MonthlyData[];
   selectedYear: number | null;
   availableYears: number[];
   onYearChange: (year: number | null) => void;
@@ -56,11 +57,16 @@ export function FinancialHealthPage({
   onYearChange,
 }: FinancialHealthPageProps) {
   const { settings } = useSettings();
-  const safeMonthlyData = useMemo(
-    () => (Array.isArray(monthlyData) ? monthlyData : []),
-    [monthlyData]
-  );
-  const safeTotalIncome = Number.isFinite(totalIncome) ? totalIncome : 0;
+  const {
+    safeMonthlyData,
+    safeTotalIncome,
+    healthResult,
+  } = useFinancialHealthViewModel({
+    transactions,
+    totalIncome,
+    monthlyData,
+    fixedExpenseCategories: settings.fixedExpenseCategories,
+  });
 
   // Helper component for scoring rule items with unified colors
   const ScoreRuleItem = ({ score, description }: { score: string; description: string }) => {
@@ -74,15 +80,6 @@ export function FinancialHealthPage({
   };
 
   // Calculate health score using the new algorithm
-  const healthResult = useMemo(() => {
-    return calculateFinancialHealth(
-      transactions,
-      safeMonthlyData,
-      safeTotalIncome,
-      settings.fixedExpenseCategories
-    );
-  }, [transactions, safeMonthlyData, safeTotalIncome, settings.fixedExpenseCategories]);
-
   // Transform result into metrics for display
   const dimensions = useMemo((): DimensionAnalysis[] => {
     const { dimensions } = healthResult;

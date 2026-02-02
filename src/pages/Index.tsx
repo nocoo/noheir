@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
-import { MonthlyChart } from '@/components/dashboard/MonthlyChart';
 import { TransactionTable } from '@/components/dashboard/TransactionTable';
 import { DataImport } from '@/components/dashboard/DataImport';
 import { TransferImportPage } from '@/components/dashboard/TransferImportPage';
@@ -16,8 +15,6 @@ import { AISettings } from '@/components/dashboard/AISettings';
 import { AccountTypesPage } from '@/components/dashboard/AccountTypesPage';
 import { UnifiedYearSelector } from '@/components/dashboard/UnifiedYearSelector';
 import type { DataQualityMetrics, TransactionValidation } from '@/types/data';
-import { TransactionHeatmap } from '@/components/dashboard/TransactionHeatmap';
-import { IncomeExpenseComparison } from '@/components/dashboard/IncomeExpenseComparison';
 import { SavingsRateChart } from '@/components/dashboard/SavingsRateChart';
 import { BalanceWaterfall } from '@/components/dashboard/BalanceWaterfall';
 import { YearComparisonChart } from '@/components/dashboard/YearComparisonChart';
@@ -31,6 +28,7 @@ import { StrategySunburst } from '@/components/assets/StrategySunburst';
 import { LiquidityLadder } from '@/components/assets/LiquidityLadder';
 import { FinancialHealthPage } from '@/pages/FinancialHealthPage';
 import AIInsightPage from '@/components/dashboard/AIInsightPage';
+import { OverviewPage } from '@/components/dashboard/OverviewPage';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -40,6 +38,7 @@ import { LoginPage } from '@/components/pages/LoginPage';
 import { TrendingUp, TrendingDown, PiggyBank, Percent } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { fadeInUp, gridContainer, gridItem } from '@/lib/animations';
+import { buildSavingsRate } from '@/domain/dashboard/overview';
 
 const TAB_IDS = new Set([
   'overview',
@@ -106,11 +105,7 @@ const Index = () => {
   } = useTransactions();
 
   const { settings } = useSettings();
-
-  // All hooks must be called before any early returns
-  const savingsRate = useMemo(() => {
-    return totalIncome > 0 ? ((totalIncome - totalExpense) / totalIncome) * 100 : 0;
-  }, [totalIncome, totalExpense]);
+  const savingsRate = useMemo(() => buildSavingsRate(totalIncome, totalExpense), [totalIncome, totalExpense]);
 
   const handleViewQuality = async (year: number) => {
     if (year === 0) {
@@ -253,51 +248,17 @@ const Index = () => {
       )}
 
       {activeTab === 'overview' && (
-        <motion.div
-          key="overview"
-          initial="initial"
-          animate="animate"
-          variants={fadeInUp}
-          transition={{ duration: 0.25 }}
-          className="space-y-6"
-        >
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold">财务概览</h1>
-              <p className="text-muted-foreground">查看您的财务状况和趋势</p>
-            </div>
-            <UnifiedYearSelector mode="single" selectedYear={selectedYear} availableYears={availableYears} onChange={setSelectedYear} />
-          </div>
-
-          <motion.div
-            variants={gridContainer}
-            initial="initial"
-            animate="animate"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
-          >
-            <motion.div variants={gridItem}>
-              <StatCard title="总收入" value={totalIncome} icon={TrendingUp} variant="income" />
-            </motion.div>
-            <motion.div variants={gridItem}>
-              <StatCard title="总支出" value={totalExpense} icon={TrendingDown} variant="expense" />
-            </motion.div>
-            <motion.div variants={gridItem}>
-              <StatCard title="结余" value={balance} icon={PiggyBank} variant="balance" />
-            </motion.div>
-            <motion.div variants={gridItem}>
-              <StatCard title="储蓄率" value={`${savingsRate.toFixed(1)}%`} icon={Percent} variant="savings" savingsValue={savingsRate} targetSavingsRate={settings.targetSavingsRate} />
-            </motion.div>
-          </motion.div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <TransactionHeatmap transactions={transactions} year={selectedYear} type="expense" />
-            <TransactionHeatmap transactions={transactions} year={selectedYear} type="income" />
-          </div>
-
-          <IncomeExpenseComparison data={monthlyData} />
-
-          <TransactionTable transactions={transactions} />
-        </motion.div>
+        <OverviewPage
+          transactions={transactions}
+          monthlyData={monthlyData}
+          totalIncome={totalIncome}
+          totalExpense={totalExpense}
+          balance={balance}
+          selectedYear={selectedYear}
+          availableYears={availableYears}
+          onYearChange={setSelectedYear}
+          targetSavingsRate={settings.targetSavingsRate}
+        />
       )}
 
       {activeTab === 'income' && (

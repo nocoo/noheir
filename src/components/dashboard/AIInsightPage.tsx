@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,55 +20,20 @@ import {
 import { cn } from '@/lib/utils';
 import { formatCurrencyFull } from '@/lib/chart-config';
 import { useTransactions } from '@/hooks/useTransactions';
-import { RecurringPaymentDetector } from '@/services/insightService';
-import { RecurringPayment, PaymentInsight, AIInsight } from '@/types/insight';
 import { motion } from 'framer-motion';
-import { fadeInUp, staggerContainer, staggerItem } from '@/lib/animations';
+import { fadeInUp, staggerItem } from '@/lib/animations';
+import { useAIInsightViewModel } from '@/viewmodels/dashboard/useAIInsightViewModel';
 
 const AIInsightPage = () => {
   const { allTransactions, isLoading } = useTransactions();
-  const [aiInsight, setAIInsight] = useState<AIInsight | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [lastGenerated, setLastGenerated] = useState<string>('');
-
-  const generateInsights = useCallback(async () => {
-    if (!allTransactions || allTransactions.length === 0) return;
-
-    setIsGenerating(true);
-    
-    try {
-      const recurringPayments = RecurringPaymentDetector.detectRecurringPayments(allTransactions);
-      const insights = RecurringPaymentDetector.generateInsights(recurringPayments);
-
-      const newInsight: AIInsight = {
-        id: `insight-${Date.now()}`,
-        generatedAt: new Date().toISOString(),
-        insights,
-        recurringPayments,
-        summary: generateSummary(recurringPayments, insights),
-        dataRange: {
-          startDate: allTransactions[allTransactions.length - 1].date,
-          endDate: allTransactions[0].date,
-          transactionCount: allTransactions.length
-        }
-      };
-
-      setAIInsight(newInsight);
-      setLastGenerated(new Date().toLocaleString());
-    } catch (error) {
-      console.error('生成AI洞察失败:', error);
-    } finally {
-      setIsGenerating(false);
-    }
-  }, [allTransactions]);
-
-  const generateSummary = (payments: RecurringPayment[], insights: PaymentInsight[]): string => {
-    const highPriorityCount = insights.filter(i => i.priority === 'high').length;
-    const yearlyTotal = payments.reduce((sum, p) => sum + p.yearlyTotal, 0);
-    const monthlyTotal = yearlyTotal / 12;
-
-    return `发现${payments.length}个周期性付款，月度总计${formatCurrencyFull(monthlyTotal)}，年度总计${formatCurrencyFull(yearlyTotal)}，${highPriorityCount}项需要立即关注。`;
-  };
+  const {
+    aiInsight,
+    isGenerating,
+    lastGenerated,
+    sortedInsights,
+    sortedRecurringPayments,
+    generateInsights,
+  } = useAIInsightViewModel({ allTransactions, isLoading });
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -95,27 +60,6 @@ const AIInsightPage = () => {
     weekly: '每周',
     biweekly: '每两周'
   };
-
-  const sortedInsights = useMemo(() => {
-    if (!aiInsight) return [];
-    return [...aiInsight.insights].sort((a, b) => {
-      const priorityOrder = { high: 0, medium: 1, low: 2 };
-      return priorityOrder[a.priority] - priorityOrder[b.priority];
-    });
-  }, [aiInsight]);
-
-  const sortedRecurringPayments = useMemo(() => {
-    if (!aiInsight) return [];
-    return [...aiInsight.recurringPayments].sort((a, b) => {
-      const daysA = Math.abs(new Date(a.nextPaymentDate).getTime() - new Date().getTime());
-      const daysB = Math.abs(new Date(b.nextPaymentDate).getTime() - new Date().getTime());
-      return daysA - daysB;
-    });
-  }, [aiInsight]);
-
-  useEffect(() => {
-    generateInsights();
-  }, [generateInsights]);
 
   if (isLoading) {
     return (
