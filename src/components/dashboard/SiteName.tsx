@@ -1,6 +1,3 @@
-import { useState, useEffect } from 'react';
-import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
-import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,40 +5,23 @@ import { Label } from '@/components/ui/label';
 import { Globe } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-
-const DEFAULT_SITE_NAME = '个人财务管理';
+import { useSiteNameViewModel } from '@/viewmodels/settings/useSiteNameViewModel';
 
 export function SiteName() {
-  const { user } = useAuth();
-  const { data, loading, error, createMetadata, updateSiteName } = useSupabaseSettings();
-  const [siteName, setSiteName] = useState('');
-  const [isEditing, setIsEditing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [autoCreated, setAutoCreated] = useState(false);
-
-  // Auto-create default metadata for new users
-  useEffect(() => {
-    if (user && !loading && !data && !error && !autoCreated) {
-      const autoCreate = async () => {
-        setAutoCreated(true);
-        try {
-          await createMetadata(DEFAULT_SITE_NAME);
-          toast.success('已自动创建默认配置');
-        } catch (err) {
-          // Silently fail - user can manually create later
-          console.error('Auto-create failed:', err);
-        }
-      };
-      autoCreate();
-    }
-  }, [user, loading, data, error, autoCreated, createMetadata]);
-
-  // Sync site name from data
-  useEffect(() => {
-    if (data?.site_name) {
-      setSiteName(data.site_name);
-    }
-  }, [data]);
+  const {
+    user,
+    loading,
+    error,
+    data,
+    siteName,
+    isEditing,
+    isSaving,
+    displayName,
+    setSiteName,
+    startEditing,
+    handleSave,
+    handleCancel,
+  } = useSiteNameViewModel(toast);
 
   if (!user) {
     return (
@@ -73,34 +53,6 @@ export function SiteName() {
     );
   }
 
-  const handleSave = async () => {
-    if (!siteName.trim()) {
-      toast.error('站点名称不能为空');
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      if (data) {
-        await updateSiteName(siteName);
-        toast.success('站点名称已更新');
-      } else {
-        await createMetadata(siteName);
-        toast.success('站点配置已创建');
-      }
-      setIsEditing(false);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : '操作失败');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleCancel = () => {
-    setSiteName(data?.site_name || '');
-    setIsEditing(false);
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -122,7 +74,7 @@ export function SiteName() {
                   placeholder="输入站点名称"
                 />
               ) : (
-                <p className="text-lg font-semibold">{data?.site_name || '未设置'}</p>
+                <p className="text-lg font-semibold">{displayName}</p>
               )}
             </div>
 
@@ -138,7 +90,7 @@ export function SiteName() {
                   </Button>
                 </>
               ) : (
-                <Button onClick={() => setIsEditing(true)}>
+                <Button onClick={startEditing}>
                   {data ? '编辑' : '设置站点名称'}
                 </Button>
               )}

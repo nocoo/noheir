@@ -2,11 +2,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
-import { useSettings } from '@/contexts/SettingsContext';
 import { TrendingUp, AlertTriangle } from 'lucide-react';
+import { useReturnRateSettingsViewModel } from '@/viewmodels/settings/useReturnRateSettingsViewModel';
 
 export function ReturnRateSettings() {
-  const { settings, updateMinReturnRate, updateMaxReturnRate } = useSettings();
+  const {
+    minReturnRate,
+    maxReturnRate,
+    handleMinChange,
+    handleMaxChange,
+  } = useReturnRateSettingsViewModel();
 
   return (
     <Card>
@@ -25,7 +30,7 @@ export function ReturnRateSettings() {
           <Label htmlFor="minReturnRate" className="flex items-center justify-between">
             <span>保底收益率 (%)</span>
             <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
-              {settings.minReturnRate.toFixed(2)}%
+              {minReturnRate.toFixed(2)}%
             </span>
           </Label>
           <Slider
@@ -33,8 +38,8 @@ export function ReturnRateSettings() {
             min={0}
             max={10}
             step={0.05}
-            value={[settings.minReturnRate]}
-            onValueChange={(value) => updateMinReturnRate(value[0])}
+            value={[minReturnRate]}
+            onValueChange={(value) => handleMinChange(value[0])}
           />
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>0%</span>
@@ -51,7 +56,7 @@ export function ReturnRateSettings() {
           <Label htmlFor="maxReturnRate" className="flex items-center justify-between">
             <span>风险收益率阈值 (%)</span>
             <span className="text-sm font-medium text-rose-600 dark:text-rose-400">
-              {settings.maxReturnRate.toFixed(2)}%
+              {maxReturnRate.toFixed(2)}%
             </span>
           </Label>
           <Slider
@@ -59,8 +64,8 @@ export function ReturnRateSettings() {
             min={0}
             max={15}
             step={0.1}
-            value={[settings.maxReturnRate]}
-            onValueChange={(value) => updateMaxReturnRate(value[0])}
+            value={[maxReturnRate]}
+            onValueChange={(value) => handleMaxChange(value[0])}
           />
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>0%</span>
@@ -80,14 +85,14 @@ export function ReturnRateSettings() {
             {/* Min marker */}
             <div
               className="absolute top-0 bottom-0 w-0.5 bg-amber-600 dark:bg-amber-400"
-              style={{ left: `${(settings.minReturnRate / 15) * 100}%` }}
+              style={{ left: `${(minReturnRate / 15) * 100}%` }}
             >
               <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-amber-600 dark:bg-amber-400 rounded-full" />
             </div>
             {/* Max marker */}
             <div
               className="absolute top-0 bottom-0 w-0.5 bg-rose-600 dark:bg-rose-400"
-              style={{ left: `${(settings.maxReturnRate / 15) * 100}%` }}
+              style={{ left: `${(maxReturnRate / 15) * 100}%` }}
             >
               <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-rose-600 dark:bg-rose-400 rounded-full" />
             </div>
@@ -99,15 +104,15 @@ export function ReturnRateSettings() {
           <div className="grid grid-cols-3 gap-2 text-xs">
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 rounded-full bg-amber-600 dark:bg-amber-400" />
-              <span>过低: &lt;{settings.minReturnRate.toFixed(2)}%</span>
+               <span>过低: &lt;{minReturnRate.toFixed(2)}%</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 rounded-full bg-emerald-600 dark:bg-emerald-400" />
-              <span>正常: {settings.minReturnRate.toFixed(2)}% - {settings.maxReturnRate.toFixed(2)}%</span>
+               <span>正常: {minReturnRate.toFixed(2)}% - {maxReturnRate.toFixed(2)}%</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 rounded-full bg-rose-600 dark:bg-rose-400" />
-              <span>风险: &gt;{settings.maxReturnRate.toFixed(2)}%</span>
+               <span>风险: &gt;{maxReturnRate.toFixed(2)}%</span>
             </div>
           </div>
         </div>

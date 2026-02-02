@@ -1,102 +1,30 @@
-import { useState, useCallback, useRef } from 'react';
-import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
-import { useAuth } from '@/contexts/AuthContext';
-import { useSettings } from '@/contexts/SettingsContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Shield, TrendingDown, Check, ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { DEFAULT_EXPENSE_CATEGORIES } from '@/types/category';
-import { toast } from 'sonner';
-
-// Get all expense tertiary categories grouped by secondary category
-const getExpenseCategoriesGrouped = (): Record<string, string[]> => {
-  return DEFAULT_EXPENSE_CATEGORIES;
-};
-
-const EXPENSE_CATEGORIES_GROUPED = getExpenseCategoriesGrouped();
-
-// Calculate total categories safely
-const TOTAL_EXPENSE_CATEGORIES = Object.values(EXPENSE_CATEGORIES_GROUPED).reduce(
-  (sum, cats) => sum + (cats?.length || 0),
-  0
-);
+import { useFixedExpenseSettingsViewModel } from '@/viewmodels/settings/useFixedExpenseSettingsViewModel';
 
 export function FixedExpenseSettings() {
-  const { user } = useAuth();
-  const { data, loading, updateSingleSetting } = useSupabaseSettings();
-  const { settings: contextSettings, updateFixedExpenseCategories } = useSettings();
-  const [showSelector, setShowSelector] = useState(false);
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const {
+    isVisible,
+    loading,
+    grouped,
+    totalCategories,
+    fixedExpenseCategories,
+    showSelector,
+    expandedGroups,
+    setShowSelector,
+    toggleGroup,
+    toggleAll,
+    handleToggleCategory,
+    getGroupStats,
+  } = useFixedExpenseSettingsViewModel();
 
-  // Debounce ref for categories - must be before any conditional returns
-  const categoriesTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const dbSettings = data?.settings;
-
-  // Debounced database update for categories
-  const debouncedUpdateCategories = useCallback((categories: string[]) => {
-    if (categoriesTimeoutRef.current) {
-      clearTimeout(categoriesTimeoutRef.current);
-    }
-    categoriesTimeoutRef.current = setTimeout(async () => {
-      try {
-        await updateSingleSetting('fixedExpenseCategories', categories);
-      } catch (err) {
-        console.error('Failed to update fixed expense categories:', err);
-      }
-    }, 1000);
-  }, [updateSingleSetting]);
-
-  if (!user || !dbSettings) {
+  if (!isVisible) {
     return null;
   }
-
-  // Use SettingsContext value for immediate UI updates
-  const fixedExpenseCategories = contextSettings.fixedExpenseCategories;
-
-  const handleToggleCategory = (category: string) => {
-    const isFixed = fixedExpenseCategories.includes(category);
-    const newCategories = isFixed
-      ? fixedExpenseCategories.filter(c => c !== category)
-      : [...fixedExpenseCategories, category];
-
-    // Immediately update local context
-    updateFixedExpenseCategories(newCategories);
-    // Debounce database update
-    debouncedUpdateCategories(newCategories);
-  };
-
-  const toggleGroup = (groupName: string) => {
-    setExpandedGroups(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(groupName)) {
-        newSet.delete(groupName);
-      } else {
-        newSet.add(groupName);
-      }
-      return newSet;
-    });
-  };
-
-  const toggleAllInGroup = (groupName: string) => {
-    const categories = EXPENSE_CATEGORIES_GROUPED[groupName] || [];
-    const allSelected = categories.every(cat => fixedExpenseCategories.includes(cat));
-
-    if (allSelected) {
-      // Deselect all
-      const newCategories = fixedExpenseCategories.filter(cat => !categories.includes(cat));
-      updateFixedExpenseCategories(newCategories);
-      debouncedUpdateCategories(newCategories);
-    } else {
-      // Select all
-      const newCategories = [...new Set([...fixedExpenseCategories, ...categories])];
-      updateFixedExpenseCategories(newCategories);
-      debouncedUpdateCategories(newCategories);
-    }
-  };
 
   return (
     <Card>
@@ -112,7 +40,7 @@ export function FixedExpenseSettings() {
           <div>
             <p className="text-sm font-medium">固定支出分类</p>
             <p className="text-xs text-muted-foreground">
-              已选择 {fixedExpenseCategories.length} / {TOTAL_EXPENSE_CATEGORIES} 个分类
+              已选择 {fixedExpenseCategories.length} / {totalCategories} 个分类
             </p>
           </div>
           <Button
@@ -132,12 +60,11 @@ export function FixedExpenseSettings() {
             </div>
             <ScrollArea className="h-[300px] pr-4">
               <div className="space-y-3">
-                {Object.entries(EXPENSE_CATEGORIES_GROUPED).map(([groupName, categories]) => {
+                {Object.entries(grouped).map(([groupName, categories]) => {
                   const categoryList = categories || [];
                   if (categoryList.length === 0) return null;
                   const isExpanded = expandedGroups.has(groupName);
-                  const allSelected = categoryList.every(cat => fixedExpenseCategories.includes(cat));
-                  const someSelected = categoryList.some(cat => fixedExpenseCategories.includes(cat));
+                  const { allSelected, someSelected, selected } = getGroupStats(groupName);
 
                   return (
                     <div key={groupName} className="border rounded-lg overflow-hidden">
@@ -148,7 +75,7 @@ export function FixedExpenseSettings() {
                         <span className="font-medium text-sm">{groupName}</span>
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-muted-foreground">
-                            {categoryList.filter(cat => fixedExpenseCategories.includes(cat)).length} / {categoryList.length}
+                            {selected} / {categoryList.length}
                           </span>
                           {isExpanded ? (
                             <ChevronDown className="h-4 w-4" />
@@ -163,7 +90,7 @@ export function FixedExpenseSettings() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => toggleAllInGroup(groupName)}
+                            onClick={() => toggleAll(groupName)}
                             className="h-7 text-xs"
                           >
                             {allSelected ? '取消全选' : '全选'}

@@ -1,35 +1,18 @@
 import { useAuth } from '@/contexts/AuthContext';
-import { useSettings } from '@/contexts/SettingsContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Sun, Moon, Monitor } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Theme, ColorScheme } from '@/contexts/SettingsContext';
 import { getIncomeColorHex, getExpenseColorHex } from '@/contexts/SettingsContext';
+import { useThemeSettingsViewModel } from '@/viewmodels/settings/useThemeSettingsViewModel';
 
 export function ThemeSettings() {
   const { user } = useAuth();
-  const { settings: contextSettings, updateTheme, updateColorScheme } = useSettings();
+  const { theme, colorScheme, handleThemeChange, handleColorSchemeChange } = useThemeSettingsViewModel(toast);
 
   if (!user) {
     return null;
   }
-
-  // Use SettingsContext values for immediate UI updates
-  const theme: Theme = contextSettings.theme;
-  const colorScheme: ColorScheme = contextSettings.colorScheme;
-
-  const handleThemeChange = (newTheme: Theme) => {
-    // Only update localStorage (no database sync)
-    updateTheme(newTheme);
-    toast.success('主题已更新');
-  };
-
-  const handleColorSchemeChange = (newColorScheme: ColorScheme) => {
-    // Only update localStorage (no database sync)
-    updateColorScheme(newColorScheme);
-    toast.success('颜色方案已更新');
-  };
 
   return (
     <Card>

@@ -1,96 +1,30 @@
-import { useState, useCallback, useRef } from 'react';
-import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
-import { useAuth } from '@/contexts/AuthContext';
-import { useSettings } from '@/contexts/SettingsContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TrendingUp, DollarSign, Check, ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { DEFAULT_INCOME_CATEGORIES } from '@/types/category';
-import { toast } from 'sonner';
-
-// Get all income tertiary categories grouped by secondary category
-const getIncomeCategoriesGrouped = (): Record<string, string[]> => {
-  return DEFAULT_INCOME_CATEGORIES;
-};
-
-const INCOME_CATEGORIES_GROUPED = getIncomeCategoriesGrouped();
+import { useActiveIncomeSettingsViewModel } from '@/viewmodels/settings/useActiveIncomeSettingsViewModel';
 
 export function ActiveIncomeSettings() {
-  const { user } = useAuth();
-  const { data, loading, updateSingleSetting } = useSupabaseSettings();
-  const { settings: contextSettings, updateActiveIncomeCategories } = useSettings();
-  const [showSelector, setShowSelector] = useState(false);
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const {
+    isVisible,
+    loading,
+    grouped,
+    totalCategories,
+    activeIncomeCategories,
+    showSelector,
+    expandedGroups,
+    setShowSelector,
+    toggleGroup,
+    toggleAll,
+    handleToggleCategory,
+    getGroupStats,
+  } = useActiveIncomeSettingsViewModel();
 
-  // Debounce ref for categories - must be before any conditional returns
-  const categoriesTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const dbSettings = data?.settings;
-
-  // Debounced database update for categories
-  const debouncedUpdateCategories = useCallback((categories: string[]) => {
-    if (categoriesTimeoutRef.current) {
-      clearTimeout(categoriesTimeoutRef.current);
-    }
-    categoriesTimeoutRef.current = setTimeout(async () => {
-      try {
-        await updateSingleSetting('activeIncomeCategories', categories);
-      } catch (err) {
-        console.error('Failed to update active income categories:', err);
-      }
-    }, 1000);
-  }, [updateSingleSetting]);
-
-  if (!user || !dbSettings) {
+  if (!isVisible) {
     return null;
   }
-
-  // Use SettingsContext value for immediate UI updates
-  const activeIncomeCategories = contextSettings.activeIncomeCategories;
-
-  const handleToggleCategory = (category: string) => {
-    const isActive = activeIncomeCategories.includes(category);
-    const newCategories = isActive
-      ? activeIncomeCategories.filter(c => c !== category)
-      : [...activeIncomeCategories, category];
-
-    // Immediately update local context
-    updateActiveIncomeCategories(newCategories);
-    // Debounce database update
-    debouncedUpdateCategories(newCategories);
-  };
-
-  const toggleGroup = (groupName: string) => {
-    setExpandedGroups(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(groupName)) {
-        newSet.delete(groupName);
-      } else {
-        newSet.add(groupName);
-      }
-      return newSet;
-    });
-  };
-
-  const toggleAllInGroup = (groupName: string) => {
-    const categories = INCOME_CATEGORIES_GROUPED[groupName];
-    const allSelected = categories.every(cat => activeIncomeCategories.includes(cat));
-
-    if (allSelected) {
-      // Deselect all
-      const newCategories = activeIncomeCategories.filter(cat => !categories.includes(cat));
-      updateActiveIncomeCategories(newCategories);
-      debouncedUpdateCategories(newCategories);
-    } else {
-      // Select all
-      const newCategories = [...new Set([...activeIncomeCategories, ...categories])];
-      updateActiveIncomeCategories(newCategories);
-      debouncedUpdateCategories(newCategories);
-    }
-  };
 
   return (
     <Card>
@@ -106,7 +40,7 @@ export function ActiveIncomeSettings() {
           <div>
             <p className="text-sm font-medium">主动收入分类</p>
             <p className="text-xs text-muted-foreground">
-              已选择 {activeIncomeCategories.length} / {Object.values(INCOME_CATEGORIES_GROUPED).flat().length} 个分类
+              已选择 {activeIncomeCategories.length} / {totalCategories} 个分类
             </p>
           </div>
           <Button
@@ -126,10 +60,9 @@ export function ActiveIncomeSettings() {
             </div>
             <ScrollArea className="h-[300px] pr-4">
               <div className="space-y-3">
-                {Object.entries(INCOME_CATEGORIES_GROUPED).map(([groupName, categories]) => {
+                {Object.entries(grouped).map(([groupName, categories]) => {
                   const isExpanded = expandedGroups.has(groupName);
-                  const allSelected = categories.every(cat => activeIncomeCategories.includes(cat));
-                  const someSelected = categories.some(cat => activeIncomeCategories.includes(cat));
+                  const { allSelected, someSelected, selected } = getGroupStats(groupName);
 
                   return (
                     <div key={groupName} className="border rounded-lg overflow-hidden">
@@ -140,7 +73,7 @@ export function ActiveIncomeSettings() {
                         <span className="font-medium text-sm">{groupName}</span>
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-muted-foreground">
-                            {categories.filter(cat => activeIncomeCategories.includes(cat)).length} / {categories.length}
+                            {selected} / {categories.length}
                           </span>
                           {isExpanded ? (
                             <ChevronDown className="h-4 w-4" />
@@ -155,7 +88,7 @@ export function ActiveIncomeSettings() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => toggleAllInGroup(groupName)}
+                            onClick={() => toggleAll(groupName)}
                             className="h-7 text-xs"
                           >
                             {allSelected ? '取消全选' : '全选'}
