@@ -1,36 +1,23 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { YearlyComparison } from '@/types/transaction';
-import { useSettings, getIncomeColorHex, getExpenseColorHex } from '@/contexts/SettingsContext';
 import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, legendStyle, formatCurrencyK, formatCurrencyFull } from '@/lib/chart-config';
 import { BALANCE_COLOR } from '@/lib/colorPalette';
 import { MultiSeriesTooltip } from '@/lib/chart-tooltip';
+import { useYearComparisonViewModel } from '@/viewmodels/dashboard/useYearComparisonViewModel';
 
 interface YearComparisonChartProps {
   data: YearlyComparison[];
 }
 
 export function YearComparisonChart({ data }: YearComparisonChartProps) {
-  const { settings } = useSettings();
-  const incomeColorHex = getIncomeColorHex(settings.colorScheme);
-  const expenseColorHex = getExpenseColorHex(settings.colorScheme);
-  const targetSavingsRate = settings.targetSavingsRate;
-
-  // Use green color for target line (same as income color)
-  const targetLineColor = '#059669';  // Emerald-600
-
-  const chartData = data.map(item => {
-    const savingsRate = item.totalIncome > 0
-      ? ((item.totalIncome - item.totalExpense) / item.totalIncome) * 100
-      : 0;
-    return {
-      year: item.year.toString(),
-      收入: item.totalIncome,
-      支出: item.totalExpense,
-      结余: item.balance,
-      储蓄率: savingsRate,
-    };
-  });
+  const {
+    incomeColorHex,
+    expenseColorHex,
+    targetSavingsRate,
+    chartData,
+    targetLineColor,
+  } = useYearComparisonViewModel({ data });
 
   return (
     <Card>
