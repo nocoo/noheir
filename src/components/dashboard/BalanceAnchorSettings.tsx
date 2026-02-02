@@ -1,13 +1,9 @@
-import { useState, useMemo, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { useSettings, BalanceAnchor } from '@/contexts/SettingsContext';
-import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTransactions } from '@/hooks/useTransactions';
 import { Calendar, DollarSign, Plus, Trash2, AlertCircle, Calculator, AlertTriangle } from 'lucide-react';
 import {
   Select,
@@ -18,202 +14,31 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useBalanceAnchorSettingsViewModel } from '@/viewmodels/settings/useBalanceAnchorSettingsViewModel';
+import { useSettings } from '@/contexts/SettingsContext';
 
 export function BalanceAnchorSettings() {
   const { user } = useAuth();
-  const { settings, addBalanceAnchor, removeBalanceAnchor } = useSettings();
-  const { transactions } = useTransactions();
-  const { data, updateSingleSetting } = useSupabaseSettings();
+  const {
+    uniqueAccounts,
+    anchorsByAccount,
+    anchorDifferences,
+    selectedAccount,
+    selectedDate,
+    balance,
+    calculatedBalance,
+    balanceDifference,
+    differenceLevel,
+    setSelectedAccount,
+    setSelectedDate,
+    setBalance,
+    handleAddAnchor,
+    handleRemoveAnchor,
+  } = useBalanceAnchorSettingsViewModel(toast);
 
-  const [selectedAccount, setSelectedAccount] = useState<string>('');
-  const [selectedDate, setSelectedDate] = useState<string>('');
-  const [balance, setBalance] = useState<string>('');
+  const { settings } = useSettings();
 
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Extract unique accounts from transactions
-  const uniqueAccounts = useMemo(() => {
-    const accounts = new Set(transactions.map(t => t.account));
-    return Array.from(accounts).sort();
-  }, [transactions]);
-
-  // Group anchors by account
-  const anchorsByAccount = useMemo(() => {
-    const grouped: Record<string, BalanceAnchor[]> = {};
-    settings.balanceAnchors?.forEach(anchor => {
-      if (!grouped[anchor.accountName]) {
-        grouped[anchor.accountName] = [];
-      }
-      grouped[anchor.accountName].push(anchor);
-    });
-    // Sort anchors by date descending
-    Object.keys(grouped).forEach(account => {
-      grouped[account].sort((a, b) => b.date.localeCompare(a.date));
-    });
-    return grouped;
-  }, [settings.balanceAnchors]);
-
-  // Calculate theoretical balance at selected date for selected account
-  const { calculatedBalance, balanceDifference, differenceLevel } = useMemo(() => {
-    if (!selectedAccount || !selectedDate) {
-      return { calculatedBalance: null, balanceDifference: null, differenceLevel: null };
-    }
-
-    // Get all anchors for this account, sorted ascending
-    const accountAnchors = (settings.balanceAnchors || [])
-      .filter(a => a.accountName === selectedAccount && a.date <= selectedDate)
-      .sort((a, b) => a.date.localeCompare(b.date));
-
-    // Find the most recent anchor before or on the selected date
-    const baseAnchor = accountAnchors.length > 0 ? accountAnchors[accountAnchors.length - 1] : null;
-    const baseBalance = baseAnchor?.balance || 0;
-    const baseDate = baseAnchor?.date || '2000-01-01';
-
-    // Get all transactions for this account
-    const accountTransactions = transactions.filter(t => t.account === selectedAccount);
-
-    // Calculate balance from base anchor to selected date
-    let calculated = baseBalance;
-    accountTransactions.forEach(t => {
-      // Skip transactions on or before base date (they're already included in base anchor)
-      if (t.fullDate <= baseDate) return;
-      // Skip transactions after selected date
-      if (t.fullDate > selectedDate) return;
-
-      // Add transaction amount (positive for income, negative for expense)
-      calculated += t.income || 0;
-      calculated -= t.expense || 0;
-    });
-
-    const inputBalance = balance !== '' ? parseFloat(balance) : null;
-    const difference = inputBalance !== null ? Math.abs(inputBalance - calculated) : null;
-
-    // Determine warning level
-    let level: 'none' | 'info' | 'warning' | 'error' | null = null;
-    if (difference !== null) {
-      if (difference < 1) {
-        level = 'none';
-      } else if (difference < 100) {
-        level = 'info';
-      } else if (difference < 1000) {
-        level = 'warning';
-      } else {
-        level = 'error';
-      }
-    }
-
-    return {
-      calculatedBalance: calculated,
-      balanceDifference: difference,
-      differenceLevel: level
-    };
-  }, [selectedAccount, selectedDate, balance, transactions, settings.balanceAnchors]);
-
-  // Calculate difference for each existing anchor
-  const anchorDifferences = useMemo(() => {
-    const differences: Record<string, number> = {};
-
-    Object.entries(anchorsByAccount).forEach(([accountName, anchors]) => {
-      anchors.forEach(anchor => {
-        // Get all anchors for this account before this date
-        const previousAnchors = (settings.balanceAnchors || [])
-          .filter(a => a.accountName === accountName && a.date < anchor.date)
-          .sort((a, b) => a.date.localeCompare(b.date));
-
-        // Find base anchor
-        const baseAnchor = previousAnchors.length > 0 ? previousAnchors[previousAnchors.length - 1] : null;
-        const baseBalance = baseAnchor?.balance || 0;
-        const baseDate = baseAnchor?.date || '2000-01-01';
-
-        // Get all transactions for this account
-        const accountTransactions = transactions.filter(t => t.account === accountName);
-
-        // Calculate balance from base anchor to this anchor date
-        let calculated = baseBalance;
-        accountTransactions.forEach(t => {
-          if (t.fullDate <= baseDate) return;
-          if (t.fullDate > anchor.date) return;
-          calculated += t.income || 0;
-          calculated -= t.expense || 0;
-        });
-
-        const diff = Math.abs(anchor.balance - calculated);
-        differences[`${accountName}-${anchor.date}`] = diff;
-      });
-    });
-
-    return differences;
-  }, [anchorsByAccount, settings.balanceAnchors, transactions]);
-
-  // Debounced database update
-  const debouncedUpdateDB = useCallback((newAnchors: BalanceAnchor[]) => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-
-    timeoutRef.current = setTimeout(async () => {
-      try {
-        await updateSingleSetting('balanceAnchors', newAnchors);
-        toast.success('余额锚点已保存');
-      } catch (err) {
-        console.error('Failed to update balance anchors:', err);
-        toast.error('保存失败，请重试');
-      }
-    }, 1500);
-  }, [updateSingleSetting]);
-
-  const handleAddAnchor = useCallback(() => {
-    if (!selectedAccount || !selectedDate || !balance) {
-      toast.error('请填写完整信息');
-      return;
-    }
-
-    const balanceNum = parseFloat(balance);
-    if (isNaN(balanceNum)) {
-      toast.error('请输入有效的金额');
-      return;
-    }
-
-    // Check for large differences before adding
-    if (balanceDifference !== null && balanceDifference >= 1000) {
-      toast.error(`差异过大 (¥${balanceDifference.toFixed(2)})，请确认后再添加`);
-      return;
-    }
-
-    const newAnchor: BalanceAnchor = {
-      accountName: selectedAccount,
-      date: selectedDate,
-      balance: balanceNum,
-    };
-
-    // Update local context
-    addBalanceAnchor(newAnchor);
-
-    // Update database with debounce
-    const updatedAnchors = settings.balanceAnchors?.filter(
-      a => !(a.accountName === selectedAccount && a.date === selectedDate)
-    ) || [];
-    debouncedUpdateDB([...updatedAnchors, newAnchor]);
-
-    // Reset form
-    setBalance('');
-    toast.success('余额锚点已添加');
-  }, [selectedAccount, selectedDate, balance, settings.balanceAnchors, addBalanceAnchor, debouncedUpdateDB, balanceDifference]);
-
-  const handleRemoveAnchor = useCallback((accountName: string, date: string) => {
-    // Update local context
-    removeBalanceAnchor(accountName, date);
-
-    // Update database
-    const updatedAnchors = settings.balanceAnchors?.filter(
-      a => !(a.accountName === accountName && a.date === date)
-    ) || [];
-    debouncedUpdateDB(updatedAnchors);
-
-    toast.success('余额锚点已删除');
-  }, [settings.balanceAnchors, removeBalanceAnchor, debouncedUpdateDB]);
-
-  if (!user || !data?.settings) {
+  if (!user) {
     return null;
   }
 

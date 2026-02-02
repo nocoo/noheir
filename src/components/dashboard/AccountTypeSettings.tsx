@@ -1,12 +1,8 @@
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useSettings, AccountType, ACCOUNT_TYPE_CONFIG } from '@/contexts/SettingsContext';
-import { useTransactions } from '@/hooks/useTransactions';
-import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { useAuth } from '@/contexts/AuthContext';
-import { RefreshCw } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -17,109 +13,23 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAccountTypeSettingsViewModel } from '@/viewmodels/settings/useAccountTypeSettingsViewModel';
+import { ACCOUNT_TYPE_CONFIG, AccountType } from '@/contexts/SettingsContext';
 
 
 export function AccountTypeSettings() {
   const { user } = useAuth();
-  const { settings, updateAccountType } = useSettings();
-  const { transactions } = useTransactions();
-  const { data, updateSingleSetting } = useSupabaseSettings();
-
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Extract unique accounts from transactions
-  const uniqueAccounts = useMemo(() => {
-    const accounts = new Set(transactions.map(t => t.account));
-    return Array.from(accounts).sort();
-  }, [transactions]);
-
-  // Group accounts by type for better display
-  const accountsByType = useMemo(() => {
-    const grouped: Record<AccountType, string[]> = {
-      debit: [],
-      credit: [],
-      prepaid: [],
-      financial: [],
-      unclassified: [],
-    };
-
-    uniqueAccounts.forEach(account => {
-      const config = settings.accountTypes?.find(acc => acc.accountName === account);
-      const type = config?.type || 'unclassified';
-      grouped[type].push(account);
-    });
-
-    return grouped;
-  }, [uniqueAccounts, settings.accountTypes]);
-
-  // Debounced database update
-  const debouncedUpdateDB = useCallback((newAccountTypes: typeof settings.accountTypes) => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-
-    timeoutRef.current = setTimeout(async () => {
-      try {
-        await updateSingleSetting('accountTypes', newAccountTypes);
-        toast.success('账户类型已保存');
-      } catch (err) {
-        console.error('Failed to update account types:', err);
-        toast.error('保存失败，请重试');
-      }
-    }, 1500);
-  }, [updateSingleSetting, settings]);
-
-  const handleTypeChange = useCallback((accountName: string, newType: AccountType) => {
-    // Immediately update local context
-    updateAccountType(accountName, newType);
-
-    // Debounce database update
-    const existingIndex = settings.accountTypes.findIndex(acc => acc.accountName === accountName);
-    let newAccountTypes = [...settings.accountTypes];
-
-    if (existingIndex >= 0) {
-      newAccountTypes[existingIndex] = { accountName, type: newType };
-    } else {
-      newAccountTypes = [...newAccountTypes, { accountName, type: newType }];
-    }
-
-    debouncedUpdateDB(newAccountTypes);
-  }, [settings.accountTypes, updateAccountType, debouncedUpdateDB]);
-
-  const handleBatchUpdate = useCallback((accounts: string[], type: AccountType) => {
-    // Update each account
-    const newAccountTypes = [...(settings.accountTypes || [])];
-
-    accounts.forEach(accountName => {
-      const existingIndex = newAccountTypes.findIndex(acc => acc.accountName === accountName);
-      if (existingIndex >= 0) {
-        newAccountTypes[existingIndex] = { accountName, type };
-      } else {
-        newAccountTypes.push({ accountName, type });
-      }
-      // Update local context
-      updateAccountType(accountName, type);
-    });
-
-    // Update database
-    debouncedUpdateDB(newAccountTypes);
-    toast.success(`已将 ${accounts.length} 个账户设为${ACCOUNT_TYPE_CONFIG[type].label}`);
-  }, [settings.accountTypes, updateAccountType, debouncedUpdateDB]);
-
-  const getTypeLabel = (type: AccountType): string => {
-    return ACCOUNT_TYPE_CONFIG[type].label;
-  };
-
-  const stats = useMemo(() => {
-    return Object.entries(accountsByType).map(([type, accounts]) => ({
-      type: type as AccountType,
-      count: accounts.length,
-      config: ACCOUNT_TYPE_CONFIG[type as AccountType],
-    }));
-  }, [accountsByType]);
+  const {
+    isReady,
+    uniqueAccounts,
+    accountsByType,
+    stats,
+    handleTypeChange,
+    handleBatchUpdate,
+  } = useAccountTypeSettingsViewModel(toast);
 
   // Early return AFTER all hooks
-  if (!user || !data?.settings) {
+  if (!user || !isReady) {
     return null;
   }
 
