@@ -1,20 +1,15 @@
 import { describe, expect, it } from 'bun:test';
-import { clampSavingsRate, getSavingsRateTone } from '../../src/domain/settings/savingsRate';
+import { buildSavingsRateChartData, buildSavingsRateSummary } from '../../src/domain/dashboard/savingsRate';
 
 describe('savingsRate domain', () => {
-  it('clamps values to 0-100', () => {
-    expect(clampSavingsRate(-10)).toBe(0);
-    expect(clampSavingsRate(120)).toBe(100);
-    expect(clampSavingsRate(60)).toBe(60);
-  });
-
-  it('handles non-finite values', () => {
-    expect(clampSavingsRate(Number.NaN)).toBe(0);
-  });
-
-  it('evaluates tone', () => {
-    expect(getSavingsRateTone(10)).toBe('low');
-    expect(getSavingsRateTone(50)).toBe('ok');
-    expect(getSavingsRateTone(80)).toBe('high');
+  it('builds chart data and summary', () => {
+    const data = [
+      { month: '1月', income: 1000, expense: 400, balance: 600 },
+      { month: '2月', income: 0, expense: 0, balance: 0 },
+    ];
+    const { chartData, totals } = buildSavingsRateChartData(data);
+    expect(chartData[0].savingsRate).toBeCloseTo(60);
+    const summary = buildSavingsRateSummary(totals, 30);
+    expect(summary.annualSavingsRate).toBeGreaterThan(0);
   });
 });

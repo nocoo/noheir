@@ -11,8 +11,8 @@ import {
   ReferenceLine
 } from 'recharts';
 import { MonthlyData } from '@/types/transaction';
-import { useSettings, getIncomeColor, getIncomeColorHex, getExpenseColor, getExpenseColorHex } from '@/contexts/SettingsContext';
 import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, formatCurrencyK, formatCurrencyFull } from '@/lib/chart-config';
+import { useBalanceWaterfallViewModel } from '@/viewmodels/dashboard/useBalanceWaterfallViewModel';
 
 interface TooltipPayload {
   payload?: {
@@ -25,24 +25,14 @@ interface BalanceWaterfallProps {
 }
 
 export function BalanceWaterfall({ data }: BalanceWaterfallProps) {
-  const { settings } = useSettings();
-  const incomeColorClass = getIncomeColor(settings.colorScheme);
-  const incomeColorHex = getIncomeColorHex(settings.colorScheme);
-  const expenseColorClass = getExpenseColor(settings.colorScheme);
-  const expenseColorHex = getExpenseColorHex(settings.colorScheme);
-
-  let cumulativeBalance = 0;
-  const waterfallData = data.map((item, index) => {
-    const prevBalance = cumulativeBalance;
-    cumulativeBalance += item.balance;
-    return {
-      month: item.month,
-      balance: item.balance,
-      cumulative: cumulativeBalance,
-      start: prevBalance,
-      isPositive: item.balance >= 0,
-    };
-  });
+  const {
+    incomeColorClass,
+    incomeColorHex,
+    expenseColorClass,
+    expenseColorHex,
+    waterfallData,
+    cumulativeBalance,
+  } = useBalanceWaterfallViewModel({ data });
 
   return (
     <Card>

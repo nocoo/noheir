@@ -15,10 +15,10 @@ import {
 } from 'recharts';
 import { MonthlyData } from '@/types/transaction';
 import { TrendingUp, TrendingDown } from 'lucide-react';
-import { useSettings, getIncomeColorHex, getExpenseColorHex, getSavingsRateStatus, getSavingsRateColor } from '@/contexts/SettingsContext';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, formatCurrencyK, formatCurrencyFull } from '@/lib/chart-config';
+import { useSavingsRateChartViewModel } from '@/viewmodels/dashboard/useSavingsRateChartViewModel';
 
 interface SavingsRateChartProps {
   data: MonthlyData[];
@@ -31,36 +31,15 @@ interface TooltipPayload {
 }
 
 export function SavingsRateChart({ data }: SavingsRateChartProps) {
-  const { settings } = useSettings();
-  const targetSavingsRate = settings.targetSavingsRate;
-  const incomeColorHex = getIncomeColorHex(settings.colorScheme);
-  const expenseColorHex = getExpenseColorHex(settings.colorScheme);
-
-  const chartData = data.map(item => ({
-    ...item,
-    savingsRate: item.income > 0 ? ((item.income - item.expense) / item.income) * 100 : 0,
-    savings: item.income - item.expense,
-  }));
-
-  // Calculate annual savings rate (total savings / total income)
-  const totalIncome = chartData.reduce((sum, d) => sum + d.income, 0);
-  const totalExpense = chartData.reduce((sum, d) => sum + d.expense, 0);
-  const totalSavings = totalIncome - totalExpense;
-  const annualSavingsRate = totalIncome > 0 ? (totalSavings / totalIncome) * 100 : 0;
-  const bestMonth = chartData.reduce((best, curr) => curr.savingsRate > best.savingsRate ? curr : best, chartData[0]);
-  const worstMonth = chartData.reduce((worst, curr) =>
-    curr.income > 0 && curr.savingsRate < worst.savingsRate ? curr : worst,
-    chartData.find(d => d.income > 0) || chartData[0]
-  );
-
-  // Calculate difference from target
-  const savingsRateDiff = annualSavingsRate - targetSavingsRate;
-  // Calculate savings gap based on annualSavingsRate diff
-  const savingsGap = totalIncome * (savingsRateDiff / 100);
-
-  // Determine savings rate status and colors
-  const savingsRateStatus = getSavingsRateStatus(annualSavingsRate, targetSavingsRate);
-  const savingsRateColorClass = getSavingsRateColor(savingsRateStatus);
+  const {
+    targetSavingsRate,
+    incomeColorHex,
+    expenseColorHex,
+    chartData,
+    summary,
+    savingsRateStatus,
+    savingsRateColorClass,
+  } = useSavingsRateChartViewModel({ data });
 
   return (
     <Card className="col-span-full">
@@ -79,9 +58,9 @@ export function SavingsRateChart({ data }: SavingsRateChartProps) {
           )}>
             <p className="text-sm text-muted-foreground">年度储蓄率</p>
             <div className="flex items-baseline gap-2">
-              <p className={cn("text-2xl font-bold", savingsRateColorClass)}>{annualSavingsRate.toFixed(1)}%</p>
-              <Badge variant={savingsRateDiff >= 0 ? "default" : "destructive"} className="text-xs">
-                {savingsRateDiff >= 0 ? '+' : ''}{savingsRateDiff.toFixed(1)}%
+            <p className={cn("text-2xl font-bold", savingsRateColorClass)}>{summary.annualSavingsRate.toFixed(1)}%</p>
+              <Badge variant={summary.savingsRateDiff >= 0 ? "default" : "destructive"} className="text-xs">
+                {summary.savingsRateDiff >= 0 ? '+' : ''}{summary.savingsRateDiff.toFixed(1)}%
               </Badge>
             </div>
             <p className="text-xs text-muted-foreground mt-1">目标: {targetSavingsRate}%</p>
@@ -89,14 +68,14 @@ export function SavingsRateChart({ data }: SavingsRateChartProps) {
           <div className="p-4 rounded-lg bg-accent border border-border">
             <p className="text-sm text-muted-foreground">累计储蓄</p>
             <div className="flex items-baseline gap-2">
-              <p className="text-2xl font-bold text-accent-foreground">{formatCurrencyFull(totalSavings)}</p>
+              <p className="text-2xl font-bold text-accent-foreground">{formatCurrencyFull(summary.totalSavings)}</p>
             </div>
             <div className="flex items-center gap-2 mt-1">
-              <Badge variant={savingsGap >= 0 ? "default" : "destructive"} className="text-xs">
-                {savingsGap >= 0 ? '+' : ''}{formatCurrencyFull(Math.abs(savingsGap))}
+              <Badge variant={summary.savingsGap >= 0 ? "default" : "destructive"} className="text-xs">
+                {summary.savingsGap >= 0 ? '+' : ''}{formatCurrencyFull(Math.abs(summary.savingsGap))}
               </Badge>
               <p className="text-xs text-muted-foreground">
-                {savingsGap >= 0 ? '超额完成' : '还差'}
+                {summary.savingsGap >= 0 ? '超额完成' : '还差'}
               </p>
             </div>
           </div>
@@ -104,15 +83,15 @@ export function SavingsRateChart({ data }: SavingsRateChartProps) {
             <p className="text-sm text-muted-foreground flex items-center gap-1">
               最佳月份 <TrendingUp className="h-3 w-3 text-primary" />
             </p>
-            <p className="text-lg font-semibold">{bestMonth?.month}</p>
-            <p className="text-sm text-primary">{bestMonth?.savingsRate.toFixed(1)}%</p>
+            <p className="text-lg font-semibold">{summary.bestMonth?.month}</p>
+            <p className="text-sm text-primary">{summary.bestMonth?.savingsRate.toFixed(1)}%</p>
           </div>
           <div className="p-4 rounded-lg bg-card border border-border">
             <p className="text-sm text-muted-foreground flex items-center gap-1">
               待改善月份 <TrendingDown className="h-3 w-3 text-destructive" />
             </p>
-            <p className="text-lg font-semibold">{worstMonth?.month}</p>
-            <p className="text-sm text-destructive">{worstMonth?.savingsRate.toFixed(1)}%</p>
+            <p className="text-lg font-semibold">{summary.worstMonth?.month}</p>
+            <p className="text-sm text-destructive">{summary.worstMonth?.savingsRate.toFixed(1)}%</p>
           </div>
         </div>
 
@@ -167,10 +146,10 @@ export function SavingsRateChart({ data }: SavingsRateChartProps) {
               />
               <ReferenceLine
                 yAxisId="left"
-                y={annualSavingsRate}
+                y={summary.annualSavingsRate}
                 stroke="hsl(var(--primary))"
                 strokeDasharray="5 5"
-                label={{ value: `年度 ${annualSavingsRate.toFixed(1)}%`, fill: 'hsl(var(--primary))', fontSize: 11 }}
+                label={{ value: `年度 ${summary.annualSavingsRate.toFixed(1)}%`, fill: 'hsl(var(--primary))', fontSize: 11 }}
               />
               <ReferenceLine
                 yAxisId="left"
