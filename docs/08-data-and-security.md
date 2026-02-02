@@ -18,4 +18,4 @@ VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-下一步：如果需要数据库细节，请补充新的 `docs/09-...` 文档并在 README 中注册。
+下一步：了解页面与数据流 → [09-pages-and-data-flow.md](./09-pages-and-data-flow.md)

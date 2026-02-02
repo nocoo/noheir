@@ -3,7 +3,7 @@
 ## 环境要求
 
 - Bun（推荐作为运行时与包管理器）
-- Node.js 生态环境（Bun 已兼容）
+- Node.js（Bun 已兼容）
 
 ## 安装依赖
 
@@ -30,6 +30,6 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 bun run dev
 ```
 
-访问 `http://localhost:7012` 查看应用。
+访问 `http://localhost:7012`。
 
 下一步：了解如何测试 → [05-testing.md](./05-testing.md)
