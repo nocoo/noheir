@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react';
 import { Transaction } from '@/types/transaction';
 import { StatCard } from './StatCard';
-import { useSettings, getIncomeColor, getIncomeColorHex, getExpenseColor, getExpenseColorHex, AccountType, getAccountType, ACCOUNT_TYPE_CONFIG } from '@/contexts/SettingsContext';
-import type { PieLabelEntry, LegendPayloadEntry } from '@/types/category-shared';
+import { getIncomeColor, getIncomeColorHex, getExpenseColor, getExpenseColorHex, ACCOUNT_TYPE_CONFIG } from '@/contexts/SettingsContext';
+import { useAccountAnalysisViewModel } from '@/viewmodels/dashboard/useAccountAnalysisViewModel';
+import type { PieLabelEntry } from '@/types/category-shared';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, LineChart, Line, Legend
+  PieChart, Pie, Cell, Legend
 } from 'recharts';
 import { Wallet, TrendingUp, TrendingDown, ArrowUpDown } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -21,194 +21,23 @@ interface AccountAnalysisProps {
   transactions: Transaction[];
 }
 
-interface AccountSummary {
-  name: string;
-  income: number;
-  expense: number;
-  balance: number;
-  transactionCount: number;
-  categories: Map<string, number>;
-}
-
-interface AccountGroup {
-  prefix: string;
-  accounts: AccountSummary[];
-  totalIncome: number;
-  totalExpense: number;
-  totalBalance: number;
-  totalTransactions: number;
-  accountType?: AccountType;
-}
-
-type GroupByType = 'prefix' | 'type';
-
-// Helper function to extract account prefix (part before hyphen)
-function getAccountPrefix(accountName: string): string {
-  const hyphenIndex = accountName.indexOf('-');
-  if (hyphenIndex > 0) {
-    return accountName.substring(0, hyphenIndex).trim();
-  }
-  return accountName;
-}
-
 export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
-  const { settings } = useSettings();
-  const [groupBy, setGroupBy] = useState<GroupByType>('type'); // 默认按类型分组
+  const {
+    settings,
+    groupBy,
+    setGroupBy,
+    accountData,
+    accountGroups,
+    chartData,
+    pieData,
+    topTransactionCounts,
+    summaryStats,
+  } = useAccountAnalysisViewModel({ transactions });
+
   const incomeColorClass = getIncomeColor(settings.colorScheme);
   const incomeColorHex = getIncomeColorHex(settings.colorScheme);
   const expenseColorClass = getExpenseColor(settings.colorScheme);
   const expenseColorHex = getExpenseColorHex(settings.colorScheme);
-
-  const accountData = useMemo(() => {
-    const accountMap = new Map<string, AccountSummary>();
-    
-    transactions.forEach(t => {
-      if (!accountMap.has(t.account)) {
-        accountMap.set(t.account, {
-          name: t.account,
-          income: 0,
-          expense: 0,
-          balance: 0,
-          transactionCount: 0,
-          categories: new Map()
-        });
-      }
-      const account = accountMap.get(t.account)!;
-      account.transactionCount++;
-      
-      if (t.type === 'income') {
-        account.income += t.amount;
-      } else {
-        account.expense += t.amount;
-      }
-      account.balance = account.income - account.expense;
-      
-      const catKey = `${t.type}-${t.primaryCategory}`;
-      account.categories.set(catKey, (account.categories.get(catKey) || 0) + t.amount);
-    });
-
-    return Array.from(accountMap.values()).sort((a, b) => 
-      (b.income + b.expense) - (a.income + a.expense)
-    );
-  }, [transactions]);
-
-  // Group accounts by prefix or type
-  const accountGroups = useMemo(() => {
-    const groupMap = new Map<string, AccountGroup>();
-
-    accountData.forEach(acc => {
-      const groupKey = groupBy === 'type'
-        ? (settings.accountTypes?.find(c => c.accountName === acc.name)?.type || 'unclassified')
-        : getAccountPrefix(acc.name);
-
-      if (!groupMap.has(groupKey)) {
-        groupMap.set(groupKey, {
-          prefix: groupKey,
-          accounts: [],
-          totalIncome: 0,
-          totalExpense: 0,
-          totalBalance: 0,
-          totalTransactions: 0,
-          accountType: groupBy === 'type' ? groupKey as AccountType : undefined,
-        });
-      }
-
-      const group = groupMap.get(groupKey)!;
-      group.accounts.push(acc);
-      group.totalIncome += acc.income;
-      group.totalExpense += acc.expense;
-      group.totalBalance += acc.balance;
-      group.totalTransactions += acc.transactionCount;
-    });
-
-    // Sort groups by total transaction volume
-    return Array.from(groupMap.values()).sort((a, b) =>
-      (b.totalIncome + b.totalExpense) - (a.totalIncome + a.totalExpense)
-    );
-  }, [accountData, groupBy, settings.accountTypes]);
-
-  const chartData = useMemo(() => 
-    accountData.map(acc => ({
-      name: acc.name,
-      收入: acc.income,
-      支出: acc.expense,
-      结余: acc.balance
-    })),
-    [accountData]
-  );
-
-  const pieData = useMemo(() => {
-    const total = accountData.reduce((sum, acc) => sum + acc.income + acc.expense, 0);
-    const THRESHOLD = 5; // 5% threshold
-
-    // Group small accounts into "其他"
-    const major = accountData.filter(acc => {
-      const value = acc.income + acc.expense;
-      return (value / total) * 100 >= THRESHOLD;
-    });
-
-    const othersTotal = accountData
-      .filter(acc => {
-        const value = acc.income + acc.expense;
-        return (value / total) * 100 < THRESHOLD;
-      })
-      .reduce((sum, acc) => sum + acc.income + acc.expense, 0);
-
-    const result = major.map(acc => ({
-      name: acc.name,
-      value: acc.income + acc.expense,
-      percentage: ((acc.income + acc.expense) / total) * 100,
-    }));
-
-    if (othersTotal > 0) {
-      result.push({
-        name: '其他',
-        value: othersTotal,
-        percentage: (othersTotal / total) * 100,
-      });
-    }
-
-    return result;
-  }, [accountData]);
-
-  const monthlyByAccount = useMemo(() => {
-    const monthMap = new Map<string, Map<string, { income: number; expense: number }>>();
-    
-    transactions.forEach(t => {
-      const monthKey = `${t.month}月`;
-      if (!monthMap.has(monthKey)) {
-        monthMap.set(monthKey, new Map());
-      }
-      const accountData = monthMap.get(monthKey)!;
-      if (!accountData.has(t.account)) {
-        accountData.set(t.account, { income: 0, expense: 0 });
-      }
-      const data = accountData.get(t.account)!;
-      if (t.type === 'income') {
-        data.income += t.amount;
-      } else {
-        data.expense += t.amount;
-      }
-    });
-
-    const months = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
-    const accounts = [...new Set(transactions.map(t => t.account))];
-    
-    return months.map((month, i): Record<string, string | number> => {
-      const monthData = monthMap.get(`${i + 1}月`) || new Map();
-      const result: Record<string, string | number> = { month };
-      accounts.forEach(acc => {
-        const data = monthData.get(acc) || { income: 0, expense: 0 };
-        result[`${acc}_income`] = data.income;
-        result[`${acc}_expense`] = data.expense;
-      });
-      return result;
-    });
-  }, [transactions]);
-
-  const accounts = [...new Set(transactions.map(t => t.account))];
-  const totalTransactions = transactions.length;
-  const totalFlow = transactions.reduce((s, t) => s + t.amount, 0);
 
   const colors = [
     'hsl(var(--chart-1))',
@@ -217,17 +46,6 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
     'hsl(var(--chart-4))',
     'hsl(var(--chart-5))',
   ];
-
-  // Top 20 accounts by transaction count
-  const topTransactionCounts = useMemo(() => {
-    return accountData
-      .map(acc => ({
-        name: acc.name,
-        count: acc.transactionCount
-      }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 20);
-  }, [accountData]);
 
   if (transactions.length === 0) {
     return (
@@ -247,35 +65,35 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
         className="grid grid-cols-1 md:grid-cols-4 gap-4"
       >
         <motion.div variants={gridItem}>
-          <StatCard
-            title="账户数量"
-            value={accountData.length}
-            icon={Wallet}
-            showCurrency={false}
-          />
+            <StatCard
+              title="账户数量"
+              value={summaryStats.accountCount}
+              icon={Wallet}
+              showCurrency={false}
+            />
         </motion.div>
         <motion.div variants={gridItem}>
-          <StatCard
-            title="总资金流动"
-            value={totalFlow}
-            icon={ArrowUpDown}
-          />
+            <StatCard
+              title="总资金流动"
+              value={summaryStats.totalFlow}
+              icon={ArrowUpDown}
+            />
         </motion.div>
         <motion.div variants={gridItem}>
-          <StatCard
-            title="净流入"
-            value={accountData.reduce((s, a) => s + a.income, 0)}
-            icon={TrendingUp}
-            variant="income"
-          />
+            <StatCard
+              title="净流入"
+              value={summaryStats.totalIncome}
+              icon={TrendingUp}
+              variant="income"
+            />
         </motion.div>
         <motion.div variants={gridItem}>
-          <StatCard
-            title="净流出"
-            value={accountData.reduce((s, a) => s + a.expense, 0)}
-            icon={TrendingDown}
-            variant="expense"
-          />
+            <StatCard
+              title="净流出"
+              value={summaryStats.totalExpense}
+              icon={TrendingDown}
+              variant="expense"
+            />
         </motion.div>
       </motion.div>
 
@@ -321,7 +139,6 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
                     dataKey="value"
                     label={(entry: PieLabelEntry) => `${entry.name} ${entry.percentage.toFixed(0)}%`}
                     labelLine={false}
-                    labelStyle={{ fontSize: '11px', fontWeight: 500 }}
                   >
                     {pieData.map((entry, index) => (
                       <Cell key={entry.name} fill={colors[index % colors.length]} />
@@ -336,11 +153,14 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
                     verticalAlign="bottom"
                     height={60}
                     iconType="circle"
-                    formatter={(value, entry: LegendPayloadEntry) => (
-                      <span style={{ color: 'hsl(var(--foreground))', fontSize: '12px' }}>
-                        {value} ({entry.payload.percentage.toFixed(1)}%)
-                      </span>
-                    )}
+                    formatter={(value, entry) => {
+                      const payload = (entry as { payload?: { percentage?: number } }).payload;
+                      return (
+                        <span style={{ color: 'hsl(var(--foreground))', fontSize: '12px' }}>
+                          {value} ({(payload?.percentage ?? 0).toFixed(1)}%)
+                        </span>
+                      );
+                    }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -516,7 +336,9 @@ export function AccountAnalysis({ transactions }: AccountAnalysisProps) {
                   </TableCell>
                   <TableCell className="text-right">{acc.transactionCount}</TableCell>
                   <TableCell className="text-right">
-                    {((acc.transactionCount / totalTransactions) * 100).toFixed(1)}%
+                    {summaryStats.totalTransactions === 0
+                      ? '0.0%'
+                      : ((acc.transactionCount / summaryStats.totalTransactions) * 100).toFixed(1)}%
                   </TableCell>
                 </TableRow>
               ))}
