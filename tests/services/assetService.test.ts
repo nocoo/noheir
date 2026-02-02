@@ -147,4 +147,138 @@ describe('assetService', () => {
     expect(result.dashboard.total_units).toBe(1);
     expect(result.dashboard.idle_amount).toBe(100);
   });
+
+  it('deploys unit only when status is 已成立', async () => {
+    mockSelect.mockReturnValue({ eq: () => ({ single: mockSingle }) });
+    mockSingle.mockResolvedValueOnce({ data: { status: '计划中' }, error: null });
+
+    const { deployUnit } = await setup();
+
+    await expect(deployUnit('u-1', {
+      product_id: 'p-1',
+      start_date: '2024-01-01',
+      strategy: '短期理财',
+      tactics: '理财产品',
+    })).rejects.toThrow();
+  });
+
+  it('throws error when unit not found during deployment', async () => {
+    mockSelect.mockReturnValue({ eq: () => ({ single: mockSingle }) });
+    mockSingle.mockResolvedValueOnce({ data: null, error: null });
+
+    const { deployUnit } = await setup();
+
+    await expect(deployUnit('u-1', {
+      product_id: 'p-1',
+      start_date: '2024-01-01',
+    })).rejects.toThrow('Unit not found');
+  });
+
+  it('recalls unit by clearing product and date', async () => {
+    const { recallUnit } = await setup();
+    await recallUnit('u-1');
+
+    expect(mockUpdate).toHaveBeenCalledWith({
+      product_id: null,
+      start_date: null,
+      status: '已成立',
+    });
+  });
+
+  it('archives unit by setting status to 已归档', async () => {
+    const { archiveUnit } = await setup();
+    await archiveUnit('u-1');
+
+    expect(mockUpdate).toHaveBeenCalledWith({
+      status: '已归档',
+      product_id: null,
+      start_date: null,
+    });
+  });
+
+  it('creates new unit with defaults', async () => {
+    mockFrom.mockReturnValue({
+      insert: mockInsert,
+    });
+    mockInsert.mockReturnValue({ select: () => ({ single: mockSingle }) });
+    mockSingle.mockResolvedValue({
+      data: { id: 'u-1', unit_code: 'E01', amount: 50000 },
+      error: null,
+    });
+
+    const { createUnit } = await setup();
+    const result = await createUnit({
+      unit_code: 'E01',
+      amount: 50000,
+      strategy: '短期理财',
+      tactics: '理财产品',
+    });
+
+    expect(result.id).toBe('u-1');
+  });
+
+  it('updates existing unit', async () => {
+    mockSingle.mockResolvedValue({
+      data: { id: 'u-1', unit_code: 'E01', amount: 60000 },
+      error: null,
+    });
+
+    const { updateUnit } = await setup();
+    const result = await updateUnit('u-1', { amount: 60000 });
+
+    expect(result.amount).toBe(60000);
+  });
+
+  it('deletes unit', async () => {
+    const { deleteUnit } = await setup();
+    await deleteUnit('u-1');
+
+    expect(mockDelete).toHaveBeenCalled();
+    expect(mockEq).toHaveBeenCalledWith('id', 'u-1');
+  });
+
+  it('fetches product by ID', async () => {
+    mockEq.mockReturnValue({ maybeSingle: mockSingle });
+    mockSingle.mockResolvedValue({
+      data: { id: 'p-1', name: '定期存款' },
+      error: null,
+    });
+
+    const { fetchProduct } = await setup();
+    const result = await fetchProduct('p-1');
+
+    expect(result).not.toBeNull();
+    expect(result?.id).toBe('p-1');
+  });
+
+  it('returns null when product not found', async () => {
+    mockSingle.mockResolvedValue({
+      data: null,
+      error: null,
+    });
+
+    const { fetchProduct } = await setup();
+    const result = await fetchProduct('p-999');
+
+    expect(result).toBeNull();
+  });
+
+  it('updates product', async () => {
+    mockSingle.mockResolvedValue({
+      data: { id: 'p-1', name: 'Updated Product' },
+      error: null,
+    });
+
+    const { updateProduct } = await setup();
+    const result = await updateProduct('p-1', { name: 'Updated Product' });
+
+    expect(result.name).toBe('Updated Product');
+  });
+
+  it('deletes product', async () => {
+    const { deleteProduct } = await setup();
+    await deleteProduct('p-1');
+
+    expect(mockDelete).toHaveBeenCalled();
+  });
 });
