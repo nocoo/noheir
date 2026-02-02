@@ -84,14 +84,16 @@ bun run prepare
 git config core.hooksPath .husky
 ```
 
+如本地已配置 `core.hooksPath`，请确保值为 `.husky`（不要使用 `.husky/_`）。
+
 ### Hook 行为
 
-- `pre-commit`：运行 `bun run test`
+- `pre-commit`：运行 `bun run test`（TS 单元测试）
 - `pre-push`：运行 `bun run test` + `bun run lint`
 
 ### 约束与目标
 
-- 不允许跳过测试
+- 不允许跳过测试（禁止使用 `HUSKY=0` 或绕过 hooks）
 - 如存在测试与 Lint 体系，应遵循上述规则进行调整
 - 原则上修复所有 UT 和 Lint 的 Error/Warning，单个 case 允许压制
 - UT 覆盖率目标：**90%**，不易测试的模块建议拆分
