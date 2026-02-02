@@ -6,17 +6,6 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { format } from 'date-fns';
-import {
-  useUnitsDisplay,
-  useCreateUnit,
-  useUpdateUnit,
-  useDeleteUnit,
-  useDeployUnit,
-  useRecallUnit,
-  useArchiveUnit,
-  useProducts,
-} from '@/hooks/useAssets';
-import { useFilteredAndSorted } from '@/hooks/useFilteredAndSorted';
 import { Plus, Pencil, Trash2, Coins, ArrowRight, Undo, Archive, Filter, X, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { getLabelColorClasses } from '@/lib/tagColors';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -67,6 +56,7 @@ import type {
   UnitDisplayInfo,
 } from '@/types/assets';
 import { formatCurrencyFull } from '@/lib/chart-config';
+import { useCapitalUnitsManagerViewModel, UnitSortField } from '@/viewmodels/assets/useCapitalUnitsManagerViewModel';
 
 // Enum options
 const STRATEGY_OPTIONS: { value: InvestmentStrategy; label: string }[] = [
@@ -961,186 +951,51 @@ function ArchiveConfirmDialog({
 export { UnifiedEditDeployDialog };
 
 export function CapitalUnitsManager() {
-  const { data: units, isLoading } = useUnitsDisplay();
-  const { data: products } = useProducts();
-  const createMutation = useCreateUnit();
-  const updateMutation = useUpdateUnit();
-  const deleteMutation = useDeleteUnit();
-  const deployMutation = useDeployUnit();
-  const recallMutation = useRecallUnit();
-  const archiveMutation = useArchiveUnit();
+  const {
+    units,
+    products,
+    isLoading,
+    filteredUnits,
+    filterStatus,
+    filterStrategy,
+    filterTactics,
+    showFilters,
+    activeFilterCount,
+    setFilterStatus,
+    setFilterStrategy,
+    setFilterTactics,
+    setShowFilters,
+    resetFilters,
+    handleSort,
+    getSortField,
+    getSortOrder,
+    formDialog,
+    deleteDialog,
+    editDeployDialog,
+    archiveDialog,
+    setFormDialog,
+    setDeleteDialog,
+    setEditDeployDialog,
+    setArchiveDialog,
+    handleCreate,
+    handleUpdate,
+    handleDelete,
+    handleEditDeploy,
+    handleRecallFromDialog,
+    handleRecall,
+    handleArchive,
+    createMutation,
+    updateMutation,
+    deleteMutation,
+    deployMutation,
+    archiveMutation,
+  } = useCapitalUnitsManagerViewModel();
 
-  // Filter state
-  const [filterStatus, setFilterStatus] = useState<UnitStatus | 'all'>('all');
-  const [filterStrategy, setFilterStrategy] = useState<InvestmentStrategy | 'all'>('all');
-  const [filterTactics, setFilterTactics] = useState<InvestmentTactics | 'all'>('all');
-  const [showFilters, setShowFilters] = useState(false);
-
-  // Sort state
-  type UnitSortField = 'unit_code' | 'amount' | 'currency' | 'strategy' | 'tactics' | 'status' | 'remaining_days';
-  const [sortField, setSortField] = useState<UnitSortField>('unit_code');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-
-  // Filtered and sorted units
-  const filteredUnits = useFilteredAndSorted({
-    items: units,
-    filters: {
-      status: filterStatus,
-      strategy: filterStrategy,
-      tactics: filterTactics,
-    },
-    sort: {
-      field: sortField,
-      order: sortOrder,
-    },
-    getValueCallback: (item, field) => {
-      // Custom handling for remaining_days field
-      if (field === 'remaining_days') {
-        return item.days_until_maturity ?? Infinity;
-      }
-      return item[field];
-    },
-  });
-
-  // Handle sort
-  const handleSort = (field: UnitSortField) => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortOrder('asc');
-    }
-  };
-
-  // Get sort icon
   const getSortIcon = (field: UnitSortField) => {
-    if (sortField !== field) return <ArrowUpDown className="w-4 h-4 inline ml-1" />;
-    return sortOrder === 'asc'
+    if (getSortField() !== field) return <ArrowUpDown className="w-4 h-4 inline ml-1" />;
+    return getSortOrder() === 'asc'
       ? <ArrowUp className="w-4 h-4 inline ml-1" />
       : <ArrowDown className="w-4 h-4 inline ml-1" />;
-  };
-
-  // Active filters count
-  const activeFilterCount = useMemo(() => {
-    let count = 0;
-    if (filterStatus !== 'all') count++;
-    if (filterStrategy !== 'all') count++;
-    if (filterTactics !== 'all') count++;
-    return count;
-  }, [filterStatus, filterStrategy, filterTactics]);
-
-  // Reset filters
-  const resetFilters = () => {
-    setFilterStatus('all');
-    setFilterStrategy('all');
-    setFilterTactics('all');
-    setShowFilters(false);
-  };
-
-  const [formDialog, setFormDialog] = useState<{
-    open: boolean;
-    unit?: CapitalUnit;
-  }>({ open: false });
-
-  const [deleteDialog, setDeleteDialog] = useState<{
-    open: boolean;
-    unit?: CapitalUnit;
-  }>({ open: false });
-
-  // Unified edit/deploy dialog
-  const [editDeployDialog, setEditDeployDialog] = useState<{
-    open: boolean;
-    unit?: UnitDisplayInfo;
-  }>({ open: false });
-
-  const [archiveDialog, setArchiveDialog] = useState<{
-    open: boolean;
-    unit?: CapitalUnit;
-  }>({ open: false });
-
-  const handleCreate = (data: CreateCapitalUnitInput) => {
-    createMutation.mutate(data, {
-      onSuccess: () => {
-        setFormDialog({ open: false });
-      },
-    });
-  };
-
-  const handleUpdate = (data: UpdateCapitalUnitInput) => {
-    if (!formDialog.unit) return;
-    updateMutation.mutate(
-      { id: formDialog.unit.id, input: data },
-      {
-        onSuccess: () => {
-          setFormDialog({ open: false });
-        },
-      }
-    );
-  };
-
-  const handleDelete = () => {
-    if (!deleteDialog.unit) return;
-    deleteMutation.mutate(deleteDialog.unit.id, {
-      onSuccess: () => {
-        setDeleteDialog({ open: false });
-      },
-    });
-  };
-
-  // Unified handler for edit/deploy
-  const handleEditDeploy = (unitData: UpdateCapitalUnitInput, deployData?: DeployUnitInput) => {
-    if (!editDeployDialog.unit) return;
-
-    // If there's deployment data with a product, ONLY deploy with strategy/tactics
-    if (deployData && deployData.product_id) {
-      deployMutation.mutate(
-        {
-          unitId: editDeployDialog.unit.id,
-          input: {
-            ...deployData,
-            strategy: unitData.strategy,
-            tactics: unitData.tactics,
-          }
-        },
-        {
-          onSuccess: () => {
-            setEditDeployDialog({ open: false });
-          },
-        }
-      );
-    } else {
-      // Only update unit info (no deployment change)
-      updateMutation.mutate(
-        { id: editDeployDialog.unit.id, input: unitData },
-        {
-          onSuccess: () => {
-            setEditDeployDialog({ open: false });
-          },
-        }
-      );
-    }
-  };
-
-  const handleRecallFromDialog = () => {
-    if (!editDeployDialog.unit) return;
-    recallMutation.mutate(editDeployDialog.unit.id, {
-      onSuccess: () => {
-        setEditDeployDialog({ open: false });
-      },
-    });
-  };
-
-  const handleRecall = (unitId: string) => {
-    recallMutation.mutate(unitId);
-  };
-
-  const handleArchive = () => {
-    if (!archiveDialog.unit) return;
-    archiveMutation.mutate(archiveDialog.unit.id, {
-      onSuccess: () => {
-        setArchiveDialog({ open: false });
-      },
-    });
   };
 
   if (isLoading) {

@@ -4,9 +4,7 @@
  * CRUD interface for managing Financial Products
  */
 
-import { useState, useMemo, useEffect } from 'react';
-import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct, useUnitsDisplay } from '@/hooks/useAssets';
-import { useFilteredAndSorted } from '@/hooks/useFilteredAndSorted';
+import { useState, useEffect } from 'react';
 import { formatCurrencyFull } from '@/lib/chart-config';
 import { Plus, Pencil, Trash2, Banknote, Filter, X, Info, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { useSettings, getReturnRateStatus, getReturnRateColor } from '@/contexts/SettingsContext';
@@ -48,6 +46,7 @@ import type {
   ProductCategory,
   Currency,
 } from '@/types/assets';
+import { useProductsLibraryViewModel, ProductSortField } from '@/viewmodels/assets/useProductsLibraryViewModel';
 
 // Enum options
 const CHANNEL_OPTIONS: { value: ProductChannel; label: string }[] = [
@@ -346,178 +345,44 @@ function DeleteConfirmDialog({
 }
 
 export function ProductsLibrary() {
-  const { data: products, isLoading } = useProducts();
-  const { data: units } = useUnitsDisplay();
   const { settings } = useSettings();
-  const createMutation = useCreateProduct();
-  const updateMutation = useUpdateProduct();
-  const deleteMutation = useDeleteProduct();
+  const {
+    products,
+    isLoading,
+    filteredProducts,
+    productMetrics,
+    filterChannel,
+    filterCategory,
+    filterCurrency,
+    filterInvestStatus,
+    showFilters,
+    activeFilterCount,
+    setFilterChannel,
+    setFilterCategory,
+    setFilterCurrency,
+    setFilterInvestStatus,
+    setShowFilters,
+    handleSort,
+    resetFilters,
+    formDialog,
+    deleteDialog,
+    setFormDialog,
+    setDeleteDialog,
+    handleCreate,
+    handleUpdate,
+    handleDelete,
+    createMutation,
+    updateMutation,
+    deleteMutation,
+    sortField,
+    sortOrder,
+  } = useProductsLibraryViewModel();
 
-  // Filter state
-  const [filterChannel, setFilterChannel] = useState<ProductChannel | 'all'>('all');
-  const [filterCategory, setFilterCategory] = useState<ProductCategory | 'all'>('all');
-  const [filterCurrency, setFilterCurrency] = useState<Currency | 'all'>('all');
-  const [filterInvestStatus, setFilterInvestStatus] = useState<'all' | '投资中' | '已退出'>('all');
-  const [showFilters, setShowFilters] = useState(false);
-
-  // Sort state
-  type SortField = 'name' | 'channel' | 'category' | 'investStatus' | 'totalCapital' | 'lockPeriod' | 'annualReturn';
-  const [sortField, setSortField] = useState<SortField>('investStatus');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-
-  const [formDialog, setFormDialog] = useState<{
-    open: boolean;
-    product?: FinancialProduct;
-  }>({ open: false });
-
-  const [deleteDialog, setDeleteDialog] = useState<{
-    open: boolean;
-    product?: FinancialProduct;
-  }>({ open: false });
-
-  // Count active filters
-  const activeFilterCount = useMemo(() => {
-    let count = 0;
-    if (filterChannel !== 'all') count++;
-    if (filterCategory !== 'all') count++;
-    if (filterCurrency !== 'all') count++;
-    if (filterInvestStatus !== 'all') count++;
-    return count;
-  }, [filterChannel, filterCategory, filterCurrency, filterInvestStatus]);
-
-  // Calculate product metrics from units
-  const productMetrics = useMemo(() => {
-    if (!products || !units) return {};
-
-    const metrics: Record<string, {
-      totalCapital: number;
-      activeUnitsCount: number;
-      dailyReturn: number;
-    }> = {};
-
-    products.forEach(product => {
-      // Include both '筹集中' (raising) and '已成立' (established) units as active
-      const productUnits = units.filter(unit =>
-        unit.product_id === product.id && (unit.status === '已成立' || unit.status === '筹集中')
-      );
-      const totalCapital = productUnits.reduce((sum, unit) => sum + unit.amount, 0);
-      const activeUnitsCount = productUnits.length;
-
-      // Calculate daily return: (annual_rate / 100) * total_capital / 365
-      const dailyReturn = product.annual_return_rate
-        ? (product.annual_return_rate / 100) * totalCapital / 365
-        : 0;
-
-      metrics[product.id] = {
-        totalCapital,
-        activeUnitsCount,
-        dailyReturn,
-      };
-    });
-
-    return metrics;
-  }, [products, units]);
-
-  // Filtered and sorted products
-  const filteredProducts = useFilteredAndSorted({
-    items: products,
-    filters: {
-      channel: filterChannel,
-      category: filterCategory,
-      currency: filterCurrency,
-      investStatus: filterInvestStatus,
-    },
-    sort: {
-      field: sortField,
-      order: sortOrder,
-    },
-    customFilter: (product, filters) => {
-      // Handle basic filters
-      if (filters.channel !== 'all' && product.channel !== filters.channel) return false;
-      if (filters.category !== 'all' && product.category !== filters.category) return false;
-      if (filters.currency !== 'all' && product.currency !== filters.currency) return false;
-
-      // Handle investStatus filter
-      const metrics = productMetrics[product.id];
-      const hasActiveUnits = metrics && metrics.activeUnitsCount > 0;
-      const investStatus = hasActiveUnits ? '投资中' : '已退出';
-      if (filters.investStatus !== 'all' && investStatus !== filters.investStatus) return false;
-
-      return true;
-    },
-    getValueCallback: (product, field) => {
-      // Custom handling for special fields
-      if (field === 'investStatus') {
-        const metrics = productMetrics[product.id];
-        return metrics && metrics.activeUnitsCount > 0 ? '投资中' : '已退出';
-      }
-      if (field === 'totalCapital') {
-        return productMetrics[product.id]?.totalCapital || 0;
-      }
-      if (field === 'lockPeriod') {
-        return product.lock_period_days;
-      }
-      if (field === 'annualReturn') {
-        return product.annual_return_rate || 0;
-      }
-      return product[field];
-    },
-  });
-
-  // Handle sort
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortOrder('asc');
-    }
-  };
-
-  // Get sort icon
-  const getSortIcon = (field: SortField) => {
+  const getSortIcon = (field: ProductSortField) => {
     if (sortField !== field) return <ArrowUpDown className="w-4 h-4 inline ml-1" />;
     return sortOrder === 'asc'
       ? <ArrowUp className="w-4 h-4 inline ml-1" />
       : <ArrowDown className="w-4 h-4 inline ml-1" />;
-  };
-
-  // Reset filters
-  const resetFilters = () => {
-    setFilterChannel('all');
-    setFilterCategory('all');
-    setFilterCurrency('all');
-    setFilterInvestStatus('all');
-    setShowFilters(false);
-  };
-
-  const handleCreate = (data: CreateFinancialProductInput) => {
-    createMutation.mutate(data, {
-      onSuccess: () => {
-        setFormDialog({ open: false });
-      },
-    });
-  };
-
-  const handleUpdate = (data: UpdateFinancialProductInput) => {
-    if (!formDialog.product) return;
-    updateMutation.mutate(
-      { id: formDialog.product.id, input: data },
-      {
-        onSuccess: () => {
-          setFormDialog({ open: false });
-        },
-      }
-    );
-  };
-
-  const handleDelete = () => {
-    if (!deleteDialog.product) return;
-    deleteMutation.mutate(deleteDialog.product.id, {
-      onSuccess: () => {
-        setDeleteDialog({ open: false });
-      },
-    });
   };
 
   if (isLoading) {
