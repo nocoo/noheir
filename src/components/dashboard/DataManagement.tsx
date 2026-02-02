@@ -1,4 +1,3 @@
-import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,12 +13,13 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { StoredYearData } from '@/hooks/useTransactions';
-import { StoredTransferYearData, useTransfers } from '@/hooks/useTransfers';
 import { formatCurrencyFull } from '@/lib/chart-config';
 import type { DataQualityMetrics, TransactionValidation } from '@/types/data';
 import { DataQuality } from '@/components/dashboard/DataQuality';
 import { TransferImport } from '@/components/dashboard/TransferImport';
 import { useSettings, getIncomeColor, getIncomeColorHex, getExpenseColor, getExpenseColorHex } from '@/contexts/SettingsContext';
+import { useDataManagementViewModel } from '@/viewmodels/dataManagement/useDataManagementViewModel';
+import { formatImportDate } from '@/domain/dataManagement';
 import {
   Database,
   Calendar,
@@ -51,14 +51,6 @@ interface DataManagementProps {
   qualityData?: { year: number; metrics: DataQualityMetrics; validations: TransactionValidation[] } | null;
 }
 
-// Year data completeness status
-interface YearDataStatus {
-  year: number;
-  hasTransactions: boolean;
-  hasTransfers: boolean;
-  isComplete: boolean;
-}
-
 export function DataManagement({
   storedYearsData,
   isLoading,
@@ -76,120 +68,43 @@ export function DataManagement({
   const expenseColorClass = getExpenseColor(settings.colorScheme);
   const expenseColorHex = getExpenseColorHex(settings.colorScheme);
 
-  // Transfers data
   const {
-    storedYearsData: transferYearsData,
-    isLoading: transfersLoading,
-    deleteYearTransfers,
-    clearAllTransfers,
-  } = useTransfers();
+    transferYearsData,
+    transfersLoading,
+    allYears,
+    totalRecords,
+    totalIncome,
+    totalExpense,
+    totalTransferRecords,
+    clearAllDialogOpen,
+    deleteYearDialogOpen,
+    yearToDelete,
+    dataTypeToDelete,
+    importTransferDialogOpen,
+    yearToImportTransfer,
+    setClearAllDialogOpen,
+    setDeleteYearDialogOpen,
+    setImportTransferDialogOpen,
+    setYearToImportTransfer,
+    handleClearAllClick,
+    handleClearAllConfirm,
+    handleDeleteYearClick,
+    handleDeleteYearConfirm,
+    handleImportTransfer,
+    getDataStatusBadge,
+  } = useDataManagementViewModel({
+    storedYearsData,
+    isLoading,
+    onDeleteYear,
+    onClearAll,
+    onExport,
+    onGoToImport,
+    onGoToTransferImport,
+    onViewQuality,
+    qualityData,
+  });
 
-  // Dialog states
-  const [clearAllDialogOpen, setClearAllDialogOpen] = useState(false);
-  const [deleteYearDialogOpen, setDeleteYearDialogOpen] = useState(false);
-  const [yearToDelete, setYearToDelete] = useState<number | null>(null);
-  const [dataTypeToDelete, setDataTypeToDelete] = useState<'transactions' | 'transfers' | 'both'>('transactions');
-  const [importTransferDialogOpen, setImportTransferDialogOpen] = useState(false);
-  const [yearToImportTransfer, setYearToImportTransfer] = useState<number | null>(null);
-
-  // Calculate year data completeness
-  const yearDataStatusMap = useMemo(() => {
-    const statusMap = new Map<number, YearDataStatus>();
-
-    // Add transaction years
-    storedYearsData.forEach(yearData => {
-      statusMap.set(yearData.year, {
-        year: yearData.year,
-        hasTransactions: true,
-        hasTransfers: false,
-        isComplete: false,
-      });
-    });
-
-    // Add transfer years and update completeness
-    transferYearsData.forEach(transferYear => {
-      const existing = statusMap.get(transferYear.year);
-      if (existing) {
-        statusMap.set(transferYear.year, {
-          year: transferYear.year,
-          hasTransactions: true,
-          hasTransfers: true,
-          isComplete: true,
-        });
-      } else {
-        statusMap.set(transferYear.year, {
-          year: transferYear.year,
-          hasTransactions: false,
-          hasTransfers: true,
-          isComplete: false,
-        });
-      }
-    });
-
-    return statusMap;
-  }, [storedYearsData, transferYearsData]);
-
-  // Get all unique years sorted
-  const allYears = useMemo(() => {
-    return Array.from(yearDataStatusMap.values()).sort((a, b) => b.year - a.year);
-  }, [yearDataStatusMap]);
-
-  // Handle clear all with confirmation
-  const handleClearAllClick = () => {
-    setClearAllDialogOpen(true);
-  };
-
-  const handleClearAllConfirm = () => {
-    setClearAllDialogOpen(false);
-    onClearAll();
-    clearAllTransfers();
-  };
-
-  // Handle delete year with confirmation
-  const handleDeleteYearClick = (year: number, dataType: 'transactions' | 'transfers') => {
-    setYearToDelete(year);
-    setDataTypeToDelete(dataType);
-    setDeleteYearDialogOpen(true);
-  };
-
-  const handleDeleteYearConfirm = () => {
-    setDeleteYearDialogOpen(false);
-    if (yearToDelete !== null) {
-      if (dataTypeToDelete === 'transactions') {
-        onDeleteYear(yearToDelete);
-      } else if (dataTypeToDelete === 'transfers') {
-        deleteYearTransfers(yearToDelete);
-      }
-      setYearToDelete(null);
-    }
-  };
-
-  // Handle import transfer
-  const handleImportTransfer = (year: number) => {
-    if (onGoToTransferImport) {
-      onGoToTransferImport();
-    }
-  };
-
-  // Calculate totals
-  const totalRecords = storedYearsData.reduce((sum, d) => sum + d.recordCount, 0);
-  const totalIncome = storedYearsData.reduce((sum, d) => sum + d.metadata.totalIncome, 0);
-  const totalExpense = storedYearsData.reduce((sum, d) => sum + d.metadata.totalExpense, 0);
-  const totalTransferRecords = transferYearsData.reduce((sum, d) => sum + d.recordCount, 0);
-
-  // Format date
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const getDataStatusBadge = (status: YearDataStatus) => {
+  const renderDataStatusBadge = (status: ReturnType<typeof getDataStatusBadge>) => {
     if (status.isComplete) {
       return (
         <Badge variant="outline" className="gap-1 bg-green-50 text-green-700 border-green-200">
@@ -199,9 +114,7 @@ export function DataManagement({
       );
     }
 
-    const missing = [];
-    if (!status.hasTransactions) missing.push('收支流水');
-    if (!status.hasTransfers) missing.push('转账数据');
+    const missing = status.missing;
 
     return (
       <Badge variant="outline" className="gap-1 bg-amber-50 text-amber-700 border-amber-200">
@@ -357,7 +270,7 @@ export function DataManagement({
                             {status.year}
                           </Badge>
                           <span className="text-sm text-muted-foreground">年</span>
-                          {getDataStatusBadge(status)}
+                          {renderDataStatusBadge(status)}
                         </div>
                       </div>
 
@@ -489,13 +402,13 @@ export function DataManagement({
                         {txData && (
                           <div className="flex items-center gap-1">
                             <Cloud className="h-3 w-3" />
-                            <span>收支导入: {formatDate(txData.importedAt)}</span>
+                            <span>收支导入: {formatImportDate(txData.importedAt)}</span>
                           </div>
                         )}
                         {tfData && (
                           <div className="flex items-center gap-1">
                             <Cloud className="h-3 w-3" />
-                            <span>转账导入: {formatDate(tfData.importedAt)}</span>
+                            <span>转账导入: {formatImportDate(tfData.importedAt)}</span>
                           </div>
                         )}
                       </div>
