@@ -4,8 +4,7 @@
  * "Capital Command Center" - Visual overview of capital units and their relation to products
  */
 
-import { useState, useMemo } from 'react';
-import { useAssetDashboard, useUnitsDisplay } from '@/hooks/useAssets';
+import { useCapitalDashboardViewModel } from '@/viewmodels/assets/useCapitalDashboardViewModel';
 import {
   Wallet,
   TrendingUp,
@@ -178,118 +177,24 @@ function ActionBar({
 // ============================================================================
 
 export function CapitalDashboard() {
-  const { data: dashboardData, isLoading: dashboardLoading } = useAssetDashboard();
-  const { data: units, isLoading: unitsLoading } = useUnitsDisplay();
-  const [selectedStrategy, setSelectedStrategy] = useState<InvestmentStrategy | null>(null);
-
-  // Calculate totals by currency (only established/active units)
-  const totalAssetsByCurrency = useMemo(() => {
-    const totals: Record<string, number> = { CNY: 0, USD: 0, HKD: 0 };
-    units?.forEach(u => {
-      // Only count units with status = '已成立'
-      if (u.status === '已成立') {
-        totals[u.currency] = (totals[u.currency] || 0) + u.amount;
-      }
-    });
-    return totals;
-  }, [units]);
-
-  const totalAssetsAll = useMemo(() => {
-    return Object.values(totalAssetsByCurrency).reduce((sum, amount) => sum + amount, 0);
-  }, [totalAssetsByCurrency]);
-
-  // Deployment rate
-  const deploymentRate = useMemo(() => {
-    if (!dashboardData || dashboardData.total_assets === 0) return 0;
-    return (dashboardData.invested_amount / dashboardData.total_assets) * 100;
-  }, [dashboardData]);
-
-  // Idle units - only count "已成立" units without associated product
-  const idleUnits = useMemo(() => {
-    return units?.filter(u => u.status === '已成立' && !u.product) || [];
-  }, [units]);
-
-  const idleCount = idleUnits.length;
-  const idleAmount = idleUnits.reduce((sum, u) => sum + u.amount, 0);
-
-  // Incoming liquidity
-  const incomingLiquidity = useMemo(() => {
-    return dashboardData?.upcoming_maturities.reduce((sum, m) => sum + m.amount, 0) || 0;
-  }, [dashboardData]);
-
-  const incomingCount = dashboardData?.upcoming_maturities.length || 0;
-
-  // Currency distribution (only for established units)
-  const currencyDistribution = useMemo(() => {
-    if (!units) return [];
-    const currencyMap: Record<string, number> = {};
-    units.forEach(u => {
-      // Only count established units
-      if (u.status === '已成立') {
-        currencyMap[u.currency] = (currencyMap[u.currency] || 0) + u.amount;
-      }
-    });
-    return Object.entries(currencyMap).map(([currency, amount]) => ({
-      currency: currency as Currency,
-      amount,
-      percentage: totalAssetsAll > 0 ? (amount / totalAssetsAll) * 100 : 0,
-    }));
-  }, [units, totalAssetsAll]);
-
-  // Status distribution (only for established units)
-  const statusDistribution = useMemo(() => {
-    if (!units) return [];
-    const statusMap: Record<string, number> = {};
-    units.forEach(u => {
-      // Only count established units
-      if (u.status === '已成立') {
-        statusMap[u.status] = (statusMap[u.status] || 0) + u.amount;
-      }
-    });
-    return Object.entries(statusMap).map(([status, amount]) => ({
-      status: status as UnitStatus,
-      amount,
-      percentage: totalAssetsAll > 0 ? (amount / totalAssetsAll) * 100 : 0,
-    }));
-  }, [units, totalAssetsAll]);
-
-  // Maturity timeline distribution
-  const maturityDistribution = useMemo(() => {
-    if (!units) return [];
-    const buckets = {
-      '已到期': 0,
-      '7天内': 0,
-      '30天内': 0,
-      '90天内': 0,
-      '90天以上': 0,
-    };
-
-    units.forEach(u => {
-      if (!u.end_date || u.status !== '已成立') return;
-      if (u.is_available) {
-        // ✅ BEST: Lock period passed - funds available + earning interest
-        buckets['已到期'] += u.amount;
-      } else if (u.days_until_maturity !== undefined) {
-        if (u.days_until_maturity <= 7) {
-          buckets['7天内'] += u.amount;
-        } else if (u.days_until_maturity <= 30) {
-          buckets['30天内'] += u.amount;
-        } else if (u.days_until_maturity <= 90) {
-          buckets['90天内'] += u.amount;
-        } else {
-          buckets['90天以上'] += u.amount;
-        }
-      }
-    });
-
-    return Object.entries(buckets)
-      .filter(([_, amount]) => amount > 0)
-      .map(([period, amount]) => ({
-        period,
-        amount,
-        percentage: totalAssetsAll > 0 ? (amount / totalAssetsAll) * 100 : 0,
-      }));
-  }, [units, totalAssetsAll]);
+  const {
+    dashboardData,
+    dashboardLoading,
+    unitsLoading,
+    selectedStrategy,
+    handleStrategySelect,
+    totalAssetsByCurrency,
+    totalAssetsAll,
+    deploymentRate,
+    idleCount,
+    idleAmount,
+    incomingLiquidity,
+    incomingCount,
+    currencyDistribution,
+    statusDistribution,
+    maturityDistribution,
+    strategyChartData,
+  } = useCapitalDashboardViewModel();
 
   if (dashboardLoading || unitsLoading) {
     return (
@@ -334,22 +239,22 @@ export function CapitalDashboard() {
         className="grid grid-cols-1 md:grid-cols-2 gap-6"
       >
         {/* Strategy Distribution */}
-        {dashboardData?.strategy_allocation && (
-          <motion.div variants={gridItem}>
-            <DistributionPieChart
-              title="策略分布"
-              data={dashboardData.strategy_allocation.map(item => ({
-                name: item.strategy,
-                value: item.total_amount,
-                percentage: item.percentage,
-                color: STRATEGY_COLORS[item.strategy]
-              }))}
-              selected={selectedStrategy}
-              onClick={setSelectedStrategy}
-              showAction={true}
-            />
-          </motion.div>
-        )}
+          {strategyChartData.length > 0 && (
+            <motion.div variants={gridItem}>
+              <DistributionPieChart
+                title="策略分布"
+                data={strategyChartData.map(item => ({
+                  name: item.name,
+                  value: item.value,
+                  percentage: item.percentage,
+                  color: STRATEGY_COLORS[item.name as InvestmentStrategy]
+                }))}
+                selected={selectedStrategy}
+                onClick={handleStrategySelect}
+                showAction={true}
+              />
+            </motion.div>
+          )}
 
         {/* Currency Distribution */}
         <motion.div variants={gridItem}>
