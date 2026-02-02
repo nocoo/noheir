@@ -6,16 +6,15 @@
  */
 
 import { useMemo } from 'react';
-import { useUnitsDisplay } from '@/hooks/useAssets';
-import { useSettings } from '@/contexts/SettingsContext';
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts/core';
 import { TooltipComponent, GridComponent, MarkLineComponent } from 'echarts/components';
 import { BarChart } from 'echarts/charts';
 import { CanvasRenderer } from 'echarts/renderers';
 import { formatCurrencyFull } from '@/lib/chart-config';
-import { format, addMonths, startOfMonth, isBefore } from 'date-fns';
+import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
+import { useLiquidityLadderViewModel } from '@/viewmodels/assets/useLiquidityLadderViewModel';
 
 echarts.use([TooltipComponent, GridComponent, MarkLineComponent, BarChart, CanvasRenderer]);
 
@@ -34,113 +33,7 @@ interface TooltipAxisParam {
 }
 
 export function LiquidityLadder() {
-  const { data: units } = useUnitsDisplay();
-  const { settings } = useSettings();
-
-  // Calculate monthly maturity data for next 24 months
-  const monthlyData = useMemo((): {
-    monthlyMaturities: MonthlyMaturity[];
-    strategies: string[];
-    months: string[];
-  } => {
-    if (!units || units.length === 0) {
-      return { monthlyMaturities: [], strategies: [], months: [] };
-    }
-
-    // Get established units with end_date
-    const establishedUnits = units.filter(
-      unit => unit.status === '已成立' && unit.end_date && unit.product
-    );
-
-    const today = new Date();
-    const months: string[] = [];
-    const monthSet = new Set<string>();
-    const strategySet = new Set<string>();
-
-    // Generate next 24 months
-    for (let i = 0; i < 24; i++) {
-      const monthDate = startOfMonth(addMonths(today, i));
-      const monthKey = format(monthDate, 'yyyy-MM');
-      months.push(monthKey);
-    }
-
-    // Group by month and strategy
-    const monthlyMap = new Map<string, Map<string, number>>();
-
-    establishedUnits.forEach(unit => {
-      if (!unit.end_date || !unit.strategy) return;
-
-      const endDate = new Date(unit.end_date);
-      const monthKey = format(endDate, 'yyyy-MM');
-      const strategy = unit.strategy;
-
-      // Only include future months
-      const monthStart = startOfMonth(endDate);
-      if (isBefore(monthStart, startOfMonth(today))) return;
-
-      if (!monthlyMap.has(monthKey)) {
-        monthlyMap.set(monthKey, new Map());
-      }
-      const monthData = monthlyMap.get(monthKey)!;
-      monthData.set(strategy, (monthData.get(strategy) || 0) + unit.amount);
-      strategySet.add(strategy);
-    });
-
-    // Convert to array format
-    const monthlyMaturities: MonthlyMaturity[] = [];
-    monthlyMap.forEach((strategyMap, month) => {
-      const monthDate = new Date(month + '-01');
-      const monthLabel = format(monthDate, 'yyyy年M月', { locale: zhCN });
-
-      strategyMap.forEach((amount, strategy) => {
-        monthlyMaturities.push({
-          month,
-          monthLabel,
-          strategy,
-          amount,
-        });
-      });
-    });
-
-    // Fill in missing months with zero amounts
-    months.forEach(month => {
-      const monthDate = new Date(month + '-01');
-      const monthLabel = format(monthDate, 'yyyy年M月', { locale: zhCN });
-
-      strategySet.forEach(strategy => {
-        if (!monthlyMaturities.find(m => m.month === month && m.strategy === strategy)) {
-          monthlyMaturities.push({
-            month,
-            monthLabel,
-            strategy,
-            amount: 0,
-          });
-        }
-      });
-    });
-
-    const strategies = Array.from(strategySet).sort();
-
-    return { monthlyMaturities, strategies, months };
-  }, [units]);
-
-  // Prepare series data for each strategy
-  const series = useMemo(() => {
-    return monthlyData.strategies.map(strategy => ({
-      name: strategy,
-      type: 'bar',
-      stack: 'total',
-      data: monthlyData.months.map(month => {
-        const item = monthlyData.monthlyMaturities.find(
-          m => m.month === month && m.strategy === strategy
-        );
-        return item?.amount || 0;
-      }),
-    }));
-  }, [monthlyData]);
-
-  // Get currency symbol
-  const currencySymbol = '¥'; // Default to CNY for now
+  const { units, monthlyData, series, summary, currencySymbol } = useLiquidityLadderViewModel();
 
   const option = useMemo(() => ({
     tooltip: {
@@ -301,50 +194,27 @@ export function LiquidityLadder() {
       <div className="border rounded-lg p-4 bg-muted/30">
         <h3 className="font-semibold mb-3">📈 未来12个月到期统计</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {(() => {
-            const next12Months = monthlyData.months.slice(0, 12);
-            const total = next12Months.reduce((sum, month) => {
-              const monthTotal = monthlyData.monthlyMaturities
-                .filter(m => m.month === month)
-                .reduce((s, m) => s + m.amount, 0);
-              return sum + monthTotal;
-            }, 0);
-
-            const peakMonth = next12Months.reduce((max, month) => {
-              const monthTotal = monthlyData.monthlyMaturities
-                .filter(m => m.month === month)
-                .reduce((s, m) => s + m.amount, 0);
-              return monthTotal > max.amount ? { month, amount: monthTotal } : max;
-            }, { month: '', amount: 0 });
-
-            const avgMonth = total / 12;
-
-            return (
-              <>
-                <div>
-                  <div className="text-2xl font-bold">{currencySymbol}{(total / 10000).toFixed(1)}万</div>
-                  <div className="text-xs text-muted-foreground">12个月到期总额</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold">{currencySymbol}{(avgMonth / 10000).toFixed(1)}万</div>
-                  <div className="text-xs text-muted-foreground">月均到期</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold">
-                    {(() => {
-                      const monthDate = new Date(peakMonth.month + '-01');
-                      return format(monthDate, 'M月', { locale: zhCN });
-                    })()}
-                  </div>
-                  <div className="text-xs text-muted-foreground">到期高峰月</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold">{currencySymbol}{(peakMonth.amount / 10000).toFixed(1)}万</div>
-                  <div className="text-xs text-muted-foreground">高峰金额</div>
-                </div>
-              </>
-            );
-          })()}
+          <div>
+            <div className="text-2xl font-bold">{currencySymbol}{(summary.total / 10000).toFixed(1)}万</div>
+            <div className="text-xs text-muted-foreground">12个月到期总额</div>
+          </div>
+          <div>
+            <div className="text-2xl font-bold">{currencySymbol}{(summary.avgMonth / 10000).toFixed(1)}万</div>
+            <div className="text-xs text-muted-foreground">月均到期</div>
+          </div>
+          <div>
+            <div className="text-2xl font-bold">
+              {(() => {
+                const monthDate = new Date(summary.peakMonth.month + '-01');
+                return format(monthDate, 'M月', { locale: zhCN });
+              })()}
+            </div>
+            <div className="text-xs text-muted-foreground">到期高峰月</div>
+          </div>
+          <div>
+            <div className="text-2xl font-bold">{currencySymbol}{(summary.peakMonth.amount / 10000).toFixed(1)}万</div>
+            <div className="text-xs text-muted-foreground">高峰金额</div>
+          </div>
         </div>
       </div>
     </div>
