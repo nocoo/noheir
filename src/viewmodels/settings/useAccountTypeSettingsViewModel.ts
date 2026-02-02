@@ -52,7 +52,7 @@ export function useAccountTypeSettingsViewModel(toast: ToastApi) {
         toast.error('保存失败，请重试');
       }
     }, 1500);
-  }, [updateSingleSetting, toast]);
+  }, [updateSingleSetting, toast, settings]);
 
   const handleTypeChange = useCallback((accountName: string, newType: AccountType) => {
     updateAccountType(accountName, newType);
