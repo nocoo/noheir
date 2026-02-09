@@ -10,49 +10,54 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto" WITH SCHEMA "public";
 
 
 -- ============================================================================
--- FUNCTION: get_units_with_products
+-- TABLE: financial_products (理财产品)
+-- Must be created before capital_units due to FK reference
 -- ============================================================================
-CREATE OR REPLACE FUNCTION "public"."get_units_with_products"()
-RETURNS TABLE(
-  "id" "uuid",
-  "user_id" "uuid",
-  "unit_code" "text",
-  "amount" numeric,
-  "currency" "text",
-  "status" "text",
-  "strategy" "text",
-  "tactics" "text",
-  "product_id" "uuid",
-  "start_date" "date",
-  "end_date" "date",
-  "created_at" timestamp with time zone,
-  "product" "jsonb"
-)
-LANGUAGE "plpgsql"
-SET "search_path" TO 'public'
-AS $$
-BEGIN
-  RETURN QUERY
-  SELECT
-    u.id,
-    u.user_id,
-    u.unit_code,
-    u.amount,
-    u.currency,
-    u.status,
-    u.strategy,
-    u.tactics,
-    u.product_id,
-    u.start_date,
-    u.end_date,
-    u.created_at,
-    to_jsonb(p) AS product
-  FROM capital_units u
-  LEFT JOIN financial_products p ON u.product_id = p.id
-  WHERE u.user_id = auth.uid()
-  ORDER BY u.created_at DESC;
-END;
-$$;
+CREATE TABLE IF NOT EXISTS "public"."financial_products" (
+  "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
+  "user_id" "uuid" DEFAULT "auth"."uid"() NOT NULL,
+  "name" "text" NOT NULL,
+  "code" "text",
+  "channel" "text",
+  "category" "text",
+  "currency" "text" DEFAULT 'CNY'::"text",
+  "lock_period_days" integer DEFAULT 0,
+  "annual_return_rate" numeric(5,2),
+  "created_at" timestamp with time zone DEFAULT "now"(),
+  CONSTRAINT "financial_products_pkey" PRIMARY KEY ("id"),
+  CONSTRAINT "financial_products_category_check" CHECK (
+    "category" = ANY (ARRAY['养老年金'::"text", '储蓄保险'::"text", '混债基金'::"text", '债券基金'::"text", '货币基金'::"text", '股票基金'::"text", '指数基金'::"text", '宽基指数'::"text", '私募基金'::"text", '定期存款'::"text", '理财产品'::"text", '现金+'::"text"])
+  ),
+  CONSTRAINT "financial_products_channel_check" CHECK (
+    "channel" = ANY (ARRAY['招商银行'::"text", '平安银行'::"text", '微众银行'::"text", '支付宝'::"text", '招银香港'::"text", '光大永明'::"text", '中信建投'::"text"])
+  ),
+  CONSTRAINT "financial_products_currency_check" CHECK (
+    "currency" = ANY (ARRAY['CNY'::"text", 'USD'::"text", 'HKD'::"text"])
+  )
+);
+
+-- Foreign Keys
+ALTER TABLE "public"."financial_products"
+  ADD CONSTRAINT "financial_products_user_id_fkey" FOREIGN KEY ("user_id")
+  REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+-- Indexes
+CREATE INDEX IF NOT EXISTS "idx_financial_products_user" ON "public"."financial_products" USING "btree" ("user_id");
+
+-- RLS
+ALTER TABLE "public"."financial_products" ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "products_select_policy" ON "public"."financial_products"
+  FOR SELECT USING (("auth"."uid"() = "user_id"));
+
+CREATE POLICY "products_insert_policy" ON "public"."financial_products"
+  FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
+
+CREATE POLICY "products_update_policy" ON "public"."financial_products"
+  FOR UPDATE USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
+
+CREATE POLICY "products_delete_policy" ON "public"."financial_products"
+  FOR DELETE USING (("auth"."uid"() = "user_id"));
 
 
 -- ============================================================================
@@ -113,53 +118,50 @@ CREATE POLICY "units_delete_policy" ON "public"."capital_units"
 
 
 -- ============================================================================
--- TABLE: financial_products (理财产品)
+-- FUNCTION: get_units_with_products
+-- Must be created after both tables it references
 -- ============================================================================
-CREATE TABLE IF NOT EXISTS "public"."financial_products" (
-  "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
-  "user_id" "uuid" DEFAULT "auth"."uid"() NOT NULL,
-  "name" "text" NOT NULL,
-  "code" "text",
-  "channel" "text",
-  "category" "text",
-  "currency" "text" DEFAULT 'CNY'::"text",
-  "lock_period_days" integer DEFAULT 0,
-  "annual_return_rate" numeric(5,2),
-  "created_at" timestamp with time zone DEFAULT "now"(),
-  CONSTRAINT "financial_products_pkey" PRIMARY KEY ("id"),
-  CONSTRAINT "financial_products_category_check" CHECK (
-    "category" = ANY (ARRAY['养老年金'::"text", '储蓄保险'::"text", '混债基金'::"text", '债券基金'::"text", '货币基金'::"text", '股票基金'::"text", '指数基金'::"text", '宽基指数'::"text", '私募基金'::"text", '定期存款'::"text", '理财产品'::"text", '现金+'::"text"])
-  ),
-  CONSTRAINT "financial_products_channel_check" CHECK (
-    "channel" = ANY (ARRAY['招商银行'::"text", '平安银行'::"text", '微众银行'::"text", '支付宝'::"text", '招银香港'::"text", '光大永明'::"text", '中信建投'::"text"])
-  ),
-  CONSTRAINT "financial_products_currency_check" CHECK (
-    "currency" = ANY (ARRAY['CNY'::"text", 'USD'::"text", 'HKD'::"text"])
-  )
-);
-
--- Foreign Keys
-ALTER TABLE "public"."financial_products"
-  ADD CONSTRAINT "financial_products_user_id_fkey" FOREIGN KEY ("user_id")
-  REFERENCES "auth"."users"("id") ON DELETE CASCADE;
-
--- Indexes
-CREATE INDEX IF NOT EXISTS "idx_financial_products_user" ON "public"."financial_products" USING "btree" ("user_id");
-
--- RLS
-ALTER TABLE "public"."financial_products" ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "products_select_policy" ON "public"."financial_products"
-  FOR SELECT USING (("auth"."uid"() = "user_id"));
-
-CREATE POLICY "products_insert_policy" ON "public"."financial_products"
-  FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
-
-CREATE POLICY "products_update_policy" ON "public"."financial_products"
-  FOR UPDATE USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
-
-CREATE POLICY "products_delete_policy" ON "public"."financial_products"
-  FOR DELETE USING (("auth"."uid"() = "user_id"));
+CREATE OR REPLACE FUNCTION "public"."get_units_with_products"()
+RETURNS TABLE(
+  "id" "uuid",
+  "user_id" "uuid",
+  "unit_code" "text",
+  "amount" numeric,
+  "currency" "text",
+  "status" "text",
+  "strategy" "text",
+  "tactics" "text",
+  "product_id" "uuid",
+  "start_date" "date",
+  "end_date" "date",
+  "created_at" timestamp with time zone,
+  "product" "jsonb"
+)
+LANGUAGE "plpgsql"
+SET "search_path" TO 'public'
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    u.id,
+    u.user_id,
+    u.unit_code,
+    u.amount,
+    u.currency,
+    u.status,
+    u.strategy,
+    u.tactics,
+    u.product_id,
+    u.start_date,
+    u.end_date,
+    u.created_at,
+    to_jsonb(p) AS product
+  FROM capital_units u
+  LEFT JOIN financial_products p ON u.product_id = p.id
+  WHERE u.user_id = auth.uid()
+  ORDER BY u.created_at DESC;
+END;
+$$;
 
 
 -- ============================================================================
@@ -275,8 +277,8 @@ GRANT ALL ON TABLE "public"."financial_products" TO "authenticated", "service_ro
 GRANT ALL ON TABLE "public"."transactions" TO "authenticated", "service_role";
 GRANT ALL ON TABLE "public"."settings" TO "authenticated", "service_role";
 
--- Sequence access
-GRANT ALL ON SEQUENCE "public"."site_metadata_id_seq" TO "authenticated", "service_role";
+-- Sequence access (settings table's identity column auto-creates this sequence)
+GRANT ALL ON SEQUENCE "public"."settings_id_seq" TO "authenticated", "service_role";
 
 -- Default privileges for future objects (DO NOT grant to anon)
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public"
