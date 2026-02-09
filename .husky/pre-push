@@ -8,5 +8,10 @@ if command -v supabase >/dev/null 2>&1 && supabase status >/dev/null 2>&1; then
   bun run test:e2e
   bun run test:mcp
 else
-  echo "⚠ Supabase not running, skipping E2E tests"
+  echo ""
+  echo "\033[1;33m╔════════════════════════════════════════════════════════╗\033[0m"
+  echo "\033[1;33m║  ⚠  Supabase not running — E2E + MCP tests SKIPPED   ║\033[0m"
+  echo "\033[1;33m║  Run 'supabase start' to enable full test coverage    ║\033[0m"
+  echo "\033[1;33m╚════════════════════════════════════════════════════════╝\033[0m"
+  echo ""
 fi
