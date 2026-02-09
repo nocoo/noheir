@@ -13,6 +13,8 @@
     "lint": "eslint .",
     "preview": "bun vite preview",
     "test": "bun test",
+    "test:unit": "bun test tests/contexts tests/domain tests/hooks tests/lib tests/services tests/smoke tests/viewmodels",
+    "test:e2e": "bun test tests/e2e/",
     "test:coverage": "bun test --coverage",
     "version": "bun run scripts/generate-version.ts"
   },
