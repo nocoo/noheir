@@ -22,7 +22,13 @@ export function McpSettings() {
     toggleMcp,
     handleRefreshToken,
   } = useMcpSettingsViewModel(
-    () => supabase.auth.refreshSession() as any
+    async () => {
+      const { data, error } = await supabase.auth.refreshSession();
+      return {
+        data: { session: data.session ? { refresh_token: data.session.refresh_token } : null },
+        error: error ? { message: error.message } : null,
+      };
+    }
   );
 
   if (!user) {
