@@ -4,6 +4,9 @@
  * Creates an authenticated Supabase client using a refresh token
  * passed via environment variable. The client carries the user's
  * session so that RLS policies enforce data isolation.
+ *
+ * Uses setSession() + autoRefreshToken so the access token is
+ * automatically refreshed before expiry (default JWT lifetime: 1h).
  */
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
@@ -32,16 +35,18 @@ export function getAuthConfig(): AuthConfig {
 
 /**
  * Create an authenticated Supabase client by exchanging the refresh token
- * for a fresh session.
+ * for a fresh session. Uses setSession() so the client manages token
+ * refresh automatically.
  */
 export async function createAuthenticatedSupabaseClient(
   config: AuthConfig,
 ): Promise<SupabaseClient> {
-  const client = createClient(config.supabaseUrl, config.supabaseAnonKey, {
+  // First, exchange refresh token for a session
+  const bootstrapClient = createClient(config.supabaseUrl, config.supabaseAnonKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  const { data, error } = await client.auth.refreshSession({
+  const { data, error } = await bootstrapClient.auth.refreshSession({
     refresh_token: config.refreshToken,
   });
 
@@ -51,11 +56,17 @@ export async function createAuthenticatedSupabaseClient(
     );
   }
 
-  // Return a new client with the access token baked in
-  return createClient(config.supabaseUrl, config.supabaseAnonKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    global: {
-      headers: { Authorization: `Bearer ${data.session.access_token}` },
-    },
+  // Create the real client with autoRefreshToken enabled
+  const client = createClient(config.supabaseUrl, config.supabaseAnonKey, {
+    auth: { persistSession: false, autoRefreshToken: true },
   });
+
+  // setSession injects both access_token and refresh_token into the client,
+  // enabling automatic refresh before the access token expires
+  await client.auth.setSession({
+    access_token: data.session.access_token,
+    refresh_token: data.session.refresh_token,
+  });
+
+  return client;
 }
