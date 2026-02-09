@@ -14,8 +14,10 @@ import { queryTransactions } from "../src/tools/queryTransactions";
 import { queryTransfers } from "../src/tools/queryTransfers";
 import { getSummary } from "../src/tools/getSummary";
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- root and mcp have separate @supabase/supabase-js instances causing structural type mismatch */
 let client: any;
 let user: any;
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 beforeAll(async () => {
   const auth = await createAuthenticatedClient("mcp-tools");
