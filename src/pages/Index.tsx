@@ -12,6 +12,7 @@ import { AccountAnalysis } from '@/components/dashboard/AccountAnalysis';
 import { AccountDetail } from '@/components/dashboard/AccountDetail';
 import { GeneralSettings } from '@/components/dashboard/GeneralSettings';
 import { AISettings } from '@/components/dashboard/AISettings';
+import { McpSettings } from '@/components/dashboard/McpSettings';
 import { AccountTypesPage } from '@/components/dashboard/AccountTypesPage';
 import { UnifiedYearSelector } from '@/components/dashboard/UnifiedYearSelector';
 import type { DataQualityMetrics, TransactionValidation } from '@/types/data';
@@ -612,6 +613,7 @@ const Index = () => {
             <p className="text-muted-foreground">配置您的 AI 助手（BYOM - Bring Your Own Model）</p>
           </div>
           <AISettings />
+          <McpSettings />
         </motion.div>
       )}
 
