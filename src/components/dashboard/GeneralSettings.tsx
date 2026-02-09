@@ -5,6 +5,7 @@ import { SavingsRateSettings } from '@/components/dashboard/SavingsRateSettings'
 import { ActiveIncomeSettings } from '@/components/dashboard/ActiveIncomeSettings';
 import { FixedExpenseSettings } from '@/components/dashboard/FixedExpenseSettings';
 import { ReturnRateSettings } from '@/components/dashboard/ReturnRateSettings';
+import { McpSettings } from '@/components/dashboard/McpSettings';
 
 export function GeneralSettings() {
   return (
@@ -15,6 +16,7 @@ export function GeneralSettings() {
       <ActiveIncomeSettings />
       <FixedExpenseSettings />
       <ReturnRateSettings />
+      <McpSettings />
     </div>
   );
 }
