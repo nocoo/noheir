@@ -83,3 +83,6 @@ E2E tests are skipped gracefully with a visible warning box when local Supabase 
 - MCP SDK v1 uses `server.tool(name, description, schema, callback)` with raw Zod shapes; v2 switches to `server.registerTool()` with `z.object()` wrappers.
 - Supabase client from mcp/node_modules and root node_modules are separate instances — use `any` type in test files to avoid TS structural mismatch errors.
 - `bun:test` LSP errors in editor are cosmetic (bun-types not visible to TS language server for test files) — tests run fine.
+- Supabase PostgREST enforces `max_rows` (default 1000) on all `.select()` queries. Never fetch full tables client-side for aggregation — use server-side RPC with `SELECT DISTINCT` / `COUNT(*)` instead.
+- MCP auth: hardcoding `access_token` in client headers causes silent failures after JWT expiry (default 1h). Use `setSession()` + `autoRefreshToken: true` so Supabase auto-refreshes.
+- When adding new RPC functions, remember to apply the migration SQL on **both** local Supabase (`supabase db reset`) and remote (Dashboard SQL Editor).
