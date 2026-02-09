@@ -46,6 +46,38 @@ bun run mcp:start
 bun run test:mcp  # 42 tests (36 tool handler + 6 protocol-level)
 ```
 
+## Test Architecture
+
+### 3-Layer Test Strategy
+
+| Layer | Files | DB Required | Runner |
+|-------|-------|-------------|--------|
+| Unit (204 tests) | `tests/{domain,viewmodels,contexts,hooks,lib,services,smoke}/` | No | `bun run test:unit` |
+| E2E (8 tests) | `tests/e2e/` | Yes (local Supabase) | `bun run test:e2e` |
+| MCP E2E (42 tests) | `mcp/tests/` | No (mocked) | `bun run test:mcp` |
+
+### Environment Isolation (Two-Layer Defense)
+
+Unit tests must **never** connect to a real Supabase instance. Two independent mechanisms enforce this:
+
+1. **`.env.test`** — Bun automatically loads this when `NODE_ENV=test` and **skips `.env.local`** entirely. Contains safe dummy values (`http://localhost`, `test-key`).
+2. **`tests/setup.ts`** (preload) — Force-overrides `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` unconditionally, catching edge cases like explicit `--env-file` flags.
+
+### Git Hooks
+
+| Hook | Runs | Config |
+|------|------|--------|
+| pre-commit | Unit tests only | `.husky/pre-commit` |
+| pre-push | Unit + Lint + E2E/MCP (if Supabase running) | `.husky/pre-push` |
+
+E2E tests are skipped gracefully with a visible warning box when local Supabase is not running.
+
+### E2E Test Conventions
+
+- E2E helpers live in `tests/e2e/helpers/` with hardcoded `127.0.0.1:54321` + Supabase demo keys.
+- `cleanup.ts` uses `service_role` key to delete all user data + auth user after tests.
+- E2E tests create isolated test users and clean up after themselves.
+
 ## Retrospective
 
 - MCP SDK v1 uses `server.tool(name, description, schema, callback)` with raw Zod shapes; v2 switches to `server.registerTool()` with `z.object()` wrappers.
