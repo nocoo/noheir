@@ -11,6 +11,7 @@ import { createAuthenticatedClient } from "../../tests/e2e/helpers/supabase-clie
 import { cleanupUser } from "../../tests/e2e/helpers/cleanup";
 import { makeTransaction, makeTransfer } from "../../tests/e2e/helpers/seed";
 import { queryTransactions } from "../src/tools/queryTransactions";
+import { queryTransfers } from "../src/tools/queryTransfers";
 
 let client: any;
 let user: any;
@@ -182,5 +183,117 @@ describe("queryTransactions", () => {
     // Should not error — RPC clamps to 500 internally
     expect(result.transactions.length).toBeLessThanOrEqual(500);
     expect(result.transactions.length).toBe(6); // we only have 6
+  });
+});
+
+// ============================================================================
+// query_transfers tool handler
+// ============================================================================
+
+describe("queryTransfers", () => {
+  it("returns all transfers when no filters provided", async () => {
+    const result = await queryTransfers(client, {});
+
+    expect(result.transfers).toBeDefined();
+    expect(result.transfers.length).toBe(4);
+    expect(result.total_returned).toBe(4);
+  });
+
+  it("filters by keyword (fuzzy match on note)", async () => {
+    const result = await queryTransfers(client, { keyword: "信用卡" });
+
+    expect(result.transfers.length).toBe(1);
+    expect(result.transfers[0].note).toBe("还信用卡");
+    expect(result.transfers[0].matched_field).toBe("note");
+  });
+
+  it("filters by keyword matching account", async () => {
+    const result = await queryTransfers(client, { keyword: "汇丰" });
+
+    expect(result.transfers.length).toBe(1);
+    expect(result.transfers[0].note).toBe("港币兑换");
+    expect(result.transfers[0].matched_field).toBe("account");
+  });
+
+  it("filters by accounts array", async () => {
+    const result = await queryTransfers(client, { accounts: ["招商银行"] });
+
+    expect(result.transfers.length).toBe(2); // 还信用卡 + 理财赎回
+  });
+
+  it("filters by transaction_type", async () => {
+    const result = await queryTransfers(client, { transaction_type: "转入" });
+
+    expect(result.transfers.length).toBe(1);
+    expect(result.transfers[0].note).toBe("理财赎回");
+  });
+
+  it("filters by tags", async () => {
+    const result = await queryTransfers(client, { tags: ["日常"] });
+
+    expect(result.transfers.length).toBe(1);
+    expect(result.transfers[0].note).toBe("日常转账");
+  });
+
+  it("filters by amount range (GREATEST of inflow/outflow)", async () => {
+    const result = await queryTransfers(client, { min_amount: 6000, max_amount: 15000 });
+
+    expect(result.transfers.length).toBe(2); // 理财赎回 10000 + 港币兑换 8000
+    const notes = result.transfers.map((t: { note: string }) => t.note).sort();
+    expect(notes).toEqual(["港币兑换", "理财赎回"]);
+  });
+
+  it("filters by year", async () => {
+    const result = await queryTransfers(client, { year: 2025 });
+
+    expect(result.transfers.length).toBe(1);
+    expect(result.transfers[0].note).toBe("港币兑换");
+  });
+
+  it("filters by currency", async () => {
+    const result = await queryTransfers(client, { currency: "港币" });
+
+    expect(result.transfers.length).toBe(1);
+    expect(result.transfers[0].account).toBe("汇丰银行");
+  });
+
+  it("filters by date range", async () => {
+    const result = await queryTransfers(client, {
+      start_date: "2026-01-01",
+      end_date: "2026-12-31",
+    });
+
+    expect(result.transfers.length).toBe(3); // 还信用卡, 理财赎回, 日常转账
+  });
+
+  it("supports pagination with limit and offset", async () => {
+    const page1 = await queryTransfers(client, { limit: 2, offset: 0 });
+    expect(page1.transfers.length).toBe(2);
+
+    const page2 = await queryTransfers(client, { limit: 2, offset: 2 });
+    expect(page2.transfers.length).toBe(2);
+
+    // Pages should not overlap
+    const ids1 = page1.transfers.map((t: { id: string }) => t.id);
+    const ids2 = page2.transfers.map((t: { id: string }) => t.id);
+    const overlap = ids1.filter((id: string) => ids2.includes(id));
+    expect(overlap.length).toBe(0);
+  });
+
+  it("combines multiple filters", async () => {
+    const result = await queryTransfers(client, {
+      accounts: ["招商银行"],
+      transaction_type: "转出",
+    });
+
+    expect(result.transfers.length).toBe(1);
+    expect(result.transfers[0].note).toBe("还信用卡");
+  });
+
+  it("returns empty array when no matches", async () => {
+    const result = await queryTransfers(client, { keyword: "不存在的东西" });
+
+    expect(result.transfers).toEqual([]);
+    expect(result.total_returned).toBe(0);
   });
 });
