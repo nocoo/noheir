@@ -96,7 +96,7 @@ export function McpSettings() {
             {/* Config JSON Section */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label>Claude Desktop 配置</Label>
+                <Label>MCP 配置</Label>
                 <Button
                   variant="outline"
                   size="sm"
@@ -111,12 +111,12 @@ export function McpSettings() {
                   {copied ? '已复制' : '复制'}
                 </Button>
               </div>
-              <pre className="p-3 bg-muted rounded text-xs font-mono overflow-auto max-h-64 whitespace-pre-wrap">
+              <pre className="p-3 bg-muted rounded text-xs font-mono overflow-auto whitespace-pre-wrap">
                 {configJson}
               </pre>
               <p className="text-xs text-muted-foreground flex items-center gap-1">
                 <Terminal className="h-3 w-3" />
-                将此配置添加到 Claude Desktop 的 claude_desktop_config.json 中
+                将此配置添加到支持 MCP 的 AI 客户端配置文件中
               </p>
             </div>
           </>
