@@ -1,5 +1,8 @@
--- Migration: Add note field to get_units_with_products function
+-- Migration: Add note column to capital_units and update get_units_with_products
 -- Date: 2025-01-02
+
+-- Step 0: Add note column to capital_units table
+ALTER TABLE "public"."capital_units" ADD COLUMN IF NOT EXISTS "note" "text";
 
 -- Step 1: Drop the existing function
 DROP FUNCTION IF EXISTS "public"."get_units_with_products"();
