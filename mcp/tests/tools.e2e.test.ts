@@ -12,6 +12,7 @@ import { cleanupUser } from "../../tests/e2e/helpers/cleanup";
 import { makeTransaction, makeTransfer } from "../../tests/e2e/helpers/seed";
 import { queryTransactions } from "../src/tools/queryTransactions";
 import { queryTransfers } from "../src/tools/queryTransfers";
+import { getSummary } from "../src/tools/getSummary";
 
 let client: any;
 let user: any;
@@ -295,5 +296,81 @@ describe("queryTransfers", () => {
 
     expect(result.transfers).toEqual([]);
     expect(result.total_returned).toBe(0);
+  });
+});
+
+// ============================================================================
+// get_summary tool handler
+// ============================================================================
+
+describe("getSummary", () => {
+  it("returns all metadata fields", async () => {
+    const result = await getSummary(client);
+
+    expect(result.years).toBeDefined();
+    expect(result.accounts).toBeDefined();
+    expect(result.categories).toBeDefined();
+    expect(result.currencies).toBeDefined();
+    expect(result.tags).toBeDefined();
+    expect(result.transaction_count).toBeDefined();
+    expect(result.transfer_count).toBeDefined();
+  });
+
+  it("returns correct years from both tables", async () => {
+    const result = await getSummary(client);
+
+    // Seeded: transactions have 2026 (4x) and 2025 (2x), transfers have 2026 (3x) and 2025 (1x)
+    expect(result.years).toContain(2025);
+    expect(result.years).toContain(2026);
+    expect(result.years.length).toBe(2);
+  });
+
+  it("returns correct accounts from both tables", async () => {
+    const result = await getSummary(client);
+
+    // Transactions: 招商银行 (5x), 支付宝 (1x)
+    // Transfers: 招商银行 (2x), 汇丰银行 (1x), 支付宝 (1x)
+    expect(result.accounts).toContain("招商银行");
+    expect(result.accounts).toContain("支付宝");
+    expect(result.accounts).toContain("汇丰银行");
+    expect(result.accounts.length).toBe(3);
+  });
+
+  it("returns correct categories from transactions", async () => {
+    const result = await getSummary(client);
+
+    // Seeded: 餐饮, 交通, 工资, 投资
+    expect(result.categories).toContain("餐饮");
+    expect(result.categories).toContain("交通");
+    expect(result.categories).toContain("工资");
+    expect(result.categories).toContain("投资");
+    expect(result.categories.length).toBe(4);
+  });
+
+  it("returns correct currencies from both tables", async () => {
+    const result = await getSummary(client);
+
+    // Transactions: 人民币 (4x), 美元 (1x)
+    // Transfers: 人民币 (3x), 港币 (1x)
+    expect(result.currencies).toContain("人民币");
+    expect(result.currencies).toContain("美元");
+    expect(result.currencies).toContain("港币");
+    expect(result.currencies.length).toBe(3);
+  });
+
+  it("returns correct tags from both tables", async () => {
+    const result = await getSummary(client);
+
+    // Transactions seed: makeTransaction default tags=["日常"], 工作餐 tag on 午餐外卖
+    // Transfers seed: ["日常"] on 日常转账
+    expect(result.tags).toContain("日常");
+    expect(result.tags).toContain("工作餐");
+  });
+
+  it("returns correct counts", async () => {
+    const result = await getSummary(client);
+
+    expect(result.transaction_count).toBe(6);
+    expect(result.transfer_count).toBe(4);
   });
 });
