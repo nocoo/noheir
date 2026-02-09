@@ -15,7 +15,9 @@
     "test": "bun test",
     "test:unit": "bun test tests/contexts tests/domain tests/hooks tests/lib tests/services tests/smoke tests/viewmodels",
     "test:e2e": "bun test tests/e2e/",
+    "test:mcp": "bun test mcp/tests/",
     "test:coverage": "bun test --coverage",
+    "mcp:start": "bun run mcp/src/index.ts",
     "version": "bun run scripts/generate-version.ts"
   },
   "dependencies": {
