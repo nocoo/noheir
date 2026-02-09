@@ -2,9 +2,9 @@ import { beforeAll } from 'bun:test';
 import { Window } from 'happy-dom';
 
 beforeAll(() => {
-  // SAFETY: Force-override to dummy values so unit tests NEVER leak to
-  // a real Supabase instance, even if .env.local contains production credentials.
-  // Bun auto-loads .env.local before preload scripts, so `||` is NOT safe here.
+  // SAFETY: Two-layer defense against production DB leaks:
+  // 1. .env.test provides safe dummy values (Bun skips .env.local when NODE_ENV=test)
+  // 2. This force-override catches edge cases (e.g., explicit --env-file overrides)
   process.env.VITE_SUPABASE_URL = 'http://localhost';
   process.env.VITE_SUPABASE_ANON_KEY = 'test-key';
 
