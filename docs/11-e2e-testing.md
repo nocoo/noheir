@@ -71,8 +71,9 @@ bun test
 
 | Script | Command |
 |---|---|
-| `test:e2e` | `bun test tests/e2e/` |
-| `test:all` | `bun test` |
+| `test:unit` | `bun run test:unit` — UT only (no E2E) |
+| `test:e2e` | `bun run test:e2e` — E2E only (requires local Supabase) |
+| `test` | `bun test` — runs all tests (UT + E2E) |
 
 ## API Coverage Matrix
 
@@ -80,89 +81,89 @@ bun test
 
 | # | Operation | File | Status |
 |---|---|---|---|
-| 1 | `auth.signUp` (email/password) | auth.e2e.test.ts | pending |
-| 2 | `auth.signInWithPassword` | auth.e2e.test.ts | pending |
-| 3 | `auth.getSession` | auth.e2e.test.ts | pending |
-| 4 | `auth.signOut` | auth.e2e.test.ts | pending |
+| 1 | `auth.signUp` (email/password) | auth.e2e.test.ts | ✅ pass |
+| 2 | `auth.signInWithPassword` | auth.e2e.test.ts | ✅ pass |
+| 3 | `auth.getSession` | auth.e2e.test.ts | ✅ pass |
+| 4 | `auth.signOut` | auth.e2e.test.ts | ✅ pass |
 
 ### Settings (5 APIs)
 
 | # | Operation | File | Status |
 |---|---|---|---|
-| 5 | `settings.select` (fetch by owner_id) | settings.e2e.test.ts | pending |
-| 6 | `settings.insert` (create) | settings.e2e.test.ts | pending |
-| 7 | `settings.update` site_name | settings.e2e.test.ts | pending |
-| 8 | `settings.update` settings JSONB | settings.e2e.test.ts | pending |
-| 9 | `settings.select` returns null for new user | settings.e2e.test.ts | pending |
+| 5 | `settings.select` (fetch by owner_id) | settings.e2e.test.ts | ✅ pass |
+| 6 | `settings.insert` (create) | settings.e2e.test.ts | ✅ pass |
+| 7 | `settings.update` site_name | settings.e2e.test.ts | ✅ pass |
+| 8 | `settings.update` settings JSONB | settings.e2e.test.ts | ✅ pass |
+| 9 | `settings.select` returns null for new user | settings.e2e.test.ts | ✅ pass |
 
 ### Transactions (9 APIs)
 
 | # | Operation | File | Status |
 |---|---|---|---|
-| 10 | `transactions.select` years | transactions.e2e.test.ts | pending |
-| 11 | `transactions.select` all ordered | transactions.e2e.test.ts | pending |
-| 12 | `transactions.select` by year | transactions.e2e.test.ts | pending |
-| 13 | `transactions.select` count by year | transactions.e2e.test.ts | pending |
-| 14 | `transactions.insert` batch | transactions.e2e.test.ts | pending |
-| 15 | `transactions.delete` by year | transactions.e2e.test.ts | pending |
-| 16 | `transactions.delete` all | transactions.e2e.test.ts | pending |
-| 17 | `transactions.select` latest year | transactions.e2e.test.ts | pending |
-| 18 | `transactions.select` years excluding one | transactions.e2e.test.ts | pending |
+| 10 | `transactions.select` years | transactions.e2e.test.ts | ✅ pass |
+| 11 | `transactions.select` all ordered | transactions.e2e.test.ts | ✅ pass |
+| 12 | `transactions.select` by year | transactions.e2e.test.ts | ✅ pass |
+| 13 | `transactions.select` count by year | transactions.e2e.test.ts | ✅ pass |
+| 14 | `transactions.insert` batch | transactions.e2e.test.ts | ✅ pass |
+| 15 | `transactions.delete` by year | transactions.e2e.test.ts | ✅ pass |
+| 16 | `transactions.delete` all | transactions.e2e.test.ts | ✅ pass |
+| 17 | `transactions.select` latest year | transactions.e2e.test.ts | ✅ pass |
+| 18 | `transactions.select` years excluding one | transactions.e2e.test.ts | ✅ pass |
 
 ### Transfers (5 APIs)
 
 | # | Operation | File | Status |
 |---|---|---|---|
-| 19 | `transfers.select` all ordered | transfers.e2e.test.ts | pending |
-| 20 | `transfers.insert` batch | transfers.e2e.test.ts | pending |
-| 21 | `transfers.delete` by year | transfers.e2e.test.ts | pending |
-| 22 | `transfers.delete` all | transfers.e2e.test.ts | pending |
-| 23 | `transfers.delete` + re-insert (replace) | transfers.e2e.test.ts | pending |
+| 19 | `transfers.select` all ordered | transfers.e2e.test.ts | ✅ pass |
+| 20 | `transfers.insert` batch | transfers.e2e.test.ts | ✅ pass |
+| 21 | `transfers.delete` by year | transfers.e2e.test.ts | ✅ pass |
+| 22 | `transfers.delete` all | transfers.e2e.test.ts | ✅ pass |
+| 23 | `transfers.delete` + re-insert (replace) | transfers.e2e.test.ts | ✅ pass |
 
 ### Financial Products (5 APIs)
 
 | # | Operation | File | Status |
 |---|---|---|---|
-| 24 | `financial_products.select` all | products.e2e.test.ts | pending |
-| 25 | `financial_products.select` by id | products.e2e.test.ts | pending |
-| 26 | `financial_products.insert` | products.e2e.test.ts | pending |
-| 27 | `financial_products.update` | products.e2e.test.ts | pending |
-| 28 | `financial_products.delete` | products.e2e.test.ts | pending |
+| 24 | `financial_products.select` all | products.e2e.test.ts | ✅ pass |
+| 25 | `financial_products.select` by id | products.e2e.test.ts | ✅ pass |
+| 26 | `financial_products.insert` | products.e2e.test.ts | ✅ pass |
+| 27 | `financial_products.update` | products.e2e.test.ts | ✅ pass |
+| 28 | `financial_products.delete` | products.e2e.test.ts | ✅ pass |
 
 ### Capital Units (13 APIs)
 
 | # | Operation | File | Status |
 |---|---|---|---|
-| 29 | `capital_units.select` all (no product) | units.e2e.test.ts | pending |
-| 30 | `capital_units.select` filtered + sorted | units.e2e.test.ts | pending |
-| 31 | `capital_units.select` by id | units.e2e.test.ts | pending |
-| 32 | `capital_units.insert` single | units.e2e.test.ts | pending |
-| 33 | `capital_units.update` single | units.e2e.test.ts | pending |
-| 34 | `capital_units.delete` single | units.e2e.test.ts | pending |
-| 35 | deploy: verify status + update product/dates | units.e2e.test.ts | pending |
-| 36 | recall: clear product + reset status | units.e2e.test.ts | pending |
-| 37 | archive: set status '已归档' | units.e2e.test.ts | pending |
-| 38 | `capital_units.insert` batch | units.e2e.test.ts | pending |
-| 39 | `capital_units.update` batch statuses | units.e2e.test.ts | pending |
-| 40 | `capital_units.select` + join product by id | units.e2e.test.ts | pending |
-| 41 | `financial_products.select` by ids (for manual join) | units.e2e.test.ts | pending |
+| 29 | `capital_units.select` all (no product) | units.e2e.test.ts | ✅ pass |
+| 30 | `capital_units.select` filtered + sorted | units.e2e.test.ts | ✅ pass |
+| 31 | `capital_units.select` by id | units.e2e.test.ts | ✅ pass |
+| 32 | `capital_units.insert` single | units.e2e.test.ts | ✅ pass |
+| 33 | `capital_units.update` single | units.e2e.test.ts | ✅ pass |
+| 34 | `capital_units.delete` single | units.e2e.test.ts | ✅ pass |
+| 35 | deploy: verify status + update product/dates | units.e2e.test.ts | ✅ pass |
+| 36 | recall: clear product + reset status | units.e2e.test.ts | ✅ pass |
+| 37 | archive: set status '已归档' | units.e2e.test.ts | ✅ pass |
+| 38 | `capital_units.insert` batch | units.e2e.test.ts | ✅ pass |
+| 39 | `capital_units.update` batch statuses | units.e2e.test.ts | ✅ pass |
+| 40 | `capital_units.select` + join product by id | units.e2e.test.ts | ✅ pass |
+| 41 | `financial_products.select` by ids (for manual join) | units.e2e.test.ts | ✅ pass |
 
 ### RPC Functions (2 APIs)
 
 | # | Operation | File | Status |
 |---|---|---|---|
-| 42 | `rpc('get_units_with_products')` | rpc.e2e.test.ts | pending |
-| 43 | `rpc('search_transactions_fuzzy')` all params | rpc.e2e.test.ts | pending |
+| 42 | `rpc('get_units_with_products')` | rpc.e2e.test.ts | ✅ pass |
+| 43 | `rpc('search_transactions_fuzzy')` all params | rpc.e2e.test.ts | ✅ pass |
 
 ### RLS Security (5 scenarios)
 
 | # | Scenario | File | Status |
 |---|---|---|---|
-| 44 | anon cannot read any table | rls.e2e.test.ts | pending |
-| 45 | user A cannot read user B's transactions | rls.e2e.test.ts | pending |
-| 46 | user A cannot read user B's settings | rls.e2e.test.ts | pending |
-| 47 | user A cannot read user B's products/units | rls.e2e.test.ts | pending |
-| 48 | anon cannot call RPC functions | rls.e2e.test.ts | pending |
+| 44 | anon cannot read any table | rls.e2e.test.ts | ✅ pass |
+| 45 | user A cannot read user B's transactions | rls.e2e.test.ts | ✅ pass |
+| 46 | user A cannot read user B's settings | rls.e2e.test.ts | ✅ pass |
+| 47 | user A cannot read user B's products/units | rls.e2e.test.ts | ✅ pass |
+| 48 | anon cannot call RPC functions | rls.e2e.test.ts | ✅ pass |
 
 **Total: 48 test scenarios across 8 files**
 
