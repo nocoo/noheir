@@ -76,6 +76,7 @@ interface Settings {
   aiConfig: AIConfig;         // AI 配置
   accountTypes: AccountTypeConfig[];  // 账户类型配置
   balanceAnchors: BalanceAnchor[];    // 余额锚点
+  mcpEnabled: boolean;        // MCP 服务器开关
 }
 
 interface SettingsContextType {
@@ -100,6 +101,7 @@ interface SettingsContextType {
   updateBalanceAnchors: (anchors: BalanceAnchor[]) => void;
   addBalanceAnchor: (anchor: BalanceAnchor) => void;
   removeBalanceAnchor: (accountName: string, date: string) => void;
+  updateMcpEnabled: (enabled: boolean) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -121,6 +123,7 @@ const DEFAULT_SETTINGS: Settings = {
   },
   accountTypes: [],
   balanceAnchors: [],
+  mcpEnabled: false,
 };
 
 const STORAGE_KEY = 'finance-settings';
@@ -340,6 +343,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     }));
   };
 
+  const updateMcpEnabled = (enabled: boolean) => {
+    setSettings(prev => ({ ...prev, mcpEnabled: enabled }));
+  };
+
   return (
     <SettingsContext.Provider
       value={{
@@ -364,6 +371,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         updateBalanceAnchors,
         addBalanceAnchor,
         removeBalanceAnchor,
+        updateMcpEnabled,
       }}
     >
       {children}
