@@ -2,8 +2,11 @@ import { beforeAll } from 'bun:test';
 import { Window } from 'happy-dom';
 
 beforeAll(() => {
-  process.env.VITE_SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'http://localhost';
-  process.env.VITE_SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'test-key';
+  // SAFETY: Force-override to dummy values so unit tests NEVER leak to
+  // a real Supabase instance, even if .env.local contains production credentials.
+  // Bun auto-loads .env.local before preload scripts, so `||` is NOT safe here.
+  process.env.VITE_SUPABASE_URL = 'http://localhost';
+  process.env.VITE_SUPABASE_ANON_KEY = 'test-key';
 
   if (typeof document !== 'undefined') {
     return;
