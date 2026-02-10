@@ -2,7 +2,7 @@ README.md
 
 ## MCP Server
 
-Local MCP server (`mcp/`) exposes read-only financial data to AI agents via stdio transport.
+Local MCP server (`mcp/`) exposes financial data query and asset CRUD to AI agents via stdio transport.
 
 ### Quick Start
 
@@ -40,11 +40,21 @@ bun run mcp:start
 | `query_transfers` | Search/filter transfers with keyword, accounts, transaction_type, tags, amount range, date range, year/month, currency |
 | `get_summary` | Metadata: available years, accounts, categories, currencies, tags, counts |
 | `get_monthly_report` | Monthly aggregation: income/expense totals, net amount, transfer flows, category breakdowns, currencies |
+| `list_products` | List financial products with optional channel/category/currency filters |
+| `get_product` | Get a single product by ID |
+| `create_product` | Create a financial product (name, channel, category required) |
+| `update_product` | Update product fields (at least one field required) |
+| `delete_product` | Delete a product (linked units get product_id set to null) |
+| `list_units` | List capital units with optional status/strategy/tactics/currency filters, with_products join |
+| `get_unit` | Get a single unit by ID, optional with_product join |
+| `create_unit` | Create a capital unit (unit_code, amount, strategy, tactics required) |
+| `update_unit` | Update unit fields, supports null clearing for product_id/start_date/note |
+| `delete_unit` | Delete a capital unit |
 
 ### Testing
 
 ```bash
-bun run test:mcp  # 66 tests (59 tool handler + 7 protocol-level)
+bun run test:mcp  # 168 tests (51 unit + 38 integration + 59 tool handler + 20 protocol-level)
 ```
 
 ## Test Architecture
@@ -55,7 +65,7 @@ bun run test:mcp  # 66 tests (59 tool handler + 7 protocol-level)
 |-------|-------|-------------|--------|
 | Unit (204 tests) | `tests/{domain,viewmodels,contexts,hooks,lib,services,smoke}/` | No | `bun run test:unit` |
 | E2E (59 tests) | `tests/e2e/` | Yes (local Supabase) | `bun run test:e2e` |
-| MCP E2E (66 tests) | `mcp/tests/` | No (mocked) | `bun run test:mcp` |
+| MCP E2E (168 tests) | `mcp/tests/` | No (mocked) | `bun run test:mcp` |
 
 ### Environment Isolation (Two-Layer Defense)
 
