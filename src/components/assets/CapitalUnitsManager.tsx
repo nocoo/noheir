@@ -230,6 +230,7 @@ function UnitForm({ unit, open, onClose, onSubmit, isPending }: UnitFormProps) {
         status: '已成立',
         strategy: '长期理财',
         tactics: '稳健理财',
+        note: '',
       });
     }
   }, [unit]);
@@ -436,6 +437,18 @@ function UnitForm({ unit, open, onClose, onSubmit, isPending }: UnitFormProps) {
                 </Select>
               </div>
             )}
+
+            {/* Note */}
+            <div className="space-y-2">
+              <Label htmlFor="note">备注</Label>
+              <Input
+                id="note"
+                type="text"
+                value={formData.note || ''}
+                onChange={e => updateField('note', e.target.value || undefined)}
+                placeholder="用途说明（可选）"
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
