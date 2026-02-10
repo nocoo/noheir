@@ -31,24 +31,32 @@ async function main() {
   // ---------------------------------------------------------------------------
   server.tool(
     "query_transactions",
-    "Search and filter personal transactions (income/expense). Supports keyword search, primary/secondary/tertiary category filters, account/tag filters, amount range, date range, year/month, and currency filters.",
+    `Search and filter personal financial transactions (income and expense records).
+
+IMPORTANT: Call get_summary first to discover available filter values (categories, accounts, currencies, tags, years) before querying. Do not guess parameter values.
+
+All parameters are optional and combine with AND logic — use multiple filters to narrow results progressively. When the user's request is vague, start broad (fewer filters) and refine based on results.
+
+Keyword search is fuzzy (ILIKE) and matches across note, all 3 category levels, and account fields. The response includes a matched_field indicator ('note', 'category', 'secondary_category', 'tertiary_category', or 'account') showing which field the keyword matched.
+
+Use year/month for period-based queries (e.g. "2025年6月"). Use start_date/end_date for arbitrary date ranges. Avoid combining both — they are redundant.`,
     {
-      keyword: z.string().optional().describe("Fuzzy search keyword — matches note, category, account"),
-      type: z.enum(["income", "expense"]).optional().describe("Transaction type filter"),
-      categories: z.array(z.string()).optional().describe("Filter by primary categories"),
-      secondary_categories: z.array(z.string()).optional().describe("Filter by secondary categories"),
-      tertiary_categories: z.array(z.string()).optional().describe("Filter by tertiary categories"),
-      accounts: z.array(z.string()).optional().describe("Filter by accounts"),
-      tags: z.array(z.string()).optional().describe("Filter by tags (any match)"),
-      start_date: z.string().optional().describe("Start date (YYYY-MM-DD) inclusive"),
-      end_date: z.string().optional().describe("End date (YYYY-MM-DD) inclusive"),
-      min_amount: z.number().optional().describe("Minimum amount"),
-      max_amount: z.number().optional().describe("Maximum amount"),
-      year: z.number().int().optional().describe("Filter by year"),
-      month: z.number().int().min(1).max(12).optional().describe("Filter by month (1-12)"),
-      currency: z.string().optional().describe("Filter by currency (e.g. 人民币, 美元, 港币)"),
-      limit: z.number().int().min(1).max(500).default(50).describe("Max results (default 50, max 500)"),
-      offset: z.number().int().min(0).default(0).describe("Offset for pagination"),
+      keyword: z.string().optional().describe("Fuzzy search keyword — matches note, all category levels, and account name via case-insensitive substring match"),
+      type: z.enum(["income", "expense"]).optional().describe("Filter by transaction type: 'income' for earnings/revenue, 'expense' for spending/costs"),
+      categories: z.array(z.string()).optional().describe("Filter by primary categories (e.g. ['餐饮', '交通']). Get valid values from get_summary().categories"),
+      secondary_categories: z.array(z.string()).optional().describe("Filter by secondary categories (e.g. ['外卖', '出租车']). Get valid values from get_summary().secondary_categories"),
+      tertiary_categories: z.array(z.string()).optional().describe("Filter by tertiary categories (e.g. ['午餐', '分红']). Get valid values from get_summary().tertiary_categories"),
+      accounts: z.array(z.string()).optional().describe("Filter by account names (e.g. ['招商银行', '支付宝']). Get valid values from get_summary().accounts"),
+      tags: z.array(z.string()).optional().describe("Filter by tags — matches if ANY tag in the array overlaps with the record's tags. Get valid values from get_summary().tags"),
+      start_date: z.string().optional().describe("Start date (YYYY-MM-DD) inclusive. Use for arbitrary date ranges. Prefer year/month for full-period queries"),
+      end_date: z.string().optional().describe("End date (YYYY-MM-DD) inclusive. Use with start_date for date range filtering"),
+      min_amount: z.number().optional().describe("Minimum transaction amount (inclusive)"),
+      max_amount: z.number().optional().describe("Maximum transaction amount (inclusive)"),
+      year: z.number().int().optional().describe("Filter by year (e.g. 2025). Get valid values from get_summary().years"),
+      month: z.number().int().min(1).max(12).optional().describe("Filter by month (1-12). Typically used together with year"),
+      currency: z.string().optional().describe("Filter by currency (e.g. '人民币', '美元', '港币'). Get valid values from get_summary().currencies"),
+      limit: z.number().int().min(1).max(500).default(50).describe("Max results per request (default 50, max 500). Use with offset for pagination"),
+      offset: z.number().int().min(0).default(0).describe("Pagination offset. Use limit + offset to page through large result sets"),
     },
     async (params) => {
       const result = await queryTransactions(client, params);
@@ -63,21 +71,25 @@ async function main() {
   // ---------------------------------------------------------------------------
   server.tool(
     "query_transfers",
-    "Search and filter personal transfers (internal account-to-account movements). Supports keyword search, account/tag/transaction_type filters, amount range, date range, year/month, and currency filters.",
+    `Search and filter personal transfers (internal account-to-account movements, not income/expense).
+
+IMPORTANT: Call get_summary first to discover available filter values before querying. Do not guess parameter values.
+
+All parameters are optional and combine with AND logic. Amount filtering uses the larger of inflow/outflow amounts (GREATEST). Transfers have no primary/secondary/tertiary category filters — use query_transactions for categorized records.`,
     {
-      keyword: z.string().optional().describe("Fuzzy search keyword — matches note, category, account"),
-      accounts: z.array(z.string()).optional().describe("Filter by accounts"),
-      transaction_type: z.string().optional().describe("Filter by transaction type (e.g. 转入, 转出)"),
-      tags: z.array(z.string()).optional().describe("Filter by tags (any match)"),
-      start_date: z.string().optional().describe("Start date (YYYY-MM-DD) inclusive"),
-      end_date: z.string().optional().describe("End date (YYYY-MM-DD) inclusive"),
-      min_amount: z.number().optional().describe("Minimum amount (matches GREATEST of inflow/outflow)"),
-      max_amount: z.number().optional().describe("Maximum amount (matches GREATEST of inflow/outflow)"),
-      year: z.number().int().optional().describe("Filter by year"),
-      month: z.number().int().min(1).max(12).optional().describe("Filter by month (1-12)"),
-      currency: z.string().optional().describe("Filter by currency (e.g. 人民币, 美元, 港币)"),
-      limit: z.number().int().min(1).max(500).default(50).describe("Max results (default 50, max 500)"),
-      offset: z.number().int().min(0).default(0).describe("Offset for pagination"),
+      keyword: z.string().optional().describe("Fuzzy search keyword — matches note, category, and account name via case-insensitive substring match"),
+      accounts: z.array(z.string()).optional().describe("Filter by account names (e.g. ['招商银行']). Get valid values from get_summary().accounts"),
+      transaction_type: z.string().optional().describe("Filter by transfer direction (e.g. '转入' for inbound, '转出' for outbound)"),
+      tags: z.array(z.string()).optional().describe("Filter by tags — matches if ANY tag overlaps. Get valid values from get_summary().tags"),
+      start_date: z.string().optional().describe("Start date (YYYY-MM-DD) inclusive. Use for arbitrary date ranges. Prefer year/month for full-period queries"),
+      end_date: z.string().optional().describe("End date (YYYY-MM-DD) inclusive. Use with start_date for date range filtering"),
+      min_amount: z.number().optional().describe("Minimum amount (inclusive). Compared against GREATEST(inflow_amount, outflow_amount)"),
+      max_amount: z.number().optional().describe("Maximum amount (inclusive). Compared against GREATEST(inflow_amount, outflow_amount)"),
+      year: z.number().int().optional().describe("Filter by year (e.g. 2025). Get valid values from get_summary().years"),
+      month: z.number().int().min(1).max(12).optional().describe("Filter by month (1-12). Typically used together with year"),
+      currency: z.string().optional().describe("Filter by currency (e.g. '人民币', '港币'). Get valid values from get_summary().currencies"),
+      limit: z.number().int().min(1).max(500).default(50).describe("Max results per request (default 50, max 500). Use with offset for pagination"),
+      offset: z.number().int().min(0).default(0).describe("Pagination offset. Use limit + offset to page through large result sets"),
     },
     async (params) => {
       const result = await queryTransfers(client, params);
@@ -92,7 +104,17 @@ async function main() {
   // ---------------------------------------------------------------------------
   server.tool(
     "get_summary",
-    "Get metadata summary of the user's financial data: available years, accounts, categories, currencies, tags, and record counts. Useful for understanding what data is available before querying.",
+    `Get metadata summary of the user's financial data. Returns all available filter values and record counts.
+
+ALWAYS call this tool first before using query_transactions or query_transfers. The response tells you:
+- years: which years have data (use for year parameter)
+- accounts: available account names (use for accounts parameter)
+- categories / secondary_categories / tertiary_categories: 3-level category hierarchy (use for category filters in query_transactions)
+- currencies: available currencies (use for currency parameter)
+- tags: available tags (use for tags parameter)
+- transaction_count / transfer_count: total record counts
+
+This ensures you pass valid filter values instead of guessing.`,
     {},
     async () => {
       const result = await getSummary(client);

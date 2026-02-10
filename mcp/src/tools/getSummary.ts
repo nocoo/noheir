@@ -13,6 +13,8 @@ export interface SummaryResult {
   years: number[];
   accounts: string[];
   categories: string[];
+  secondary_categories: string[];
+  tertiary_categories: string[];
   currencies: string[];
   tags: string[];
   transaction_count: number;
@@ -31,6 +33,8 @@ export async function getSummary(client: SupabaseClient): Promise<SummaryResult>
     years: data.years ?? [],
     accounts: data.accounts ?? [],
     categories: data.categories ?? [],
+    secondary_categories: data.secondary_categories ?? [],
+    tertiary_categories: data.tertiary_categories ?? [],
     currencies: data.currencies ?? [],
     tags: data.tags ?? [],
     transaction_count: data.transaction_count ?? 0,

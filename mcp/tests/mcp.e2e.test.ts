@@ -146,6 +146,11 @@ describe("MCP Protocol E2E", () => {
     expect(parsed.categories).toContain("餐饮");
     expect(parsed.categories).toContain("交通");
     expect(parsed.currencies).toContain("人民币");
+    // Verify sub-category metadata is returned
+    expect(parsed.secondary_categories).toBeDefined();
+    expect(Array.isArray(parsed.secondary_categories)).toBe(true);
+    expect(parsed.tertiary_categories).toBeDefined();
+    expect(Array.isArray(parsed.tertiary_categories)).toBe(true);
   });
 
   it("handles empty results gracefully", async () => {

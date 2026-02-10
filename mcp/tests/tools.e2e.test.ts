@@ -442,6 +442,8 @@ describe("getSummary", () => {
     expect(result.years).toBeDefined();
     expect(result.accounts).toBeDefined();
     expect(result.categories).toBeDefined();
+    expect(result.secondary_categories).toBeDefined();
+    expect(result.tertiary_categories).toBeDefined();
     expect(result.currencies).toBeDefined();
     expect(result.tags).toBeDefined();
     expect(result.transaction_count).toBeDefined();
@@ -477,6 +479,32 @@ describe("getSummary", () => {
     expect(result.categories).toContain("工资");
     expect(result.categories).toContain("投资");
     expect(result.categories.length).toBe(4);
+  });
+
+  it("returns correct secondary_categories from transactions", async () => {
+    const result = await getSummary(client);
+
+    // Seeded: 早餐, 外卖, 出租车, 月薪, 股票, 奖金
+    expect(result.secondary_categories).toContain("早餐");
+    expect(result.secondary_categories).toContain("外卖");
+    expect(result.secondary_categories).toContain("出租车");
+    expect(result.secondary_categories).toContain("月薪");
+    expect(result.secondary_categories).toContain("股票");
+    expect(result.secondary_categories).toContain("奖金");
+    expect(result.secondary_categories.length).toBe(6);
+  });
+
+  it("returns correct tertiary_categories from transactions", async () => {
+    const result = await getSummary(client);
+
+    // Seeded: 豆浆, 午餐, 市内, 基本工资, 分红, 年终
+    expect(result.tertiary_categories).toContain("豆浆");
+    expect(result.tertiary_categories).toContain("午餐");
+    expect(result.tertiary_categories).toContain("市内");
+    expect(result.tertiary_categories).toContain("基本工资");
+    expect(result.tertiary_categories).toContain("分红");
+    expect(result.tertiary_categories).toContain("年终");
+    expect(result.tertiary_categories.length).toBe(6);
   });
 
   it("returns correct currencies from both tables", async () => {
