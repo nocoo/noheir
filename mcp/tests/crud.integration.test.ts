@@ -26,7 +26,6 @@ import {
 /* eslint-disable @typescript-eslint/no-explicit-any -- root and mcp have separate @supabase/supabase-js instances */
 let client: any;
 let user: any;
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 beforeAll(async () => {
   const auth = await createAuthenticatedClient("mcp-crud");

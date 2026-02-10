@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- mock chains require dynamic typing */
+
 /**
  * Unit Tests: Unit CRUD handlers
  *
@@ -54,7 +56,7 @@ function createChainMock(result: { data?: unknown; error?: unknown }) {
 }
 
 function createTrackingMock(result: { data?: unknown; error?: unknown }) {
-  let eqCalls: [string, unknown][] = [];
+  const eqCalls: [string, unknown][] = [];
   let insertedData: Record<string, unknown> = {};
   let updatedData: Record<string, unknown> = {};
 

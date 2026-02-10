@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- MCP protocol responses need dynamic typing */
+
 /**
  * E2E: MCP Protocol-level tests
  *

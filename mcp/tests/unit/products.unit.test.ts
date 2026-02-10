@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- mock chains require dynamic typing */
+
 /**
  * Unit Tests: Product CRUD handlers
  *
@@ -123,7 +125,7 @@ describe("listProducts", () => {
   });
 
   it("passes channel filter", async () => {
-    let eqCalls: [string, unknown][] = [];
+    const eqCalls: [string, unknown][] = [];
     const chain: Record<string, any> = {};
     const methods = ["select", "order", "single", "maybeSingle", "insert", "update", "delete"];
     for (const m of methods) {
@@ -144,7 +146,7 @@ describe("listProducts", () => {
   });
 
   it("passes category filter", async () => {
-    let eqCalls: [string, unknown][] = [];
+    const eqCalls: [string, unknown][] = [];
     const chain: Record<string, any> = {};
     const methods = ["select", "order", "single", "maybeSingle", "insert", "update", "delete"];
     for (const m of methods) {
@@ -165,7 +167,7 @@ describe("listProducts", () => {
   });
 
   it("passes currency filter", async () => {
-    let eqCalls: [string, unknown][] = [];
+    const eqCalls: [string, unknown][] = [];
     const chain: Record<string, any> = {};
     const methods = ["select", "order", "single", "maybeSingle", "insert", "update", "delete"];
     for (const m of methods) {
@@ -186,7 +188,7 @@ describe("listProducts", () => {
   });
 
   it("does not add eq filters when params are empty", async () => {
-    let eqCalls: [string, unknown][] = [];
+    const eqCalls: [string, unknown][] = [];
     const chain: Record<string, any> = {};
     const methods = ["select", "order", "single", "maybeSingle", "insert", "update", "delete"];
     for (const m of methods) {
