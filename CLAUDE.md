@@ -54,7 +54,7 @@ bun run test:mcp  # 66 tests (59 tool handler + 7 protocol-level)
 | Layer | Files | DB Required | Runner |
 |-------|-------|-------------|--------|
 | Unit (204 tests) | `tests/{domain,viewmodels,contexts,hooks,lib,services,smoke}/` | No | `bun run test:unit` |
-| E2E (8 tests) | `tests/e2e/` | Yes (local Supabase) | `bun run test:e2e` |
+| E2E (59 tests) | `tests/e2e/` | Yes (local Supabase) | `bun run test:e2e` |
 | MCP E2E (66 tests) | `mcp/tests/` | No (mocked) | `bun run test:mcp` |
 
 ### Environment Isolation (Two-Layer Defense)
