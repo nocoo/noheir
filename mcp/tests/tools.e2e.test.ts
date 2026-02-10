@@ -13,6 +13,7 @@ import { makeTransaction, makeTransfer } from "../../tests/e2e/helpers/seed";
 import { queryTransactions } from "../src/tools/queryTransactions";
 import { queryTransfers } from "../src/tools/queryTransfers";
 import { getSummary } from "../src/tools/getSummary";
+import { getMonthlyReport } from "../src/tools/getMonthlyReport";
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- root and mcp have separate @supabase/supabase-js instances causing structural type mismatch */
 let client: any;
@@ -532,5 +533,114 @@ describe("getSummary", () => {
 
     expect(result.transaction_count).toBe(6);
     expect(result.transfer_count).toBe(4);
+  });
+});
+
+// ============================================================================
+// get_monthly_report tool handler
+// ============================================================================
+
+describe("getMonthlyReport", () => {
+  // Seed recap for 2026-01 (人民币):
+  //   Transactions: 早餐豆浆(expense,餐饮,12), 午餐外卖(expense,餐饮,35),
+  //                 打车回家(expense,交通,45), 工资收入(income,工资,15000)
+  //   Transfers: 还信用卡(out:5000), 理财赎回(in:10000), 日常转账(out:200)
+  //
+  // 2025-06 (美元): 美股分红(income,投资,200)
+  // 2025-12 (人民币): 年终奖金(income,工资,50000)
+  // 2025-03 (港币): 港币兑换(transfer,out:8000)
+
+  it("returns correct income and expense totals for a month", async () => {
+    const result = await getMonthlyReport(client, { year: 2026, month: 1 });
+
+    expect(result.year).toBe(2026);
+    expect(result.month).toBe(1);
+    expect(result.total_income).toBe(15000);
+    expect(result.total_expense).toBe(92); // 12 + 35 + 45
+    expect(result.net_amount).toBe(14908); // 15000 - 92
+  });
+
+  it("returns correct transaction and transfer counts", async () => {
+    const result = await getMonthlyReport(client, { year: 2026, month: 1 });
+
+    expect(result.transaction_count).toBe(4);
+    expect(result.transfer_count).toBe(3);
+  });
+
+  it("returns correct transfer inflow and outflow totals", async () => {
+    const result = await getMonthlyReport(client, { year: 2026, month: 1 });
+
+    expect(result.total_transfer_in).toBe(10000);
+    expect(result.total_transfer_out).toBe(5200); // 5000 + 200
+  });
+
+  it("returns expense breakdown by category sorted by amount desc", async () => {
+    const result = await getMonthlyReport(client, { year: 2026, month: 1 });
+
+    expect(result.expense_by_category.length).toBe(2);
+    // 餐饮: 12+35=47 (2 records), 交通: 45 (1 record)
+    expect(result.expense_by_category[0].category).toBe("餐饮");
+    expect(result.expense_by_category[0].total).toBe(47);
+    expect(result.expense_by_category[0].count).toBe(2);
+    expect(result.expense_by_category[1].category).toBe("交通");
+    expect(result.expense_by_category[1].total).toBe(45);
+    expect(result.expense_by_category[1].count).toBe(1);
+  });
+
+  it("returns income breakdown by category", async () => {
+    const result = await getMonthlyReport(client, { year: 2026, month: 1 });
+
+    expect(result.income_by_category.length).toBe(1);
+    expect(result.income_by_category[0].category).toBe("工资");
+    expect(result.income_by_category[0].total).toBe(15000);
+    expect(result.income_by_category[0].count).toBe(1);
+  });
+
+  it("returns currencies involved in the month", async () => {
+    const result = await getMonthlyReport(client, { year: 2026, month: 1 });
+
+    expect(result.currencies).toContain("人民币");
+    expect(result.currencies.length).toBe(1); // only 人民币 in 2026-01
+  });
+
+  it("filters by currency", async () => {
+    // 2025-06 has 美股分红 in 美元 — should only count that
+    const result = await getMonthlyReport(client, { year: 2025, month: 6, currency: "美元" });
+
+    expect(result.total_income).toBe(200);
+    expect(result.total_expense).toBe(0);
+    expect(result.transaction_count).toBe(1);
+    expect(result.income_by_category.length).toBe(1);
+    expect(result.income_by_category[0].category).toBe("投资");
+  });
+
+  it("returns zeros for a month with no data", async () => {
+    const result = await getMonthlyReport(client, { year: 2020, month: 1 });
+
+    expect(result.total_income).toBe(0);
+    expect(result.total_expense).toBe(0);
+    expect(result.net_amount).toBe(0);
+    expect(result.transaction_count).toBe(0);
+    expect(result.transfer_count).toBe(0);
+    expect(result.total_transfer_in).toBe(0);
+    expect(result.total_transfer_out).toBe(0);
+    expect(result.expense_by_category).toEqual([]);
+    expect(result.income_by_category).toEqual([]);
+  });
+
+  it("reports different months independently", async () => {
+    // 2025-12: 年终奖金 (income, 工资, 50000, 人民币)
+    const dec = await getMonthlyReport(client, { year: 2025, month: 12 });
+    expect(dec.total_income).toBe(50000);
+    expect(dec.total_expense).toBe(0);
+    expect(dec.transaction_count).toBe(1);
+
+    // 2025-03: only a transfer (港币兑换)
+    const mar = await getMonthlyReport(client, { year: 2025, month: 3 });
+    expect(mar.total_income).toBe(0);
+    expect(mar.total_expense).toBe(0);
+    expect(mar.transaction_count).toBe(0);
+    expect(mar.transfer_count).toBe(1);
+    expect(mar.total_transfer_out).toBe(8000);
   });
 });

@@ -14,6 +14,7 @@ import { getAuthConfig, createAuthenticatedSupabaseClient } from "./auth";
 import { queryTransactions } from "./tools/queryTransactions";
 import { queryTransfers } from "./tools/queryTransfers";
 import { getSummary } from "./tools/getSummary";
+import { getMonthlyReport } from "./tools/getMonthlyReport";
 
 async function main() {
   // Authenticate
@@ -118,6 +119,35 @@ This ensures you pass valid filter values instead of guessing.`,
     {},
     async () => {
       const result = await getSummary(client);
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(result) }],
+      };
+    },
+  );
+
+  // ---------------------------------------------------------------------------
+  // Tool: get_monthly_report
+  // ---------------------------------------------------------------------------
+  server.tool(
+    "get_monthly_report",
+    `Get aggregated financial report for a specific month. Returns income/expense totals, net amount, transfer flows, and category breakdowns.
+
+Use this tool when the user asks about monthly spending, income, or financial overview for a specific period. For example: "2025年6月花了多少钱", "上个月收支情况", "1月各分类支出".
+
+Call get_summary first to discover available years via get_summary().years. The response includes:
+- total_income / total_expense / net_amount: aggregated amounts
+- expense_by_category / income_by_category: breakdown with category name, total amount, and transaction count (sorted by amount descending)
+- transfer_count / total_transfer_in / total_transfer_out: internal transfer summary
+- currencies: all currencies involved in this month
+
+Use the optional currency parameter to isolate a single currency when the user has multi-currency data.`,
+    {
+      year: z.number().int().describe("Year to report on (e.g. 2025). Required. Get valid values from get_summary().years"),
+      month: z.number().int().min(1).max(12).describe("Month to report on (1-12). Required"),
+      currency: z.string().optional().describe("Optional currency filter (e.g. '人民币'). When omitted, aggregates across all currencies"),
+    },
+    async (params) => {
+      const result = await getMonthlyReport(client, params);
       return {
         content: [{ type: "text" as const, text: JSON.stringify(result) }],
       };

@@ -74,10 +74,10 @@ describe("MCP Protocol E2E", () => {
     const result = await mcpClient.listTools();
 
     expect(result.tools).toBeDefined();
-    expect(result.tools.length).toBe(3);
+    expect(result.tools.length).toBe(4);
 
     const toolNames = result.tools.map((t) => t.name).sort();
-    expect(toolNames).toEqual(["get_summary", "query_transactions", "query_transfers"]);
+    expect(toolNames).toEqual(["get_monthly_report", "get_summary", "query_transactions", "query_transfers"]);
 
     // Verify each tool has a description and input schema
     for (const tool of result.tools) {
@@ -151,6 +151,27 @@ describe("MCP Protocol E2E", () => {
     expect(Array.isArray(parsed.secondary_categories)).toBe(true);
     expect(parsed.tertiary_categories).toBeDefined();
     expect(Array.isArray(parsed.tertiary_categories)).toBe(true);
+  });
+
+  it("calls get_monthly_report tool", async () => {
+    const result = await mcpClient.callTool({
+      name: "get_monthly_report",
+      arguments: { year: 2026, month: 1 },
+    });
+
+    const textContent = result.content as Array<{ type: string; text: string }>;
+    const parsed = JSON.parse(textContent[0].text);
+
+    expect(parsed.year).toBe(2026);
+    expect(parsed.month).toBe(1);
+    expect(parsed.total_income).toBe(200); // 协议测试交易2 income 200
+    expect(parsed.total_expense).toBe(100); // 协议测试交易1 expense 100
+    expect(parsed.net_amount).toBe(100); // 200 - 100
+    expect(parsed.transaction_count).toBe(2);
+    expect(parsed.transfer_count).toBe(1);
+    expect(parsed.expense_by_category).toBeDefined();
+    expect(parsed.income_by_category).toBeDefined();
+    expect(parsed.currencies).toContain("人民币");
   });
 
   it("handles empty results gracefully", async () => {
