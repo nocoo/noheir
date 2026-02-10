@@ -34,22 +34,45 @@ bun run mcp:start
 
 ### Tools
 
+#### Query Tools (read-only)
+
 | Tool | Description |
 |------|-------------|
-| `query_transactions` | Search/filter transactions with keyword, type, categories, accounts, tags, amount range, date range, year/month, currency |
-| `query_transfers` | Search/filter transfers with keyword, accounts, transaction_type, tags, amount range, date range, year/month, currency |
-| `get_summary` | Metadata: available years, accounts, categories, currencies, tags, counts |
-| `get_monthly_report` | Monthly aggregation: income/expense totals, net amount, transfer flows, category breakdowns, currencies |
-| `list_products` | List financial products with optional channel/category/currency filters |
-| `get_product` | Get a single product by ID |
-| `create_product` | Create a financial product (name, channel, category required) |
-| `update_product` | Update product fields (at least one field required) |
-| `delete_product` | Delete a product (linked units get product_id set to null) |
-| `list_units` | List capital units with optional status/strategy/tactics/currency filters, with_products join |
-| `get_unit` | Get a single unit by ID, optional with_product join |
-| `create_unit` | Create a capital unit (unit_code, amount, strategy, tactics required) |
-| `update_unit` | Update unit fields, supports null clearing for product_id/start_date/note |
-| `delete_unit` | Delete a capital unit |
+| `get_summary` | **Call first.** Returns metadata: available years, accounts, categories (3-level), currencies, tags, counts. Use the returned values as filter parameters for other query tools. |
+| `query_transactions` | Search/filter transactions with keyword, type, categories, accounts, tags, amount range, date range, year/month, currency. All params optional, AND logic. Returns `{ transactions[], total_returned }`. |
+| `query_transfers` | Search/filter transfers with keyword, accounts, transaction_type, tags, amount range, date range, year/month, currency. All params optional, AND logic. Returns `{ transfers[], total_returned }`. |
+| `get_monthly_report` | Monthly aggregation by year+month. Returns income/expense totals, net amount, transfer flows, category breakdowns, currencies. Optional currency filter. |
+
+#### Product CRUD (`financial_products` table)
+
+| Tool | Required Params | Optional Params | Returns |
+|------|----------------|-----------------|---------|
+| `list_products` | — | `channel`, `category`, `currency` | `{ products[], total_returned }` |
+| `get_product` | `id` (uuid) | — | `{ product }` or `{ product: null }` |
+| `create_product` | `name`, `channel`, `category` | `code`, `currency` (default CNY), `lock_period_days` (default 0), `annual_return_rate` | `{ product }` |
+| `update_product` | `id` (uuid) + at least 1 field | `name`, `code`, `channel`, `category`, `currency`, `lock_period_days`, `annual_return_rate` | `{ product }` |
+| `delete_product` | `id` (uuid) | — | `{ success: true }`. Linked units get `product_id` set to null. |
+
+#### Unit CRUD (`capital_units` table)
+
+| Tool | Required Params | Optional Params | Returns |
+|------|----------------|-----------------|---------|
+| `list_units` | — | `status`, `strategy`, `tactics`, `currency`, `with_products` (bool, joins product data) | `{ units[], total_returned }` |
+| `get_unit` | `id` (uuid) | `with_product` (bool) | `{ unit }` or `{ unit: null }` |
+| `create_unit` | `unit_code`, `amount`, `strategy`, `tactics` | `currency` (default CNY), `status` (default '已成立'), `product_id`, `start_date`, `end_date`, `note` | `{ unit }` |
+| `update_unit` | `id` (uuid) + at least 1 field | `unit_code`, `amount`, `currency`, `status`, `strategy`, `tactics`, `product_id` (nullable), `start_date` (nullable), `end_date` (nullable), `note` (nullable) | `{ unit }` |
+| `delete_unit` | `id` (uuid) | — | `{ success: true }` |
+
+#### Enum Values (DB CHECK constraints)
+
+| Field | Valid Values |
+|-------|-------------|
+| `channel` | 招商银行, 平安银行, 微众银行, 支付宝, 招银香港, 光大永明, 中信建投 |
+| `category` (product) | 养老年金, 储蓄保险, 混债基金, 债券基金, 货币基金, 股票基金, 指数基金, 宽基指数, 私募基金, 定期存款, 理财产品, 现金+ |
+| `strategy` | 远期理财, 美元资产, 36存单, 长期理财, 短期理财, 中期理财, 进攻计划, 麻麻理财 |
+| `tactics` | 养老年金, 个人养老金, 定期存款, 理财产品, 现金产品, 债券基金, 偏股基金, 稳健理财, 增额寿险, 货币基金 |
+| `status` (unit) | 已成立, 计划中, 筹集中, 已归档 |
+| `currency` | CNY, USD, HKD |
 
 ### Testing
 
