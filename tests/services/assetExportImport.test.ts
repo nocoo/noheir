@@ -737,6 +737,550 @@ describe('round-trip: export → parse', () => {
 
     // Verify unit data integrity
     expect(data.units[0].product_name).toBe('产品A');
-    expect(data.units[1].product_name).toBeUndefined();
+     expect(data.units[1].product_name).toBeUndefined();
+  });
+});
+
+// ===========================================================================
+// parseProductJSON tests
+// ===========================================================================
+
+describe('parseProductJSON', () => {
+  it('parses valid product export data', async () => {
+    const { parseProductJSON } = await setup();
+    const json = JSON.stringify({
+      version: 1,
+      type: 'products',
+      exported_at: '2026-01-01T00:00:00Z',
+      products: [makeProduct()],
+    });
+    const { data, warnings } = parseProductJSON(json);
+
+    expect(data.version).toBe(1);
+    expect(data.type).toBe('products');
+    expect(data.products).toHaveLength(1);
+    expect(warnings).toHaveLength(0);
+  });
+
+  it('throws on invalid JSON', async () => {
+    const { parseProductJSON } = await setup();
+    expect(() => parseProductJSON('{')).toThrow('Invalid JSON');
+  });
+
+  it('throws on non-object JSON', async () => {
+    const { parseProductJSON } = await setup();
+    expect(() => parseProductJSON('"hello"')).toThrow('must be an object');
+  });
+
+  it('throws on unsupported version', async () => {
+    const { parseProductJSON } = await setup();
+    const json = JSON.stringify({ version: 2, type: 'products', products: [] });
+    expect(() => parseProductJSON(json)).toThrow('Unsupported export version');
+  });
+
+  it('throws when type is not "products"', async () => {
+    const { parseProductJSON } = await setup();
+    const json = JSON.stringify({ version: 1, type: 'units', products: [] });
+    expect(() => parseProductJSON(json)).toThrow('Expected type "products"');
+  });
+
+  it('throws when products is not an array', async () => {
+    const { parseProductJSON } = await setup();
+    const json = JSON.stringify({ version: 1, type: 'products', products: 'bad' });
+    expect(() => parseProductJSON(json)).toThrow('Missing or invalid "products"');
+  });
+
+  it('accepts empty products array', async () => {
+    const { parseProductJSON } = await setup();
+    const json = JSON.stringify({ version: 1, type: 'products', exported_at: '', products: [] });
+    const { data } = parseProductJSON(json);
+    expect(data.products).toHaveLength(0);
+  });
+
+  it('warns on duplicate product names', async () => {
+    const { parseProductJSON } = await setup();
+    const p = makeProduct();
+    const json = JSON.stringify({
+      version: 1,
+      type: 'products',
+      exported_at: '',
+      products: [p, p],
+    });
+    const { warnings } = parseProductJSON(json);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain('duplicate product name');
+  });
+
+  it('throws on invalid product data', async () => {
+    const { parseProductJSON } = await setup();
+    const json = JSON.stringify({
+      version: 1,
+      type: 'products',
+      exported_at: '',
+      products: [{ channel: 'bad' }],
+    });
+    expect(() => parseProductJSON(json)).toThrow('Validation failed');
+  });
+});
+
+// ===========================================================================
+// parseUnitJSON tests
+// ===========================================================================
+
+describe('parseUnitJSON', () => {
+  it('parses valid unit export data', async () => {
+    const { parseUnitJSON } = await setup();
+    const json = JSON.stringify({
+      version: 1,
+      type: 'units',
+      exported_at: '2026-01-01T00:00:00Z',
+      units: [makeUnit()],
+    });
+    const { data, warnings } = parseUnitJSON(json);
+
+    expect(data.version).toBe(1);
+    expect(data.type).toBe('units');
+    expect(data.units).toHaveLength(1);
+    expect(warnings).toHaveLength(0);
+  });
+
+  it('throws on invalid JSON', async () => {
+    const { parseUnitJSON } = await setup();
+    expect(() => parseUnitJSON('{')).toThrow('Invalid JSON');
+  });
+
+  it('throws on non-object JSON', async () => {
+    const { parseUnitJSON } = await setup();
+    expect(() => parseUnitJSON('42')).toThrow('must be an object');
+  });
+
+  it('throws on unsupported version', async () => {
+    const { parseUnitJSON } = await setup();
+    const json = JSON.stringify({ version: 99, type: 'units', units: [] });
+    expect(() => parseUnitJSON(json)).toThrow('Unsupported export version');
+  });
+
+  it('throws when type is not "units"', async () => {
+    const { parseUnitJSON } = await setup();
+    const json = JSON.stringify({ version: 1, type: 'products', units: [] });
+    expect(() => parseUnitJSON(json)).toThrow('Expected type "units"');
+  });
+
+  it('throws when units is not an array', async () => {
+    const { parseUnitJSON } = await setup();
+    const json = JSON.stringify({ version: 1, type: 'units', units: null });
+    expect(() => parseUnitJSON(json)).toThrow('Missing or invalid "units"');
+  });
+
+  it('accepts empty units array', async () => {
+    const { parseUnitJSON } = await setup();
+    const json = JSON.stringify({ version: 1, type: 'units', exported_at: '', units: [] });
+    const { data } = parseUnitJSON(json);
+    expect(data.units).toHaveLength(0);
+  });
+
+  it('uses permissive product_name validation (accepts any product_name)', async () => {
+    const { parseUnitJSON } = await setup();
+    const json = JSON.stringify({
+      version: 1,
+      type: 'units',
+      exported_at: '',
+      units: [makeUnit({ product_name: '任意产品名称' })],
+    });
+    // Should NOT throw even though product_name doesn't exist in any product set
+    const { data } = parseUnitJSON(json);
+    expect(data.units).toHaveLength(1);
+  });
+
+  it('throws on invalid unit data', async () => {
+    const { parseUnitJSON } = await setup();
+    const json = JSON.stringify({
+      version: 1,
+      type: 'units',
+      exported_at: '',
+      units: [{ unit_code: '', amount: -1, strategy: 'bad', tactics: 'bad' }],
+    });
+    expect(() => parseUnitJSON(json)).toThrow('Validation failed');
+  });
+});
+
+// ===========================================================================
+// exportProducts tests
+// ===========================================================================
+
+describe('exportProducts', () => {
+  beforeEach(() => {
+    mockFrom.mockReset();
+    mockSelect.mockReset();
+    mockOrder.mockReset();
+  });
+
+  it('exports products with correct envelope', async () => {
+    mockFrom.mockReturnValue({ select: mockSelect });
+    mockSelect.mockReturnValue({ order: mockOrder });
+    mockOrder.mockResolvedValue({
+      data: [
+        {
+          id: 'p-1', user_id: 'u-1', name: '产品A', code: 'P001',
+          channel: '招商银行', category: '定期存款', currency: 'CNY',
+          lock_period_days: 90, annual_return_rate: 3.5,
+          created_at: '2026-01-01T00:00:00Z',
+        },
+      ],
+      error: null,
+    });
+
+    const { exportProducts } = await setup();
+    const result = await exportProducts();
+
+    expect(result.version).toBe(1);
+    expect(result.type).toBe('products');
+    expect(result.exported_at).toBeDefined();
+    expect(result.products).toHaveLength(1);
+    expect(result.products[0].name).toBe('产品A');
+    expect(result.products[0].code).toBe('P001');
+    // System fields stripped
+    expect((result.products[0] as Record<string, unknown>).id).toBeUndefined();
+    expect((result.products[0] as Record<string, unknown>).user_id).toBeUndefined();
+  });
+
+  it('omits optional fields when null', async () => {
+    mockFrom.mockReturnValue({ select: mockSelect });
+    mockSelect.mockReturnValue({ order: mockOrder });
+    mockOrder.mockResolvedValue({
+      data: [
+        {
+          id: 'p-1', user_id: 'u-1', name: '产品B', code: null,
+          channel: '支付宝', category: '货币基金', currency: 'CNY',
+          lock_period_days: 0, annual_return_rate: null,
+          created_at: '2026-01-01T00:00:00Z',
+        },
+      ],
+      error: null,
+    });
+
+    const { exportProducts } = await setup();
+    const result = await exportProducts();
+
+    expect(result.products[0].code).toBeUndefined();
+    expect(result.products[0].annual_return_rate).toBeUndefined();
+  });
+
+  it('handles empty database', async () => {
+    mockFrom.mockReturnValue({ select: mockSelect });
+    mockSelect.mockReturnValue({ order: mockOrder });
+    mockOrder.mockResolvedValue({ data: [], error: null });
+
+    const { exportProducts } = await setup();
+    const result = await exportProducts();
+
+    expect(result.products).toHaveLength(0);
+  });
+
+  it('throws on Supabase error', async () => {
+    mockFrom.mockReturnValue({ select: mockSelect });
+    mockSelect.mockReturnValue({ order: mockOrder });
+    mockOrder.mockResolvedValue({ data: null, error: { message: 'DB error' } });
+
+    const { exportProducts } = await setup();
+    await expect(exportProducts()).rejects.toThrow('DB error');
+  });
+});
+
+// ===========================================================================
+// exportUnits tests
+// ===========================================================================
+
+describe('exportUnits', () => {
+  beforeEach(() => {
+    mockFrom.mockReset();
+    mockSelect.mockReset();
+    mockOrder.mockReset();
+    mockRpc.mockReset();
+  });
+
+  it('exports units with product name resolution', async () => {
+    // Mock product lookup
+    mockFrom.mockReturnValue({ select: mockSelect });
+    mockSelect.mockResolvedValue({
+      data: [{ id: 'p-1', name: '产品A' }],
+      error: null,
+    });
+
+    // Mock units RPC
+    mockRpc.mockResolvedValue({
+      data: [
+        {
+          id: 'u-1', user_id: 'u-1', unit_code: 'E01', amount: 50000,
+          currency: 'CNY', status: '已成立', strategy: '短期理财', tactics: '理财产品',
+          product_id: 'p-1', start_date: '2026-01-15', note: 'test',
+          created_at: '2026-01-01T00:00:00Z', product: null,
+        },
+      ],
+      error: null,
+    });
+
+    const { exportUnits } = await setup();
+    const result = await exportUnits();
+
+    expect(result.version).toBe(1);
+    expect(result.type).toBe('units');
+    expect(result.units).toHaveLength(1);
+    expect(result.units[0].unit_code).toBe('E01');
+    expect(result.units[0].product_name).toBe('产品A');
+    expect(result.units[0].start_date).toBe('2026-01-15');
+    expect(result.units[0].note).toBe('test');
+    // System fields stripped
+    expect((result.units[0] as Record<string, unknown>).id).toBeUndefined();
+    expect((result.units[0] as Record<string, unknown>).product_id).toBeUndefined();
+  });
+
+  it('handles units without product_id', async () => {
+    mockFrom.mockReturnValue({ select: mockSelect });
+    mockSelect.mockResolvedValue({ data: [], error: null });
+
+    mockRpc.mockResolvedValue({
+      data: [
+        {
+          id: 'u-1', user_id: 'u-1', unit_code: 'E01', amount: 10000,
+          currency: 'CNY', status: '已成立', strategy: '短期理财', tactics: '货币基金',
+          product_id: null, start_date: null, note: null,
+          created_at: '2026-01-01T00:00:00Z', product: null,
+        },
+      ],
+      error: null,
+    });
+
+    const { exportUnits } = await setup();
+    const result = await exportUnits();
+
+    expect(result.units[0].product_name).toBeUndefined();
+    expect(result.units[0].start_date).toBeUndefined();
+    expect(result.units[0].note).toBeUndefined();
+  });
+
+  it('throws on product lookup error', async () => {
+    mockFrom.mockReturnValue({ select: mockSelect });
+    mockSelect.mockResolvedValue({ data: null, error: { message: 'Lookup failed' } });
+
+    const { exportUnits } = await setup();
+    await expect(exportUnits()).rejects.toThrow('Lookup failed');
+  });
+
+  it('throws on units RPC error', async () => {
+    mockFrom.mockReturnValue({ select: mockSelect });
+    mockSelect.mockResolvedValue({ data: [], error: null });
+
+    mockRpc.mockResolvedValue({ data: null, error: { message: 'RPC failed' } });
+
+    const { exportUnits } = await setup();
+    await expect(exportUnits()).rejects.toThrow('RPC failed');
+  });
+});
+
+// ===========================================================================
+// importProducts tests
+// ===========================================================================
+
+describe('importProducts', () => {
+  beforeEach(() => {
+    mockFrom.mockReset();
+    mockInsert.mockReset();
+  });
+
+  it('imports products successfully', async () => {
+    mockFrom.mockReturnValue({
+      insert: (records: unknown[]) => {
+        mockInsert(records);
+        return {
+          select: () => Promise.resolve({
+            data: [{ id: 'p-1', name: '测试产品' }],
+            error: null,
+          }),
+        };
+      },
+    });
+
+    const { importProducts } = await setup();
+    const result = await importProducts({
+      version: 1,
+      type: 'products',
+      exported_at: '',
+      products: [makeProduct()],
+    });
+
+    expect(result.products_created).toBe(1);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it('handles empty products', async () => {
+    const { importProducts } = await setup();
+    const result = await importProducts({
+      version: 1,
+      type: 'products',
+      exported_at: '',
+      products: [],
+    });
+
+    expect(result.products_created).toBe(0);
+    expect(result.warnings).toContain('No products to import');
+  });
+
+  it('handles insert error gracefully', async () => {
+    mockFrom.mockReturnValue({
+      insert: () => ({
+        select: () => Promise.resolve({ data: null, error: { message: 'duplicate key' } }),
+      }),
+    });
+
+    const { importProducts } = await setup();
+    const result = await importProducts({
+      version: 1,
+      type: 'products',
+      exported_at: '',
+      products: [makeProduct()],
+    });
+
+    expect(result.products_created).toBe(0);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]).toContain('duplicate key');
+  });
+});
+
+// ===========================================================================
+// importUnits tests
+// ===========================================================================
+
+describe('importUnits', () => {
+  beforeEach(() => {
+    mockFrom.mockReset();
+    mockSelect.mockReset();
+    mockInsert.mockReset();
+  });
+
+  it('imports units with product name resolution', async () => {
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'financial_products') {
+        return {
+          select: () => Promise.resolve({
+            data: [{ id: 'p-1', name: '测试产品' }],
+            error: null,
+          }),
+        };
+      }
+      return {
+        insert: (records: unknown[]) => {
+          mockInsert(records);
+          return {
+            select: () => Promise.resolve({
+              data: [{ id: 'u-1', unit_code: 'E01' }],
+              error: null,
+            }),
+          };
+        },
+      };
+    });
+
+    const { importUnits } = await setup();
+    const result = await importUnits({
+      version: 1,
+      type: 'units',
+      exported_at: '',
+      units: [makeUnit({ product_name: '测试产品' })],
+    });
+
+    expect(result.units_created).toBe(1);
+    expect(result.errors).toHaveLength(0);
+    expect(result.warnings).toHaveLength(0);
+  });
+
+  it('warns when unit references unknown product', async () => {
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'financial_products') {
+        return {
+          select: () => Promise.resolve({
+            data: [{ id: 'p-1', name: '产品A' }],
+            error: null,
+          }),
+        };
+      }
+      return {
+        insert: () => ({
+          select: () => Promise.resolve({
+            data: [{ id: 'u-1' }],
+            error: null,
+          }),
+        }),
+      };
+    });
+
+    const { importUnits } = await setup();
+    const result = await importUnits({
+      version: 1,
+      type: 'units',
+      exported_at: '',
+      units: [makeUnit({ product_name: '不存在产品' })],
+    });
+
+    expect(result.warnings.length).toBeGreaterThanOrEqual(1);
+    expect(result.warnings[0]).toContain('不存在产品');
+    expect(result.warnings[0]).toContain('not found');
+  });
+
+  it('handles empty units', async () => {
+    const { importUnits } = await setup();
+    const result = await importUnits({
+      version: 1,
+      type: 'units',
+      exported_at: '',
+      units: [],
+    });
+
+    expect(result.units_created).toBe(0);
+    expect(result.warnings).toContain('No units to import');
+  });
+
+  it('handles product lookup error', async () => {
+    mockFrom.mockReturnValue({
+      select: () => Promise.resolve({ data: null, error: { message: 'DB down' } }),
+    });
+
+    const { importUnits } = await setup();
+    const result = await importUnits({
+      version: 1,
+      type: 'units',
+      exported_at: '',
+      units: [makeUnit()],
+    });
+
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]).toContain('DB down');
+  });
+
+  it('handles unit insert error', async () => {
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'financial_products') {
+        return {
+          select: () => Promise.resolve({ data: [], error: null }),
+        };
+      }
+      return {
+        insert: () => ({
+          select: () => Promise.resolve({ data: null, error: { message: 'insert failed' } }),
+        }),
+      };
+    });
+
+    const { importUnits } = await setup();
+    const result = await importUnits({
+      version: 1,
+      type: 'units',
+      exported_at: '',
+      units: [makeUnit()],
+    });
+
+    expect(result.units_created).toBe(0);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]).toContain('insert failed');
   });
 });
