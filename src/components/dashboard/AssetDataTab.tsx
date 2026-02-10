@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -14,6 +16,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useProductExportImport } from '@/viewmodels/dataManagement/useProductExportImport';
 import { useUnitExportImport } from '@/viewmodels/dataManagement/useUnitExportImport';
+import { assetQueryKeys } from '@/hooks/useAssets';
 import { fetchProducts, fetchUnits } from '@/services/assetService';
 import { formatCurrencyFull } from '@/lib/chart-config';
 import {
@@ -41,6 +44,7 @@ export function AssetDataTab() {
 
   const product = useProductExportImport();
   const unit = useUnitExportImport();
+  const queryClient = useQueryClient();
 
   const loadOverview = useCallback(async () => {
     setOverviewLoading(true);
@@ -65,10 +69,13 @@ export function AssetDataTab() {
     loadOverview();
   }, [loadOverview]);
 
-  // Reload overview after successful import
+  // Reload overview and invalidate React Query caches after successful import
   const handleProductImportClose = () => {
     if (product.importState.step === 'done') {
       loadOverview();
+      queryClient.invalidateQueries({ queryKey: assetQueryKeys.allProducts });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === 'assets' });
+      toast.success(`成功导入 ${product.importState.result.products_created} 个产品`);
     }
     product.handleImportClose();
   };
@@ -76,6 +83,9 @@ export function AssetDataTab() {
   const handleUnitImportClose = () => {
     if (unit.importState.step === 'done') {
       loadOverview();
+      queryClient.invalidateQueries({ queryKey: assetQueryKeys.allUnits });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === 'assets' });
+      toast.success(`成功导入 ${unit.importState.result.units_created} 个资金单元`);
     }
     unit.handleImportClose();
   };
