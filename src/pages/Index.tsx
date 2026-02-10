@@ -3,7 +3,6 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { TransactionTable } from '@/components/dashboard/TransactionTable';
 import { DataImport } from '@/components/dashboard/DataImport';
-import { TransferImportPage } from '@/components/dashboard/TransferImportPage';
 import { DataQuality } from '@/components/dashboard/DataQuality';
 import { DataManagement } from '@/components/dashboard/DataManagement';
 import { FlowAnalysis } from '@/components/dashboard/FlowAnalysis';
@@ -65,7 +64,6 @@ const TAB_IDS = new Set([
   'account-types',
   'manage',
   'import',
-  'transfer-import',
   'quality',
 ]);
 
@@ -138,10 +136,6 @@ const Index = () => {
     updateTab('import');
   };
 
-  const handleGoToTransferImport = () => {
-    updateTab('transfer-import');
-  };
-
   const handleGoToManage = () => {
     updateTab('manage');
   };
@@ -189,19 +183,6 @@ const Index = () => {
         </motion.div>
       )}
 
-      {activeTab === 'transfer-import' && (
-        <motion.div
-          key="transfer-import"
-          initial="initial"
-          animate="animate"
-          variants={fadeInUp}
-          transition={{ duration: 0.25 }}
-          className="space-y-6"
-        >
-          <TransferImportPage onNavigateToManage={handleGoToManage} />
-        </motion.div>
-      )}
-
       {activeTab === 'quality' && (
         <motion.div
           key="quality"
@@ -241,7 +222,6 @@ const Index = () => {
             onClearAll={clearAll}
             onExport={exportData}
             onGoToImport={handleGoToImport}
-            onGoToTransferImport={handleGoToTransferImport}
             onViewQuality={handleViewQuality}
             qualityData={qualityData}
           />

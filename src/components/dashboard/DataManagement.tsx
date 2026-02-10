@@ -1,45 +1,14 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { StoredYearData } from '@/hooks/useTransactions';
-import { formatCurrencyFull } from '@/lib/chart-config';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { TransactionDataTab } from '@/components/dashboard/TransactionDataTab';
+import { TransferDataTab } from '@/components/dashboard/TransferDataTab';
+import { AssetDataTab } from '@/components/dashboard/AssetDataTab';
+import type { StoredYearData } from '@/hooks/useTransactions';
 import type { DataQualityMetrics, TransactionValidation } from '@/types/data';
-import { DataQuality } from '@/components/dashboard/DataQuality';
-import { TransferImport } from '@/components/dashboard/TransferImport';
-import { useSettings, getIncomeColor, getIncomeColorHex, getExpenseColor, getExpenseColorHex } from '@/contexts/SettingsContext';
-import { useDataManagementViewModel } from '@/viewmodels/dataManagement/useDataManagementViewModel';
-import { useAssetExportImport } from '@/viewmodels/dataManagement/useAssetExportImport';
-import { formatImportDate } from '@/domain/dataManagement';
 import {
-  Database,
-  Calendar,
-  FileText,
-  TrendingUp,
-  TrendingDown,
-  Download,
-  Trash2,
   Cloud,
-  Clock,
-  ChevronRight,
-  AlertTriangle,
-  CheckCircle2,
-  XCircle,
+  FileText,
   ArrowRightLeft,
-  Upload,
-  X,
   Package,
-  Loader2,
 } from 'lucide-react';
 
 interface DataManagementProps {
@@ -49,7 +18,6 @@ interface DataManagementProps {
   onClearAll: () => void;
   onExport: () => void;
   onGoToImport: () => void;
-  onGoToTransferImport?: () => void;
   onViewQuality: (year: number) => void;
   qualityData?: { year: number; metrics: DataQualityMetrics; validations: TransactionValidation[] } | null;
 }
@@ -61,84 +29,9 @@ export function DataManagement({
   onClearAll,
   onExport,
   onGoToImport,
-  onGoToTransferImport,
   onViewQuality,
-  qualityData
+  qualityData,
 }: DataManagementProps) {
-  const { settings } = useSettings();
-  const incomeColorClass = getIncomeColor(settings.colorScheme);
-  const incomeColorHex = getIncomeColorHex(settings.colorScheme);
-  const expenseColorClass = getExpenseColor(settings.colorScheme);
-  const expenseColorHex = getExpenseColorHex(settings.colorScheme);
-
-  const {
-    exporting,
-    handleExport: handleAssetExport,
-    importState,
-    importDialogOpen,
-    fileInputRef,
-    triggerFileSelect,
-    handleFileSelect,
-    handleImportConfirm,
-    handleImportClose,
-  } = useAssetExportImport();
-
-  const {
-    transferYearsData,
-    transfersLoading,
-    allYears,
-    totalRecords,
-    totalIncome,
-    totalExpense,
-    totalTransferRecords,
-    clearAllDialogOpen,
-    deleteYearDialogOpen,
-    yearToDelete,
-    dataTypeToDelete,
-    importTransferDialogOpen,
-    yearToImportTransfer,
-    setClearAllDialogOpen,
-    setDeleteYearDialogOpen,
-    setImportTransferDialogOpen,
-    setYearToImportTransfer,
-    handleClearAllClick,
-    handleClearAllConfirm,
-    handleDeleteYearClick,
-    handleDeleteYearConfirm,
-    handleImportTransfer,
-    getDataStatusBadge,
-  } = useDataManagementViewModel({
-    storedYearsData,
-    isLoading,
-    onDeleteYear,
-    onClearAll,
-    onExport,
-    onGoToImport,
-    onGoToTransferImport,
-    onViewQuality,
-    qualityData,
-  });
-
-  const renderDataStatusBadge = (status: ReturnType<typeof getDataStatusBadge>) => {
-    if (status.isComplete) {
-      return (
-        <Badge variant="outline" className="gap-1 bg-green-50 text-green-700 border-green-200">
-          <CheckCircle2 className="h-3 w-3" />
-          完整
-        </Badge>
-      );
-    }
-
-    const missing = status.missing;
-
-    return (
-      <Badge variant="outline" className="gap-1 bg-amber-50 text-amber-700 border-amber-200">
-        <XCircle className="h-3 w-3" />
-        缺失: {missing.join(', ')}
-      </Badge>
-    );
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -156,566 +49,44 @@ export function DataManagement({
         </div>
       </div>
 
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">存储年份</p>
-                <p className="text-2xl font-bold mt-1">{allYears.length}</p>
-              </div>
-              <Calendar className="h-8 w-8 text-muted-foreground/50" />
-            </div>
-          </CardContent>
-        </Card>
+      {/* Tabs */}
+      <Tabs defaultValue="transactions">
+        <TabsList>
+          <TabsTrigger value="transactions" className="gap-1.5">
+            <FileText className="h-4 w-4" />
+            收支流水
+          </TabsTrigger>
+          <TabsTrigger value="transfers" className="gap-1.5">
+            <ArrowRightLeft className="h-4 w-4" />
+            转账数据
+          </TabsTrigger>
+          <TabsTrigger value="assets" className="gap-1.5">
+            <Package className="h-4 w-4" />
+            资产数据
+          </TabsTrigger>
+        </TabsList>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">收支记录</p>
-                <p className="text-2xl font-bold mt-1">{totalRecords.toLocaleString()}</p>
-              </div>
-              <FileText className="h-8 w-8 text-muted-foreground/50" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">总收入</p>
-                <p className={`text-2xl font-bold mt-1 ${incomeColorClass}`}>
-                  {formatCurrencyFull(totalIncome)}
-                </p>
-              </div>
-              <TrendingUp className="h-8 w-8" style={{ color: incomeColorHex, opacity: 0.5 }} />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">总支出</p>
-                <p className={`text-2xl font-bold mt-1 ${expenseColorClass}`}>
-                  {formatCurrencyFull(totalExpense)}
-                </p>
-              </div>
-              <TrendingDown className="h-8 w-8" style={{ color: expenseColorHex, opacity: 0.5 }} />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">转账记录</p>
-                <p className="text-2xl font-bold mt-1">{totalTransferRecords.toLocaleString()}</p>
-              </div>
-              <ArrowRightLeft className="h-8 w-8 text-muted-foreground/50" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Actions */}
-      <div className="flex gap-3">
-        <Button onClick={onGoToImport} variant="default" className="gap-2">
-          <Cloud className="h-4 w-4" />
-          导入收支流水
-        </Button>
-        <Button onClick={() => onGoToTransferImport && onGoToTransferImport()} variant="default" className="gap-2">
-          <ArrowRightLeft className="h-4 w-4" />
-          导入转账数据
-        </Button>
-        <Button onClick={onExport} variant="outline" className="gap-2">
-          <Download className="h-4 w-4" />
-          导出 CSV
-        </Button>
-        <Button onClick={handleAssetExport} variant="outline" className="gap-2" disabled={exporting}>
-          {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Package className="h-4 w-4" />}
-          导出资产数据
-        </Button>
-        <Button onClick={triggerFileSelect} variant="outline" className="gap-2">
-          <Upload className="h-4 w-4" />
-          导入资产数据
-        </Button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".json"
-          onChange={handleFileSelect}
-          className="hidden"
-        />
-        <Button onClick={handleClearAllClick} variant="destructive" className="gap-2" disabled={allYears.length === 0}>
-          <Trash2 className="h-4 w-4" />
-          清空所有数据
-        </Button>
-      </div>
-
-      <Separator />
-
-      {/* Year Data List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>已存储的年份数据</CardTitle>
-          <CardDescription>
-            {allYears.length === 0
-              ? '暂无数据，请先导入 CSV 文件'
-              : `共 ${allYears.length} 个年份，需要同时导入收支流水和转账数据才算完整`}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading || transfersLoading ? (
-            <div className="flex items-center justify-center py-12 text-muted-foreground">
-              正在加载数据...
-            </div>
-          ) : allYears.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Cloud className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>暂无数据</p>
-              <p className="text-sm mt-1">请先导入 CSV 文件</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {allYears.map((status) => {
-                const txData = storedYearsData.find(d => d.year === status.year);
-                const tfData = transferYearsData.find(d => d.year === status.year);
-
-                return (
-                  <div
-                    key={status.year}
-                    className="border rounded-lg hover:bg-accent/50 transition-colors"
-                  >
-                    <div className="p-4 space-y-4">
-                      {/* First row: Year and completeness status */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <Badge variant="outline" className="text-lg px-3 py-1">
-                            {status.year}
-                          </Badge>
-                          <span className="text-sm text-muted-foreground">年</span>
-                          {renderDataStatusBadge(status)}
-                        </div>
-                      </div>
-
-                      {/* Second row: Transaction data */}
-                      <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                        {txData ? (
-                          <>
-                            <div className="flex items-center gap-4 text-sm">
-                              <div className="flex items-center gap-1.5">
-                                <FileText className="h-4 w-4 text-muted-foreground" />
-                                <span className="font-medium">收支流水</span>
-                              </div>
-                              <div className="flex items-center gap-1 text-muted-foreground">
-                                <span>{txData.recordCount.toLocaleString()} 条</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <TrendingUp className="h-4 w-4" style={{ color: incomeColorHex }} />
-                                <span className={incomeColorClass}>
-                                  {formatCurrencyFull(txData.metadata.totalIncome)}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <TrendingDown className="h-4 w-4" style={{ color: expenseColorHex }} />
-                                <span className={expenseColorClass}>
-                                  {formatCurrencyFull(txData.metadata.totalExpense)}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => onViewQuality(status.year)}
-                                className="gap-1"
-                              >
-                                查看质量
-                                <ChevronRight className="h-3 w-3" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteYearClick(status.year, 'transactions')}
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                              <div className="flex items-center gap-1.5">
-                                <FileText className="h-4 w-4" />
-                                <span className="font-medium">收支流水</span>
-                              </div>
-                              <span className="text-xs">缺失数据</span>
-                            </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={onGoToImport}
-                              className="gap-1"
-                            >
-                              <Upload className="h-3 w-3" />
-                              导入
-                            </Button>
-                          </>
-                        )}
-                      </div>
-
-                      {/* Third row: Transfer data */}
-                      <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                        {tfData ? (
-                          <>
-                            <div className="flex items-center gap-4 text-sm">
-                              <div className="flex items-center gap-1.5">
-                                <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
-                                <span className="font-medium">转账数据</span>
-                              </div>
-                              <div className="flex items-center gap-1 text-muted-foreground">
-                                <span>{tfData.recordCount.toLocaleString()} 条</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <span className="text-muted-foreground">流入:</span>
-                                <span className={incomeColorClass}>
-                                  {formatCurrencyFull(tfData.metadata.totalInflow)}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <span className="text-muted-foreground">流出:</span>
-                                <span className={expenseColorClass}>
-                                  {formatCurrencyFull(tfData.metadata.totalOutflow)}
-                                </span>
-                              </div>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteYearClick(status.year, 'transfers')}
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                              <div className="flex items-center gap-1.5">
-                                <ArrowRightLeft className="h-4 w-4" />
-                                <span className="font-medium">转账数据</span>
-                              </div>
-                              <span className="text-xs">缺失数据</span>
-                            </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleImportTransfer(status.year)}
-                              className="gap-1"
-                            >
-                              <Upload className="h-3 w-3" />
-                              导入
-                            </Button>
-                          </>
-                        )}
-                      </div>
-
-                      {/* Metadata */}
-                      <div className="flex items-center gap-6 text-xs text-muted-foreground pt-2 border-t">
-                        {txData && (
-                          <div className="flex items-center gap-1">
-                            <Cloud className="h-3 w-3" />
-                            <span>收支导入: {formatImportDate(txData.importedAt)}</span>
-                          </div>
-                        )}
-                        {tfData && (
-                          <div className="flex items-center gap-1">
-                            <Cloud className="h-3 w-3" />
-                            <span>转账导入: {formatImportDate(tfData.importedAt)}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Quality View */}
-      {qualityData && (
-        <>
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold">{qualityData.year} 年数据质量评估</h2>
-              <p className="text-muted-foreground text-sm">
-                查看该年份数据的完整性和有效性
-              </p>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onViewQuality(0)}
-            >
-              关闭
-            </Button>
-          </div>
-          <DataQuality
-            metrics={qualityData.metrics}
-            validations={qualityData.validations}
+        <TabsContent value="transactions">
+          <TransactionDataTab
+            storedYearsData={storedYearsData}
+            isLoading={isLoading}
+            onDeleteYear={onDeleteYear}
+            onClearAll={onClearAll}
+            onExport={onExport}
+            onGoToImport={onGoToImport}
+            onViewQuality={onViewQuality}
+            qualityData={qualityData}
           />
-        </>
-      )}
+        </TabsContent>
 
-      <Card className="bg-muted/50 border-dashed">
-        <CardContent className="p-6">
-          <div className="flex gap-4">
-            <Cloud className="h-5 w-5 text-muted-foreground mt-0.5" />
-            <div className="text-sm text-muted-foreground space-y-2">
-              <p>
-                <span className="font-medium">数据类型说明：</span>
-                每个年份需要导入两种数据：<span className="font-medium">收支流水</span>和<span className="font-medium">转账数据</span>。只有两种数据都导入后，该年份才算完整。
-              </p>
-              <p>
-                <span className="font-medium">数据导入规则：</span>
-                按年份导入，导入新数据会自动替换该年份的旧数据。不同年份的数据可以同时存在。
-              </p>
-              <p>
-                <span className="font-medium">建议操作：</span>
-                定期使用"导出 CSV"功能，将数据导出为 CSV 文件保存到本地，作为数据备份。
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        <TabsContent value="transfers">
+          <TransferDataTab />
+        </TabsContent>
 
-      {/* Clear All Confirmation Dialog */}
-      <AlertDialog open={clearAllDialogOpen} onOpenChange={setClearAllDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-              <AlertDialogTitle>确认清空所有数据？</AlertDialogTitle>
-            </div>
-            <AlertDialogDescription asChild>
-              <div className="space-y-2">
-                <p>此操作将删除云端的所有数据（收支流水和转账），操作无法撤销。</p>
-                <p className="text-sm text-muted-foreground">
-                  将删除 {allYears.length} 个年份的数据，
-                  {totalRecords > 0 && ` ${totalRecords.toLocaleString()} 条收支记录`}
-                  {totalTransferRecords > 0 && ` ${totalTransferRecords.toLocaleString()} 条转账记录`}。
-                </p>
-                <p className="text-sm font-medium text-destructive">
-                  建议在执行此操作前先使用"导出 CSV"功能备份您的数据。
-                </p>
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction onClick={handleClearAllConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              确认清空
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Delete Year Confirmation Dialog */}
-      <AlertDialog open={deleteYearDialogOpen} onOpenChange={setDeleteYearDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-              <AlertDialogTitle>
-                确认删除 {yearToDelete} 年{dataTypeToDelete === 'transactions' ? '收支流水' : '转账数据'}？
-              </AlertDialogTitle>
-            </div>
-            <AlertDialogDescription asChild>
-              <div className="space-y-2">
-                <p>
-                  此操作将删除 {yearToDelete} 年的{dataTypeToDelete === 'transactions' ? '收支流水数据' : '转账数据'}，操作无法撤销。
-                </p>
-                {dataTypeToDelete === 'transactions' && (() => {
-                  const yearData = storedYearsData.find(d => d.year === yearToDelete);
-                  return yearData ? (
-                    <p className="text-sm text-muted-foreground">
-                      将删除 {yearData.recordCount.toLocaleString()} 条收支记录。
-                    </p>
-                  ) : null;
-                })()}
-                {dataTypeToDelete === 'transfers' && (() => {
-                  const yearData = transferYearsData.find(d => d.year === yearToDelete);
-                  return yearData ? (
-                    <p className="text-sm text-muted-foreground">
-                      将删除 {yearData.recordCount.toLocaleString()} 条转账记录。
-                    </p>
-                  ) : null;
-                })()}
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteYearConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              确认删除
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Import Transfer Dialog */}
-      <AlertDialog open={importTransferDialogOpen} onOpenChange={setImportTransferDialogOpen}>
-        <AlertDialogContent className="max-w-4xl">
-          <div className="flex items-center justify-between mb-4">
-            <AlertDialogHeader>
-              <AlertDialogTitle>导入转账数据</AlertDialogTitle>
-            </AlertDialogHeader>
-            <Button variant="ghost" size="icon" onClick={() => setImportTransferDialogOpen(false)}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {yearToImportTransfer && (
-            <TransferImport
-              year={yearToImportTransfer}
-              onUploadComplete={() => {
-                setImportTransferDialogOpen(false);
-                setYearToImportTransfer(null);
-              }}
-              onClose={() => {
-                setImportTransferDialogOpen(false);
-                setYearToImportTransfer(null);
-              }}
-            />
-          )}
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Asset Import Dialog */}
-      <AlertDialog open={importDialogOpen} onOpenChange={(open) => { if (!open) handleImportClose(); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              {importState.step === 'error' ? '导入失败' :
-               importState.step === 'done' ? '导入完成' :
-               importState.step === 'importing' ? '正在导入...' :
-               '导入资产数据'}
-            </AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-3">
-                {importState.step === 'preview' && (
-                  <>
-                    <p>即将导入以下资产数据（追加到现有数据）：</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="p-3 bg-muted/50 rounded-lg">
-                        <p className="text-xs text-muted-foreground">产品数</p>
-                        <p className="text-xl font-bold">{importState.data.products.length}</p>
-                      </div>
-                      <div className="p-3 bg-muted/50 rounded-lg">
-                        <p className="text-xs text-muted-foreground">资金单元数</p>
-                        <p className="text-xl font-bold">{importState.data.units.length}</p>
-                      </div>
-                    </div>
-                    {importState.warnings.length > 0 && (
-                      <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                        <p className="text-sm font-medium text-amber-700 flex items-center gap-1">
-                          <AlertTriangle className="h-4 w-4" />
-                          警告 ({importState.warnings.length})
-                        </p>
-                        <ul className="mt-1 text-xs text-amber-600 space-y-0.5">
-                          {importState.warnings.map((w, i) => (
-                            <li key={i}>{w}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {importState.step === 'importing' && (
-                  <div className="flex items-center justify-center py-6">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-                )}
-
-                {importState.step === 'done' && (
-                  <>
-                    <div className="flex items-center gap-2 text-green-700">
-                      <CheckCircle2 className="h-5 w-5" />
-                      <span>导入成功</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="p-3 bg-green-50 rounded-lg">
-                        <p className="text-xs text-muted-foreground">创建产品</p>
-                        <p className="text-xl font-bold text-green-700">{importState.result.products_created}</p>
-                      </div>
-                      <div className="p-3 bg-green-50 rounded-lg">
-                        <p className="text-xs text-muted-foreground">创建资金单元</p>
-                        <p className="text-xl font-bold text-green-700">{importState.result.units_created}</p>
-                      </div>
-                    </div>
-                    {importState.result.warnings.length > 0 && (
-                      <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                        <p className="text-sm font-medium text-amber-700">导入警告：</p>
-                        <ul className="mt-1 text-xs text-amber-600 space-y-0.5">
-                          {importState.result.warnings.map((w, i) => (
-                            <li key={i}>{w}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {importState.result.errors.length > 0 && (
-                      <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="text-sm font-medium text-red-700">导入错误：</p>
-                        <ul className="mt-1 text-xs text-red-600 space-y-0.5">
-                          {importState.result.errors.map((e, i) => (
-                            <li key={i}>{e}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {importState.step === 'error' && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-sm font-medium text-red-700 flex items-center gap-1">
-                      <XCircle className="h-4 w-4" />
-                      错误
-                    </p>
-                    <p className="mt-1 text-xs text-red-600 whitespace-pre-wrap">{importState.message}</p>
-                  </div>
-                )}
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            {importState.step === 'preview' && (
-              <>
-                <AlertDialogCancel onClick={handleImportClose}>取消</AlertDialogCancel>
-                <AlertDialogAction onClick={handleImportConfirm}>
-                  确认导入
-                </AlertDialogAction>
-              </>
-            )}
-            {(importState.step === 'done' || importState.step === 'error') && (
-              <AlertDialogAction onClick={handleImportClose}>
-                关闭
-              </AlertDialogAction>
-            )}
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        <TabsContent value="assets">
+          <AssetDataTab />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
