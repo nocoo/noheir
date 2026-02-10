@@ -12,6 +12,8 @@ export interface QueryTransactionsParams {
   keyword?: string;
   type?: string;
   categories?: string[];
+  secondary_categories?: string[];
+  tertiary_categories?: string[];
   accounts?: string[];
   tags?: string[];
   start_date?: string;
@@ -56,6 +58,8 @@ export async function queryTransactions(
 
   if (params.keyword !== undefined) rpcParams.p_keyword = params.keyword;
   if (params.categories !== undefined) rpcParams.p_categories = params.categories;
+  if (params.secondary_categories !== undefined) rpcParams.p_secondary_categories = params.secondary_categories;
+  if (params.tertiary_categories !== undefined) rpcParams.p_tertiary_categories = params.tertiary_categories;
   if (params.type !== undefined) rpcParams.p_type = params.type;
   if (params.accounts !== undefined) rpcParams.p_accounts = params.accounts;
   if (params.tags !== undefined) rpcParams.p_tags = params.tags;

@@ -31,11 +31,13 @@ async function main() {
   // ---------------------------------------------------------------------------
   server.tool(
     "query_transactions",
-    "Search and filter personal transactions (income/expense). Supports keyword search, category/account/tag filters, amount range, date range, year/month, and currency filters.",
+    "Search and filter personal transactions (income/expense). Supports keyword search, primary/secondary/tertiary category filters, account/tag filters, amount range, date range, year/month, and currency filters.",
     {
       keyword: z.string().optional().describe("Fuzzy search keyword — matches note, category, account"),
       type: z.enum(["income", "expense"]).optional().describe("Transaction type filter"),
       categories: z.array(z.string()).optional().describe("Filter by primary categories"),
+      secondary_categories: z.array(z.string()).optional().describe("Filter by secondary categories"),
+      tertiary_categories: z.array(z.string()).optional().describe("Filter by tertiary categories"),
       accounts: z.array(z.string()).optional().describe("Filter by accounts"),
       tags: z.array(z.string()).optional().describe("Filter by tags (any match)"),
       start_date: z.string().optional().describe("Start date (YYYY-MM-DD) inclusive"),
