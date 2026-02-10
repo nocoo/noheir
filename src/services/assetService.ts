@@ -5,6 +5,7 @@
  * - Financial Products (product library)
  * - Capital Units (asset instances)
  * - Dashboard analytics
+ * - Data export/import (JSON)
  */
 
 import { supabase } from '@/lib/supabase';
@@ -26,6 +27,10 @@ import type {
   SortOrder,
   InvestmentStrategy,
   InvestmentTactics,
+  Currency,
+  ProductChannel,
+  ProductCategory,
+  UnitStatus,
 } from '@/types/assets';
 import { AssetServiceError } from '@/types/assets';
 
@@ -765,5 +770,406 @@ export async function batchUpdateUnitStatuses(
     if (error) throw error;
   } catch (error) {
     handleSupabaseError(error, 'Failed to batch update unit statuses');
+  }
+}
+
+// ============================================================================
+// DATA EXPORT / IMPORT (JSON)
+// ============================================================================
+
+/**
+ * Portable product record (stripped of system-generated fields)
+ */
+export interface ExportedProduct {
+  name: string;
+  code?: string;
+  channel: string;
+  category: string;
+  currency: string;
+  lock_period_days: number;
+  annual_return_rate?: number;
+}
+
+/**
+ * Portable unit record — references product by name instead of ID
+ */
+export interface ExportedUnit {
+  unit_code: string;
+  amount: number;
+  currency: string;
+  status: string;
+  strategy: string;
+  tactics: string;
+  product_name?: string;    // Reference by name (resolved during import)
+  start_date?: string;
+  note?: string;
+}
+
+/**
+ * Complete asset data export envelope
+ */
+export interface AssetExportData {
+  version: 1;
+  exported_at: string;
+  products: ExportedProduct[];
+  units: ExportedUnit[];
+}
+
+/**
+ * Import result with detailed reporting
+ */
+export interface AssetImportResult {
+  products_created: number;
+  units_created: number;
+  errors: string[];
+  warnings: string[];
+}
+
+// ---------------------------------------------------------------------------
+// Validation helpers (reusable for import)
+// ---------------------------------------------------------------------------
+
+const VALID_CHANNELS: readonly string[] = [
+  '招商银行', '平安银行', '微众银行', '支付宝', '招银香港', '光大永明', '中信建投',
+];
+
+const VALID_CATEGORIES: readonly string[] = [
+  '养老年金', '储蓄保险', '混债基金', '债券基金', '货币基金',
+  '股票基金', '指数基金', '宽基指数', '私募基金', '定期存款', '理财产品', '现金+',
+];
+
+const VALID_CURRENCIES: readonly string[] = ['CNY', 'USD', 'HKD'];
+
+const VALID_STRATEGIES: readonly string[] = [
+  '远期理财', '美元资产', '36存单', '长期理财', '短期理财', '中期理财', '进攻计划', '麻麻理财',
+];
+
+const VALID_TACTICS: readonly string[] = [
+  '养老年金', '个人养老金', '定期存款', '理财产品', '现金产品',
+  '债券基金', '偏股基金', '稳健理财', '增额寿险', '货币基金',
+];
+
+const VALID_STATUSES: readonly string[] = ['已成立', '计划中', '筹集中', '已归档'];
+
+/**
+ * Validate a product record, returning error messages (empty = valid)
+ */
+export function validateProduct(p: unknown, index: number): string[] {
+  const errors: string[] = [];
+  const prefix = `products[${index}]`;
+
+  if (!p || typeof p !== 'object') {
+    return [`${prefix}: not an object`];
+  }
+
+  const obj = p as Record<string, unknown>;
+
+  if (!obj.name || typeof obj.name !== 'string') {
+    errors.push(`${prefix}: missing or invalid 'name'`);
+  }
+  if (!obj.channel || !VALID_CHANNELS.includes(obj.channel as string)) {
+    errors.push(`${prefix}: invalid 'channel' "${obj.channel}" (expected: ${VALID_CHANNELS.join(', ')})`);
+  }
+  if (!obj.category || !VALID_CATEGORIES.includes(obj.category as string)) {
+    errors.push(`${prefix}: invalid 'category' "${obj.category}" (expected: ${VALID_CATEGORIES.join(', ')})`);
+  }
+  if (obj.currency !== undefined && !VALID_CURRENCIES.includes(obj.currency as string)) {
+    errors.push(`${prefix}: invalid 'currency' "${obj.currency}" (expected: ${VALID_CURRENCIES.join(', ')})`);
+  }
+  if (obj.lock_period_days !== undefined && (typeof obj.lock_period_days !== 'number' || obj.lock_period_days < 0)) {
+    errors.push(`${prefix}: 'lock_period_days' must be a non-negative number`);
+  }
+  if (obj.annual_return_rate !== undefined && typeof obj.annual_return_rate !== 'number') {
+    errors.push(`${prefix}: 'annual_return_rate' must be a number`);
+  }
+
+  return errors;
+}
+
+/**
+ * Validate a unit record, returning error messages (empty = valid)
+ */
+export function validateUnit(u: unknown, index: number, productNames: Set<string>): string[] {
+  const errors: string[] = [];
+  const prefix = `units[${index}]`;
+
+  if (!u || typeof u !== 'object') {
+    return [`${prefix}: not an object`];
+  }
+
+  const obj = u as Record<string, unknown>;
+
+  if (!obj.unit_code || typeof obj.unit_code !== 'string') {
+    errors.push(`${prefix}: missing or invalid 'unit_code'`);
+  }
+  if (typeof obj.amount !== 'number' || obj.amount <= 0) {
+    errors.push(`${prefix}: 'amount' must be a positive number`);
+  }
+  if (obj.currency !== undefined && !VALID_CURRENCIES.includes(obj.currency as string)) {
+    errors.push(`${prefix}: invalid 'currency' "${obj.currency}"`);
+  }
+  if (obj.status !== undefined && !VALID_STATUSES.includes(obj.status as string)) {
+    errors.push(`${prefix}: invalid 'status' "${obj.status}"`);
+  }
+  if (!obj.strategy || !VALID_STRATEGIES.includes(obj.strategy as string)) {
+    errors.push(`${prefix}: invalid 'strategy' "${obj.strategy}" (expected: ${VALID_STRATEGIES.join(', ')})`);
+  }
+  if (!obj.tactics || !VALID_TACTICS.includes(obj.tactics as string)) {
+    errors.push(`${prefix}: invalid 'tactics' "${obj.tactics}" (expected: ${VALID_TACTICS.join(', ')})`);
+  }
+  if (obj.product_name !== undefined && obj.product_name !== null) {
+    if (typeof obj.product_name !== 'string') {
+      errors.push(`${prefix}: 'product_name' must be a string`);
+    } else if (!productNames.has(obj.product_name)) {
+      errors.push(`${prefix}: product_name "${obj.product_name}" not found in products list`);
+    }
+  }
+  if (obj.start_date !== undefined && obj.start_date !== null) {
+    if (typeof obj.start_date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(obj.start_date)) {
+      errors.push(`${prefix}: 'start_date' must be YYYY-MM-DD format`);
+    }
+  }
+
+  return errors;
+}
+
+/**
+ * Export all products and units as a portable JSON structure.
+ *
+ * System-generated fields (id, user_id, created_at) are stripped.
+ * Units reference products by name instead of ID for portability.
+ */
+export async function exportAssets(): Promise<AssetExportData> {
+  try {
+    // Fetch all products
+    const { data: products, error: pErr } = await supabase
+      .from('financial_products')
+      .select('*')
+      .order('created_at', { ascending: true });
+
+    if (pErr) throw pErr;
+
+    // Fetch all units with products (need product name for reference)
+    const { data: rawUnits, error: uErr } = await supabase
+      .rpc('get_units_with_products');
+
+    if (uErr) throw uErr;
+
+    // Build product ID -> name lookup
+    const productMap = new Map<string, string>();
+    (products || []).forEach((p: FinancialProduct) => productMap.set(p.id, p.name));
+
+    // Transform products: strip system fields
+    const exportedProducts: ExportedProduct[] = (products || []).map((p: FinancialProduct) => {
+      const exported: ExportedProduct = {
+        name: p.name,
+        channel: p.channel,
+        category: p.category,
+        currency: p.currency,
+        lock_period_days: p.lock_period_days,
+      };
+      if (p.code) exported.code = p.code;
+      if (p.annual_return_rate !== undefined && p.annual_return_rate !== null) {
+        exported.annual_return_rate = p.annual_return_rate;
+      }
+      return exported;
+    });
+
+    // Transform units: strip system fields, replace product_id with product_name
+    const exportedUnits: ExportedUnit[] = (rawUnits || []).map((row: CapitalUnitWithProduct) => {
+      const exported: ExportedUnit = {
+        unit_code: row.unit_code,
+        amount: row.amount,
+        currency: row.currency,
+        status: row.status,
+        strategy: row.strategy,
+        tactics: row.tactics,
+      };
+      if (row.product_id) {
+        exported.product_name = productMap.get(row.product_id);
+      }
+      if (row.start_date) exported.start_date = row.start_date;
+      if (row.note) exported.note = row.note;
+      return exported;
+    });
+
+    return {
+      version: 1,
+      exported_at: new Date().toISOString(),
+      products: exportedProducts,
+      units: exportedUnits,
+    };
+  } catch (error) {
+    handleSupabaseError(error, 'Failed to export assets');
+  }
+}
+
+/**
+ * Parse and validate a JSON string as asset export data.
+ * Returns the parsed data or throws with validation errors.
+ */
+export function parseAssetJSON(jsonString: string): { data: AssetExportData; warnings: string[] } {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(jsonString);
+  } catch {
+    throw new AssetServiceError('Invalid JSON format', 'PARSE_ERROR');
+  }
+
+  if (!parsed || typeof parsed !== 'object') {
+    throw new AssetServiceError('JSON must be an object', 'PARSE_ERROR');
+  }
+
+  const obj = parsed as Record<string, unknown>;
+
+  if (obj.version !== 1) {
+    throw new AssetServiceError(
+      `Unsupported export version: ${obj.version} (expected 1)`,
+      'VERSION_ERROR'
+    );
+  }
+
+  if (!Array.isArray(obj.products)) {
+    throw new AssetServiceError('Missing or invalid "products" array', 'PARSE_ERROR');
+  }
+
+  if (!Array.isArray(obj.units)) {
+    throw new AssetServiceError('Missing or invalid "units" array', 'PARSE_ERROR');
+  }
+
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  // Validate products
+  const productNames = new Set<string>();
+  for (let i = 0; i < obj.products.length; i++) {
+    const pErrors = validateProduct(obj.products[i], i);
+    errors.push(...pErrors);
+    const name = (obj.products[i] as Record<string, unknown>)?.name;
+    if (typeof name === 'string') {
+      if (productNames.has(name)) {
+        warnings.push(`products[${i}]: duplicate product name "${name}"`);
+      }
+      productNames.add(name);
+    }
+  }
+
+  // Validate units
+  for (let i = 0; i < obj.units.length; i++) {
+    const uErrors = validateUnit(obj.units[i], i, productNames);
+    errors.push(...uErrors);
+  }
+
+  if (errors.length > 0) {
+    throw new AssetServiceError(
+      `Validation failed with ${errors.length} error(s):\n${errors.join('\n')}`,
+      'VALIDATION_ERROR',
+      errors
+    );
+  }
+
+  return {
+    data: parsed as AssetExportData,
+    warnings,
+  };
+}
+
+/**
+ * Import assets from a parsed export data structure.
+ *
+ * Strategy:
+ * 1. Insert products first (they have no dependencies)
+ * 2. Build a name -> new_id map from inserted products
+ * 3. Insert units, resolving product_name to product_id
+ *
+ * This does NOT delete existing data — it adds to it.
+ * Call deleteAllProducts() / deleteAllUnits() first if you want a clean import.
+ */
+export async function importAssets(data: AssetExportData): Promise<AssetImportResult> {
+  const result: AssetImportResult = {
+    products_created: 0,
+    units_created: 0,
+    errors: [],
+    warnings: [],
+  };
+
+  try {
+    // Step 1: Insert products
+    const productNameToId = new Map<string, string>();
+
+    if (data.products.length > 0) {
+      const productRecords = data.products.map(p => ({
+        name: p.name,
+        code: p.code || null,
+        channel: p.channel as ProductChannel,
+        category: p.category as ProductCategory,
+        currency: (p.currency || 'CNY') as Currency,
+        lock_period_days: p.lock_period_days ?? 0,
+        annual_return_rate: p.annual_return_rate ?? null,
+      }));
+
+      const { data: inserted, error } = await supabase
+        .from('financial_products')
+        .insert(productRecords)
+        .select();
+
+      if (error) {
+        result.errors.push(`Failed to insert products: ${error.message}`);
+        return result;
+      }
+
+      (inserted || []).forEach((p: FinancialProduct) => {
+        productNameToId.set(p.name, p.id);
+      });
+      result.products_created = inserted?.length || 0;
+    }
+
+    // Step 2: Insert units
+    if (data.units.length > 0) {
+      const unitRecords = data.units.map(u => {
+        let product_id: string | null = null;
+        if (u.product_name) {
+          product_id = productNameToId.get(u.product_name) || null;
+          if (!product_id) {
+            result.warnings.push(
+              `Unit "${u.unit_code}": product "${u.product_name}" not found in import, setting product_id to null`
+            );
+          }
+        }
+
+        return {
+          unit_code: u.unit_code,
+          amount: u.amount,
+          currency: (u.currency || 'CNY') as Currency,
+          status: (u.status || '已成立') as UnitStatus,
+          strategy: u.strategy as InvestmentStrategy,
+          tactics: u.tactics as InvestmentTactics,
+          product_id,
+          start_date: u.start_date || null,
+          note: u.note || null,
+        };
+      });
+
+      // Batch insert in chunks of 100
+      const BATCH_SIZE = 100;
+      for (let i = 0; i < unitRecords.length; i += BATCH_SIZE) {
+        const batch = unitRecords.slice(i, i + BATCH_SIZE);
+        const { data: inserted, error } = await supabase
+          .from('capital_units')
+          .insert(batch)
+          .select();
+
+        if (error) {
+          result.errors.push(`Failed to insert units batch ${i / BATCH_SIZE + 1}: ${error.message}`);
+          continue;
+        }
+        result.units_created += inserted?.length || 0;
+      }
+    }
+
+    return result;
+  } catch (error) {
+    if (error instanceof AssetServiceError) throw error;
+    handleSupabaseError(error, 'Failed to import assets');
   }
 }
