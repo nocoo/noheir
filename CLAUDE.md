@@ -39,11 +39,12 @@ bun run mcp:start
 | `query_transactions` | Search/filter transactions with keyword, type, categories, accounts, tags, amount range, date range, year/month, currency |
 | `query_transfers` | Search/filter transfers with keyword, accounts, transaction_type, tags, amount range, date range, year/month, currency |
 | `get_summary` | Metadata: available years, accounts, categories, currencies, tags, counts |
+| `get_monthly_report` | Monthly aggregation: income/expense totals, net amount, transfer flows, category breakdowns, currencies |
 
 ### Testing
 
 ```bash
-bun run test:mcp  # 42 tests (36 tool handler + 6 protocol-level)
+bun run test:mcp  # 66 tests (59 tool handler + 7 protocol-level)
 ```
 
 ## Test Architecture
@@ -54,7 +55,7 @@ bun run test:mcp  # 42 tests (36 tool handler + 6 protocol-level)
 |-------|-------|-------------|--------|
 | Unit (204 tests) | `tests/{domain,viewmodels,contexts,hooks,lib,services,smoke}/` | No | `bun run test:unit` |
 | E2E (8 tests) | `tests/e2e/` | Yes (local Supabase) | `bun run test:e2e` |
-| MCP E2E (42 tests) | `mcp/tests/` | No (mocked) | `bun run test:mcp` |
+| MCP E2E (66 tests) | `mcp/tests/` | No (mocked) | `bun run test:mcp` |
 
 ### Environment Isolation (Two-Layer Defense)
 
