@@ -259,6 +259,19 @@ CREATE POLICY "Users can delete own data" ON "public"."settings"
 
 
 -- ============================================================================
+-- CLEANUP: Drop old function signatures to avoid ambiguity
+-- Required when applying on top of existing databases with prior migrations
+-- ============================================================================
+DROP FUNCTION IF EXISTS "public"."get_units_with_products"() CASCADE;
+DROP FUNCTION IF EXISTS "public"."search_transactions_fuzzy"(TEXT, TEXT[], TEXT, TEXT[], TEXT[], TEXT, TEXT, NUMERIC, NUMERIC, INTEGER, INTEGER) CASCADE;
+DROP FUNCTION IF EXISTS "public"."search_transactions_fuzzy"(TEXT, TEXT[], TEXT, TEXT[], TEXT[], TEXT, TEXT, NUMERIC, NUMERIC, INTEGER, INTEGER, INTEGER, INTEGER, TEXT) CASCADE;
+DROP FUNCTION IF EXISTS "public"."search_transactions_fuzzy"(TEXT, TEXT[], TEXT, TEXT[], TEXT[], TEXT, TEXT, NUMERIC, NUMERIC, INTEGER, INTEGER, INTEGER, INTEGER, TEXT, TEXT[], TEXT[]) CASCADE;
+DROP FUNCTION IF EXISTS "public"."search_transfers_fuzzy"(TEXT, TEXT[], TEXT, TEXT[], TEXT, TEXT, NUMERIC, NUMERIC, INTEGER, INTEGER, INTEGER, INTEGER, TEXT) CASCADE;
+DROP FUNCTION IF EXISTS "public"."get_financial_metadata"() CASCADE;
+DROP FUNCTION IF EXISTS "public"."get_monthly_report"(INTEGER, INTEGER, TEXT) CASCADE;
+
+
+-- ============================================================================
 -- FUNCTION: get_units_with_products
 -- Joins capital_units with financial_products for the current user
 -- ============================================================================
@@ -405,7 +418,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION "public"."search_transactions_fuzzy" IS
+COMMENT ON FUNCTION "public"."search_transactions_fuzzy"(TEXT, TEXT[], TEXT, TEXT[], TEXT[], TEXT, TEXT, NUMERIC, NUMERIC, INTEGER, INTEGER, INTEGER, INTEGER, TEXT, TEXT[], TEXT[]) IS
 'Fuzzy search transactions with filters including year, month, currency, and sub-category arrays. matched_field reports which field matched the keyword. Enforces user isolation via auth.uid(). Results limited to 500 max per query.';
 
 
@@ -498,7 +511,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION "public"."search_transfers_fuzzy" IS
+COMMENT ON FUNCTION "public"."search_transfers_fuzzy"(TEXT, TEXT[], TEXT, TEXT[], TEXT, TEXT, NUMERIC, NUMERIC, INTEGER, INTEGER, INTEGER, INTEGER, TEXT) IS
 'Fuzzy search transfers with filters including keyword, account, transaction_type, tags, date range, amount range, year, month, currency. Amount range matches on GREATEST(inflow_amount, outflow_amount). Enforces user isolation via auth.uid(). Results limited to 500 max per query.';
 
 
@@ -581,7 +594,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION "public"."get_financial_metadata" IS
+COMMENT ON FUNCTION "public"."get_financial_metadata"() IS
 'Returns distinct metadata (years, accounts, categories at 3 levels, currencies, tags, counts) aggregated server-side. AI agents should call this first to discover available filter values before using query_transactions or query_transfers.';
 
 
@@ -732,9 +745,9 @@ GRANT ALL ON SEQUENCE "public"."settings_id_seq" TO "authenticated", "service_ro
 
 -- Function access
 GRANT ALL ON FUNCTION "public"."get_units_with_products"() TO "authenticated", "service_role";
-GRANT EXECUTE ON FUNCTION "public"."search_transactions_fuzzy" TO "authenticated", "service_role";
-GRANT EXECUTE ON FUNCTION "public"."search_transfers_fuzzy" TO "authenticated", "service_role";
-GRANT EXECUTE ON FUNCTION "public"."get_financial_metadata" TO "authenticated", "service_role";
+GRANT EXECUTE ON FUNCTION "public"."search_transactions_fuzzy"(TEXT, TEXT[], TEXT, TEXT[], TEXT[], TEXT, TEXT, NUMERIC, NUMERIC, INTEGER, INTEGER, INTEGER, INTEGER, TEXT, TEXT[], TEXT[]) TO "authenticated", "service_role";
+GRANT EXECUTE ON FUNCTION "public"."search_transfers_fuzzy"(TEXT, TEXT[], TEXT, TEXT[], TEXT, TEXT, NUMERIC, NUMERIC, INTEGER, INTEGER, INTEGER, INTEGER, TEXT) TO "authenticated", "service_role";
+GRANT EXECUTE ON FUNCTION "public"."get_financial_metadata"() TO "authenticated", "service_role";
 GRANT EXECUTE ON FUNCTION "public"."get_monthly_report"(INTEGER, INTEGER, TEXT) TO "authenticated", "service_role";
 
 -- Default privileges for future objects
