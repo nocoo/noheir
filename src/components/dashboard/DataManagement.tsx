@@ -19,6 +19,7 @@ import { DataQuality } from '@/components/dashboard/DataQuality';
 import { TransferImport } from '@/components/dashboard/TransferImport';
 import { useSettings, getIncomeColor, getIncomeColorHex, getExpenseColor, getExpenseColorHex } from '@/contexts/SettingsContext';
 import { useDataManagementViewModel } from '@/viewmodels/dataManagement/useDataManagementViewModel';
+import { useAssetExportImport } from '@/viewmodels/dataManagement/useAssetExportImport';
 import { formatImportDate } from '@/domain/dataManagement';
 import {
   Database,
@@ -36,7 +37,9 @@ import {
   XCircle,
   ArrowRightLeft,
   Upload,
-  X
+  X,
+  Package,
+  Loader2,
 } from 'lucide-react';
 
 interface DataManagementProps {
@@ -67,6 +70,18 @@ export function DataManagement({
   const incomeColorHex = getIncomeColorHex(settings.colorScheme);
   const expenseColorClass = getExpenseColor(settings.colorScheme);
   const expenseColorHex = getExpenseColorHex(settings.colorScheme);
+
+  const {
+    exporting,
+    handleExport: handleAssetExport,
+    importState,
+    importDialogOpen,
+    fileInputRef,
+    triggerFileSelect,
+    handleFileSelect,
+    handleImportConfirm,
+    handleImportClose,
+  } = useAssetExportImport();
 
   const {
     transferYearsData,
@@ -222,6 +237,21 @@ export function DataManagement({
           <Download className="h-4 w-4" />
           导出 CSV
         </Button>
+        <Button onClick={handleAssetExport} variant="outline" className="gap-2" disabled={exporting}>
+          {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Package className="h-4 w-4" />}
+          导出资产数据
+        </Button>
+        <Button onClick={triggerFileSelect} variant="outline" className="gap-2">
+          <Upload className="h-4 w-4" />
+          导入资产数据
+        </Button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
         <Button onClick={handleClearAllClick} variant="destructive" className="gap-2" disabled={allYears.length === 0}>
           <Trash2 className="h-4 w-4" />
           清空所有数据
@@ -567,6 +597,123 @@ export function DataManagement({
               }}
             />
           )}
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Asset Import Dialog */}
+      <AlertDialog open={importDialogOpen} onOpenChange={(open) => { if (!open) handleImportClose(); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              {importState.step === 'error' ? '导入失败' :
+               importState.step === 'done' ? '导入完成' :
+               importState.step === 'importing' ? '正在导入...' :
+               '导入资产数据'}
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                {importState.step === 'preview' && (
+                  <>
+                    <p>即将导入以下资产数据（追加到现有数据）：</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="p-3 bg-muted/50 rounded-lg">
+                        <p className="text-xs text-muted-foreground">产品数</p>
+                        <p className="text-xl font-bold">{importState.data.products.length}</p>
+                      </div>
+                      <div className="p-3 bg-muted/50 rounded-lg">
+                        <p className="text-xs text-muted-foreground">资金单元数</p>
+                        <p className="text-xl font-bold">{importState.data.units.length}</p>
+                      </div>
+                    </div>
+                    {importState.warnings.length > 0 && (
+                      <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                        <p className="text-sm font-medium text-amber-700 flex items-center gap-1">
+                          <AlertTriangle className="h-4 w-4" />
+                          警告 ({importState.warnings.length})
+                        </p>
+                        <ul className="mt-1 text-xs text-amber-600 space-y-0.5">
+                          {importState.warnings.map((w, i) => (
+                            <li key={i}>{w}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {importState.step === 'importing' && (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                )}
+
+                {importState.step === 'done' && (
+                  <>
+                    <div className="flex items-center gap-2 text-green-700">
+                      <CheckCircle2 className="h-5 w-5" />
+                      <span>导入成功</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="p-3 bg-green-50 rounded-lg">
+                        <p className="text-xs text-muted-foreground">创建产品</p>
+                        <p className="text-xl font-bold text-green-700">{importState.result.products_created}</p>
+                      </div>
+                      <div className="p-3 bg-green-50 rounded-lg">
+                        <p className="text-xs text-muted-foreground">创建资金单元</p>
+                        <p className="text-xl font-bold text-green-700">{importState.result.units_created}</p>
+                      </div>
+                    </div>
+                    {importState.result.warnings.length > 0 && (
+                      <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                        <p className="text-sm font-medium text-amber-700">导入警告：</p>
+                        <ul className="mt-1 text-xs text-amber-600 space-y-0.5">
+                          {importState.result.warnings.map((w, i) => (
+                            <li key={i}>{w}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {importState.result.errors.length > 0 && (
+                      <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <p className="text-sm font-medium text-red-700">导入错误：</p>
+                        <ul className="mt-1 text-xs text-red-600 space-y-0.5">
+                          {importState.result.errors.map((e, i) => (
+                            <li key={i}>{e}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {importState.step === 'error' && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm font-medium text-red-700 flex items-center gap-1">
+                      <XCircle className="h-4 w-4" />
+                      错误
+                    </p>
+                    <p className="mt-1 text-xs text-red-600 whitespace-pre-wrap">{importState.message}</p>
+                  </div>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            {importState.step === 'preview' && (
+              <>
+                <AlertDialogCancel onClick={handleImportClose}>取消</AlertDialogCancel>
+                <AlertDialogAction onClick={handleImportConfirm}>
+                  确认导入
+                </AlertDialogAction>
+              </>
+            )}
+            {(importState.step === 'done' || importState.step === 'error') && (
+              <AlertDialogAction onClick={handleImportClose}>
+                关闭
+              </AlertDialogAction>
+            )}
+          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
