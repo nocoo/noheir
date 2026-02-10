@@ -65,14 +65,16 @@ bun run mcp:start
 
 #### Enum Values (DB CHECK constraints)
 
-| Field | Valid Values |
-|-------|-------------|
-| `channel` | 招商银行, 平安银行, 微众银行, 支付宝, 招银香港, 光大永明, 中信建投 |
-| `category` (product) | 养老年金, 储蓄保险, 混债基金, 债券基金, 货币基金, 股票基金, 指数基金, 宽基指数, 私募基金, 定期存款, 理财产品, 现金+ |
-| `strategy` | 远期理财, 美元资产, 36存单, 长期理财, 短期理财, 中期理财, 进攻计划, 麻麻理财 |
-| `tactics` | 养老年金, 个人养老金, 定期存款, 理财产品, 现金产品, 债券基金, 偏股基金, 稳健理财, 增额寿险, 货币基金 |
-| `status` (unit) | 已成立, 计划中, 筹集中, 已归档 |
-| `currency` | CNY, USD, HKD |
+All enum fields are enforced by DB CHECK constraints. Valid values are defined in `mcp/src/index.ts` tool descriptions (visible to the local AI agent at runtime). The fields include:
+
+| Field | Count | Description |
+|-------|-------|-------------|
+| `channel` | 7 values | Financial institution / distribution platform |
+| `category` (product) | 12 values | Product type classification |
+| `strategy` | 8 values | Investment strategy label |
+| `tactics` | 10 values | Investment tactics label |
+| `status` (unit) | 4 values | Unit lifecycle state |
+| `currency` | 3 values | CNY, USD, HKD |
 
 ### Testing
 

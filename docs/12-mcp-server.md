@@ -162,8 +162,8 @@ Agent 应 **首先调用此工具** 了解可用的筛选值，避免幻觉式�
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | `name` | string | 是 | 产品名称 |
-| `channel` | string | 是 | 渠道（招商银行/支付宝/微众银行 等 7 个） |
-| `category` | string | 是 | 分类（债券基金/货币基金/定期存款 等 12 个） |
+| `channel` | string | 是 | 渠道（7 个有效值，见 `index.ts` 工具描述） |
+| `category` | string | 是 | 分类（12 个有效值，见 `index.ts` 工具描述） |
 | `code` | string | 否 | 产品代码 |
 | `currency` | string | 否 | 币种（默认 CNY） |
 | `lock_period_days` | number | 否 | 锁定期天数（默认 0） |
@@ -198,7 +198,7 @@ Agent 应 **首先调用此工具** 了解可用的筛选值，避免幻觉式�
 
 | 参数 | 类型 | 说明 |
 |------|------|------|
-| `status` | string | 按状态筛选（已成立/计划中/已归档/已终止） |
+| `status` | string | 按状态筛选（4 个有效值，见 `index.ts` 工具描述） |
 | `strategy` | string | 按策略筛选 |
 | `tactics` | string | 按战术筛选 |
 | `currency` | string | 按币种筛选 |
@@ -222,8 +222,8 @@ Agent 应 **首先调用此工具** 了解可用的筛选值，避免幻觉式�
 |------|------|------|------|
 | `unit_code` | string | 是 | 单元编码 |
 | `amount` | number | 是 | 金额 |
-| `strategy` | string | 是 | 策略（短期理财/中期理财/长期理财 等 8 个） |
-| `tactics` | string | 是 | 战术（债券基金/货币基金/定期存款 等 10 个） |
+| `strategy` | string | 是 | 策略（8 个有效值，见 `index.ts` 工具描述） |
+| `tactics` | string | 是 | 战术（10 个有效值，见 `index.ts` 工具描述） |
 | `currency` | string | 否 | 币种（默认 CNY） |
 | `status` | string | 否 | 状态（默认 已成立） |
 | `product_id` | string | 否 | 关联产品 ID |
