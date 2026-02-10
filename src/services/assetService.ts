@@ -816,10 +816,45 @@ export interface AssetExportData {
 }
 
 /**
+ * Standalone product export envelope
+ */
+export interface ProductExportData {
+  version: 1;
+  type: 'products';
+  exported_at: string;
+  products: ExportedProduct[];
+}
+
+/**
+ * Standalone unit export envelope
+ */
+export interface UnitExportData {
+  version: 1;
+  type: 'units';
+  exported_at: string;
+  units: ExportedUnit[];
+}
+
+/**
  * Import result with detailed reporting
  */
 export interface AssetImportResult {
   products_created: number;
+  units_created: number;
+  errors: string[];
+  warnings: string[];
+}
+
+/**
+ * Single-domain import result
+ */
+export interface ProductImportResult {
+  products_created: number;
+  errors: string[];
+  warnings: string[];
+}
+
+export interface UnitImportResult {
   units_created: number;
   errors: string[];
   warnings: string[];
@@ -1171,5 +1206,350 @@ export async function importAssets(data: AssetExportData): Promise<AssetImportRe
   } catch (error) {
     if (error instanceof AssetServiceError) throw error;
     handleSupabaseError(error, 'Failed to import assets');
+  }
+}
+
+// ============================================================================
+// SEPARATE PRODUCT / UNIT EXPORT / IMPORT
+// ============================================================================
+
+/**
+ * Export only products as a standalone JSON structure.
+ */
+export async function exportProducts(): Promise<ProductExportData> {
+  try {
+    const { data: products, error } = await supabase
+      .from('financial_products')
+      .select('*')
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    const exportedProducts: ExportedProduct[] = (products || []).map((p: FinancialProduct) => {
+      const exported: ExportedProduct = {
+        name: p.name,
+        channel: p.channel,
+        category: p.category,
+        currency: p.currency,
+        lock_period_days: p.lock_period_days,
+      };
+      if (p.code) exported.code = p.code;
+      if (p.annual_return_rate !== undefined && p.annual_return_rate !== null) {
+        exported.annual_return_rate = p.annual_return_rate;
+      }
+      return exported;
+    });
+
+    return {
+      version: 1,
+      type: 'products',
+      exported_at: new Date().toISOString(),
+      products: exportedProducts,
+    };
+  } catch (error) {
+    handleSupabaseError(error, 'Failed to export products');
+  }
+}
+
+/**
+ * Export only units as a standalone JSON structure.
+ * Units reference products by name for portability.
+ */
+export async function exportUnits(): Promise<UnitExportData> {
+  try {
+    // Need product map for name resolution
+    const { data: products, error: pErr } = await supabase
+      .from('financial_products')
+      .select('id, name');
+
+    if (pErr) throw pErr;
+
+    const productMap = new Map<string, string>();
+    (products || []).forEach((p: { id: string; name: string }) => productMap.set(p.id, p.name));
+
+    const { data: rawUnits, error: uErr } = await supabase
+      .rpc('get_units_with_products');
+
+    if (uErr) throw uErr;
+
+    const exportedUnits: ExportedUnit[] = (rawUnits || []).map((row: CapitalUnitWithProduct) => {
+      const exported: ExportedUnit = {
+        unit_code: row.unit_code,
+        amount: row.amount,
+        currency: row.currency,
+        status: row.status,
+        strategy: row.strategy,
+        tactics: row.tactics,
+      };
+      if (row.product_id) {
+        exported.product_name = productMap.get(row.product_id);
+      }
+      if (row.start_date) exported.start_date = row.start_date;
+      if (row.note) exported.note = row.note;
+      return exported;
+    });
+
+    return {
+      version: 1,
+      type: 'units',
+      exported_at: new Date().toISOString(),
+      units: exportedUnits,
+    };
+  } catch (error) {
+    handleSupabaseError(error, 'Failed to export units');
+  }
+}
+
+/**
+ * Parse and validate a product-only JSON export.
+ */
+export function parseProductJSON(jsonString: string): { data: ProductExportData; warnings: string[] } {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(jsonString);
+  } catch {
+    throw new AssetServiceError('Invalid JSON format', 'PARSE_ERROR');
+  }
+
+  if (!parsed || typeof parsed !== 'object') {
+    throw new AssetServiceError('JSON must be an object', 'PARSE_ERROR');
+  }
+
+  const obj = parsed as Record<string, unknown>;
+
+  if (obj.version !== 1) {
+    throw new AssetServiceError(
+      `Unsupported export version: ${obj.version} (expected 1)`,
+      'VERSION_ERROR'
+    );
+  }
+
+  if (obj.type !== 'products') {
+    throw new AssetServiceError(
+      `Expected type "products" but got "${obj.type}"`,
+      'PARSE_ERROR'
+    );
+  }
+
+  if (!Array.isArray(obj.products)) {
+    throw new AssetServiceError('Missing or invalid "products" array', 'PARSE_ERROR');
+  }
+
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  const productNames = new Set<string>();
+
+  for (let i = 0; i < obj.products.length; i++) {
+    const pErrors = validateProduct(obj.products[i], i);
+    errors.push(...pErrors);
+    const name = (obj.products[i] as Record<string, unknown>)?.name;
+    if (typeof name === 'string') {
+      if (productNames.has(name)) {
+        warnings.push(`products[${i}]: duplicate product name "${name}"`);
+      }
+      productNames.add(name);
+    }
+  }
+
+  if (errors.length > 0) {
+    throw new AssetServiceError(
+      `Validation failed with ${errors.length} error(s):\n${errors.join('\n')}`,
+      'VALIDATION_ERROR',
+      errors
+    );
+  }
+
+  return {
+    data: parsed as ProductExportData,
+    warnings,
+  };
+}
+
+/**
+ * Parse and validate a unit-only JSON export.
+ * Note: product_name references are NOT validated here since products may already exist in DB.
+ * We use a permissive product name set that accepts any string.
+ */
+export function parseUnitJSON(jsonString: string): { data: UnitExportData; warnings: string[] } {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(jsonString);
+  } catch {
+    throw new AssetServiceError('Invalid JSON format', 'PARSE_ERROR');
+  }
+
+  if (!parsed || typeof parsed !== 'object') {
+    throw new AssetServiceError('JSON must be an object', 'PARSE_ERROR');
+  }
+
+  const obj = parsed as Record<string, unknown>;
+
+  if (obj.version !== 1) {
+    throw new AssetServiceError(
+      `Unsupported export version: ${obj.version} (expected 1)`,
+      'VERSION_ERROR'
+    );
+  }
+
+  if (obj.type !== 'units') {
+    throw new AssetServiceError(
+      `Expected type "units" but got "${obj.type}"`,
+      'PARSE_ERROR'
+    );
+  }
+
+  if (!Array.isArray(obj.units)) {
+    throw new AssetServiceError('Missing or invalid "units" array', 'PARSE_ERROR');
+  }
+
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  // Use a permissive set: accept any product_name since products may already be in DB
+  const permissiveProductNames = new Proxy(new Set<string>(), {
+    get(target, prop) {
+      if (prop === 'has') return () => true;
+      return Reflect.get(target, prop);
+    },
+  }) as Set<string>;
+
+  for (let i = 0; i < obj.units.length; i++) {
+    const uErrors = validateUnit(obj.units[i], i, permissiveProductNames);
+    errors.push(...uErrors);
+  }
+
+  if (errors.length > 0) {
+    throw new AssetServiceError(
+      `Validation failed with ${errors.length} error(s):\n${errors.join('\n')}`,
+      'VALIDATION_ERROR',
+      errors
+    );
+  }
+
+  return {
+    data: parsed as UnitExportData,
+    warnings,
+  };
+}
+
+/**
+ * Import products from a standalone product export.
+ */
+export async function importProducts(data: ProductExportData): Promise<ProductImportResult> {
+  const result: ProductImportResult = {
+    products_created: 0,
+    errors: [],
+    warnings: [],
+  };
+
+  try {
+    if (data.products.length === 0) {
+      result.warnings.push('No products to import');
+      return result;
+    }
+
+    const productRecords = data.products.map(p => ({
+      name: p.name,
+      code: p.code || null,
+      channel: p.channel as ProductChannel,
+      category: p.category as ProductCategory,
+      currency: (p.currency || 'CNY') as Currency,
+      lock_period_days: p.lock_period_days ?? 0,
+      annual_return_rate: p.annual_return_rate ?? null,
+    }));
+
+    const { data: inserted, error } = await supabase
+      .from('financial_products')
+      .insert(productRecords)
+      .select();
+
+    if (error) {
+      result.errors.push(`Failed to insert products: ${error.message}`);
+      return result;
+    }
+
+    result.products_created = inserted?.length || 0;
+    return result;
+  } catch (error) {
+    if (error instanceof AssetServiceError) throw error;
+    handleSupabaseError(error, 'Failed to import products');
+  }
+}
+
+/**
+ * Import units from a standalone unit export.
+ * Resolves product_name to product_id by looking up existing products in DB.
+ */
+export async function importUnits(data: UnitExportData): Promise<UnitImportResult> {
+  const result: UnitImportResult = {
+    units_created: 0,
+    errors: [],
+    warnings: [],
+  };
+
+  try {
+    if (data.units.length === 0) {
+      result.warnings.push('No units to import');
+      return result;
+    }
+
+    // Look up existing products to resolve product_name -> product_id
+    const { data: products, error: pErr } = await supabase
+      .from('financial_products')
+      .select('id, name');
+
+    if (pErr) {
+      result.errors.push(`Failed to look up products: ${pErr.message}`);
+      return result;
+    }
+
+    const productNameToId = new Map<string, string>();
+    (products || []).forEach((p: { id: string; name: string }) => {
+      productNameToId.set(p.name, p.id);
+    });
+
+    const unitRecords = data.units.map(u => {
+      let product_id: string | null = null;
+      if (u.product_name) {
+        product_id = productNameToId.get(u.product_name) || null;
+        if (!product_id) {
+          result.warnings.push(
+            `Unit "${u.unit_code}": product "${u.product_name}" not found in database, setting product_id to null`
+          );
+        }
+      }
+
+      return {
+        unit_code: u.unit_code,
+        amount: u.amount,
+        currency: (u.currency || 'CNY') as Currency,
+        status: (u.status || '已成立') as UnitStatus,
+        strategy: u.strategy as InvestmentStrategy,
+        tactics: u.tactics as InvestmentTactics,
+        product_id,
+        start_date: u.start_date || null,
+        note: u.note || null,
+      };
+    });
+
+    const BATCH_SIZE = 100;
+    for (let i = 0; i < unitRecords.length; i += BATCH_SIZE) {
+      const batch = unitRecords.slice(i, i + BATCH_SIZE);
+      const { data: inserted, error } = await supabase
+        .from('capital_units')
+        .insert(batch)
+        .select();
+
+      if (error) {
+        result.errors.push(`Failed to insert units batch ${i / BATCH_SIZE + 1}: ${error.message}`);
+        continue;
+      }
+      result.units_created += inserted?.length || 0;
+    }
+
+    return result;
+  } catch (error) {
+    if (error instanceof AssetServiceError) throw error;
+    handleSupabaseError(error, 'Failed to import units');
   }
 }
