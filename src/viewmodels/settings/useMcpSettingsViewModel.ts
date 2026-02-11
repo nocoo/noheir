@@ -1,16 +1,10 @@
-import { useSettings } from '@/contexts/SettingsContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { buildMcpConfigJson, getMcpProjectPath } from '@/domain/settings/mcpConfig';
 
 export function useMcpSettingsViewModel() {
-  const { settings, updateMcpEnabled } = useSettings();
   const { user } = useAuth();
 
   const email = user?.email ?? '';
-
-  const toggleMcp = (enabled: boolean) => {
-    updateMcpEnabled(enabled);
-  };
 
   const configJson = buildMcpConfigJson({
     email,
@@ -20,9 +14,7 @@ export function useMcpSettingsViewModel() {
   });
 
   return {
-    mcpEnabled: settings.mcpEnabled,
     email,
     configJson,
-    toggleMcp,
   };
 }
