@@ -3,10 +3,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { RefreshCw, Copy, Check, Terminal } from 'lucide-react';
+import { Copy, Check, Terminal } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
 import { useMcpSettingsViewModel } from '@/viewmodels/settings/useMcpSettingsViewModel';
 
 export function McpSettings() {
@@ -15,21 +14,10 @@ export function McpSettings() {
 
   const {
     mcpEnabled,
-    refreshToken,
-    refreshError,
-    refreshing,
+    email,
     configJson,
     toggleMcp,
-    handleRefreshToken,
-  } = useMcpSettingsViewModel(
-    async () => {
-      const { data, error } = await supabase.auth.refreshSession();
-      return {
-        data: { session: data.session ? { refresh_token: data.session.refresh_token } : null },
-        error: error ? { message: error.message } : null,
-      };
-    }
-  );
+  } = useMcpSettingsViewModel();
 
   if (!user) {
     return null;
@@ -43,15 +31,6 @@ export function McpSettings() {
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error('复制失败');
-    }
-  };
-
-  const handleRefresh = async () => {
-    await handleRefreshToken();
-    if (refreshError) {
-      toast.error(`刷新失败: ${refreshError}`);
-    } else {
-      toast.success('Refresh Token 已更新');
     }
   };
 
@@ -74,28 +53,14 @@ export function McpSettings() {
 
         {mcpEnabled && (
           <>
-            {/* Refresh Token Section */}
+            {/* Auth Info */}
             <div className="space-y-3">
-              <Label>Refresh Token</Label>
-              <div className="flex items-center gap-2">
-                <code className="flex-1 p-2 bg-muted rounded text-xs font-mono break-all max-h-20 overflow-auto">
-                  {refreshToken || '<未获取>'}
-                </code>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleRefresh}
-                  disabled={refreshing}
-                  title="刷新 Token"
-                >
-                  <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-                </Button>
-              </div>
-              {refreshError && (
-                <p className="text-xs text-destructive">{refreshError}</p>
-              )}
+              <Label>认证账号</Label>
+              <code className="block p-2 bg-muted rounded text-xs font-mono">
+                {email || '<未登录>'}
+              </code>
               <p className="text-xs text-muted-foreground">
-                Token 用于 MCP 服务器认证，刷新后需更新配置
+                MCP 服务器使用此邮箱 + 密码登录，请将密码填入下方配置的 SUPABASE_PASSWORD 字段
               </p>
             </div>
 

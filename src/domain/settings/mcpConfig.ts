@@ -1,5 +1,5 @@
 export interface McpConfigParams {
-  refreshToken: string;
+  email: string;
   supabaseUrl: string;
   supabaseAnonKey: string;
   projectPath: string;
@@ -25,7 +25,8 @@ export function buildMcpConfigJson(params: McpConfigParams): string {
         env: {
           SUPABASE_URL: params.supabaseUrl,
           SUPABASE_ANON_KEY: params.supabaseAnonKey,
-          SUPABASE_REFRESH_TOKEN: params.refreshToken,
+          SUPABASE_EMAIL: params.email,
+          SUPABASE_PASSWORD: '<your-password>',
         },
       },
     },

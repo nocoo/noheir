@@ -11,9 +11,9 @@ describe('mcpConfig domain', () => {
   });
 
   describe('buildMcpConfigJson', () => {
-    it('generates valid config JSON with given refresh token', () => {
+    it('generates valid config JSON with email auth', () => {
       const result = buildMcpConfigJson({
-        refreshToken: 'test-refresh-token-123',
+        email: 'user@example.com',
         supabaseUrl: 'http://127.0.0.1:54321',
         supabaseAnonKey: 'test-anon-key',
         projectPath: '/path/to/project',
@@ -27,12 +27,13 @@ describe('mcpConfig domain', () => {
       expect(parsed.mcpServers.noheir.args).toContain('/path/to/project/mcp/src/index.ts');
       expect(parsed.mcpServers.noheir.env.SUPABASE_URL).toBe('http://127.0.0.1:54321');
       expect(parsed.mcpServers.noheir.env.SUPABASE_ANON_KEY).toBe('test-anon-key');
-      expect(parsed.mcpServers.noheir.env.SUPABASE_REFRESH_TOKEN).toBe('test-refresh-token-123');
+      expect(parsed.mcpServers.noheir.env.SUPABASE_EMAIL).toBe('user@example.com');
+      expect(parsed.mcpServers.noheir.env.SUPABASE_PASSWORD).toBe('<your-password>');
     });
 
     it('produces pretty-printed JSON with 2-space indent', () => {
       const result = buildMcpConfigJson({
-        refreshToken: 'tok',
+        email: 'a@b.com',
         supabaseUrl: 'http://localhost',
         supabaseAnonKey: 'key',
         projectPath: '/p',
@@ -44,16 +45,17 @@ describe('mcpConfig domain', () => {
       expect(() => JSON.parse(result)).not.toThrow();
     });
 
-    it('handles empty refresh token', () => {
+    it('handles empty email', () => {
       const result = buildMcpConfigJson({
-        refreshToken: '',
+        email: '',
         supabaseUrl: 'http://localhost',
         supabaseAnonKey: 'key',
         projectPath: '/p',
       });
 
       const parsed = JSON.parse(result);
-      expect(parsed.mcpServers.noheir.env.SUPABASE_REFRESH_TOKEN).toBe('');
+      expect(parsed.mcpServers.noheir.env.SUPABASE_EMAIL).toBe('');
+      expect(parsed.mcpServers.noheir.env.SUPABASE_PASSWORD).toBe('<your-password>');
     });
   });
 });
