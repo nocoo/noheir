@@ -10,7 +10,8 @@ Local MCP server (`mcp/`) exposes financial data query and asset CRUD to AI agen
 # Set env vars and run
 SUPABASE_URL=http://127.0.0.1:54321 \
 SUPABASE_ANON_KEY=<anon-key> \
-SUPABASE_REFRESH_TOKEN=<your-refresh-token> \
+SUPABASE_EMAIL=<your-email> \
+SUPABASE_PASSWORD=<your-password> \
 bun run mcp:start
 ```
 
@@ -25,7 +26,8 @@ bun run mcp:start
       "env": {
         "SUPABASE_URL": "http://127.0.0.1:54321",
         "SUPABASE_ANON_KEY": "<anon-key>",
-        "SUPABASE_REFRESH_TOKEN": "<your-refresh-token>"
+        "SUPABASE_EMAIL": "<your-email>",
+        "SUPABASE_PASSWORD": "<your-password>"
       }
     }
   }
@@ -121,4 +123,5 @@ E2E tests are skipped gracefully with a visible warning box when local Supabase 
 - `bun:test` LSP errors in editor are cosmetic (bun-types not visible to TS language server for test files) — tests run fine.
 - Supabase PostgREST enforces `max_rows` (default 1000) on all `.select()` queries. Never fetch full tables client-side for aggregation — use server-side RPC with `SELECT DISTINCT` / `COUNT(*)` instead.
 - MCP auth: hardcoding `access_token` in client headers causes silent failures after JWT expiry (default 1h). Use `setSession()` + `autoRefreshToken: true` so Supabase auto-refreshes.
+- MCP auth: refresh-token-based auth fails when the token expires between MCP server restarts. Switched to email/password `signInWithPassword()` — passwords never expire, so the server always starts successfully.
 - When adding new RPC functions, remember to apply the migration SQL on **both** local Supabase (`supabase db reset`) and remote (Dashboard SQL Editor).

@@ -4,7 +4,7 @@
  * Exposes the user's financial data (transactions, transfers, summary)
  * and asset management (products, units) as MCP tools via stdio transport.
  *
- * Auth: Supabase refresh token via SUPABASE_REFRESH_TOKEN env var.
+ * Auth: Supabase email/password via SUPABASE_EMAIL + SUPABASE_PASSWORD env vars.
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";

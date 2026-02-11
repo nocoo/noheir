@@ -19,7 +19,8 @@ const ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0";
 
 let userId: string;
-let refreshToken: string;
+let testEmail: string;
+let testPassword: string;
 let mcpClient: Client;
 let transport: StdioClientTransport;
 
@@ -27,7 +28,8 @@ beforeAll(async () => {
   // Create test user and seed data
   const auth = await createAuthenticatedClient("mcp-protocol");
   userId = auth.user.id;
-  refreshToken = auth.session.refresh_token;
+  testEmail = auth.email;
+  testPassword = auth.password;
 
   // Seed some data for the user
   await auth.client.from("transactions").insert([
@@ -46,7 +48,8 @@ beforeAll(async () => {
     env: {
       SUPABASE_URL,
       SUPABASE_ANON_KEY: ANON_KEY,
-      SUPABASE_REFRESH_TOKEN: refreshToken,
+      SUPABASE_EMAIL: testEmail,
+      SUPABASE_PASSWORD: testPassword,
       PATH: process.env.PATH ?? "",
     },
     stderr: "pipe",

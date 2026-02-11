@@ -1,9 +1,10 @@
 /**
  * Supabase authentication for MCP server
  *
- * Creates an authenticated Supabase client using a refresh token
- * passed via environment variable. The client carries the user's
- * session so that RLS policies enforce data isolation.
+ * Creates an authenticated Supabase client using email/password login.
+ * Unlike the previous refresh-token approach, passwords never expire,
+ * so the MCP server can always start successfully regardless of how
+ * long it has been idle.
  *
  * Uses setSession() + autoRefreshToken so the access token is
  * automatically refreshed before expiry (default JWT lifetime: 1h).
@@ -14,7 +15,8 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 export interface AuthConfig {
   supabaseUrl: string;
   supabaseAnonKey: string;
-  refreshToken: string;
+  email: string;
+  password: string;
 }
 
 /**
@@ -24,49 +26,38 @@ export interface AuthConfig {
 export function getAuthConfig(): AuthConfig {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
-  const refreshToken = process.env.SUPABASE_REFRESH_TOKEN;
+  const email = process.env.SUPABASE_EMAIL;
+  const password = process.env.SUPABASE_PASSWORD;
 
   if (!supabaseUrl) throw new Error("SUPABASE_URL environment variable is required");
   if (!supabaseAnonKey) throw new Error("SUPABASE_ANON_KEY environment variable is required");
-  if (!refreshToken) throw new Error("SUPABASE_REFRESH_TOKEN environment variable is required");
+  if (!email) throw new Error("SUPABASE_EMAIL environment variable is required");
+  if (!password) throw new Error("SUPABASE_PASSWORD environment variable is required");
 
-  return { supabaseUrl, supabaseAnonKey, refreshToken };
+  return { supabaseUrl, supabaseAnonKey, email, password };
 }
 
 /**
- * Create an authenticated Supabase client by exchanging the refresh token
- * for a fresh session. Uses setSession() so the client manages token
- * refresh automatically.
+ * Create an authenticated Supabase client by signing in with email/password.
+ * Uses setSession() so the client manages token refresh automatically.
  */
 export async function createAuthenticatedSupabaseClient(
   config: AuthConfig,
 ): Promise<SupabaseClient> {
-  // First, exchange refresh token for a session
-  const bootstrapClient = createClient(config.supabaseUrl, config.supabaseAnonKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-
-  const { data, error } = await bootstrapClient.auth.refreshSession({
-    refresh_token: config.refreshToken,
-  });
-
-  if (error || !data.session) {
-    throw new Error(
-      `Failed to authenticate with refresh token: ${error?.message ?? "no session returned"}`,
-    );
-  }
-
-  // Create the real client with autoRefreshToken enabled
   const client = createClient(config.supabaseUrl, config.supabaseAnonKey, {
     auth: { persistSession: false, autoRefreshToken: true },
   });
 
-  // setSession injects both access_token and refresh_token into the client,
-  // enabling automatic refresh before the access token expires
-  await client.auth.setSession({
-    access_token: data.session.access_token,
-    refresh_token: data.session.refresh_token,
+  const { data, error } = await client.auth.signInWithPassword({
+    email: config.email,
+    password: config.password,
   });
+
+  if (error || !data.session) {
+    throw new Error(
+      `Failed to authenticate with email/password: ${error?.message ?? "no session returned"}`,
+    );
+  }
 
   return client;
 }
