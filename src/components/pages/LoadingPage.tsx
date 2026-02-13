@@ -8,12 +8,11 @@ export function LoadingPage() {
       <div className="flex flex-col items-center gap-8">
         {/* Logo */}
         <div className="relative animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="flex items-center justify-center">
+          <div className="flex h-72 w-72 items-center justify-center rounded-full bg-secondary dark:bg-[#171717] ring-1 ring-border overflow-hidden p-6">
             <img
               src={loading}
               alt="Logo"
-              className="h-64 w-64"
-              style={{ width: '256px', height: '256px' }}
+              className="h-full w-full object-contain"
             />
           </div>
         </div>
