@@ -1,5 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext';
-import { User, Loader2 } from 'lucide-react';
+import { useSettings } from '@/contexts/SettingsContext';
+import { User, Loader2, Sun, Moon, Monitor, Github } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -49,6 +50,7 @@ function GoogleLogo() {
 
 export function LoginPage() {
   const { signInWithGoogle } = useAuth();
+  const { settings, updateTheme } = useSettings();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
@@ -60,6 +62,13 @@ export function LoginPage() {
     }
     // Don't reset isLoading — page will redirect to Google OAuth
   };
+
+  const cycleTheme = () => {
+    const next = settings.theme === 'light' ? 'dark' : settings.theme === 'dark' ? 'system' : 'light';
+    updateTheme(next);
+  };
+
+  const ThemeIcon = settings.theme === 'dark' ? Moon : settings.theme === 'system' ? Monitor : Sun;
 
   const year = new Date().getFullYear();
   const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -84,6 +93,26 @@ export function LoginPage() {
           ].join(' '),
         }}
       />
+
+      {/* Top-right toolbar */}
+      <div className="absolute top-4 right-4 flex items-center gap-1 z-10">
+        <a
+          href="https://github.com/nocoo/noheir"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="GitHub repository"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+        >
+          <Github className="h-[18px] w-[18px]" aria-hidden="true" strokeWidth={1.5} />
+        </a>
+        <button
+          onClick={cycleTheme}
+          aria-label={`Toggle theme, currently ${settings.theme}`}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+        >
+          <ThemeIcon className="h-4 w-4" aria-hidden="true" strokeWidth={1.5} />
+        </button>
+      </div>
 
       <div className="flex flex-col items-center">
         {/* Badge card — vertical ID badge (aspect 54/86) */}
