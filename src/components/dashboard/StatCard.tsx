@@ -68,7 +68,7 @@ export function StatCard({ title, value, icon: Icon, variant = 'default', showCu
 
   return (
     <Card
-      className={cn('transition-all hover:shadow-md', variantStyles[variant])}
+      className={cn('transition-colors', variantStyles[variant])}
       style={borderStyle}
     >
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
