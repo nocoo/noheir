@@ -1,5 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useSettings } from '@/contexts/SettingsContext';
+import { useThemedLogo } from '@/hooks/useThemedLogo';
 import { User, Loader2, Sun, Moon, Monitor, Github } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -51,6 +52,7 @@ function GoogleLogo() {
 export function LoginPage() {
   const { signInWithGoogle } = useAuth();
   const { settings, updateTheme } = useSettings();
+  const { logo64 } = useThemedLogo();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
@@ -142,7 +144,7 @@ export function LoginPage() {
               />
               <div className="flex items-center gap-2">
                 <img
-                  src="/logo/logo-64.png"
+                  src={logo64}
                   alt="Logo"
                   className="h-4 w-4"
                 />

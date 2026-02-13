@@ -1,14 +1,17 @@
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Shield, Eye, Database, Trash2 } from 'lucide-react';
+import { useThemedLogo } from '@/hooks/useThemedLogo';
 
 export function PrivacyPage() {
+  const { logo64 } = useThemedLogo();
+
   return (
     <div className="min-h-screen bg-background p-2 md:p-4 flex items-center justify-center">
       <div className="mx-auto max-w-2xl rounded-[16px] md:rounded-[20px] bg-card p-6 md:p-10">
         {/* Header */}
         <div className="space-y-4 mb-8">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-secondary overflow-hidden">
-            <img src="/logo/logo-64.png" alt="Logo" className="h-14 w-14" />
+            <img src={logo64} alt="Logo" className="h-14 w-14" />
           </div>
 
           <div className="flex items-center gap-2">

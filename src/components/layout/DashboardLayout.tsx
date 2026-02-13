@@ -1,6 +1,7 @@
 import { ReactNode, useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSettings } from '@/contexts/SettingsContext';
+import { useThemedLogo } from '@/hooks/useThemedLogo';
 import { APP_VERSION } from '@/lib/version-generated';
 import {
   Database,
@@ -223,6 +224,7 @@ export function DashboardLayout({
   onTabChange,
 }: DashboardLayoutProps) {
   const { settings, updateTheme } = useSettings();
+  const { logo64 } = useThemedLogo();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -279,7 +281,7 @@ export function DashboardLayout({
         <div className="flex w-full items-center justify-between px-3">
           <div className="flex items-center gap-3">
             <img
-              src="/logo/logo-64.png"
+              src={logo64}
               alt="Logo"
               className="h-5 w-5 shrink-0"
             />
@@ -390,7 +392,7 @@ export function DashboardLayout({
           <div className="flex h-screen w-[68px] flex-col items-center">
             <div className="flex h-14 items-center justify-center">
               <img
-                src="/logo/logo-64.png"
+                src={logo64}
                 alt="Logo"
                 className="h-5 w-5"
               />
