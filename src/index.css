@@ -1,240 +1,339 @@
 @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap");
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "tw-animate-css";
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here.
-All colors MUST be HSL.
+@custom-variant dark (&:where(.dark, .dark *));
 
-Financial Color System:
-- Primary: Blue/Indigo (信任、专业)
-- Income: Emerald (收入 - 稳重绿色)
-- Expense: Rose (支出 - 现代红色)
-- Neutral: Slate (文字、边框、背景)
-*/
+/*
+ * Tailwind v4 theme — map CSS custom properties to --color-* namespace
+ * so utilities like bg-background, text-foreground, etc. work.
+ *
+ * Financial Color System:
+ * - Primary: Sky (信任、专业)
+ * - Income: Emerald (收入 - 稳重绿色)
+ * - Expense: Rose (支出 - 现代红色)
+ * - Neutral: Slate (文字、边框、背景)
+ */
+@theme inline {
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
 
-@layer base {
-  :root {
-    /* ========== Base Colors (Slate-based) ========== */
-    --background: 210 40% 98%;       /* Slate-50 */
-    --foreground: 222 47% 11%;       /* Slate-900 */
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-hover: hsl(var(--primary-hover));
+  --color-primary-light: hsl(var(--primary-light));
+  --color-primary-dark: hsl(var(--primary-dark));
 
-    --card: 0 0% 100%;               /* White */
-    --card-foreground: 222 47% 11%;  /* Slate-900 */
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
 
-    --popover: 210 40% 96%;          /* Slate-100 */
-    --popover-foreground: 222 47% 11%; /* Slate-900 */
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
 
-    /* ========== Primary: Logo Blue (专业、信任) ========== */
-    --primary: 219 43% 41%;          /* Logo Blue #3b5a95 */
-    --primary-foreground: 210 40% 98%; /* Slate-50 */
-    --primary-hover: 219 43% 36%;    /* Darker logo blue */
-    --primary-light: 219 28% 95%;    /* Very light blue */
-    --primary-dark: 219 51% 45%;     /* Medium dark */
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
 
-    /* ========== Secondary ========== */
-    --secondary: 210 40% 96%;        /* Slate-100 */
-    --secondary-foreground: 222 47% 11%; /* Slate-900 */
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
 
-    /* ========== Muted ========== */
-    --muted: 210 40% 96%;            /* Slate-100 */
-    --muted-foreground: 215 16% 47%; /* Slate-500 */
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
 
-    /* ========== Accent ========== */
-    --accent: 210 40% 96%;           /* Slate-100 */
-    --accent-foreground: 222 47% 11%; /* Slate-900 */
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
 
-    /* ========== Destructive ========== */
-    --destructive: 0 84% 60%;        /* Red-500 */
-    --destructive-foreground: 210 40% 98%; /* Slate-50 */
+  --color-sidebar: hsl(var(--sidebar-background));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
 
-    /* ========== Border & Input ========== */
-    --border: 214 32% 91%;           /* Slate-200 */
-    --input: 214 32% 91%;            /* Slate-200 */
-    --ring: 219 43% 41%;             /* Logo Blue */
+  /* Financial colors */
+  --color-income: hsl(var(--income));
+  --color-income-foreground: hsl(var(--income-foreground));
+  --color-income-bg: hsl(var(--income-bg));
+  --color-income-dark: hsl(var(--income-dark));
+  --color-income-light: hsl(var(--income-light));
 
-    /* ========== NEW: Financial Colors ========== */
+  --color-expense: hsl(var(--expense));
+  --color-expense-foreground: hsl(var(--expense-foreground));
+  --color-expense-bg: hsl(var(--expense-bg));
+  --color-expense-dark: hsl(var(--expense-dark));
+  --color-expense-light: hsl(var(--expense-light));
 
-    /* Income: Emerald (稳重绿色) */
-    --income: 160 84% 39%;            /* Emerald-600 */
-    --income-foreground: 210 40% 98%; /* Slate-50 */
-    --income-bg: 160 84% 97%;        /* Emerald-50 */
-    --income-dark: 160 84% 45%;      /* Emerald-500 */
-    --income-light: 160 84% 95%;     /* Emerald-100 */
+  /* Semantic text colors */
+  --color-text-main: hsl(var(--text-main));
+  --color-text-secondary: hsl(var(--text-secondary));
+  --color-text-muted: hsl(var(--text-muted));
+  --color-text-income: hsl(var(--text-income));
+  --color-text-expense: hsl(var(--text-expense));
 
-    /* Expense: Rose (现代红色) */
-    --expense: 350 89% 60%;          /* Rose-600 */
-    --expense-foreground: 210 40% 98%; /* Slate-50 */
-    --expense-bg: 350 89% 97%;       /* Rose-50 */
-    --expense-dark: 350 89% 65%;     /* Rose-500 */
-    --expense-light: 350 89% 95%;    /* Rose-100 */
+  /* Semantic background colors */
+  --color-bg-main: hsl(var(--bg-main));
+  --color-bg-surface: hsl(var(--bg-surface));
+  --color-bg-alt: hsl(var(--bg-alt));
 
-    /* Semantic Text Colors */
-    --text-main: 222 47% 11%;        /* Slate-900 */
-    --text-secondary: 215 16% 47%;   /* Slate-500 */
-    --text-muted: 215 20% 65%;       /* Slate-400 */
-    --text-income: 160 84% 39%;      /* Emerald-600 */
-    --text-expense: 350 89% 60%;     /* Rose-600 */
+  /* Chart colors */
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
 
-    /* Semantic Backgrounds */
-    --bg-main: 210 40% 98%;          /* Slate-50 */
-    --bg-surface: 0 0% 100%;         /* White */
-    --bg-alt: 210 40% 96%;           /* Slate-100 */
+  /* Heatmap colors */
+  --color-heatmap-0: var(--heatmap-0);
+  --color-heatmap-1: var(--heatmap-1);
+  --color-heatmap-2: var(--heatmap-2);
+  --color-heatmap-3: var(--heatmap-3);
+  --color-heatmap-4: var(--heatmap-4);
 
-    /* ========== Chart Colors (金融色系) ========== */
-    --chart-1: 160 84% 39%;           /* Emerald (income) */
-    --chart-2: 350 89% 60%;           /* Rose (expense) */
-    --chart-3: 221 83% 53%;           /* Blue (primary) */
-    --chart-4: 45 93% 47%;            /* Yellow/Amber */
-    --chart-5: 262 83% 58%;           /* Purple */
+  /* Radii */
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
 
-    /* ========== Sidebar ========== */
-    --sidebar-background: 0 0% 100%;  /* White */
-    --sidebar-foreground: 222 47% 11%; /* Slate-900 */
-    --sidebar-primary: 219 43% 41%;   /* Logo Blue */
-    --sidebar-primary-foreground: 210 40% 98%; /* Slate-50 */
-    --sidebar-accent: 210 40% 96%;    /* Slate-100 */
-    --sidebar-accent-foreground: 222 47% 11%; /* Slate-900 */
-    --sidebar-border: 214 32% 91%;   /* Slate-200 */
-    --sidebar-ring: 219 43% 41%;      /* Logo Blue */
+  /* Animations */
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
 
-    /* ========== Legacy Sidebar ========== */
-    --sidebar: 0 0% 100%;
-
-    /* ========== Heatmap Colors (保留原GitHub风格) ========== */
-    --heatmap-0: #ebedf0;
-    --heatmap-1: #c6e48b;
-    --heatmap-2: #7bc96f;
-    --heatmap-3: #239a3b;
-    --heatmap-4: #196127;
-
-    /* ========== Other ========== */
-    --radius: 0.75rem;
-
-    --font-sans: 'Roboto', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
-    --font-serif: 'Libre Caslon Text', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
-    --font-mono: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-
-    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
-
-    --tracking-normal: 0em;
-    --spacing: 0.25rem;
-  }
-
-  .dark {
-    /* ========== Base Colors (Dark Mode) ========== */
-    --background: 222 47% 11%;       /* Slate-900 */
-    --foreground: 210 40% 98%;       /* Slate-50 */
-
-    --card: 224 71% 4%;              /* Slate-950 / Slate-800 */
-    --card-foreground: 210 40% 98%;  /* Slate-50 */
-
-    --popover: 224 71% 4%;           /* Slate-950 */
-    --popover-foreground: 210 40% 98%; /* Slate-50 */
-
-    /* ========== Primary: Logo Blue (Dark Mode) ========== */
-    --primary: 219 53% 55%;          /* Lighter logo blue for dark mode */
-    --primary-foreground: 0 0% 100%;  /* White */
-    --primary-hover: 219 53% 60%;    /* Even lighter */
-    --primary-light: 219 43% 20%;    /* Very dark logo blue */
-    --primary-dark: 219 53% 50%;     /* Medium */
-
-    /* ========== Secondary (Dark Mode) ========== */
-    --secondary: 215 20% 30%;        /* Slate-700 */
-    --secondary-foreground: 210 40% 98%; /* Slate-50 */
-
-    /* ========== Muted (Dark Mode) ========== */
-    --muted: 215 20% 30%;            /* Slate-700 */
-    --muted-foreground: 215 20% 65%; /* Slate-400 */
-
-    /* ========== Accent (Dark Mode) ========== */
-    --accent: 215 20% 30%;           /* Slate-700 */
-    --accent-foreground: 210 40% 98%; /* Slate-50 */
-
-    /* ========== Destructive (Dark Mode) ========== */
-    --destructive: 0 72% 50%;        /* Red-600 */
-    --destructive-foreground: 210 40% 98%; /* Slate-50 */
-
-    /* ========== Border & Input (Dark Mode) ========== */
-    --border: 215 20% 30%;           /* Slate-700 */
-    --input: 215 20% 30%;            /* Slate-700 */
-    --ring: 219 53% 55%;             /* Logo Blue (lighter for dark mode) */
-
-    /* ========== NEW: Financial Colors (Dark Mode) ========== */
-
-    /* Income: Emerald (Dark Mode) - 更亮以提升可读性 */
-    --income: 160 100% 50%;          /* Emerald-400 (最亮易读) */
-    --income-foreground: 160 100% 10%; /* Emerald-950 */
-    --income-bg: 160 84% 15%;        /* Emerald-950 + 更亮背景 */
-    --income-dark: 160 100% 45%;     /* Emerald-500 */
-    --income-light: 160 84% 25%;     /* Emerald-800 */
-
-    /* Expense: Rose (Dark Mode) - 更亮以提升可读性 */
-    --expense: 350 100% 65%;         /* Rose-400 (最亮易读) */
-    --expense-foreground: 350 100% 15%; /* Rose-950 */
-    --expense-bg: 350 89% 15%;       /* Rose-950 + 更亮背景 */
-    --expense-dark: 350 100% 60%;    /* Rose-500 */
-    --expense-light: 350 89% 25%;    /* Rose-800 */
-
-    /* Semantic Text Colors (Dark Mode) */
-    --text-main: 210 40% 98%;        /* Slate-50 */
-    --text-secondary: 215 20% 65%;   /* Slate-400 */
-    --text-muted: 215 20% 50%;       /* Slate-500 */
-    --text-income: 160 100% 55%;     /* Emerald-350 (更亮) */
-    --text-expense: 350 100% 70%;    /* Rose-350 (更亮) */
-
-    /* Semantic Backgrounds (Dark Mode) */
-    --bg-main: 222 47% 11%;          /* Slate-900 */
-    --bg-surface: 224 71% 4%;        /* Slate-950 */
-    --bg-alt: 215 20% 20%;           /* Slate-800 */
-
-    /* ========== Chart Colors (Dark Mode) ========== */
-    --chart-1: 160 84% 50%;           /* Emerald (brighter) */
-    --chart-2: 350 89% 70%;           /* Rose (brighter) */
-    --chart-3: 217 91% 65%;           /* Blue (brighter) */
-    --chart-4: 45 93% 57%;            /* Yellow (brighter) */
-    --chart-5: 262 83% 68%;           /* Purple (brighter) */
-
-    /* ========== Heatmap Colors (Dark Mode - GitHub style) ========== */
-    --heatmap-0: #161b22;
-    --heatmap-1: #0e4429;
-    --heatmap-2: #006d32;
-    --heatmap-3: #26a641;
-    --heatmap-4: #39d353;
-
-    /* ========== Sidebar (Dark Mode) ========== */
-    --sidebar-background: 224 71% 4%; /* Slate-950 */
-    --sidebar-foreground: 210 40% 98%; /* Slate-50 */
-    --sidebar-primary: 219 53% 55%;  /* Logo Blue (lighter for dark mode) */
-    --sidebar-primary-foreground: 0 0% 100%; /* White */
-    --sidebar-accent: 215 20% 30%;   /* Slate-700 */
-    --sidebar-accent-foreground: 210 40% 98%; /* Slate-50 */
-    --sidebar-border: 215 20% 30%;   /* Slate-700 */
-    --sidebar-ring: 219 53% 55%;     /* Logo Blue (lighter for dark mode) */
-
-    --sidebar: 224 71% 4%;
-
-    /* ========== Shadows (Dark Mode) ========== */
-    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.3);
-    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.3);
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.4), 0 1px 2px -1px hsl(0 0% 0% / 0.4);
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.4), 0 1px 2px -1px hsl(0 0% 0% / 0.4);
-    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.4), 0 2px 4px -1px hsl(0 0% 0% / 0.4);
-    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.4), 0 4px 6px -1px hsl(0 0% 0% / 0.4);
-    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.4), 0 8px 10px -1px hsl(0 0% 0% / 0.4);
-    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.6);
-  }
+  /* Font families */
+  --font-sans: 'Roboto', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  --font-serif: 'Libre Caslon Text', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+  --font-mono: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
 }
 
+@keyframes accordion-down {
+  from { height: 0; }
+  to { height: var(--radix-accordion-content-height); }
+}
+
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); }
+  to { height: 0; }
+}
+
+/*
+ * Design tokens — light (default) & dark mode
+ */
+:root {
+  /* ========== Base Colors (Slate-based) ========== */
+  --background: 210 40% 98%;       /* Slate-50 */
+  --foreground: 222 47% 11%;       /* Slate-900 */
+
+  --card: 0 0% 100%;               /* White */
+  --card-foreground: 222 47% 11%;  /* Slate-900 */
+
+  --popover: 210 40% 96%;          /* Slate-100 */
+  --popover-foreground: 222 47% 11%; /* Slate-900 */
+
+  /* ========== Primary: Logo Blue ========== */
+  --primary: 219 43% 41%;          /* Logo Blue #3b5a95 */
+  --primary-foreground: 210 40% 98%; /* Slate-50 */
+  --primary-hover: 219 43% 36%;    /* Darker logo blue */
+  --primary-light: 219 28% 95%;    /* Very light blue */
+  --primary-dark: 219 51% 45%;     /* Medium dark */
+
+  /* ========== Secondary ========== */
+  --secondary: 210 40% 96%;        /* Slate-100 */
+  --secondary-foreground: 222 47% 11%; /* Slate-900 */
+
+  /* ========== Muted ========== */
+  --muted: 210 40% 96%;            /* Slate-100 */
+  --muted-foreground: 215 16% 47%; /* Slate-500 */
+
+  /* ========== Accent ========== */
+  --accent: 210 40% 96%;           /* Slate-100 */
+  --accent-foreground: 222 47% 11%; /* Slate-900 */
+
+  /* ========== Destructive ========== */
+  --destructive: 0 84% 60%;        /* Red-500 */
+  --destructive-foreground: 210 40% 98%; /* Slate-50 */
+
+  /* ========== Border & Input ========== */
+  --border: 214 32% 91%;           /* Slate-200 */
+  --input: 214 32% 91%;            /* Slate-200 */
+  --ring: 219 43% 41%;             /* Logo Blue */
+
+  /* ========== Financial Colors ========== */
+  --income: 160 84% 39%;            /* Emerald-600 */
+  --income-foreground: 210 40% 98%; /* Slate-50 */
+  --income-bg: 160 84% 97%;        /* Emerald-50 */
+  --income-dark: 160 84% 45%;      /* Emerald-500 */
+  --income-light: 160 84% 95%;     /* Emerald-100 */
+
+  --expense: 350 89% 60%;          /* Rose-600 */
+  --expense-foreground: 210 40% 98%; /* Slate-50 */
+  --expense-bg: 350 89% 97%;       /* Rose-50 */
+  --expense-dark: 350 89% 65%;     /* Rose-500 */
+  --expense-light: 350 89% 95%;    /* Rose-100 */
+
+  /* Semantic Text Colors */
+  --text-main: 222 47% 11%;        /* Slate-900 */
+  --text-secondary: 215 16% 47%;   /* Slate-500 */
+  --text-muted: 215 20% 65%;       /* Slate-400 */
+  --text-income: 160 84% 39%;      /* Emerald-600 */
+  --text-expense: 350 89% 60%;     /* Rose-600 */
+
+  /* Semantic Backgrounds */
+  --bg-main: 210 40% 98%;          /* Slate-50 */
+  --bg-surface: 0 0% 100%;         /* White */
+  --bg-alt: 210 40% 96%;           /* Slate-100 */
+
+  /* ========== Chart Colors ========== */
+  --chart-1: 160 84% 39%;           /* Emerald (income) */
+  --chart-2: 350 89% 60%;           /* Rose (expense) */
+  --chart-3: 221 83% 53%;           /* Blue (primary) */
+  --chart-4: 45 93% 47%;            /* Yellow/Amber */
+  --chart-5: 262 83% 58%;           /* Purple */
+
+  /* ========== Sidebar ========== */
+  --sidebar-background: 0 0% 100%;  /* White */
+  --sidebar-foreground: 222 47% 11%; /* Slate-900 */
+  --sidebar-primary: 219 43% 41%;   /* Logo Blue */
+  --sidebar-primary-foreground: 210 40% 98%; /* Slate-50 */
+  --sidebar-accent: 210 40% 96%;    /* Slate-100 */
+  --sidebar-accent-foreground: 222 47% 11%; /* Slate-900 */
+  --sidebar-border: 214 32% 91%;   /* Slate-200 */
+  --sidebar-ring: 219 43% 41%;      /* Logo Blue */
+
+  /* Legacy */
+  --sidebar: 0 0% 100%;
+
+  /* ========== Heatmap Colors ========== */
+  --heatmap-0: #ebedf0;
+  --heatmap-1: #c6e48b;
+  --heatmap-2: #7bc96f;
+  --heatmap-3: #239a3b;
+  --heatmap-4: #196127;
+
+  /* ========== Other ========== */
+  --radius: 0.75rem;
+
+  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+  --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
+  --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
+  --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
+  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+
+  --tracking-normal: 0em;
+  --spacing: 0.25rem;
+}
+
+.dark {
+  /* ========== Base Colors (Dark Mode) ========== */
+  --background: 222 47% 11%;       /* Slate-900 */
+  --foreground: 210 40% 98%;       /* Slate-50 */
+
+  --card: 224 71% 4%;              /* Slate-950 */
+  --card-foreground: 210 40% 98%;  /* Slate-50 */
+
+  --popover: 224 71% 4%;           /* Slate-950 */
+  --popover-foreground: 210 40% 98%;
+
+  /* ========== Primary (Dark Mode) ========== */
+  --primary: 219 53% 55%;
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 219 53% 60%;
+  --primary-light: 219 43% 20%;
+  --primary-dark: 219 53% 50%;
+
+  /* ========== Secondary (Dark Mode) ========== */
+  --secondary: 215 20% 30%;
+  --secondary-foreground: 210 40% 98%;
+
+  /* ========== Muted (Dark Mode) ========== */
+  --muted: 215 20% 30%;
+  --muted-foreground: 215 20% 65%;
+
+  /* ========== Accent (Dark Mode) ========== */
+  --accent: 215 20% 30%;
+  --accent-foreground: 210 40% 98%;
+
+  /* ========== Destructive (Dark Mode) ========== */
+  --destructive: 0 72% 50%;
+  --destructive-foreground: 210 40% 98%;
+
+  /* ========== Border & Input (Dark Mode) ========== */
+  --border: 215 20% 30%;
+  --input: 215 20% 30%;
+  --ring: 219 53% 55%;
+
+  /* ========== Financial Colors (Dark Mode) ========== */
+  --income: 160 100% 50%;
+  --income-foreground: 160 100% 10%;
+  --income-bg: 160 84% 15%;
+  --income-dark: 160 100% 45%;
+  --income-light: 160 84% 25%;
+
+  --expense: 350 100% 65%;
+  --expense-foreground: 350 100% 15%;
+  --expense-bg: 350 89% 15%;
+  --expense-dark: 350 100% 60%;
+  --expense-light: 350 89% 25%;
+
+  /* Semantic Text Colors (Dark Mode) */
+  --text-main: 210 40% 98%;
+  --text-secondary: 215 20% 65%;
+  --text-muted: 215 20% 50%;
+  --text-income: 160 100% 55%;
+  --text-expense: 350 100% 70%;
+
+  /* Semantic Backgrounds (Dark Mode) */
+  --bg-main: 222 47% 11%;
+  --bg-surface: 224 71% 4%;
+  --bg-alt: 215 20% 20%;
+
+  /* ========== Chart Colors (Dark Mode) ========== */
+  --chart-1: 160 84% 50%;
+  --chart-2: 350 89% 70%;
+  --chart-3: 217 91% 65%;
+  --chart-4: 45 93% 57%;
+  --chart-5: 262 83% 68%;
+
+  /* ========== Heatmap Colors (Dark Mode) ========== */
+  --heatmap-0: #161b22;
+  --heatmap-1: #0e4429;
+  --heatmap-2: #006d32;
+  --heatmap-3: #26a641;
+  --heatmap-4: #39d353;
+
+  /* ========== Sidebar (Dark Mode) ========== */
+  --sidebar-background: 224 71% 4%;
+  --sidebar-foreground: 210 40% 98%;
+  --sidebar-primary: 219 53% 55%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 215 20% 30%;
+  --sidebar-accent-foreground: 210 40% 98%;
+  --sidebar-border: 215 20% 30%;
+  --sidebar-ring: 219 53% 55%;
+
+  --sidebar: 224 71% 4%;
+
+  /* ========== Shadows (Dark Mode) ========== */
+  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.3);
+  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.3);
+  --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.4), 0 1px 2px -1px hsl(0 0% 0% / 0.4);
+  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.4), 0 1px 2px -1px hsl(0 0% 0% / 0.4);
+  --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.4), 0 2px 4px -1px hsl(0 0% 0% / 0.4);
+  --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.4), 0 4px 6px -1px hsl(0 0% 0% / 0.4);
+  --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.4), 0 8px 10px -1px hsl(0 0% 0% / 0.4);
+  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.6);
+}
+
+/*
+ * Base styles
+ */
 @layer base {
   * {
     @apply border-border;
@@ -252,15 +351,9 @@ Financial Color System:
 
 /* Loading Animation */
 @keyframes loading {
-  0% {
-    transform: translateX(-100%);
-  }
-  50% {
-    transform: translateX(100%);
-  }
-  100% {
-    transform: translateX(-100%);
-  }
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
 }
 
 /* Date Input Styling for Dark Mode Support */
@@ -273,7 +366,6 @@ input[type="date"] {
   color-scheme: dark;
 }
 
-/* Date input calendar icon color - Light mode */
 input[type="date"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
   filter: invert(0);
@@ -285,9 +377,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   opacity: 1;
 }
 
-/* Dark mode calendar icon - stronger filters for better visibility */
 .dark input[type="date"]::-webkit-calendar-picker-indicator {
-  /* Invert + brightness boost to ensure icon is visible on dark backgrounds */
   filter: invert(1) brightness(1.5);
   opacity: 0.8;
 }
@@ -296,7 +386,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   opacity: 1;
 }
 
-/* Firefox date picker icon - Light mode */
 input[type="date"]::-moz-calendar-picker-indicator {
   cursor: pointer;
   filter: invert(0);
@@ -307,7 +396,6 @@ input[type="date"]::-moz-calendar-picker-indicator:hover {
   opacity: 1;
 }
 
-/* Firefox dark mode */
 .dark input[type="date"]::-moz-calendar-picker-indicator {
   filter: invert(1) brightness(1.5);
   opacity: 0.8;

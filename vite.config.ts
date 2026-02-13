@@ -1,8 +1,10 @@
 import { defineConfig } from "vite";
+import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
 // https://vitejs.dev/config/
 export default defineConfig(() => ({
+  plugins: [tailwindcss()],
   server: {
     host: "::",
     port: 7012,
@@ -17,7 +19,6 @@ export default defineConfig(() => ({
     },
   },
   optimizeDeps: {
-    // Bun 优化配置
     include: ["react", "react-dom", "react-router-dom"],
   },
 }));
