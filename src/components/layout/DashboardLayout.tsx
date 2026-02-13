@@ -1,24 +1,18 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSettings } from '@/contexts/SettingsContext';
 import { APP_VERSION } from '@/lib/version-generated';
 import {
-  Upload,
-  CheckCircle,
   Database,
   LayoutDashboard,
   TrendingUp,
   TrendingDown,
-  ArrowRightLeft,
   Percent,
   Wallet,
   GitCompareArrows,
   Network,
-  Menu,
-  ChevronDown,
+  ChevronUp,
   Settings as SettingsIcon,
-  ArrowUpRight,
-  ArrowDownRight,
   Target,
   Package,
   Coins,
@@ -28,10 +22,24 @@ import {
   Sparkles,
   CreditCard,
   Brain,
+  PanelLeft,
+  Search,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Collapsible, CollapsibleTrigger } from '@/components/ui/collapsible';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
 import { LoginButton } from '@/components/auth';
 
 interface DashboardLayoutProps {
@@ -40,14 +48,25 @@ interface DashboardLayoutProps {
   onTabChange: (tab: string) => void;
 }
 
-const navGroups = [
+interface NavItem {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+}
+
+interface NavGroup {
+  title: string;
+  items: NavItem[];
+}
+
+const navGroups: NavGroup[] = [
   {
     title: '总览',
     items: [
       { id: 'overview', label: '总览', icon: LayoutDashboard },
       { id: 'financial-health', label: '财务健康', icon: HeartPulse },
       { id: 'ai-insight', label: 'AI洞察', icon: Brain },
-    ]
+    ],
   },
   {
     title: '现金流分析',
@@ -58,14 +77,14 @@ const navGroups = [
       { id: 'expense', label: '支出分析', icon: TrendingDown },
       { id: 'flow', label: '流向分析', icon: Network },
       { id: 'compare', label: '时段对比', icon: GitCompareArrows },
-    ]
+    ],
   },
   {
     title: '账户管理',
     items: [
       { id: 'account', label: '账户总览', icon: Wallet },
       { id: 'account-detail', label: '账户详情', icon: Wallet },
-    ]
+    ],
   },
   {
     title: '存量资金管理',
@@ -77,7 +96,7 @@ const navGroups = [
       { id: 'liquidity-ladder', label: '流动性梯队', icon: TrendingUp },
       { id: 'products', label: '产品表', icon: Package },
       { id: 'funds', label: '资金表', icon: Coins },
-    ]
+    ],
   },
   {
     title: '系统',
@@ -86,145 +105,404 @@ const navGroups = [
       { id: 'ai-settings', label: 'AI设置', icon: Sparkles },
       { id: 'account-types', label: '账户设置', icon: CreditCard },
       { id: 'manage', label: '数据管理', icon: Database },
-    ]
+    ],
   },
 ];
 
-export function DashboardLayout({ children, activeTab, onTabChange }: DashboardLayoutProps) {
-  const { settings } = useSettings();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [openGroups, setOpenGroups] = useState<string[]>(navGroups.map(g => g.title));
+const allNavItems = navGroups.flatMap((g) => g.items);
 
-  const toggleGroup = (title: string) => {
-    setOpenGroups(prev =>
-      prev.includes(title) ? prev.filter(g => g !== title) : [...prev, title]
-    );
-  };
+// ── Nav group section (expanded sidebar) ──
+
+function NavGroupSection({
+  group,
+  activeTab,
+  onTabChange,
+}: {
+  group: NavGroup;
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+}) {
+  const [open, setOpen] = useState(true);
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Sidebar */}
-      <aside className={cn(
-        'fixed inset-y-0 left-0 z-50 flex bg-card border-r border-border transition-all duration-300',
-        sidebarOpen ? 'w-64' : 'w-14'
-      )}>
-        <div className="flex flex-col h-full">
-          <div className={cn(
-            "flex items-center h-14 border-b border-border shrink-0",
-            sidebarOpen ? "px-3 justify-between" : "px-2 justify-center"
-          )}>
-            {sidebarOpen && (
-              <div className="flex items-center gap-2 overflow-hidden">
-                <img src="/logo/logo-64.png" alt="Logo" className="h-8 w-8 shrink-0" />
-                <h1 className="text-base font-bold text-foreground whitespace-nowrap">{settings.siteName}</h1>
-              </div>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="shrink-0 h-7 w-7"
-            >
-              <Menu className="h-3.5 w-3.5" />
-            </Button>
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <div className="px-3 mt-2">
+        <CollapsibleTrigger className="flex w-full items-center justify-between px-3 py-2.5">
+          <span className="text-sm font-normal text-muted-foreground">
+            {group.title}
+          </span>
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center">
+            <ChevronUp
+              className={cn(
+                'h-4 w-4 text-muted-foreground transition-transform duration-200',
+                !open && 'rotate-180',
+              )}
+              strokeWidth={1.5}
+            />
+          </span>
+        </CollapsibleTrigger>
+      </div>
+      <div
+        className="grid overflow-hidden"
+        style={{
+          gridTemplateRows: open ? '1fr' : '0fr',
+          transition: 'grid-template-rows 200ms ease-out',
+        }}
+      >
+        <div className="min-h-0 overflow-hidden">
+          <div className="flex flex-col gap-0.5 px-3">
+            {group.items.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => onTabChange(item.id)}
+                data-value={item.id}
+                className={cn(
+                  'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-normal transition-colors',
+                  activeTab === item.id
+                    ? 'bg-accent text-foreground'
+                    : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                )}
+              >
+                <item.icon
+                  className="h-4 w-4 shrink-0"
+                  strokeWidth={1.5}
+                />
+                <span className="flex-1 text-left">{item.label}</span>
+              </button>
+            ))}
           </div>
-
-          <nav className={cn(
-            "flex-1 overflow-y-auto min-h-0",
-            sidebarOpen ? "px-2 py-2 space-y-1" : "py-2 space-y-0.5 mx-2"
-          )}>
-            {sidebarOpen ? (
-              // 展开状态：带分组
-              navGroups.map(group => (
-                <Collapsible
-                  key={group.title}
-                  open={openGroups.includes(group.title)}
-                  onOpenChange={() => toggleGroup(group.title)}
-                >
-                  <CollapsibleTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-between px-2 py-1.5 h-auto text-xs font-semibold text-muted-foreground uppercase tracking-wider"
-                    >
-                      <span>{group.title}</span>
-                      <ChevronDown className={cn(
-                        "h-3 w-3 transition-transform duration-200 shrink-0",
-                        openGroups.includes(group.title) && "rotate-180"
-                      )} />
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="space-y-0.5">
-                    {group.items.map(item => (
-                      <Button
-                        key={item.id}
-                        variant={activeTab === item.id ? 'default' : 'ghost'}
-                        className="w-full justify-start gap-2 px-2 h-9"
-                        onClick={() => onTabChange(item.id)}
-                        data-value={item.id}
-                      >
-                        <item.icon className="h-4 w-4 shrink-0" />
-                        <span className="text-sm">{item.label}</span>
-                      </Button>
-                    ))}
-                  </CollapsibleContent>
-                </Collapsible>
-              ))
-            ) : (
-              // 收缩状态：显示所有导航项
-              navGroups.flatMap(group => group.items).map(item => (
-                <Button
-                  key={item.id}
-                  variant={activeTab === item.id ? 'default' : 'ghost'}
-                  className="w-full justify-center px-1 h-9"
-                  onClick={() => onTabChange(item.id)}
-                  data-value={item.id}
-                  title={item.label}
-                >
-                  <item.icon className="h-4 w-4 shrink-0" />
-                </Button>
-              ))
-            )}
-          </nav>
-
-          {sidebarOpen && (
-            <div className="shrink-0 border-t border-border bg-card px-2 pt-2 pb-3 space-y-2">
-              <LoginButton />
-              <div className="text-xs text-muted-foreground text-center">
-                <a
-                  href="https://github.com/nocoo/noheir"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-primary transition-colors"
-                >
-                  <span className="text-[10px] opacity-70">{APP_VERSION}</span>
-                </a>
-                <span className="text-[10px] opacity-50 mx-1">•</span>
-                <Link to="/terms" className="hover:text-primary transition-colors text-[10px] opacity-70">服务条款</Link>
-                <span className="text-[10px] opacity-50">•</span>
-                <Link to="/privacy" className="hover:text-primary transition-colors text-[10px] opacity-70">隐私政策</Link>
-              </div>
-            </div>
-          )}
         </div>
+      </div>
+    </Collapsible>
+  );
+}
+
+// ── Collapsed nav item with tooltip ──
+
+function CollapsedNavItem({
+  item,
+  activeTab,
+  onTabChange,
+}: {
+  item: NavItem;
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+}) {
+  return (
+    <Tooltip delayDuration={0}>
+      <TooltipTrigger asChild>
+        <button
+          onClick={() => onTabChange(item.id)}
+          data-value={item.id}
+          className={cn(
+            'relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors',
+            activeTab === item.id
+              ? 'bg-accent text-foreground'
+              : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+          )}
+        >
+          <item.icon className="h-4 w-4" strokeWidth={1.5} />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="right" sideOffset={8}>
+        {item.label}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+// ── Main layout component ──
+
+export function DashboardLayout({
+  children,
+  activeTab,
+  onTabChange,
+}: DashboardLayoutProps) {
+  const { settings } = useSettings();
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  // Cmd+K / Ctrl+K shortcut
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen((prev) => !prev);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleSelect = useCallback(
+    (id: string) => {
+      setSearchOpen(false);
+      onTabChange(id);
+    },
+    [onTabChange],
+  );
+
+  // Close mobile sidebar on tab change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [activeTab]);
+
+  // Prevent body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileOpen]);
+
+  // Shared sidebar content (expanded)
+  const expandedSidebar = (
+    <div className="flex h-screen w-[260px] flex-col">
+      {/* Header */}
+      <div className="px-3 h-14 flex items-center">
+        <div className="flex w-full items-center justify-between px-3">
+          <div className="flex items-center gap-3">
+            <img
+              src="/logo/logo-64.png"
+              alt="Logo"
+              className="h-5 w-5 shrink-0"
+            />
+            <span className="text-lg font-semibold text-foreground">
+              {settings.siteName}
+            </span>
+          </div>
+          <button
+            onClick={() => {
+              setCollapsed(true);
+              setMobileOpen(false);
+            }}
+            aria-label="Collapse sidebar"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <PanelLeft
+              className="h-4 w-4"
+              aria-hidden="true"
+              strokeWidth={1.5}
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* Search trigger */}
+      <div className="px-3 pb-1">
+        <button
+          onClick={() => setSearchOpen(true)}
+          className="flex w-full items-center gap-3 rounded-lg bg-secondary px-3 py-1.5 transition-colors hover:bg-accent cursor-pointer"
+        >
+          <Search
+            className="h-4 w-4 text-muted-foreground"
+            strokeWidth={1.5}
+          />
+          <span className="flex-1 text-left text-sm text-muted-foreground">
+            搜索
+          </span>
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center">
+            <kbd className="pointer-events-none hidden rounded-sm border border-border bg-card px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground sm:inline-block">
+              ⌘K
+            </kbd>
+          </span>
+        </button>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto pt-1">
+        {navGroups.map((group) => (
+          <NavGroupSection
+            key={group.title}
+            group={group}
+            activeTab={activeTab}
+            onTabChange={onTabChange}
+          />
+        ))}
+      </nav>
+
+      {/* Footer */}
+      <div className="px-4 py-3 space-y-2">
+        <LoginButton />
+        <div className="text-xs text-muted-foreground text-center">
+          <a
+            href="https://github.com/nocoo/noheir"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-primary transition-colors"
+          >
+            <span className="text-[10px] opacity-70">{APP_VERSION}</span>
+          </a>
+          <span className="text-[10px] opacity-50 mx-1">·</span>
+          <Link
+            to="/terms"
+            className="hover:text-primary transition-colors text-[10px] opacity-70"
+          >
+            服务条款
+          </Link>
+          <span className="text-[10px] opacity-50 mx-1">·</span>
+          <Link
+            to="/privacy"
+            className="hover:text-primary transition-colors text-[10px] opacity-70"
+          >
+            隐私政策
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="flex min-h-screen w-full bg-background">
+      {/* Skip to content (a11y) */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:top-2 focus:left-2 focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground"
+      >
+        跳到主内容
+      </a>
+
+      {/* ── Desktop sidebar ── */}
+      <aside
+        className={cn(
+          'sticky top-0 hidden lg:flex h-screen shrink-0 flex-col bg-background transition-all duration-300 ease-in-out overflow-hidden',
+          collapsed ? 'w-[68px]' : 'w-[260px]',
+        )}
+      >
+        {collapsed ? (
+          /* Collapsed (icon-only) view */
+          <div className="flex h-screen w-[68px] flex-col items-center">
+            <div className="flex h-14 items-center justify-center">
+              <img
+                src="/logo/logo-64.png"
+                alt="Logo"
+                className="h-5 w-5"
+              />
+            </div>
+
+            <button
+              onClick={() => setCollapsed(false)}
+              aria-label="Expand sidebar"
+              className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors mb-1"
+            >
+              <PanelLeft
+                className="h-4 w-4"
+                aria-hidden="true"
+                strokeWidth={1.5}
+              />
+            </button>
+
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setSearchOpen(true)}
+                  aria-label="搜索 (⌘K)"
+                  className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors mb-2"
+                >
+                  <Search
+                    className="h-4 w-4"
+                    aria-hidden="true"
+                    strokeWidth={1.5}
+                  />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8}>
+                搜索 (⌘K)
+              </TooltipContent>
+            </Tooltip>
+
+            <nav className="flex-1 flex flex-col items-center gap-1 overflow-y-auto pt-1">
+              {allNavItems.map((item) => (
+                <CollapsedNavItem
+                  key={item.id}
+                  item={item}
+                  activeTab={activeTab}
+                  onTabChange={onTabChange}
+                />
+              ))}
+            </nav>
+          </div>
+        ) : (
+          expandedSidebar
+        )}
       </aside>
 
-      {/* Main Content */}
-      <main className={cn(
-        "min-h-screen transition-all duration-300",
-        sidebarOpen ? "lg:ml-64" : "lg:ml-14"
-      )}>
-        <div className="p-6 lg:p-8">
-          {children}
+      {/* ── Mobile overlay ── */}
+      {mobileOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs lg:hidden"
+            onClick={() => setMobileOpen(false)}
+          />
+          <div className="fixed inset-y-0 left-0 z-50 w-[260px] bg-background lg:hidden">
+            {expandedSidebar}
+          </div>
+        </>
+      )}
+
+      {/* ── Main content ── */}
+      <main
+        id="main-content"
+        className="flex-1 flex flex-col min-h-screen min-w-0"
+      >
+        {/* Header bar */}
+        <header className="flex h-14 items-center justify-between px-4 md:px-6 shrink-0">
+          <div className="flex items-center gap-3">
+            {/* Mobile menu button */}
+            <button
+              onClick={() => setMobileOpen(true)}
+              aria-label="打开导航菜单"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors lg:hidden"
+            >
+              <PanelLeft
+                className="h-5 w-5"
+                aria-hidden="true"
+                strokeWidth={1.5}
+              />
+            </button>
+          </div>
+          {/* Placeholder right side — can hold ThemeToggle, notifications etc. */}
+          <div className="flex items-center gap-1" />
+        </header>
+
+        {/* Content area with basalt card container */}
+        <div className="flex-1 px-2 pb-2 md:px-3 md:pb-3">
+          <div className="h-full rounded-[16px] md:rounded-[20px] bg-card p-3 md:p-5 overflow-y-auto">
+            {children}
+          </div>
         </div>
       </main>
 
-      {/* Mobile Overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      {/* ── Command palette (⌘K) ── */}
+      <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
+        <CommandInput placeholder="搜索页面..." />
+        <CommandList>
+          <CommandEmpty>没有找到结果</CommandEmpty>
+          {navGroups.map((group) => (
+            <CommandGroup key={group.title} heading={group.title}>
+              {group.items.map((item) => (
+                <CommandItem
+                  key={item.id}
+                  value={item.label}
+                  onSelect={() => handleSelect(item.id)}
+                  className="gap-3 cursor-pointer"
+                >
+                  <item.icon
+                    className="h-4 w-4 text-muted-foreground"
+                    strokeWidth={1.5}
+                  />
+                  <span>{item.label}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          ))}
+        </CommandList>
+      </CommandDialog>
     </div>
   );
 }
