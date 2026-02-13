@@ -12,6 +12,7 @@ import { TooltipComponent, GridComponent, MarkLineComponent } from 'echarts/comp
 import { BarChart } from 'echarts/charts';
 import { CanvasRenderer } from 'echarts/renderers';
 import { formatCurrencyFull } from '@/lib/chart-config';
+import { resolveColor } from '@/lib/palette';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { useLiquidityLadderViewModel } from '@/viewmodels/assets/useLiquidityLadderViewModel';
@@ -35,7 +36,12 @@ interface TooltipAxisParam {
 export function LiquidityLadder() {
   const { units, monthlyData, series, summary, currencySymbol } = useLiquidityLadderViewModel();
 
-  const option = useMemo(() => ({
+  const option = useMemo(() => {
+  const borderColor = resolveColor('border');
+  const axisColor = resolveColor('chart-axis');
+  const splitColor = resolveColor('chart-muted');
+
+  return ({
     tooltip: {
       trigger: 'axis',
       axisPointer: {
@@ -68,11 +74,11 @@ export function LiquidityLadder() {
 
         return `
           <div style="padding: 8px; min-width: 200px;">
-            <div style="font-weight: 600; margin-bottom: 8px; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px;">
+            <div style="font-weight: 600; margin-bottom: 8px; border-bottom: 1px solid ${borderColor}; padding-bottom: 4px;">
               ${monthLabel}
             </div>
             ${items.join('')}
-            <div style="margin-top: 8px; padding-top: 4px; border-top: 1px solid #e5e7eb; font-weight: 600;">
+            <div style="margin-top: 8px; padding-top: 4px; border-top: 1px solid ${borderColor}; font-weight: 600;">
               合计: ${currencySymbol}${total.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
           </div>
@@ -104,7 +110,7 @@ export function LiquidityLadder() {
       },
       axisLine: {
         lineStyle: {
-          color: '#d1d5db',
+          color: axisColor,
         },
       },
     },
@@ -121,12 +127,12 @@ export function LiquidityLadder() {
       },
       axisLine: {
         lineStyle: {
-          color: '#d1d5db',
+          color: axisColor,
         },
       },
       splitLine: {
         lineStyle: {
-          color: '#e5e7eb',
+          color: splitColor,
           type: 'dashed',
         },
       },
@@ -137,7 +143,8 @@ export function LiquidityLadder() {
         focus: 'series',
       },
     })),
-  }), [monthlyData, series, currencySymbol]);
+  });
+  }, [monthlyData, series, currencySymbol]);
 
   if (!units || units.length === 0) {
     return (

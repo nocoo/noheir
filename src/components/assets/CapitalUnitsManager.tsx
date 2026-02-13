@@ -1244,7 +1244,7 @@ export function CapitalUnitsManager() {
                                   color: unit.is_available
                                     ? 'hsl(var(--income))'  // ✅ BEST
                                     : unit.days_until_maturity <= 7
-                                      ? 'hsl(var(--orange-500) || #f97316)'  // ⚠️ Near unlock
+                                      ? 'hsl(var(--chart-7))'  // ⚠️ Near unlock (orange)
                                       : 'inherit'
                                 }}
                               >

@@ -102,19 +102,37 @@ Migrate all noheir UI to the basalt design system (matte, 3-tier luminance, Sky 
 
 ### Phase 4 — Component library alignment
 
-1. Update existing shadcn/ui components' default styles for v4 compatibility.
-2. Ensure all 50 noheir components work with new CSS variable system.
-3. Add `colored-badge.tsx` integration with new palette.
-4. Run UT.
+1. ~~Update existing shadcn/ui components' default styles for v4 compatibility.~~ ✅
+2. ~~Ensure all 50 noheir components work with new CSS variable system.~~ ✅
+3. ~~Add `colored-badge.tsx` integration with new palette.~~ (Skipped — not needed)
+4. ~~Migrate all `colorPalette.ts` consumers to `palette.ts`.~~ ✅ (7 files)
+5. ~~Fix remaining hardcoded hex colors in ECharts components.~~ ✅ (LiquidityLadder, CapitalUnitsManager)
+6. Run UT. ✅
 
 ### Phase 5 — Full validation
 
-1. `bun run test:unit` — 204 tests pass.
-2. `bun run lint` — 0 errors, 0 warnings.
-3. `bun run test:e2e` — 59 tests pass (requires local Supabase).
-4. `bun run test:mcp` — 168 tests pass.
-5. `bun run build` — clean production build.
+1. ~~`bun run test:unit` — 327 tests pass.~~ ✅
+2. ~~`bun run lint` — 0 errors, 0 warnings.~~ ✅
+3. ~~`bun run test:e2e` — 59 tests pass.~~ ✅
+4. ~~`bun run test:mcp` — 168 tests pass.~~ ✅
+5. ~~`bun run build` — clean production build.~~ ✅
 
 ## Rollback
 
 Every phase is a sequence of atomic commits. To rollback any phase, `git revert` the range.
+
+## Progress
+
+| Phase | Status | Commit | Notes |
+|-------|--------|--------|-------|
+| 0.1 Tailwind v4 | ✅ Done | `0732c5d` | Removed v3 config, installed v4 + `@tailwindcss/vite` |
+| 0.2 Font swap | ✅ Done | `d25c2b9` | Inter / DM Sans |
+| 0.3 Color palette | ✅ Done | `32c1089` | Sky primary, 3-tier luminance, 24 chart colors, heatmaps |
+| 1 Layout | ✅ Done | `cd4d491` | Basalt sidebar + rounded content area + ⌘K |
+| 2 BadgeLogin | ✅ Done | `fad293a` | Badge card with radial glow, Google OAuth |
+| 3 Page visual | ✅ Done | `f227a31` | Matte cards, LoadingPage, NotFound |
+| 4.1 shadcn/ui fixes | ✅ Done | `d290bc7` | caret-blink, animation, toast, sidebar |
+| 4.2 Palette resolver | ✅ Done | `4bc1607` | resolveColor, domain maps, 28 tests |
+| 4.3 Consumer migration | ✅ Done | `cf61170` | 7 files migrated to palette.ts |
+| 4.4 Hardcoded hex cleanup | ✅ Done | (this commit) | LiquidityLadder + CapitalUnitsManager |
+| 5 Full validation | ✅ Done | — | 327 UT + lint + build + 59 E2E + 168 MCP |
