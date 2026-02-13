@@ -1,33 +1,31 @@
 import { Link } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Shield, Eye, Database, Trash2 } from 'lucide-react';
 
 export function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-primary py-8 px-4">
-      <div className="flex justify-center">
-        <Card className="w-full max-w-2xl">
-          <CardHeader className="space-y-4">
-            {/* Logo */}
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary overflow-hidden">
-              <img src="/logo/logo-64.png" alt="Logo" className="h-14 w-14" />
-            </div>
+    <div className="min-h-screen bg-background p-2 md:p-4">
+      <div className="mx-auto max-w-2xl rounded-[16px] md:rounded-[20px] bg-card p-6 md:p-10">
+        {/* Header */}
+        <div className="space-y-4 mb-8">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-secondary overflow-hidden">
+            <img src="/logo/logo-64.png" alt="Logo" className="h-14 w-14" />
+          </div>
 
-            <div className="flex items-center gap-2">
-              <Link to="/" className="text-muted-foreground hover:text-primary transition-colors">
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
-              <CardTitle className="text-2xl flex items-center gap-2">
-                <Shield className="h-6 w-6" />
-                隐私政策
-              </CardTitle>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              最后更新日期：2026年1月1日
-            </p>
-          </CardHeader>
+          <div className="flex items-center gap-2">
+            <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+            <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2">
+              <Shield className="h-6 w-6" />
+              隐私政策
+            </h1>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            最后更新日期：2026年1月1日
+          </p>
+        </div>
 
-          <CardContent className="space-y-6 text-sm">
+        <div className="space-y-6 text-sm">
             {/* Introduction */}
             <section>
               <p className="text-muted-foreground leading-relaxed">
@@ -194,8 +192,7 @@ export function PrivacyPage() {
                 我们承诺保护您的隐私并安全地处理您的数据。
               </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
       </div>
     </div>
   );

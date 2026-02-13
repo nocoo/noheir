@@ -1,30 +1,28 @@
 import { Link } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
 
 export function TermsPage() {
   return (
-    <div className="min-h-screen bg-primary py-8 px-4">
-      <div className="flex justify-center">
-        <Card className="w-full max-w-2xl">
-          <CardHeader className="space-y-4">
-            {/* Logo */}
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary overflow-hidden">
-              <img src="/logo/logo-64.png" alt="Logo" className="h-14 w-14" />
-            </div>
+    <div className="min-h-screen bg-background p-2 md:p-4">
+      <div className="mx-auto max-w-2xl rounded-[16px] md:rounded-[20px] bg-card p-6 md:p-10">
+        {/* Header */}
+        <div className="space-y-4 mb-8">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-secondary overflow-hidden">
+            <img src="/logo/logo-64.png" alt="Logo" className="h-14 w-14" />
+          </div>
 
-            <div className="flex items-center gap-2">
-              <Link to="/" className="text-muted-foreground hover:text-primary transition-colors">
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
-              <CardTitle className="text-2xl">服务条款</CardTitle>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              最后更新日期：2026年1月1日
-            </p>
-          </CardHeader>
+          <div className="flex items-center gap-2">
+            <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+            <h1 className="text-2xl font-semibold text-foreground">服务条款</h1>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            最后更新日期：2026年1月1日
+          </p>
+        </div>
 
-          <CardContent className="space-y-6 text-sm">
+        <div className="space-y-6 text-sm">
             {/* 1. Acceptance of Terms */}
             <section>
               <h3 className="font-semibold mb-2 text-base">1. 接受条款</h3>
@@ -137,8 +135,7 @@ export function TermsPage() {
                 通过使用 noheir 服务，您确认您已阅读、理解并同意遵守这些服务条款。
               </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
       </div>
     </div>
   );
