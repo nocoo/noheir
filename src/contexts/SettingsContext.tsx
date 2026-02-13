@@ -203,16 +203,26 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   // Apply theme to document
   useEffect(() => {
     const root = window.document.documentElement;
-    root.classList.remove('light', 'dark');
+    const apply = () => {
+      root.classList.remove('light', 'dark');
+      let effectiveTheme: 'light' | 'dark' = 'light';
+      if (settings.theme === 'system') {
+        effectiveTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      } else {
+        effectiveTheme = settings.theme;
+      }
+      root.classList.add(effectiveTheme);
+    };
 
-    let effectiveTheme: 'light' | 'dark' = 'light';
+    apply();
+
+    // Listen for OS dark mode changes when following system
     if (settings.theme === 'system') {
-      effectiveTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    } else {
-      effectiveTheme = settings.theme;
+      const mq = window.matchMedia('(prefers-color-scheme: dark)');
+      const handler = () => apply();
+      mq.addEventListener('change', handler);
+      return () => mq.removeEventListener('change', handler);
     }
-
-    root.classList.add(effectiveTheme);
   }, [settings.theme]);
 
   // Update document title based on siteName
