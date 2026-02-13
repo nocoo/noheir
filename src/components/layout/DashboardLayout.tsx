@@ -24,6 +24,10 @@ import {
   Brain,
   PanelLeft,
   Search,
+  Github,
+  Sun,
+  Moon,
+  Monitor,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Collapsible, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -218,7 +222,7 @@ export function DashboardLayout({
   activeTab,
   onTabChange,
 }: DashboardLayoutProps) {
-  const { settings } = useSettings();
+  const { settings, updateTheme } = useSettings();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -242,6 +246,13 @@ export function DashboardLayout({
     },
     [onTabChange],
   );
+
+  const cycleTheme = useCallback(() => {
+    const next = settings.theme === 'light' ? 'dark' : settings.theme === 'dark' ? 'system' : 'light';
+    updateTheme(next);
+  }, [settings.theme, updateTheme]);
+
+  const ThemeIcon = settings.theme === 'dark' ? Moon : settings.theme === 'system' ? Monitor : Sun;
 
   // Close mobile sidebar on tab change
   useEffect(() => {
@@ -466,8 +477,25 @@ export function DashboardLayout({
               />
             </button>
           </div>
-          {/* Placeholder right side — can hold ThemeToggle, notifications etc. */}
-          <div className="flex items-center gap-1" />
+          {/* Right toolbar */}
+          <div className="flex items-center gap-1">
+            <a
+              href="https://github.com/nocoo/noheir"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="GitHub repository"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            >
+              <Github className="h-[18px] w-[18px]" aria-hidden="true" strokeWidth={1.5} />
+            </a>
+            <button
+              onClick={cycleTheme}
+              aria-label={`Toggle theme, currently ${settings.theme}`}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            >
+              <ThemeIcon className="h-4 w-4" aria-hidden="true" strokeWidth={1.5} />
+            </button>
+          </div>
         </header>
 
         {/* Content area with basalt card container */}
