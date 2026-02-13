@@ -1,7 +1,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useThemedLogo } from '@/hooks/useThemedLogo';
-import { User, Loader2, Sun, Moon, Monitor, Github } from 'lucide-react';
+import { Loader2, Sun, Moon, Monitor, Github, Landmark } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -143,11 +143,7 @@ export function LoginPage() {
                 }}
               />
               <div className="flex items-center gap-2">
-                <img
-                  src={logo64}
-                  alt="Logo"
-                  className="h-4 w-4"
-                />
+                <Landmark className="h-4 w-4 text-primary-foreground" strokeWidth={1.5} />
                 <span className="text-sm font-semibold text-primary-foreground">
                   noheir
                 </span>
@@ -169,11 +165,12 @@ export function LoginPage() {
 
           {/* Badge content */}
           <div className="flex flex-1 flex-col items-center px-6 pt-6 pb-14">
-            {/* Avatar placeholder */}
-            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-secondary ring-1 ring-border">
-              <User
-                className="h-10 w-10 text-muted-foreground"
-                strokeWidth={1.5}
+            {/* Logo */}
+            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-secondary ring-1 ring-border overflow-hidden p-2.5">
+              <img
+                src={logo64}
+                alt="Logo"
+                className="h-full w-full object-contain"
               />
             </div>
 
