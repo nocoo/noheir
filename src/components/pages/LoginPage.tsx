@@ -1,9 +1,51 @@
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { LogIn, Loader2 } from 'lucide-react';
+import { User, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+
+// ── Barcode decoration ──
+
+function Barcode() {
+  const bars = [2, 1, 3, 1, 2, 1, 1, 3, 1, 2, 1, 3, 2, 1, 1, 2, 3, 1, 2, 1];
+  return (
+    <div className="flex items-stretch gap-[1.5px] h-full">
+      {bars.map((w, i) => (
+        <div
+          key={i}
+          className="rounded-[0.5px] bg-primary-foreground"
+          style={{ width: `${w * 1.5}px`, opacity: i % 3 === 0 ? 0.9 : 0.5 }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ── Google Logo SVG ──
+
+function GoogleLogo() {
+  return (
+    <svg className="h-4 w-4" viewBox="0 0 24 24">
+      <path
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
+        fill="#4285F4"
+      />
+      <path
+        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+        fill="#34A853"
+      />
+      <path
+        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+        fill="#FBBC05"
+      />
+      <path
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+        fill="#EA4335"
+      />
+    </svg>
+  );
+}
+
+// ── Badge Login Page ──
 
 export function LoginPage() {
   const { signInWithGoogle } = useAuth();
@@ -13,93 +55,159 @@ export function LoginPage() {
     setIsLoading(true);
     try {
       await signInWithGoogle();
-    } catch (error) {
+    } catch {
       setIsLoading(false);
     }
-    // Note: Don't reset isLoading here because the page will redirect to Google OAuth
+    // Don't reset isLoading — page will redirect to Google OAuth
   };
 
+  const year = new Date().getFullYear();
+  const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary p-4 animate-in fade-in duration-300">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-4 text-center">
-          {/* Logo */}
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary overflow-hidden">
-            <img src="/logo/logo-64.png" alt="Logo" className="h-14 w-14" />
-          </div>
+    <div className="relative flex min-h-screen items-center justify-center bg-background p-4 overflow-hidden">
+      {/* Radial glow background */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: [
+            'radial-gradient(ellipse 70% 55% at 50% 50%,',
+            'hsl(var(--foreground) / 0.045) 0%,',
+            'hsl(var(--foreground) / 0.042) 10%,',
+            'hsl(var(--foreground) / 0.036) 20%,',
+            'hsl(var(--foreground) / 0.028) 32%,',
+            'hsl(var(--foreground) / 0.020) 45%,',
+            'hsl(var(--foreground) / 0.012) 58%,',
+            'hsl(var(--foreground) / 0.006) 72%,',
+            'hsl(var(--foreground) / 0.002) 86%,',
+            'transparent 100%)',
+          ].join(' '),
+        }}
+      />
 
-          <div className="space-y-2">
-            <CardTitle className="text-2xl">个人财务管理</CardTitle>
-            <CardDescription>
-              请登录以访问您的财务数据
-            </CardDescription>
-          </div>
-        </CardHeader>
-
-        <CardContent className="space-y-4">
-          {/* Features */}
-          <div className="space-y-3 pb-4">
-            <div className="flex items-start gap-3 text-sm">
-              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                <span className="text-xs font-bold text-primary">1</span>
+      <div className="flex flex-col items-center">
+        {/* Badge card — vertical ID badge (aspect 54/86) */}
+        <div
+          className="relative aspect-[54/86] w-72 overflow-hidden rounded-2xl bg-card flex flex-col ring-1 ring-black/[0.08] dark:ring-white/[0.06]"
+          style={{
+            boxShadow: [
+              '0 1px 2px rgba(0,0,0,0.06)',
+              '0 4px 8px rgba(0,0,0,0.04)',
+              '0 12px 24px rgba(0,0,0,0.06)',
+              '0 24px 48px rgba(0,0,0,0.04)',
+              '0 0 0 0.5px rgba(0,0,0,0.02)',
+              '0 0 60px rgba(0,0,0,0.03)',
+            ].join(', '),
+          }}
+        >
+          {/* Header strip with barcode */}
+          <div className="bg-primary px-5 py-4">
+            <div className="flex items-center justify-between">
+              {/* Punch hole */}
+              <div
+                className="h-4 w-8 rounded-full bg-background/80"
+                style={{
+                  boxShadow:
+                    'inset 0 1.5px 3px rgba(0,0,0,0.35), inset 0 -0.5px 1px rgba(255,255,255,0.1)',
+                }}
+              />
+              <div className="flex items-center gap-2">
+                <img
+                  src="/logo/logo-64.png"
+                  alt="Logo"
+                  className="h-4 w-4"
+                />
+                <span className="text-sm font-semibold text-primary-foreground">
+                  noheir
+                </span>
               </div>
-              <div>
-                <p className="font-medium">智能分析</p>
-                <p className="text-muted-foreground">自动分析收支结构，洞察财务健康</p>
+              <span className="text-[10px] font-medium uppercase tracking-widest text-primary-foreground/60">
+                Visitor
+              </span>
+            </div>
+            {/* Barcode row */}
+            <div className="mt-3 flex items-center justify-between">
+              <span className="text-[9px] font-mono text-primary-foreground/40 tracking-wider">
+                ID {year}-{today.slice(4)}
+              </span>
+              <div className="h-6">
+                <Barcode />
               </div>
             </div>
-            <div className="flex items-start gap-3 text-sm">
-              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                <span className="text-xs font-bold text-primary">2</span>
-              </div>
-              <div>
-                <p className="font-medium">数据安全</p>
-                <p className="text-muted-foreground">数据存储在您的私有账户中</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 text-sm">
-              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                <span className="text-xs font-bold text-primary">3</span>
-              </div>
-              <div>
-                <p className="font-medium">多端同步</p>
-                <p className="text-muted-foreground">随时随地访问您的财务数据</p>
-              </div>
-            </div>
           </div>
 
-          {/* Login Button */}
-          <Button
-            onClick={handleLogin}
-            size="lg"
-            className="w-full"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                登录中...
-              </>
-            ) : (
-              <>
-                <LogIn className="mr-2 h-5 w-5" />
-                使用 Google 登录
-              </>
-            )}
-          </Button>
+          {/* Badge content */}
+          <div className="flex flex-1 flex-col items-center px-6 pt-6 pb-14">
+            {/* Avatar placeholder */}
+            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-secondary ring-1 ring-border">
+              <User
+                className="h-10 w-10 text-muted-foreground"
+                strokeWidth={1.5}
+              />
+            </div>
 
-          <p className="text-xs text-center text-muted-foreground pt-2">
-            点击登录即表示您同意我们的{' '}
-            <Link to="/terms" className="text-primary hover:underline">
-              服务条款
-            </Link>
-            {' '}和{' '}
-            <Link to="/privacy" className="text-primary hover:underline">
-              隐私政策
-            </Link>
-          </p>
-        </CardContent>
-      </Card>
+            <p className="mt-5 text-lg font-semibold text-foreground">
+              个人财务管理
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              登录以访问您的财务数据
+            </p>
+
+            {/* Divider */}
+            <div className="mt-5 h-px w-full bg-border" />
+
+            {/* Push button toward bottom */}
+            <div className="flex-1" />
+
+            {/* Google Sign-in button */}
+            <button
+              onClick={handleLogin}
+              disabled={isLoading}
+              className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-secondary px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  登录中...
+                </>
+              ) : (
+                <>
+                  <GoogleLogo />
+                  使用 Google 登录
+                </>
+              )}
+            </button>
+
+            {/* Terms */}
+            <p className="mt-3 text-center text-[10px] leading-relaxed text-muted-foreground/60">
+              点击登录即表示您同意我们的{' '}
+              <Link
+                to="/terms"
+                className="text-primary hover:underline"
+              >
+                服务条款
+              </Link>
+              {' '}和{' '}
+              <Link
+                to="/privacy"
+                className="text-primary hover:underline"
+              >
+                隐私政策
+              </Link>
+            </p>
+          </div>
+
+          {/* Footer strip */}
+          <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center border-t border-border bg-secondary/50 py-2.5">
+            <div className="flex items-center gap-1.5">
+              <div className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
+              <span className="text-[10px] text-muted-foreground">
+                Secure authentication
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
