@@ -3,7 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 
 export function TermsPage() {
   return (
-    <div className="min-h-screen bg-background p-2 md:p-4">
+    <div className="min-h-screen bg-background p-2 md:p-4 flex items-center justify-center">
       <div className="mx-auto max-w-2xl rounded-[16px] md:rounded-[20px] bg-card p-6 md:p-10">
         {/* Header */}
         <div className="space-y-4 mb-8">
