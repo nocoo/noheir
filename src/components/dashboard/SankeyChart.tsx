@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Transaction } from '@/types/transaction';
 import { useSettings, getIncomeColorHex, getExpenseColorHex } from '@/contexts/SettingsContext';
 import { formatCurrencyFull } from '@/lib/chart-config';
+import { resolveChartColors, resolveColor } from '@/lib/palette';
 
 // ECharts Sankey label callback parameter types
 interface SankeyLabelParams {
@@ -40,33 +41,15 @@ export function SankeyChart({ transactions, type }: SankeyChartProps) {
       );
     });
 
-    // Rich color palette for Sankey categories (all direct hex values for ECharts)
+    // Resolved chart colors for ECharts (first 2 slots = income/expense theme colors)
+    const resolvedChart = resolveChartColors();
     const colors = [
       getIncomeColorHex(settings.colorScheme),
       getExpenseColorHex(settings.colorScheme),
-      '#3b82f6', // Blue-500
-      '#06b6d4', // Cyan-500
-      '#0ea5e9', // Sky-500
-      '#6366f1', // Indigo-500
-      '#8b5cf6', // Violet-500
-      '#a855f7', // Purple-500
-      '#d946ef', // Fuchsia-500
-      '#ec4899', // Pink-500
-      '#f43f5e', // Rose-500
-      '#ef4444', // Red-500
-      '#f97316', // Orange-500
-      '#f59e0b', // Amber-500
-      '#eab308', // Yellow-500
-      '#84cc16', // Lime-500
-      '#22c55e', // Green-500
-      '#10b981', // Emerald-500
-      '#14b8a6', // Teal-500
-      '#0891b2', // Cyan-600
-      '#0284c7', // Sky-600
-      '#2563eb', // Blue-600
-      '#4f46e5', // Indigo-600
-      '#7c3aed', // Violet-600
+      ...resolvedChart,
     ];
+
+    const bgColor = resolveColor('background');
 
     // Build nodes and links for ECharts Sankey
     // Node type with optional itemStyle for direct color assignment
@@ -161,7 +144,7 @@ export function SankeyChart({ transactions, type }: SankeyChartProps) {
           data: nodes,
           links: indexedLinks,
           itemStyle: {
-            borderColor: 'hsl(var(--background))'
+            borderColor: bgColor
           },
           lineStyle: {
             opacity: 0.4
@@ -179,7 +162,7 @@ export function SankeyChart({ transactions, type }: SankeyChartProps) {
             depth: 0,
             itemStyle: {
               color: totalColor,
-              borderColor: 'hsl(var(--background))'
+              borderColor: bgColor
             },
             label: {
               fontSize: 12,

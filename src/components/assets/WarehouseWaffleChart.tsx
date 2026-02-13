@@ -28,8 +28,6 @@ import { StatusBadge } from '@/components/ui/colored-badge';
 import type { UnitDisplayInfo, UnitStatus, Currency, InvestmentStrategy } from '@/types/assets';
 import { formatCurrencyFull } from '@/lib/chart-config';
 import { staggerFastContainer, staggerFastItem } from '@/lib/animations';
-import { UNIFIED_PALETTE } from '@/lib/colorPalette';
-
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -43,19 +41,6 @@ type WaffleStatus =
   | 'planned'              // 🟡 黄色 - 计划中（资金为0）
   | 'fundraising'          // 🟠 橙色 - 筹集中（资金逐步到位）
   | 'archived';            // ⚪️ 灰色 - 已归档（完全消灭）
-
-// ============================================================================
-// COLOR CONSTANTS (from unified palette)
-// ============================================================================
-// All colors are derived from UNIFIED_PALETTE to ensure consistency
-const WAFFLE_COLORS = {
-  // Status colors (using palette colors)
-  idleNoProduct: UNIFIED_PALETTE.rose,        // 🔴 Rose - No product (worst)
-  idleCashPlus: '#f9a8d4',                    // 🌸 Pink-300 - Cash+ products (lighter pink)
-  planned: UNIFIED_PALETTE.gray,              // ⚪️ Gray - Planned
-  fundraising: UNIFIED_PALETTE.yellow,        // 🟡 Yellow - Fundraising
-  archived: UNIFIED_PALETTE.slate,            // ⚫️ Slate - Archived
-} as const;
 
 // Currency emoji
 const CURRENCY_EMOJI: Record<Currency, string> = {

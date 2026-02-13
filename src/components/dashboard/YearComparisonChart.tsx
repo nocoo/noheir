@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { YearlyComparison } from '@/types/transaction';
 import { tooltipStyle, xAxisStyle, yAxisStyle, gridStyle, legendStyle, formatCurrencyK, formatCurrencyFull } from '@/lib/chart-config';
-import { BALANCE_COLOR } from '@/lib/colorPalette';
+import { chartBalance, chart } from '@/lib/palette';
 import { MultiSeriesTooltip } from '@/lib/chart-tooltip';
 import { useYearComparisonViewModel } from '@/viewmodels/dashboard/useYearComparisonViewModel';
 
@@ -50,15 +50,15 @@ export function YearComparisonChart({ data }: YearComparisonChartProps) {
               <Legend {...legendStyle} />
               <Bar yAxisId="left" dataKey="收入" fill={incomeColorHex} radius={[4, 4, 0, 0]} />
               <Bar yAxisId="left" dataKey="支出" fill={expenseColorHex} radius={[4, 4, 0, 0]} />
-              <Bar yAxisId="left" dataKey="结余" fill={BALANCE_COLOR} radius={[4, 4, 0, 0]} />
+              <Bar yAxisId="left" dataKey="结余" fill={chartBalance} radius={[4, 4, 0, 0]} />
               <Line
                 yAxisId="right"
                 type="monotone"
                 dataKey="储蓄率"
-                stroke="#8b5cf6"
+                stroke={chart.purple}
                 strokeWidth={3}
-                dot={{ fill: '#8b5cf6', r: 5, strokeWidth: 2 }}
-                activeDot={{ r: 7, stroke: '#8b5cf6', strokeWidth: 2 }}
+                dot={{ fill: chart.purple, r: 5, strokeWidth: 2 }}
+                activeDot={{ r: 7, stroke: chart.purple, strokeWidth: 2 }}
                 connectNulls={true}
               />
               <ReferenceLine

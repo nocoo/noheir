@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { formatCurrencyFull } from '@/lib/chart-config';
 import { useSettings } from '@/contexts/SettingsContext';
 import { TrendingUp, TrendingDown } from 'lucide-react';
-import { HEATMAP_GREEN_PALETTE, HEATMAP_RED_PALETTE } from '@/lib/colorPalette';
+import { HEATMAP_5 } from '@/lib/palette';
 
 type TransactionType = 'income' | 'expense';
 
@@ -35,9 +35,9 @@ export function TransactionHeatmap({ transactions, year, type, colorPalette, emb
   // Expense: red when default, green when swapped
   const COLORS = useMemo(() => {
     if (palette === 'green') {
-      return settings.colorScheme === 'swapped' ? HEATMAP_RED_PALETTE : HEATMAP_GREEN_PALETTE;
+      return settings.colorScheme === 'swapped' ? HEATMAP_5.red : HEATMAP_5.green;
     } else {
-      return settings.colorScheme === 'swapped' ? HEATMAP_GREEN_PALETTE : HEATMAP_RED_PALETTE;
+      return settings.colorScheme === 'swapped' ? HEATMAP_5.green : HEATMAP_5.red;
     }
   }, [settings.colorScheme, palette]);
 

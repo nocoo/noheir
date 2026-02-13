@@ -15,14 +15,14 @@ import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { formatCurrencyFull } from '@/lib/chart-config';
-import type { InvestmentStrategy, Currency, UnitStatus } from '@/types/assets';
+import type { InvestmentStrategy, Currency } from '@/types/assets';
 import { DistributionPieChart } from './DistributionPieChart';
 import {
-  STRATEGY_COLORS,
-  CURRENCY_COLORS,
-  STATUS_COLORS,
-  MATURITY_COLORS,
-} from '@/lib/colorPalette';
+  strategyColor,
+  currencyColor,
+  statusColor,
+  maturityColor,
+} from '@/lib/palette';
 import { fadeInUp, gridContainer, gridItem } from '@/lib/animations';
 
 // ============================================================================
@@ -247,7 +247,7 @@ export function CapitalDashboard() {
                   name: item.name,
                   value: item.value,
                   percentage: item.percentage,
-                  color: STRATEGY_COLORS[item.name as InvestmentStrategy]
+                  color: strategyColor(item.name)
                 }))}
                 selected={selectedStrategy}
                 onClick={handleStrategySelect}
@@ -264,7 +264,7 @@ export function CapitalDashboard() {
               name: `${CURRENCY_EMOJI[item.currency]} ${item.currency}`,
               value: item.amount,
               percentage: item.percentage,
-              color: CURRENCY_COLORS[item.currency]
+              color: currencyColor(item.currency)
             }))}
           />
         </motion.div>
@@ -277,7 +277,7 @@ export function CapitalDashboard() {
               name: item.status,
               value: item.amount,
               percentage: item.percentage,
-              color: STATUS_COLORS[item.status]
+              color: statusColor(item.status)
             }))}
           />
         </motion.div>
@@ -290,7 +290,7 @@ export function CapitalDashboard() {
               name: item.period,
               value: item.amount,
               percentage: item.percentage,
-              color: MATURITY_COLORS[item.period]
+              color: maturityColor(item.period)
             }))}
           />
         </motion.div>

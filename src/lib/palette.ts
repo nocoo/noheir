@@ -111,11 +111,25 @@ export const chartBalance = chart.teal;
 
 // ── Heatmap scales (4 intensities × 4 hues) ──
 
+/** "No data" background — raw hex CSS variable (not HSL). */
+export const heatmapNoData = "var(--heatmap-0)";
+
 export const heatmap = {
   green: [v("heatmap-green-1"), v("heatmap-green-2"), v("heatmap-green-3"), v("heatmap-green-4")] as const,
   red:   [v("heatmap-red-1"),   v("heatmap-red-2"),   v("heatmap-red-3"),   v("heatmap-red-4")]   as const,
   blue:  [v("heatmap-blue-1"),  v("heatmap-blue-2"),  v("heatmap-blue-3"),  v("heatmap-blue-4")]  as const,
   orange:[v("heatmap-orange-1"),v("heatmap-orange-2"),v("heatmap-orange-3"),v("heatmap-orange-4")] as const,
+} as const;
+
+/**
+ * 5-element heatmap palettes (index 0 = no-data, 1-4 = intensity levels).
+ * Drop-in replacement for legacy HEATMAP_GREEN_PALETTE / HEATMAP_RED_PALETTE.
+ */
+export const HEATMAP_5 = {
+  green: [heatmapNoData, ...heatmap.green] as readonly string[],
+  red:   [heatmapNoData, ...heatmap.red]   as readonly string[],
+  blue:  [heatmapNoData, ...heatmap.blue]  as readonly string[],
+  orange:[heatmapNoData, ...heatmap.orange] as readonly string[],
 } as const;
 
 // ── Domain color maps (asset management) ──
@@ -168,6 +182,26 @@ export const ACCOUNT_TYPE_TOKEN_MAP: Record<string, string> = {
 // ── Domain resolver helpers (for ECharts) ──
 
 const DEFAULT_TOKEN = 'chart-23'; // gray fallback
+
+/** Get CSS-variable color string for a strategy (for SVG/Recharts). */
+export function strategyColor(strategy: string): string {
+  return v(STRATEGY_TOKEN_MAP[strategy] ?? DEFAULT_TOKEN);
+}
+
+/** Get CSS-variable color string for a currency (for SVG/Recharts). */
+export function currencyColor(currency: string): string {
+  return v(CURRENCY_TOKEN_MAP[currency] ?? DEFAULT_TOKEN);
+}
+
+/** Get CSS-variable color string for a unit status (for SVG/Recharts). */
+export function statusColor(status: string): string {
+  return v(STATUS_TOKEN_MAP[status] ?? DEFAULT_TOKEN);
+}
+
+/** Get CSS-variable color string for a maturity period (for SVG/Recharts). */
+export function maturityColor(period: string): string {
+  return v(MATURITY_TOKEN_MAP[period] ?? DEFAULT_TOKEN);
+}
 
 export function resolveStrategyColor(strategy: string): string {
   return resolveColor(STRATEGY_TOKEN_MAP[strategy] ?? DEFAULT_TOKEN);

@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import * as echarts from 'echarts';
 import { Transaction } from '@/types/transaction';
 import { useSettings, getIncomeColorHex, getExpenseColorHex } from '@/contexts/SettingsContext';
-import { RICH_PALETTE, UNIFIED_PALETTE } from '@/lib/colorPalette';
+import { resolveChartColors, resolveColor } from '@/lib/palette';
 
 interface RigiditySankeyProps {
   transactions: Transaction[];
@@ -25,12 +25,12 @@ export function RigiditySankey({ transactions, totalIncome }: RigiditySankeyProp
     // Get colors from settings
     const incomeColor = getIncomeColorHex(settings.colorScheme);
     const expenseColor = getExpenseColorHex(settings.colorScheme);
-    const savingsColor = UNIFIED_PALETTE.blue; // Blue for savings
-    const fixedColor = UNIFIED_PALETTE.rose; // Rose-600 for fixed
-    const flexibleColor = '#fb7185'; // Rose-400 for flexible
+    const savingsColor = resolveColor('chart-24'); // Blue for savings
+    const fixedColor = resolveColor('chart-9'); // Red for fixed
+    const flexibleColor = resolveColor('chart-10'); // Rose for flexible
 
-    // Rich color palette for primary categories (from unified palette)
-    const categoryColors = RICH_PALETTE;
+    // Rich color palette for primary categories (resolved chart colors)
+    const categoryColors = resolveChartColors();
 
     // Get color for primary category based on hash
     const getCategoryColor = (category: string, isFixed: boolean): string => {
