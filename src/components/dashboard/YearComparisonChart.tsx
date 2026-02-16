@@ -46,7 +46,7 @@ export function YearComparisonChart({ data }: YearComparisonChartProps) {
                 tickFormatter={(value) => `${value}%`}
                 domain={[0, 100]}
               />
-              <Tooltip content={<MultiSeriesTooltip />} />
+              <Tooltip content={<MultiSeriesTooltip percentageKeys={['储蓄率']} />} />
               <Legend {...legendStyle} />
               <Bar yAxisId="left" dataKey="收入" fill={incomeColorHex} radius={[4, 4, 0, 0]} />
               <Bar yAxisId="left" dataKey="支出" fill={expenseColorHex} radius={[4, 4, 0, 0]} />

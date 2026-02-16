@@ -181,6 +181,8 @@ interface MultiSeriesTooltipProps {
   payload?: RechartsPayloadItem[];
   label?: string;
   seriesLabels?: string[];
+  /** dataKeys that should be formatted as percentage (e.g. ['储蓄率']) */
+  percentageKeys?: string[];
 }
 
 export function MultiSeriesTooltip({
@@ -188,10 +190,19 @@ export function MultiSeriesTooltip({
   payload,
   label,
   seriesLabels,
+  percentageKeys,
 }: MultiSeriesTooltipProps) {
   if (!active || !payload || !payload.length) {
     return null;
   }
+
+  const formatValue = (entry: RechartsPayloadItem) => {
+    const key = (entry.dataKey ?? entry.name ?? '') as string;
+    if (percentageKeys?.includes(key)) {
+      return `${Number(entry.value).toFixed(1)}%`;
+    }
+    return formatCurrencyFull(entry.value);
+  };
 
   return (
     <div style={tooltipContentStyle}>
@@ -211,7 +222,7 @@ export function MultiSeriesTooltip({
             {seriesLabels?.[index] || entry.name || entry.dataKey}
           </span>
           <span style={{ fontWeight: '500' }}>
-            {formatCurrencyFull(entry.value)}
+            {formatValue(entry)}
           </span>
         </div>
       ))}
