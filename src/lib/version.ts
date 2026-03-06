@@ -1,12 +1,12 @@
 // Version management utilities
-// Format: v0.1-{shortGitHash}
+// Format: v0.2-{shortGitHash}
 
 let cachedVersion: string | null = null;
 
 /**
  * Get the current application version
- * Format: v0.1-{gitShortHash}
- * Example: v0.1-a3f2b1c
+ * Format: v0.2-{gitShortHash}
+ * Example: v0.2-a3f2b1c
  */
 export async function getAppVersion(): Promise<string> {
   if (cachedVersion) {
@@ -37,7 +37,7 @@ export async function getAppVersion(): Promise<string> {
   }
 
   // Final fallback
-  cachedVersion = 'v0.1-dev';
+  cachedVersion = 'v0.2-dev';
   return cachedVersion;
 }
 
@@ -45,5 +45,5 @@ export async function getAppVersion(): Promise<string> {
  * Get version synchronously (returns cached version or fallback)
  */
 export function getVersionSync(): string {
-  return cachedVersion || 'v0.1-dev';
+  return cachedVersion || 'v0.2-dev';
 }

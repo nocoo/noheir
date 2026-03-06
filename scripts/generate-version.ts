@@ -1,8 +1,8 @@
 #!/usr/bin/env tsx
 /**
  * Generate version based on git commit hash
- * Format: v0.1-{shortGitHash}
- * Example: v0.1-abcd1234
+ * Format: v0.2-{shortGitHash}
+ * Example: v0.2-abcd1234
  */
 
 import { execSync } from 'child_process';
@@ -14,7 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const VERSION_FILE = join(__dirname, '../src/lib/version-generated.ts');
-const VERSION_PREFIX = 'v0.1';
+const VERSION_PREFIX = 'v0.2';
 
 try {
   // Get short git hash (7 characters)
@@ -72,5 +72,5 @@ export const APP_BRANCH = 'unknown';
   mkdirSync(join(__dirname, '../src/lib'), { recursive: true });
   writeFileSync(VERSION_FILE, content, 'utf-8');
 
-  console.log('Version generated (fallback): v0.1-dev');
+  console.log('Version generated (fallback): v0.2-dev');
 }
