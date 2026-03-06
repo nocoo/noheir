@@ -60,7 +60,9 @@ noheir/
 │   ├── types/             # 类型定义
 │   ├── viewmodels/         # 视图模型与派生逻辑
 │   └── main.tsx           # 应用入口
-├── tests/                 # 单元测试
+├── mcp/                   # MCP server（AI agent 数据接口）
+├── supabase/              # 数据库迁移与 Supabase 配置
+├── tests/                 # 单元测试 + E2E 测试
 ├── scripts/               # 开发辅助脚本
 └── docs/                  # 项目文档
 ```
