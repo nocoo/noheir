@@ -90,7 +90,7 @@ bun run test:mcp  # 168 tests (51 unit + 38 integration + 59 tool handler + 20 p
 
 | Layer | Files | DB Required | Runner |
 |-------|-------|-------------|--------|
-| Unit (204 tests) | `tests/{domain,viewmodels,contexts,hooks,lib,services,smoke}/` | No | `bun run test:unit` |
+| Unit (327 tests) | `tests/{domain,viewmodels,contexts,hooks,lib,services,smoke}/` | No | `bun run test:unit` |
 | E2E (59 tests) | `tests/e2e/` | Yes (local Supabase) | `bun run test:e2e` |
 | MCP E2E (168 tests) | `mcp/tests/` | No (mocked) | `bun run test:mcp` |
 
