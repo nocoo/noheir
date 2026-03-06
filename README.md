@@ -22,6 +22,7 @@ Noheir 是一款个人财务管理 Web 应用，帮助用户从收支到资产�
 - [10-mvvm-guidelines.md](./docs/10-mvvm-guidelines.md)
 - [11-e2e-testing.md](./docs/11-e2e-testing.md)
 - [12-mcp-server.md](./docs/12-mcp-server.md)
+- [13-basalt-migration.md](./docs/13-basalt-migration.md)
 
 ## 🚀 快速运行
 
