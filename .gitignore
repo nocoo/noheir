@@ -33,5 +33,8 @@ data/
 # Supabase temporary files
 supabase/.temp/
 
+# Next.js (legacy)
+.next/
+
 # Temporary scripts
 scripts/get-schema.ts
