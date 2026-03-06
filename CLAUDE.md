@@ -1,5 +1,14 @@
 README.md
 
+## Deployment
+
+- **Production URL**: https://noheir.hexly.ai
+- **Platform**: Railway (Railpack builder, Caddy SPA serving)
+- **Auto-deploy**: Push to `main` branch triggers build & deploy
+- **Region**: Asia Southeast 1 (Singapore)
+- **Architecture**: Pure client-side SPA — no SSR, no API routes. All backend via Supabase Cloud SDK.
+- **Compile-time env vars** (set in Railway): `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+
 ## MCP Server
 
 Local MCP server (`mcp/`) exposes financial data query and asset CRUD to AI agents via stdio transport.

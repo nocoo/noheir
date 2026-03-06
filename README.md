@@ -34,6 +34,13 @@ bun run dev
 
 访问 `http://localhost:7012`。
 
+## 🌐 生产部署
+
+- **平台**：[Railway](https://railway.com)（Railpack 自动识别 Vite SPA → Caddy 托管）
+- **线上地址**：[https://noheir.hexly.ai](https://noheir.hexly.ai)
+- **自动部署**：推送 `main` 分支即触发
+- **详细部署文档**：[docs/04-run.md](./docs/04-run.md#生产部署railway)
+
 ## 🤖 Agent 指南（必读）
 
 ### 主要功能
