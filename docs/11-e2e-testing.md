@@ -148,24 +148,35 @@ bun test
 | 40 | `capital_units.select` + join product by id | units.e2e.test.ts | ✅ pass |
 | 41 | `financial_products.select` by ids (for manual join) | units.e2e.test.ts | ✅ pass |
 
-### RPC Functions (2 APIs)
+### RPC Functions (5 APIs)
 
 | # | Operation | File | Status |
 |---|---|---|---|
 | 42 | `rpc('get_units_with_products')` | rpc.e2e.test.ts | ✅ pass |
-| 43 | `rpc('search_transactions_fuzzy')` all params | rpc.e2e.test.ts | ✅ pass |
+| 43 | `rpc('search_transactions_fuzzy')` keyword + filters | rpc.e2e.test.ts | ✅ pass |
+| 44 | `rpc('search_transactions_fuzzy')` year/month/currency | rpc.e2e.test.ts | ✅ pass |
+| 45 | `rpc('search_transfers_fuzzy')` keyword + filters + pagination | rpc.e2e.test.ts | ✅ pass |
+| 46 | `rpc('search_transfers_fuzzy')` year/month/currency/tags | rpc.e2e.test.ts | ✅ pass |
 
-### RLS Security (5 scenarios)
+### RLS Security (13 scenarios)
 
 | # | Scenario | File | Status |
 |---|---|---|---|
-| 44 | anon cannot read any table | rls.e2e.test.ts | ✅ pass |
-| 45 | user A cannot read user B's transactions | rls.e2e.test.ts | ✅ pass |
-| 46 | user A cannot read user B's settings | rls.e2e.test.ts | ✅ pass |
-| 47 | user A cannot read user B's products/units | rls.e2e.test.ts | ✅ pass |
-| 48 | anon cannot call RPC functions | rls.e2e.test.ts | ✅ pass |
+| 47 | anon cannot read any table | rls.e2e.test.ts | ✅ pass |
+| 48 | anon cannot call any RPC function | rls.e2e.test.ts | ✅ pass |
+| 49 | user B cannot read user A's transactions | rls.e2e.test.ts | ✅ pass |
+| 50 | user B cannot read user A's transfers | rls.e2e.test.ts | ✅ pass |
+| 51 | user B cannot read user A's settings | rls.e2e.test.ts | ✅ pass |
+| 52 | user B cannot read user A's products/units | rls.e2e.test.ts | ✅ pass |
+| 53 | user B cannot UPDATE user A's transaction | rls.e2e.test.ts | ✅ pass |
+| 54 | user B cannot DELETE user A's transaction | rls.e2e.test.ts | ✅ pass |
+| 55 | user B cannot UPDATE user A's transfer | rls.e2e.test.ts | ✅ pass |
+| 56 | user B cannot DELETE user A's transfer | rls.e2e.test.ts | ✅ pass |
+| 57 | user B gets empty from search_transactions_fuzzy on user A's data | rls.e2e.test.ts | ✅ pass |
+| 58 | user B gets empty from search_transfers_fuzzy on user A's data | rls.e2e.test.ts | ✅ pass |
+| 59 | user B gets zero counts from get_financial_metadata and get_monthly_report | rls.e2e.test.ts | ✅ pass |
 
-**Total: 48 test scenarios across 8 files**
+**Total: 59 test scenarios across 8 files**
 
 ## Test Design Principles
 
@@ -177,8 +188,9 @@ bun test
 
 ## Git Hooks Integration
 
-- **pre-commit**: `bun run test` (UT only, fast)
-- **pre-push**: `bun run test && bun run lint && bun run test:e2e` (UT + Lint + E2E)
+- **pre-commit**: `bun run test:unit` (UT only, fast)
+- **pre-push**: `bun run test:unit && bun run lint && bun run test:e2e && bun run test:mcp` (UT + Lint + E2E + MCP, if Supabase running)
 
-> E2E requires Docker + local Supabase running. If `supabase` is not available,
-> E2E tests skip gracefully.
+> E2E and MCP integration tests require Docker + local Supabase running. If `supabase` CLI
+> is not available or local Supabase is not running, E2E/MCP tests skip gracefully with a
+> visible warning box.
