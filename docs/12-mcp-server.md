@@ -11,7 +11,7 @@ Agent 可以通过 14 个工具查询收支交易、内部转账、财务元数�
 ```
 mcp/
 ├── src/
-│   ├── auth.ts                  # Supabase 认证（refresh token 引导流程）
+│   ├── auth.ts                  # Supabase 认证（email/password 登录）
 │   ├── index.ts                 # 服务入口（工具注册 + stdio 传输）
 │   └── tools/
 │       ├── getMonthlyReport.ts  # 月度报表工具
@@ -22,8 +22,8 @@ mcp/
 │       └── units.ts             # 资金单元 CRUD 工具
 ├── tests/
 │   ├── unit/
-│   │   ├── products.unit.test.ts  # 22 个产品单元测试（mock）
-│   │   └── units.unit.test.ts     # 29 个资金单元单元测试（mock）
+│   │   ├── products.unit.test.ts  # 21 个产品单元测试（mock）
+│   │   └── units.unit.test.ts     # 30 个资金单元单元测试（mock）
 │   ├── crud.integration.test.ts   # 38 个 CRUD 集成测试（真实 DB）
 │   ├── tools.e2e.test.ts          # 59 个查询工具处理函数测试
 │   └── mcp.e2e.test.ts            # 20 个协议层端到端测试
@@ -49,7 +49,7 @@ mcp/
 ├─────────────────────────────────────────────────┤
 │  认证层 (auth.ts)                                │
 │  - 环境变量读取                                    │
-│  - Refresh token 引导 + 自动刷新                   │
+│  - Email/password 登录 + 自动刷新                   │
 ├─────────────────────────────────────────────────┤
 │  数据层 (Supabase Postgres)                       │
 │  - RPC: search_transactions_fuzzy                │
@@ -253,19 +253,20 @@ Agent 应 **首先调用此工具** 了解可用的筛选值，避免幻觉式�
 
 ## 认证机制
 
-采用 **两阶段 Refresh Token 引导**：
+采用 **Email/Password 登录 + 自动刷新**：
 
-1. **配置阶段** (`getAuthConfig()`): 读取 3 个必需环境变量
+1. **配置阶段** (`getAuthConfig()`): 读取 4 个必需环境变量
    - `SUPABASE_URL` — Supabase API 端点
    - `SUPABASE_ANON_KEY` — 公开匿名密钥
-   - `SUPABASE_REFRESH_TOKEN` — 用户长期 refresh token
+   - `SUPABASE_EMAIL` — 用户邮箱
+   - `SUPABASE_PASSWORD` — 用户密码
 
-2. **引导阶段** (`createAuthenticatedSupabaseClient()`):
-   - 创建临时客户端，用 refresh token 换取 session（access + refresh token）
-   - 创建正式客户端，启用 `autoRefreshToken: true`
-   - 通过 `setSession()` 注入 session，后续自动刷新
+2. **登录阶段** (`createAuthenticatedSupabaseClient()`):
+   - 创建客户端，启用 `autoRefreshToken: true`、`persistSession: false`
+   - 调用 `signInWithPassword()` 获取 session
+   - 后续 JWT 自动刷新，无需手动管理 token
 
-> **为什么不直接设置 access_token？** 硬编码 access_token 会在 JWT 过期（默认 1 小时）后静默失败。使用 `setSession()` + `autoRefreshToken: true` 可自动续期。
+> **为什么用 email/password 而非 refresh token？** Refresh token 在 MCP 服务器重启后可能已过期，导致启动失败。密码永不过期，服务器每次启动都能成功认证。
 
 ## 运行
 
@@ -273,7 +274,8 @@ Agent 应 **首先调用此工具** 了解可用的筛选值，避免幻觉式�
 # 设置环境变量并启动
 SUPABASE_URL=http://127.0.0.1:54321 \
 SUPABASE_ANON_KEY=<anon-key> \
-SUPABASE_REFRESH_TOKEN=<your-refresh-token> \
+SUPABASE_EMAIL=<your-email> \
+SUPABASE_PASSWORD=<your-password> \
 bun run mcp:start
 ```
 
@@ -288,7 +290,8 @@ bun run mcp:start
       "env": {
         "SUPABASE_URL": "http://127.0.0.1:54321",
         "SUPABASE_ANON_KEY": "<anon-key>",
-        "SUPABASE_REFRESH_TOKEN": "<your-refresh-token>"
+        "SUPABASE_EMAIL": "<your-email>",
+        "SUPABASE_PASSWORD": "<your-password>"
       }
     }
   }
