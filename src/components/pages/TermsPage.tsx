@@ -3,7 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useThemedLogo } from '@/hooks/useThemedLogo';
 
 export function TermsPage() {
-  const { logo64 } = useThemedLogo();
+  const { logo80 } = useThemedLogo();
 
   return (
     <div className="min-h-screen bg-background p-2 md:p-4 flex items-center justify-center">
@@ -11,7 +11,7 @@ export function TermsPage() {
         {/* Header */}
         <div className="space-y-4 mb-8">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-secondary overflow-hidden">
-            <img src={logo64} alt="Logo" className="h-14 w-14" />
+            <img src={logo80} alt="Logo" className="h-14 w-14" />
           </div>
 
           <div className="flex items-center gap-2">

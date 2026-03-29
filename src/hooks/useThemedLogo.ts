@@ -2,15 +2,20 @@ import { useMemo } from 'react';
 
 /**
  * Returns logo paths (unified transparent logo, no theme switching needed).
+ *
+ * B-3 standard sizes:
+ *   logo24  – sidebar header (24×24)
+ *   logo80  – login avatar, about page (80×80)
+ *
+ * Extended sizes kept for PWA / loading:
+ *   logo256 – loading splash (256×256)
  */
 export function useThemedLogo() {
   return useMemo(
     () => ({
-      logo32: '/logo/logo-32.png',
-      logo64: '/logo/logo-64.png',
-      logo128: '/logo/logo-128.png',
-      logo256: '/logo/logo-256.png',
-      loading: '/logo-loading.png',
+      logo24: '/logo-24.png',
+      logo80: '/logo-80.png',
+      logo256: '/logo-256.png',
     }),
     [],
   );

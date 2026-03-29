@@ -52,7 +52,7 @@ function GoogleLogo() {
 export function LoginPage() {
   const { signInWithGoogle } = useAuth();
   const { settings, updateTheme } = useSettings();
-  const { logo64 } = useThemedLogo();
+  const { logo80 } = useThemedLogo();
   const [isLoading, setIsLoading] = useState(false);
   const [searchParams] = useSearchParams();
 
@@ -172,7 +172,7 @@ export function LoginPage() {
             {/* Logo */}
             <div className="flex h-24 w-24 items-center justify-center rounded-full bg-secondary dark:bg-[#171717] ring-1 ring-border overflow-hidden p-2.5">
               <img
-                src={logo64}
+                src={logo80}
                 alt="Logo"
                 className="h-full w-full object-contain"
               />
