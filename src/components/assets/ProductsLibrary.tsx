@@ -385,6 +385,11 @@ export function ProductsLibrary() {
       : <ArrowDown className="w-4 h-4 inline ml-1" />;
   };
 
+  const getAriaSort = (field: ProductSortField): "ascending" | "descending" | "none" => {
+    if (sortField !== field) return "none";
+    return sortOrder === 'asc' ? "ascending" : "descending";
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -528,7 +533,7 @@ export function ProductsLibrary() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="h-10 px-3">
+                    <TableHead className="h-10 px-3" aria-sort={getAriaSort('investStatus')}>
                       <button
                         onClick={() => handleSort('investStatus')}
                         className="flex items-center hover:text-foreground transition-colors"
@@ -537,7 +542,7 @@ export function ProductsLibrary() {
                         {getSortIcon('investStatus')}
                       </button>
                     </TableHead>
-                    <TableHead className="h-10 px-3">
+                    <TableHead className="h-10 px-3" aria-sort={getAriaSort('name')}>
                       <button
                         onClick={() => handleSort('name')}
                         className="flex items-center hover:text-foreground transition-colors"
@@ -546,7 +551,7 @@ export function ProductsLibrary() {
                         {getSortIcon('name')}
                       </button>
                     </TableHead>
-                    <TableHead className="h-10 px-3">
+                    <TableHead className="h-10 px-3" aria-sort={getAriaSort('channel')}>
                       <button
                         onClick={() => handleSort('channel')}
                         className="flex items-center hover:text-foreground transition-colors"
@@ -555,7 +560,7 @@ export function ProductsLibrary() {
                         {getSortIcon('channel')}
                       </button>
                     </TableHead>
-                    <TableHead className="h-10 px-3">
+                    <TableHead className="h-10 px-3" aria-sort={getAriaSort('category')}>
                       <button
                         onClick={() => handleSort('category')}
                         className="flex items-center hover:text-foreground transition-colors"
@@ -564,7 +569,7 @@ export function ProductsLibrary() {
                         {getSortIcon('category')}
                       </button>
                     </TableHead>
-                    <TableHead className="text-right">
+                    <TableHead className="text-right" aria-sort={getAriaSort('totalCapital')}>
                       <button
                         onClick={() => handleSort('totalCapital')}
                         className="flex items-center hover:text-foreground transition-colors"
@@ -573,7 +578,7 @@ export function ProductsLibrary() {
                         {getSortIcon('totalCapital')}
                       </button>
                     </TableHead>
-                    <TableHead className="text-right">
+                    <TableHead className="text-right" aria-sort={getAriaSort('lockPeriod')}>
                       <button
                         onClick={() => handleSort('lockPeriod')}
                         className="flex items-center hover:text-foreground transition-colors"
@@ -582,7 +587,7 @@ export function ProductsLibrary() {
                         {getSortIcon('lockPeriod')}
                       </button>
                     </TableHead>
-                    <TableHead className="text-right">
+                    <TableHead className="text-right" aria-sort={getAriaSort('annualReturn')}>
                       <button
                         onClick={() => handleSort('annualReturn')}
                         className="flex items-center hover:text-foreground transition-colors"

@@ -1011,6 +1011,11 @@ export function CapitalUnitsManager() {
       : <ArrowDown className="w-4 h-4 inline ml-1" />;
   };
 
+  const getAriaSort = (field: UnitSortField): "ascending" | "descending" | "none" => {
+    if (getSortField() !== field) return "none";
+    return getSortOrder() === 'asc' ? "ascending" : "descending";
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -1136,7 +1141,7 @@ export function CapitalUnitsManager() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="h-10 px-3">
+                <TableHead className="h-10 px-3" aria-sort={getAriaSort('unit_code')}>
                   <button
                     onClick={() => handleSort('unit_code')}
                     className="flex items-center hover:text-foreground transition-colors text-sm"
@@ -1145,7 +1150,7 @@ export function CapitalUnitsManager() {
                     {getSortIcon('unit_code')}
                   </button>
                 </TableHead>
-                <TableHead className="h-10 px-3">
+                <TableHead className="h-10 px-3" aria-sort={getAriaSort('strategy')}>
                   <button
                     onClick={() => handleSort('strategy')}
                     className="flex items-center hover:text-foreground transition-colors text-sm"
@@ -1154,7 +1159,7 @@ export function CapitalUnitsManager() {
                     {getSortIcon('strategy')}
                   </button>
                 </TableHead>
-                <TableHead className="h-10 px-3">
+                <TableHead className="h-10 px-3" aria-sort={getAriaSort('tactics')}>
                   <button
                     onClick={() => handleSort('tactics')}
                     className="flex items-center hover:text-foreground transition-colors text-sm"
@@ -1163,7 +1168,7 @@ export function CapitalUnitsManager() {
                     {getSortIcon('tactics')}
                   </button>
                 </TableHead>
-                <TableHead className="h-10 px-3">
+                <TableHead className="h-10 px-3" aria-sort={getAriaSort('status')}>
                   <button
                     onClick={() => handleSort('status')}
                     className="flex items-center hover:text-foreground transition-colors text-sm"
@@ -1173,7 +1178,7 @@ export function CapitalUnitsManager() {
                   </button>
                 </TableHead>
                 <TableHead className="h-10 px-3">关联产品</TableHead>
-                <TableHead className="h-10 px-3 text-right">
+                <TableHead className="h-10 px-3 text-right" aria-sort={getAriaSort('remaining_days')}>
                   <button
                     onClick={() => handleSort('remaining_days')}
                     className="flex items-center hover:text-foreground transition-colors text-sm"

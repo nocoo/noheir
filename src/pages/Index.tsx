@@ -34,6 +34,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useSettings } from '@/contexts/SettingsContext';
 import { LoadingPage } from '@/components/pages/LoadingPage';
+import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
 import { LoginPage } from '@/components/pages/LoginPage';
 import { TrendingUp, TrendingDown, PiggyBank, Percent } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -151,14 +152,23 @@ const Index = () => {
     }
   }, [tab, activeTab, navigate]);
 
-  // Show Loading page when auth is loading or data is loading for the first time
-  if (authLoading || (user && isLoading)) {
+  // Show Loading page when auth is loading
+  if (authLoading) {
     return <LoadingPage />;
   }
 
   // Show Login page when user is not authenticated
   if (!user) {
     return <LoginPage />;
+  }
+
+  // Show dashboard skeleton when data is loading (auth complete)
+  if (isLoading) {
+    return (
+      <DashboardLayout activeTab={activeTab} onTabChange={updateTab}>
+        <DashboardSkeleton />
+      </DashboardLayout>
+    );
   }
 
   return (

@@ -200,6 +200,11 @@ export function CapitalDecisions() {
       : <ArrowDown className="w-4 h-4 inline ml-1" />;
   };
 
+  const getAriaSort = (column: SortColumn): "ascending" | "descending" | "none" => {
+    if (sortColumn !== column) return "none";
+    return sortDirection === 'asc' ? "ascending" : "descending";
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -246,7 +251,7 @@ export function CapitalDecisions() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="h-10 px-3">
+                  <TableHead className="h-10 px-3" aria-sort={getAriaSort('紧急度')}>
                     <button
                       onClick={() => handleSort('紧急度')}
                       className="flex items-center hover:text-foreground transition-colors text-sm"
@@ -255,7 +260,7 @@ export function CapitalDecisions() {
                       {getSortIcon('紧急度')}
                     </button>
                   </TableHead>
-                  <TableHead className="h-10 px-3">
+                  <TableHead className="h-10 px-3" aria-sort={getAriaSort('番号')}>
                     <button
                       onClick={() => handleSort('番号')}
                       className="flex items-center hover:text-foreground transition-colors text-sm"
@@ -264,7 +269,7 @@ export function CapitalDecisions() {
                       {getSortIcon('番号')}
                     </button>
                   </TableHead>
-                  <TableHead className="h-10 px-3">
+                  <TableHead className="h-10 px-3" aria-sort={getAriaSort('策略')}>
                     <button
                       onClick={() => handleSort('策略')}
                       className="flex items-center hover:text-foreground transition-colors text-sm"
@@ -273,7 +278,7 @@ export function CapitalDecisions() {
                       {getSortIcon('策略')}
                     </button>
                   </TableHead>
-                  <TableHead className="h-10 px-3">
+                  <TableHead className="h-10 px-3" aria-sort={getAriaSort('说明')}>
                     <button
                       onClick={() => handleSort('说明')}
                       className="flex items-center hover:text-foreground transition-colors text-sm"
