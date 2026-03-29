@@ -3,7 +3,7 @@ import { useSettings } from '@/contexts/SettingsContext';
 import { useThemedLogo } from '@/hooks/useThemedLogo';
 import { Loader2, Sun, Moon, Monitor, Github, Wallet } from 'lucide-react';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 // ── Barcode decoration ──
 
@@ -26,7 +26,7 @@ function Barcode() {
 
 function GoogleLogo() {
   return (
-    <svg className="h-4 w-4" viewBox="0 0 24 24">
+    <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
       <path
         d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
         fill="#4285F4"
@@ -54,6 +54,10 @@ export function LoginPage() {
   const { settings, updateTheme } = useSettings();
   const { logo64 } = useThemedLogo();
   const [isLoading, setIsLoading] = useState(false);
+  const [searchParams] = useSearchParams();
+
+  // Supabase OAuth may redirect back with error/error_description in URL params
+  const error = searchParams.get('error') || searchParams.get('error_description');
 
   const handleLogin = async () => {
     setIsLoading(true);
@@ -76,7 +80,7 @@ export function LoginPage() {
   const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-background p-4 overflow-hidden">
+    <div className="relative flex flex-col flex-1 min-h-svh bg-background overflow-hidden">
       {/* Radial glow background */}
       <div
         className="pointer-events-none absolute inset-0"
@@ -116,7 +120,7 @@ export function LoginPage() {
         </button>
       </div>
 
-      <div className="flex flex-col items-center">
+      <div className="flex flex-1 flex-col items-center justify-center p-4">
         {/* Badge card — vertical ID badge (aspect 54/86) */}
         <div
           className="relative aspect-[54/86] w-72 overflow-hidden rounded-2xl bg-card flex flex-col ring-1 ring-black/[0.08] dark:ring-white/[0.06]"
@@ -181,6 +185,14 @@ export function LoginPage() {
               登录以访问您的财务数据
             </p>
 
+            {error && (
+              <div className="mt-3 w-full rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive text-center">
+                {error === "access_denied"
+                  ? "Your account is not authorized to access this application."
+                  : "Sign in failed. Please try again."}
+              </div>
+            )}
+
             {/* Divider */}
             <div className="mt-5 h-px w-full bg-border" />
 
@@ -236,6 +248,11 @@ export function LoginPage() {
           </div>
         </div>
       </div>
+
+      {/* Inline footer */}
+      <footer className="relative z-10 py-4 text-center text-xs text-muted-foreground/60">
+        &copy; {year} noheir
+      </footer>
     </div>
   );
 }
