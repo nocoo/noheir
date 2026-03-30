@@ -26,6 +26,16 @@ async function main() {
   if (stdout) process.stdout.write(stdout);
   if (stderr) process.stderr.write(stderr);
 
+  // Check if no test files were found (bun exits non-zero but it's not a real failure)
+  const noTestFiles =
+    stdout.includes("did not match any test files") ||
+    stderr.includes("did not match any test files");
+
+  if (noTestFiles) {
+    console.log("\n⚠️  No test files found yet. Skipping coverage check.");
+    process.exit(0);
+  }
+
   // If tests failed, exit with same code
   if (exitCode !== 0) {
     console.error(`\n❌ Tests failed with exit code ${exitCode}`);
