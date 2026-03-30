@@ -527,7 +527,7 @@ rm -rf _archive/
 | 3.0 | `feat: port shared UI components` | Port shadcn/ui components, ChartCard, StatCard, shared chart components. Replace ECharts imports with Recharts. | **DONE** |
 | 3.1 | `feat: port overview page` | `(dashboard)/overview/page.tsx` — Server Component fetches summary via WorkerDbClient, passes to Client Components with Recharts charts. | **DONE** |
 | 3.2 | `feat: port financial-health page` | Radar chart → Recharts RadarChart. Extract shared toDomainTransaction/buildMonthlyData to lib/transaction-mappers. | **DONE** |
-| 3.3 | `feat: port ai-insight page` | AI insight display + settings. |
+| 3.3 | `feat: port ai-insight page` | AI insight display — port RecurringPaymentDetector to pure functions, server-side detection. | **DONE** |
 | 3.4 | `feat: port cash flow pages (6)` | savings, freedom, income, expense, flow, compare. All chart replacements. |
 | 3.5 | `feat: port account pages (2)` | account, account-detail. |
 | 3.6 | `feat: port capital pages (7)` | capital-dashboard, capital-decisions, warehouse, strategy-sunburst (→TreeMap), liquidity-ladder, products, funds. |
