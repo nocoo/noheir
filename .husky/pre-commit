@@ -1,5 +1,3 @@
 #!/bin/sh
 set -e
-# Temporarily disabled during Gen 2 rewrite (Phase 0).
-# Will be restored with new test paths in Phase 0.8.
-# Original: bun run test:unit
+bun run test:coverage && bunx lint-staged && bun run typecheck
