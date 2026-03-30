@@ -9,9 +9,14 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "noheir-db"
-database_id = "placeholder-replace-with-real-id"
+database_id = "586c101d-df19-4e1f-a946-42151c1e199d"
 
 [[d1_databases]]
 binding = "DB_TEST"
 database_name = "noheir-db-test"
-database_id = "placeholder-replace-with-real-id"
+database_id = "9303e89d-1890-42a9-bd3c-8fd7d8abbfdf"
+
+# Custom domain for the Worker
+[[routes]]
+pattern = "noheir.worker.hexly.ai/*"
+zone_name = "hexly.ai"

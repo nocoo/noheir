@@ -1,0 +1,13 @@
+_archive/
+mcp/
+worker/
+playwright-report/
+e2e/
+src/__tests__/
+tests/
+docs/
+*.test.ts
+*.spec.ts
+tsconfig.tsbuildinfo
+.git/
+node_modules/.cache/
