@@ -9,6 +9,7 @@
     "lint": "eslint --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "test": "bun test src/__tests__",
+    "test:worker": "bun test worker/tests/",
     "test:coverage": "bun run scripts/check-coverage.ts",
     "test:e2e": "bun run scripts/run-e2e.ts",
     "db:generate": "drizzle-kit generate",
