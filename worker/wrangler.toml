@@ -1,0 +1,17 @@
+name = "noheir"
+main = "src/index.ts"
+compatibility_date = "2025-06-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+# WORKER_SHARED_SECRET is set via `wrangler secret put WORKER_SHARED_SECRET`
+
+[[d1_databases]]
+binding = "DB"
+database_name = "noheir-db"
+database_id = "placeholder-replace-with-real-id"
+
+[[d1_databases]]
+binding = "DB_TEST"
+database_name = "noheir-db-test"
+database_id = "placeholder-replace-with-real-id"

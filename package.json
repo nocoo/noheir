@@ -15,6 +15,9 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
+    "worker:dev": "cd worker && wrangler dev",
+    "worker:deploy": "cd worker && wrangler deploy",
+    "worker:typecheck": "cd worker && tsc --noEmit",
     "prepare": "husky"
   },
   "dependencies": {
