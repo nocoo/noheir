@@ -533,7 +533,7 @@ rm -rf _archive/
 | 3.6 | `feat: port capital pages (7)` | capital-dashboard, capital-decisions, warehouse, strategy-sunburst (→TreeMap), liquidity-ladder, products, funds. | **DONE** |
 | 3.7 | `feat: port system pages (6)` | settings, ai-settings, account-types, manage, import, quality. | **DONE** |
 | 3.8 | `feat: port terms and privacy pages` | Static pages, straightforward. | **DONE** |
-| 3.9 | `feat: port command palette (cmdk)` | ⌘K search across all pages. |
+| 3.9 | `feat: port command palette (cmdk)` | ⌘K search across all pages. | **DONE** |
 | 3.10 | `test: add L3 Playwright tests` | Core user flows: login → overview → navigate → settings. |
 
 ### Phase 4: MCP Server Rewrite
