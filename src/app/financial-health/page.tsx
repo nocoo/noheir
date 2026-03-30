@@ -1,11 +1,15 @@
 import { AppShell } from "@/components/layout"
 import { getAuthedClient } from "@/lib/api-helpers"
-import { buildSavingsRate } from "@/domain/dashboard/overview"
 import type { DomainTransaction } from "@/domain/types"
 import { toDomainTransaction, buildMonthlyData } from "@/lib/transaction-mappers"
-import { OverviewClient } from "./overview-client"
+import {
+  buildSafeMonthlyData,
+  buildSafeTotalIncome,
+  buildFinancialHealthResult,
+} from "@/domain/dashboard/financial-health"
+import { FinancialHealthClient } from "./financial-health-client"
 
-export default async function OverviewPage({
+export default async function FinancialHealthPage({
   searchParams,
 }: {
   searchParams: Promise<{ year?: string }>
@@ -20,8 +24,6 @@ export default async function OverviewPage({
     const metadata = await client.getMetadata(userId)
 
     availableYears = metadata.years.sort((a, b) => b - a)
-
-    // Use year from query param if valid, otherwise latest year
     const yearParam = params.year ? Number(params.year) : null
     if (yearParam && availableYears.includes(yearParam)) {
       selectedYear = yearParam
@@ -32,33 +34,35 @@ export default async function OverviewPage({
     const result = await client.searchTransactions(userId, {
       year: selectedYear,
     })
-
     transactions = result.transactions.map((raw) =>
       toDomainTransaction(raw as Record<string, unknown>)
     )
   } catch {
-    // Not authenticated or Worker unavailable — render empty state
+    // Not authenticated or Worker unavailable
   }
 
+  const monthlyData = buildMonthlyData(transactions)
+  const safeMonthly = buildSafeMonthlyData(monthlyData)
   const totalIncome = transactions
     .filter((t) => t.type === "income")
     .reduce((sum, t) => sum + t.amount, 0)
-  const totalExpense = transactions
-    .filter((t) => t.type === "expense")
-    .reduce((sum, t) => sum + t.amount, 0)
-  const balance = totalIncome - totalExpense
-  const savingsRate = buildSavingsRate(totalIncome, totalExpense)
-  const monthlyData = buildMonthlyData(transactions)
+  const safeTotalIncome = buildSafeTotalIncome(totalIncome)
+
+  // TODO: load fixedExpenseCategories from user settings
+  const fixedExpenseCategories: string[] = []
+
+  const healthResult = buildFinancialHealthResult(
+    transactions,
+    safeMonthly,
+    safeTotalIncome,
+    fixedExpenseCategories,
+  )
 
   return (
     <AppShell>
-      <OverviewClient
-        transactions={transactions}
-        monthlyData={monthlyData}
-        totalIncome={totalIncome}
-        totalExpense={totalExpense}
-        balance={balance}
-        savingsRate={savingsRate}
+      <FinancialHealthClient
+        healthResult={healthResult}
+        monthlyData={safeMonthly}
         selectedYear={selectedYear}
         availableYears={availableYears}
       />
