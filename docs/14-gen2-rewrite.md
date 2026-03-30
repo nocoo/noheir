@@ -490,30 +490,30 @@ rm -rf _archive/
 
 **Goal:** All Worker endpoints working and tested. Behavioral contracts from RPC section verified.
 
-| # | Commit | Description |
-|---|--------|-------------|
-| 1.1 | `feat: add transactions search + CRUD` | `repos.transactions.search()` with full 16-param filter, `matched_field`, limit clamping `[1,500]`, offset pagination, tags JSON overlap, AND logic, `ORDER BY date DESC, created_at DESC`. CRUD: create, update, delete. |
-| 1.2 | `feat: add transfers search + CRUD` | `repos.transfers.search()` with 13-param filter, `GREATEST(inflow, outflow)` for amount filter, `matched_field` values preserved. CRUD. |
-| 1.3 | `feat: add products CRUD` | list (with channel/category/currency filters), get by id, create, update, delete. Zod validation for enum fields. |
-| 1.4 | `feat: add units CRUD + findAllWithProducts` | LEFT JOIN via Drizzle, `product` as nested object or null. All CRUD ops. |
-| 1.5 | `feat: add settings upsert` | GET returns single row by userId (or null). PUT does INSERT OR REPLACE keyed by `ownerId` UNIQUE constraint. |
-| 1.6 | `feat: add metadata aggregation` | `repos.metadata.getAll()` — 9 fields, UNION queries for years/accounts/currencies/tags, DISTINCT with null/empty filtering for categories. Exact JSON field names preserved. |
-| 1.7 | `feat: add monthly report aggregation` | `repos.reports.monthly()` — income/expense/net/transfer totals, category breakdowns sorted by total DESC, optional currency filter applied to every sub-query. |
-| 1.8 | `feat: add bulk import endpoints` | `/import/transactions`, `/import/transfers` — CSV/JSON bulk insert. |
-| 1.9 | `feat: add backup/restore endpoints` | `/backup` exports all tables for requesting userId as JSON. `/restore` deletes requesting user's data then bulk inserts. Never touches other users' rows. |
-| 1.10 | `test: add L1 unit tests for repositories` | Test all repository methods with `:memory:` SQLite. Verify every behavioral contract from RPC section. 90% coverage. |
+| # | Commit | Description | Status |
+|---|--------|-------------|--------|
+| 1.1 | `feat: add transactions search + CRUD` | `repos.transactions.search()` with full 16-param filter, `matched_field`, limit clamping `[1,500]`, offset pagination, tags JSON overlap, AND logic, `ORDER BY date DESC, created_at DESC`. CRUD: create, update, delete. | **DONE** (Phase 0.5+0.6) |
+| 1.2 | `feat: add transfers search + CRUD` | `repos.transfers.search()` with 13-param filter, `GREATEST(inflow, outflow)` for amount filter, `matched_field` values preserved. CRUD. | **DONE** (Phase 0.5+0.6) |
+| 1.3 | `feat: add products CRUD` | list (with channel/category/currency filters), get by id, create, update, delete. Zod validation for enum fields. | **DONE** (Phase 0.5+0.6) |
+| 1.4 | `feat: add units CRUD + findAllWithProducts` | LEFT JOIN via Drizzle, `product` as nested object or null. All CRUD ops. | **DONE** (Phase 0.5+0.6) |
+| 1.5 | `feat: add settings upsert` | GET returns single row by userId (or null). PUT does INSERT OR REPLACE keyed by `ownerId` UNIQUE constraint. | **DONE** (Phase 0.5+0.6) |
+| 1.6 | `feat: add metadata aggregation` | `repos.metadata.getAll()` — 9 fields, UNION queries for years/accounts/currencies/tags, DISTINCT with null/empty filtering for categories. Exact JSON field names preserved. | **DONE** (Phase 0.5+0.6) |
+| 1.7 | `feat: add monthly report aggregation` | `repos.reports.monthly()` — income/expense/net/transfer totals, category breakdowns sorted by total DESC, optional currency filter applied to every sub-query. | **DONE** (Phase 0.5+0.6) |
+| 1.8 | `feat: add bulk import endpoints` | `/import/transactions`, `/import/transfers` — CSV/JSON bulk insert. | **DONE** (Phase 0.6) |
+| 1.9 | `feat: add backup/restore endpoints` | `/backup` exports all tables for requesting userId as JSON. `/restore` deletes requesting user's data then bulk inserts. Never touches other users' rows. | **DONE** (Phase 0.6) |
+| 1.10 | `test: add L1 unit tests for repositories` | Test all repository methods with `:memory:` SQLite. Verify every behavioral contract from RPC section. 90% coverage. | **DONE** (93 tests) |
 | 1.11 | `test: add L2 E2E tests for Worker API` | Start Worker locally, test all endpoints. Verify response shapes match MCP/UI expectations. |
 
 ### Phase 2: Domain Logic Port (pure functions, no UI)
 
 **Goal:** Port all 24 domain modules and 31 viewmodels. Maximum test coverage.
 
-| # | Commit | Description |
-|---|--------|-------------|
-| 2.1 | `feat: port domain/dashboard logic` | Port 11 dashboard domain modules. Pure functions, no React. Adapt to INTEGER cents (divide by 100 for display). |
-| 2.2 | `feat: port domain/assets logic` | Port 4 asset domain modules. |
-| 2.3 | `feat: port domain/settings logic` | Port 9 settings domain modules. |
-| 2.4 | `feat: port viewmodels to server-compatible form` | Port 31 viewmodels. Separate server-fetchable data from client-interactive state. VMs that only compute derived data become plain functions called in Server Components. VMs that manage interactive state remain as hooks in Client Components. |
+| # | Commit | Description | Status |
+|---|--------|-------------|--------|
+| 2.1 | `feat: port domain/dashboard logic` | Port 11 dashboard domain modules. Pure functions, no React. Adapt to INTEGER cents (divide by 100 for display). | **DONE** |
+| 2.2 | `feat: port domain/assets logic` | Port 4 asset domain modules. | **DONE** |
+| 2.3 | `feat: port domain/settings logic` | Port 9 settings domain modules + shared libs (financial-health-algorithm, tag-colors, chart-config). | **DONE** |
+| 2.4 | `feat: port viewmodels to server-compatible form` | Deferred to Phase 3 — viewmodels port alongside their pages. Server Components replace data-fetching VMs; interactive state hooks created per-page as needed. |
 | 2.5 | `test: add L1 tests for domain + viewmodels` | Port and adapt existing 327 unit tests. Target 90% coverage. |
 
 ### Phase 3: UI Migration (page by page)
