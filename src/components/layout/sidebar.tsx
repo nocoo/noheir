@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import {
   PanelLeft,
   LogOut,
@@ -99,14 +100,15 @@ interface SidebarProps {
 export function Sidebar({ mobile = false }: SidebarProps) {
   const pathname = usePathname();
   const { collapsed, toggle, setMobileOpen } = useSidebar();
+  const { data: session } = useSession();
 
-  // TODO: Replace with real session data from NextAuth in Phase 0.3
-  const userName = "User";
-  const userEmail = "";
-  const userImage: string | undefined = undefined;
-  const userInitial = "U";
+  const userName = session?.user?.name ?? "User";
+  const userEmail = session?.user?.email ?? "";
+  const userImage = session?.user?.image;
+  const userInitial = userName[0] ?? "?";
 
   const handleNavigate = () => setMobileOpen(false);
+  const handleSignOut = () => signOut({ callbackUrl: "/login" });
 
   // Mobile sidebar is always expanded
   const isCollapsed = mobile ? false : collapsed;
@@ -188,6 +190,7 @@ export function Sidebar({ mobile = false }: SidebarProps) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
+                    onClick={handleSignOut}
                     aria-label="Sign out"
                     className="cursor-pointer"
                   >
@@ -264,6 +267,7 @@ export function Sidebar({ mobile = false }: SidebarProps) {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
+                      onClick={handleSignOut}
                       aria-label="Sign out"
                       className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors shrink-0"
                     >
