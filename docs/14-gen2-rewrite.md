@@ -617,9 +617,9 @@ rm -rf _archive/
 
 | # | Commit | Description |
 |---|--------|-------------|
-| 5.1 | `feat: add Cloudflare Worker wrangler config` | `worker/wrangler.toml` with D1 bindings (`noheir-db` as DB, `noheir-db-test` as DB_TEST). Custom domain `noheir.worker.hexly.ai`. `X-Target-DB` header routing logic. |
-| 5.2 | `chore: create D1 databases and deploy Worker` | `wrangler d1 create noheir-db` + `wrangler d1 create noheir-db-test`. `wrangler deploy`. Apply Drizzle migrations to both databases. Set `WORKER_TOKEN` secret. Verify Worker health at `noheir.worker.hexly.ai`. |
-| 5.3 | `feat: add Dockerfile for Railway` | Three-stage Bun build (deps → builder → runner). `AUTH_SECRET=build-placeholder` at build time. `output: 'standalone'` in next.config.ts. |
+| 5.1 | `feat: add Cloudflare Worker wrangler config` | `worker/wrangler.toml` with D1 bindings (`noheir-db` as DB, `noheir-db-test` as DB_TEST). Custom domain `noheir.worker.hexly.ai`. `X-Target-DB` header routing logic. | **DONE** |
+| 5.2 | `chore: create D1 databases and deploy Worker` | `wrangler d1 create noheir-db` + `wrangler d1 create noheir-db-test`. `wrangler deploy`. Apply Drizzle migrations to both databases. Set `WORKER_TOKEN` secret. Verify Worker health at `noheir.worker.hexly.ai`. | **DONE** |
+| 5.3 | `feat: add Dockerfile for Railway` | Three-stage Bun build (deps → builder → runner). `AUTH_SECRET=build-placeholder` at build time. `output: 'standalone'` in next.config.ts. | **DONE** |
 | 5.4 | `chore: disconnect old Railway auto-deploy` | Rename old Railway service to `noheir-legacy`. **Disconnect GitHub auto-deploy** on old service to prevent Gen 2 commits from breaking the live Vite SPA. Old service stays running on its current build. |
 | 5.5 | `chore: deploy new Railway service` | Create new Railway service `noheir`. Connect GitHub repo with auto-deploy on `main`. Set env vars: `WORKER_URL=https://noheir.worker.hexly.ai`, `WORKER_TOKEN`, `AUTH_SECRET`, `ALLOWED_EMAILS`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `NEXTAUTH_URL`. Deploy. Verify on Railway's temporary domain. |
 | 5.6 | `chore: import data via UI` | Sign in on temporary domain (creates user row), then use the import feature to restore transactions and transfers from CSV. Re-create products and units. All data keyed to the authenticated user's `users.id`. |
