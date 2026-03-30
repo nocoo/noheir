@@ -530,7 +530,7 @@ rm -rf _archive/
 | 3.3 | `feat: port ai-insight page` | AI insight display — port RecurringPaymentDetector to pure functions, server-side detection. | **DONE** |
 | 3.4 | `feat: port cash flow pages (6)` | savings, freedom, income, expense, flow, compare. All chart replacements. Extract shared category/account builders. | **DONE** |
 | 3.5 | `feat: port account pages (2)` | Account overview with bar/pie charts, groups, detail table. Account detail with balance line chart and transaction table. | **DONE** |
-| 3.6 | `feat: port capital pages (7)` | capital-dashboard, capital-decisions, warehouse, strategy-sunburst (→TreeMap), liquidity-ladder, products, funds. |
+| 3.6 | `feat: port capital pages (7)` | capital-dashboard, capital-decisions, warehouse, strategy-sunburst (→TreeMap), liquidity-ladder, products, funds. | **DONE** |
 | 3.7 | `feat: port system pages (6)` | settings, ai-settings, account-types, manage, import, quality. |
 | 3.8 | `feat: port terms and privacy pages` | Static pages, straightforward. |
 | 3.9 | `feat: port command palette (cmdk)` | ⌘K search across all pages. |
