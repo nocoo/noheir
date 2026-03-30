@@ -542,9 +542,9 @@ rm -rf _archive/
 
 | # | Commit | Description |
 |---|--------|-------------|
-| 4.1 | `feat: rewrite MCP server for D1 backend` | Replace Supabase client with `WorkerDbClient`. Same 14 tools, same response shapes. |
-| 4.2 | `feat: update MCP auth to API key` | Replace Supabase email/password auth with Worker Bearer token. |
-| 4.3 | `test: update MCP tests` | Adapt 168 tests to new backend. Mock WorkerDbClient for unit tests. |
+| 4.1 | `feat: rewrite MCP server for D1 backend` | Replace Supabase client with `WorkerDbClient`. Same 14 tools, same response shapes. | **DONE** |
+| 4.2 | `feat: update MCP auth to API key` | Replace Supabase email/password auth with Worker Bearer token. | **DONE** |
+| 4.3 | `test: update MCP tests` | Adapt 168 tests to new backend. Mock WorkerDbClient for unit tests. | **DONE** |
 
 ### Phase 5: Infrastructure & Deployment
 
