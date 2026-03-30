@@ -1,0 +1,15 @@
+_archive/
+mcp/
+worker/
+node_modules/
+.next/
+playwright-report/
+e2e/
+src/__tests__/
+tests/
+docs/
+*.test.ts
+*.spec.ts
+tsconfig.tsbuildinfo
+.git/
+.claude/
