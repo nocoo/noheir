@@ -30,7 +30,7 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 bun run dev
 ```
 
-访问 `http://localhost:7012`。
+访问 `http://localhost:7004`。
 
 ## 生产部署（Railway）
 

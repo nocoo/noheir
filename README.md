@@ -32,7 +32,7 @@ cp .env.example .env.local
 bun run dev
 ```
 
-访问 `http://localhost:7012`。
+访问 `http://localhost:7004`。
 
 ## 🌐 生产部署
 

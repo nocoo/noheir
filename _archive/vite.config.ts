@@ -7,7 +7,7 @@ export default defineConfig(() => ({
   plugins: [tailwindcss()],
   server: {
     host: "::",
-    port: 7012,
+    port: 7004,
     allowedHosts: ["noheir.dev.hexly.ai"],
   },
   esbuild: {
