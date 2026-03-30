@@ -524,7 +524,7 @@ rm -rf _archive/
 
 | # | Commit | Description |
 |---|--------|-------------|
-| 3.0 | `feat: port shared UI components` | Port shadcn/ui components, ChartCard, StatCard, shared chart components. Replace ECharts imports with Recharts. |
+| 3.0 | `feat: port shared UI components` | Port shadcn/ui components, ChartCard, StatCard, shared chart components. Replace ECharts imports with Recharts. | **DONE** |
 | 3.1 | `feat: port overview page` | `(dashboard)/overview/page.tsx` — Server Component fetches summary via WorkerDbClient, passes to Client Components with Recharts charts. |
 | 3.2 | `feat: port financial-health page` | Radar chart → Recharts RadarChart. |
 | 3.3 | `feat: port ai-insight page` | AI insight display + settings. |
