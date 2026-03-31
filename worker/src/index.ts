@@ -401,8 +401,8 @@ app.get("/api/backup", async (c) => {
   const repos = c.get("repos");
 
   const [txResult, trResult, products, units, setting] = await Promise.all([
-    repos.transactions.search(userId, { limit: 500 }),
-    repos.transfers.search(userId, { limit: 500 }),
+    repos.transactions.search(userId, { limit: 10_000 }),
+    repos.transfers.search(userId, { limit: 10_000 }),
     repos.products.findAll(userId),
     repos.units.findAll(userId),
     repos.settings.getByUserId(userId),

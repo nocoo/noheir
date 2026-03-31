@@ -11,6 +11,8 @@
  * WORKER_URL and WORKER_TOKEN are server-only env vars.
  */
 
+import { FULL_YEAR_LIMIT } from "./constants";
+
 export type TargetDb = "production" | "test";
 
 export class WorkerDbError extends Error {
@@ -101,6 +103,20 @@ export class WorkerDbClient {
     }>("POST", "/api/transactions/search", userId, params);
   }
 
+  /**
+   * Fetch transactions with a high limit suitable for full-year dashboard aggregation.
+   * Logs a warning when the result set hits the limit (data may be truncated).
+   */
+  async searchAllTransactions(userId: string, params: Record<string, unknown> = {}) {
+    const result = await this.searchTransactions(userId, { ...params, limit: FULL_YEAR_LIMIT });
+    if (result.total_returned >= FULL_YEAR_LIMIT) {
+      console.warn(
+        `[WorkerDbClient] searchAllTransactions returned ${result.total_returned} rows (limit ${FULL_YEAR_LIMIT}) — data may be truncated`,
+      );
+    }
+    return result;
+  }
+
   async getTransaction(userId: string, id: string) {
     return this.request<{ transaction: unknown | null }>(
       "GET", `/api/transactions/${id}`, userId,
@@ -150,6 +166,20 @@ export class WorkerDbClient {
       transfers: unknown[];
       total_returned: number;
     }>("POST", "/api/transfers/search", userId, params);
+  }
+
+  /**
+   * Fetch transfers with a high limit suitable for full-year dashboard aggregation.
+   * Logs a warning when the result set hits the limit (data may be truncated).
+   */
+  async searchAllTransfers(userId: string, params: Record<string, unknown> = {}) {
+    const result = await this.searchTransfers(userId, { ...params, limit: FULL_YEAR_LIMIT });
+    if (result.total_returned >= FULL_YEAR_LIMIT) {
+      console.warn(
+        `[WorkerDbClient] searchAllTransfers returned ${result.total_returned} rows (limit ${FULL_YEAR_LIMIT}) — data may be truncated`,
+      );
+    }
+    return result;
   }
 
   async getTransfer(userId: string, id: string) {

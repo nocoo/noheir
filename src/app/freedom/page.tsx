@@ -30,7 +30,7 @@ export default async function FreedomPage({
       selectedYear = availableYears[0] ?? new Date().getFullYear()
     }
 
-    const result = await client.searchTransactions(userId, {
+    const result = await client.searchAllTransactions(userId, {
       year: selectedYear,
     })
     transactions = result.transactions.map((raw) =>

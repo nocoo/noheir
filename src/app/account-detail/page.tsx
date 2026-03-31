@@ -51,8 +51,8 @@ export default async function AccountDetailPage({
     }
 
     const [txResult, trResult] = await Promise.all([
-      client.searchTransactions(userId, { year: selectedYear }),
-      client.searchTransfers(userId, { year: selectedYear }),
+      client.searchAllTransactions(userId, { year: selectedYear }),
+      client.searchAllTransfers(userId, { year: selectedYear }),
     ])
 
     transactions = txResult.transactions.map((raw) =>

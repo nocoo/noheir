@@ -32,7 +32,7 @@ export default async function AccountPage({
       selectedYear = availableYears[0] ?? new Date().getFullYear()
     }
 
-    const result = await client.searchTransactions(userId, {
+    const result = await client.searchAllTransactions(userId, {
       year: selectedYear,
     })
     transactions = result.transactions.map((raw) =>
