@@ -336,4 +336,40 @@ describe("transactions repo", () => {
     });
     expect(result.total_returned).toBe(1);
   });
+
+  // ── findAllByUser (backup/export) ──
+
+  test("findAllByUser returns all rows without limit", async () => {
+    const repos = getTestRepos();
+    // Insert more than the search default limit (100)
+    for (let i = 0; i < 150; i++) {
+      await repos.transactions.create(userId, {
+        ...baseTx,
+        date: `2026-03-${String((i % 28) + 1).padStart(2, "0")}`,
+        day: (i % 28) + 1,
+        note: `tx-${i}`,
+      });
+    }
+
+    const all = await repos.transactions.findAllByUser(userId);
+    expect(all.length).toBe(150);
+  });
+
+  test("findAllByUser returns empty for user with no data", async () => {
+    const repos = getTestRepos();
+    seedUser("empty-user", "empty@example.com");
+    const all = await repos.transactions.findAllByUser("empty-user");
+    expect(all.length).toBe(0);
+  });
+
+  test("findAllByUser only returns rows for given user", async () => {
+    const repos = getTestRepos();
+    seedUser("other-user-2", "other2@example.com");
+    await repos.transactions.create(userId, baseTx);
+    await repos.transactions.create("other-user-2", { ...baseTx, note: "other" });
+
+    const result = await repos.transactions.findAllByUser(userId);
+    expect(result.length).toBe(1);
+    expect(result[0]!.note).toBe("公司附近的沙拉");
+  });
 });

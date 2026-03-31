@@ -200,4 +200,39 @@ describe("transfers repo", () => {
     const result = await repos.transfers.search(userId);
     expect(result.transfers[0]!.date).toBe("2026-03-20");
   });
+
+  // ── findAllByUser (backup/export) ──
+
+  test("findAllByUser returns all rows without limit", async () => {
+    const repos = getTestRepos();
+    for (let i = 0; i < 150; i++) {
+      await repos.transfers.create(userId, {
+        ...baseTr,
+        date: `2026-03-${String((i % 28) + 1).padStart(2, "0")}`,
+        day: (i % 28) + 1,
+        note: `tr-${i}`,
+      });
+    }
+
+    const all = await repos.transfers.findAllByUser(userId);
+    expect(all.length).toBe(150);
+  });
+
+  test("findAllByUser returns empty for user with no data", async () => {
+    const repos = getTestRepos();
+    seedUser("empty-user", "empty@example.com");
+    const all = await repos.transfers.findAllByUser("empty-user");
+    expect(all.length).toBe(0);
+  });
+
+  test("findAllByUser only returns rows for given user", async () => {
+    const repos = getTestRepos();
+    seedUser("other-user-2", "other2@example.com");
+    await repos.transfers.create(userId, baseTr);
+    await repos.transfers.create("other-user-2", { ...baseTr, note: "other" });
+
+    const result = await repos.transfers.findAllByUser(userId);
+    expect(result.length).toBe(1);
+    expect(result[0]!.note).toBe("转入定期账户");
+  });
 });

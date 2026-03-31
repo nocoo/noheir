@@ -272,6 +272,19 @@ export function createTransfersRepo(db: DrizzleD1Database) {
         .all();
       return rows.length;
     },
+
+    /**
+     * Return ALL transfers for a user without any limit.
+     * Used by backup/export — must never silently truncate data.
+     */
+    async findAllByUser(userId: string): Promise<Transfer[]> {
+      return await db
+        .select()
+        .from(transfers)
+        .where(eq(transfers.userId, userId))
+        .orderBy(desc(transfers.date), desc(transfers.createdAt))
+        .all();
+    },
   };
 }
 

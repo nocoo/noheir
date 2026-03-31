@@ -291,6 +291,19 @@ export function createTransactionsRepo(db: DrizzleD1Database) {
         .all();
       return rows.length;
     },
+
+    /**
+     * Return ALL transactions for a user without any limit.
+     * Used by backup/export — must never silently truncate data.
+     */
+    async findAllByUser(userId: string): Promise<Transaction[]> {
+      return await db
+        .select()
+        .from(transactions)
+        .where(eq(transactions.userId, userId))
+        .orderBy(desc(transactions.date), desc(transactions.createdAt))
+        .all();
+    },
   };
 }
 
