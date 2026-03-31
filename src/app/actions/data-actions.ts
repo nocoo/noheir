@@ -15,7 +15,7 @@ interface BackupData {
 export async function exportBackup(): Promise<ActionResult<BackupData>> {
   try {
     const { userId, client } = await getAuthedClient()
-    const data = await client.backup(userId)
+    const data = await client.exportData(userId)
     return { success: true, data }
   } catch (err) {
     return {
@@ -31,7 +31,7 @@ export async function restoreBackup(data: {
 }): Promise<ActionResult<{ transactions: number; transfers: number }>> {
   try {
     const { userId, client } = await getAuthedClient()
-    const result = await client.restore(userId, {
+    const result = await client.importData(userId, {
       transactions: data.transactions,
       transfers: data.transfers,
     })
@@ -55,7 +55,7 @@ export async function clearAllData(): Promise<ActionResult> {
     const { userId, client } = await getAuthedClient()
 
     // Clear transactions and transfers via restore with empty arrays
-    await client.restore(userId, { transactions: [], transfers: [] })
+    await client.importData(userId, { transactions: [], transfers: [] })
 
     // Delete all products
     const { products } = await client.listProducts(userId)

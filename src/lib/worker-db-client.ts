@@ -381,7 +381,7 @@ export class WorkerDbClient {
 
   // ── Backup / Restore ──
 
-  async backup(userId: string) {
+  async exportData(userId: string) {
     return this.request<{
       transactions: unknown[];
       transfers: unknown[];
@@ -389,13 +389,13 @@ export class WorkerDbClient {
       units: unknown[];
       settings: unknown | null;
       exported_at: string;
-    }>("GET", "/api/backup", userId);
+    }>("GET", "/api/data/export", userId);
   }
 
-  async restore(userId: string, data: Record<string, unknown>) {
+  async importData(userId: string, data: Record<string, unknown>) {
     return this.request<{
       transactions_imported: number;
       transfers_imported: number;
-    }>("POST", "/api/restore", userId, data);
+    }>("POST", "/api/data/import", userId, data);
   }
 }

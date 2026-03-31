@@ -472,9 +472,9 @@ app.get("/api/reports/monthly", async (c) => {
   return c.json(result);
 });
 
-// ── Backup / Restore (Phase 1.9) ──
+// ── Data Export / Import ──
 
-app.get("/api/backup", async (c) => {
+app.get("/api/data/export", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
 
@@ -496,7 +496,7 @@ app.get("/api/backup", async (c) => {
   });
 });
 
-app.post("/api/restore", async (c) => {
+app.post("/api/data/import", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
   const body = await c.req.json<{
@@ -533,6 +533,34 @@ app.post("/api/restore", async (c) => {
     );
   }
 
+  return c.json(results, 201);
+});
+
+// Legacy aliases — remove in cleanup phase
+app.get("/api/backup", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const [txRows, trRows, products, units, setting] = await Promise.all([
+    repos.transactions.findAllByUser(userId),
+    repos.transfers.findAllByUser(userId),
+    repos.products.findAll(userId),
+    repos.units.findAll(userId),
+    repos.settings.getByUserId(userId),
+  ]);
+  return c.json({ transactions: txRows, transfers: trRows, products, units, settings: setting, exported_at: new Date().toISOString() });
+});
+app.post("/api/restore", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const body = await c.req.json<{ transactions?: unknown[]; transfers?: unknown[] }>();
+  await Promise.all([repos.transactions.deleteByUser(userId), repos.transfers.deleteByUser(userId)]);
+  const results = { transactions_imported: 0, transfers_imported: 0 };
+  if (body.transactions && Array.isArray(body.transactions)) {
+    results.transactions_imported = await repos.transactions.createMany(userId, body.transactions as Parameters<AllRepos["transactions"]["createMany"]>[1]);
+  }
+  if (body.transfers && Array.isArray(body.transfers)) {
+    results.transfers_imported = await repos.transfers.createMany(userId, body.transfers as Parameters<AllRepos["transfers"]["createMany"]>[1]);
+  }
   return c.json(results, 201);
 });
 
