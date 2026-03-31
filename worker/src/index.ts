@@ -374,7 +374,13 @@ app.delete("/api/settings", async (c) => {
 
 // ── Metadata ──
 
-app.get("/api/metadata", async (c) => {
+app.get("/api/reports/metadata", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const result = await repos.metadata.getAll(userId);
+  return c.json(result);
+});
+app.get("/api/metadata", async (c) => { // legacy alias — remove in cleanup phase
   const userId = c.get("userId");
   const repos = c.get("repos");
   const result = await repos.metadata.getAll(userId);

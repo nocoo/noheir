@@ -305,7 +305,7 @@ export class WorkerDbClient {
       tags: string[];
       transaction_count: number;
       transfer_count: number;
-    }>("GET", "/api/metadata", userId);
+    }>("GET", "/api/reports/metadata", userId);
   }
 
   // ── Reports ──
