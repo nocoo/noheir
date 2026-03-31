@@ -1,6 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import {
   Landmark,
   Search,
@@ -34,8 +36,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { cn } from "@/lib/utils"
 import { formatCurrencyFull } from "@/lib/chart-config"
+import {
+  createUnit,
+  updateUnit,
+  deleteUnit,
+} from "@/app/actions/unit-actions"
 
 interface SerializedUnit {
   id: string
@@ -82,11 +90,14 @@ type SortField = "unitCode" | "amount" | "endDate" | "status"
 type SortDir = "asc" | "desc"
 
 export function FundsClient({ units }: FundsClientProps) {
+  const router = useRouter()
   const [search, setSearch] = useState("")
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingUnit, setEditingUnit] = useState<SerializedUnit | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<SerializedUnit | null>(null)
   const [sortField, setSortField] = useState<SortField>("unitCode")
   const [sortDir, setSortDir] = useState<SortDir>("asc")
+  const [isPending, startTransition] = useTransition()
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
@@ -136,6 +147,24 @@ export function FundsClient({ units }: FundsClientProps) {
     setDialogOpen(true)
   }
 
+  const handleDelete = (unit: SerializedUnit) => {
+    setDeleteTarget(unit)
+  }
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return
+    startTransition(async () => {
+      const result = await deleteUnit(deleteTarget.id)
+      if (result.success) {
+        toast.success("资本单位已删除")
+        router.refresh()
+      } else {
+        toast.error(result.error)
+      }
+      setDeleteTarget(null)
+    })
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -176,6 +205,10 @@ export function FundsClient({ units }: FundsClientProps) {
               <UnitForm
                 unit={editingUnit}
                 onClose={() => setDialogOpen(false)}
+                onSuccess={() => {
+                  setDialogOpen(false)
+                  router.refresh()
+                }}
               />
             </DialogContent>
           </Dialog>
@@ -304,6 +337,8 @@ export function FundsClient({ units }: FundsClientProps) {
                         variant="ghost"
                         size="icon"
                         className="text-destructive size-7"
+                        onClick={() => handleDelete(unit)}
+                        disabled={isPending}
                       >
                         <Trash2 className="size-3.5" />
                       </Button>
@@ -325,18 +360,32 @@ export function FundsClient({ units }: FundsClientProps) {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null)
+        }}
+        title="删除资本单位"
+        description={`确定要删除单位「${deleteTarget?.unitCode ?? ""}」吗？此操作不可撤销。`}
+        onConfirm={confirmDelete}
+        loading={isPending}
+      />
     </div>
   )
 }
 
-// ── Unit Form (placeholder for CRUD operations) ──
+// ── Unit Form ──
 
 function UnitForm({
   unit,
   onClose,
+  onSuccess,
 }: {
   unit: SerializedUnit | null
   onClose: () => void
+  onSuccess: () => void
 }) {
   const [unitCode, setUnitCode] = useState(unit?.unitCode ?? "")
   const [amount, setAmount] = useState(
@@ -349,11 +398,53 @@ function UnitForm({
   const [startDate, setStartDate] = useState(unit?.startDate ?? "")
   const [endDate, setEndDate] = useState(unit?.endDate ?? "")
   const [note, setNote] = useState(unit?.note ?? "")
+  const [isPending, startTransition] = useTransition()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Wire to server action for create/update
-    onClose()
+    startTransition(async () => {
+      if (unit) {
+        // Update existing unit
+        const result = await updateUnit(unit.id, {
+          unitCode,
+          amount: Number(amount),
+          currency,
+          status,
+          strategy,
+          tactics,
+          startDate: startDate || null,
+          endDate: endDate || null,
+          note: note || null,
+        })
+        if (result.success) {
+          toast.success("单位已更新")
+          onSuccess()
+        } else {
+          toast.error(result.error)
+        }
+      } else {
+        // Create new unit
+        const payload: Parameters<typeof createUnit>[0] = {
+          unitCode,
+          amount: Number(amount),
+          currency,
+          status,
+          strategy,
+          tactics,
+        }
+        if (startDate) payload.startDate = startDate
+        if (endDate) payload.endDate = endDate
+        if (note) payload.note = note
+
+        const result = await createUnit(payload)
+        if (result.success) {
+          toast.success("单位已创建")
+          onSuccess()
+        } else {
+          toast.error(result.error)
+        }
+      }
+    })
   }
 
   return (
@@ -474,10 +565,17 @@ function UnitForm({
         />
       </div>
       <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onClose}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onClose}
+          disabled={isPending}
+        >
           取消
         </Button>
-        <Button type="submit">{unit ? "保存" : "创建"}</Button>
+        <Button type="submit" disabled={isPending}>
+          {isPending ? "保存中..." : unit ? "保存" : "创建"}
+        </Button>
       </div>
     </form>
   )
