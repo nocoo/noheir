@@ -4,7 +4,6 @@ import type { DomainTransaction } from "@/domain/types"
 import { toDomainTransaction } from "@/lib/transaction-mappers"
 import {
   buildIncomeBreakdown,
-  buildTotalExpense,
   buildFreedomSummary,
 } from "@/domain/dashboard/financial-freedom"
 import { FinancialFreedomClient } from "./financial-freedom-client"
@@ -16,7 +15,7 @@ export default async function FreedomPage({
 }) {
   const params = await searchParams
   let transactions: DomainTransaction[] = []
-  let selectedYear: number | null = null
+  let totalExpenseFromSummary = 0
 
   try {
     const { userId, client } = await getAuthedClient()
@@ -24,15 +23,22 @@ export default async function FreedomPage({
 
     const availableYears = metadata.years.sort((a, b) => b - a)
     const yearParam = params.year ? Number(params.year) : null
+    let selectedYear: number
     if (yearParam && availableYears.includes(yearParam)) {
       selectedYear = yearParam
     } else {
       selectedYear = availableYears[0] ?? new Date().getFullYear()
     }
 
-    const result = await client.searchTransactions(userId, {
-      year: selectedYear,
-    })
+    // Fetch aggregated totals + raw transactions in parallel
+    // Raw transactions needed for income breakdown by tertiaryCategory + secondaryCategory
+    const [summary, result] = await Promise.all([
+      client.getYearlySummary(userId, selectedYear),
+      client.searchTransactions(userId, { year: selectedYear, limit: 5000 }),
+    ])
+
+    totalExpenseFromSummary = summary.totals.expense / 100
+
     transactions = result.transactions.map((raw) =>
       toDomainTransaction(raw as Record<string, unknown>),
     )
@@ -44,7 +50,8 @@ export default async function FreedomPage({
   const activeIncomeCategories: string[] = []
 
   const breakdown = buildIncomeBreakdown(transactions, activeIncomeCategories)
-  const totalExpense = buildTotalExpense(transactions)
+  // Use accurate total expense from aggregation API
+  const totalExpense = totalExpenseFromSummary
   const summary = buildFreedomSummary(totalExpense, breakdown.passiveIncome)
 
   // Serialize Maps to arrays for client component

@@ -376,6 +376,71 @@ app.get("/api/metadata", async (c) => {
 
 // ── Reports ──
 
+app.get("/api/reports/yearly-summary", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const { year } = c.req.query();
+
+  if (!year) {
+    return c.json({ error: "year is required" }, 400);
+  }
+
+  const result = await repos.reports.yearlySummary(
+    userId,
+    parseInt(year, 10),
+  );
+  return c.json(result);
+});
+
+app.get("/api/reports/category-summary", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const { year, type } = c.req.query();
+
+  if (!year) {
+    return c.json({ error: "year is required" }, 400);
+  }
+
+  const result = await repos.reports.categorySummary(
+    userId,
+    parseInt(year, 10),
+    type || undefined,
+  );
+  return c.json(result);
+});
+
+app.get("/api/reports/account-summary", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const { year } = c.req.query();
+
+  if (!year) {
+    return c.json({ error: "year is required" }, 400);
+  }
+
+  const result = await repos.reports.accountSummary(
+    userId,
+    parseInt(year, 10),
+  );
+  return c.json(result);
+});
+
+app.get("/api/reports/flow-summary", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const { year } = c.req.query();
+
+  if (!year) {
+    return c.json({ error: "year is required" }, 400);
+  }
+
+  const result = await repos.reports.flowSummary(
+    userId,
+    parseInt(year, 10),
+  );
+  return c.json(result);
+});
+
 app.get("/api/reports/monthly", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
@@ -401,8 +466,8 @@ app.get("/api/backup", async (c) => {
   const repos = c.get("repos");
 
   const [txResult, trResult, products, units, setting] = await Promise.all([
-    repos.transactions.search(userId, { limit: 500 }),
-    repos.transfers.search(userId, { limit: 500 }),
+    repos.transactions.search(userId, { limit: 5000 }),
+    repos.transfers.search(userId, { limit: 5000 }),
     repos.products.findAll(userId),
     repos.units.findAll(userId),
     repos.settings.getByUserId(userId),

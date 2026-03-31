@@ -310,6 +310,55 @@ export class WorkerDbClient {
 
   // ── Reports ──
 
+  async getYearlySummary(userId: string, year: number) {
+    return this.request<{
+      months: Array<{ month: number; income: number; expense: number; count: number }>;
+      totals: { income: number; expense: number; count: number };
+    }>("GET", `/api/reports/yearly-summary?year=${year}`, userId);
+  }
+
+  async getCategorySummary(userId: string, year: number, type?: string) {
+    const params = new URLSearchParams({ year: year.toString() });
+    if (type) params.set("type", type);
+    return this.request<{
+      categories: Array<{
+        primary_category: string;
+        secondary_category: string | null;
+        tertiary_category: string;
+        total: number;
+        count: number;
+      }>;
+    }>("GET", `/api/reports/category-summary?${params}`, userId);
+  }
+
+  async getAccountSummary(userId: string, year: number) {
+    return this.request<{
+      accounts: Array<{
+        account: string;
+        type: string;
+        total: number;
+        count: number;
+      }>;
+    }>("GET", `/api/reports/account-summary?year=${year}`, userId);
+  }
+
+  async getFlowSummary(userId: string, year: number) {
+    return this.request<{
+      account_to_category: Array<{
+        type: string;
+        account: string;
+        primary_category: string;
+        total: number;
+      }>;
+      category_to_subcategory: Array<{
+        type: string;
+        primary_category: string;
+        secondary_category: string | null;
+        total: number;
+      }>;
+    }>("GET", `/api/reports/flow-summary?year=${year}`, userId);
+  }
+
   async getMonthlyReport(userId: string, year: number, month: number, currency?: string) {
     const params = new URLSearchParams({
       year: year.toString(),

@@ -1,61 +1,37 @@
 import { AppShell } from "@/components/layout"
 import { getAuthedClient } from "@/lib/api-helpers"
-import type { DomainTransaction, YearlyComparison } from "@/domain/types"
-import { toDomainTransaction } from "@/lib/transaction-mappers"
+import type { YearlyComparison } from "@/domain/types"
 import { buildYearComparisonChartData } from "@/domain/dashboard/year-comparison"
 import { YearComparisonClient } from "./year-comparison-client"
 
-function buildYearlyComparisons(
-  transactions: DomainTransaction[],
-  years: number[],
-): YearlyComparison[] {
-  return years.map((year) => {
-    const yearTxs = transactions.filter((t) => t.year === year)
-    const totalIncome = yearTxs
-      .filter((t) => t.type === "income")
-      .reduce((sum, t) => sum + t.amount, 0)
-    const totalExpense = yearTxs
-      .filter((t) => t.type === "expense")
-      .reduce((sum, t) => sum + t.amount, 0)
-
-    return {
-      year,
-      totalIncome,
-      totalExpense,
-      balance: totalIncome - totalExpense,
-      categoryBreakdown: [],
-    }
-  })
-}
-
 export default async function ComparePage() {
-  let allTransactions: DomainTransaction[] = []
-  let availableYears: number[] = []
+  let yearlyComparisons: YearlyComparison[] = []
 
   try {
     const { userId, client } = await getAuthedClient()
     const metadata = await client.getMetadata(userId)
 
-    availableYears = metadata.years.sort((a, b) => a - b) // ascending for chart
+    const availableYears = metadata.years.sort((a, b) => a - b) // ascending for chart
 
-    // Fetch transactions for all years
-    const fetchPromises = availableYears.map(async (year) => {
-      const result = await client.searchTransactions(userId, { year })
-      return result.transactions.map((raw) =>
-        toDomainTransaction(raw as Record<string, unknown>),
-      )
-    })
+    // Fetch yearly summaries in parallel — one lightweight SQL per year
+    const summaries = await Promise.all(
+      availableYears.map(async (year) => {
+        const summary = await client.getYearlySummary(userId, year)
+        return { year, summary }
+      })
+    )
 
-    const results = await Promise.all(fetchPromises)
-    allTransactions = results.flat()
+    yearlyComparisons = summaries.map(({ year, summary }) => ({
+      year,
+      totalIncome: summary.totals.income / 100,
+      totalExpense: summary.totals.expense / 100,
+      balance: (summary.totals.income - summary.totals.expense) / 100,
+      categoryBreakdown: [],
+    }))
   } catch {
     // Not authenticated or Worker unavailable
   }
 
-  const yearlyComparisons = buildYearlyComparisons(
-    allTransactions,
-    availableYears,
-  )
   const chartData = buildYearComparisonChartData(yearlyComparisons)
 
   // TODO: load targetSavingsRate from user settings

@@ -68,3 +68,69 @@ export interface CategoryBreakdown {
   total: number;
   count: number;
 }
+
+// ── Yearly summary response shape ──
+
+export interface YearlySummaryMonth {
+  month: number;
+  income: number;
+  expense: number;
+  count: number;
+}
+
+export interface YearlySummary {
+  months: YearlySummaryMonth[];
+  totals: {
+    income: number;
+    expense: number;
+    count: number;
+  };
+}
+
+// ── Category summary response shape ──
+
+export interface CategorySummaryRow {
+  primary_category: string;
+  secondary_category: string | null;
+  tertiary_category: string;
+  total: number;
+  count: number;
+}
+
+export interface CategorySummaryResponse {
+  categories: CategorySummaryRow[];
+}
+
+// ── Account summary response shape ──
+
+export interface AccountSummaryRow {
+  account: string;
+  type: string;
+  total: number;
+  count: number;
+}
+
+export interface AccountSummaryResponse {
+  accounts: AccountSummaryRow[];
+}
+
+// ── Flow summary response shape ──
+
+export interface FlowAccountCategoryRow {
+  type: string;
+  account: string;
+  primary_category: string;
+  total: number;
+}
+
+export interface FlowCategoryRow {
+  type: string;
+  primary_category: string;
+  secondary_category: string | null;
+  total: number;
+}
+
+export interface FlowSummaryResponse {
+  account_to_category: FlowAccountCategoryRow[];
+  category_to_subcategory: FlowCategoryRow[];
+}

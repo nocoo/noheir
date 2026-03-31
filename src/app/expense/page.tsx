@@ -36,6 +36,7 @@ export default async function ExpensePage({
 
     const result = await client.searchTransactions(userId, {
       year: selectedYear,
+      limit: 5000,
     })
     transactions = result.transactions.map((raw) =>
       toDomainTransaction(raw as Record<string, unknown>),

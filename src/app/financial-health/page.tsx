@@ -1,7 +1,7 @@
 import { AppShell } from "@/components/layout"
 import { getAuthedClient } from "@/lib/api-helpers"
-import type { DomainTransaction } from "@/domain/types"
-import { toDomainTransaction, buildMonthlyData } from "@/lib/transaction-mappers"
+import type { DomainTransaction, MonthlyData } from "@/domain/types"
+import { toDomainTransaction } from "@/lib/transaction-mappers"
 import {
   buildSafeMonthlyData,
   buildSafeTotalIncome,
@@ -9,14 +9,20 @@ import {
 } from "@/domain/dashboard/financial-health"
 import { FinancialHealthClient } from "./financial-health-client"
 
+const MONTH_NAMES = [
+  "一月", "二月", "三月", "四月", "五月", "六月",
+  "七月", "八月", "九月", "十月", "十一月", "十二月",
+]
+
 export default async function FinancialHealthPage({
   searchParams,
 }: {
   searchParams: Promise<{ year?: string }>
 }) {
   const params = await searchParams
-  let transactions: DomainTransaction[] = []
-  let selectedYear: number | null = null
+  let transactions: DomainTransaction[] | undefined
+  let monthlyData: MonthlyData[] = []
+  let totalIncome = 0
 
   try {
     const { userId, client } = await getAuthedClient()
@@ -24,27 +30,39 @@ export default async function FinancialHealthPage({
 
     const availableYears = metadata.years.sort((a, b) => b - a)
     const yearParam = params.year ? Number(params.year) : null
+    let selectedYear: number
     if (yearParam && availableYears.includes(yearParam)) {
       selectedYear = yearParam
     } else {
       selectedYear = availableYears[0] ?? new Date().getFullYear()
     }
 
-    const result = await client.searchTransactions(userId, {
-      year: selectedYear,
-    })
-    transactions = result.transactions.map((raw) =>
+    // Fetch aggregated monthly data + raw transactions in parallel
+    // Monthly data from aggregation API (accurate, no truncation)
+    // Raw transactions still needed for rigidity (tertiaryCategory) & quality (primaryCategory)
+    const [summary, txResult] = await Promise.all([
+      client.getYearlySummary(userId, selectedYear),
+      client.searchTransactions(userId, { year: selectedYear, limit: 5000 }),
+    ])
+
+    // Build monthly data from aggregation API (cents → display)
+    monthlyData = summary.months.map((m) => ({
+      month: MONTH_NAMES[m.month - 1] ?? `${m.month}月`,
+      income: m.income / 100,
+      expense: m.expense / 100,
+      balance: (m.income - m.expense) / 100,
+    }))
+
+    totalIncome = summary.totals.income / 100
+
+    transactions = txResult.transactions.map((raw) =>
       toDomainTransaction(raw as Record<string, unknown>)
     )
   } catch {
     // Not authenticated or Worker unavailable
   }
 
-  const monthlyData = buildMonthlyData(transactions)
   const safeMonthly = buildSafeMonthlyData(monthlyData)
-  const totalIncome = transactions
-    .filter((t) => t.type === "income")
-    .reduce((sum, t) => sum + t.amount, 0)
   const safeTotalIncome = buildSafeTotalIncome(totalIncome)
 
   // TODO: load fixedExpenseCategories from user settings
