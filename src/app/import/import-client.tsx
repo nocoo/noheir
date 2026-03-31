@@ -1,6 +1,8 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useTransition } from "react"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { FileUp, FileText, AlertCircle, CheckCircle } from "lucide-react"
 import {
   Card,
@@ -10,38 +12,83 @@ import {
   CardDescription,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
+import { parseImportFile } from "@/domain/import/parse-import-file"
+import { restoreBackup } from "@/app/actions/data-actions"
 
 export function ImportClient() {
+  const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
   const [file, setFile] = useState<File | null>(null)
-  const [uploading, setUploading] = useState(false)
+  const [preview, setPreview] = useState<{
+    transactions: number
+    transfers: number
+    errors: string[]
+  } | null>(null)
   const [result, setResult] = useState<{
     transactions: number
     transfers: number
   } | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
 
-  const handleSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Holds parsed data ready for submission
+  const [parsedData, setParsedData] = useState<{
+    transactions: Record<string, unknown>[]
+    transfers: Record<string, unknown>[]
+  } | null>(null)
+
+  const handleSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0] ?? null
     setFile(selected)
     setResult(null)
     setError(null)
+    setPreview(null)
+    setParsedData(null)
+
+    if (!selected) return
+
+    try {
+      const text = await selected.text()
+      const parsed = parseImportFile(text, selected.name)
+
+      if (parsed.errors.length > 0 && parsed.transactions.length === 0 && parsed.transfers.length === 0) {
+        setError(parsed.errors.join("; "))
+        return
+      }
+
+      setParsedData({
+        transactions: parsed.transactions,
+        transfers: parsed.transfers,
+      })
+      setPreview({
+        transactions: parsed.transactions.length,
+        transfers: parsed.transfers.length,
+        errors: parsed.errors,
+      })
+    } catch {
+      setError("Failed to read file")
+    }
   }
 
-  const handleImport = async () => {
-    if (!file) return
-    setUploading(true)
-    setError(null)
-    try {
-      // TODO: Wire to server action for file upload + restore
-      // Placeholder
-      setResult({ transactions: 0, transfers: 0 })
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "导入失败")
-    } finally {
-      setUploading(false)
-    }
+  const handleImport = () => {
+    if (!parsedData) return
+    startTransition(async () => {
+      setError(null)
+      try {
+        const importResult = await restoreBackup(parsedData)
+        if (importResult.success) {
+          setResult(importResult.data)
+          toast.success(
+            `Imported ${importResult.data.transactions} transactions, ${importResult.data.transfers} transfers`,
+          )
+          router.refresh()
+        } else {
+          setError(importResult.error)
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Import failed")
+      }
+    })
   }
 
   return (
@@ -86,26 +133,47 @@ export function ImportClient() {
             className="hidden"
           />
 
-          {file && (
+          {/* Preview */}
+          {preview && (
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div>
-                <p className="text-sm font-medium">{file.name}</p>
+                <p className="text-sm font-medium">{file?.name}</p>
                 <p className="text-muted-foreground text-xs">
-                  {(file.size / 1024).toFixed(1)} KB
+                  {preview.transactions}条交易 · {preview.transfers}条转账
+                  {preview.errors.length > 0 && (
+                    <span className="text-amber-600 ml-2">
+                      ({preview.errors.length}条警告)
+                    </span>
+                  )}
                 </p>
               </div>
               <Button
                 onClick={handleImport}
-                disabled={uploading}
+                disabled={isPending || (preview.transactions === 0 && preview.transfers === 0)}
                 size="sm"
               >
-                {uploading ? "导入中..." : "开始导入"}
+                {isPending ? "导入中..." : "开始导入"}
               </Button>
             </div>
           )}
 
-          {uploading && (
-            <Progress value={50} className="h-2" />
+          {/* Parse warnings */}
+          {preview && preview.errors.length > 0 && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30">
+              <p className="text-amber-800 dark:text-amber-300 mb-1 text-xs font-medium">
+                解析警告
+              </p>
+              {preview.errors.slice(0, 5).map((err, i) => (
+                <p key={i} className="text-amber-700 dark:text-amber-400 text-xs">
+                  {err}
+                </p>
+              ))}
+              {preview.errors.length > 5 && (
+                <p className="text-amber-600 text-xs mt-1">
+                  ...还有 {preview.errors.length - 5} 条警告
+                </p>
+              )}
+            </div>
           )}
         </CardContent>
       </Card>
