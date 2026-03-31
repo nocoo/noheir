@@ -102,7 +102,7 @@ export class WorkerDbClient {
   }
 
   async getTransaction(userId: string, id: string) {
-    return this.request<{ transaction: unknown | null }>(
+    return this.request<{ transaction: unknown }>(
       "GET", `/api/transactions/${id}`, userId,
     );
   }
@@ -153,7 +153,7 @@ export class WorkerDbClient {
   }
 
   async getTransfer(userId: string, id: string) {
-    return this.request<{ transfer: unknown | null }>(
+    return this.request<{ transfer: unknown }>(
       "GET", `/api/transfers/${id}`, userId,
     );
   }
@@ -209,7 +209,7 @@ export class WorkerDbClient {
   }
 
   async getProduct(userId: string, id: string) {
-    return this.request<{ product: unknown | null }>(
+    return this.request<{ product: unknown }>(
       "GET", `/api/products/${id}`, userId,
     );
   }
@@ -255,7 +255,7 @@ export class WorkerDbClient {
   }
 
   async getUnit(userId: string, id: string) {
-    return this.request<{ unit: unknown | null }>(
+    return this.request<{ unit: unknown }>(
       "GET", `/api/units/${id}`, userId,
     );
   }

@@ -61,6 +61,8 @@ describe("E2E: Transfers", () => {
       userId,
     });
     expect(res.status).toBe(404);
+    const body = await res.json();
+    expect(body).toEqual({ error: "Not found" });
   });
 
   // ── Update ──

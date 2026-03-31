@@ -68,6 +68,8 @@ describe("E2E: Products", () => {
       userId,
     });
     expect(res.status).toBe(404);
+    const body = await res.json();
+    expect(body).toEqual({ error: "Not found" });
   });
 
   // ── Update ──

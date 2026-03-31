@@ -170,7 +170,7 @@ app.get("/api/transactions/:id", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
   const row = await repos.transactions.findById(userId, c.req.param("id"));
-  return row ? c.json({ transaction: row }) : c.json({ transaction: null }, 404);
+  return row ? c.json({ transaction: row }) : c.json({ error: "Not found" }, 404);
 });
 
 app.put("/api/transactions/:id", async (c) => {
@@ -237,7 +237,7 @@ app.get("/api/transfers/:id", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
   const row = await repos.transfers.findById(userId, c.req.param("id"));
-  return row ? c.json({ transfer: row }) : c.json({ transfer: null }, 404);
+  return row ? c.json({ transfer: row }) : c.json({ error: "Not found" }, 404);
 });
 
 app.put("/api/transfers/:id", async (c) => {
@@ -269,7 +269,7 @@ app.get("/api/products/:id", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
   const row = await repos.products.findById(userId, c.req.param("id"));
-  return row ? c.json({ product: row }) : c.json({ product: null }, 404);
+  return row ? c.json({ product: row }) : c.json({ error: "Not found" }, 404);
 });
 
 app.post("/api/products", async (c) => {
@@ -315,7 +315,7 @@ app.get("/api/units/:id", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
   const row = await repos.units.findById(userId, c.req.param("id"));
-  return row ? c.json({ unit: row }) : c.json({ unit: null }, 404);
+  return row ? c.json({ unit: row }) : c.json({ error: "Not found" }, 404);
 });
 
 app.post("/api/units", async (c) => {
