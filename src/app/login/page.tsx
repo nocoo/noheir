@@ -94,7 +94,7 @@ function LoginContent() {
                   <span className="text-sm font-semibold text-primary-foreground">noheir</span>
                 </div>
                 <span className="text-[10px] font-medium uppercase tracking-widest text-primary-foreground/60">
-                  Finance
+                  财务
                 </span>
               </div>
               <div className="mt-3 flex items-center justify-between">
@@ -120,14 +120,14 @@ function LoginContent() {
                 />
               </div>
 
-              <p className="mt-5 text-lg font-semibold text-foreground">Personal Finance Manager</p>
-              <p className="mt-1 text-xs text-muted-foreground">Sign in to manage your financial data</p>
+              <p className="mt-5 text-lg font-semibold text-foreground">个人财务管理</p>
+              <p className="mt-1 text-xs text-muted-foreground">登录以管理你的财务数据</p>
 
               {error && (
                 <div className="mt-3 w-full rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive text-center">
                   {error === "AccessDenied"
-                    ? "Access denied. Your account is not authorized."
-                    : "Login failed. Please try again."}
+                    ? "访问被拒绝，你的账号未获授权。"
+                    : "登录失败，请重试。"}
                 </div>
               )}
 
@@ -156,11 +156,11 @@ function LoginContent() {
                     fill="#EA4335"
                   />
                 </svg>
-                Sign in with Google
+                使用 Google 登录
               </button>
 
               <p className="mt-3 text-center text-[10px] leading-relaxed text-muted-foreground/60">
-                By signing in, you agree to our terms of service and privacy policy
+                登录即表示你同意我们的服务条款和隐私政策
               </p>
             </div>
 
@@ -168,7 +168,7 @@ function LoginContent() {
             <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center border-t border-border bg-secondary/50 py-2.5">
               <div className="flex items-center gap-1.5">
                 <div className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-                <span className="text-[10px] text-muted-foreground">Secure authentication</span>
+                <span className="text-[10px] text-muted-foreground">安全认证</span>
               </div>
             </div>
           </div>
@@ -176,11 +176,12 @@ function LoginContent() {
       </div>
       <footer className="py-4 text-center">
         <p className="text-xs text-muted-foreground">
-          Powered by{" "}
+          由{" "}
           <a href="https://github.com/nocoo/noheir" target="_blank" rel="noopener noreferrer"
              className="text-primary hover:text-primary/80 transition-colors">
             noheir
           </a>
+          {" "}驱动
         </p>
       </footer>
     </div>
@@ -190,7 +191,7 @@ function LoginContent() {
 function LoginLoading() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-muted-foreground">Loading...</div>
+      <div className="text-muted-foreground">加载中...</div>
     </div>
   );
 }

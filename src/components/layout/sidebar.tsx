@@ -102,7 +102,7 @@ export function Sidebar({ mobile = false }: SidebarProps) {
   const { collapsed, toggle, setMobileOpen } = useSidebar();
   const { data: session } = useSession();
 
-  const userName = session?.user?.name ?? "User";
+  const userName = session?.user?.name ?? "用户";
   const userEmail = session?.user?.email ?? "";
   const userImage = session?.user?.image;
   const userInitial = userName[0] ?? "?";
@@ -116,7 +116,7 @@ export function Sidebar({ mobile = false }: SidebarProps) {
   return (
     <TooltipProvider delayDuration={0}>
       <aside
-        aria-label={mobile ? "Main navigation drawer" : "Main navigation"}
+        aria-label={mobile ? "主导航抽屉" : "主导航"}
         className={cn(
           "sticky top-0 flex h-screen shrink-0 flex-col bg-background transition-all duration-300 ease-in-out overflow-hidden",
           isCollapsed ? "w-[68px]" : "w-[260px]"
@@ -142,14 +142,14 @@ export function Sidebar({ mobile = false }: SidebarProps) {
               <TooltipTrigger asChild>
                 <button
                   onClick={toggle}
-                  aria-label="Expand sidebar"
+                  aria-label="展开侧边栏"
                   className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors mb-2"
                 >
                   <PanelLeft className="h-4 w-4" aria-hidden="true" strokeWidth={1.5} />
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right" sideOffset={8}>
-                Expand sidebar
+                展开侧边栏
               </TooltipContent>
             </Tooltip>
 
@@ -191,7 +191,7 @@ export function Sidebar({ mobile = false }: SidebarProps) {
                 <TooltipTrigger asChild>
                   <button
                     onClick={handleSignOut}
-                    aria-label="Sign out"
+                    aria-label="退出登录"
                     className="cursor-pointer"
                   >
                     <Avatar className="h-9 w-9">
@@ -203,7 +203,7 @@ export function Sidebar({ mobile = false }: SidebarProps) {
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="right" sideOffset={8}>
-                  {userName} &middot; Click to sign out
+                  {userName} &middot; 点击退出登录
                 </TooltipContent>
               </Tooltip>
             </div>
@@ -228,7 +228,7 @@ export function Sidebar({ mobile = false }: SidebarProps) {
                 {!mobile && (
                   <button
                     onClick={toggle}
-                    aria-label="Collapse sidebar"
+                    aria-label="收起侧边栏"
                     className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground transition-colors"
                   >
                     <PanelLeft className="h-4 w-4" aria-hidden="true" strokeWidth={1.5} />
@@ -268,13 +268,13 @@ export function Sidebar({ mobile = false }: SidebarProps) {
                   <TooltipTrigger asChild>
                     <button
                       onClick={handleSignOut}
-                      aria-label="Sign out"
+                      aria-label="退出登录"
                       className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors shrink-0"
                     >
                       <LogOut className="h-4 w-4" aria-hidden="true" strokeWidth={1.5} />
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent side="top">Sign out</TooltipContent>
+                  <TooltipContent side="top">退出登录</TooltipContent>
                 </Tooltip>
               </div>
             </div>
