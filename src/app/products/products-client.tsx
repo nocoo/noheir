@@ -1,6 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { Package, Search, Plus, Pencil, Trash2 } from "lucide-react"
 import {
   Card,
@@ -27,6 +29,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import {
+  createProduct,
+  updateProduct,
+  deleteProduct,
+} from "@/app/actions/product-actions"
 import type { DomainProduct } from "@/domain/types"
 
 interface ProductsClientProps {
@@ -45,11 +53,14 @@ const CATEGORIES = [
 ]
 
 export function ProductsClient({ products }: ProductsClientProps) {
+  const router = useRouter()
   const [search, setSearch] = useState("")
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<DomainProduct | null>(
     null,
   )
+  const [deleteTarget, setDeleteTarget] = useState<DomainProduct | null>(null)
+  const [isPending, startTransition] = useTransition()
 
   const filtered = search
     ? products.filter(
@@ -69,6 +80,24 @@ export function ProductsClient({ products }: ProductsClientProps) {
   const handleCreate = () => {
     setEditingProduct(null)
     setDialogOpen(true)
+  }
+
+  const handleDelete = (product: DomainProduct) => {
+    setDeleteTarget(product)
+  }
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return
+    startTransition(async () => {
+      const result = await deleteProduct(deleteTarget.id)
+      if (result.success) {
+        toast.success("产品已删除")
+        router.refresh()
+      } else {
+        toast.error(result.error)
+      }
+      setDeleteTarget(null)
+    })
   }
 
   return (
@@ -110,6 +139,10 @@ export function ProductsClient({ products }: ProductsClientProps) {
               <ProductForm
                 product={editingProduct}
                 onClose={() => setDialogOpen(false)}
+                onSuccess={() => {
+                  setDialogOpen(false)
+                  router.refresh()
+                }}
               />
             </DialogContent>
           </Dialog>
@@ -183,6 +216,8 @@ export function ProductsClient({ products }: ProductsClientProps) {
                         variant="ghost"
                         size="icon"
                         className="text-destructive size-7"
+                        onClick={() => handleDelete(product)}
+                        disabled={isPending}
                       >
                         <Trash2 className="size-3.5" />
                       </Button>
@@ -204,18 +239,32 @@ export function ProductsClient({ products }: ProductsClientProps) {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null)
+        }}
+        title="删除产品"
+        description={`确定要删除产品「${deleteTarget?.name ?? ""}」吗？此操作不可撤销。`}
+        onConfirm={confirmDelete}
+        loading={isPending}
+      />
     </div>
   )
 }
 
-// ── Product Form (placeholder for CRUD operations) ──
+// ── Product Form ──
 
 function ProductForm({
   product,
   onClose,
+  onSuccess,
 }: {
   product: DomainProduct | null
   onClose: () => void
+  onSuccess: () => void
 }) {
   const [name, setName] = useState(product?.name ?? "")
   const [code, setCode] = useState(product?.code ?? "")
@@ -230,11 +279,30 @@ function ProductForm({
       ? String(product.annualReturnRate * 100)
       : "",
   )
+  const [isPending, startTransition] = useTransition()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Wire to server action for create/update
-    onClose()
+    startTransition(async () => {
+      const data: Parameters<typeof createProduct>[0] = { name }
+      if (code) data.code = code
+      if (channel) data.channel = channel
+      if (category) data.category = category
+      if (currency) data.currency = currency
+      if (lockDays) data.lockPeriodDays = Number(lockDays)
+      if (rate) data.annualReturnRate = Number(rate) / 100
+
+      const result = product
+        ? await updateProduct(product.id, data)
+        : await createProduct(data)
+
+      if (result.success) {
+        toast.success(product ? "产品已更新" : "产品已创建")
+        onSuccess()
+      } else {
+        toast.error(result.error)
+      }
+    })
   }
 
   return (
@@ -327,10 +395,17 @@ function ProductForm({
         </div>
       </div>
       <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onClose}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onClose}
+          disabled={isPending}
+        >
           取消
         </Button>
-        <Button type="submit">{product ? "保存" : "创建"}</Button>
+        <Button type="submit" disabled={isPending}>
+          {isPending ? "保存中..." : product ? "保存" : "创建"}
+        </Button>
       </div>
     </form>
   )
