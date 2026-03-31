@@ -1,6 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { Bot, Save, Copy } from "lucide-react"
 import {
   Card,
@@ -27,12 +29,16 @@ import {
   isConfigComplete,
 } from "@/domain/settings/ai-config"
 import { buildMcpConfigJson } from "@/domain/settings/mcp-config"
+import { saveAiSettings } from "@/app/actions/settings-actions"
 
 interface AiSettingsClientProps {
   aiConfig: Record<string, unknown>
 }
 
 export function AiSettingsClient({ aiConfig }: AiSettingsClientProps) {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+
   const [enabled, setEnabled] = useState(Boolean(aiConfig.enabled ?? false))
   const [baseURL, setBaseURL] = useState(String(aiConfig.baseURL ?? ""))
   const [modelName, setModelName] = useState(String(aiConfig.modelName ?? ""))
@@ -51,10 +57,24 @@ export function AiSettingsClient({ aiConfig }: AiSettingsClientProps) {
 
   const handleCopyMcp = () => {
     navigator.clipboard.writeText(mcpJson)
+    toast.success("已复制到剪贴板")
   }
 
   const handleSave = () => {
-    // TODO: Wire to server action
+    startTransition(async () => {
+      const result = await saveAiSettings({
+        enabled,
+        baseURL,
+        modelName,
+        apiKey,
+      })
+      if (result.success) {
+        toast.success("AI 设置已保存")
+        router.refresh()
+      } else {
+        toast.error(result.error)
+      }
+    })
   }
 
   return (
@@ -187,9 +207,9 @@ export function AiSettingsClient({ aiConfig }: AiSettingsClientProps) {
             ? "配置完整"
             : "请填写所有必填字段"}
         </p>
-        <Button onClick={handleSave} disabled={!complete}>
+        <Button onClick={handleSave} disabled={!complete || isPending}>
           <Save className="mr-2 size-4" />
-          保存设置
+          {isPending ? "保存中..." : "保存设置"}
         </Button>
       </div>
     </div>

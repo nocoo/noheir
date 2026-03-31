@@ -8,8 +8,10 @@ export default async function AiSettingsPage() {
   try {
     const { userId, client } = await getAuthedClient()
     const result = await client.getSettings(userId)
-    const settings = (result.settings as Record<string, unknown>) ?? {}
-    aiConfig = (settings.ai_config as Record<string, unknown>) ?? {}
+    const row = (result.settings as Record<string, unknown>) ?? {}
+    const rawJson = typeof row.settings === "string" ? row.settings : "{}"
+    const parsed = JSON.parse(rawJson) as Record<string, unknown>
+    aiConfig = (parsed.ai_config as Record<string, unknown>) ?? {}
   } catch {
     // Not authenticated or Worker unavailable
   }
