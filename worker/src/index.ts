@@ -299,6 +299,13 @@ app.put("/api/settings", async (c) => {
   return c.json({ settings: row });
 });
 
+app.delete("/api/settings", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const ok = await repos.settings.deleteByUser(userId);
+  return ok ? c.json({ success: true }) : c.json({ error: "Not found" }, 404);
+});
+
 // ── Metadata ──
 
 app.get("/api/metadata", async (c) => {

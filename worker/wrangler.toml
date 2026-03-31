@@ -10,11 +10,13 @@ compatibility_flags = ["nodejs_compat"]
 binding = "DB"
 database_name = "noheir-db"
 database_id = "586c101d-df19-4e1f-a946-42151c1e199d"
+migrations_dir = "db/migrations"
 
 [[d1_databases]]
 binding = "DB_TEST"
 database_name = "noheir-db-test"
 database_id = "9303e89d-1890-42a9-bd3c-8fd7d8abbfdf"
+migrations_dir = "db/migrations"
 
 # Custom domain for the Worker
 [[routes]]

@@ -14,6 +14,15 @@ export function createSettingsRepo(db: DrizzleD1Database) {
       return row ?? null;
     },
 
+    async deleteByUser(userId: string): Promise<boolean> {
+      const rows = await db
+        .delete(settings)
+        .where(eq(settings.ownerId, userId))
+        .returning()
+        .all();
+      return rows.length > 0;
+    },
+
     async upsert(userId: string, data: Partial<Pick<NewSetting, "siteName" | "settings">>): Promise<Setting> {
       const existing = await db
         .select()
