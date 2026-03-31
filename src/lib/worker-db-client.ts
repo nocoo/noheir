@@ -81,14 +81,14 @@ export class WorkerDbClient {
 
   // ── Users ──
 
-  async upsertUser(userId: string, data: {
+  async syncUser(userId: string, data: {
     email: string;
     name?: string | null;
     image?: string | null;
     providerAccountId: string;
   }) {
     return this.request<{ user: unknown }>(
-      "POST", "/api/users/upsert", userId, data,
+      "PUT", "/api/users/me", userId, data,
     );
   }
 

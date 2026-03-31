@@ -102,7 +102,11 @@ app.use("*", async (c, next) => {
 
 // ── Users ──
 
-app.post("/api/users/upsert", async (c) => {
+async function handleUserSync(c: {
+  get: (key: "userId") => string;
+  req: { json: <T>() => Promise<T> };
+  json: (data: unknown, status?: number) => Response;
+} & { get(key: "repos"): AllRepos }) {
   const userId = c.get("userId");
   const repos = c.get("repos");
   const body = await c.req.json<{
@@ -119,7 +123,10 @@ app.post("/api/users/upsert", async (c) => {
     providerAccountId: body.providerAccountId,
   });
   return c.json({ user }, 201);
-});
+}
+
+app.put("/api/users/me", (c) => handleUserSync(c));
+app.post("/api/users/upsert", (c) => handleUserSync(c)); // legacy alias — remove in cleanup phase
 
 // ── Transactions ──
 // NOTE: Static paths MUST come before :id to avoid Hono matching "count-by-year" as an id.

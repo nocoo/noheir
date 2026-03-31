@@ -120,7 +120,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           const workerToken = process.env.WORKER_TOKEN;
           if (workerUrl && workerToken) {
             const client = new WorkerDbClient(workerUrl, workerToken);
-            await client.upsertUser(account.providerAccountId, {
+            await client.syncUser(account.providerAccountId, {
               email,
               name: (profile?.name ?? user.name) || null,
               image: ((profile?.picture as string | undefined) ?? user.image) || null,
