@@ -22,7 +22,6 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import { formatCurrencyFull } from "@/lib/chart-config"
-import { YearSelector } from "../year-selector"
 
 interface AIInsightClientProps {
   sortedPayments: RecurringPayment[]
@@ -38,8 +37,6 @@ interface AIInsightClientProps {
     endDate: string
     transactionCount: number
   }
-  selectedYear: number | null
-  availableYears: number[]
 }
 
 const frequencyLabels: Record<string, string> = {
@@ -81,8 +78,6 @@ export function AIInsightClient({
   sortedInsights,
   summary,
   dataRange,
-  selectedYear,
-  availableYears,
 }: AIInsightClientProps) {
   const summaryText =
     summary.paymentsCount > 0
@@ -105,10 +100,6 @@ export function AIInsightClient({
             基于交易数据自动分析，发现周期性支出和即将到期的付款
           </p>
         </div>
-        <YearSelector
-          selectedYear={selectedYear}
-          availableYears={availableYears}
-        />
       </div>
 
       {/* Summary */}

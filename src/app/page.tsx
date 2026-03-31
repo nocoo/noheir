@@ -12,14 +12,13 @@ export default async function OverviewPage({
 }) {
   const params = await searchParams
   let transactions: DomainTransaction[] = []
-  let availableYears: number[] = []
   let selectedYear: number | null = null
 
   try {
     const { userId, client } = await getAuthedClient()
     const metadata = await client.getMetadata(userId)
 
-    availableYears = metadata.years.sort((a, b) => b - a)
+    const availableYears = metadata.years.sort((a, b) => b - a)
 
     // Use year from query param if valid, otherwise latest year
     const yearParam = params.year ? Number(params.year) : null
@@ -59,8 +58,6 @@ export default async function OverviewPage({
         totalExpense={totalExpense}
         balance={balance}
         savingsRate={savingsRate}
-        selectedYear={selectedYear}
-        availableYears={availableYears}
       />
     </AppShell>
   )

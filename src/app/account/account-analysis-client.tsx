@@ -34,7 +34,6 @@ import {
 import { cn } from "@/lib/utils"
 import { formatCurrencyFull, formatCurrencyK } from "@/lib/chart-config"
 import { StatCard } from "../stat-card"
-import { YearSelector } from "../year-selector"
 
 interface SerializedAccount {
   name: string
@@ -71,8 +70,6 @@ interface AccountAnalysisClientProps {
     totalIncome: number
     totalExpense: number
   }
-  selectedYear: number | null
-  availableYears: number[]
 }
 
 const PIE_COLORS = [
@@ -94,8 +91,6 @@ export function AccountAnalysisClient({
   chartData,
   pieData,
   summaryStats,
-  selectedYear,
-  availableYears,
 }: AccountAnalysisClientProps) {
   return (
     <div className="space-y-6">
@@ -110,10 +105,6 @@ export function AccountAnalysisClient({
             各账户收支概览与分布
           </p>
         </div>
-        <YearSelector
-          selectedYear={selectedYear}
-          availableYears={availableYears}
-        />
       </div>
 
       {/* Summary Stats */}

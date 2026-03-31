@@ -27,14 +27,11 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { formatCurrencyFull, formatCurrencyK } from "@/lib/chart-config"
-import { YearSelector } from "../year-selector"
 
 interface SavingsRateClientProps {
   chartData: SavingsRateChartPoint[]
   summary: SavingsRateSummary
   targetSavingsRate: number
-  selectedYear: number | null
-  availableYears: number[]
 }
 
 const INCOME_HEX = "#10b981"
@@ -44,8 +41,6 @@ export function SavingsRateClient({
   chartData,
   summary,
   targetSavingsRate,
-  selectedYear,
-  availableYears,
 }: SavingsRateClientProps) {
   const savingsRateStatus =
     summary.annualSavingsRate >= targetSavingsRate + 5
@@ -74,10 +69,6 @@ export function SavingsRateClient({
             月度储蓄率趋势和累计储蓄
           </p>
         </div>
-        <YearSelector
-          selectedYear={selectedYear}
-          availableYears={availableYears}
-        />
       </div>
 
       {/* Summary Stats */}

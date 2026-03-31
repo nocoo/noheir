@@ -16,14 +16,13 @@ export default async function FreedomPage({
 }) {
   const params = await searchParams
   let transactions: DomainTransaction[] = []
-  let availableYears: number[] = []
   let selectedYear: number | null = null
 
   try {
     const { userId, client } = await getAuthedClient()
     const metadata = await client.getMetadata(userId)
 
-    availableYears = metadata.years.sort((a, b) => b - a)
+    const availableYears = metadata.years.sort((a, b) => b - a)
     const yearParam = params.year ? Number(params.year) : null
     if (yearParam && availableYears.includes(yearParam)) {
       selectedYear = yearParam
@@ -66,8 +65,6 @@ export default async function FreedomPage({
         summary={summary}
         activeByCategoryList={activeByCategoryList}
         passiveByCategoryList={passiveByCategoryList}
-        selectedYear={selectedYear}
-        availableYears={availableYears}
       />
     </AppShell>
   )

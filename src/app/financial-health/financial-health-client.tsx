@@ -33,13 +33,10 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
-import { YearSelector } from "../year-selector"
 
 interface FinancialHealthClientProps {
   healthResult: FinancialHealthResult
   monthlyData: MonthlyData[]
-  selectedYear: number | null
-  availableYears: number[]
 }
 
 const gradeColors: Record<string, { text: string; bg: string; border: string }> = {
@@ -68,8 +65,6 @@ function getStatusBadge(score: number, max: number) {
 export function FinancialHealthClient({
   healthResult,
   monthlyData,
-  selectedYear,
-  availableYears,
 }: FinancialHealthClientProps) {
   const { totalScore, maxScore, grade, dimensions } = healthResult
   const colors = gradeColors[grade] ?? gradeColors["D"] ?? { text: "text-destructive", bg: "bg-destructive/10", border: "border-destructive" }
@@ -99,10 +94,6 @@ export function FinancialHealthClient({
             5维度反脆弱评估体系
           </p>
         </div>
-        <YearSelector
-          selectedYear={selectedYear}
-          availableYears={availableYears}
-        />
       </div>
 
       {/* Overall Score Card */}

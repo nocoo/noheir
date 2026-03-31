@@ -17,7 +17,6 @@ import {
   TopTransactionsTable,
 } from "@/components/shared"
 import { StatCard } from "./stat-card"
-import { YearSelector } from "./year-selector"
 import { formatCurrencyFull } from "@/lib/chart-config"
 
 const CHART_COLORS = [
@@ -39,8 +38,6 @@ interface TransactionAnalysisClientProps {
   accountData: AccountChartData[]
   topTransactions: TopTransaction[]
   labels: TransactionAnalysisLabels
-  selectedYear: number | null
-  availableYears: number[]
 }
 
 export function TransactionAnalysisClient({
@@ -54,8 +51,6 @@ export function TransactionAnalysisClient({
   accountData,
   topTransactions,
   labels,
-  selectedYear,
-  availableYears,
 }: TransactionAnalysisClientProps) {
   const isIncome = type === "income"
   const colorHex = isIncome ? "#10b981" : "#f43f5e"
@@ -75,10 +70,6 @@ export function TransactionAnalysisClient({
               {isIncome ? "收入分析" : "支出分析"}
             </h1>
           </div>
-          <YearSelector
-            selectedYear={selectedYear}
-            availableYears={availableYears}
-          />
         </div>
         <div className="text-muted-foreground py-8 text-center">
           暂无{isIncome ? "收入" : "支出"}数据
@@ -99,10 +90,6 @@ export function TransactionAnalysisClient({
             {isIncome ? "收入来源与趋势分析" : "支出结构与趋势分析"}
           </p>
         </div>
-        <YearSelector
-          selectedYear={selectedYear}
-          availableYears={availableYears}
-        />
       </div>
 
       {/* Summary Stats */}

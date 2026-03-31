@@ -19,7 +19,6 @@ import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 import { formatCurrencyFull } from "@/lib/chart-config"
-import { YearSelector } from "../year-selector"
 
 interface CategoryItem {
   name: string
@@ -34,8 +33,6 @@ interface FinancialFreedomClientProps {
   summary: FinancialFreedomSummary
   activeByCategoryList: CategoryItem[]
   passiveByCategoryList: CategoryItem[]
-  selectedYear: number | null
-  availableYears: number[]
 }
 
 export function FinancialFreedomClient({
@@ -45,8 +42,6 @@ export function FinancialFreedomClient({
   summary,
   activeByCategoryList,
   passiveByCategoryList,
-  selectedYear,
-  availableYears,
 }: FinancialFreedomClientProps) {
   const [reductionPct, setReductionPct] = useState(20)
   const [increasePct, setIncreasePct] = useState(50)
@@ -82,10 +77,6 @@ export function FinancialFreedomClient({
             被动收入 vs 支出，追踪财务自由进度
           </p>
         </div>
-        <YearSelector
-          selectedYear={selectedYear}
-          availableYears={availableYears}
-        />
       </div>
 
       {/* Status Card */}

@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Menu, Github } from "lucide-react";
 import { Sidebar } from "./sidebar";
 import { SidebarProvider, useSidebar } from "./sidebar-context";
 import { ThemeToggle } from "./theme-toggle";
 import { Breadcrumbs } from "./breadcrumbs";
+import { GlobalYearSelector } from "./global-year-selector";
 import {
   Sheet,
   SheetContent,
@@ -52,8 +53,8 @@ function AppShellInner({ children, breadcrumbs = [] }: AppShellProps) {
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetContent side="left" className="w-[260px] p-0 sm:max-w-[260px]" showCloseButton={false}>
             <SheetHeader className="sr-only">
-              <SheetTitle>Navigation</SheetTitle>
-              <SheetDescription>Browse noheir pages</SheetDescription>
+              <SheetTitle>导航菜单</SheetTitle>
+              <SheetDescription>浏览 noheir 页面</SheetDescription>
             </SheetHeader>
             <Sidebar mobile />
           </SheetContent>
@@ -67,15 +68,18 @@ function AppShellInner({ children, breadcrumbs = [] }: AppShellProps) {
             {isMobile && (
               <button
                 onClick={() => setMobileOpen(true)}
-                aria-label="Open navigation"
+                aria-label="打开导航"
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
               >
                 <Menu className="h-5 w-5" aria-hidden="true" strokeWidth={1.5} />
               </button>
             )}
-            <Breadcrumbs items={[{ label: "Home", href: "/" }, ...breadcrumbs]} />
+            <Breadcrumbs items={[{ label: "首页", href: "/" }, ...breadcrumbs]} />
           </div>
           <div className="flex items-center gap-1">
+            <Suspense>
+              <GlobalYearSelector />
+            </Suspense>
             <a
               href="https://github.com/nocoo/noheir"
               target="_blank"

@@ -12,8 +12,6 @@ import { formatCurrencyFull } from "@/lib/chart-config"
 import { StatCard } from "./stat-card"
 import { IncomeExpenseChart } from "./income-expense-chart"
 import { RecentTransactionsTable } from "./recent-transactions-table"
-import { YearSelector } from "./year-selector"
-
 interface OverviewClientProps {
   transactions: DomainTransaction[]
   monthlyData: MonthlyData[]
@@ -21,8 +19,6 @@ interface OverviewClientProps {
   totalExpense: number
   balance: number
   savingsRate: number
-  selectedYear: number | null
-  availableYears: number[]
 }
 
 export function OverviewClient({
@@ -32,8 +28,6 @@ export function OverviewClient({
   totalExpense,
   balance,
   savingsRate,
-  selectedYear,
-  availableYears,
 }: OverviewClientProps) {
   const recentTransactions = [...transactions]
     .sort((a, b) => b.date.localeCompare(a.date))
@@ -41,7 +35,7 @@ export function OverviewClient({
 
   return (
     <div className="space-y-6">
-      {/* Header + Year Selector */}
+      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">财务概览</h1>
@@ -49,10 +43,6 @@ export function OverviewClient({
             查看您的财务状况和趋势
           </p>
         </div>
-        <YearSelector
-          selectedYear={selectedYear}
-          availableYears={availableYears}
-        />
       </div>
 
       {/* Stat Cards */}

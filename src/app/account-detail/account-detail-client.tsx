@@ -1,6 +1,6 @@
 "use client"
 
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import {
   LineChart,
   Line,
@@ -38,7 +38,6 @@ import {
 import { cn } from "@/lib/utils"
 import { formatCurrencyFull, formatCurrencyK } from "@/lib/chart-config"
 import { StatCard } from "../stat-card"
-import { YearSelector } from "../year-selector"
 
 interface AccountDetailSummary {
   totalIncome: number
@@ -55,8 +54,6 @@ interface AccountDetailClientProps {
   dailyBalances: DailyBalance[]
   displayEntries: DisplayEntry[]
   summary: AccountDetailSummary
-  selectedYear: number | null
-  availableYears: number[]
 }
 
 const TYPE_LABELS: Record<string, { label: string; color: string }> = {
@@ -72,14 +69,12 @@ export function AccountDetailClient({
   dailyBalances,
   displayEntries,
   summary,
-  selectedYear,
-  availableYears,
 }: AccountDetailClientProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   const handleAccountChange = (account: string) => {
-    const params = new URLSearchParams()
-    if (selectedYear) params.set("year", String(selectedYear))
+    const params = new URLSearchParams(searchParams.toString())
     params.set("account", account)
     router.push(`/account-detail?${params.toString()}`)
   }
@@ -113,10 +108,6 @@ export function AccountDetailClient({
               ))}
             </SelectContent>
           </Select>
-          <YearSelector
-            selectedYear={selectedYear}
-            availableYears={availableYears}
-          />
         </div>
       </div>
 

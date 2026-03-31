@@ -12,7 +12,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { formatCurrencyFull } from "@/lib/chart-config"
-import { YearSelector } from "../year-selector"
 
 interface FlowNode {
   source: string
@@ -23,8 +22,6 @@ interface FlowNode {
 interface FlowAnalysisClientProps {
   incomeFlows: FlowNode[]
   expenseFlows: FlowNode[]
-  selectedYear: number | null
-  availableYears: number[]
 }
 
 const INCOME_COLORS = [
@@ -99,8 +96,6 @@ function FlowList({
 export function FlowAnalysisClient({
   incomeFlows,
   expenseFlows,
-  selectedYear,
-  availableYears,
 }: FlowAnalysisClientProps) {
   const [tab, setTab] = useState<string>("income")
 
@@ -117,10 +112,6 @@ export function FlowAnalysisClient({
             可视化资金从来源到分类的流向分布
           </p>
         </div>
-        <YearSelector
-          selectedYear={selectedYear}
-          availableYears={availableYears}
-        />
       </div>
 
       {/* Flow Chart */}

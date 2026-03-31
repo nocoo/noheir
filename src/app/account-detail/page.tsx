@@ -36,14 +36,13 @@ export default async function AccountDetailPage({
   const params = await searchParams
   let transactions: DomainTransaction[] = []
   let transfers: DomainTransfer[] = []
-  let availableYears: number[] = []
   let selectedYear: number | null = null
 
   try {
     const { userId, client } = await getAuthedClient()
     const metadata = await client.getMetadata(userId)
 
-    availableYears = metadata.years.sort((a, b) => b - a)
+    const availableYears = metadata.years.sort((a, b) => b - a)
     const yearParam = params.year ? Number(params.year) : null
     if (yearParam && availableYears.includes(yearParam)) {
       selectedYear = yearParam
@@ -107,8 +106,6 @@ export default async function AccountDetailPage({
         dailyBalances={serializedDailyBalances}
         displayEntries={serializedEntries}
         summary={serializedSummary}
-        selectedYear={selectedYear}
-        availableYears={availableYears}
       />
     </AppShell>
   )
