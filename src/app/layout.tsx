@@ -3,6 +3,7 @@ import { Inter, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth-provider";
 import { CommandPalette } from "@/components/command-palette";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -17,13 +18,13 @@ const dmSans = DM_Sans({
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.NEXTAUTH_URL || "http://localhost:7016"
+    process.env.NEXTAUTH_URL || "http://localhost:7004"
   ),
-  title: "noheir - Personal Finance Manager",
-  description: "Privacy-first personal finance tracking and analysis",
+  title: "noheir - 个人财务管理",
+  description: "隐私优先的个人财务记录与分析",
   openGraph: {
-    title: "noheir - Personal Finance Manager",
-    description: "Privacy-first personal finance tracking and analysis",
+    title: "noheir - 个人财务管理",
+    description: "隐私优先的个人财务记录与分析",
     type: "website",
   },
 };
@@ -49,6 +50,7 @@ export default function RootLayout({
         <AuthProvider>
           {children}
           <CommandPalette />
+          <Toaster />
         </AuthProvider>
       </body>
     </html>
