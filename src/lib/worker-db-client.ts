@@ -376,7 +376,7 @@ export class WorkerDbClient {
       expense_by_category: Array<{ category: string; total: number; count: number }>;
       income_by_category: Array<{ category: string; total: number; count: number }>;
       currencies: string[];
-    }>("GET", `/api/reports/monthly?${params}`, userId);
+    }>("GET", `/api/reports/monthly-summary?${params}`, userId);
   }
 
   // ── Backup / Restore ──

@@ -454,7 +454,25 @@ app.get("/api/reports/flow-summary", async (c) => {
   return c.json(result);
 });
 
-app.get("/api/reports/monthly", async (c) => {
+app.get("/api/reports/monthly-summary", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const { year, month, currency } = c.req.query();
+
+  if (!year || !month) {
+    return c.json({ error: "year and month are required" }, 400);
+  }
+
+  const result = await repos.reports.monthly(
+    userId,
+    parseInt(year, 10),
+    parseInt(month, 10),
+    currency || undefined,
+  );
+  return c.json(result);
+});
+
+app.get("/api/reports/monthly", async (c) => { // legacy alias — remove in cleanup phase
   const userId = c.get("userId");
   const repos = c.get("repos");
   const { year, month, currency } = c.req.query();
