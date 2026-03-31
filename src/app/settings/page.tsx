@@ -3,19 +3,23 @@ import { getAuthedClient } from "@/lib/api-helpers"
 import { SettingsClient } from "./settings-client"
 
 export default async function SettingsPage() {
-  let settings: Record<string, unknown> = {}
+  let siteName = ""
+  let settingsJson: Record<string, unknown> = {}
 
   try {
     const { userId, client } = await getAuthedClient()
     const result = await client.getSettings(userId)
-    settings = (result.settings as Record<string, unknown>) ?? {}
+    const row = (result.settings as Record<string, unknown>) ?? {}
+    siteName = String(row.siteName ?? "")
+    const rawJson = typeof row.settings === "string" ? row.settings : "{}"
+    settingsJson = JSON.parse(rawJson) as Record<string, unknown>
   } catch {
     // Not authenticated or Worker unavailable
   }
 
   return (
     <AppShell>
-      <SettingsClient settings={settings} />
+      <SettingsClient siteName={siteName} settingsJson={settingsJson} />
     </AppShell>
   )
 }

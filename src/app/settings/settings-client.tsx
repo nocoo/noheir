@@ -1,6 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { Settings, Save } from "lucide-react"
 import {
   Card,
@@ -17,27 +19,45 @@ import { Separator } from "@/components/ui/separator"
 import { DEFAULT_SITE_NAME } from "@/domain/settings/site-name"
 import { clampSavingsRate } from "@/domain/settings/savings-rate"
 import { clampReturnRate } from "@/domain/settings/return-rate"
+import { saveGeneralSettings } from "@/app/actions/settings-actions"
 
 interface SettingsClientProps {
-  settings: Record<string, unknown>
+  siteName: string
+  settingsJson: Record<string, unknown>
 }
 
-export function SettingsClient({ settings }: SettingsClientProps) {
+export function SettingsClient({ siteName: initialSiteName, settingsJson }: SettingsClientProps) {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+
   const [siteName, setSiteName] = useState(
-    String(settings.site_name ?? DEFAULT_SITE_NAME),
+    initialSiteName || DEFAULT_SITE_NAME,
   )
   const [savingsTarget, setSavingsTarget] = useState(
-    String(settings.savings_rate_target ?? 30),
+    String(settingsJson.savings_rate_target ?? 30),
   )
   const [returnRate, setReturnRate] = useState(
-    String(settings.expected_return_rate ?? 5),
+    String(settingsJson.expected_return_rate ?? 5),
   )
   const [darkMode, setDarkMode] = useState(
-    Boolean(settings.dark_mode ?? false),
+    Boolean(settingsJson.dark_mode ?? false),
   )
 
   const handleSave = () => {
-    // TODO: Wire to server action
+    startTransition(async () => {
+      const result = await saveGeneralSettings({
+        siteName,
+        savingsRateTarget: Number(savingsTarget),
+        expectedReturnRate: Number(returnRate),
+        darkMode,
+      })
+      if (result.success) {
+        toast.success("设置已保存")
+        router.refresh()
+      } else {
+        toast.error(result.error)
+      }
+    })
   }
 
   return (
@@ -142,9 +162,9 @@ export function SettingsClient({ settings }: SettingsClientProps) {
 
       {/* Save */}
       <div className="flex justify-end">
-        <Button onClick={handleSave}>
+        <Button onClick={handleSave} disabled={isPending}>
           <Save className="mr-2 size-4" />
-          保存设置
+          {isPending ? "保存中..." : "保存设置"}
         </Button>
       </div>
     </div>
