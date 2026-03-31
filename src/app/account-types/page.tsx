@@ -12,10 +12,12 @@ export default async function AccountTypesPage() {
     const { userId, client } = await getAuthedClient()
     const metadata = await client.getMetadata(userId)
     accounts = metadata.accounts
-    const settings = await client.getSettings(userId)
-    const s = (settings.settings as Record<string, unknown>) ?? {}
+    const result = await client.getSettings(userId)
+    const row = (result.settings as Record<string, unknown>) ?? {}
+    const rawJson = typeof row.settings === "string" ? row.settings : "{}"
+    const parsed = JSON.parse(rawJson) as Record<string, unknown>
     accountTypes =
-      (s.account_types as AccountTypeConfig[]) ?? []
+      (parsed.account_types as AccountTypeConfig[]) ?? []
   } catch {
     // Not authenticated or Worker unavailable
   }

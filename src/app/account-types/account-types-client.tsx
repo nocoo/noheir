@@ -1,6 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { CreditCard, Save } from "lucide-react"
 import {
   Card,
@@ -20,6 +22,7 @@ import {
 } from "@/components/ui/select"
 import type { AccountType, AccountTypeConfig } from "@/domain/types"
 import { buildAccountTypesUpdate } from "@/domain/settings/account-types"
+import { saveAccountTypes } from "@/app/actions/settings-actions"
 
 const TYPE_LABELS: Record<AccountType, { label: string; color: string }> = {
   debit: { label: "储蓄卡", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" },
@@ -40,6 +43,8 @@ export function AccountTypesClient({
   accountTypes,
   grouped,
 }: AccountTypesClientProps) {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
   const [types, setTypes] = useState<AccountTypeConfig[]>(accountTypes)
 
   const getType = (accountName: string): AccountType => {
@@ -52,7 +57,15 @@ export function AccountTypesClient({
   }
 
   const handleSave = () => {
-    // TODO: Wire to server action
+    startTransition(async () => {
+      const result = await saveAccountTypes(types)
+      if (result.success) {
+        toast.success("账户类型已保存")
+        router.refresh()
+      } else {
+        toast.error(result.error)
+      }
+    })
   }
 
   return (
@@ -148,9 +161,9 @@ export function AccountTypesClient({
 
       {/* Save */}
       <div className="flex justify-end">
-        <Button onClick={handleSave}>
+        <Button onClick={handleSave} disabled={isPending}>
           <Save className="mr-2 size-4" />
-          保存配置
+          {isPending ? "保存中..." : "保存配置"}
         </Button>
       </div>
     </div>
