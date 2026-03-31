@@ -40,7 +40,7 @@ export default async function ComparePage() {
 
     // Fetch transactions for all years
     const fetchPromises = availableYears.map(async (year) => {
-      const result = await client.searchAllTransactions(userId, { year })
+      const result = await client.searchTransactions(userId, { year })
       return result.transactions.map((raw) =>
         toDomainTransaction(raw as Record<string, unknown>),
       )

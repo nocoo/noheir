@@ -28,7 +28,7 @@ export default async function OverviewPage({
       selectedYear = availableYears[0] ?? new Date().getFullYear()
     }
 
-    const result = await client.searchAllTransactions(userId, {
+    const result = await client.searchTransactions(userId, {
       year: selectedYear,
     })
 

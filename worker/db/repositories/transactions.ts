@@ -33,7 +33,7 @@ export interface TransactionSearchResult {
 
 function clampLimit(limit: number | undefined): number {
   if (limit === undefined) return 100;
-  return Math.min(Math.max(limit, 1), 10_000);
+  return Math.min(Math.max(limit, 1), 500);
 }
 
 /**
