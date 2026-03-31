@@ -8,7 +8,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : 2,
   reporter: "html",
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:7016",
+    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:7004",
     trace: "on-first-retry",
   },
   projects: [
@@ -19,7 +19,7 @@ export default defineConfig({
   ],
   webServer: {
     command: "bun run dev",
-    url: "http://localhost:7016",
+    url: "http://localhost:7004",
     reuseExistingServer: !process.env.CI,
     timeout: 30000,
   },

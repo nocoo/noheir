@@ -12,7 +12,7 @@ COPY . .
 
 # Build-time env vars (placeholders for standalone build)
 ENV AUTH_SECRET=build-placeholder
-ENV NEXTAUTH_URL=http://localhost:7016
+ENV NEXTAUTH_URL=http://localhost:7004
 ENV WORKER_URL=http://placeholder
 ENV WORKER_TOKEN=placeholder
 
@@ -24,7 +24,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV HOSTNAME=0.0.0.0
-ENV PORT=7016
+ENV PORT=7004
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs && \
@@ -36,6 +36,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
-EXPOSE 7016
+EXPOSE 7004
 
 CMD ["bun", "server.js"]
