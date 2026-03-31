@@ -4,8 +4,8 @@
  * Expected header:
  *   日期,交易分类,交易类型,流入金额,流出金额,币种,资金账户,标签,备注
  *
- * Output rows match the D1 `transactions` table schema (snake_case,
- * amount_cents as integer, tags as JSON string).
+ * Output rows use camelCase field names matching the Drizzle ORM schema
+ * (amountCents as integer, tags as JSON string).
  *
  * Ported from Gen1 `_archive/src/lib/csvParser.ts`.
  */
@@ -23,17 +23,17 @@ export interface ParsedTransactionRow {
   year: number;
   month: number;
   day: number;
-  primary_category: string;
-  secondary_category: string;
-  tertiary_category: string;
-  amount_cents: number;
+  primaryCategory: string;
+  secondaryCategory: string;
+  tertiaryCategory: string;
+  amountCents: number;
   type: string; // "income" | "expense"
   account: string;
   currency: string;
   tags: string; // JSON string: '["tag1","tag2"]'
   note: string | null;
-  raw_index: number;
-  has_secondary_mapping: number; // 1 = true, 0 = false (SQLite boolean)
+  rawIndex: number;
+  hasSecondaryMapping: boolean; // SQLite boolean via Drizzle mode: "boolean"
 }
 
 export interface ParseError {
@@ -283,17 +283,17 @@ export function parseChineseCSV(content: string): ChineseCSVParseResult {
         year: dateParts.year,
         month: dateParts.month,
         day: dateParts.day,
-        primary_category: primaryCategory,
-        secondary_category: secondaryCategory,
-        tertiary_category: tertiaryCategory,
-        amount_cents: amountCents,
+        primaryCategory: primaryCategory,
+        secondaryCategory: secondaryCategory,
+        tertiaryCategory: tertiaryCategory,
+        amountCents: amountCents,
         type,
         account,
         currency,
         tags: parseTags(tagsStr),
         note: note || null,
-        raw_index: i + 1,
-        has_secondary_mapping: hasMapping ? 1 : 0,
+        rawIndex: i + 1,
+        hasSecondaryMapping: hasMapping,
       });
     } catch (err) {
       errors.push({

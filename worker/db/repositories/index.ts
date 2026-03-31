@@ -1,4 +1,5 @@
 import type { DrizzleD1Database } from "drizzle-orm/d1";
+import { createUsersRepo } from "./users";
 import { createTransactionsRepo } from "./transactions";
 import { createTransfersRepo } from "./transfers";
 import { createProductsRepo } from "./products";
@@ -9,6 +10,7 @@ import { createReportsRepo } from "./reports";
 
 export function createAllRepos(db: DrizzleD1Database) {
   return {
+    users: createUsersRepo(db),
     transactions: createTransactionsRepo(db),
     transfers: createTransfersRepo(db),
     products: createProductsRepo(db),
@@ -22,6 +24,7 @@ export function createAllRepos(db: DrizzleD1Database) {
 export type AllRepos = ReturnType<typeof createAllRepos>;
 
 // Re-export individual repo factories and types
+export { createUsersRepo, type UsersRepo } from "./users";
 export { createTransactionsRepo, type TransactionsRepo } from "./transactions";
 export { createTransfersRepo, type TransfersRepo } from "./transfers";
 export { createProductsRepo, type ProductsRepo } from "./products";

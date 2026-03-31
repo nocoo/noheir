@@ -18,11 +18,11 @@ describe("parseChineseTransferCSV", () => {
     expect(tr?.year).toBe(2025);
     expect(tr?.month).toBe(3);
     expect(tr?.day).toBe(15);
-    expect(tr?.outflow_amount_cents).toBe(500000);
-    expect(tr?.inflow_amount_cents).toBe(0);
+    expect(tr?.outflowAmountCents).toBe(500000);
+    expect(tr?.inflowAmountCents).toBe(0);
     expect(tr?.account).toBe("招商银行 → 支付宝");
-    expect(tr?.secondary_category).toBe("转账");
-    expect(tr?.transaction_type).toBe("转账 / 转出");
+    expect(tr?.secondaryCategory).toBe("转账");
+    expect(tr?.transactionType).toBe("转账 / 转出");
   });
 
   test("filters out 转账 / 优惠抵扣 rows", () => {
@@ -67,8 +67,8 @@ describe("parseChineseTransferCSV", () => {
       "2025-06-01,转账,转账,转账 / 转入,1234.56,0.00,人民币,微信,,",
     ].join("\n");
     const result = parseChineseTransferCSV(csv);
-    expect(result.transfers[0]?.inflow_amount_cents).toBe(123456);
-    expect(result.transfers[0]?.outflow_amount_cents).toBe(0);
+    expect(result.transfers[0]?.inflowAmountCents).toBe(123456);
+    expect(result.transfers[0]?.outflowAmountCents).toBe(0);
   });
 
   test("handles Windows CRLF line endings", () => {

@@ -1,6 +1,7 @@
 import NextAuth, { type DefaultSession } from "next-auth";
 import type { JWT } from "@auth/core/jwt";
 import Google from "next-auth/providers/google";
+import { WorkerDbClient } from "./lib/worker-db-client";
 
 // ---------------------------------------------------------------------------
 // NextAuth type extensions
@@ -101,19 +102,34 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   },
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ user, account, profile }) {
       // Only allow specific emails
       const email = user.email?.toLowerCase();
       if (!email || !allowedEmails.includes(email)) {
         return false;
       }
 
-      // TODO (Phase 0.4+): Upsert into users table via Worker API
-      // For now, we use the provider account ID as the userId
-      // This will be replaced when D1 + Worker are ready
       if (account) {
-        // Store Google sub (providerAccountId) for future DB upsert
+        // Use Google sub (providerAccountId) as the userId throughout the system
         user.id = account.providerAccountId;
+
+        // Upsert user into D1 so FK constraints are satisfied on INSERT operations.
+        // Wrapped in try/catch — a Worker outage must not block sign-in.
+        try {
+          const workerUrl = process.env.WORKER_URL;
+          const workerToken = process.env.WORKER_TOKEN;
+          if (workerUrl && workerToken) {
+            const client = new WorkerDbClient(workerUrl, workerToken);
+            await client.upsertUser(account.providerAccountId, {
+              email,
+              name: (profile?.name ?? user.name) || null,
+              image: ((profile?.picture as string | undefined) ?? user.image) || null,
+              providerAccountId: account.providerAccountId,
+            });
+          }
+        } catch (err) {
+          console.error("[auth] Failed to upsert user into D1:", err);
+        }
       }
 
       return true;

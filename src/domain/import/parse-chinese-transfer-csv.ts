@@ -4,8 +4,8 @@
  * Expected header (10 columns):
  *   日期,收支大类,交易分类,交易类型,流入金额,流出金额,币种,资金账户,标签,备注
  *
- * Output rows match the D1 `transfers` table schema (snake_case,
- * amount_cents as integer, tags as JSON string).
+ * Output rows use camelCase field names matching the Drizzle ORM schema
+ * (amountCents as integer, tags as JSON string).
  *
  * Ported from Gen1 `_archive/src/hooks/useTransfers.ts#parseTransferCSV`.
  */
@@ -17,16 +17,16 @@ export interface ParsedTransferRow {
   year: number;
   month: number;
   day: number;
-  primary_category: string | null;
-  secondary_category: string;
-  transaction_type: string;
-  inflow_amount_cents: number;
-  outflow_amount_cents: number;
+  primaryCategory: string | null;
+  secondaryCategory: string;
+  transactionType: string;
+  inflowAmountCents: number;
+  outflowAmountCents: number;
   currency: string;
   account: string;
   tags: string; // JSON string: '["tag1","tag2"]'
   note: string | null;
-  raw_index: number;
+  rawIndex: number;
 }
 
 export interface TransferParseError {
@@ -199,16 +199,16 @@ export function parseChineseTransferCSV(
       year,
       month,
       day,
-      primary_category: primaryCategory || null,
-      secondary_category: secondaryCategory,
-      transaction_type: transactionType,
-      inflow_amount_cents: parseToCents(inflowStr),
-      outflow_amount_cents: parseToCents(outflowStr),
+      primaryCategory: primaryCategory || null,
+      secondaryCategory: secondaryCategory,
+      transactionType: transactionType,
+      inflowAmountCents: parseToCents(inflowStr),
+      outflowAmountCents: parseToCents(outflowStr),
       currency,
       account,
       tags: parseTags(tagsStr),
       note: note || null,
-      raw_index: i,
+      rawIndex: i,
     });
   }
 

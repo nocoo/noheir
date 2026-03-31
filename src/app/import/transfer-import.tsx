@@ -41,7 +41,6 @@ export function TransferImport() {
   const [step, setStep] = useState<ImportStep>("idle");
   const [fileName, setFileName] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [csvContent, setCsvContent] = useState<string | null>(null);
   const [parseResult, setParseResult] =
     useState<ChineseTransferCSVParseResult | null>(null);
   const [csvYear, setCsvYear] = useState<number | null>(null);
@@ -54,7 +53,6 @@ export function TransferImport() {
   const resetState = useCallback(() => {
     setStep("idle");
     setFileName(null);
-    setCsvContent(null);
     setParseResult(null);
     setCsvYear(null);
     setExistingCount(null);
@@ -77,7 +75,6 @@ export function TransferImport() {
 
     try {
       const text = await file.text();
-      setCsvContent(text);
 
       const result = parseChineseTransferCSV(text);
       setParseResult(result);
@@ -141,7 +138,7 @@ export function TransferImport() {
 
   // Confirm and upload
   const handleConfirmUpload = () => {
-    if (!csvYear || !csvContent) return;
+    if (!csvYear || !parseResult?.transfers.length) return;
 
     startTransition(async () => {
       setStep("uploading");
@@ -149,7 +146,8 @@ export function TransferImport() {
 
       try {
         setUploadProgress(30);
-        const result = await deleteAndImportTransfers(csvContent, csvYear);
+        const rows = parseResult.transfers as unknown as Record<string, unknown>[];
+        const result = await deleteAndImportTransfers(rows, csvYear);
         setUploadProgress(90);
 
         if (result.success) {

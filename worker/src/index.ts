@@ -100,7 +100,29 @@ app.use("*", async (c, next) => {
   return next();
 });
 
+// ── Users ──
+
+app.post("/api/users/upsert", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const body = await c.req.json<{
+    email: string;
+    name?: string;
+    image?: string;
+    providerAccountId: string;
+  }>();
+  const user = await repos.users.upsert({
+    id: userId,
+    email: body.email,
+    name: body.name,
+    image: body.image,
+    providerAccountId: body.providerAccountId,
+  });
+  return c.json({ user }, 201);
+});
+
 // ── Transactions ──
+// NOTE: Static paths MUST come before :id to avoid Hono matching "count-by-year" as an id.
 
 app.post("/api/transactions/search", async (c) => {
   const userId = c.get("userId");
@@ -108,21 +130,6 @@ app.post("/api/transactions/search", async (c) => {
   const body = await c.req.json();
   const result = await repos.transactions.search(userId, body);
   return c.json(result);
-});
-
-app.get("/api/transactions/:id", async (c) => {
-  const userId = c.get("userId");
-  const repos = c.get("repos");
-  const row = await repos.transactions.findById(userId, c.req.param("id"));
-  return row ? c.json({ transaction: row }) : c.json({ transaction: null }, 404);
-});
-
-app.post("/api/transactions", async (c) => {
-  const userId = c.get("userId");
-  const repos = c.get("repos");
-  const body = await c.req.json();
-  const row = await repos.transactions.create(userId, body);
-  return c.json({ transaction: row }, 201);
 });
 
 app.post("/api/transactions/bulk", async (c) => {
@@ -151,6 +158,21 @@ app.delete("/api/transactions/by-year", async (c) => {
   return c.json({ deleted });
 });
 
+app.post("/api/transactions", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const body = await c.req.json();
+  const row = await repos.transactions.create(userId, body);
+  return c.json({ transaction: row }, 201);
+});
+
+app.get("/api/transactions/:id", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const row = await repos.transactions.findById(userId, c.req.param("id"));
+  return row ? c.json({ transaction: row }) : c.json({ transaction: null }, 404);
+});
+
 app.put("/api/transactions/:id", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
@@ -167,6 +189,7 @@ app.delete("/api/transactions/:id", async (c) => {
 });
 
 // ── Transfers ──
+// NOTE: Static paths MUST come before :id to avoid Hono matching "count-by-year" as an id.
 
 app.post("/api/transfers/search", async (c) => {
   const userId = c.get("userId");
@@ -174,21 +197,6 @@ app.post("/api/transfers/search", async (c) => {
   const body = await c.req.json();
   const result = await repos.transfers.search(userId, body);
   return c.json(result);
-});
-
-app.get("/api/transfers/:id", async (c) => {
-  const userId = c.get("userId");
-  const repos = c.get("repos");
-  const row = await repos.transfers.findById(userId, c.req.param("id"));
-  return row ? c.json({ transfer: row }) : c.json({ transfer: null }, 404);
-});
-
-app.post("/api/transfers", async (c) => {
-  const userId = c.get("userId");
-  const repos = c.get("repos");
-  const body = await c.req.json();
-  const row = await repos.transfers.create(userId, body);
-  return c.json({ transfer: row }, 201);
 });
 
 app.post("/api/transfers/bulk", async (c) => {
@@ -215,6 +223,21 @@ app.delete("/api/transfers/by-year", async (c) => {
   if (!yearStr) return c.json({ error: "year is required" }, 400);
   const deleted = await repos.transfers.deleteByYear(userId, parseInt(yearStr, 10));
   return c.json({ deleted });
+});
+
+app.post("/api/transfers", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const body = await c.req.json();
+  const row = await repos.transfers.create(userId, body);
+  return c.json({ transfer: row }, 201);
+});
+
+app.get("/api/transfers/:id", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const row = await repos.transfers.findById(userId, c.req.param("id"));
+  return row ? c.json({ transfer: row }) : c.json({ transfer: null }, 404);
 });
 
 app.put("/api/transfers/:id", async (c) => {

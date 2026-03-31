@@ -2,14 +2,13 @@
 
 import { getAuthedClient } from "@/lib/api-helpers";
 import type { ActionResult } from "@/lib/action-result";
-import {
-  parseChineseCSV,
-  type ChineseCSVParseResult,
-} from "@/domain/import/parse-chinese-csv";
-import {
-  parseChineseTransferCSV,
-  type ChineseTransferCSVParseResult,
-} from "@/domain/import/parse-chinese-transfer-csv";
+
+/**
+ * Batch size for sending rows to the Worker's /bulk endpoint.
+ * Each Worker invocation then internally batches into D1 inserts of 10 rows.
+ * 100 rows per Worker call keeps the payload small and avoids CPU time limits.
+ */
+const WORKER_BATCH_SIZE = 100;
 
 // ── Transaction import ──
 
@@ -29,38 +28,34 @@ export async function countTransactionsByYear(
 }
 
 export async function deleteAndImportTransactions(
-  csvContent: string,
+  rows: Record<string, unknown>[],
   year: number,
 ): Promise<ActionResult<{ imported: number }>> {
   try {
     const { userId, client } = await getAuthedClient();
 
-    // Re-parse on server side (stateless: don't trust client-parsed data)
-    const parsed: ChineseCSVParseResult = parseChineseCSV(csvContent);
-    if (parsed.transactions.length === 0) {
-      return {
-        success: false,
-        error:
-          parsed.errors.length > 0
-            ? (parsed.errors[0]?.message ?? "Unknown parse error")
-            : "No valid transactions found in CSV",
-      };
+    if (rows.length === 0) {
+      return { success: false, error: "No valid transactions to import" };
     }
 
     // Delete existing year data
     await client.deleteTransactionsByYear(userId, year);
 
-    // Bulk insert
-    const result = await client.bulkCreateTransactions(
-      userId,
-      parsed.transactions as unknown as Record<string, unknown>[],
-    );
+    // Bulk insert in batches to avoid Worker CPU time limits
+    let totalInserted = 0;
+    for (let i = 0; i < rows.length; i += WORKER_BATCH_SIZE) {
+      const batch = rows.slice(i, i + WORKER_BATCH_SIZE);
+      const result = await client.bulkCreateTransactions(userId, batch);
+      totalInserted += result.inserted;
+    }
 
-    return { success: true, data: { imported: result.inserted } };
+    return { success: true, data: { imported: totalInserted } };
   } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to import transactions";
+    console.error("[import-actions] deleteAndImportTransactions failed:", message);
     return {
       success: false,
-      error: err instanceof Error ? err.message : "Failed to import transactions",
+      error: message,
     };
   }
 }
@@ -83,39 +78,34 @@ export async function countTransfersByYear(
 }
 
 export async function deleteAndImportTransfers(
-  csvContent: string,
+  rows: Record<string, unknown>[],
   year: number,
 ): Promise<ActionResult<{ imported: number }>> {
   try {
     const { userId, client } = await getAuthedClient();
 
-    // Re-parse on server side
-    const parsed: ChineseTransferCSVParseResult =
-      parseChineseTransferCSV(csvContent);
-    if (parsed.transfers.length === 0) {
-      return {
-        success: false,
-        error:
-          parsed.errors.length > 0
-            ? (parsed.errors[0]?.message ?? "Unknown parse error")
-            : "No valid transfers found in CSV",
-      };
+    if (rows.length === 0) {
+      return { success: false, error: "No valid transfers to import" };
     }
 
     // Delete existing year data
     await client.deleteTransfersByYear(userId, year);
 
-    // Bulk insert
-    const result = await client.bulkCreateTransfers(
-      userId,
-      parsed.transfers as unknown as Record<string, unknown>[],
-    );
+    // Bulk insert in batches to avoid Worker CPU time limits
+    let totalInserted = 0;
+    for (let i = 0; i < rows.length; i += WORKER_BATCH_SIZE) {
+      const batch = rows.slice(i, i + WORKER_BATCH_SIZE);
+      const result = await client.bulkCreateTransfers(userId, batch);
+      totalInserted += result.inserted;
+    }
 
-    return { success: true, data: { imported: result.inserted } };
+    return { success: true, data: { imported: totalInserted } };
   } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to import transfers";
+    console.error("[import-actions] deleteAndImportTransfers failed:", message, err);
     return {
       success: false,
-      error: err instanceof Error ? err.message : "Failed to import transfers",
+      error: message,
     };
   }
 }

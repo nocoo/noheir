@@ -198,7 +198,9 @@ export function createTransfersRepo(db: DrizzleD1Database) {
       rows: Omit<NewTransfer, "id" | "userId" | "createdAt">[],
     ): Promise<number> {
       if (rows.length === 0) return 0;
-      const BATCH_SIZE = 10;
+      // D1 limit: 100 bound parameters per query. transfers has 14 columns,
+      // so max 7 rows per INSERT, use 5 for safety margin.
+      const BATCH_SIZE = 5;
       let inserted = 0;
       for (let i = 0; i < rows.length; i += BATCH_SIZE) {
         const chunk = rows.slice(i, i + BATCH_SIZE);

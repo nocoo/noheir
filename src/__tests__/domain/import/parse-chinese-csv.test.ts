@@ -15,17 +15,17 @@ describe("parseChineseCSV", () => {
 
     const tx = result.transactions[0];
     expect(tx?.type).toBe("expense");
-    expect(tx?.amount_cents).toBe(3550);
-    expect(tx?.primary_category).toBe("支出");
-    expect(tx?.secondary_category).toBe("日常吃喝");
-    expect(tx?.tertiary_category).toBe("吃饭");
+    expect(tx?.amountCents).toBe(3550);
+    expect(tx?.primaryCategory).toBe("支出");
+    expect(tx?.secondaryCategory).toBe("日常吃喝");
+    expect(tx?.tertiaryCategory).toBe("吃饭");
     expect(tx?.account).toBe("支付宝");
     expect(tx?.currency).toBe("人民币");
     expect(tx?.note).toBe("午餐");
     expect(tx?.year).toBe(2025);
     expect(tx?.month).toBe(3);
     expect(tx?.day).toBe(15);
-    expect(tx?.has_secondary_mapping).toBe(1);
+    expect(tx?.hasSecondaryMapping).toBe(true);
   });
 
   test("parses a valid income row", () => {
@@ -38,8 +38,8 @@ describe("parseChineseCSV", () => {
 
     const tx = result.transactions[0];
     expect(tx?.type).toBe("income");
-    expect(tx?.amount_cents).toBe(2500000);
-    expect(tx?.secondary_category).toBe("薪资收入");
+    expect(tx?.amountCents).toBe(2500000);
+    expect(tx?.secondaryCategory).toBe("薪资收入");
   });
 
   test("converts decimal amounts to cents correctly", () => {
@@ -48,7 +48,7 @@ describe("parseChineseCSV", () => {
       "2025-06-01,支出,超市,0.00,123.45,人民币,微信,,",
     ].join("\n");
     const result = parseChineseCSV(csv);
-    expect(result.transactions[0]?.amount_cents).toBe(12345);
+    expect(result.transactions[0]?.amountCents).toBe(12345);
   });
 
   test("handles 余额调整 → 对账收入/对账支出", () => {
@@ -57,14 +57,14 @@ describe("parseChineseCSV", () => {
       "2025-01-01,收入,余额调整,100.00,0.00,人民币,支付宝,,",
     ].join("\n");
     const r1 = parseChineseCSV(csvIncome);
-    expect(r1.transactions[0]?.tertiary_category).toBe("对账收入");
+    expect(r1.transactions[0]?.tertiaryCategory).toBe("对账收入");
 
     const csvExpense = [
       header,
       "2025-01-01,支出,余额调整,0.00,50.00,人民币,支付宝,,",
     ].join("\n");
     const r2 = parseChineseCSV(csvExpense);
-    expect(r2.transactions[0]?.tertiary_category).toBe("对账支出");
+    expect(r2.transactions[0]?.tertiaryCategory).toBe("对账支出");
   });
 
   test("extracts tertiary from slash-separated value", () => {
@@ -73,8 +73,8 @@ describe("parseChineseCSV", () => {
       "2025-01-01,收入,理财收入 / JY040205XXX,500.00,0.00,人民币,招商银行,,",
     ].join("\n");
     const result = parseChineseCSV(csv);
-    expect(result.transactions[0]?.tertiary_category).toBe("理财收入");
-    expect(result.transactions[0]?.secondary_category).toBe("投资收入");
+    expect(result.transactions[0]?.tertiaryCategory).toBe("理财收入");
+    expect(result.transactions[0]?.secondaryCategory).toBe("投资收入");
   });
 
   test("skips zero-amount rows with warning", () => {
@@ -150,8 +150,8 @@ describe("parseChineseCSV", () => {
     ].join("\n");
     const result = parseChineseCSV(csv);
     expect(result.transactions).toHaveLength(1);
-    expect(result.transactions[0]?.secondary_category).toBe("未分类");
-    expect(result.transactions[0]?.has_secondary_mapping).toBe(0);
+    expect(result.transactions[0]?.secondaryCategory).toBe("未分类");
+    expect(result.transactions[0]?.hasSecondaryMapping).toBe(false);
   });
 
   test("multiple rows produce correct year validation data", () => {
