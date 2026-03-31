@@ -118,6 +118,18 @@ export class WorkerDbClient {
     );
   }
 
+  async countTransactionsByYear(userId: string, year: number) {
+    return this.request<{ count: number }>(
+      "GET", `/api/transactions/count-by-year?year=${year}`, userId,
+    );
+  }
+
+  async deleteTransactionsByYear(userId: string, year: number) {
+    return this.request<{ deleted: number }>(
+      "DELETE", `/api/transactions/by-year?year=${year}`, userId,
+    );
+  }
+
   // ── Transfers ──
 
   async searchTransfers(userId: string, params: Record<string, unknown> = {}) {
@@ -154,6 +166,18 @@ export class WorkerDbClient {
   async deleteTransfer(userId: string, id: string) {
     return this.request<{ success: boolean }>(
       "DELETE", `/api/transfers/${id}`, userId,
+    );
+  }
+
+  async countTransfersByYear(userId: string, year: number) {
+    return this.request<{ count: number }>(
+      "GET", `/api/transfers/count-by-year?year=${year}`, userId,
+    );
+  }
+
+  async deleteTransfersByYear(userId: string, year: number) {
+    return this.request<{ deleted: number }>(
+      "DELETE", `/api/transfers/by-year?year=${year}`, userId,
     );
   }
 

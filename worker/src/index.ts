@@ -133,6 +133,24 @@ app.post("/api/transactions/bulk", async (c) => {
   return c.json({ inserted: count }, 201);
 });
 
+app.get("/api/transactions/count-by-year", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const yearStr = c.req.query("year");
+  if (!yearStr) return c.json({ error: "year is required" }, 400);
+  const count = await repos.transactions.countByYear(userId, parseInt(yearStr, 10));
+  return c.json({ count });
+});
+
+app.delete("/api/transactions/by-year", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const yearStr = c.req.query("year");
+  if (!yearStr) return c.json({ error: "year is required" }, 400);
+  const deleted = await repos.transactions.deleteByYear(userId, parseInt(yearStr, 10));
+  return c.json({ deleted });
+});
+
 app.put("/api/transactions/:id", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
@@ -179,6 +197,24 @@ app.post("/api/transfers/bulk", async (c) => {
   const body = await c.req.json<{ rows: unknown[] }>();
   const count = await repos.transfers.createMany(userId, body.rows as Parameters<AllRepos["transfers"]["createMany"]>[1]);
   return c.json({ inserted: count }, 201);
+});
+
+app.get("/api/transfers/count-by-year", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const yearStr = c.req.query("year");
+  if (!yearStr) return c.json({ error: "year is required" }, 400);
+  const count = await repos.transfers.countByYear(userId, parseInt(yearStr, 10));
+  return c.json({ count });
+});
+
+app.delete("/api/transfers/by-year", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const yearStr = c.req.query("year");
+  if (!yearStr) return c.json({ error: "year is required" }, 400);
+  const deleted = await repos.transfers.deleteByYear(userId, parseInt(yearStr, 10));
+  return c.json({ deleted });
 });
 
 app.put("/api/transfers/:id", async (c) => {

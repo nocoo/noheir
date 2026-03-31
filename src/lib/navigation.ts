@@ -20,6 +20,7 @@ import {
   Settings,
   Cpu,
   Tags,
+  FileUp,
   Database,
   type LucideIcon,
 } from "lucide-react";
@@ -86,6 +87,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/settings", label: "设置", icon: Settings },
       { href: "/ai-settings", label: "AI 设置", icon: Cpu },
       { href: "/account-types", label: "账户类型", icon: Tags },
+      { href: "/import", label: "数据导入", icon: FileUp },
       { href: "/manage", label: "管理", icon: Database },
     ],
   },

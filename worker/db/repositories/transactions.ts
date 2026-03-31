@@ -272,6 +272,24 @@ export function createTransactionsRepo(db: DrizzleD1Database) {
         .get();
       return result?.count ?? 0;
     },
+
+    async countByYear(userId: string, year: number): Promise<number> {
+      const result = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(transactions)
+        .where(and(eq(transactions.userId, userId), eq(transactions.year, year)))
+        .get();
+      return result?.count ?? 0;
+    },
+
+    async deleteByYear(userId: string, year: number): Promise<number> {
+      const rows = await db
+        .delete(transactions)
+        .where(and(eq(transactions.userId, userId), eq(transactions.year, year)))
+        .returning()
+        .all();
+      return rows.length;
+    },
   };
 }
 
