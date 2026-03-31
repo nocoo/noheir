@@ -21,9 +21,9 @@ export function toDomainProduct(raw: Record<string, unknown>): DomainProduct {
     category: raw.category != null ? String(raw.category) : null,
     currency: raw.currency != null ? String(raw.currency) : null,
     lockPeriodDays:
-      raw.lock_period_days != null ? Number(raw.lock_period_days) : null,
+      raw.lockPeriodDays != null ? Number(raw.lockPeriodDays) : null,
     annualReturnRate:
-      raw.annual_return_rate != null ? Number(raw.annual_return_rate) : null,
+      raw.annualReturnRate != null ? Number(raw.annualReturnRate) : null,
   }
 }
 
@@ -31,15 +31,15 @@ export function toDomainUnit(raw: Record<string, unknown>): DomainUnit {
   const product = raw.product as Record<string, unknown> | null | undefined
   return {
     id: String(raw.id ?? ""),
-    unitCode: String(raw.unit_code ?? ""),
-    amount: Number(raw.amount_cents ?? 0) / 100,
+    unitCode: String(raw.unitCode ?? ""),
+    amount: Number(raw.amountCents ?? 0) / 100,
     currency: (String(raw.currency ?? "CNY")) as Currency,
     status: String(raw.status ?? "已成立") as UnitStatus,
     strategy: String(raw.strategy ?? "") as InvestmentStrategy,
     tactics: String(raw.tactics ?? "") as InvestmentTactics,
-    productId: raw.product_id != null ? String(raw.product_id) : null,
-    startDate: raw.start_date != null ? String(raw.start_date) : null,
-    endDate: raw.end_date != null ? String(raw.end_date) : null,
+    productId: raw.productId != null ? String(raw.productId) : null,
+    startDate: raw.startDate != null ? String(raw.startDate) : null,
+    endDate: raw.endDate != null ? String(raw.endDate) : null,
     note: raw.note != null ? String(raw.note) : null,
     product: product ? toDomainProduct(product) : null,
   }

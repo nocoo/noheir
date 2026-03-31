@@ -1,6 +1,6 @@
 import type { DomainTransaction, MonthlyData } from "@/domain/types"
 
-/** Map raw Worker transaction (snake_case, amount_cents) to DomainTransaction */
+/** Map raw Worker transaction (camelCase from Drizzle) to DomainTransaction */
 export function toDomainTransaction(
   raw: Record<string, unknown>,
 ): DomainTransaction {
@@ -9,13 +9,13 @@ export function toDomainTransaction(
     date: String(raw.date ?? ""),
     year: Number(raw.year ?? 0),
     month: Number(raw.month ?? 0),
-    primaryCategory: String(raw.primary_category ?? ""),
+    primaryCategory: String(raw.primaryCategory ?? ""),
     secondaryCategory:
-      raw.secondary_category != null
-        ? String(raw.secondary_category)
+      raw.secondaryCategory != null
+        ? String(raw.secondaryCategory)
         : null,
-    tertiaryCategory: String(raw.tertiary_category ?? ""),
-    amount: Number(raw.amount_cents ?? 0) / 100,
+    tertiaryCategory: String(raw.tertiaryCategory ?? ""),
+    amount: Number(raw.amountCents ?? 0) / 100,
     account: String(raw.account ?? ""),
     type: raw.type === "income" ? "income" : "expense",
     currency: String(raw.currency ?? "CNY"),
