@@ -45,29 +45,19 @@ export class WorkerClient {
   // ── Transactions ──
 
   searchTransactions(params: Record<string, unknown> = {}) {
-    const qs = new URLSearchParams()
-    Object.entries(params).forEach(([k, v]) => {
-      if (v != null && v !== "") qs.set(k, String(v))
-    })
-    const str = qs.toString()
     return this.request<{
       transactions: Record<string, unknown>[]
       total_returned: number
-    }>("GET", `/api/transactions${str ? `?${str}` : ""}`)
+    }>("POST", "/api/transactions/search", params)
   }
 
   // ── Transfers ──
 
   searchTransfers(params: Record<string, unknown> = {}) {
-    const qs = new URLSearchParams()
-    Object.entries(params).forEach(([k, v]) => {
-      if (v != null && v !== "") qs.set(k, String(v))
-    })
-    const str = qs.toString()
     return this.request<{
       transfers: Record<string, unknown>[]
       total_returned: number
-    }>("GET", `/api/transfers${str ? `?${str}` : ""}`)
+    }>("POST", "/api/transfers/search", params)
   }
 
   // ── Summary / Metadata ──
@@ -83,7 +73,7 @@ export class WorkerClient {
       tags: string[]
       transaction_count: number
       transfer_count: number
-    }>("GET", "/api/metadata")
+    }>("GET", "/api/reports/metadata")
   }
 
   // ── Monthly Report ──
@@ -102,7 +92,7 @@ export class WorkerClient {
       expense_by_category: Array<{ category: string; total: number; count: number }>
       income_by_category: Array<{ category: string; total: number; count: number }>
       currencies: string[]
-    }>("GET", `/api/reports/monthly?${qs}`)
+    }>("GET", `/api/reports/monthly-summary?${qs}`)
   }
 
   // ── Products ──
