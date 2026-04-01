@@ -24,7 +24,7 @@ async function patchSettingsJson(
       ...extraFields,
     }
 
-    await client.upsertSettings(userId, payload)
+    await client.saveSettings(userId, payload)
     return { success: true, data: undefined }
   } catch (err) {
     return {

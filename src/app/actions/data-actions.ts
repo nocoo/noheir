@@ -72,7 +72,7 @@ export async function clearAllData(): Promise<ActionResult> {
     }
 
     // Reset settings
-    await client.upsertSettings(userId, { siteName: "", settings: "{}" })
+    await client.saveSettings(userId, { siteName: "", settings: "{}" })
 
     return { success: true, data: undefined }
   } catch (err) {

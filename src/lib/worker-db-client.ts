@@ -286,7 +286,7 @@ export class WorkerDbClient {
     );
   }
 
-  async upsertSettings(userId: string, data: Record<string, unknown>) {
+  async saveSettings(userId: string, data: Record<string, unknown>) {
     return this.request<{ settings: unknown }>(
       "PUT", "/api/settings", userId, data,
     );
