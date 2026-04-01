@@ -235,4 +235,65 @@ describe("transfers repo", () => {
     expect(result.length).toBe(1);
     expect(result[0]!.note).toBe("转入定期账户");
   });
+
+  // ── findAllByYear ──
+
+  test("findAllByYear returns all rows for given year", async () => {
+    const repos = getTestRepos();
+    for (let i = 0; i < 5; i++) {
+      await repos.transfers.create(userId, {
+        ...baseTr,
+        date: `2026-03-${String(i + 1).padStart(2, "0")}`,
+        day: i + 1,
+      });
+    }
+    const result = await repos.transfers.findAllByYear(userId, 2026);
+    expect(result.length).toBe(5);
+  });
+
+  test("findAllByYear excludes rows from other years", async () => {
+    const repos = getTestRepos();
+    await repos.transfers.create(userId, baseTr); // year 2026
+    await repos.transfers.create(userId, {
+      ...baseTr,
+      date: "2025-06-15",
+      year: 2025,
+      month: 6,
+      day: 15,
+    });
+
+    const result = await repos.transfers.findAllByYear(userId, 2026);
+    expect(result.length).toBe(1);
+    expect(result[0]!.year).toBe(2026);
+  });
+
+  test("findAllByYear isolates by user", async () => {
+    const repos = getTestRepos();
+    seedUser("other-user-3", "other3@example.com");
+    await repos.transfers.create(userId, baseTr);
+    await repos.transfers.create("other-user-3", baseTr);
+
+    const result = await repos.transfers.findAllByYear(userId, 2026);
+    expect(result.length).toBe(1);
+  });
+
+  test("findAllByYear returns empty for year with no data", async () => {
+    const repos = getTestRepos();
+    await repos.transfers.create(userId, baseTr); // year 2026
+    const result = await repos.transfers.findAllByYear(userId, 1999);
+    expect(result.length).toBe(0);
+  });
+
+  test("findAllByYear results are ordered by date DESC", async () => {
+    const repos = getTestRepos();
+    await repos.transfers.create(userId, { ...baseTr, date: "2026-03-01", day: 1 });
+    await repos.transfers.create(userId, { ...baseTr, date: "2026-03-20", day: 20 });
+    await repos.transfers.create(userId, { ...baseTr, date: "2026-03-10", day: 10 });
+
+    const result = await repos.transfers.findAllByYear(userId, 2026);
+    expect(result.length).toBe(3);
+    expect(result[0]!.date).toBe("2026-03-20");
+    expect(result[1]!.date).toBe("2026-03-10");
+    expect(result[2]!.date).toBe("2026-03-01");
+  });
 });

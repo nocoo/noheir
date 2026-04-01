@@ -304,6 +304,19 @@ export function createTransactionsRepo(db: DrizzleD1Database) {
         .orderBy(desc(transactions.date), desc(transactions.createdAt))
         .all();
     },
+
+    /**
+     * Return ALL transactions for a user in a given year without any limit.
+     * Used by pages that need complete year data for client-side aggregation.
+     */
+    async findAllByYear(userId: string, year: number): Promise<Transaction[]> {
+      return await db
+        .select()
+        .from(transactions)
+        .where(and(eq(transactions.userId, userId), eq(transactions.year, year)))
+        .orderBy(desc(transactions.date), desc(transactions.createdAt))
+        .all();
+    },
   };
 }
 

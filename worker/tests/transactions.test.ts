@@ -372,4 +372,65 @@ describe("transactions repo", () => {
     expect(result.length).toBe(1);
     expect(result[0]!.note).toBe("公司附近的沙拉");
   });
+
+  // ── findAllByYear ──
+
+  test("findAllByYear returns all rows for given year", async () => {
+    const repos = getTestRepos();
+    for (let i = 0; i < 5; i++) {
+      await repos.transactions.create(userId, {
+        ...baseTx,
+        date: `2026-03-${String(i + 1).padStart(2, "0")}`,
+        day: i + 1,
+      });
+    }
+    const result = await repos.transactions.findAllByYear(userId, 2026);
+    expect(result.length).toBe(5);
+  });
+
+  test("findAllByYear excludes rows from other years", async () => {
+    const repos = getTestRepos();
+    await repos.transactions.create(userId, baseTx); // year 2026
+    await repos.transactions.create(userId, {
+      ...baseTx,
+      date: "2025-06-15",
+      year: 2025,
+      month: 6,
+      day: 15,
+    });
+
+    const result = await repos.transactions.findAllByYear(userId, 2026);
+    expect(result.length).toBe(1);
+    expect(result[0]!.year).toBe(2026);
+  });
+
+  test("findAllByYear isolates by user", async () => {
+    const repos = getTestRepos();
+    seedUser("other-user-3", "other3@example.com");
+    await repos.transactions.create(userId, baseTx);
+    await repos.transactions.create("other-user-3", baseTx);
+
+    const result = await repos.transactions.findAllByYear(userId, 2026);
+    expect(result.length).toBe(1);
+  });
+
+  test("findAllByYear returns empty for year with no data", async () => {
+    const repos = getTestRepos();
+    await repos.transactions.create(userId, baseTx); // year 2026
+    const result = await repos.transactions.findAllByYear(userId, 1999);
+    expect(result.length).toBe(0);
+  });
+
+  test("findAllByYear results are ordered by date DESC", async () => {
+    const repos = getTestRepos();
+    await repos.transactions.create(userId, { ...baseTx, date: "2026-03-01", day: 1 });
+    await repos.transactions.create(userId, { ...baseTx, date: "2026-03-20", day: 20 });
+    await repos.transactions.create(userId, { ...baseTx, date: "2026-03-10", day: 10 });
+
+    const result = await repos.transactions.findAllByYear(userId, 2026);
+    expect(result.length).toBe(3);
+    expect(result[0]!.date).toBe("2026-03-20");
+    expect(result[1]!.date).toBe("2026-03-10");
+    expect(result[2]!.date).toBe("2026-03-01");
+  });
 });

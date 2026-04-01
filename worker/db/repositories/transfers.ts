@@ -285,6 +285,19 @@ export function createTransfersRepo(db: DrizzleD1Database) {
         .orderBy(desc(transfers.date), desc(transfers.createdAt))
         .all();
     },
+
+    /**
+     * Return ALL transfers for a user in a given year without any limit.
+     * Used by pages that need complete year data for client-side aggregation.
+     */
+    async findAllByYear(userId: string, year: number): Promise<Transfer[]> {
+      return await db
+        .select()
+        .from(transfers)
+        .where(and(eq(transfers.userId, userId), eq(transfers.year, year)))
+        .orderBy(desc(transfers.date), desc(transfers.createdAt))
+        .all();
+    },
   };
 }
 
