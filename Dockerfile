@@ -1,42 +1,35 @@
 # ── Stage 1: Dependencies ──
-FROM oven/bun:1.3 AS deps
+FROM oven/bun:1 AS deps
 WORKDIR /app
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
 # ── Stage 2: Build ──
-FROM oven/bun:1.3 AS builder
+FROM oven/bun:1 AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Build-time env vars (placeholders for standalone build)
 ENV AUTH_SECRET=build-placeholder
-ENV NEXTAUTH_URL=http://localhost:7004
+ENV NEXTAUTH_URL=http://localhost:8080
 ENV WORKER_URL=http://placeholder
 ENV WORKER_TOKEN=placeholder
 
 RUN bun run build
 
 # ── Stage 3: Runner ──
-FROM oven/bun:1.3-slim AS runner
+FROM oven/bun:1 AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV HOSTNAME=0.0.0.0
-# PORT is injected by Railway at runtime, default to 8080 for compatibility
 ENV PORT=8080
 
-# Create non-root user (using base commands available in slim images)
-RUN groupadd --system --gid 1001 nodejs && \
-    useradd --system --uid 1001 --gid nodejs nextjs
-
 # Copy standalone build
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-USER nextjs
 EXPOSE 8080
 
 CMD ["bun", "server.js"]
