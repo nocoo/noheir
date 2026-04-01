@@ -24,7 +24,8 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV HOSTNAME=0.0.0.0
-ENV PORT=7004
+# PORT is injected by Railway at runtime, default to 8080 for compatibility
+ENV PORT=8080
 
 # Create non-root user (using base commands available in slim images)
 RUN groupadd --system --gid 1001 nodejs && \
@@ -36,6 +37,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
-EXPOSE 7004
+EXPOSE 8080
 
 CMD ["bun", "server.js"]
