@@ -20,8 +20,8 @@ export async function createProduct(data: {
       channel: data.channel || undefined,
       category: data.category || undefined,
       currency: data.currency || "CNY",
-      lock_period_days: data.lockPeriodDays ?? 0,
-      annual_return_rate: data.annualReturnRate ?? undefined,
+      lockPeriodDays: data.lockPeriodDays ?? 0,
+      annualReturnRate: data.annualReturnRate ?? undefined,
     })
     const product = result.product as Record<string, unknown>
     return { success: true, data: { id: String(product.id) } }
@@ -54,9 +54,9 @@ export async function updateProduct(
     if (data.category !== undefined) payload.category = data.category || null
     if (data.currency !== undefined) payload.currency = data.currency
     if (data.lockPeriodDays !== undefined)
-      payload.lock_period_days = data.lockPeriodDays
+      payload.lockPeriodDays = data.lockPeriodDays
     if (data.annualReturnRate !== undefined)
-      payload.annual_return_rate = data.annualReturnRate
+      payload.annualReturnRate = data.annualReturnRate
     await client.updateProduct(userId, id, payload)
     return { success: true, data: undefined }
   } catch (err) {
