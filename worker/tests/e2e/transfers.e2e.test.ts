@@ -158,6 +158,81 @@ describe("E2E: Transfers", () => {
     expect(res.total_returned).toBe(1);
   });
 
+  // ── Year-scoped ──
+
+  test("GET /api/transfers/years/:year/count returns count for year", async () => {
+    await api({
+      method: "POST",
+      path: "/api/transfers",
+      userId,
+      body: makeTransfer({ year: 2025, date: "2025-06-15" }),
+    });
+    await api({
+      method: "POST",
+      path: "/api/transfers",
+      userId,
+      body: makeTransfer({ year: 2025, date: "2025-08-01" }),
+    });
+    await api({
+      method: "POST",
+      path: "/api/transfers",
+      userId,
+      body: makeTransfer({ year: 2024, date: "2024-01-10" }),
+    });
+
+    const res = await api<{ count: number }>({
+      method: "GET",
+      path: "/api/transfers/years/2025/count",
+      userId,
+    });
+    expect(res.count).toBe(2);
+  });
+
+  test("GET /api/transfers/years/:year/count returns 0 for empty year", async () => {
+    const res = await api<{ count: number }>({
+      method: "GET",
+      path: "/api/transfers/years/1999/count",
+      userId,
+    });
+    expect(res.count).toBe(0);
+  });
+
+  test("DELETE /api/transfers/years/:year deletes all in year", async () => {
+    await api({
+      method: "POST",
+      path: "/api/transfers",
+      userId,
+      body: makeTransfer({ year: 2023, date: "2023-03-15" }),
+    });
+    await api({
+      method: "POST",
+      path: "/api/transfers",
+      userId,
+      body: makeTransfer({ year: 2023, date: "2023-07-01" }),
+    });
+    await api({
+      method: "POST",
+      path: "/api/transfers",
+      userId,
+      body: makeTransfer({ year: 2024, date: "2024-01-10" }),
+    });
+
+    const res = await api<{ deleted: number }>({
+      method: "DELETE",
+      path: "/api/transfers/years/2023",
+      userId,
+    });
+    expect(res.deleted).toBe(2);
+
+    // Verify 2024 data is untouched
+    const remaining = await api<{ count: number }>({
+      method: "GET",
+      path: "/api/transfers/years/2024/count",
+      userId,
+    });
+    expect(remaining.count).toBe(1);
+  });
+
   // ── Bulk ──
 
   test("POST /api/transfers/bulk inserts multiple rows", async () => {

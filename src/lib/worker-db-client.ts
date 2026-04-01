@@ -184,13 +184,13 @@ export class WorkerDbClient {
 
   async countTransfersByYear(userId: string, year: number) {
     return this.request<{ count: number }>(
-      "GET", `/api/transfers/count-by-year?year=${year}`, userId,
+      "GET", `/api/transfers/years/${year}/count`, userId,
     );
   }
 
   async deleteTransfersByYear(userId: string, year: number) {
     return this.request<{ deleted: number }>(
-      "DELETE", `/api/transfers/by-year?year=${year}`, userId,
+      "DELETE", `/api/transfers/years/${year}`, userId,
     );
   }
 
