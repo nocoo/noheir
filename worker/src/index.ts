@@ -153,6 +153,22 @@ app.post("/api/transactions/bulk", async (c) => {
   return c.json({ inserted: count }, 201);
 });
 
+app.get("/api/transactions/years/:year/count", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const year = parseInt(c.req.param("year"), 10);
+  const count = await repos.transactions.countByYear(userId, year);
+  return c.json({ count });
+});
+
+app.delete("/api/transactions/years/:year", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const year = parseInt(c.req.param("year"), 10);
+  const deleted = await repos.transactions.deleteByYear(userId, year);
+  return c.json({ deleted });
+});
+
 app.get("/api/transactions/count-by-year", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");

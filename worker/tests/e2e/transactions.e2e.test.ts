@@ -214,6 +214,81 @@ describe("E2E: Transactions", () => {
     expect(res.transactions).toHaveLength(0);
   });
 
+  // ── Year-scoped ──
+
+  test("GET /api/transactions/years/:year/count returns count for year", async () => {
+    await api({
+      method: "POST",
+      path: "/api/transactions",
+      userId,
+      body: makeTransaction({ year: 2025, month: 6, date: "2025-06-15" }),
+    });
+    await api({
+      method: "POST",
+      path: "/api/transactions",
+      userId,
+      body: makeTransaction({ year: 2025, month: 8, date: "2025-08-01" }),
+    });
+    await api({
+      method: "POST",
+      path: "/api/transactions",
+      userId,
+      body: makeTransaction({ year: 2024, month: 1, date: "2024-01-10" }),
+    });
+
+    const res = await api<{ count: number }>({
+      method: "GET",
+      path: "/api/transactions/years/2025/count",
+      userId,
+    });
+    expect(res.count).toBe(2);
+  });
+
+  test("GET /api/transactions/years/:year/count returns 0 for empty year", async () => {
+    const res = await api<{ count: number }>({
+      method: "GET",
+      path: "/api/transactions/years/1999/count",
+      userId,
+    });
+    expect(res.count).toBe(0);
+  });
+
+  test("DELETE /api/transactions/years/:year deletes all in year", async () => {
+    await api({
+      method: "POST",
+      path: "/api/transactions",
+      userId,
+      body: makeTransaction({ year: 2023, month: 3, date: "2023-03-15" }),
+    });
+    await api({
+      method: "POST",
+      path: "/api/transactions",
+      userId,
+      body: makeTransaction({ year: 2023, month: 7, date: "2023-07-01" }),
+    });
+    await api({
+      method: "POST",
+      path: "/api/transactions",
+      userId,
+      body: makeTransaction({ year: 2024, month: 1, date: "2024-01-10" }),
+    });
+
+    const res = await api<{ deleted: number }>({
+      method: "DELETE",
+      path: "/api/transactions/years/2023",
+      userId,
+    });
+    expect(res.deleted).toBe(2);
+
+    // Verify 2024 data is untouched
+    const remaining = await api<{ count: number }>({
+      method: "GET",
+      path: "/api/transactions/years/2024/count",
+      userId,
+    });
+    expect(remaining.count).toBe(1);
+  });
+
   // ── Bulk ──
 
   test("POST /api/transactions/bulk inserts multiple rows", async () => {
