@@ -42,7 +42,7 @@ export default async function FinancialHealthPage({
     // Raw transactions still needed for rigidity (tertiaryCategory) & quality (primaryCategory)
     const [summary, txResult] = await Promise.all([
       client.getYearlySummary(userId, selectedYear),
-      client.searchTransactions(userId, { year: selectedYear, limit: 5000 }),
+      client.getAllTransactionsByYear(userId, selectedYear),
     ])
 
     // Build monthly data from aggregation API (cents → display)

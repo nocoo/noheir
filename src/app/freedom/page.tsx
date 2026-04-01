@@ -34,7 +34,7 @@ export default async function FreedomPage({
     // Raw transactions needed for income breakdown by tertiaryCategory + secondaryCategory
     const [summary, result] = await Promise.all([
       client.getYearlySummary(userId, selectedYear),
-      client.searchTransactions(userId, { year: selectedYear, limit: 5000 }),
+      client.getAllTransactionsByYear(userId, selectedYear),
     ])
 
     totalExpenseFromSummary = summary.totals.expense / 100

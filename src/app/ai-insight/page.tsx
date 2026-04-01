@@ -34,10 +34,7 @@ export default async function AIInsightPage({
       selectedYear = availableYears[0] ?? new Date().getFullYear()
     }
 
-    const result = await client.searchTransactions(userId, {
-      year: selectedYear,
-      limit: 5000,
-    })
+    const result = await client.getAllTransactionsByYear(userId, selectedYear)
     transactions = result.transactions.map((raw) =>
       toDomainTransaction(raw as Record<string, unknown>),
     )
