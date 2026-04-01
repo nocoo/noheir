@@ -292,6 +292,12 @@ export class WorkerDbClient {
     );
   }
 
+  async deleteSettings(userId: string) {
+    return this.request<{ success: boolean }>(
+      "DELETE", "/api/settings", userId,
+    );
+  }
+
   // ── Metadata ──
 
   async getMetadata(userId: string) {
