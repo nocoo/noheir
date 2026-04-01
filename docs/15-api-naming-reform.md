@@ -179,6 +179,31 @@ After confirming Next.js is deployed and stable on new paths:
 - Update all E2E tests to only reference new paths
 - This is the final cut-over commit
 
+### Follow-up — Fix Silent Data Truncation on Year-Scoped Pages ✅
+
+The original reform fixed `/api/data/export` to use `findAllByUser()` (unlimited), but 6 Next.js pages still called `searchTransactions(userId, { year, limit: 5000 })` which silently truncates data for years with >5000 transactions.
+
+**Commit A: Add `findAllByYear()` repo methods + unit tests** ✅ `ca2e484`
+
+- New repo methods with no limit, year-filtered queries for transactions and transfers
+- 5 unit tests each: all rows returned, year isolation, user isolation, empty year, DESC ordering
+
+**Commit B: Add Worker routes + client methods + E2E tests** ✅ `2755b0f`
+
+- `GET /api/transactions/years/:year` and `GET /api/transfers/years/:year`
+- `getAllTransactionsByYear()` and `getAllTransfersByYear()` client methods
+- 2 E2E tests each: returns all rows with `total_returned`, empty year returns 0
+
+**Commit C: Switch 6 pages from `search(limit:5000)` to `getAllByYear`** ✅ `4db1cb8`
+
+- Mechanical replacement in: `income`, `expense`, `ai-insight`, `financial-health`, `freedom`, `account-detail`
+- `account-detail` also switched transfers from `searchTransfers` to `getAllTransfersByYear`
+
+**Commit D: Strengthen export E2E test** ✅ `05b6bc1`
+
+- Structural regression guard: `exported_at` must exist in export response (search doesn't have it)
+- Multi-row count: seed 10 transactions + 5 transfers, verify export returns exact counts
+
 ## Route Migration Table (Before → After)
 
 | # | Method | Before | After |
