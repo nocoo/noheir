@@ -51,7 +51,10 @@ app.use(
 
 // ── Health check (no auth) ──
 
-app.get("/api/live", async (c) => {
+async function handleHealthCheck(c: {
+  env: Env;
+  json: (data: unknown, status?: number) => Response;
+}) {
   const db = drizzle(c.env.DB);
   try {
     await db.run(sql`SELECT 1 AS ok`);
@@ -59,13 +62,16 @@ app.get("/api/live", async (c) => {
   } catch {
     return c.json({ status: "error", timestamp: Date.now() }, 500);
   }
-});
+}
+
+app.get("/api/health", (c) => handleHealthCheck(c));
+app.get("/api/live", (c) => handleHealthCheck(c)); // legacy alias
 
 // ── Auth middleware (all routes below require Bearer token + X-User-Id) ──
 
 app.use("*", async (c, next) => {
-  // Skip for already-handled routes
-  if (c.req.path === "/api/live") return next();
+  // Skip for already-handled routes (health check)
+  if (c.req.path === "/api/health" || c.req.path === "/api/live") return next();
 
   // 1. Verify Bearer token
   const authHeader = c.req.header("Authorization");

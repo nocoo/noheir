@@ -72,7 +72,7 @@ export class WorkerDbClient {
 
   async health(): Promise<boolean> {
     try {
-      const res = await fetch(`${this.baseUrl}/api/live`);
+      const res = await fetch(`${this.baseUrl}/api/health`);
       return res.ok;
     } catch {
       return false;
