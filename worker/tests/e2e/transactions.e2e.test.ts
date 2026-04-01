@@ -216,6 +216,45 @@ describe("E2E: Transactions", () => {
 
   // ── Year-scoped ──
 
+  test("GET /api/transactions/years/:year returns all transactions for year", async () => {
+    await api({
+      method: "POST",
+      path: "/api/transactions",
+      userId,
+      body: makeTransaction({ year: 2025, month: 3, date: "2025-03-15" }),
+    });
+    await api({
+      method: "POST",
+      path: "/api/transactions",
+      userId,
+      body: makeTransaction({ year: 2025, month: 6, date: "2025-06-01" }),
+    });
+    await api({
+      method: "POST",
+      path: "/api/transactions",
+      userId,
+      body: makeTransaction({ year: 2024, month: 1, date: "2024-01-10" }),
+    });
+
+    const res = await api<{ transactions: unknown[]; total_returned: number }>({
+      method: "GET",
+      path: "/api/transactions/years/2025",
+      userId,
+    });
+    expect(res.total_returned).toBe(2);
+    expect(res.transactions).toHaveLength(2);
+  });
+
+  test("GET /api/transactions/years/:year returns empty for year with no data", async () => {
+    const res = await api<{ transactions: unknown[]; total_returned: number }>({
+      method: "GET",
+      path: "/api/transactions/years/1999",
+      userId,
+    });
+    expect(res.total_returned).toBe(0);
+    expect(res.transactions).toHaveLength(0);
+  });
+
   test("GET /api/transactions/years/:year/count returns count for year", async () => {
     await api({
       method: "POST",

@@ -158,6 +158,14 @@ app.get("/api/transactions/years/:year/count", async (c) => {
   return c.json({ count });
 });
 
+app.get("/api/transactions/years/:year", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const year = parseInt(c.req.param("year"), 10);
+  const rows = await repos.transactions.findAllByYear(userId, year);
+  return c.json({ transactions: rows, total_returned: rows.length });
+});
+
 app.delete("/api/transactions/years/:year", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
@@ -220,6 +228,14 @@ app.get("/api/transfers/years/:year/count", async (c) => {
   const year = parseInt(c.req.param("year"), 10);
   const count = await repos.transfers.countByYear(userId, year);
   return c.json({ count });
+});
+
+app.get("/api/transfers/years/:year", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const year = parseInt(c.req.param("year"), 10);
+  const rows = await repos.transfers.findAllByYear(userId, year);
+  return c.json({ transfers: rows, total_returned: rows.length });
 });
 
 app.delete("/api/transfers/years/:year", async (c) => {

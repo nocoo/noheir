@@ -137,6 +137,13 @@ export class WorkerDbClient {
     );
   }
 
+  async getAllTransactionsByYear(userId: string, year: number) {
+    return this.request<{
+      transactions: unknown[];
+      total_returned: number;
+    }>("GET", `/api/transactions/years/${year}`, userId);
+  }
+
   async deleteTransactionsByYear(userId: string, year: number) {
     return this.request<{ deleted: number }>(
       "DELETE", `/api/transactions/years/${year}`, userId,
@@ -186,6 +193,13 @@ export class WorkerDbClient {
     return this.request<{ count: number }>(
       "GET", `/api/transfers/years/${year}/count`, userId,
     );
+  }
+
+  async getAllTransfersByYear(userId: string, year: number) {
+    return this.request<{
+      transfers: unknown[];
+      total_returned: number;
+    }>("GET", `/api/transfers/years/${year}`, userId);
   }
 
   async deleteTransfersByYear(userId: string, year: number) {
