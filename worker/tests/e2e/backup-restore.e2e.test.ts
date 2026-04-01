@@ -86,6 +86,67 @@ describe("E2E: Data Export / Import", () => {
     expect(notes).not.toContain("old");
   });
 
+  test("GET /api/data/export response has exported_at (structural regression guard)", async () => {
+    // The export route uses findAllByUser() which returns exported_at.
+    // The search endpoint does NOT return exported_at.
+    // If someone regresses export back to search(), this test will fail
+    // because the response shape will be missing exported_at.
+    await api({ method: "POST", path: "/api/transactions", userId, body: makeTransaction() });
+
+    const res = await api<Record<string, unknown>>({
+      method: "GET",
+      path: "/api/data/export",
+      userId,
+    });
+
+    // exported_at must exist and be a valid ISO timestamp
+    expect(res.exported_at).toBeDefined();
+    expect(typeof res.exported_at).toBe("string");
+    expect(new Date(res.exported_at as string).toISOString()).toBe(res.exported_at);
+
+    // search-style response fields must NOT be present
+    expect(res.total_returned).toBeUndefined();
+    expect(res.total_count).toBeUndefined();
+  });
+
+  test("GET /api/data/export returns all rows without truncation", async () => {
+    // Seed 10 transactions + 5 transfers.
+    // If export regresses to search() with default/clamped limit,
+    // it would still pass for small counts, but the structural guard
+    // above catches that. This test validates count correctness.
+    const txPromises = Array.from({ length: 10 }, (_, i) =>
+      api({
+        method: "POST",
+        path: "/api/transactions",
+        userId,
+        body: makeTransaction({ note: `export-count-tx-${i}` }),
+      }),
+    );
+    const trPromises = Array.from({ length: 5 }, (_, i) =>
+      api({
+        method: "POST",
+        path: "/api/transfers",
+        userId,
+        body: makeTransfer({ note: `export-count-tr-${i}` }),
+      }),
+    );
+    await Promise.all([...txPromises, ...trPromises]);
+
+    const backup = await api<{
+      transactions: unknown[];
+      transfers: unknown[];
+      exported_at: string;
+    }>({
+      method: "GET",
+      path: "/api/data/export",
+      userId,
+    });
+
+    expect(backup.transactions).toHaveLength(10);
+    expect(backup.transfers).toHaveLength(5);
+    expect(backup.exported_at).toBeString();
+  });
+
   test("POST /api/data/import with empty arrays clears all", async () => {
     await api({ method: "POST", path: "/api/transactions", userId, body: makeTransaction() });
 
