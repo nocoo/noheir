@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "bun run src/index.ts",
-    "test": "bun test"
+    "test": "bun test tests/"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
