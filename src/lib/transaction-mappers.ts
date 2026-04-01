@@ -1,5 +1,27 @@
 import type { DomainTransaction, MonthlyData } from "@/domain/types"
 
+/**
+ * Parse tags from Worker response.
+ * Worker stores tags as JSON string in D1 (e.g., '["tag1","tag2"]').
+ * This handles both JSON string and array formats for compatibility.
+ */
+export function parseTags(raw: unknown): string[] {
+  if (Array.isArray(raw)) {
+    return raw.filter((t): t is string => typeof t === "string")
+  }
+  if (typeof raw === "string" && raw.length > 0) {
+    try {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) {
+        return parsed.filter((t): t is string => typeof t === "string")
+      }
+    } catch {
+      // Not valid JSON, return empty
+    }
+  }
+  return []
+}
+
 /** Map raw Worker transaction (camelCase from Drizzle) to DomainTransaction */
 export function toDomainTransaction(
   raw: Record<string, unknown>,
@@ -19,7 +41,7 @@ export function toDomainTransaction(
     account: String(raw.account ?? ""),
     type: raw.type === "income" ? "income" : "expense",
     currency: String(raw.currency ?? "CNY"),
-    tags: Array.isArray(raw.tags) ? (raw.tags as string[]) : [],
+    tags: parseTags(raw.tags),
     note: raw.note != null ? String(raw.note) : null,
   }
 }

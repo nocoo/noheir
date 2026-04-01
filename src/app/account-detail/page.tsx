@@ -1,7 +1,7 @@
 import { AppShell } from "@/components/layout"
 import { getAuthedClient } from "@/lib/api-helpers"
 import type { DomainTransaction, DomainTransfer } from "@/domain/types"
-import { toDomainTransaction } from "@/lib/transaction-mappers"
+import { toDomainTransaction, parseTags } from "@/lib/transaction-mappers"
 import {
   buildBalanceEntries,
   buildUniqueAccounts,
@@ -23,7 +23,7 @@ function toDomainTransfer(raw: Record<string, unknown>): DomainTransfer {
     outflowAmount: Number(raw.outflowAmountCents ?? 0) / 100,
     currency: String(raw.currency ?? "CNY"),
     account: String(raw.account ?? ""),
-    tags: Array.isArray(raw.tags) ? (raw.tags as string[]) : [],
+    tags: parseTags(raw.tags),
     note: raw.note != null ? String(raw.note) : null,
   }
 }
