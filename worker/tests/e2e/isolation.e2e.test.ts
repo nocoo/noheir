@@ -85,7 +85,7 @@ describe("E2E: Cross-user isolation", () => {
 
     const res = await api<{ transaction_count: number }>({
       method: "GET",
-      path: "/api/metadata",
+      path: "/api/reports/metadata",
       userId: TEST_USER_B,
     });
     expect(res.transaction_count).toBe(0);

@@ -2,7 +2,7 @@
  * Clean up all test data for a given user via the Worker REST API.
  *
  * Strategy:
- * 1. POST /api/restore with empty arrays → deletes all transactions + transfers
+ * 1. POST /api/data/import with empty arrays → deletes all transactions + transfers
  * 2. GET /api/units → DELETE each unit
  * 3. GET /api/products → DELETE each product
  * 4. DELETE /api/settings → remove settings row
@@ -12,10 +12,10 @@
 import { api } from "./client";
 
 export async function cleanupUser(userId: string): Promise<void> {
-  // 1. Wipe transactions + transfers via restore
+  // 1. Wipe transactions + transfers via import
   await api({
     method: "POST",
-    path: "/api/restore",
+    path: "/api/data/import",
     userId,
     body: { transactions: [], transfers: [] },
   });

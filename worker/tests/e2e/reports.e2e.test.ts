@@ -10,19 +10,19 @@ describe("E2E: Reports", () => {
     await cleanupUser(userId);
   });
 
-  test("GET /api/reports/monthly returns 400 without year/month", async () => {
+  test("GET /api/reports/monthly-summary returns 400 without year/month", async () => {
     const res = await rawFetch({
       method: "GET",
-      path: "/api/reports/monthly",
+      path: "/api/reports/monthly-summary",
       userId,
     });
     expect(res.status).toBe(400);
   });
 
-  test("GET /api/reports/monthly returns zeros when no data", async () => {
+  test("GET /api/reports/monthly-summary returns zeros when no data", async () => {
     const res = await api<Record<string, unknown>>({
       method: "GET",
-      path: "/api/reports/monthly?year=2025&month=6",
+      path: "/api/reports/monthly-summary?year=2025&month=6",
       userId,
     });
     expect(res.total_income).toBe(0);
@@ -30,7 +30,7 @@ describe("E2E: Reports", () => {
     expect(res.transaction_count).toBe(0);
   });
 
-  test("GET /api/reports/monthly aggregates correctly", async () => {
+  test("GET /api/reports/monthly-summary aggregates correctly", async () => {
     await api({
       method: "POST",
       path: "/api/transactions",
@@ -69,7 +69,7 @@ describe("E2E: Reports", () => {
 
     const res = await api<Record<string, unknown>>({
       method: "GET",
-      path: "/api/reports/monthly?year=2025&month=6",
+      path: "/api/reports/monthly-summary?year=2025&month=6",
       userId,
     });
     expect(res.total_income).toBe(1000000);
@@ -79,7 +79,7 @@ describe("E2E: Reports", () => {
     expect(res.total_transfer_in).toBe(50000);
   });
 
-  test("GET /api/reports/monthly returns category breakdowns", async () => {
+  test("GET /api/reports/monthly-summary returns category breakdowns", async () => {
     await api({
       method: "POST",
       path: "/api/transactions",
@@ -109,7 +109,7 @@ describe("E2E: Reports", () => {
       expense_by_category: Array<{ category: string; total: number }>;
     }>({
       method: "GET",
-      path: "/api/reports/monthly?year=2025&month=6",
+      path: "/api/reports/monthly-summary?year=2025&month=6",
       userId,
     });
     expect(res.expense_by_category).toHaveLength(2);
@@ -118,7 +118,7 @@ describe("E2E: Reports", () => {
     expect(res.expense_by_category[0]!.total).toBe(7000);
   });
 
-  test("GET /api/reports/monthly ignores other months", async () => {
+  test("GET /api/reports/monthly-summary ignores other months", async () => {
     await api({
       method: "POST",
       path: "/api/transactions",
@@ -134,7 +134,7 @@ describe("E2E: Reports", () => {
 
     const res = await api<Record<string, unknown>>({
       method: "GET",
-      path: "/api/reports/monthly?year=2025&month=6",
+      path: "/api/reports/monthly-summary?year=2025&month=6",
       userId,
     });
     expect(res.transaction_count).toBe(1);

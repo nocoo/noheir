@@ -5,12 +5,12 @@ import { makeTransaction, makeTransfer, makeProduct, makeUnit } from "./helpers/
 
 const userId = TEST_USER_A;
 
-describe("E2E: Backup / Restore", () => {
+describe("E2E: Data Export / Import", () => {
   beforeEach(async () => {
     await cleanupUser(userId);
   });
 
-  test("GET /api/backup returns all user data", async () => {
+  test("GET /api/data/export returns all user data", async () => {
     await api({ method: "POST", path: "/api/transactions", userId, body: makeTransaction() });
     await api({ method: "POST", path: "/api/transfers", userId, body: makeTransfer() });
     await api({ method: "POST", path: "/api/products", userId, body: makeProduct() });
@@ -24,7 +24,7 @@ describe("E2E: Backup / Restore", () => {
       exported_at: string;
     }>({
       method: "GET",
-      path: "/api/backup",
+      path: "/api/data/export",
       userId,
     });
 
@@ -35,31 +35,31 @@ describe("E2E: Backup / Restore", () => {
     expect(backup.exported_at).toBeString();
   });
 
-  test("GET /api/backup returns empty when no data", async () => {
+  test("GET /api/data/export returns empty when no data", async () => {
     const backup = await api<{
       transactions: unknown[];
       transfers: unknown[];
     }>({
       method: "GET",
-      path: "/api/backup",
+      path: "/api/data/export",
       userId,
     });
     expect(backup.transactions).toHaveLength(0);
     expect(backup.transfers).toHaveLength(0);
   });
 
-  test("POST /api/restore replaces transactions and transfers", async () => {
+  test("POST /api/data/import replaces transactions and transfers", async () => {
     // Seed initial data
     await api({ method: "POST", path: "/api/transactions", userId, body: makeTransaction({ note: "old" }) });
     await api({ method: "POST", path: "/api/transfers", userId, body: makeTransfer({ note: "old" }) });
 
-    // Restore with new data
+    // Import with new data
     const restored = await api<{
       transactions_imported: number;
       transfers_imported: number;
     }>({
       method: "POST",
-      path: "/api/restore",
+      path: "/api/data/import",
       userId,
       body: {
         transactions: [
@@ -86,12 +86,12 @@ describe("E2E: Backup / Restore", () => {
     expect(notes).not.toContain("old");
   });
 
-  test("POST /api/restore with empty arrays clears all", async () => {
+  test("POST /api/data/import with empty arrays clears all", async () => {
     await api({ method: "POST", path: "/api/transactions", userId, body: makeTransaction() });
 
     await api({
       method: "POST",
-      path: "/api/restore",
+      path: "/api/data/import",
       userId,
       body: { transactions: [], transfers: [] },
     });

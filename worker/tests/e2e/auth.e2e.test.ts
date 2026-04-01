@@ -4,7 +4,7 @@ import { rawFetch, TEST_USER_A } from "./helpers/client";
 describe("E2E: Auth middleware", () => {
   test("401 when no Authorization header", async () => {
     const res = await rawFetch({
-      path: "/api/metadata",
+      path: "/api/reports/metadata",
       userId: TEST_USER_A,
       omitAuth: true,
     });
@@ -15,7 +15,7 @@ describe("E2E: Auth middleware", () => {
 
   test("403 when invalid Bearer token", async () => {
     const res = await rawFetch({
-      path: "/api/metadata",
+      path: "/api/reports/metadata",
       userId: TEST_USER_A,
       token: "wrong-token-value",
     });
@@ -26,7 +26,7 @@ describe("E2E: Auth middleware", () => {
 
   test("400 when missing X-User-Id header", async () => {
     const res = await rawFetch({
-      path: "/api/metadata",
+      path: "/api/reports/metadata",
       // userId omitted
     });
     expect(res.status).toBe(400);
@@ -36,7 +36,7 @@ describe("E2E: Auth middleware", () => {
 
   test("401 when token is empty string", async () => {
     const res = await rawFetch({
-      path: "/api/metadata",
+      path: "/api/reports/metadata",
       userId: TEST_USER_A,
       token: "",
     });
@@ -47,7 +47,7 @@ describe("E2E: Auth middleware", () => {
 
   test("200 when valid auth headers are present", async () => {
     const res = await rawFetch({
-      path: "/api/metadata",
+      path: "/api/reports/metadata",
       userId: TEST_USER_A,
     });
     expect(res.status).toBe(200);

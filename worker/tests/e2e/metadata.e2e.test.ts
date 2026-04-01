@@ -10,10 +10,10 @@ describe("E2E: Metadata", () => {
     await cleanupUser(userId);
   });
 
-  test("GET /api/metadata returns empty when no data", async () => {
+  test("GET /api/reports/metadata returns empty when no data", async () => {
     const res = await api<Record<string, unknown>>({
       method: "GET",
-      path: "/api/metadata",
+      path: "/api/reports/metadata",
       userId,
     });
     expect(res.transaction_count).toBe(0);
@@ -21,7 +21,7 @@ describe("E2E: Metadata", () => {
     expect(res.years).toEqual([]);
   });
 
-  test("GET /api/metadata reflects inserted transactions", async () => {
+  test("GET /api/reports/metadata reflects inserted transactions", async () => {
     await api({
       method: "POST",
       path: "/api/transactions",
@@ -37,7 +37,7 @@ describe("E2E: Metadata", () => {
 
     const res = await api<Record<string, unknown>>({
       method: "GET",
-      path: "/api/metadata",
+      path: "/api/reports/metadata",
       userId,
     });
     expect(res.transaction_count).toBe(2);
@@ -45,7 +45,7 @@ describe("E2E: Metadata", () => {
     expect((res.accounts as string[]).sort()).toEqual(["平安银行", "招商银行"]);
   });
 
-  test("GET /api/metadata includes transfer counts", async () => {
+  test("GET /api/reports/metadata includes transfer counts", async () => {
     await api({
       method: "POST",
       path: "/api/transfers",
@@ -55,13 +55,13 @@ describe("E2E: Metadata", () => {
 
     const res = await api<Record<string, unknown>>({
       method: "GET",
-      path: "/api/metadata",
+      path: "/api/reports/metadata",
       userId,
     });
     expect(res.transfer_count).toBe(1);
   });
 
-  test("GET /api/metadata returns categories and tags", async () => {
+  test("GET /api/reports/metadata returns categories and tags", async () => {
     await api({
       method: "POST",
       path: "/api/transactions",
@@ -76,7 +76,7 @@ describe("E2E: Metadata", () => {
 
     const res = await api<Record<string, unknown>>({
       method: "GET",
-      path: "/api/metadata",
+      path: "/api/reports/metadata",
       userId,
     });
     expect((res.categories as string[])).toContain("餐饮");

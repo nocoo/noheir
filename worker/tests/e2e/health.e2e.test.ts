@@ -22,11 +22,4 @@ describe("E2E: /api/health (health check)", () => {
     });
     expect(res.status).toBe(200);
   });
-
-  test("legacy /api/live still works", async () => {
-    const res = await rawFetch({ path: "/api/live", omitAuth: true });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { status: string };
-    expect(body.status).toBe("ok");
-  });
 });

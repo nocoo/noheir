@@ -65,13 +65,12 @@ async function handleHealthCheck(c: {
 }
 
 app.get("/api/health", (c) => handleHealthCheck(c));
-app.get("/api/live", (c) => handleHealthCheck(c)); // legacy alias
 
 // ── Auth middleware (all routes below require Bearer token + X-User-Id) ──
 
 app.use("*", async (c, next) => {
   // Skip for already-handled routes (health check)
-  if (c.req.path === "/api/health" || c.req.path === "/api/live") return next();
+  if (c.req.path === "/api/health") return next();
 
   // 1. Verify Bearer token
   const authHeader = c.req.header("Authorization");
@@ -132,10 +131,8 @@ async function handleUserSync(c: {
 }
 
 app.put("/api/users/me", (c) => handleUserSync(c));
-app.post("/api/users/upsert", (c) => handleUserSync(c)); // legacy alias — remove in cleanup phase
 
 // ── Transactions ──
-// NOTE: Static paths MUST come before :id to avoid Hono matching "count-by-year" as an id.
 
 app.post("/api/transactions/search", async (c) => {
   const userId = c.get("userId");
@@ -166,24 +163,6 @@ app.delete("/api/transactions/years/:year", async (c) => {
   const repos = c.get("repos");
   const year = parseInt(c.req.param("year"), 10);
   const deleted = await repos.transactions.deleteByYear(userId, year);
-  return c.json({ deleted });
-});
-
-app.get("/api/transactions/count-by-year", async (c) => {
-  const userId = c.get("userId");
-  const repos = c.get("repos");
-  const yearStr = c.req.query("year");
-  if (!yearStr) return c.json({ error: "year is required" }, 400);
-  const count = await repos.transactions.countByYear(userId, parseInt(yearStr, 10));
-  return c.json({ count });
-});
-
-app.delete("/api/transactions/by-year", async (c) => {
-  const userId = c.get("userId");
-  const repos = c.get("repos");
-  const yearStr = c.req.query("year");
-  if (!yearStr) return c.json({ error: "year is required" }, 400);
-  const deleted = await repos.transactions.deleteByYear(userId, parseInt(yearStr, 10));
   return c.json({ deleted });
 });
 
@@ -218,7 +197,6 @@ app.delete("/api/transactions/:id", async (c) => {
 });
 
 // ── Transfers ──
-// NOTE: Static paths MUST come before :id to avoid Hono matching "count-by-year" as an id.
 
 app.post("/api/transfers/search", async (c) => {
   const userId = c.get("userId");
@@ -249,24 +227,6 @@ app.delete("/api/transfers/years/:year", async (c) => {
   const repos = c.get("repos");
   const year = parseInt(c.req.param("year"), 10);
   const deleted = await repos.transfers.deleteByYear(userId, year);
-  return c.json({ deleted });
-});
-
-app.get("/api/transfers/count-by-year", async (c) => {
-  const userId = c.get("userId");
-  const repos = c.get("repos");
-  const yearStr = c.req.query("year");
-  if (!yearStr) return c.json({ error: "year is required" }, 400);
-  const count = await repos.transfers.countByYear(userId, parseInt(yearStr, 10));
-  return c.json({ count });
-});
-
-app.delete("/api/transfers/by-year", async (c) => {
-  const userId = c.get("userId");
-  const repos = c.get("repos");
-  const yearStr = c.req.query("year");
-  if (!yearStr) return c.json({ error: "year is required" }, 400);
-  const deleted = await repos.transfers.deleteByYear(userId, parseInt(yearStr, 10));
   return c.json({ deleted });
 });
 
@@ -418,12 +378,6 @@ app.get("/api/reports/metadata", async (c) => {
   const result = await repos.metadata.getAll(userId);
   return c.json(result);
 });
-app.get("/api/metadata", async (c) => { // legacy alias — remove in cleanup phase
-  const userId = c.get("userId");
-  const repos = c.get("repos");
-  const result = await repos.metadata.getAll(userId);
-  return c.json(result);
-});
 
 // ── Reports ──
 
@@ -510,24 +464,6 @@ app.get("/api/reports/monthly-summary", async (c) => {
   return c.json(result);
 });
 
-app.get("/api/reports/monthly", async (c) => { // legacy alias — remove in cleanup phase
-  const userId = c.get("userId");
-  const repos = c.get("repos");
-  const { year, month, currency } = c.req.query();
-
-  if (!year || !month) {
-    return c.json({ error: "year and month are required" }, 400);
-  }
-
-  const result = await repos.reports.monthly(
-    userId,
-    parseInt(year, 10),
-    parseInt(month, 10),
-    currency || undefined,
-  );
-  return c.json(result);
-});
-
 // ── Data Export / Import ──
 
 app.get("/api/data/export", async (c) => {
@@ -589,34 +525,6 @@ app.post("/api/data/import", async (c) => {
     );
   }
 
-  return c.json(results, 201);
-});
-
-// Legacy aliases — remove in cleanup phase
-app.get("/api/backup", async (c) => {
-  const userId = c.get("userId");
-  const repos = c.get("repos");
-  const [txRows, trRows, products, units, setting] = await Promise.all([
-    repos.transactions.findAllByUser(userId),
-    repos.transfers.findAllByUser(userId),
-    repos.products.findAll(userId),
-    repos.units.findAll(userId),
-    repos.settings.getByUserId(userId),
-  ]);
-  return c.json({ transactions: txRows, transfers: trRows, products, units, settings: setting, exported_at: new Date().toISOString() });
-});
-app.post("/api/restore", async (c) => {
-  const userId = c.get("userId");
-  const repos = c.get("repos");
-  const body = await c.req.json<{ transactions?: unknown[]; transfers?: unknown[] }>();
-  await Promise.all([repos.transactions.deleteByUser(userId), repos.transfers.deleteByUser(userId)]);
-  const results = { transactions_imported: 0, transfers_imported: 0 };
-  if (body.transactions && Array.isArray(body.transactions)) {
-    results.transactions_imported = await repos.transactions.createMany(userId, body.transactions as Parameters<AllRepos["transactions"]["createMany"]>[1]);
-  }
-  if (body.transfers && Array.isArray(body.transfers)) {
-    results.transfers_imported = await repos.transfers.createMany(userId, body.transfers as Parameters<AllRepos["transfers"]["createMany"]>[1]);
-  }
   return c.json(results, 201);
 });
 
