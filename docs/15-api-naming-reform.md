@@ -74,11 +74,11 @@ Test-driven approach: **write/update tests first**, then make them pass.
 > Each rename = 3 steps: (a) Worker adds new path as alias, (b) Next.js switches to new path, (c) Worker removes old path.
 > Phase 0 (contract fixes) does NOT need dual-path — they are **not** HTTP-level backward-compatible (R1 changes the 404 response body), but impact is controlled because the sole client (`WorkerDbClient`) already throws on non-2xx status codes and never inspects the 404 body. Verify all call sites before commit 1.
 
-### Phase 0 — Contract Fixes (R1, R2)
+### Phase 0 — Contract Fixes (R1, R2) ✅
 
 > **These are behavioral changes**, not renames. Separated from naming reform for honest categorization.
 
-**Atomic commit 1: Normalize 404 responses**
+**Atomic commit 1: Normalize 404 responses** ✅ `aa3d04d`
 
 Test first:
 - Update Worker E2E tests to assert all GET-by-id 404s return `{ error: "Not found" }` instead of `{ entity: null }`
@@ -88,7 +88,7 @@ Then implement:
 - `worker/src/index.ts` — Change 4 GET-by-id handlers from `c.json({ transaction: null }, 404)` to `c.json({ error: "Not found" }, 404)`
 - `src/lib/worker-db-client.ts` — Update `getTransaction()`, `getTransfer()`, `getProduct()`, `getUnit()` return types (remove `| null` variant, callers now catch 404 via `WorkerDbError`)
 
-**Atomic commit 2: Dedicated backup export methods**
+**Atomic commit 2: Dedicated backup export methods** ✅ `a5e28df`
 
 Test first (two layers):
 - **Repo unit tests**: Add tests for new `findAllByUser()` in transaction and transfer repos — assert no limit is applied, all rows returned
@@ -99,11 +99,11 @@ Then implement:
 - `worker/db/repositories/transfers.ts` — Add `findAllByUser(userId)` that returns all rows without limit
 - `worker/src/index.ts` — Backup route uses `findAllByUser()` instead of `search(userId, { limit: 5000 })`
 
-### Phase 1 — Route Renames with Dual-Path Transition (P1, P4, P5, P6, P7)
+### Phase 1 — Route Renames with Dual-Path Transition (P1, P4, P5, P6, P7) ✅
 
 Each route rename follows the 3-step protocol from the Deployment Model section above. Steps (a) and (b) are shown as one commit when they can ship in the same PR. The old-path removal (c) is batched into a single cleanup commit at the end (Phase 3).
 
-**Atomic commit 3a: Add `PUT /api/users/me` alias + switch client**
+**Atomic commit 3a: Add `PUT /api/users/me` alias + switch client** ✅ `e6647df`
 
 Test first:
 - Add E2E test asserting `PUT /api/users/me` works identically to `POST /api/users/upsert`
@@ -114,32 +114,32 @@ Then implement:
 - `src/lib/worker-db-client.ts` — `upsertUser()` → `syncUser()`, path → `/api/users/me`, method → `PUT`
 - `src/auth.ts` — Update `client.upsertUser(...)` → `client.syncUser(...)` at line 123
 
-**Atomic commit 4a: Add `/api/reports/metadata` alias + switch client**
+**Atomic commit 4a: Add `/api/reports/metadata` alias + switch client** ✅ `c941e67`
 
 - Worker: Add `GET /api/reports/metadata` alongside `GET /api/metadata`
 - Client: `getMetadata()` path update to `/api/reports/metadata`
 
-**Atomic commit 5a: Add `/api/data/export` + `/api/data/import` aliases + switch client**
+**Atomic commit 5a: Add `/api/data/export` + `/api/data/import` aliases + switch client** ✅ `f242789`
 
 - Worker: Add `GET /api/data/export` alias for `GET /api/backup`, `POST /api/data/import` alias for `POST /api/restore`
 - Client: `backup()` → `exportData()`, `restore()` → `importData()`, paths updated
 
-**Atomic commit 6a: Add `/api/reports/monthly-summary` alias + switch client**
+**Atomic commit 6a: Add `/api/reports/monthly-summary` alias + switch client** ✅ `a381d2c`
 
 - Worker: Add `GET /api/reports/monthly-summary` alongside `GET /api/reports/monthly`
 - Client: `getMonthlyReport()` path update
 
-**Atomic commit 7a: Add `/api/health` alias + switch client**
+**Atomic commit 7a: Add `/api/health` alias + switch client** ✅ `f31e615`
 
 - Worker: Add `GET /api/health` alias, update auth middleware to skip both `/api/live` and `/api/health`
 - Client: `health()` path update
 - Note: Next.js also has `/api/live` — that is a separate route (kept as-is, it's a Next.js route not Worker)
 
-### Phase 2 — Sub-Resource Path Reform (P2, P3)
+### Phase 2 — Sub-Resource Path Reform (P2, P3) ✅
 
 Same dual-path protocol. Old paths kept until Phase 3 cleanup.
 
-**Atomic commit 8a: Add resourceful year-scoped paths for transactions + switch client**
+**Atomic commit 8a: Add resourceful year-scoped paths for transactions + switch client** ✅ `15f5de9`
 
 Test first:
 - Add E2E tests for `GET /api/transactions/years/:year/count` and `DELETE /api/transactions/years/:year`
@@ -148,24 +148,24 @@ Then implement:
 - Worker: Add new routes alongside old `/count-by-year` and `/by-year`
 - Client: `countTransactionsByYear()` and `deleteTransactionsByYear()` path updates
 
-**Atomic commit 9a: Same for transfers**
+**Atomic commit 9a: Same for transfers** ✅ `f3c2bfe`
 
 - Mirror commit 8a for `/api/transfers/years/:year/count` and `/api/transfers/years/:year`
 
-### Phase 3 — Client Method Semantics + Cleanup (C1, C2)
+### Phase 3 — Client Method Semantics + Cleanup (C1, C2) ✅
 
-**Atomic commit 10: Rename client methods for semantic clarity**
+**Atomic commit 10: Rename client methods for semantic clarity** ✅ `31ddb7c`
 
 - `upsertSettings()` → `saveSettings()` in `worker-db-client.ts`
 - Update all call sites in `src/`
 
-**Atomic commit 11: Add `deleteSettings()` to `WorkerDbClient`**
+**Atomic commit 11: Add `deleteSettings()` to `WorkerDbClient`** ✅ `00cb51a`
 
 - Add `deleteSettings(userId)` to `WorkerDbClient` — route already exists at `worker/src/index.ts:361`
 - Route is actively used by E2E cleanup (`worker/tests/e2e/helpers/cleanup.ts:43`) — **must not be removed**
 - Adding the client method provides hard-delete capability for future business use
 
-**Atomic commit 12: Remove all old-path aliases from Worker**
+**Atomic commit 12: Remove all old-path aliases from Worker** ✅ `d8d191b`
 
 After confirming Next.js is deployed and stable on new paths:
 - Remove all old route handlers that were kept as aliases in Phase 1–2:
