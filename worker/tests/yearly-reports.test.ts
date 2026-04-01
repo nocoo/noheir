@@ -155,13 +155,45 @@ describe("reports repo — yearly aggregation", () => {
       await repos.transactions.create(userId, makeTx({ type: "income", amountCents: 100000 }));
       await repos.transactions.create(userId, makeTx({ type: "expense", amountCents: 5000 }));
 
-      const incomeResult = await repos.reports.categorySummary(userId, 2025, "income");
+      const incomeResult = await repos.reports.categorySummary(userId, 2025, undefined, "income");
       expect(incomeResult.categories).toHaveLength(1);
       expect(incomeResult.categories[0]!.total).toBe(100000);
 
-      const expenseResult = await repos.reports.categorySummary(userId, 2025, "expense");
+      const expenseResult = await repos.reports.categorySummary(userId, 2025, undefined, "expense");
       expect(expenseResult.categories).toHaveLength(1);
       expect(expenseResult.categories[0]!.total).toBe(5000);
+    });
+
+    test("filters by month", async () => {
+      const repos = getTestRepos();
+      await repos.transactions.create(userId, makeTx({ month: 1, date: "2025-01-15", amountCents: 1000 }));
+      await repos.transactions.create(userId, makeTx({ month: 1, date: "2025-01-20", amountCents: 2000 }));
+      await repos.transactions.create(userId, makeTx({ month: 3, date: "2025-03-15", amountCents: 5000 }));
+
+      const janResult = await repos.reports.categorySummary(userId, 2025, 1);
+      expect(janResult.categories).toHaveLength(1);
+      expect(janResult.categories[0]!.total).toBe(3000);
+      expect(janResult.categories[0]!.count).toBe(2);
+
+      const marResult = await repos.reports.categorySummary(userId, 2025, 3);
+      expect(marResult.categories).toHaveLength(1);
+      expect(marResult.categories[0]!.total).toBe(5000);
+      expect(marResult.categories[0]!.count).toBe(1);
+    });
+
+    test("filters by month and type combined", async () => {
+      const repos = getTestRepos();
+      await repos.transactions.create(userId, makeTx({ month: 1, type: "income", amountCents: 100000 }));
+      await repos.transactions.create(userId, makeTx({ month: 1, type: "expense", amountCents: 3000 }));
+      await repos.transactions.create(userId, makeTx({ month: 3, type: "expense", amountCents: 5000 }));
+
+      const janExpense = await repos.reports.categorySummary(userId, 2025, 1, "expense");
+      expect(janExpense.categories).toHaveLength(1);
+      expect(janExpense.categories[0]!.total).toBe(3000);
+
+      const janIncome = await repos.reports.categorySummary(userId, 2025, 1, "income");
+      expect(janIncome.categories).toHaveLength(1);
+      expect(janIncome.categories[0]!.total).toBe(100000);
     });
 
     test("returns all types when type is omitted", async () => {

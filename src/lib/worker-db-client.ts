@@ -337,8 +337,9 @@ export class WorkerDbClient {
     }>("GET", `/api/reports/yearly-summary?year=${year}`, userId);
   }
 
-  async getCategorySummary(userId: string, year: number, type?: string) {
+  async getCategorySummary(userId: string, year: number, month?: number, type?: string) {
     const params = new URLSearchParams({ year: year.toString() });
+    if (month) params.set("month", month.toString());
     if (type) params.set("type", type);
     return this.request<{
       categories: Array<{

@@ -225,17 +225,21 @@ export function createReportsRepo(db: DrizzleD1Database) {
 
     /**
      * Category summary: SUM/COUNT grouped by (primary, secondary, tertiary).
-     * Filtered by year and optionally by type (income/expense).
+     * Filtered by year, optionally by month, and optionally by type (income/expense).
      */
     async categorySummary(
       userId: string,
       year: number,
+      month?: number,
       type?: string,
     ): Promise<CategorySummaryResponse> {
       const conditions = [
         eq(transactions.userId, userId),
         eq(transactions.year, year),
       ];
+      if (month) {
+        conditions.push(eq(transactions.month, month));
+      }
       if (type) {
         conditions.push(eq(transactions.type, type));
       }

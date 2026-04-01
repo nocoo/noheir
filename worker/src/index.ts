@@ -416,7 +416,7 @@ app.get("/api/reports/yearly-summary", async (c) => {
 app.get("/api/reports/category-summary", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
-  const { year, type } = c.req.query();
+  const { year, month, type } = c.req.query();
 
   if (!year) {
     return c.json({ error: "year is required" }, 400);
@@ -425,6 +425,7 @@ app.get("/api/reports/category-summary", async (c) => {
   const result = await repos.reports.categorySummary(
     userId,
     parseInt(year, 10),
+    month ? parseInt(month, 10) : undefined,
     type || undefined,
   );
   return c.json(result);
