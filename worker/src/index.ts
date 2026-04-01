@@ -4,6 +4,12 @@ import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { createAllRepos, type AllRepos } from "../db/repositories";
+import {
+  createProductSchema,
+  updateProductSchema,
+  createUnitSchema,
+  updateUnitSchema,
+} from "../db/validation";
 
 /** Strip undefined values from an object at runtime.
  *  Returns a clean Record<string, string> that satisfies exactOptionalPropertyTypes. */
@@ -13,6 +19,15 @@ function pickDefined(obj: Record<string, string | undefined>): Record<string, st
     if (v !== undefined) result[k] = v;
   }
   return result;
+}
+
+/** Strip undefined values from any object for exactOptionalPropertyTypes compatibility. */
+function stripUndefined<T extends Record<string, unknown>>(obj: T): { [K in keyof T]: Exclude<T[K], undefined> } {
+  const result: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v !== undefined) result[k] = v;
+  }
+  return result as { [K in keyof T]: Exclude<T[K], undefined> };
 }
 
 // ── Cloudflare Bindings ──
@@ -297,7 +312,13 @@ app.post("/api/products", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
   const body = await c.req.json();
-  const row = await repos.products.create(userId, body);
+
+  const parsed = createProductSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: parsed.error.issues.map((i) => i.message).join("; ") }, 400);
+  }
+
+  const row = await repos.products.create(userId, parsed.data);
   return c.json({ product: row }, 201);
 });
 
@@ -305,7 +326,13 @@ app.put("/api/products/:id", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
   const body = await c.req.json();
-  const row = await repos.products.update(userId, c.req.param("id"), body);
+
+  const parsed = updateProductSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: parsed.error.issues.map((i) => i.message).join("; ") }, 400);
+  }
+
+  const row = await repos.products.update(userId, c.req.param("id"), stripUndefined(parsed.data));
   return row ? c.json({ product: row }) : c.json({ error: "Not found" }, 404);
 });
 
@@ -343,7 +370,13 @@ app.post("/api/units", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
   const body = await c.req.json();
-  const row = await repos.units.create(userId, body);
+
+  const parsed = createUnitSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: parsed.error.issues.map((i) => i.message).join("; ") }, 400);
+  }
+
+  const row = await repos.units.create(userId, parsed.data);
   return c.json({ unit: row }, 201);
 });
 
@@ -351,7 +384,13 @@ app.put("/api/units/:id", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
   const body = await c.req.json();
-  const row = await repos.units.update(userId, c.req.param("id"), body);
+
+  const parsed = updateUnitSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: parsed.error.issues.map((i) => i.message).join("; ") }, 400);
+  }
+
+  const row = await repos.units.update(userId, c.req.param("id"), stripUndefined(parsed.data));
   return row ? c.json({ unit: row }) : c.json({ error: "Not found" }, 404);
 });
 
