@@ -35,7 +35,7 @@ This document details the differences between the old Supabase-based system and 
 
 ### Behavior Changes
 
-- Search `limit` default: 100 → 50
+- Search `limit` default: 100 (unchanged)
 - Search `limit` max: 1000 (PostgREST) → 5000 (Worker clamp)
 - Tags filter: PostgreSQL `@>` operator → D1 `LIKE '%"tag"%'`
 
@@ -512,9 +512,9 @@ jobs:
 
 ### Medium Risk
 
-1. **CHECK constraint removal** — Invalid enum values can enter database
+1. **CHECK constraint removal** — Invalid enum values can enter database (now mitigated by Zod validation)
 2. **Tags format change** — Existing queries will fail silently
-3. **Default limit reduction** — Pagination behavior changes
+3. **Limit max increase** — 5000 vs 1000 could cause performance issues
 
 ### Low Risk
 
