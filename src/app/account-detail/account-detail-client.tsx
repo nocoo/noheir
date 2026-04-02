@@ -57,8 +57,8 @@ interface AccountDetailClientProps {
 }
 
 const TYPE_LABELS: Record<string, { label: string; color: string }> = {
-  income: { label: "收入", color: "text-emerald-600" },
-  expense: { label: "支出", color: "text-rose-600" },
+  income: { label: "收入", color: "text-income" },
+  expense: { label: "支出", color: "text-expense" },
   transfer: { label: "转账", color: "text-blue-600" },
   anchor: { label: "锚点", color: "text-muted-foreground" },
 }
@@ -231,7 +231,7 @@ export function AccountDetailClient({
             </TableHeader>
             <TableBody>
               {displayEntries.map((entry) => {
-                const typeInfo = TYPE_LABELS[entry.type] ?? { label: "支出", color: "text-rose-600" }
+                const typeInfo = TYPE_LABELS[entry.type] ?? { label: "支出", color: "text-expense" }
                 const isAnchor = entry.isAnchor === true
 
                 return (

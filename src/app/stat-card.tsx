@@ -11,8 +11,8 @@ interface StatCardProps {
 }
 
 const variantStyles: Record<StatCardProps["variant"], string> = {
-  income: "border-l-emerald-500 text-emerald-600 dark:text-emerald-400",
-  expense: "border-l-rose-500 text-rose-600 dark:text-rose-400",
+  income: "border-l-income text-income",
+  expense: "border-l-expense text-expense",
   warning: "border-l-amber-500 text-amber-600 dark:text-amber-400",
 }
 

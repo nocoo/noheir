@@ -54,7 +54,7 @@ export function SavingsRateClient({
       ? "text-destructive"
       : savingsRateStatus === "met"
         ? "text-primary"
-        : "text-emerald-600 dark:text-emerald-400"
+        : "text-income"
 
   return (
     <div className="space-y-6">
@@ -80,7 +80,7 @@ export function SavingsRateClient({
               "border-destructive/30 bg-destructive/10",
             savingsRateStatus === "met" && "border-primary/30 bg-primary/10",
             savingsRateStatus === "exceeded" &&
-              "border-emerald-500/30 bg-emerald-500/10",
+              "border-income/30 bg-income/10",
           )}
         >
           <p className="text-muted-foreground text-sm">年度储蓄率</p>

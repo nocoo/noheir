@@ -291,8 +291,8 @@ export function AccountAnalysisClient({
                     className={cn(
                       "font-medium",
                       group.totalBalance >= 0
-                        ? "text-emerald-600"
-                        : "text-rose-600",
+                        ? "text-income"
+                        : "text-expense",
                     )}
                   >
                     {formatCurrencyFull(group.totalBalance)}
@@ -337,18 +337,18 @@ export function AccountAnalysisClient({
               {accounts.map((acc) => (
                 <TableRow key={acc.name}>
                   <TableCell className="font-medium">{acc.name}</TableCell>
-                  <TableCell className="text-right text-emerald-600">
+                  <TableCell className="text-income text-right">
                     {formatCurrencyFull(acc.income)}
                   </TableCell>
-                  <TableCell className="text-right text-rose-600">
+                  <TableCell className="text-expense text-right">
                     {formatCurrencyFull(acc.expense)}
                   </TableCell>
                   <TableCell
                     className={cn(
                       "text-right font-medium",
                       acc.balance >= 0
-                        ? "text-emerald-600"
-                        : "text-rose-600",
+                        ? "text-income"
+                        : "text-expense",
                     )}
                   >
                     {formatCurrencyFull(acc.balance)}

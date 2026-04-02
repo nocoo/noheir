@@ -53,10 +53,8 @@ export function TransactionAnalysisClient({
   labels,
 }: TransactionAnalysisClientProps) {
   const isIncome = type === "income"
-  const colorHex = isIncome ? "#10b981" : "#f43f5e"
-  const colorClass = isIncome
-    ? "text-emerald-600 dark:text-emerald-400"
-    : "text-rose-600 dark:text-rose-400"
+  const colorHex = isIncome ? "var(--color-income)" : "var(--color-expense)"
+  const colorClass = isIncome ? "text-income" : "text-expense"
   const variant = isIncome ? "income" : "expense"
   const icon = isIncome ? TrendingUp : TrendingDown
   const dataKey: "income" | "expense" = isIncome ? "income" : "expense"
