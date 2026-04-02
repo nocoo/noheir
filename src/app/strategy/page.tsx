@@ -21,20 +21,10 @@ export default async function StrategyPage() {
   const hierarchy = buildStrategyHierarchy(units, "全部资产")
   const totalAmount = buildTotalAmount(units)
 
-  // Flatten hierarchy for treemap
-  const treemapData = hierarchy.children?.flatMap((currencyNode) =>
-    (currencyNode.children ?? []).map((strategyNode) => ({
-      name: `${currencyNode.name} / ${strategyNode.name}`,
-      value: strategyNode.value ?? 0,
-      currency: currencyNode.name,
-      strategy: strategyNode.name,
-    })),
-  ) ?? []
-
   return (
     <AppShell>
       <StrategyClient
-        treemapData={treemapData}
+        hierarchy={hierarchy}
         totalAmount={totalAmount}
       />
     </AppShell>
