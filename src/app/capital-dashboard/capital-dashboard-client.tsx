@@ -70,7 +70,7 @@ function DistributionPie({
   data: DistributionItem[]
 }) {
   return (
-    <Card className="bg-muted/20">
+    <Card className="border-l-4 border-l-primary bg-card">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm">{title}</CardTitle>
         <CardDescription className="text-xs">{description}</CardDescription>
@@ -338,15 +338,17 @@ export function CapitalDashboardClient({
       {Object.keys(totalsByCurrency).length > 0 && (
         <div className="grid grid-cols-3 gap-3">
           {Object.entries(totalsByCurrency).map(([currency, amount]) => (
-            <div
+            <Card
               key={currency}
-              className="flex items-center justify-between rounded-lg border bg-muted/30 px-3 py-2"
+              className="border-l-4 border-l-primary bg-card"
             >
-              <span className="text-muted-foreground text-sm">{currency}</span>
-              <span className="text-primary font-bold">
-                {formatCurrencyFull(amount)}
-              </span>
-            </div>
+              <CardContent className="flex items-center justify-between p-3">
+                <span className="text-muted-foreground text-sm">{currency}</span>
+                <span className="text-primary font-bold">
+                  {formatCurrencyFull(amount)}
+                </span>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}
