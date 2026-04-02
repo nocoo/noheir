@@ -7,33 +7,52 @@ interface StatCardProps {
   title: string
   value: string
   icon: React.ElementType
-  variant: "income" | "expense" | "warning"
+  variant: "income" | "expense" | "warning" | "primary"
 }
 
-const variantStyles: Record<StatCardProps["variant"], string> = {
-  income: "border-l-income text-income",
-  expense: "border-l-expense text-expense",
-  warning: "border-l-amber-500 text-amber-600 dark:text-amber-400",
+const variantStyles: Record<
+  StatCardProps["variant"],
+  { border: string; bg: string; text: string; iconText: string }
+> = {
+  income: {
+    border: "border-l-income",
+    bg: "bg-emerald-500/5",
+    text: "text-income",
+    iconText: "text-income",
+  },
+  expense: {
+    border: "border-l-expense",
+    bg: "bg-rose-500/5",
+    text: "text-expense",
+    iconText: "text-expense",
+  },
+  warning: {
+    border: "border-l-amber-500",
+    bg: "bg-amber-500/5",
+    text: "text-amber-600 dark:text-amber-400",
+    iconText: "text-amber-600 dark:text-amber-400",
+  },
+  primary: {
+    border: "border-l-primary",
+    bg: "bg-primary/5",
+    text: "text-primary",
+    iconText: "text-primary",
+  },
 }
 
 export function StatCard({ title, value, icon: Icon, variant }: StatCardProps) {
   const styles = variantStyles[variant]
-  const borderColor = styles.split(" ")[0] ?? ""
-  const textColor = styles
-    .split(" ")
-    .filter((c) => c.startsWith("text-") || c.startsWith("dark:text-"))
-    .join(" ")
 
   return (
-    <Card className={cn("border-l-4", borderColor)}>
-      <CardContent className="flex items-center justify-between pt-4">
-        <div>
-          <p className="text-muted-foreground text-sm">{title}</p>
-          <p className={cn("text-2xl font-bold", textColor)}>{value}</p>
+    <Card className={cn("border-l-4", styles.border, styles.bg)}>
+      <CardContent className="flex items-center justify-between p-4">
+        <div className="min-w-0 flex-1">
+          <p className="text-muted-foreground truncate text-xs">{title}</p>
+          <p className={cn("truncate text-xl font-bold", styles.text)}>
+            {value}
+          </p>
         </div>
-        <Icon
-          className={cn("size-8 opacity-30", textColor)}
-        />
+        <Icon className={cn("size-7 shrink-0 opacity-40", styles.iconText)} />
       </CardContent>
     </Card>
   )

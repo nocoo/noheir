@@ -42,13 +42,13 @@ function DistributionPie({
   data: DistributionItem[]
 }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+    <Card className="bg-muted/20">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm">{title}</CardTitle>
+        <CardDescription className="text-xs">{description}</CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="h-[250px]">
+      <CardContent className="pb-3">
+        <div className="h-[180px]">
           {data.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -58,8 +58,8 @@ function DistributionPie({
                   nameKey="name"
                   cx="50%"
                   cy="50%"
-                  outerRadius={80}
-                  innerRadius={40}
+                  outerRadius={70}
+                  innerRadius={35}
                   paddingAngle={2}
                 >
                   {data.map((_, i) => (
@@ -98,11 +98,11 @@ function DistributionPie({
           )}
         </div>
         {/* Legend */}
-        <div className="mt-2 flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-x-3 gap-y-1">
           {data.map((item, i) => (
             <div key={item.name} className="flex items-center gap-1 text-xs">
               <div
-                className="size-3 rounded-full"
+                className="size-2.5 rounded-full"
                 style={{
                   backgroundColor:
                     PIE_COLORS[i % PIE_COLORS.length] ??
@@ -110,7 +110,8 @@ function DistributionPie({
                     "#64748b",
                 }}
               />
-              <span>{item.name}</span>
+              <span className="text-muted-foreground">{item.name}</span>
+              <span className="font-medium">{item.percentage.toFixed(0)}%</span>
             </div>
           ))}
         </div>
@@ -130,7 +131,7 @@ export function CapitalDashboardClient({
   maturityDistribution,
 }: CapitalDashboardClientProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold">
@@ -143,18 +144,18 @@ export function CapitalDashboardClient({
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard
           title="总资产"
           value={formatCurrencyFull(totalAll)}
           icon={BarChart3}
-          variant="income"
+          variant="primary"
         />
         <StatCard
           title="配置率"
           value={`${deploymentRate.toFixed(1)}%`}
           icon={Percent}
-          variant="warning"
+          variant="income"
         />
         <StatCard
           title="闲置资金"
@@ -172,30 +173,23 @@ export function CapitalDashboardClient({
 
       {/* Currency breakdown */}
       {Object.keys(totalsByCurrency).length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">币种明细</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              {Object.entries(totalsByCurrency).map(([currency, amount]) => (
-                <div
-                  key={currency}
-                  className="flex items-center justify-between rounded-lg border p-3"
-                >
-                  <span className="font-medium">{currency}</span>
-                  <span className="text-primary font-bold">
-                    {formatCurrencyFull(amount)}
-                  </span>
-                </div>
-              ))}
+        <div className="grid grid-cols-3 gap-3">
+          {Object.entries(totalsByCurrency).map(([currency, amount]) => (
+            <div
+              key={currency}
+              className="flex items-center justify-between rounded-lg border bg-muted/30 px-3 py-2"
+            >
+              <span className="text-muted-foreground text-sm">{currency}</span>
+              <span className="text-primary font-bold">
+                {formatCurrencyFull(amount)}
+              </span>
             </div>
-          </CardContent>
-        </Card>
+          ))}
+        </div>
       )}
 
       {/* Distribution Charts */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <DistributionPie
           title="币种分布"
           description="按币种的资产配置"
