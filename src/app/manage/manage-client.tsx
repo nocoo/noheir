@@ -176,26 +176,26 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
         <CardContent>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
             <div>
-              <p className="text-muted-foreground text-sm">覆盖年份</p>
-              <p className="text-2xl font-bold">{dataSummary.years.length}</p>
+              <p className="text-xs text-muted-foreground">覆盖年份</p>
+              <p className="text-2xl font-semibold font-display">{dataSummary.years.length}</p>
             </div>
             <div>
-              <p className="text-muted-foreground text-sm">交易记录</p>
-              <p className="text-2xl font-bold">{dataSummary.totalTransactions.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">交易记录</p>
+              <p className="text-2xl font-semibold font-display">{dataSummary.totalTransactions.toLocaleString()}</p>
             </div>
             <div>
-              <p className="text-muted-foreground text-sm">转账记录</p>
-              <p className="text-2xl font-bold">{dataSummary.totalTransfers.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">转账记录</p>
+              <p className="text-2xl font-semibold font-display">{dataSummary.totalTransfers.toLocaleString()}</p>
             </div>
             <div>
-              <p className="text-muted-foreground text-sm">总收入</p>
-              <p className="text-xl font-bold text-income">
+              <p className="text-xs text-muted-foreground">总收入</p>
+              <p className="text-xl font-semibold font-display text-income">
                 {formatCurrency(dataSummary.totalIncome)}
               </p>
             </div>
             <div>
-              <p className="text-muted-foreground text-sm">总支出</p>
-              <p className="text-xl font-bold text-expense">
+              <p className="text-xs text-muted-foreground">总支出</p>
+              <p className="text-xl font-semibold font-display text-expense">
                 {formatCurrency(dataSummary.totalExpense)}
               </p>
             </div>
@@ -206,7 +206,7 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
               <Separator className="my-4" />
               <div className="space-y-3">
                 <div>
-                  <p className="text-muted-foreground text-sm mb-2">
+                  <p className="text-xs text-muted-foreground mb-2">
                     资金账户 ({dataSummary.totalAccounts.length})
                   </p>
                   <div className="flex flex-wrap gap-1">
@@ -223,7 +223,7 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
                   </div>
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-sm mb-2">
+                  <p className="text-xs text-muted-foreground mb-2">
                     一级分类 ({dataSummary.totalCategories.length})
                   </p>
                   <div className="flex flex-wrap gap-1">
@@ -257,12 +257,12 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-6 mb-6">
-              <div className={`text-5xl font-bold ${healthColor}`}>
+              <div className={`text-5xl font-semibold font-display ${healthColor}`}>
                 {healthScore.toFixed(0)}%
               </div>
               <div className="flex-1 space-y-2">
                 <Progress value={healthScore} className="h-2" />
-                <p className={`font-medium ${healthColor}`}>
+                <p className={`text-sm font-medium ${healthColor}`}>
                   数据质量{healthLabel}
                 </p>
                 <div className="flex gap-2 flex-wrap">
@@ -283,7 +283,7 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
                     </Badge>
                   )}
                   {healthMetrics.missingDates === 0 && healthMetrics.zeroAmounts === 0 && (
-                    <Badge variant="outline" className="gap-1 text-xs text-income">
+                    <Badge variant="outline" className="gap-1 text-xs text-green-600 dark:text-green-400">
                       <CheckCircle className="size-3" />
                       无异常
                     </Badge>
@@ -318,8 +318,8 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
 
             {/* Category Mapping Warning */}
             {healthMetrics.missingSecondaryMappings > 0 && (
-              <div className="mt-4 p-3 rounded-lg border border-orange-500/50 bg-orange-500/10">
-                <div className="flex items-center gap-2 text-orange-700 dark:text-orange-400 font-medium mb-2">
+              <div className="mt-4 p-3 rounded-[var(--radius-card)] bg-secondary border border-yellow-500/50">
+                <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-400 font-medium mb-2">
                   <AlertTriangle className="size-4" />
                   分类映射缺失
                 </div>
@@ -331,7 +331,7 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
                     <Badge
                       key={cat}
                       variant="outline"
-                      className="text-xs border-orange-500/50 text-orange-700 dark:text-orange-400"
+                      className="text-xs border-yellow-500/50 text-yellow-700 dark:text-yellow-400"
                     >
                       {cat}
                     </Badge>
@@ -365,7 +365,7 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
                 onOpenChange={() => toggleYear(stats.year)}
               >
                 <CollapsibleTrigger asChild>
-                  <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors">
+                  <div className="flex items-center justify-between p-3 rounded-[var(--radius-card)] border hover:bg-secondary cursor-pointer transition-colors">
                     <div className="flex items-center gap-3">
                       <Badge variant="default" className="text-sm font-semibold">
                         {stats.year}
@@ -391,26 +391,26 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
                   </div>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <div className="mt-2 p-4 rounded-lg bg-muted/30 space-y-4">
+                  <div className="mt-2 p-4 rounded-[var(--radius-card)] bg-secondary space-y-4">
                     {/* Year Stats Grid */}
                     <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                       <div>
-                        <p className="text-muted-foreground text-xs">收入笔数</p>
-                        <p className="text-lg font-bold text-income">{stats.incomeCount}</p>
+                        <p className="text-xs text-muted-foreground">收入笔数</p>
+                        <p className="text-lg font-semibold font-display text-income">{stats.incomeCount}</p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground text-xs">支出笔数</p>
-                        <p className="text-lg font-bold text-expense">{stats.expenseCount}</p>
+                        <p className="text-xs text-muted-foreground">支出笔数</p>
+                        <p className="text-lg font-semibold font-display text-expense">{stats.expenseCount}</p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground text-xs">净收入</p>
-                        <p className={`text-lg font-bold ${stats.netAmount >= 0 ? "text-income" : "text-expense"}`}>
+                        <p className="text-xs text-muted-foreground">净收入</p>
+                        <p className={`text-lg font-semibold font-display ${stats.netAmount >= 0 ? "text-income" : "text-expense"}`}>
                           {formatCurrency(stats.netAmount)}
                         </p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground text-xs">覆盖月份</p>
-                        <p className="text-lg font-bold">{stats.monthsCovered.length}/12</p>
+                        <p className="text-xs text-muted-foreground">覆盖月份</p>
+                        <p className="text-lg font-semibold font-display">{stats.monthsCovered.length}/12</p>
                       </div>
                     </div>
 
@@ -571,10 +571,12 @@ function CompletenessBar({
   percentage: number
   icon: React.ComponentType<{ className?: string }>
 }) {
+  // Use fixed colors: green=good, yellow=warning, red=bad
+  // (not semantic income/expense which can swap)
   const getColor = (p: number) => {
-    if (p >= 95) return "bg-income"
+    if (p >= 95) return "bg-green-500"
     if (p >= 80) return "bg-yellow-500"
-    return "bg-expense"
+    return "bg-red-500"
   }
 
   return (
