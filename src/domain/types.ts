@@ -167,3 +167,8 @@ export interface AIConfig {
   baseURL: string;
   modelName: string;
 }
+
+// ── Theme & Color types ──
+
+export type Theme = "light" | "dark" | "system";
+export type ColorScheme = "default" | "swapped";
