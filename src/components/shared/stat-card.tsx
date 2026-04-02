@@ -40,7 +40,7 @@ export function StatCard({ title, value, icon: Icon, variant }: StatCardProps) {
   const styles = variantStyles[variant]
 
   return (
-    <Card className={cn("border-l-4 bg-card", styles.border)}>
+    <Card className={cn("border-l-4", styles.border)}>
       <CardContent className="flex items-center justify-between p-4">
         <div className="min-w-0 flex-1">
           <p className="text-muted-foreground truncate text-xs">{title}</p>

@@ -82,7 +82,7 @@ export function FinancialFreedomClient({
       {/* Status Card */}
       <Card
         className={cn(
-          "border-l-4 bg-card",
+          "border-l-4",
           summary.isFree
             ? "border-l-success"
             : "border-l-amber-500",
@@ -122,7 +122,7 @@ export function FinancialFreedomClient({
 
       {/* Income Breakdown */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card className="border-l-4 border-l-primary bg-card">
+        <Card className="border-l-4 border-l-primary">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Briefcase className="text-primary size-5" />
@@ -153,7 +153,7 @@ export function FinancialFreedomClient({
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-success bg-card">
+        <Card className="border-l-4 border-l-success">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Coins className="text-success size-5" />

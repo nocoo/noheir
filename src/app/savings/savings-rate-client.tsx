@@ -75,7 +75,7 @@ export function SavingsRateClient({
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <Card
           className={cn(
-            "border-l-4 bg-card",
+            "border-l-4",
             savingsRateStatus === "below" && "border-l-destructive",
             savingsRateStatus === "met" && "border-l-primary",
             savingsRateStatus === "exceeded" && "border-l-success",
@@ -112,7 +112,7 @@ export function SavingsRateClient({
             />
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-primary bg-card">
+        <Card className="border-l-4 border-l-primary">
           <CardContent className="flex items-center justify-between p-4">
             <div className="min-w-0 flex-1">
               <p className="text-muted-foreground text-xs">累计储蓄</p>
@@ -135,7 +135,7 @@ export function SavingsRateClient({
             <Wallet className="text-primary size-7 shrink-0 opacity-40" />
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-success bg-card">
+        <Card className="border-l-4 border-l-success">
           <CardContent className="flex items-center justify-between p-4">
             <div className="min-w-0 flex-1">
               <p className="text-muted-foreground text-xs">最佳月份</p>
@@ -149,7 +149,7 @@ export function SavingsRateClient({
             <TrendingUp className="text-success size-7 shrink-0 opacity-40" />
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-destructive bg-card">
+        <Card className="border-l-4 border-l-destructive">
           <CardContent className="flex items-center justify-between p-4">
             <div className="min-w-0 flex-1">
               <p className="text-muted-foreground text-xs">待改善月份</p>

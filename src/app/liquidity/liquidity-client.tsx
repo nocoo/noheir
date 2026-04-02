@@ -161,7 +161,7 @@ export function LiquidityClient({
 
       {/* Insights */}
       <div className="grid gap-4 md:grid-cols-2">
-        <Card className="border-l-4 border-l-primary bg-card">
+        <Card className="border-l-4 border-l-primary">
           <CardContent className="p-4">
             <h3 className="mb-2 font-semibold">💡 使用场景</h3>
             <ul className="text-muted-foreground space-y-1 text-sm">
@@ -173,7 +173,7 @@ export function LiquidityClient({
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-primary bg-card">
+        <Card className="border-l-4 border-l-primary">
           <CardContent className="p-4">
             <h3 className="mb-2 font-semibold">📊 阅读指南</h3>
             <ul className="text-muted-foreground space-y-1 text-sm">
