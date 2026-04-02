@@ -12,7 +12,7 @@ import {
   ReferenceLine,
   Cell,
 } from "recharts"
-import { TrendingUp, TrendingDown, PiggyBank } from "lucide-react"
+import { TrendingUp, TrendingDown, PiggyBank, Target, Wallet } from "lucide-react"
 import type {
   SavingsRateChartPoint,
   SavingsRateSummary,
@@ -34,8 +34,8 @@ interface SavingsRateClientProps {
   targetSavingsRate: number
 }
 
-const INCOME_HEX = "#10b981"
-const EXPENSE_HEX = "#f43f5e"
+const INCOME_HEX = "var(--color-income)"
+const EXPENSE_HEX = "var(--color-expense)"
 
 export function SavingsRateClient({
   chartData,
@@ -54,7 +54,7 @@ export function SavingsRateClient({
       ? "text-destructive"
       : savingsRateStatus === "met"
         ? "text-primary"
-        : "text-income"
+        : "text-success"
 
   return (
     <div className="space-y-6">
@@ -73,75 +73,96 @@ export function SavingsRateClient({
 
       {/* Summary Stats */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <div
+        <Card
           className={cn(
-            "rounded-lg border p-4 transition-colors",
-            savingsRateStatus === "below" &&
-              "border-destructive/30 bg-destructive/10",
-            savingsRateStatus === "met" && "border-primary/30 bg-primary/10",
-            savingsRateStatus === "exceeded" &&
-              "border-income/30 bg-income/10",
+            "border-l-4 bg-card",
+            savingsRateStatus === "below" && "border-l-destructive",
+            savingsRateStatus === "met" && "border-l-primary",
+            savingsRateStatus === "exceeded" && "border-l-success",
           )}
         >
-          <p className="text-muted-foreground text-sm">年度储蓄率</p>
-          <div className="flex items-baseline gap-2">
-            <p className={cn("text-2xl font-bold", savingsRateColorClass)}>
-              {summary.annualSavingsRate.toFixed(1)}%
-            </p>
-            <Badge
-              variant={
-                summary.savingsRateDiff >= 0 ? "default" : "destructive"
-              }
-              className="text-xs"
-            >
-              {summary.savingsRateDiff >= 0 ? "+" : ""}
-              {summary.savingsRateDiff.toFixed(1)}%
-            </Badge>
-          </div>
-          <p className="text-muted-foreground mt-1 text-xs">
-            目标: {targetSavingsRate}%
-          </p>
-        </div>
-        <div className="bg-accent rounded-lg border p-4">
-          <p className="text-muted-foreground text-sm">累计储蓄</p>
-          <p className="text-accent-foreground text-2xl font-bold">
-            {formatCurrencyFull(summary.totalSavings)}
-          </p>
-          <div className="mt-1 flex items-center gap-2">
-            <Badge
-              variant={summary.savingsGap >= 0 ? "default" : "destructive"}
-              className="text-xs"
-            >
-              {summary.savingsGap >= 0 ? "+" : ""}
-              {formatCurrencyFull(Math.abs(summary.savingsGap))}
-            </Badge>
-            <p className="text-muted-foreground text-xs">
-              {summary.savingsGap >= 0 ? "超额完成" : "还差"}
-            </p>
-          </div>
-        </div>
-        <div className="rounded-lg border p-4">
-          <p className="text-muted-foreground flex items-center gap-1 text-sm">
-            最佳月份 <TrendingUp className="text-primary size-3" />
-          </p>
-          <p className="text-lg font-semibold">
-            {summary.bestMonth?.month ?? "—"}
-          </p>
-          <p className="text-primary text-sm">
-            {summary.bestMonth?.savingsRate.toFixed(1) ?? "0"}%
-          </p>
-        </div>
-        <div className="rounded-lg border p-4">
-          <p className="text-muted-foreground flex items-center gap-1 text-sm">
-            待改善月份 <TrendingDown className="text-destructive size-3" />
-          </p>
-          <p className="text-lg font-semibold">
-            {summary.worstMonth?.month ?? "—"}
-          </p>
-          <p className="text-destructive text-sm">
-            {summary.worstMonth?.savingsRate.toFixed(1) ?? "0"}%
-          </p>
-        </div>
+          <CardContent className="flex items-center justify-between p-4">
+            <div className="min-w-0 flex-1">
+              <p className="text-muted-foreground text-xs">年度储蓄率</p>
+              <div className="flex items-baseline gap-2">
+                <p className={cn("text-xl font-bold", savingsRateColorClass)}>
+                  {summary.annualSavingsRate.toFixed(1)}%
+                </p>
+                <Badge
+                  variant={
+                    summary.savingsRateDiff >= 0 ? "default" : "destructive"
+                  }
+                  className="text-xs"
+                >
+                  {summary.savingsRateDiff >= 0 ? "+" : ""}
+                  {summary.savingsRateDiff.toFixed(1)}%
+                </Badge>
+              </div>
+              <p className="text-muted-foreground mt-1 text-xs">
+                目标: {targetSavingsRate}%
+              </p>
+            </div>
+            <Target
+              className={cn(
+                "size-7 shrink-0 opacity-40",
+                savingsRateStatus === "below" && "text-destructive",
+                savingsRateStatus === "met" && "text-primary",
+                savingsRateStatus === "exceeded" && "text-success",
+              )}
+            />
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-primary bg-card">
+          <CardContent className="flex items-center justify-between p-4">
+            <div className="min-w-0 flex-1">
+              <p className="text-muted-foreground text-xs">累计储蓄</p>
+              <p className="text-primary text-xl font-bold">
+                {formatCurrencyFull(summary.totalSavings)}
+              </p>
+              <div className="mt-1 flex items-center gap-1">
+                <Badge
+                  variant={summary.savingsGap >= 0 ? "default" : "destructive"}
+                  className="text-xs"
+                >
+                  {summary.savingsGap >= 0 ? "+" : ""}
+                  {formatCurrencyFull(Math.abs(summary.savingsGap))}
+                </Badge>
+                <span className="text-muted-foreground text-xs">
+                  {summary.savingsGap >= 0 ? "超额" : "还差"}
+                </span>
+              </div>
+            </div>
+            <Wallet className="text-primary size-7 shrink-0 opacity-40" />
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-success bg-card">
+          <CardContent className="flex items-center justify-between p-4">
+            <div className="min-w-0 flex-1">
+              <p className="text-muted-foreground text-xs">最佳月份</p>
+              <p className="text-lg font-semibold">
+                {summary.bestMonth?.month ?? "—"}
+              </p>
+              <p className="text-success text-sm">
+                {summary.bestMonth?.savingsRate.toFixed(1) ?? "0"}%
+              </p>
+            </div>
+            <TrendingUp className="text-success size-7 shrink-0 opacity-40" />
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-destructive bg-card">
+          <CardContent className="flex items-center justify-between p-4">
+            <div className="min-w-0 flex-1">
+              <p className="text-muted-foreground text-xs">待改善月份</p>
+              <p className="text-lg font-semibold">
+                {summary.worstMonth?.month ?? "—"}
+              </p>
+              <p className="text-destructive text-sm">
+                {summary.worstMonth?.savingsRate.toFixed(1) ?? "0"}%
+              </p>
+            </div>
+            <TrendingDown className="text-destructive size-7 shrink-0 opacity-40" />
+          </CardContent>
+        </Card>
       </div>
 
       {/* Chart */}
