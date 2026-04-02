@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState, useTransition, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import {
@@ -10,6 +10,10 @@ import {
   Pencil,
   Trash2,
   ArrowUpDown,
+  Filter,
+  X,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react"
 import {
   Card,
@@ -17,6 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
@@ -93,7 +98,9 @@ const TACTICS = [
   "货币基金",
 ]
 
-type SortField = "unitCode" | "amount" | "endDate" | "status"
+const STATUSES = ["已成立", "计划中", "筹集中", "已归档"]
+
+type SortField = "unitCode" | "amount" | "endDate" | "status" | "strategy"
 type SortDir = "asc" | "desc"
 
 export function FundsClient({ units }: FundsClientProps) {
@@ -106,6 +113,22 @@ export function FundsClient({ units }: FundsClientProps) {
   const [sortDir, setSortDir] = useState<SortDir>("asc")
   const [isPending, startTransition] = useTransition()
 
+  // Filter state
+  const [showFilters, setShowFilters] = useState(false)
+  const [filterStatus, setFilterStatus] = useState("all")
+  const [filterStrategy, setFilterStrategy] = useState("all")
+  const [filterTactics, setFilterTactics] = useState("all")
+
+  const activeFilterCount = [filterStatus, filterStrategy, filterTactics].filter(
+    (f) => f !== "all",
+  ).length
+
+  const resetFilters = () => {
+    setFilterStatus("all")
+    setFilterStrategy("all")
+    setFilterTactics("all")
+  }
+
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDir(sortDir === "asc" ? "desc" : "asc")
@@ -115,34 +138,64 @@ export function FundsClient({ units }: FundsClientProps) {
     }
   }
 
-  const filtered = search
-    ? units.filter(
-        (u) =>
-          u.unitCode.toLowerCase().includes(search.toLowerCase()) ||
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) return <ArrowUpDown className="ml-1 inline size-3" />
+    return sortDir === "asc"
+      ? <ArrowUp className="ml-1 inline size-3" />
+      : <ArrowDown className="ml-1 inline size-3" />
+  }
+
+  const getAriaSort = (field: SortField): "ascending" | "descending" | "none" => {
+    if (sortField !== field) return "none"
+    return sortDir === "asc" ? "ascending" : "descending"
+  }
+
+  const filteredAndSorted = useMemo(() => {
+    // First filter
+    const result = units.filter((u) => {
+      // Text search
+      if (search) {
+        const q = search.toLowerCase()
+        const matches =
+          u.unitCode.toLowerCase().includes(q) ||
           u.strategy.includes(search) ||
           u.tactics.includes(search) ||
           (u.productName ?? "").includes(search) ||
-          (u.note ?? "").includes(search),
-      )
-    : units
+          (u.note ?? "").includes(search)
+        if (!matches) return false
+      }
+      // Status filter
+      if (filterStatus !== "all" && u.status !== filterStatus) return false
+      // Strategy filter
+      if (filterStrategy !== "all" && u.strategy !== filterStrategy) return false
+      // Tactics filter
+      if (filterTactics !== "all" && u.tactics !== filterTactics) return false
+      return true
+    })
 
-  const sorted = [...filtered].sort((a, b) => {
-    const dir = sortDir === "asc" ? 1 : -1
-    switch (sortField) {
-      case "amount":
-        return (a.amount - b.amount) * dir
-      case "endDate":
-        return (
-          ((a.endDate ?? "9999") > (b.endDate ?? "9999") ? 1 : -1) * dir
-        )
-      case "status":
-        return a.status.localeCompare(b.status) * dir
-      default:
-        return a.unitCode.localeCompare(b.unitCode) * dir
-    }
-  })
+    // Then sort
+    result.sort((a, b) => {
+      const dir = sortDir === "asc" ? 1 : -1
+      switch (sortField) {
+        case "amount":
+          return (a.amount - b.amount) * dir
+        case "endDate":
+          return (
+            ((a.endDate ?? "9999") > (b.endDate ?? "9999") ? 1 : -1) * dir
+          )
+        case "status":
+          return a.status.localeCompare(b.status) * dir
+        case "strategy":
+          return a.strategy.localeCompare(b.strategy, "zh-CN") * dir
+        default:
+          return a.unitCode.localeCompare(b.unitCode) * dir
+      }
+    })
 
-  const totalAmount = filtered.reduce((sum, u) => sum + u.amount, 0)
+    return result
+  }, [units, search, filterStatus, filterStrategy, filterTactics, sortField, sortDir])
+
+  const totalAmount = filteredAndSorted.reduce((sum, u) => sum + u.amount, 0)
 
   const handleEdit = (unit: SerializedUnit) => {
     setEditingUnit(unit)
@@ -182,7 +235,7 @@ export function FundsClient({ units }: FundsClientProps) {
             资本单位管理
           </h1>
           <p className="text-muted-foreground text-sm">
-            {filtered.length}个单位 · 总计{" "}
+            ({filteredAndSorted.length} / {units.length} 个单位) · 总计{" "}
             {formatCurrencyFull(totalAmount)}
           </p>
         </div>
@@ -196,6 +249,20 @@ export function FundsClient({ units }: FundsClientProps) {
               className="w-[200px] pl-9"
             />
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowFilters(!showFilters)}
+            className={activeFilterCount > 0 ? "border-primary" : ""}
+          >
+            <Filter className="mr-1 size-4" />
+            筛选
+            {activeFilterCount > 0 && (
+              <Badge variant="secondary" className="ml-1 text-xs">
+                {activeFilterCount}
+              </Badge>
+            )}
+          </Button>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button onClick={handleCreate} size="sm">
@@ -227,6 +294,74 @@ export function FundsClient({ units }: FundsClientProps) {
         </div>
       </div>
 
+      {/* Filter Panel */}
+      {showFilters && (
+        <div className="space-y-4 rounded-lg border bg-muted/30 p-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium">筛选条件</h3>
+            <Button variant="ghost" size="sm" onClick={resetFilters}>
+              <X className="mr-1 size-4" />
+              重置
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            {/* Status Filter */}
+            <div className="space-y-1.5">
+              <Label className="text-muted-foreground text-xs">状态</Label>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全部状态</SelectItem>
+                  {STATUSES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Strategy Filter */}
+            <div className="space-y-1.5">
+              <Label className="text-muted-foreground text-xs">策略</Label>
+              <Select value={filterStrategy} onValueChange={setFilterStrategy}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全部策略</SelectItem>
+                  {STRATEGIES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Tactics Filter */}
+            <div className="space-y-1.5">
+              <Label className="text-muted-foreground text-xs">战术</Label>
+              <Select value={filterTactics} onValueChange={setFilterTactics}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全部战术</SelectItem>
+                  {TACTICS.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Units Table */}
       <Card>
         <CardHeader>
@@ -236,58 +371,58 @@ export function FundsClient({ units }: FundsClientProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="-ml-3"
+                <TableHead aria-sort={getAriaSort("unitCode")}>
+                  <button
                     onClick={() => toggleSort("unitCode")}
+                    className="hover:text-foreground flex items-center text-sm transition-colors"
                   >
                     编号
-                    <ArrowUpDown className="ml-1 size-3" />
-                  </Button>
+                    {getSortIcon("unitCode")}
+                  </button>
                 </TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="-ml-3"
+                <TableHead aria-sort={getAriaSort("amount")}>
+                  <button
                     onClick={() => toggleSort("amount")}
+                    className="hover:text-foreground flex items-center text-sm transition-colors"
                   >
                     金额
-                    <ArrowUpDown className="ml-1 size-3" />
-                  </Button>
+                    {getSortIcon("amount")}
+                  </button>
                 </TableHead>
-                <TableHead>策略</TableHead>
+                <TableHead aria-sort={getAriaSort("strategy")}>
+                  <button
+                    onClick={() => toggleSort("strategy")}
+                    className="hover:text-foreground flex items-center text-sm transition-colors"
+                  >
+                    策略
+                    {getSortIcon("strategy")}
+                  </button>
+                </TableHead>
                 <TableHead>战术</TableHead>
                 <TableHead>产品</TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="-ml-3"
+                <TableHead aria-sort={getAriaSort("status")}>
+                  <button
                     onClick={() => toggleSort("status")}
+                    className="hover:text-foreground flex items-center text-sm transition-colors"
                   >
                     状态
-                    <ArrowUpDown className="ml-1 size-3" />
-                  </Button>
+                    {getSortIcon("status")}
+                  </button>
                 </TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="-ml-3"
+                <TableHead aria-sort={getAriaSort("endDate")}>
+                  <button
                     onClick={() => toggleSort("endDate")}
+                    className="hover:text-foreground flex items-center text-sm transition-colors"
                   >
                     到期日
-                    <ArrowUpDown className="ml-1 size-3" />
-                  </Button>
+                    {getSortIcon("endDate")}
+                  </button>
                 </TableHead>
                 <TableHead className="w-20">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sorted.map((unit) => (
+              {filteredAndSorted.map((unit) => (
                 <TableRow key={unit.id}>
                   <TableCell>
                     <UnitCodeBadge unitCode={unit.unitCode} />
@@ -355,13 +490,15 @@ export function FundsClient({ units }: FundsClientProps) {
                   </TableCell>
                 </TableRow>
               ))}
-              {sorted.length === 0 && (
+              {filteredAndSorted.length === 0 && (
                 <TableRow>
                   <TableCell
                     colSpan={8}
                     className="text-muted-foreground py-8 text-center"
                   >
-                    {search ? "未找到匹配的单位" : "暂无资本单位"}
+                    {search || activeFilterCount > 0
+                      ? "未找到匹配的单位"
+                      : "暂无资本单位"}
                   </TableCell>
                 </TableRow>
               )}
