@@ -2,7 +2,7 @@
 
 import { getAuthedClient } from "@/lib/api-helpers"
 import type { ActionResult } from "@/lib/action-result"
-import type { AccountTypeConfig } from "@/domain/types"
+import type { AccountTypeConfig, BalanceAnchor, Theme, ColorScheme } from "@/domain/types"
 
 // ── Helper: read-modify-write the settings JSON column ──
 
@@ -51,6 +51,65 @@ export async function saveGeneralSettings(data: {
     }),
     { siteName: data.siteName },
   )
+}
+
+// ── Theme Settings ──
+
+export async function saveThemeSettings(data: {
+  theme: Theme
+  colorScheme: ColorScheme
+}): Promise<ActionResult> {
+  return patchSettingsJson((parsed) => ({
+    ...parsed,
+    theme: data.theme,
+    color_scheme: data.colorScheme,
+  }))
+}
+
+// ── Income Category Settings ──
+
+export async function saveActiveIncomeCategories(
+  categories: string[],
+): Promise<ActionResult> {
+  return patchSettingsJson((parsed) => ({
+    ...parsed,
+    active_income_categories: categories,
+  }))
+}
+
+// ── Expense Category Settings ──
+
+export async function saveFixedExpenseCategories(
+  categories: string[],
+): Promise<ActionResult> {
+  return patchSettingsJson((parsed) => ({
+    ...parsed,
+    fixed_expense_categories: categories,
+  }))
+}
+
+// ── Return Rate Settings ──
+
+export async function saveReturnRateSettings(data: {
+  minReturnRate: number
+  maxReturnRate: number
+}): Promise<ActionResult> {
+  return patchSettingsJson((parsed) => ({
+    ...parsed,
+    min_return_rate: data.minReturnRate,
+    max_return_rate: data.maxReturnRate,
+  }))
+}
+
+// ── Balance Anchor Settings ──
+
+export async function saveBalanceAnchors(
+  anchors: BalanceAnchor[],
+): Promise<ActionResult> {
+  return patchSettingsJson((parsed) => ({
+    ...parsed,
+    balance_anchors: anchors,
+  }))
 }
 
 // ── AI Settings ──
