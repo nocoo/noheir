@@ -320,9 +320,11 @@ export function getHealthLabel(score: number): string {
 
 /**
  * Get health status color class
+ * Uses fixed green/yellow/red colors (not semantic income/expense)
+ * because health score meaning shouldn't swap with color scheme
  */
 export function getHealthColorClass(score: number): string {
-  if (score >= 90) return "text-income"
+  if (score >= 90) return "text-green-600 dark:text-green-400"
   if (score >= 70) return "text-yellow-600 dark:text-yellow-400"
-  return "text-expense"
+  return "text-red-600 dark:text-red-400"
 }
