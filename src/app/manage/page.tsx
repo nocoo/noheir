@@ -3,6 +3,7 @@ import { getAuthedClient } from "@/lib/api-helpers"
 import { ManageClient } from "./manage-client"
 import type { DomainTransaction, DomainTransfer } from "@/domain/types"
 import { buildDataSummary, buildDataHealthMetrics } from "@/domain/data-management"
+import { toDomainTransaction, toDomainTransfer } from "@/lib/transaction-mappers"
 
 export default async function ManagePage() {
   let dataSummary = {
@@ -33,8 +34,12 @@ export default async function ManagePage() {
         client.getAllTransfersByYear(userId, year),
       ])
       return {
-        transactions: txResult.transactions as DomainTransaction[],
-        transfers: trResult.transfers as DomainTransfer[],
+        transactions: txResult.transactions.map((raw) =>
+          toDomainTransaction(raw as Record<string, unknown>),
+        ),
+        transfers: trResult.transfers.map((raw) =>
+          toDomainTransfer(raw as Record<string, unknown>),
+        ),
       }
     })
 

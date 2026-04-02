@@ -1,4 +1,4 @@
-import type { DomainTransaction, MonthlyData } from "@/domain/types"
+import type { DomainTransaction, DomainTransfer, MonthlyData } from "@/domain/types"
 
 /**
  * Parse tags from Worker response.
@@ -41,6 +41,31 @@ export function toDomainTransaction(
     account: String(raw.account ?? ""),
     type: raw.type === "income" ? "income" : "expense",
     currency: String(raw.currency ?? "CNY"),
+    tags: parseTags(raw.tags),
+    note: raw.note != null ? String(raw.note) : null,
+  }
+}
+
+/** Map raw Worker transfer (camelCase from Drizzle) to DomainTransfer */
+export function toDomainTransfer(
+  raw: Record<string, unknown>,
+): DomainTransfer {
+  return {
+    id: String(raw.id ?? ""),
+    date: String(raw.date ?? ""),
+    year: Number(raw.year ?? 0),
+    month: Number(raw.month ?? 0),
+    day: Number(raw.day ?? 0),
+    primaryCategory:
+      raw.primaryCategory != null ? String(raw.primaryCategory) : null,
+    secondaryCategory:
+      raw.secondaryCategory != null ? String(raw.secondaryCategory) : null,
+    transactionType:
+      raw.transactionType != null ? String(raw.transactionType) : null,
+    inflowAmount: Number(raw.inflowAmountCents ?? 0) / 100,
+    outflowAmount: Number(raw.outflowAmountCents ?? 0) / 100,
+    currency: String(raw.currency ?? "CNY"),
+    account: String(raw.account ?? ""),
     tags: parseTags(raw.tags),
     note: raw.note != null ? String(raw.note) : null,
   }
