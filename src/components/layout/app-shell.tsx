@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { Menu, Github } from "lucide-react";
 import { Sidebar } from "./sidebar";
@@ -8,6 +8,7 @@ import { SidebarProvider, useSidebar } from "./sidebar-context";
 import { ThemeToggle } from "./theme-toggle";
 import { Breadcrumbs } from "./breadcrumbs";
 import { GlobalYearSelector } from "./global-year-selector";
+import { ALL_NAV_ITEMS, NAV_GROUPS } from "@/lib/navigation";
 import {
   Sheet,
   SheetContent,
@@ -22,10 +23,43 @@ interface AppShellProps {
   breadcrumbs?: { label: string; href?: string }[];
 }
 
-function AppShellInner({ children, breadcrumbs = [] }: AppShellProps) {
+/**
+ * Build breadcrumbs from pathname using navigation config
+ */
+function buildBreadcrumbsFromPath(pathname: string): { label: string; href?: string }[] {
+  // Find matching nav item
+  const navItem = ALL_NAV_ITEMS.find((item) =>
+    item.href === "/" ? pathname === "/" : pathname.startsWith(item.href)
+  );
+
+  if (!navItem || navItem.href === "/") {
+    return []; // Home page, no extra breadcrumbs
+  }
+
+  // Find the group this item belongs to
+  const group = NAV_GROUPS.find((g) => g.items.some((i) => i.href === navItem.href));
+
+  const crumbs: { label: string; href?: string }[] = [];
+
+  // Add group label if different from item label
+  if (group && group.label !== navItem.label) {
+    crumbs.push({ label: group.label });
+  }
+
+  // Add current page (no href = current page)
+  crumbs.push({ label: navItem.label });
+
+  return crumbs;
+}
+
+function AppShellInner({ children, breadcrumbs }: AppShellProps) {
   const isMobile = useIsMobile();
   const { mobileOpen, setMobileOpen } = useSidebar();
   const pathname = usePathname();
+
+  // Auto-generate breadcrumbs from pathname if not provided
+  const autoBreadcrumbs = useMemo(() => buildBreadcrumbsFromPath(pathname), [pathname]);
+  const finalBreadcrumbs = breadcrumbs ?? autoBreadcrumbs;
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -74,7 +108,7 @@ function AppShellInner({ children, breadcrumbs = [] }: AppShellProps) {
                 <Menu className="h-5 w-5" aria-hidden="true" strokeWidth={1.5} />
               </button>
             )}
-            <Breadcrumbs items={[{ label: "首页", href: "/" }, ...breadcrumbs]} />
+            <Breadcrumbs items={[{ label: "首页", href: "/" }, ...finalBreadcrumbs]} />
           </div>
           <div className="flex items-center gap-1">
             <Suspense>
