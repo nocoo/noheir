@@ -98,6 +98,26 @@ describe("Product validation schemas", () => {
         expect(result.success).toBe(true);
       }
     });
+
+    test("accepts minimal product with only name", () => {
+      // channel and category are optional (nullable)
+      const result = createProductSchema.safeParse({
+        name: "只有名称的产品",
+      });
+      expect(result.success).toBe(true);
+    });
+
+    test("accepts null for optional fields", () => {
+      const result = createProductSchema.safeParse({
+        name: "Test",
+        code: null,
+        channel: null,
+        category: null,
+        lockPeriodDays: null,
+        annualReturnRate: null,
+      });
+      expect(result.success).toBe(true);
+    });
   });
 
   describe("updateProductSchema", () => {
@@ -121,6 +141,41 @@ describe("Product validation schemas", () => {
         channel: "无效渠道",
       });
       expect(result.success).toBe(false);
+    });
+
+    test("accepts null to clear optional fields", () => {
+      // code, channel, category, lockPeriodDays, annualReturnRate can all be cleared with null
+      const result = updateProductSchema.safeParse({
+        code: null,
+        channel: null,
+        category: null,
+        lockPeriodDays: null,
+        annualReturnRate: null,
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.code).toBeNull();
+        expect(result.data.channel).toBeNull();
+        expect(result.data.category).toBeNull();
+        expect(result.data.lockPeriodDays).toBeNull();
+        expect(result.data.annualReturnRate).toBeNull();
+      }
+    });
+
+    test("accepts mix of values and nulls", () => {
+      const result = updateProductSchema.safeParse({
+        name: "更新名称",
+        code: null, // clear code
+        channel: "招商银行", // set new channel
+        category: null, // clear category
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.name).toBe("更新名称");
+        expect(result.data.code).toBeNull();
+        expect(result.data.channel).toBe("招商银行");
+        expect(result.data.category).toBeNull();
+      }
     });
   });
 });
@@ -268,6 +323,37 @@ describe("Unit validation schemas", () => {
         strategy: "无效策略",
       });
       expect(result.success).toBe(false);
+    });
+
+    test("accepts null to clear optional fields", () => {
+      // productId, startDate, endDate, note can all be cleared with null
+      const result = updateUnitSchema.safeParse({
+        productId: null,
+        startDate: null,
+        endDate: null,
+        note: null,
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.productId).toBeNull();
+        expect(result.data.startDate).toBeNull();
+        expect(result.data.endDate).toBeNull();
+        expect(result.data.note).toBeNull();
+      }
+    });
+
+    test("accepts mix of values and nulls", () => {
+      const result = updateUnitSchema.safeParse({
+        amountCents: 7000000,
+        productId: null, // unlink product
+        note: "新备注",
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.amountCents).toBe(7000000);
+        expect(result.data.productId).toBeNull();
+        expect(result.data.note).toBe("新备注");
+      }
     });
   });
 });
