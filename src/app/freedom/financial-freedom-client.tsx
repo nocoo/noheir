@@ -82,10 +82,10 @@ export function FinancialFreedomClient({
       {/* Status Card */}
       <Card
         className={cn(
-          "border-2",
+          "border-l-4 bg-card",
           summary.isFree
-            ? "border-emerald-500"
-            : "border-amber-500",
+            ? "border-l-success"
+            : "border-l-amber-500",
         )}
       >
         <CardContent className="space-y-4 pt-6">
@@ -122,10 +122,10 @@ export function FinancialFreedomClient({
 
       {/* Income Breakdown */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card>
+        <Card className="border-l-4 border-l-primary bg-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Briefcase className="size-5" />
+              <Briefcase className="text-primary size-5" />
               主动收入 ({formatCurrencyFull(activeIncome)})
             </CardTitle>
             <CardDescription>工资、劳务等需要投入时间的收入</CardDescription>
@@ -153,10 +153,10 @@ export function FinancialFreedomClient({
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-success bg-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Coins className="size-5" />
+              <Coins className="text-success size-5" />
               被动收入 ({formatCurrencyFull(passiveIncome)})
             </CardTitle>
             <CardDescription>
