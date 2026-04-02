@@ -64,7 +64,17 @@ Use year/month for period-based queries (e.g. "2025年6月"). Use start_date/end
       offset: z.number().int().min(0).default(0).describe("Pagination offset"),
     },
     async (params) => {
-      const result = await client.searchTransactions(params)
+      // Convert decimal amounts to cents for backend
+      const searchParams = {
+        ...params,
+        min_amount_cents: params.min_amount !== undefined ? Math.round(params.min_amount * 100) : undefined,
+        max_amount_cents: params.max_amount !== undefined ? Math.round(params.max_amount * 100) : undefined,
+      }
+      // Remove original decimal params to avoid confusion
+      delete (searchParams as Record<string, unknown>).min_amount
+      delete (searchParams as Record<string, unknown>).max_amount
+
+      const result = await client.searchTransactions(searchParams)
       return {
         content: [{ type: "text" as const, text: JSON.stringify(result) }],
       }
@@ -95,7 +105,17 @@ All parameters are optional and combine with AND logic.`,
       offset: z.number().int().min(0).default(0).describe("Pagination offset"),
     },
     async (params) => {
-      const result = await client.searchTransfers(params)
+      // Convert decimal amounts to cents for backend
+      const searchParams = {
+        ...params,
+        min_amount_cents: params.min_amount !== undefined ? Math.round(params.min_amount * 100) : undefined,
+        max_amount_cents: params.max_amount !== undefined ? Math.round(params.max_amount * 100) : undefined,
+      }
+      // Remove original decimal params to avoid confusion
+      delete (searchParams as Record<string, unknown>).min_amount
+      delete (searchParams as Record<string, unknown>).max_amount
+
+      const result = await client.searchTransfers(searchParams)
       return {
         content: [{ type: "text" as const, text: JSON.stringify(result) }],
       }

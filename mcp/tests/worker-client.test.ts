@@ -80,6 +80,30 @@ describe("WorkerClient", () => {
 
       expect(result).toEqual(responseData);
     });
+
+    it("passes amount_cents params directly to backend", async () => {
+      fetchSpy.mockResolvedValueOnce(mockFetchResponse({ transactions: [], total_returned: 0 }));
+
+      await client.searchTransactions({
+        min_amount_cents: 1000,
+        max_amount_cents: 5000,
+      });
+
+      const [, options] = fetchSpy.mock.calls[0] as [string, RequestInit];
+      const body = JSON.parse(options.body as string);
+      expect(body.min_amount_cents).toBe(1000);
+      expect(body.max_amount_cents).toBe(5000);
+    });
+
+    it("passes tags array to backend", async () => {
+      fetchSpy.mockResolvedValueOnce(mockFetchResponse({ transactions: [], total_returned: 0 }));
+
+      await client.searchTransactions({ tags: ["日常", "工作餐"] });
+
+      const [, options] = fetchSpy.mock.calls[0] as [string, RequestInit];
+      const body = JSON.parse(options.body as string);
+      expect(body.tags).toEqual(["日常", "工作餐"]);
+    });
   });
 
   // ────────────────────────────────────────────────────────────────────────────

@@ -105,6 +105,76 @@ describe("units repo", () => {
     expect(withoutProduct!.product).toBeNull();
   });
 
+  test("findAllWithProducts filters by status", async () => {
+    const repos = getTestRepos();
+    await repos.units.create(userId, baseUnit);
+    await repos.units.create(userId, { ...baseUnit, unitCode: "U-2026-002", status: "已归档" });
+
+    const result = await repos.units.findAllWithProducts(userId, { status: "已归档" });
+    expect(result).toHaveLength(1);
+    expect(result[0]!.status).toBe("已归档");
+  });
+
+  test("findAllWithProducts filters by strategy", async () => {
+    const repos = getTestRepos();
+    await repos.units.create(userId, baseUnit);
+    await repos.units.create(userId, { ...baseUnit, unitCode: "U-2026-002", strategy: "短期理财" });
+
+    const result = await repos.units.findAllWithProducts(userId, { strategy: "短期理财" });
+    expect(result).toHaveLength(1);
+    expect(result[0]!.strategy).toBe("短期理财");
+  });
+
+  test("findAllWithProducts filters by tactics", async () => {
+    const repos = getTestRepos();
+    await repos.units.create(userId, baseUnit);
+    await repos.units.create(userId, { ...baseUnit, unitCode: "U-2026-002", tactics: "货币基金" });
+
+    const result = await repos.units.findAllWithProducts(userId, { tactics: "货币基金" });
+    expect(result).toHaveLength(1);
+    expect(result[0]!.tactics).toBe("货币基金");
+  });
+
+  test("findAllWithProducts filters by currency", async () => {
+    const repos = getTestRepos();
+    await repos.units.create(userId, baseUnit);
+    await repos.units.create(userId, { ...baseUnit, unitCode: "U-2026-002", currency: "USD" });
+
+    const result = await repos.units.findAllWithProducts(userId, { currency: "USD" });
+    expect(result).toHaveLength(1);
+    expect(result[0]!.currency).toBe("USD");
+  });
+
+  test("findAllWithProducts combines multiple filters with AND logic", async () => {
+    const repos = getTestRepos();
+    await repos.units.create(userId, { ...baseUnit, status: "已归档", strategy: "短期理财" });
+    await repos.units.create(userId, { ...baseUnit, unitCode: "U-2026-002", status: "已归档", strategy: "长期理财" });
+    await repos.units.create(userId, { ...baseUnit, unitCode: "U-2026-003", status: "已成立", strategy: "短期理财" });
+
+    const result = await repos.units.findAllWithProducts(userId, {
+      status: "已归档",
+      strategy: "短期理财",
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0]!.status).toBe("已归档");
+    expect(result[0]!.strategy).toBe("短期理财");
+  });
+
+  test("findAll combines multiple filters with AND logic", async () => {
+    const repos = getTestRepos();
+    await repos.units.create(userId, { ...baseUnit, status: "已归档", strategy: "短期理财" });
+    await repos.units.create(userId, { ...baseUnit, unitCode: "U-2026-002", status: "已归档", strategy: "长期理财" });
+    await repos.units.create(userId, { ...baseUnit, unitCode: "U-2026-003", status: "已成立", strategy: "短期理财" });
+
+    const result = await repos.units.findAll(userId, {
+      status: "已归档",
+      strategy: "短期理财",
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0]!.status).toBe("已归档");
+    expect(result[0]!.strategy).toBe("短期理财");
+  });
+
   test("update", async () => {
     const repos = getTestRepos();
     const created = await repos.units.create(userId, baseUnit);

@@ -349,13 +349,14 @@ app.get("/api/units", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
   const { status, strategy, tactics, currency, with_products } = c.req.query();
+  const filters = pickDefined({ status, strategy, tactics, currency });
 
   if (with_products === "true") {
-    const units = await repos.units.findAllWithProducts(userId);
+    const units = await repos.units.findAllWithProducts(userId, filters);
     return c.json({ units, total_returned: units.length });
   }
 
-  const units = await repos.units.findAll(userId, pickDefined({ status, strategy, tactics, currency }));
+  const units = await repos.units.findAll(userId, filters);
   return c.json({ units, total_returned: units.length });
 });
 

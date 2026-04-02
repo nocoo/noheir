@@ -11,30 +11,52 @@ export function createUnitsRepo(db: DrizzleD1Database) {
       tactics?: string;
       currency?: string;
     }): Promise<CapitalUnit[]> {
-      let query = db
-        .select()
-        .from(capitalUnits)
-        .where(eq(capitalUnits.userId, userId))
-        .$dynamic();
+      // Build all conditions upfront, then apply with and()
+      const conditions = [eq(capitalUnits.userId, userId)];
 
       if (filters?.status) {
-        query = query.where(and(eq(capitalUnits.userId, userId), eq(capitalUnits.status, filters.status)));
+        conditions.push(eq(capitalUnits.status, filters.status));
       }
       if (filters?.strategy) {
-        query = query.where(and(eq(capitalUnits.userId, userId), eq(capitalUnits.strategy, filters.strategy)));
+        conditions.push(eq(capitalUnits.strategy, filters.strategy));
       }
       if (filters?.tactics) {
-        query = query.where(and(eq(capitalUnits.userId, userId), eq(capitalUnits.tactics, filters.tactics)));
+        conditions.push(eq(capitalUnits.tactics, filters.tactics));
       }
       if (filters?.currency) {
-        query = query.where(and(eq(capitalUnits.userId, userId), eq(capitalUnits.currency, filters.currency)));
+        conditions.push(eq(capitalUnits.currency, filters.currency));
       }
 
-      return await query.all();
+      return await db
+        .select()
+        .from(capitalUnits)
+        .where(and(...conditions))
+        .all();
     },
 
     /** LEFT JOIN with financial_products — behavioral contract from get_units_with_products RPC */
-    async findAllWithProducts(userId: string): Promise<UnitWithProduct[]> {
+    async findAllWithProducts(userId: string, filters?: {
+      status?: string;
+      strategy?: string;
+      tactics?: string;
+      currency?: string;
+    }): Promise<UnitWithProduct[]> {
+      // Build all conditions upfront
+      const conditions = [eq(capitalUnits.userId, userId)];
+
+      if (filters?.status) {
+        conditions.push(eq(capitalUnits.status, filters.status));
+      }
+      if (filters?.strategy) {
+        conditions.push(eq(capitalUnits.strategy, filters.strategy));
+      }
+      if (filters?.tactics) {
+        conditions.push(eq(capitalUnits.tactics, filters.tactics));
+      }
+      if (filters?.currency) {
+        conditions.push(eq(capitalUnits.currency, filters.currency));
+      }
+
       const rows = await db
         .select({
           unit: capitalUnits,
@@ -42,7 +64,7 @@ export function createUnitsRepo(db: DrizzleD1Database) {
         })
         .from(capitalUnits)
         .leftJoin(financialProducts, eq(capitalUnits.productId, financialProducts.id))
-        .where(eq(capitalUnits.userId, userId))
+        .where(and(...conditions))
         .orderBy(capitalUnits.createdAt)
         .all();
 
