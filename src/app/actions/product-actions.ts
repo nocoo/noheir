@@ -5,22 +5,22 @@ import type { ActionResult } from "@/lib/action-result"
 
 export async function createProduct(data: {
   name: string
-  code?: string
-  channel?: string
-  category?: string
+  code?: string | null
+  channel?: string | null
+  category?: string | null
   currency?: string
-  lockPeriodDays?: number
-  annualReturnRate?: number
+  lockPeriodDays?: number | null
+  annualReturnRate?: number | null
 }): Promise<ActionResult<{ id: string }>> {
   try {
     const { userId, client } = await getAuthedClient()
     const result = await client.createProduct(userId, {
       name: data.name,
-      code: data.code || undefined,
-      channel: data.channel || undefined,
-      category: data.category || undefined,
+      code: data.code ?? undefined,
+      channel: data.channel ?? undefined,
+      category: data.category ?? undefined,
       currency: data.currency || "CNY",
-      lockPeriodDays: data.lockPeriodDays ?? 0,
+      lockPeriodDays: data.lockPeriodDays ?? undefined,
       annualReturnRate: data.annualReturnRate ?? undefined,
     })
     const product = result.product as Record<string, unknown>
@@ -37,26 +37,25 @@ export async function updateProduct(
   id: string,
   data: {
     name?: string
-    code?: string
-    channel?: string
-    category?: string
+    code?: string | null
+    channel?: string | null
+    category?: string | null
     currency?: string
-    lockPeriodDays?: number
-    annualReturnRate?: number
+    lockPeriodDays?: number | null
+    annualReturnRate?: number | null
   },
 ): Promise<ActionResult> {
   try {
     const { userId, client } = await getAuthedClient()
     const payload: Record<string, unknown> = {}
     if (data.name !== undefined) payload.name = data.name
-    if (data.code !== undefined) payload.code = data.code || null
-    if (data.channel !== undefined) payload.channel = data.channel || null
-    if (data.category !== undefined) payload.category = data.category || null
+    // Allow explicit null to clear the field
+    if (data.code !== undefined) payload.code = data.code
+    if (data.channel !== undefined) payload.channel = data.channel
+    if (data.category !== undefined) payload.category = data.category
     if (data.currency !== undefined) payload.currency = data.currency
-    if (data.lockPeriodDays !== undefined)
-      payload.lockPeriodDays = data.lockPeriodDays
-    if (data.annualReturnRate !== undefined)
-      payload.annualReturnRate = data.annualReturnRate
+    if (data.lockPeriodDays !== undefined) payload.lockPeriodDays = data.lockPeriodDays
+    if (data.annualReturnRate !== undefined) payload.annualReturnRate = data.annualReturnRate
     await client.updateProduct(userId, id, payload)
     return { success: true, data: undefined }
   } catch (err) {

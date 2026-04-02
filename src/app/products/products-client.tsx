@@ -284,23 +284,40 @@ function ProductForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     startTransition(async () => {
-      const data: Parameters<typeof createProduct>[0] = { name }
-      if (code) data.code = code
-      if (channel) data.channel = channel
-      if (category) data.category = category
-      if (currency) data.currency = currency
-      if (lockDays) data.lockPeriodDays = Number(lockDays)
-      if (rate) data.annualReturnRate = Number(rate) / 100
+      if (product) {
+        // Update: explicitly send null to clear optional fields
+        const data: Parameters<typeof updateProduct>[1] = { name }
+        data.code = code || null
+        data.channel = channel || null
+        data.category = category || null
+        data.currency = currency || "CNY"
+        data.lockPeriodDays = lockDays ? Number(lockDays) : null
+        data.annualReturnRate = rate ? Number(rate) / 100 : null
 
-      const result = product
-        ? await updateProduct(product.id, data)
-        : await createProduct(data)
-
-      if (result.success) {
-        toast.success(product ? "产品已更新" : "产品已创建")
-        onSuccess()
+        const result = await updateProduct(product.id, data)
+        if (result.success) {
+          toast.success("产品已更新")
+          onSuccess()
+        } else {
+          toast.error(result.error)
+        }
       } else {
-        toast.error(result.error)
+        // Create: only send fields that have values
+        const data: Parameters<typeof createProduct>[0] = { name }
+        if (code) data.code = code
+        if (channel) data.channel = channel
+        if (category) data.category = category
+        if (currency) data.currency = currency
+        if (lockDays) data.lockPeriodDays = Number(lockDays)
+        if (rate) data.annualReturnRate = Number(rate) / 100
+
+        const result = await createProduct(data)
+        if (result.success) {
+          toast.success("产品已创建")
+          onSuccess()
+        } else {
+          toast.error(result.error)
+        }
       }
     })
   }

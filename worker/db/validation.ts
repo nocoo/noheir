@@ -18,30 +18,30 @@ import {
 
 export const createProductSchema = z.object({
   name: z.string().min(1, "name is required"),
-  code: z.string().optional(),
+  code: z.string().optional().nullable(),
   channel: z.enum(CHANNELS, {
     message: `channel must be one of: ${CHANNELS.join(", ")}`,
-  }),
+  }).optional().nullable(),
   category: z.enum(PRODUCT_CATEGORIES, {
     message: `category must be one of: ${PRODUCT_CATEGORIES.join(", ")}`,
-  }),
+  }).optional().nullable(),
   currency: z.enum(CURRENCIES).default("CNY"),
-  lockPeriodDays: z.number().int().min(0).optional(),
-  annualReturnRate: z.number().optional(),
+  lockPeriodDays: z.number().int().min(0).optional().nullable(),
+  annualReturnRate: z.number().optional().nullable(),
 });
 
 export const updateProductSchema = z.object({
   name: z.string().min(1).optional(),
-  code: z.string().optional(),
+  code: z.string().optional().nullable(),
   channel: z.enum(CHANNELS, {
     message: `channel must be one of: ${CHANNELS.join(", ")}`,
-  }).optional(),
+  }).optional().nullable(),
   category: z.enum(PRODUCT_CATEGORIES, {
     message: `category must be one of: ${PRODUCT_CATEGORIES.join(", ")}`,
-  }).optional(),
+  }).optional().nullable(),
   currency: z.enum(CURRENCIES).optional(),
-  lockPeriodDays: z.number().int().min(0).optional(),
-  annualReturnRate: z.number().optional(),
+  lockPeriodDays: z.number().int().min(0).optional().nullable(),
+  annualReturnRate: z.number().optional().nullable(),
 }).refine(
   (data) => Object.keys(data).length > 0,
   { message: "At least one field must be provided for update" },
