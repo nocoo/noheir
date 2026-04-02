@@ -11,6 +11,7 @@ import {
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts"
 import { StatCard } from "@/components/shared/stat-card"
 import { formatCurrencyFull } from "@/lib/chart-config"
+import { CHART_COLORS } from "@/lib/palette"
 
 interface DistributionItem {
   name: string
@@ -29,14 +30,7 @@ interface CapitalDashboardClientProps {
   maturityDistribution: DistributionItem[]
 }
 
-const PIE_COLORS = [
-  "hsl(var(--chart-1))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--chart-5))",
-  "#64748b",
-]
+const PIE_COLORS = [...CHART_COLORS.slice(0, 5), "#64748b"]
 
 function DistributionPie({
   title,

@@ -18,14 +18,7 @@ import {
 } from "@/components/shared"
 import { StatCard } from "@/components/shared/stat-card"
 import { formatCurrencyFull } from "@/lib/chart-config"
-
-const CHART_COLORS = [
-  "hsl(var(--chart-1))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--chart-5))",
-]
+import { CHART_COLORS } from "@/lib/palette"
 
 interface TransactionAnalysisClientProps {
   type: "income" | "expense"
