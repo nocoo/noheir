@@ -1,6 +1,7 @@
 "use client"
 
-import { BarChart3, PiggyBank, Percent, Clock } from "lucide-react"
+import { useState, useMemo } from "react"
+import { BarChart3, PiggyBank, Percent, Clock, X } from "lucide-react"
 import {
   Card,
   CardContent,
@@ -8,10 +9,27 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts"
 import { StatCard } from "@/components/shared/stat-card"
 import { formatCurrencyFull } from "@/lib/chart-config"
 import { CHART_COLORS } from "@/lib/palette"
+import {
+  buildTotalAssetsByCurrency,
+  buildTotalAssetsAll,
+  buildIdleUnits,
+  buildCurrencyDistribution,
+  buildStatusDistribution,
+  buildMaturityDistribution,
+} from "@/domain/assets/capital-dashboard"
+import type { UnitDisplayInfo } from "@/domain/types"
 
 interface DistributionItem {
   name: string
@@ -20,15 +38,25 @@ interface DistributionItem {
 }
 
 interface CapitalDashboardClientProps {
-  totalsByCurrency: Record<string, number>
-  totalAll: number
+  units: UnitDisplayInfo[]
   deploymentRate: number
-  idleUnitsCount: number
-  idleFunds: number
-  currencyDistribution: DistributionItem[]
-  statusDistribution: DistributionItem[]
-  maturityDistribution: DistributionItem[]
 }
+
+const STRATEGIES = [
+  "远期理财", "美元资产", "36存单",
+  "长期理财", "短期理财", "中期理财",
+  "进攻计划", "麻麻理财",
+]
+
+const TACTICS = [
+  "养老年金", "个人养老金", "定期存款",
+  "理财产品", "现金产品", "债券基金",
+  "偏股基金", "稳健理财", "增额寿险",
+  "货币基金",
+]
+
+const STATUSES = ["已成立", "计划中", "筹集中", "已归档"]
+const CURRENCIES = ["CNY", "USD", "HKD"]
 
 const PIE_COLORS = [...CHART_COLORS.slice(0, 5), "#64748b"]
 
@@ -121,26 +149,161 @@ function DistributionPie({
 }
 
 export function CapitalDashboardClient({
-  totalsByCurrency,
-  totalAll,
+  units,
   deploymentRate,
-  idleUnitsCount,
-  idleFunds,
-  currencyDistribution,
-  statusDistribution,
-  maturityDistribution,
 }: CapitalDashboardClientProps) {
+  // Filter state
+  const [filterStatus, setFilterStatus] = useState("all")
+  const [filterStrategy, setFilterStrategy] = useState("all")
+  const [filterTactics, setFilterTactics] = useState("all")
+  const [filterCurrency, setFilterCurrency] = useState("all")
+
+  const activeFilterCount = [
+    filterStatus,
+    filterStrategy,
+    filterTactics,
+    filterCurrency,
+  ].filter((f) => f !== "all").length
+
+  const resetFilters = () => {
+    setFilterStatus("all")
+    setFilterStrategy("all")
+    setFilterTactics("all")
+    setFilterCurrency("all")
+  }
+
+  // Filtered units and computed aggregations
+  const { filteredUnits, totalsByCurrency, totalAll, idleUnits, currencyDistribution, statusDistribution, maturityDistribution } = useMemo(() => {
+    const filtered = units.filter((u) => {
+      if (filterStatus !== "all" && u.status !== filterStatus) return false
+      if (filterStrategy !== "all" && u.strategy !== filterStrategy) return false
+      if (filterTactics !== "all" && u.tactics !== filterTactics) return false
+      if (filterCurrency !== "all" && u.currency !== filterCurrency) return false
+      return true
+    })
+
+    const totals = buildTotalAssetsByCurrency(filtered)
+    const total = buildTotalAssetsAll(totals)
+    const idle = buildIdleUnits(filtered)
+    const currDist = buildCurrencyDistribution(filtered, total).map((d) => ({
+      name: d.currency,
+      value: d.amount,
+      percentage: d.percentage,
+    }))
+    const statusDist = buildStatusDistribution(filtered, total).map((d) => ({
+      name: d.status,
+      value: d.amount,
+      percentage: d.percentage,
+    }))
+    const maturityDist = buildMaturityDistribution(filtered, total).map((d) => ({
+      name: d.period,
+      value: d.amount,
+      percentage: d.percentage,
+    }))
+
+    return {
+      filteredUnits: filtered,
+      totalsByCurrency: totals,
+      totalAll: total,
+      idleUnits: idle,
+      currencyDistribution: currDist,
+      statusDistribution: statusDist,
+      maturityDistribution: maturityDist,
+    }
+  }, [units, filterStatus, filterStrategy, filterTactics, filterCurrency])
+
+  const idleUnitsCount = idleUnits.length
+  const idleFunds = idleUnits.reduce((sum, u) => sum + u.amount, 0)
+
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <BarChart3 className="text-primary size-6" />
-          资本仪表盘
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          资本配置总览与分布分析
-        </p>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="flex items-center gap-2 text-2xl font-bold">
+            <BarChart3 className="text-primary size-6" />
+            资本仪表盘
+          </h1>
+          <p className="text-muted-foreground text-sm">
+            资本配置总览与分布分析
+            {activeFilterCount > 0 && (
+              <span className="ml-2">
+                ({filteredUnits.length} / {units.length} 个单位)
+              </span>
+            )}
+          </p>
+        </div>
+      </div>
+
+      {/* Filter Bar - Single Row */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="h-8 w-[110px] text-xs">
+            <SelectValue placeholder="状态" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部状态</SelectItem>
+            {STATUSES.map((s) => (
+              <SelectItem key={s} value={s}>
+                {s}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={filterStrategy} onValueChange={setFilterStrategy}>
+          <SelectTrigger className="h-8 w-[110px] text-xs">
+            <SelectValue placeholder="策略" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部策略</SelectItem>
+            {STRATEGIES.map((s) => (
+              <SelectItem key={s} value={s}>
+                {s}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={filterTactics} onValueChange={setFilterTactics}>
+          <SelectTrigger className="h-8 w-[110px] text-xs">
+            <SelectValue placeholder="战术" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部战术</SelectItem>
+            {TACTICS.map((t) => (
+              <SelectItem key={t} value={t}>
+                {t}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={filterCurrency} onValueChange={setFilterCurrency}>
+          <SelectTrigger className="h-8 w-[90px] text-xs">
+            <SelectValue placeholder="币种" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部币种</SelectItem>
+            {CURRENCIES.map((c) => (
+              <SelectItem key={c} value={c}>
+                {c}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {activeFilterCount > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={resetFilters}
+            className="h-8 text-xs"
+          >
+            <X className="mr-1 size-3" />
+            清除 ({activeFilterCount})
+          </Button>
+        )}
       </div>
 
       {/* Summary Stats */}
