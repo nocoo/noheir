@@ -59,11 +59,16 @@ function computeMatchedField(
 
 /**
  * Check if a row's JSON tags overlap with the filter tags.
+ * Also handles double-encoded strings like '"[\\"tag1\\"]"' from legacy data migration.
  */
 function tagsOverlap(rowTags: string | null, filterTags: string[]): boolean {
   if (!rowTags) return false;
   try {
-    const parsed: unknown = JSON.parse(rowTags);
+    let parsed: unknown = JSON.parse(rowTags);
+    // Handle double-encoded JSON strings from legacy migration
+    if (typeof parsed === "string") {
+      parsed = JSON.parse(parsed);
+    }
     if (!Array.isArray(parsed)) return false;
     return (parsed as string[]).some((t) => filterTags.includes(t));
   } catch {

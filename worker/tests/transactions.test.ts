@@ -281,6 +281,17 @@ describe("transactions repo", () => {
     expect(result.total_returned).toBe(0);
   });
 
+  test("search tags overlap handles double-encoded JSON from legacy migration", async () => {
+    const repos = getTestRepos();
+    // Simulate double-encoded tags that might come from legacy data migration
+    // Instead of '["工资"]', the data might be '"[\\"工资\\"]"' (JSON string of JSON string)
+    const doubleEncoded = JSON.stringify(JSON.stringify(["工资"]));
+    await repos.transactions.create(userId, { ...baseTx, tags: doubleEncoded });
+
+    const result = await repos.transactions.search(userId, { tags: ["工资"] });
+    expect(result.total_returned).toBe(1);
+  });
+
   test("search limit clamping: max 500", async () => {
     const repos = getTestRepos();
     // We can't insert 501 rows efficiently, but we can test the clamp logic
