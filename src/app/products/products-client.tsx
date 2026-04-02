@@ -1,15 +1,16 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState, useTransition, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { Package, Search, Plus, Pencil, Trash2 } from "lucide-react"
+import { Package, Search, Plus, Pencil, Trash2, Filter, X } from "lucide-react"
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
@@ -70,15 +71,44 @@ export function ProductsClient({ products }: ProductsClientProps) {
   const [deleteTarget, setDeleteTarget] = useState<DomainProduct | null>(null)
   const [isPending, startTransition] = useTransition()
 
-  const filtered = search
-    ? products.filter(
-        (p) =>
-          p.name.toLowerCase().includes(search.toLowerCase()) ||
-          (p.code ?? "").toLowerCase().includes(search.toLowerCase()) ||
+  // Filter state
+  const [showFilters, setShowFilters] = useState(false)
+  const [filterChannel, setFilterChannel] = useState("all")
+  const [filterCategory, setFilterCategory] = useState("all")
+  const [filterCurrency, setFilterCurrency] = useState("all")
+
+  const activeFilterCount = [filterChannel, filterCategory, filterCurrency].filter(
+    (f) => f !== "all",
+  ).length
+
+  const resetFilters = () => {
+    setFilterChannel("all")
+    setFilterCategory("all")
+    setFilterCurrency("all")
+  }
+
+  const filtered = useMemo(() => {
+    return products.filter((p) => {
+      // Text search
+      if (search) {
+        const q = search.toLowerCase()
+        const matches =
+          p.name.toLowerCase().includes(q) ||
+          (p.code ?? "").toLowerCase().includes(q) ||
           (p.channel ?? "").includes(search) ||
-          (p.category ?? "").includes(search),
-      )
-    : products
+          (p.category ?? "").includes(search)
+        if (!matches) return false
+      }
+      // Channel filter
+      if (filterChannel !== "all" && p.channel !== filterChannel) return false
+      // Category filter
+      if (filterCategory !== "all" && p.category !== filterCategory) return false
+      // Currency filter
+      if (filterCurrency !== "all" && (p.currency ?? "CNY") !== filterCurrency)
+        return false
+      return true
+    })
+  }, [products, search, filterChannel, filterCategory, filterCurrency])
 
   const handleEdit = (product: DomainProduct) => {
     setEditingProduct(product)
@@ -118,7 +148,7 @@ export function ProductsClient({ products }: ProductsClientProps) {
             产品管理
           </h1>
           <p className="text-muted-foreground text-sm">
-            金融产品目录 · {filtered.length}个产品
+            金融产品目录 · ({filtered.length} / {products.length} 个产品)
           </p>
         </div>
         <div className="flex gap-2">
@@ -131,6 +161,20 @@ export function ProductsClient({ products }: ProductsClientProps) {
               className="w-[200px] pl-9"
             />
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowFilters(!showFilters)}
+            className={activeFilterCount > 0 ? "border-primary" : ""}
+          >
+            <Filter className="mr-1 size-4" />
+            筛选
+            {activeFilterCount > 0 && (
+              <Badge variant="secondary" className="ml-1 text-xs">
+                {activeFilterCount}
+              </Badge>
+            )}
+          </Button>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button onClick={handleCreate} size="sm">
@@ -161,6 +205,72 @@ export function ProductsClient({ products }: ProductsClientProps) {
           </Dialog>
         </div>
       </div>
+
+      {/* Filter Panel */}
+      {showFilters && (
+        <div className="space-y-4 rounded-lg border bg-muted/30 p-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium">筛选条件</h3>
+            <Button variant="ghost" size="sm" onClick={resetFilters}>
+              <X className="mr-1 size-4" />
+              重置
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            {/* Channel Filter */}
+            <div className="space-y-1.5">
+              <Label className="text-muted-foreground text-xs">销售渠道</Label>
+              <Select value={filterChannel} onValueChange={setFilterChannel}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全部渠道</SelectItem>
+                  {CHANNELS.map((ch) => (
+                    <SelectItem key={ch} value={ch}>
+                      {ch}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Category Filter */}
+            <div className="space-y-1.5">
+              <Label className="text-muted-foreground text-xs">产品类别</Label>
+              <Select value={filterCategory} onValueChange={setFilterCategory}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全部类别</SelectItem>
+                  {CATEGORIES.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Currency Filter */}
+            <div className="space-y-1.5">
+              <Label className="text-muted-foreground text-xs">币种</Label>
+              <Select value={filterCurrency} onValueChange={setFilterCurrency}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全部币种</SelectItem>
+                  <SelectItem value="CNY">人民币 CNY</SelectItem>
+                  <SelectItem value="USD">美元 USD</SelectItem>
+                  <SelectItem value="HKD">港币 HKD</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Products Table */}
       <Card>
