@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Collapsible, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useSidebar } from "./sidebar-context";
+import pkg from "../../../package.json";
 
 // ── Sub-components ──
 
@@ -214,7 +215,7 @@ export function Sidebar({ mobile = false }: SidebarProps) {
             {/* Header: logo + collapse toggle */}
             <div className="px-3 h-14 flex items-center">
               <div className="flex w-full items-center justify-between px-3">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src="/logo-24.png"
@@ -224,6 +225,9 @@ export function Sidebar({ mobile = false }: SidebarProps) {
                     className="shrink-0"
                   />
                   <span className="text-lg font-bold tracking-tighter">noheir</span>
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground font-mono">
+                    v{pkg.version}
+                  </span>
                 </div>
                 {!mobile && (
                   <button
