@@ -3,7 +3,18 @@
 import { useState, useTransition, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { Package, Search, Plus, Pencil, Trash2, Filter, X } from "lucide-react"
+import {
+  Package,
+  Search,
+  Plus,
+  Pencil,
+  Trash2,
+  Filter,
+  X,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+} from "lucide-react"
 import {
   Card,
   CardContent,
@@ -50,6 +61,9 @@ interface ProductsClientProps {
   products: DomainProduct[]
 }
 
+type SortColumn = "name" | "channel" | "category" | "lockPeriodDays" | "annualReturnRate"
+type SortDirection = "asc" | "desc"
+
 const CHANNELS = [
   "招商银行", "平安银行", "微众银行", "支付宝",
   "招银香港", "光大永明", "中信建投",
@@ -77,6 +91,31 @@ export function ProductsClient({ products }: ProductsClientProps) {
   const [filterCategory, setFilterCategory] = useState("all")
   const [filterCurrency, setFilterCurrency] = useState("all")
 
+  // Sort state
+  const [sortColumn, setSortColumn] = useState<SortColumn>("name")
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc")
+
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection((d) => (d === "asc" ? "desc" : "asc"))
+    } else {
+      setSortColumn(column)
+      setSortDirection("asc")
+    }
+  }
+
+  const getSortIcon = (column: SortColumn) => {
+    if (sortColumn !== column) return <ArrowUpDown className="ml-1 inline size-3" />
+    return sortDirection === "asc"
+      ? <ArrowUp className="ml-1 inline size-3" />
+      : <ArrowDown className="ml-1 inline size-3" />
+  }
+
+  const getAriaSort = (column: SortColumn): "ascending" | "descending" | "none" => {
+    if (sortColumn !== column) return "none"
+    return sortDirection === "asc" ? "ascending" : "descending"
+  }
+
   const activeFilterCount = [filterChannel, filterCategory, filterCurrency].filter(
     (f) => f !== "all",
   ).length
@@ -87,8 +126,9 @@ export function ProductsClient({ products }: ProductsClientProps) {
     setFilterCurrency("all")
   }
 
-  const filtered = useMemo(() => {
-    return products.filter((p) => {
+  const filteredAndSorted = useMemo(() => {
+    // First filter
+    const result = products.filter((p) => {
       // Text search
       if (search) {
         const q = search.toLowerCase()
@@ -108,7 +148,32 @@ export function ProductsClient({ products }: ProductsClientProps) {
         return false
       return true
     })
-  }, [products, search, filterChannel, filterCategory, filterCurrency])
+
+    // Then sort
+    result.sort((a, b) => {
+      let cmp = 0
+      switch (sortColumn) {
+        case "name":
+          cmp = a.name.localeCompare(b.name, "zh-CN")
+          break
+        case "channel":
+          cmp = (a.channel ?? "").localeCompare(b.channel ?? "", "zh-CN")
+          break
+        case "category":
+          cmp = (a.category ?? "").localeCompare(b.category ?? "", "zh-CN")
+          break
+        case "lockPeriodDays":
+          cmp = (a.lockPeriodDays ?? 0) - (b.lockPeriodDays ?? 0)
+          break
+        case "annualReturnRate":
+          cmp = (a.annualReturnRate ?? 0) - (b.annualReturnRate ?? 0)
+          break
+      }
+      return sortDirection === "asc" ? cmp : -cmp
+    })
+
+    return result
+  }, [products, search, filterChannel, filterCategory, filterCurrency, sortColumn, sortDirection])
 
   const handleEdit = (product: DomainProduct) => {
     setEditingProduct(product)
@@ -148,7 +213,7 @@ export function ProductsClient({ products }: ProductsClientProps) {
             产品管理
           </h1>
           <p className="text-muted-foreground text-sm">
-            金融产品目录 · ({filtered.length} / {products.length} 个产品)
+            金融产品目录 · ({filteredAndSorted.length} / {products.length} 个产品)
           </p>
         </div>
         <div className="flex gap-2">
@@ -281,18 +346,58 @@ export function ProductsClient({ products }: ProductsClientProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>名称</TableHead>
+                <TableHead aria-sort={getAriaSort("name")}>
+                  <button
+                    onClick={() => handleSort("name")}
+                    className="hover:text-foreground flex items-center text-sm transition-colors"
+                  >
+                    名称
+                    {getSortIcon("name")}
+                  </button>
+                </TableHead>
                 <TableHead>代码</TableHead>
-                <TableHead>渠道</TableHead>
-                <TableHead>类别</TableHead>
+                <TableHead aria-sort={getAriaSort("channel")}>
+                  <button
+                    onClick={() => handleSort("channel")}
+                    className="hover:text-foreground flex items-center text-sm transition-colors"
+                  >
+                    渠道
+                    {getSortIcon("channel")}
+                  </button>
+                </TableHead>
+                <TableHead aria-sort={getAriaSort("category")}>
+                  <button
+                    onClick={() => handleSort("category")}
+                    className="hover:text-foreground flex items-center text-sm transition-colors"
+                  >
+                    类别
+                    {getSortIcon("category")}
+                  </button>
+                </TableHead>
                 <TableHead>币种</TableHead>
-                <TableHead>锁定期</TableHead>
-                <TableHead>预期收益</TableHead>
+                <TableHead aria-sort={getAriaSort("lockPeriodDays")}>
+                  <button
+                    onClick={() => handleSort("lockPeriodDays")}
+                    className="hover:text-foreground flex items-center text-sm transition-colors"
+                  >
+                    锁定期
+                    {getSortIcon("lockPeriodDays")}
+                  </button>
+                </TableHead>
+                <TableHead aria-sort={getAriaSort("annualReturnRate")}>
+                  <button
+                    onClick={() => handleSort("annualReturnRate")}
+                    className="hover:text-foreground flex items-center text-sm transition-colors"
+                  >
+                    预期收益
+                    {getSortIcon("annualReturnRate")}
+                  </button>
+                </TableHead>
                 <TableHead className="w-20">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((product) => (
+              {filteredAndSorted.map((product) => (
                 <TableRow key={product.id}>
                   <TableCell className="font-medium">
                     {product.name}
@@ -350,7 +455,7 @@ export function ProductsClient({ products }: ProductsClientProps) {
                   </TableCell>
                 </TableRow>
               ))}
-              {filtered.length === 0 && (
+              {filteredAndSorted.length === 0 && (
                 <TableRow>
                   <TableCell
                     colSpan={8}
