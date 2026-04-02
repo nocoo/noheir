@@ -21,10 +21,24 @@ export default async function SavingsPage({
   let monthlyData: MonthlyData[] = MONTH_NAMES.map((name) => ({
     month: name, income: 0, expense: 0, balance: 0,
   }))
+  let targetSavingsRate = 30 // default
 
   try {
     const { userId, client } = await getAuthedClient()
-    const metadata = await client.getMetadata(userId)
+
+    // Fetch metadata and settings in parallel
+    const [metadata, settingsResult] = await Promise.all([
+      client.getMetadata(userId),
+      client.getSettings(userId),
+    ])
+
+    // Parse settings for targetSavingsRate
+    const settingsRow = (settingsResult.settings as Record<string, unknown>) ?? {}
+    const rawJson = typeof settingsRow.settings === "string" ? settingsRow.settings : "{}"
+    const settingsJson = JSON.parse(rawJson) as Record<string, unknown>
+    if (typeof settingsJson.savings_rate_target === "number") {
+      targetSavingsRate = settingsJson.savings_rate_target
+    }
 
     const availableYears = metadata.years.sort((a, b) => b - a)
     const yearParam = params.year ? Number(params.year) : null
@@ -48,9 +62,6 @@ export default async function SavingsPage({
   }
 
   const { chartData, totals } = buildSavingsRateChartData(monthlyData)
-
-  // TODO: load targetSavingsRate from user settings
-  const targetSavingsRate = 30
   const summary = buildSavingsRateSummary(totals, targetSavingsRate)
 
   return (

@@ -6,10 +6,24 @@ import { YearComparisonClient } from "./year-comparison-client"
 
 export default async function ComparePage() {
   let yearlyComparisons: YearlyComparison[] = []
+  let targetSavingsRate = 30 // default
 
   try {
     const { userId, client } = await getAuthedClient()
-    const metadata = await client.getMetadata(userId)
+
+    // Fetch metadata and settings in parallel
+    const [metadata, settingsResult] = await Promise.all([
+      client.getMetadata(userId),
+      client.getSettings(userId),
+    ])
+
+    // Parse settings for targetSavingsRate
+    const settingsRow = (settingsResult.settings as Record<string, unknown>) ?? {}
+    const rawJson = typeof settingsRow.settings === "string" ? settingsRow.settings : "{}"
+    const settingsJson = JSON.parse(rawJson) as Record<string, unknown>
+    if (typeof settingsJson.savings_rate_target === "number") {
+      targetSavingsRate = settingsJson.savings_rate_target
+    }
 
     const availableYears = metadata.years.sort((a, b) => a - b) // ascending for chart
 
@@ -33,9 +47,6 @@ export default async function ComparePage() {
   }
 
   const chartData = buildYearComparisonChartData(yearlyComparisons)
-
-  // TODO: load targetSavingsRate from user settings
-  const targetSavingsRate = 30
 
   return (
     <AppShell>
