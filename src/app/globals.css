@@ -239,7 +239,29 @@
   --text-muted: 0 0% 60%;
   --text-income: 160 84% 39%;
   --text-expense: 350 89% 60%;
+}
 
+/* ========== Swapped Color Scheme (Light Mode) ========== */
+/* In swapped mode: income=red, expense=green (common in Asian markets) */
+:root.color-scheme-swapped,
+.color-scheme-swapped {
+  --income: 350 89% 60%;
+  --income-foreground: 210 40% 98%;
+  --income-bg: 350 89% 97%;
+  --income-dark: 350 89% 65%;
+  --income-light: 350 89% 95%;
+
+  --expense: 160 84% 39%;
+  --expense-foreground: 210 40% 98%;
+  --expense-bg: 160 84% 97%;
+  --expense-dark: 160 84% 45%;
+  --expense-light: 160 84% 95%;
+
+  --text-income: 350 89% 60%;
+  --text-expense: 160 84% 39%;
+}
+
+:root {
   /* Semantic Backgrounds */
   --bg-main: 220 14% 94%;
   --bg-surface: 220 14% 97%;
@@ -391,7 +413,28 @@
   --text-muted: 0 0% 40%;
   --text-income: 160 100% 55%;
   --text-expense: 350 100% 70%;
+}
 
+/* ========== Swapped Color Scheme (Dark Mode) ========== */
+.dark.color-scheme-swapped,
+.dark .color-scheme-swapped {
+  --income: 350 100% 65%;
+  --income-foreground: 350 100% 15%;
+  --income-bg: 350 89% 15%;
+  --income-dark: 350 100% 60%;
+  --income-light: 350 89% 25%;
+
+  --expense: 160 100% 50%;
+  --expense-foreground: 160 100% 10%;
+  --expense-bg: 160 84% 15%;
+  --expense-dark: 160 100% 45%;
+  --expense-light: 160 84% 25%;
+
+  --text-income: 350 100% 70%;
+  --text-expense: 160 100% 55%;
+}
+
+.dark {
   /* Semantic Backgrounds (Dark Mode) */
   --bg-main: 0 0% 9%;
   --bg-surface: 0 0% 10.6%;

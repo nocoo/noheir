@@ -80,6 +80,45 @@ export function SettingsClient({ siteName: initialSiteName, settingsJson }: Sett
 
   const savingsRateTone = getSavingsRateTone(savingsTarget)
 
+  // Apply theme and color scheme to DOM immediately when changed
+  const applyThemeToDOM = (newTheme: Theme) => {
+    const root = document.documentElement
+    if (newTheme === "dark") {
+      root.classList.add("dark")
+    } else if (newTheme === "light") {
+      root.classList.remove("dark")
+    } else {
+      // system
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
+      if (prefersDark) {
+        root.classList.add("dark")
+      } else {
+        root.classList.remove("dark")
+      }
+    }
+    localStorage.setItem("theme", newTheme)
+  }
+
+  const applyColorSchemeToDOM = (newScheme: ColorScheme) => {
+    const root = document.documentElement
+    if (newScheme === "swapped") {
+      root.classList.add("color-scheme-swapped")
+    } else {
+      root.classList.remove("color-scheme-swapped")
+    }
+    localStorage.setItem("colorScheme", newScheme)
+  }
+
+  const handleThemeChange = (newTheme: Theme) => {
+    setTheme(newTheme)
+    applyThemeToDOM(newTheme)
+  }
+
+  const handleColorSchemeChange = (newScheme: ColorScheme) => {
+    setColorScheme(newScheme)
+    applyColorSchemeToDOM(newScheme)
+  }
+
   const handleSave = () => {
     startTransition(async () => {
       // Save all settings in parallel
@@ -161,7 +200,7 @@ export function SettingsClient({ siteName: initialSiteName, settingsJson }: Sett
                   <Button
                     key={opt.value}
                     variant={theme === opt.value ? "default" : "outline"}
-                    onClick={() => setTheme(opt.value)}
+                    onClick={() => handleThemeChange(opt.value)}
                     className="flex h-20 flex-col items-center gap-2"
                   >
                     <Icon className="size-5" />
@@ -182,7 +221,7 @@ export function SettingsClient({ siteName: initialSiteName, settingsJson }: Sett
                 <Button
                   key={opt.value}
                   variant={colorScheme === opt.value ? "default" : "outline"}
-                  onClick={() => setColorScheme(opt.value)}
+                  onClick={() => handleColorSchemeChange(opt.value)}
                   className="flex h-24 flex-col items-center gap-3"
                 >
                   <div className="flex items-center gap-4">
