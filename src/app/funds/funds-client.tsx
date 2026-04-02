@@ -31,10 +31,18 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { cn } from "@/lib/utils"
@@ -201,6 +209,11 @@ export function FundsClient({ units }: FundsClientProps) {
                 <DialogTitle>
                   {editingUnit ? "编辑单位" : "新增资本单位"}
                 </DialogTitle>
+                <DialogDescription>
+                  {editingUnit
+                    ? "修改资本单位信息"
+                    : "创建新的资本单位并关联投资策略"}
+                </DialogDescription>
               </DialogHeader>
               <UnitForm
                 unit={editingUnit}
@@ -451,7 +464,9 @@ function UnitForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="unitCode">编号 *</Label>
+          <Label htmlFor="unitCode">
+            编号 <span className="text-destructive">*</span>
+          </Label>
           <Input
             id="unitCode"
             value={unitCode}
@@ -460,7 +475,9 @@ function UnitForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="amount">金额 *</Label>
+          <Label htmlFor="amount">
+            金额 <span className="text-destructive">*</span>
+          </Label>
           <Input
             id="amount"
             type="number"
@@ -473,67 +490,67 @@ function UnitForm({
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="currency">币种</Label>
-          <select
-            id="currency"
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
-            className="border-input bg-background flex h-9 w-full rounded-md border px-3 py-1 text-sm"
-          >
-            <option value="CNY">CNY</option>
-            <option value="USD">USD</option>
-            <option value="HKD">HKD</option>
-          </select>
+          <Label>币种</Label>
+          <Select value={currency} onValueChange={setCurrency}>
+            <SelectTrigger>
+              <SelectValue placeholder="选择币种" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="CNY">CNY</SelectItem>
+              <SelectItem value="USD">USD</SelectItem>
+              <SelectItem value="HKD">HKD</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="status">状态</Label>
-          <select
-            id="status"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="border-input bg-background flex h-9 w-full rounded-md border px-3 py-1 text-sm"
-          >
-            <option value="已成立">已成立</option>
-            <option value="计划中">计划中</option>
-            <option value="筹集中">筹集中</option>
-            <option value="已归档">已归档</option>
-          </select>
+          <Label>状态</Label>
+          <Select value={status} onValueChange={setStatus}>
+            <SelectTrigger>
+              <SelectValue placeholder="选择状态" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="已成立">已成立</SelectItem>
+              <SelectItem value="计划中">计划中</SelectItem>
+              <SelectItem value="筹集中">筹集中</SelectItem>
+              <SelectItem value="已归档">已归档</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="strategy">策略 *</Label>
-          <select
-            id="strategy"
-            value={strategy}
-            onChange={(e) => setStrategy(e.target.value)}
-            className="border-input bg-background flex h-9 w-full rounded-md border px-3 py-1 text-sm"
-            required
-          >
-            <option value="">选择策略</option>
-            {STRATEGIES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
+          <Label>
+            策略 <span className="text-destructive">*</span>
+          </Label>
+          <Select value={strategy} onValueChange={setStrategy}>
+            <SelectTrigger>
+              <SelectValue placeholder="选择策略" />
+            </SelectTrigger>
+            <SelectContent>
+              {STRATEGIES.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="tactics">战术 *</Label>
-          <select
-            id="tactics"
-            value={tactics}
-            onChange={(e) => setTactics(e.target.value)}
-            className="border-input bg-background flex h-9 w-full rounded-md border px-3 py-1 text-sm"
-            required
-          >
-            <option value="">选择战术</option>
-            {TACTICS.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
+          <Label>
+            战术 <span className="text-destructive">*</span>
+          </Label>
+          <Select value={tactics} onValueChange={setTactics}>
+            <SelectTrigger>
+              <SelectValue placeholder="选择战术" />
+            </SelectTrigger>
+            <SelectContent>
+              {TACTICS.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {t}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4">

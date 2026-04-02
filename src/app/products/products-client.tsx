@@ -24,10 +24,18 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import {
@@ -42,14 +50,14 @@ interface ProductsClientProps {
 }
 
 const CHANNELS = [
-  "招商银行", "工商银行", "建设银行", "交通银行",
-  "支付宝", "微信", "其他",
+  "招商银行", "平安银行", "微众银行", "支付宝",
+  "招银香港", "光大永明", "中信建投",
 ]
 
 const CATEGORIES = [
-  "定期存款", "大额存单", "结构性存款", "银行理财",
-  "货币基金", "债券基金", "指数基金", "混合基金",
-  "养老年金", "增额终身寿", "万能险", "国债",
+  "养老年金", "储蓄保险", "混债基金", "债券基金", "货币基金",
+  "股票基金", "指数基金", "宽基指数", "私募基金", "定期存款",
+  "理财产品", "现金+",
 ]
 
 export function ProductsClient({ products }: ProductsClientProps) {
@@ -135,6 +143,11 @@ export function ProductsClient({ products }: ProductsClientProps) {
                 <DialogTitle>
                   {editingProduct ? "编辑产品" : "新增产品"}
                 </DialogTitle>
+                <DialogDescription>
+                  {editingProduct
+                    ? "修改理财产品信息"
+                    : "添加新的理财产品到产品库"}
+                </DialogDescription>
               </DialogHeader>
               <ProductForm
                 product={editingProduct}
@@ -325,7 +338,9 @@ function ProductForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="name">名称 *</Label>
+        <Label htmlFor="name">
+          名称 <span className="text-destructive">*</span>
+        </Label>
         <Input
           id="name"
           value={name}
@@ -343,51 +358,49 @@ function ProductForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="currency">币种</Label>
-          <select
-            id="currency"
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
-            className="border-input bg-background flex h-9 w-full rounded-md border px-3 py-1 text-sm"
-          >
-            <option value="CNY">CNY</option>
-            <option value="USD">USD</option>
-            <option value="HKD">HKD</option>
-          </select>
+          <Label>币种</Label>
+          <Select value={currency} onValueChange={setCurrency}>
+            <SelectTrigger>
+              <SelectValue placeholder="选择币种" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="CNY">CNY</SelectItem>
+              <SelectItem value="USD">USD</SelectItem>
+              <SelectItem value="HKD">HKD</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="channel">渠道</Label>
-          <select
-            id="channel"
-            value={channel}
-            onChange={(e) => setChannel(e.target.value)}
-            className="border-input bg-background flex h-9 w-full rounded-md border px-3 py-1 text-sm"
-          >
-            <option value="">选择渠道</option>
-            {CHANNELS.map((ch) => (
-              <option key={ch} value={ch}>
-                {ch}
-              </option>
-            ))}
-          </select>
+          <Label>渠道</Label>
+          <Select value={channel} onValueChange={setChannel}>
+            <SelectTrigger>
+              <SelectValue placeholder="选择渠道" />
+            </SelectTrigger>
+            <SelectContent>
+              {CHANNELS.map((ch) => (
+                <SelectItem key={ch} value={ch}>
+                  {ch}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="category">类别</Label>
-          <select
-            id="category"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="border-input bg-background flex h-9 w-full rounded-md border px-3 py-1 text-sm"
-          >
-            <option value="">选择类别</option>
-            {CATEGORIES.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
+          <Label>类别</Label>
+          <Select value={category} onValueChange={setCategory}>
+            <SelectTrigger>
+              <SelectValue placeholder="选择类别" />
+            </SelectTrigger>
+            <SelectContent>
+              {CATEGORIES.map((cat) => (
+                <SelectItem key={cat} value={cat}>
+                  {cat}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
