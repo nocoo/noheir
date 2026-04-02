@@ -146,26 +146,30 @@ export function StrategyClient({
 
       {/* Insights */}
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-lg border bg-muted/30 p-4">
-          <h3 className="mb-2 font-semibold">💡 透视价值</h3>
-          <ul className="text-muted-foreground space-y-1 text-sm">
-            <li>• 识别单一渠道/产品过度集中</li>
-            <li>• 评估美元资产配置占比</li>
-            <li>• 检查各策略资金分布均衡性</li>
-            <li>• 发现&ldquo;产品名称不同但实际同类&rdquo;的情况</li>
-          </ul>
-        </div>
+        <Card className="border-l-4 border-l-primary bg-card">
+          <CardContent className="p-4">
+            <h3 className="mb-2 font-semibold">💡 透视价值</h3>
+            <ul className="text-muted-foreground space-y-1 text-sm">
+              <li>• 识别单一渠道/产品过度集中</li>
+              <li>• 评估美元资产配置占比</li>
+              <li>• 检查各策略资金分布均衡性</li>
+              <li>• 发现&ldquo;产品名称不同但实际同类&rdquo;的情况</li>
+            </ul>
+          </CardContent>
+        </Card>
 
-        <div className="rounded-lg border bg-muted/30 p-4">
-          <h3 className="mb-2 font-semibold">📊 使用指南</h3>
-          <ul className="text-muted-foreground space-y-1 text-sm">
-            <li>• <strong>内圈</strong>: 币种分类 (人民币/美元/港币)</li>
-            <li>• <strong>中圈</strong>: 投资策略</li>
-            <li>• <strong>外圈</strong>: 具体产品</li>
-            <li>• <strong>面积</strong>: 代表资金量大小</li>
-            <li>• 悬停查看详细金额和占比</li>
-          </ul>
-        </div>
+        <Card className="border-l-4 border-l-primary bg-card">
+          <CardContent className="p-4">
+            <h3 className="mb-2 font-semibold">📊 使用指南</h3>
+            <ul className="text-muted-foreground space-y-1 text-sm">
+              <li>• <strong>内圈</strong>: 币种分类 (人民币/美元/港币)</li>
+              <li>• <strong>中圈</strong>: 投资策略</li>
+              <li>• <strong>外圈</strong>: 具体产品</li>
+              <li>• <strong>面积</strong>: 代表资金量大小</li>
+              <li>• 悬停查看详细金额和占比</li>
+            </ul>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
