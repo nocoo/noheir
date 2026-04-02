@@ -182,13 +182,25 @@ export function FinancialHealthClient({
           const Icon = dim.icon
           const pct = (result.score / result.maxScore) * 100
           const interpretation = result.details.interpretation
+          const borderColor =
+            pct >= 80
+              ? "border-l-success"
+              : pct >= 50
+                ? "border-l-amber-500"
+                : "border-l-destructive"
+          const iconColor =
+            pct >= 80
+              ? "text-success"
+              : pct >= 50
+                ? "text-amber-500"
+                : "text-destructive"
 
           return (
-            <Card key={dim.key}>
+            <Card key={dim.key} className={cn("border-l-4 bg-card", borderColor)}>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2 text-base">
-                    <Icon className="text-primary size-5" />
+                    <Icon className={cn("size-5", iconColor)} />
                     {dim.name}
                   </CardTitle>
                   <span className="text-muted-foreground text-sm font-medium">
