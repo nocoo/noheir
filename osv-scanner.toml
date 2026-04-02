@@ -1,3 +1,7 @@
 [[IgnoredVulns]]
 id = "GHSA-67mh-4wv8-2f99"
 reason = "Transitive dependency via @esbuild-kit/core-utils (drizzle-kit). Cannot fix without drizzle-kit update."
+
+[[IgnoredVulns]]
+id = "GHSA-5f7q-jpqc-wp7h"
+reason = "DoS in PPR minimal mode. This project does not use Partial Pre Rendering."

@@ -2,6 +2,66 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] - 2026-04-02
+
+Major architecture migration from Supabase to Cloudflare D1 + Worker, with restored settings functionality and improved dashboard experience.
+
+### Breaking Changes
+
+- **Backend Migration** — Migrated from Supabase (PostgreSQL) to Cloudflare D1 (SQLite) + Worker API
+- **Auth System** — Switched from Supabase Auth to custom Worker-based authentication
+- **API Routes** — Complete RESTful API redesign with resourceful paths
+
+### Features
+
+- **Settings Restoration** — Full settings functionality restored from legacy system:
+  - Color scheme toggle (green/red income/expense swap)
+  - Theme mode selector (light/dark/system)
+  - Income category classification (active vs passive)
+  - Expense category classification (fixed vs flexible)
+  - Return rate range settings with visual indicator
+  - Balance anchor management
+  - MCP configuration with full credential support
+- **UI Components** — New Slider and Alert components (shadcn/ui Radix-based)
+- **Server Actions** — New settings actions: `saveThemeSettings`, `saveActiveIncomeCategories`, `saveFixedExpenseCategories`, `saveReturnRateSettings`, `saveBalanceAnchors`
+- **Category Settings Page** — New `/category-settings` route for income/expense classification
+- **Balance Anchors Page** — New `/balance-anchors` route for balance anchor management
+- **Zod Validation** — Added Zod schemas for products/units enum constraints
+- **Month Filter** — Category summary endpoint now supports month filtering
+
+### Improvements
+
+- **Color Scheme Switching** — CSS variable-based color switching for income/expense colors across all pages
+- **Chart Focus Fix** — Removed ugly blue focus outline on Recharts chart elements
+- **CSS Variables** — Replaced hardcoded Tailwind colors (emerald/rose) with semantic CSS variables (text-income/text-expense)
+- **API Naming** — Resourceful year-scoped paths for transactions and transfers
+- **Backup Integrity** — Added `findAllByUser()` for backup to prevent silent data truncation
+- **Server-Side Aggregation** — Dashboard now uses server-side aggregation APIs instead of client-side
+
+### Fixes
+
+- Align product/unit action payloads with Worker camelCase schema
+- Parse tags JSON string from Worker response
+- Correct MCP WorkerClient API paths to match Worker routes
+- Add HOSTNAME=0.0.0.0 to bind to all interfaces
+- Simplify Dockerfile and remove healthcheck for Railway
+- Change default PORT to 8080 for Railway compatibility
+- Normalize 404 response format across all GET-by-id endpoints
+- Align domain mappers to Drizzle camelCase field names
+
+### Architecture
+
+- **D1 Backend** — SQLite-based serverless database on Cloudflare
+- **Worker API** — Cloudflare Worker handling all API requests
+- **Migration Script** — Supabase → D1 migration for products and units
+- **WorkerClient** — New API client with proper path verification
+
+### Tests
+
+- 267 unit tests (all passing)
+- WorkerClient unit tests for API path verification
+- Export route regression guards (structural shape + multi-row count)
+
 ## [0.2.0] - 2026-03-06
 
 First official release. Covers the full journey from initial Next.js scaffold to a production-ready personal finance analytics app with an AI-integrated MCP server.
