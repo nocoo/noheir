@@ -81,9 +81,9 @@ const PIE_COLORS = [
   "#64748b",
 ]
 
-const INCOME_HEX = "#10b981"
-const EXPENSE_HEX = "#f43f5e"
-const BALANCE_HEX = "#3b82f6"
+const INCOME_HEX = "var(--color-income)"
+const EXPENSE_HEX = "var(--color-expense)"
+const BALANCE_HEX = "var(--color-primary)"
 
 export function AccountAnalysisClient({
   accounts,

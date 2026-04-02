@@ -28,9 +28,9 @@ interface YearComparisonClientProps {
   targetSavingsRate: number
 }
 
-const INCOME_HEX = "#10b981"
-const EXPENSE_HEX = "#f43f5e"
-const BALANCE_HEX = "#3b82f6"
+const INCOME_HEX = "var(--color-income)"
+const EXPENSE_HEX = "var(--color-expense)"
+const BALANCE_HEX = "var(--color-primary)"
 const SAVINGS_HEX = "#8b5cf6"
 const TARGET_HEX = "#f59e0b"
 
