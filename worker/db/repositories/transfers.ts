@@ -1,5 +1,6 @@
 import { eq, and, gte, lte, sql, like, or, desc, inArray } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
+import type { SQL } from "drizzle-orm";
 import { transfers } from "../schema";
 import type { Transfer, NewTransfer } from "../types";
 
@@ -76,6 +77,27 @@ function tagsOverlap(rowTags: string | null, filterTags: string[]): boolean {
   }
 }
 
+/**
+ * Build SQL condition for tags overlap.
+ * Uses LIKE patterns to match JSON array elements.
+ * Handles both normal JSON (["tag"]) and double-encoded ("[\\"tag\\"]").
+ */
+function buildTagsCondition(filterTags: string[]): SQL {
+  // For each tag, we check if the tags column contains the tag as a JSON string element
+  // This handles both normal JSON: ["tag1","tag2"]
+  // and double-encoded: "[\"tag1\",\"tag2\"]" stored as: ["\"tag1\",\"tag2\"]
+  const conditions = filterTags.map(tag => {
+    // Escape single quotes for SQL string literal
+    const escaped = tag.replace(/'/g, "''");
+    // Match patterns:
+    // 1. "tag" - normal JSON array element
+    // 2. \"tag\" - double-encoded (backslash-quote around the tag)
+    return `(tags LIKE '%"${escaped}"%' OR tags LIKE '%\\"${escaped}\\"%')`;
+  });
+
+  return sql.raw(`(${conditions.join(" OR ")})`);
+}
+
 export function createTransfersRepo(db: DrizzleD1Database) {
   return {
     /**
@@ -149,6 +171,12 @@ export function createTransfersRepo(db: DrizzleD1Database) {
         conditions.push(eq(transfers.currency, params.currency));
       }
 
+      // Tags filter: use SQL json_each for proper pagination
+      // (post-filtering after LIMIT would miss matching rows)
+      if (params.tags && params.tags.length > 0) {
+        conditions.push(buildTagsCondition(params.tags));
+      }
+
       const limit = clampLimit(params.limit);
       const offset = params.offset ?? 0;
 
@@ -161,13 +189,8 @@ export function createTransfersRepo(db: DrizzleD1Database) {
         .offset(offset)
         .all();
 
-      // Post-filter: tags overlap
-      let filtered = rows;
-      if (params.tags && params.tags.length > 0) {
-        filtered = rows.filter((row) => tagsOverlap(row.tags, params.tags!));
-      }
-
-      const result: TransferWithMatch[] = filtered.map((row) => ({
+      // Compute matched_field for keyword searches
+      const result: TransferWithMatch[] = rows.map((row) => ({
         ...row,
         matched_field: computeMatchedField(row, params.keyword),
       }));
