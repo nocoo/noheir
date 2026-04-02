@@ -51,6 +51,9 @@ export default async function CapitalDecisionsPage() {
           soonCount: stats.medium,
           normalCount: stats.low,
           totalAmount: stats.totalAmount,
+          urgentAmount: stats.highAmount,
+          soonAmount: stats.mediumAmount,
+          normalAmount: stats.lowAmount,
         }}
         filterCounts={filterCounts}
       />

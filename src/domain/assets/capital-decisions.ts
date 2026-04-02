@@ -129,6 +129,8 @@ export const buildDecisionStats = (decisions: DecisionItem[]) => {
     medium: byUrgency.medium.length,
     low: byUrgency.low.length,
     highAmount: byUrgency.high.reduce((sum, d) => sum + d.unit.amount, 0),
+    mediumAmount: byUrgency.medium.reduce((sum, d) => sum + d.unit.amount, 0),
+    lowAmount: byUrgency.low.reduce((sum, d) => sum + d.unit.amount, 0),
   };
 };
 

@@ -157,6 +157,30 @@ describe("capital-decisions domain", () => {
       expect(stats.high).toBe(1);
       expect(stats.low).toBe(1);
       expect(stats.totalAmount).toBe(1500);
+      expect(stats.highAmount).toBe(1000);
+      expect(stats.lowAmount).toBe(500);
+    });
+
+    it("returns zero amounts when no decisions", () => {
+      const stats = buildDecisionStats([]);
+      expect(stats.total).toBe(0);
+      expect(stats.totalAmount).toBe(0);
+      expect(stats.highAmount).toBe(0);
+      expect(stats.mediumAmount).toBe(0);
+      expect(stats.lowAmount).toBe(0);
+    });
+
+    it("calculates medium amount separately", () => {
+      const decisions = classifyDecisions([
+        makeUnit({
+          unitCode: "A01",
+          amount: 2000,
+          product: makeProduct({ category: "现金+" }),
+        }),
+      ]);
+      const stats = buildDecisionStats(decisions);
+      expect(stats.medium).toBe(1);
+      expect(stats.mediumAmount).toBe(2000);
     });
   });
 
