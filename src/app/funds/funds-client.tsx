@@ -17,7 +17,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
@@ -45,6 +44,13 @@ import {
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import {
+  UnitCodeBadge,
+  StrategyBadge,
+  TacticsBadge,
+  StatusBadge,
+  CurrencyBadge,
+} from "@/components/ui/colored-badge"
 import { cn } from "@/lib/utils"
 import { formatCurrencyFull } from "@/lib/chart-config"
 import {
@@ -72,13 +78,6 @@ interface SerializedUnit {
 
 interface FundsClientProps {
   units: SerializedUnit[]
-}
-
-const STATUS_COLORS: Record<string, string> = {
-  已成立: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
-  计划中: "bg-blue-500/15 text-blue-700 dark:text-blue-400",
-  筹集中: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  已归档: "bg-gray-500/15 text-gray-600 dark:text-gray-400",
 }
 
 const STRATEGIES = [
@@ -290,30 +289,27 @@ export function FundsClient({ units }: FundsClientProps) {
             <TableBody>
               {sorted.map((unit) => (
                 <TableRow key={unit.id}>
-                  <TableCell className="font-medium">
-                    {unit.unitCode}
+                  <TableCell>
+                    <UnitCodeBadge unitCode={unit.unitCode} />
                   </TableCell>
                   <TableCell className="font-bold">
                     {formatCurrencyFull(unit.amount)}{" "}
-                    <span className="text-muted-foreground text-xs font-normal">
-                      {unit.currency}
-                    </span>
+                    <CurrencyBadge
+                      currency={unit.currency}
+                      className="ml-1 text-xs font-normal"
+                    />
                   </TableCell>
-                  <TableCell>{unit.strategy}</TableCell>
-                  <TableCell>{unit.tactics}</TableCell>
+                  <TableCell>
+                    <StrategyBadge strategy={unit.strategy} />
+                  </TableCell>
+                  <TableCell>
+                    <TacticsBadge tactics={unit.tactics} />
+                  </TableCell>
                   <TableCell className="text-muted-foreground text-xs">
                     {unit.productName ?? "—"}
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant="secondary"
-                      className={cn(
-                        "text-xs",
-                        STATUS_COLORS[unit.status] ?? "",
-                      )}
-                    >
-                      {unit.status}
-                    </Badge>
+                    <StatusBadge status={unit.status} />
                   </TableCell>
                   <TableCell>
                     <span

@@ -109,3 +109,14 @@ export function CategoryBadge({
 }) {
   return <ColoredBadge label={category} className={className} />
 }
+
+/** Currency badge (auto-colored) */
+export function CurrencyBadge({
+  currency,
+  className,
+}: {
+  currency: string
+  className?: string
+}) {
+  return <ColoredBadge label={currency} className={className} />
+}

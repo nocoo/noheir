@@ -10,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
@@ -38,6 +37,7 @@ import {
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { ChannelBadge, CategoryBadge, CurrencyBadge } from "@/components/ui/colored-badge"
 import {
   createProduct,
   updateProduct,
@@ -192,19 +192,21 @@ export function ProductsClient({ products }: ProductsClientProps) {
                   </TableCell>
                   <TableCell>
                     {product.channel ? (
-                      <Badge variant="outline">{product.channel}</Badge>
+                      <ChannelBadge channel={product.channel} />
                     ) : (
                       "—"
                     )}
                   </TableCell>
                   <TableCell>
                     {product.category ? (
-                      <Badge variant="secondary">{product.category}</Badge>
+                      <CategoryBadge category={product.category} />
                     ) : (
                       "—"
                     )}
                   </TableCell>
-                  <TableCell>{product.currency ?? "CNY"}</TableCell>
+                  <TableCell>
+                    <CurrencyBadge currency={product.currency ?? "CNY"} />
+                  </TableCell>
                   <TableCell>
                     {product.lockPeriodDays != null
                       ? `${product.lockPeriodDays}天`
