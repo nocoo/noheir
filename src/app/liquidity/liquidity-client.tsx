@@ -158,6 +158,30 @@ export function LiquidityClient({
           </div>
         </CardContent>
       </Card>
+
+      {/* Insights */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="rounded-lg border bg-muted/30 p-4">
+          <h3 className="mb-2 font-semibold">💡 使用场景</h3>
+          <ul className="text-muted-foreground space-y-1 text-sm">
+            <li>• 查看每月资金到账情况，规划大额支出</li>
+            <li>• 识别到期高峰，提前准备再投资方案</li>
+            <li>• 配合&ldquo;阶梯策略&rdquo;，平滑资金到期时间</li>
+            <li>• 评估流动性风险，避免资金过度集中到期</li>
+          </ul>
+        </div>
+
+        <div className="rounded-lg border bg-muted/30 p-4">
+          <h3 className="mb-2 font-semibold">📊 阅读指南</h3>
+          <ul className="text-muted-foreground space-y-1 text-sm">
+            <li>• <strong>X轴</strong>: 未来24个月，按月显示</li>
+            <li>• <strong>Y轴</strong>: 当月解锁金额</li>
+            <li>• <strong>堆叠颜色</strong>: 按投资策略分类</li>
+            <li>• <strong>悬停</strong>: 查看当月详细金额和合计</li>
+            <li>• <strong>柱高</strong>: 代表当月到期资金总量</li>
+          </ul>
+        </div>
+      </div>
     </div>
   )
 }
