@@ -52,7 +52,7 @@ function buildBreadcrumbsFromPath(pathname: string): { label: string; href?: str
   return crumbs;
 }
 
-function AppShellInner({ children, breadcrumbs }: AppShellProps) {
+function AppShellInner({ children, breadcrumbs }: { children: React.ReactNode; breadcrumbs: { label: string; href?: string }[] | undefined }) {
   const isMobile = useIsMobile();
   const { mobileOpen, setMobileOpen } = useSidebar();
   const pathname = usePathname();
@@ -138,10 +138,10 @@ function AppShellInner({ children, breadcrumbs }: AppShellProps) {
   );
 }
 
-export function AppShell({ children, breadcrumbs = [] }: AppShellProps) {
+export function AppShell({ children, breadcrumbs }: AppShellProps) {
   return (
     <SidebarProvider>
-      <AppShellInner breadcrumbs={breadcrumbs}>
+      <AppShellInner breadcrumbs={breadcrumbs ?? undefined}>
         {children}
       </AppShellInner>
     </SidebarProvider>
