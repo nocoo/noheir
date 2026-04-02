@@ -9,7 +9,7 @@ import {
 } from "lucide-react"
 import type { DomainTransaction, MonthlyData } from "@/domain/types"
 import { formatCurrencyFull } from "@/lib/chart-config"
-import { StatCard } from "./stat-card"
+import { StatCard } from "@/components/shared/stat-card"
 import { IncomeExpenseChart } from "./income-expense-chart"
 import { RecentTransactionsTable } from "./recent-transactions-table"
 interface OverviewClientProps {

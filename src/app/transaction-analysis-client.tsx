@@ -16,7 +16,7 @@ import {
   CategoryDetailList,
   TopTransactionsTable,
 } from "@/components/shared"
-import { StatCard } from "./stat-card"
+import { StatCard } from "@/components/shared/stat-card"
 import { formatCurrencyFull } from "@/lib/chart-config"
 
 const CHART_COLORS = [

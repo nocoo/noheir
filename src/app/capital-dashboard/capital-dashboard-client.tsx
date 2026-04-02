@@ -9,7 +9,7 @@ import {
   CardDescription,
 } from "@/components/ui/card"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts"
-import { StatCard } from "../stat-card"
+import { StatCard } from "@/components/shared/stat-card"
 import { formatCurrencyFull } from "@/lib/chart-config"
 
 interface DistributionItem {

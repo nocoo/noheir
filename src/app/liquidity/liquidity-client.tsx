@@ -23,7 +23,7 @@ import {
   formatCurrencyK,
   yAxisWidth,
 } from "@/lib/chart-config"
-import { StatCard } from "../stat-card"
+import { StatCard } from "@/components/shared/stat-card"
 
 interface LiquidityClientProps {
   chartData: Record<string, string | number>[]

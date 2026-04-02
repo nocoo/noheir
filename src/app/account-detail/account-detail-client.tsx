@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 import { formatCurrencyFull, formatCurrencyK } from "@/lib/chart-config"
-import { StatCard } from "../stat-card"
+import { StatCard } from "@/components/shared/stat-card"
 
 interface AccountDetailSummary {
   totalIncome: number
