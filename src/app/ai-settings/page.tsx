@@ -4,9 +4,16 @@ import { AiSettingsClient } from "./ai-settings-client"
 
 export default async function AiSettingsPage() {
   let aiConfig: Record<string, unknown> = {}
+  const mcpParams = {
+    workerUrl: process.env.WORKER_URL ?? "",
+    workerToken: process.env.WORKER_TOKEN ?? "",
+    userId: "",
+  }
 
   try {
     const { userId, client } = await getAuthedClient()
+    mcpParams.userId = userId
+
     const result = await client.getSettings(userId)
     const row = (result.settings as Record<string, unknown>) ?? {}
     const rawJson = typeof row.settings === "string" ? row.settings : "{}"
@@ -18,7 +25,7 @@ export default async function AiSettingsPage() {
 
   return (
     <AppShell>
-      <AiSettingsClient aiConfig={aiConfig} />
+      <AiSettingsClient aiConfig={aiConfig} mcpParams={mcpParams} />
     </AppShell>
   )
 }

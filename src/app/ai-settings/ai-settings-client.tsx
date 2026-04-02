@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { Bot, Save, Copy } from "lucide-react"
+import { Bot, Save, Copy, Terminal, Check } from "lucide-react"
 import {
   Card,
   CardContent,
@@ -33,11 +33,17 @@ import { saveAiSettings } from "@/app/actions/settings-actions"
 
 interface AiSettingsClientProps {
   aiConfig: Record<string, unknown>
+  mcpParams: {
+    workerUrl: string
+    workerToken: string
+    userId: string
+  }
 }
 
-export function AiSettingsClient({ aiConfig }: AiSettingsClientProps) {
+export function AiSettingsClient({ aiConfig, mcpParams }: AiSettingsClientProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [copied, setCopied] = useState(false)
 
   const [enabled, setEnabled] = useState(Boolean(aiConfig.enabled ?? false))
   const [baseURL, setBaseURL] = useState(String(aiConfig.baseURL ?? ""))
@@ -49,15 +55,23 @@ export function AiSettingsClient({ aiConfig }: AiSettingsClientProps) {
   const customModel = isCustomOption(modelName, PREDEFINED_AI_MODELS)
 
   const mcpJson = buildMcpConfigJson({
-    workerUrl: "YOUR_WORKER_URL",
-    workerToken: "YOUR_WORKER_TOKEN",
-    userId: "YOUR_USER_ID",
-    projectPath: process.cwd?.() ?? ".",
+    workerUrl: mcpParams.workerUrl,
+    workerToken: mcpParams.workerToken,
+    userId: mcpParams.userId,
+    projectPath: "<path-to-project>",
   })
 
-  const handleCopyMcp = () => {
-    navigator.clipboard.writeText(mcpJson)
-    toast.success("已复制到剪贴板")
+  const hasMcpCredentials = mcpParams.workerUrl && mcpParams.workerToken && mcpParams.userId
+
+  const handleCopyMcp = async () => {
+    try {
+      await navigator.clipboard.writeText(mcpJson)
+      setCopied(true)
+      toast.success("已复制到剪贴板")
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      toast.error("复制失败")
+    }
   }
 
   const handleSave = () => {
@@ -179,33 +193,58 @@ export function AiSettingsClient({ aiConfig }: AiSettingsClientProps) {
       {/* MCP Config Preview */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">MCP 连接配置</CardTitle>
+          <CardTitle className="text-base">MCP 服务器配置</CardTitle>
           <CardDescription>
-            复制此 JSON 到 Claude Desktop 配置文件
+            为 AI 助手（如 Claude Desktop）提供财务数据只读访问
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <pre className="bg-muted overflow-x-auto rounded-md p-3 text-xs">
-            {mcpJson}
-          </pre>
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-2"
-            onClick={handleCopyMcp}
-          >
-            <Copy className="mr-1 size-3" />
-            复制
-          </Button>
+        <CardContent className="space-y-4">
+          {hasMcpCredentials ? (
+            <>
+              <div className="space-y-2">
+                <Label>当前用户 ID</Label>
+                <code className="bg-muted block rounded p-2 font-mono text-xs">
+                  {mcpParams.userId}
+                </code>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>MCP 配置</Label>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopyMcp}
+                    className="gap-1.5"
+                  >
+                    {copied ? (
+                      <Check className="size-3.5" />
+                    ) : (
+                      <Copy className="size-3.5" />
+                    )}
+                    {copied ? "已复制" : "复制"}
+                  </Button>
+                </div>
+                <pre className="bg-muted overflow-x-auto whitespace-pre-wrap rounded p-3 font-mono text-xs">
+                  {mcpJson}
+                </pre>
+                <p className="text-muted-foreground flex items-center gap-1 text-xs">
+                  <Terminal className="size-3" />
+                  将此配置添加到 Claude Desktop 配置文件中，并替换 &lt;path-to-project&gt;
+                </p>
+              </div>
+            </>
+          ) : (
+            <p className="text-muted-foreground py-4 text-center text-sm">
+              请先登录以获取 MCP 配置
+            </p>
+          )}
         </CardContent>
       </Card>
 
       {/* Save */}
       <div className="flex items-center justify-between">
         <p className="text-muted-foreground text-xs">
-          {complete
-            ? "配置完整"
-            : "请填写所有必填字段"}
+          {complete ? "配置完整" : "请填写所有必填字段"}
         </p>
         <Button onClick={handleSave} disabled={!complete || isPending}>
           <Save className="mr-2 size-4" />
