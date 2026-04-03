@@ -24,6 +24,13 @@ const STRATEGIES = ["远期理财", "美元资产", "36存单", "长期理财", 
 const TACTICS = ["养老年金", "个人养老金", "定期存款", "理财产品", "现金产品", "债券基金", "偏股基金", "稳健理财", "增额寿险", "货币基金"]
 const STATUSES = ["已成立", "计划中", "筹集中", "已归档"]
 
+type GroupByOption = "strategy" | "status" | "tactics"
+const GROUP_BY_OPTIONS: { value: GroupByOption; label: string }[] = [
+  { value: "strategy", label: "按策略" },
+  { value: "status", label: "按状态" },
+  { value: "tactics", label: "按战术" },
+]
+
 interface SerializedUnit {
   id: string
   unitCode: string
@@ -56,13 +63,25 @@ function getSeriesPrefix(unitCode: string): string {
   return match?.[1] ?? unitCode
 }
 
-/** Get a consistent color for a series based on hash of prefix */
-function getSeriesColorIndex(prefix: string): number {
+/** Get a consistent color for a group based on hash of name */
+function getGroupColorIndex(name: string): number {
   let hash = 0
-  for (let i = 0; i < prefix.length; i++) {
-    hash = (hash * 31 + prefix.charCodeAt(i)) % CHART_COLORS.length
+  for (let i = 0; i < name.length; i++) {
+    hash = (hash * 31 + name.charCodeAt(i)) % CHART_COLORS.length
   }
   return hash
+}
+
+/** Get group key from unit based on groupBy option */
+function getGroupKey(unit: SerializedUnit, groupBy: GroupByOption): string {
+  switch (groupBy) {
+    case "strategy":
+      return unit.strategy
+    case "status":
+      return unit.status
+    case "tactics":
+      return unit.tactics
+  }
 }
 
 export function WarehouseClient({ units }: WarehouseClientProps) {
@@ -70,6 +89,7 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
   const [filterStatus, setFilterStatus] = useState("all")
   const [filterStrategy, setFilterStrategy] = useState("all")
   const [filterTactics, setFilterTactics] = useState("all")
+  const [groupBy, setGroupBy] = useState<GroupByOption>("strategy")
 
   const activeFilterCount = [filterStatus, filterStrategy, filterTactics].filter(f => f !== "all").length
 
@@ -101,27 +121,27 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
     })
   }, [units, search, filterStatus, filterStrategy, filterTactics])
 
-  // Group by series and sort
+  // Group by selected option and sort
   const groupedUnits = useMemo(() => {
     const groups = new Map<string, typeof filtered>()
 
     // Sort units by unitCode first
     const sorted = [...filtered].sort((a, b) => a.unitCode.localeCompare(b.unitCode))
 
-    // Group by series prefix
+    // Group by selected option
     for (const unit of sorted) {
-      const prefix = getSeriesPrefix(unit.unitCode)
-      const existing = groups.get(prefix)
+      const key = getGroupKey(unit, groupBy)
+      const existing = groups.get(key)
       if (existing) {
         existing.push(unit)
       } else {
-        groups.set(prefix, [unit])
+        groups.set(key, [unit])
       }
     }
 
-    // Sort groups by prefix
+    // Sort groups by key
     return Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b))
-  }, [filtered])
+  }, [filtered, groupBy])
 
   const totalAmount = filtered.reduce((sum, u) => sum + u.amount, 0)
 
@@ -153,9 +173,23 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
       {/* Filter Panel - Always visible */}
       <div className="flex flex-wrap items-end gap-3">
         <div className="space-y-1.5">
+          <Label className="text-xs">分组</Label>
+          <Select value={groupBy} onValueChange={(v) => setGroupBy(v as GroupByOption)}>
+            <SelectTrigger className="h-9 w-[110px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {GROUP_BY_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="bg-border mx-1 h-9 w-px" />
+        <div className="space-y-1.5">
           <Label className="text-xs">状态</Label>
           <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="h-9 w-[130px]">
+            <SelectTrigger className="h-9 w-[120px]">
               <SelectValue placeholder="全部状态" />
             </SelectTrigger>
             <SelectContent>
@@ -169,7 +203,7 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
         <div className="space-y-1.5">
           <Label className="text-xs">策略</Label>
           <Select value={filterStrategy} onValueChange={setFilterStrategy}>
-            <SelectTrigger className="h-9 w-[130px]">
+            <SelectTrigger className="h-9 w-[120px]">
               <SelectValue placeholder="全部策略" />
             </SelectTrigger>
             <SelectContent>
@@ -183,7 +217,7 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
         <div className="space-y-1.5">
           <Label className="text-xs">战术</Label>
           <Select value={filterTactics} onValueChange={setFilterTactics}>
-            <SelectTrigger className="h-9 w-[130px]">
+            <SelectTrigger className="h-9 w-[120px]">
               <SelectValue placeholder="全部战术" />
             </SelectTrigger>
             <SelectContent>
@@ -203,18 +237,18 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
       </div>
 
       {/* Grouped Waffle Grid */}
-      {groupedUnits.map(([prefix, groupUnits]) => {
-        const colorIndex = getSeriesColorIndex(prefix)
+      {groupedUnits.map(([groupName, groupUnits]) => {
+        const colorIndex = getGroupColorIndex(groupName)
         const groupTotal = groupUnits.reduce((sum, u) => sum + u.amount, 0)
 
         return (
-          <div key={prefix} className="space-y-3">
+          <div key={groupName} className="space-y-3">
             <div className="flex items-center gap-2">
               <div
                 className="size-3 rounded-sm"
                 style={{ backgroundColor: CHART_COLORS[colorIndex] }}
               />
-              <h2 className="text-sm font-semibold">{prefix}</h2>
+              <h2 className="text-sm font-semibold">{groupName}</h2>
               <span className="text-muted-foreground text-xs">
                 {groupUnits.length}个 · {formatCurrencyFull(groupTotal)}
               </span>
@@ -222,6 +256,8 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-10">
               {groupUnits.map((unit) => {
                 const statusColor = STATUS_COLORS[unit.status] ?? "bg-gray-400"
+                // Show different secondary info based on groupBy
+                const secondaryInfo = groupBy === "tactics" ? unit.strategy : unit.tactics
                 return (
                   <Card
                     key={unit.id}
@@ -229,17 +265,23 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
                     style={{ backgroundColor: CHART_COLORS[colorIndex] }}
                   >
                     <div className={cn("absolute right-0 top-0 h-full w-1", statusColor)} />
-                    <CardContent className="space-y-0.5 p-2 text-white">
+                    {/* Unit code as large watermark */}
+                    <div className="absolute inset-0 flex items-center justify-end pr-2">
+                      <span className="text-2xl font-bold text-white/25">
+                        {getSeriesPrefix(unit.unitCode)}
+                      </span>
+                    </div>
+                    <CardContent className="relative space-y-0.5 p-2 text-white">
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] font-semibold opacity-90">
-                          {unit.unitCode.replace(`${prefix}-`, "")}
+                          {unit.unitCode}
                         </span>
                       </div>
                       <p className="text-xs font-bold">
                         {formatCurrencyFull(unit.amount)}
                       </p>
                       <p className="truncate text-[10px] opacity-80">
-                        {unit.tactics}
+                        {secondaryInfo}
                       </p>
                       {unit.daysUntilMaturity != null && unit.daysUntilMaturity <= 30 && (
                         <p className={cn(
