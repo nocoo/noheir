@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Warehouse, Search, X } from "lucide-react"
 import {
   Card,
@@ -16,6 +17,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { formatCurrencyFull } from "@/lib/chart-config"
 import {
@@ -45,9 +53,11 @@ interface SerializedUnit {
   status: string
   strategy: string
   tactics: string
+  productId: string | null
   productName: string | null
   startDate: string | null
   endDate: string | null
+  note: string | null
   daysUntilMaturity?: number | undefined
   isAvailable?: boolean | undefined
 }
@@ -89,11 +99,29 @@ function getGroupKey(unit: SerializedUnit, groupBy: GroupByOption): string {
 }
 
 export function WarehouseClient({ units }: WarehouseClientProps) {
-  const [search, setSearch] = useState("")
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  // Initialize search from URL parameter
+  const initialSearch = searchParams.get("q") ?? ""
+  const [search, setSearch] = useState(initialSearch)
   const [filterStatus, setFilterStatus] = useState("all")
   const [filterStrategy, setFilterStrategy] = useState("all")
   const [filterTactics, setFilterTactics] = useState("all")
   const [groupBy, setGroupBy] = useState<GroupByOption>("strategy")
+  const [selectedUnit, setSelectedUnit] = useState<SerializedUnit | null>(null)
+
+  // Sync URL when search changes (debounced would be better for production)
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (search) {
+      params.set("q", search)
+    } else {
+      params.delete("q")
+    }
+    const newUrl = params.toString() ? `?${params.toString()}` : window.location.pathname
+    router.replace(newUrl, { scroll: false })
+  }, [search, searchParams, router])
 
   const activeFilterCount = [filterStatus, filterStrategy, filterTactics].filter(f => f !== "all").length
 
@@ -106,13 +134,15 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
   // Filter units
   const filtered = useMemo(() => {
     return units.filter((u) => {
-      // Text search
+      // Text search - support multiple fields
       if (search) {
         const q = search.toLowerCase()
         const matches = u.unitCode.toLowerCase().includes(q) ||
-          u.strategy.includes(search) ||
-          u.tactics.includes(search) ||
-          (u.productName ?? "").includes(search)
+          u.strategy.toLowerCase().includes(q) ||
+          u.tactics.toLowerCase().includes(q) ||
+          (u.productName ?? "").toLowerCase().includes(q) ||
+          u.status.toLowerCase().includes(q) ||
+          u.currency.toLowerCase().includes(q)
         if (!matches) return false
       }
       // Status filter
@@ -152,92 +182,110 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="flex items-center gap-2 text-xl font-bold sm:text-2xl">
-            <Warehouse className="text-primary size-5 sm:size-6" />
-            资本仓库
-          </h1>
-          <p className="text-muted-foreground text-xs sm:text-sm">
-            {groupedUnits.length}个系列 · {filtered.length}个单位 ·{" "}
-            {formatCurrencyFull(totalAmount)}
-          </p>
-        </div>
-        <div className="relative">
-          <Search className="text-muted-foreground absolute left-3 top-1/2 size-4 -translate-y-1/2" />
-          <Input
-            placeholder="搜索单位..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 sm:w-[200px]"
-          />
-        </div>
+      <div>
+        <h1 className="flex items-center gap-2 text-xl font-bold sm:text-2xl">
+          <Warehouse className="text-primary size-5 sm:size-6" />
+          资本仓库
+        </h1>
+        <p className="text-muted-foreground text-xs sm:text-sm">
+          {groupedUnits.length}个系列 · {filtered.length}个单位 ·{" "}
+          {formatCurrencyFull(totalAmount)}
+        </p>
       </div>
 
-      {/* Filter Panel - Always visible */}
-      <div className="flex flex-wrap items-end gap-2 sm:gap-3">
-        <div className="space-y-1">
-          <Label className="text-[10px] sm:text-xs">分组</Label>
-          <Select value={groupBy} onValueChange={(v) => setGroupBy(v as GroupByOption)}>
-            <SelectTrigger className="h-8 w-[90px] text-xs sm:h-9 sm:w-[110px] sm:text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {GROUP_BY_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {/* Unified Search & Filter Panel */}
+      <div className="space-y-3 rounded-lg border bg-muted/30 p-3">
+        <div className="flex flex-wrap items-end gap-2 sm:gap-3">
+          {/* Search */}
+          <div className="space-y-1 flex-1 min-w-[150px] sm:flex-none sm:min-w-0">
+            <Label className="text-[10px] sm:text-xs">搜索</Label>
+            <div className="relative">
+              <Search className="text-muted-foreground absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2" />
+              <Input
+                placeholder="编号、产品、策略..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-8 pl-8 text-xs sm:h-9 sm:w-[180px] sm:text-sm"
+              />
+            </div>
+          </div>
+          <div className="bg-border mx-0.5 hidden h-8 w-px sm:mx-1 sm:block sm:h-9" />
+          {/* Group By */}
+          <div className="space-y-1">
+            <Label className="text-[10px] sm:text-xs">分组</Label>
+            <Select value={groupBy} onValueChange={(v) => setGroupBy(v as GroupByOption)}>
+              <SelectTrigger className="h-8 w-[90px] text-xs sm:h-9 sm:w-[110px] sm:text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {GROUP_BY_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="bg-border mx-0.5 hidden h-8 w-px sm:mx-1 sm:block sm:h-9" />
+          {/* Status Filter */}
+          <div className="space-y-1">
+            <Label className="text-[10px] sm:text-xs">状态</Label>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="h-8 w-[85px] text-xs sm:h-9 sm:w-[120px] sm:text-sm">
+                <SelectValue placeholder="全部" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部状态</SelectItem>
+                {STATUSES.map((s) => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {/* Strategy Filter */}
+          <div className="space-y-1">
+            <Label className="text-[10px] sm:text-xs">策略</Label>
+            <Select value={filterStrategy} onValueChange={setFilterStrategy}>
+              <SelectTrigger className="h-8 w-[85px] text-xs sm:h-9 sm:w-[120px] sm:text-sm">
+                <SelectValue placeholder="全部" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部策略</SelectItem>
+                {STRATEGIES.map((s) => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {/* Tactics Filter */}
+          <div className="space-y-1">
+            <Label className="text-[10px] sm:text-xs">战术</Label>
+            <Select value={filterTactics} onValueChange={setFilterTactics}>
+              <SelectTrigger className="h-8 w-[85px] text-xs sm:h-9 sm:w-[120px] sm:text-sm">
+                <SelectValue placeholder="全部" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部战术</SelectItem>
+                {TACTICS.map((t) => (
+                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {/* Reset Button */}
+          {(activeFilterCount > 0 || search) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                resetFilters()
+                setSearch("")
+              }}
+              className="h-8 text-xs sm:h-9 sm:text-sm"
+            >
+              <X className="mr-1 size-3 sm:size-4" />
+              重置
+            </Button>
+          )}
         </div>
-        <div className="bg-border mx-0.5 hidden h-8 w-px sm:mx-1 sm:block sm:h-9" />
-        <div className="space-y-1">
-          <Label className="text-[10px] sm:text-xs">状态</Label>
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="h-8 w-[85px] text-xs sm:h-9 sm:w-[120px] sm:text-sm">
-              <SelectValue placeholder="全部" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部状态</SelectItem>
-              {STATUSES.map((s) => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1">
-          <Label className="text-[10px] sm:text-xs">策略</Label>
-          <Select value={filterStrategy} onValueChange={setFilterStrategy}>
-            <SelectTrigger className="h-8 w-[85px] text-xs sm:h-9 sm:w-[120px] sm:text-sm">
-              <SelectValue placeholder="全部" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部策略</SelectItem>
-              {STRATEGIES.map((s) => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1">
-          <Label className="text-[10px] sm:text-xs">战术</Label>
-          <Select value={filterTactics} onValueChange={setFilterTactics}>
-            <SelectTrigger className="h-8 w-[85px] text-xs sm:h-9 sm:w-[120px] sm:text-sm">
-              <SelectValue placeholder="全部" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部战术</SelectItem>
-              {TACTICS.map((t) => (
-                <SelectItem key={t} value={t}>{t}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        {activeFilterCount > 0 && (
-          <Button variant="ghost" size="sm" onClick={resetFilters} className="h-8 text-xs sm:h-9 sm:text-sm">
-            <X className="mr-1 size-3 sm:size-4" />
-            重置
-          </Button>
-        )}
       </div>
 
       {/* Grouped Waffle Grid */}
@@ -265,11 +313,12 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
                 return (
                   <Card
                     key={unit.id}
-                    className="relative overflow-hidden border"
+                    className="relative cursor-pointer overflow-hidden border transition-shadow hover:shadow-md"
                     style={{
                       backgroundColor: withAlpha(colorToken, 0.1),
                       borderColor: withAlpha(colorToken, 0.2),
                     }}
+                    onClick={() => setSelectedUnit(unit)}
                   >
                     <div
                       className="absolute left-0 top-0 h-full w-0.5 sm:w-1"
@@ -313,6 +362,120 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
           {search || activeFilterCount > 0 ? "未找到匹配的单位" : "暂无资本单位"}
         </div>
       )}
+
+      {/* Unit Detail Dialog */}
+      <UnitDetailDialog
+        unit={selectedUnit}
+        open={selectedUnit !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedUnit(null)
+        }}
+      />
     </div>
+  )
+}
+
+// ── Unit Detail Dialog ──
+
+function UnitDetailDialog({
+  unit,
+  open,
+  onOpenChange,
+}: {
+  unit: SerializedUnit | null
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
+  if (!unit) return null
+
+  const statusToken = getStatusToken(unit.status)
+  const strategyToken = getStrategyToken(unit.strategy)
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <span
+              className="text-2xl font-black"
+              style={{ color: withAlpha(strategyToken, 1) }}
+            >
+              {unit.unitCode}
+            </span>
+            <Badge
+              variant="outline"
+              style={{
+                borderColor: withAlpha(statusToken, 0.5),
+                backgroundColor: withAlpha(statusToken, 0.1),
+                color: withAlpha(statusToken, 1),
+              }}
+            >
+              {unit.status}
+            </Badge>
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          {/* Amount */}
+          <div className="rounded-lg bg-muted/50 p-4 text-center">
+            <p className="text-muted-foreground text-sm">金额</p>
+            <p className="text-2xl font-bold">{formatCurrencyFull(unit.amount)}</p>
+            <p className="text-muted-foreground text-xs">{unit.currency}</p>
+          </div>
+
+          {/* Details Grid */}
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <p className="text-muted-foreground text-xs">策略</p>
+              <p className="font-medium">{unit.strategy}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground text-xs">战术</p>
+              <p className="font-medium">{unit.tactics}</p>
+            </div>
+            {unit.productName && (
+              <div className="col-span-2">
+                <p className="text-muted-foreground text-xs">关联产品</p>
+                <p className="font-medium">{unit.productName}</p>
+              </div>
+            )}
+            {unit.startDate && (
+              <div>
+                <p className="text-muted-foreground text-xs">开始日期</p>
+                <p className="font-medium">{unit.startDate}</p>
+              </div>
+            )}
+            {unit.endDate && (
+              <div>
+                <p className="text-muted-foreground text-xs">到期日期</p>
+                <p className="font-medium">{unit.endDate}</p>
+              </div>
+            )}
+            {unit.daysUntilMaturity != null && (
+              <div>
+                <p className="text-muted-foreground text-xs">距到期</p>
+                <p className={cn(
+                  "font-medium",
+                  unit.daysUntilMaturity <= 0
+                    ? "text-destructive"
+                    : unit.daysUntilMaturity <= 30
+                      ? "text-amber-600 dark:text-amber-400"
+                      : ""
+                )}>
+                  {unit.daysUntilMaturity <= 0 ? "已到期" : `${unit.daysUntilMaturity} 天`}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Note */}
+          {unit.note && (
+            <div className="rounded-lg border p-3">
+              <p className="text-muted-foreground mb-1 text-xs">备注</p>
+              <p className="text-sm whitespace-pre-wrap">{unit.note}</p>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }

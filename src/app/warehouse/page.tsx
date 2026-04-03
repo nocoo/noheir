@@ -25,9 +25,11 @@ export default async function WarehousePage() {
     status: u.status,
     strategy: u.strategy,
     tactics: u.tactics,
+    productId: u.productId,
     productName: u.product?.name ?? null,
     startDate: u.startDate,
     endDate: u.endDate,
+    note: u.note,
     daysUntilMaturity: u.daysUntilMaturity,
     isAvailable: u.isAvailable,
   }))

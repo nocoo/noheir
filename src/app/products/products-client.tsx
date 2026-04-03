@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useMemo } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { toast } from "sonner"
 import {
   Package,
@@ -14,6 +15,7 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  Warehouse,
 } from "lucide-react"
 import {
   Card,
@@ -47,6 +49,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { Label } from "@/components/ui/label"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { ChannelBadge, CategoryBadge, CurrencyBadge } from "@/components/ui/colored-badge"
@@ -55,10 +63,29 @@ import {
   updateProduct,
   deleteProduct,
 } from "@/app/actions/product-actions"
+import {
+  getReturnRateStatus,
+  getReturnRateTextClass,
+  DEFAULT_MIN_RETURN_RATE,
+  DEFAULT_MAX_RETURN_RATE,
+} from "@/domain/settings"
 import type { DomainProduct } from "@/domain/types"
+
+interface SerializedUnit {
+  id: string
+  unitCode: string
+  amount: number
+  currency: string
+  status: string
+  strategy: string
+  tactics: string
+  productId: string | null
+  productName: string | null
+}
 
 interface ProductsClientProps {
   products: DomainProduct[]
+  units: SerializedUnit[]
 }
 
 type SortColumn = "name" | "channel" | "category" | "lockPeriodDays" | "annualReturnRate"
@@ -75,7 +102,7 @@ const CATEGORIES = [
   "理财产品", "现金+",
 ]
 
-export function ProductsClient({ products }: ProductsClientProps) {
+export function ProductsClient({ products, units }: ProductsClientProps) {
   const router = useRouter()
   const [search, setSearch] = useState("")
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -94,6 +121,22 @@ export function ProductsClient({ products }: ProductsClientProps) {
   // Sort state
   const [sortColumn, setSortColumn] = useState<SortColumn>("name")
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc")
+
+  // Calculate product associations with units
+  const productUnitStats = useMemo(() => {
+    const stats = new Map<string, { count: number; totalAmount: number }>()
+    for (const unit of units) {
+      if (!unit.productId) continue
+      const existing = stats.get(unit.productId)
+      if (existing) {
+        existing.count += 1
+        existing.totalAmount += unit.amount
+      } else {
+        stats.set(unit.productId, { count: 1, totalAmount: unit.amount })
+      }
+    }
+    return stats
+  }, [units])
 
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
@@ -428,12 +471,35 @@ export function ProductsClient({ products }: ProductsClientProps) {
                       : "—"}
                   </TableCell>
                   <TableCell>
-                    {product.annualReturnRate != null
-                      ? `${(product.annualReturnRate * 100).toFixed(2)}%`
-                      : "—"}
+                    {product.annualReturnRate != null ? (
+                      <ReturnRateCell rate={product.annualReturnRate} />
+                    ) : (
+                      "—"
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
+                      {productUnitStats.has(product.id) && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-7"
+                                asChild
+                              >
+                                <Link href={`/warehouse?q=${encodeURIComponent(product.name)}`}>
+                                  <Warehouse className="size-3.5" />
+                                </Link>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>查看关联的 {productUnitStats.get(product.id)?.count ?? 0} 个资本单位</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
                       <Button
                         variant="ghost"
                         size="icon"
@@ -655,5 +721,32 @@ function ProductForm({
         </Button>
       </div>
     </form>
+  )
+}
+
+// ── Return Rate Cell ──
+
+function ReturnRateCell({ rate }: { rate: number }) {
+  const ratePercent = rate * 100
+  const status = getReturnRateStatus(ratePercent, DEFAULT_MIN_RETURN_RATE, DEFAULT_MAX_RETURN_RATE)
+  const textClass = getReturnRateTextClass(status)
+  const dailyRate = (ratePercent / 365).toFixed(4)
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className={`cursor-help font-medium ${textClass}`}>
+            {ratePercent.toFixed(2)}%
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>日收益率约 {dailyRate}%</p>
+          <p className="text-muted-foreground text-xs">
+            即每万元日收益约 ¥{(10000 * rate / 365).toFixed(2)}
+          </p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   )
 }

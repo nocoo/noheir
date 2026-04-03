@@ -1,25 +1,45 @@
 import { AppShell } from "@/components/layout"
 import { getAuthedClient } from "@/lib/api-helpers"
-import { toDomainProduct } from "@/lib/capital-mappers"
-import type { DomainProduct } from "@/domain/types"
+import { toDomainProduct, toDomainUnit, toUnitDisplayInfo } from "@/lib/capital-mappers"
+import type { DomainProduct, UnitDisplayInfo } from "@/domain/types"
 import { ProductsClient } from "./products-client"
 
 export default async function ProductsPage() {
   let products: DomainProduct[] = []
+  let units: UnitDisplayInfo[] = []
 
   try {
     const { userId, client } = await getAuthedClient()
-    const result = await client.listProducts(userId)
-    products = result.products.map((raw) =>
+    const [productsResult, unitsResult] = await Promise.all([
+      client.listProducts(userId),
+      client.listUnits(userId, { with_products: true }),
+    ])
+    products = productsResult.products.map((raw) =>
       toDomainProduct(raw as Record<string, unknown>),
     )
+    units = unitsResult.units
+      .map((raw) => toDomainUnit(raw as Record<string, unknown>))
+      .map(toUnitDisplayInfo)
   } catch {
     // Not authenticated or Worker unavailable
   }
 
+  // Serialize units for client
+  const serializedUnits = units.map((u) => ({
+    id: u.id,
+    unitCode: u.unitCode,
+    amount: u.amount,
+    currency: u.currency,
+    status: u.status,
+    strategy: u.strategy,
+    tactics: u.tactics,
+    productId: u.productId,
+    productName: u.product?.name ?? null,
+  }))
+
   return (
     <AppShell>
-      <ProductsClient products={products} />
+      <ProductsClient products={products} units={serializedUnits} />
     </AppShell>
   )
 }
