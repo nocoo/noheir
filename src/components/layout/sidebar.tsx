@@ -20,17 +20,30 @@ import {
 } from "@/components/ui/tooltip";
 import { Collapsible, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useSidebar } from "./sidebar-context";
+import { useYear, YEAR_ENABLED_PATHS } from "./year-context";
 import pkg from "../../../package.json";
+
+/**
+ * Build href with year param if the target path supports it
+ */
+function buildHrefWithYear(href: string, year: number): string {
+  if (YEAR_ENABLED_PATHS.has(href)) {
+    return `${href}?year=${year}`
+  }
+  return href
+}
 
 // ── Sub-components ──
 
 function NavGroupSection({
   group,
   pathname,
+  year,
   onNavigate,
 }: {
   group: NavGroup;
   pathname: string;
+  year: number;
   onNavigate: () => void;
 }) {
   const [open, setOpen] = useState(group.defaultOpen ?? true);
@@ -71,7 +84,7 @@ function NavGroupSection({
               return (
                 <Link
                   key={item.href}
-                  href={item.href}
+                  href={buildHrefWithYear(item.href, year)}
                   onClick={onNavigate}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-normal transition-colors",
@@ -101,6 +114,7 @@ interface SidebarProps {
 export function Sidebar({ mobile = false }: SidebarProps) {
   const pathname = usePathname();
   const { collapsed, toggle, setMobileOpen } = useSidebar();
+  const { year } = useYear();
   const { data: session } = useSession();
 
   const userName = session?.user?.name ?? "用户";
@@ -166,7 +180,7 @@ export function Sidebar({ mobile = false }: SidebarProps) {
                   <Tooltip key={item.href}>
                     <TooltipTrigger asChild>
                       <Link
-                        href={item.href}
+                        href={buildHrefWithYear(item.href, year)}
                         onClick={handleNavigate}
                         className={cn(
                           "relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors",
@@ -248,6 +262,7 @@ export function Sidebar({ mobile = false }: SidebarProps) {
                   key={group.label}
                   group={group}
                   pathname={pathname}
+                  year={year}
                   onNavigate={handleNavigate}
                 />
               ))}

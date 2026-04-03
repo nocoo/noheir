@@ -1,58 +1,24 @@
 "use client"
 
-import { useEffect, useState, useTransition } from "react"
-import { usePathname, useSearchParams, useRouter } from "next/navigation"
+import { useTransition } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { getAvailableYears } from "@/app/actions/get-available-years"
+import { useYear } from "./year-context"
 import { cn } from "@/lib/utils"
 
-/**
- * Paths where the global year selector should be visible.
- * These are pages that accept `?year=` as a query parameter.
- */
-const YEAR_ENABLED_PATHS = new Set([
-  "/",
-  "/savings",
-  "/freedom",
-  "/income",
-  "/expense",
-  "/flow",
-  "/financial-health",
-  "/ai-insight",
-  "/account",
-  "/account-detail",
-])
-
-const CURRENT_YEAR = new Date().getFullYear()
-
 export function GlobalYearSelector() {
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
-  const router = useRouter()
-  const [years, setYears] = useState<number[]>([CURRENT_YEAR])
+  const { year, years, setYear, isYearEnabled } = useYear()
   const [isPending, startTransition] = useTransition()
 
-  useEffect(() => {
-    getAvailableYears()
-      .then((fetched) => {
-        setYears(fetched.length > 0 ? fetched : [CURRENT_YEAR])
-      })
-      .catch(() => setYears([CURRENT_YEAR]))
-  }, [])
+  if (!isYearEnabled) return null
 
-  if (!YEAR_ENABLED_PATHS.has(pathname)) return null
-
-  const currentYear = Number(searchParams.get("year") ?? years[0] ?? CURRENT_YEAR)
-  const currentIndex = years.indexOf(currentYear)
+  const currentIndex = years.indexOf(year)
   const canGoPrev = currentIndex < years.length - 1 // years are sorted desc
   const canGoNext = currentIndex > 0
 
-  const navigateToYear = (year: number) => {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set("year", year.toString())
+  const navigateToYear = (newYear: number) => {
     startTransition(() => {
-      router.push(`${pathname}?${params.toString()}`)
+      setYear(newYear)
     })
   }
 
@@ -82,21 +48,21 @@ export function GlobalYearSelector() {
 
       {/* Year labels */}
       <div className="flex items-center">
-        {years.map((year) => (
+        {years.map((y) => (
           <Button
-            key={year}
+            key={y}
             variant="ghost"
             size="sm"
             className={cn(
               "h-7 px-2 text-sm font-medium",
-              year === currentYear
+              y === year
                 ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
                 : "text-muted-foreground hover:text-foreground",
             )}
-            onClick={() => navigateToYear(year)}
+            onClick={() => navigateToYear(y)}
             disabled={isPending}
           >
-            {year}
+            {y}
           </Button>
         ))}
       </div>

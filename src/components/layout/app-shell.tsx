@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Menu, Github } from "lucide-react";
 import { Sidebar } from "./sidebar";
 import { SidebarProvider, useSidebar } from "./sidebar-context";
+import { YearProvider } from "./year-context";
 import { ThemeToggle } from "./theme-toggle";
 import { Breadcrumbs } from "./breadcrumbs";
 import { GlobalYearSelector } from "./global-year-selector";
@@ -141,9 +142,13 @@ function AppShellInner({ children, breadcrumbs }: { children: React.ReactNode; b
 export function AppShell({ children, breadcrumbs }: AppShellProps) {
   return (
     <SidebarProvider>
-      <AppShellInner breadcrumbs={breadcrumbs ?? undefined}>
-        {children}
-      </AppShellInner>
+      <Suspense>
+        <YearProvider>
+          <AppShellInner breadcrumbs={breadcrumbs ?? undefined}>
+            {children}
+          </AppShellInner>
+        </YearProvider>
+      </Suspense>
     </SidebarProvider>
   );
 }
