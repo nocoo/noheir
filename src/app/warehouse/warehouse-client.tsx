@@ -56,13 +56,6 @@ interface WarehouseClientProps {
   units: SerializedUnit[]
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  已成立: "bg-emerald-500",
-  计划中: "bg-blue-500",
-  筹集中: "bg-amber-500",
-  已归档: "bg-gray-400",
-}
-
 /** Extract series prefix from unitCode (e.g., "CU01-001" → "CU01") */
 function getSeriesPrefix(unitCode: string): string {
   const match = unitCode.match(/^([A-Z]+\d+)/)
@@ -266,7 +259,7 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
             </div>
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-10">
               {groupUnits.map((unit) => {
-                const statusColor = STATUS_COLORS[unit.status] ?? "bg-gray-400"
+                const statusToken = getStatusToken(unit.status)
                 // Show different secondary info based on groupBy
                 const secondaryInfo = groupBy === "tactics" ? unit.strategy : unit.tactics
                 return (
@@ -278,7 +271,10 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
                       borderColor: withAlpha(colorToken, 0.2),
                     }}
                   >
-                    <div className={cn("absolute left-0 top-0 h-full w-1", statusColor)} />
+                    <div
+                      className="absolute left-0 top-0 h-full w-1"
+                      style={{ backgroundColor: withAlpha(statusToken, 1) }}
+                    />
                     {/* Unit code as large watermark - full height, right aligned */}
                     <div className="pointer-events-none absolute inset-0 flex items-center justify-end overflow-hidden pr-3">
                       <span

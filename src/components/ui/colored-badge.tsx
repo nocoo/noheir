@@ -1,13 +1,22 @@
 /**
  * Colored Badge Components
  *
- * Hash-based colored badge system using 20-color palette.
- * Ensures same label always displays same color across all pages.
+ * Uses centralized color token system from palette.ts for domain-specific
+ * badges (strategy, tactics, status, currency). Falls back to tag-colors
+ * for generic labels.
  */
 
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { getLabelColorClasses, getUnitCodePrefix } from "@/lib/tag-colors"
+import {
+  withAlpha,
+  getStrategyToken,
+  getTacticsToken,
+  getStatusToken,
+  getCurrencyToken,
+  hashToChartToken,
+} from "@/lib/palette"
 
 interface ColoredBadgeProps {
   label: string
@@ -15,7 +24,7 @@ interface ColoredBadgeProps {
 }
 
 /**
- * Generic auto-colored badge.
+ * Generic auto-colored badge using tag-colors (Tailwind classes).
  * Uses 20-color DJB2 hash algorithm for consistent colors.
  */
 export function ColoredBadge({ label, className }: ColoredBadgeProps) {
@@ -25,6 +34,33 @@ export function ColoredBadge({ label, className }: ColoredBadgeProps) {
     <Badge
       variant="outline"
       className={cn(bg, text, "border-transparent font-normal", className)}
+    >
+      {label}
+    </Badge>
+  )
+}
+
+/**
+ * Badge using chart color token (CSS variables).
+ * Supports both light and dark mode via hsl with alpha.
+ */
+function ChartColorBadge({
+  label,
+  token,
+  className,
+}: {
+  label: string
+  token: string
+  className?: string | undefined
+}) {
+  return (
+    <Badge
+      variant="outline"
+      className={cn("border-transparent font-normal", className)}
+      style={{
+        backgroundColor: withAlpha(token, 0.15),
+        color: withAlpha(token, 1),
+      }}
     >
       {label}
     </Badge>
@@ -43,19 +79,23 @@ export function UnitCodeBadge({
   className?: string
 }) {
   const prefix = getUnitCodePrefix(unitCode)
-  const { bg, text } = getLabelColorClasses(prefix)
+  const token = hashToChartToken(prefix)
 
   return (
     <Badge
       variant="outline"
-      className={cn(bg, text, "border-transparent font-mono", className)}
+      className={cn("border-transparent font-mono", className)}
+      style={{
+        backgroundColor: withAlpha(token, 0.15),
+        color: withAlpha(token, 1),
+      }}
     >
       {unitCode}
     </Badge>
   )
 }
 
-/** Strategy badge (auto-colored) */
+/** Strategy badge - uses predefined strategy colors */
 export function StrategyBadge({
   strategy,
   className,
@@ -63,10 +103,11 @@ export function StrategyBadge({
   strategy: string
   className?: string
 }) {
-  return <ColoredBadge label={strategy} className={className} />
+  const token = getStrategyToken(strategy)
+  return <ChartColorBadge label={strategy} token={token} className={className} />
 }
 
-/** Tactics badge (auto-colored) */
+/** Tactics badge - uses predefined tactics colors */
 export function TacticsBadge({
   tactics,
   className,
@@ -74,10 +115,11 @@ export function TacticsBadge({
   tactics: string
   className?: string
 }) {
-  return <ColoredBadge label={tactics} className={className} />
+  const token = getTacticsToken(tactics)
+  return <ChartColorBadge label={tactics} token={token} className={className} />
 }
 
-/** Status badge (auto-colored) */
+/** Status badge - uses predefined status colors */
 export function StatusBadge({
   status,
   className,
@@ -85,10 +127,23 @@ export function StatusBadge({
   status: string
   className?: string
 }) {
-  return <ColoredBadge label={status} className={className} />
+  const token = getStatusToken(status)
+  return <ChartColorBadge label={status} token={token} className={className} />
 }
 
-/** Channel badge (auto-colored) */
+/** Currency badge - uses predefined currency colors */
+export function CurrencyBadge({
+  currency,
+  className,
+}: {
+  currency: string
+  className?: string
+}) {
+  const token = getCurrencyToken(currency)
+  return <ChartColorBadge label={currency} token={token} className={className} />
+}
+
+/** Channel badge (generic auto-colored) */
 export function ChannelBadge({
   channel,
   className,
@@ -99,7 +154,7 @@ export function ChannelBadge({
   return <ColoredBadge label={channel} className={className} />
 }
 
-/** Category badge (auto-colored) */
+/** Category badge (generic auto-colored) */
 export function CategoryBadge({
   category,
   className,
@@ -108,15 +163,4 @@ export function CategoryBadge({
   className?: string
 }) {
   return <ColoredBadge label={category} className={className} />
-}
-
-/** Currency badge (auto-colored) */
-export function CurrencyBadge({
-  currency,
-  className,
-}: {
-  currency: string
-  className?: string
-}) {
-  return <ColoredBadge label={currency} className={className} />
 }
