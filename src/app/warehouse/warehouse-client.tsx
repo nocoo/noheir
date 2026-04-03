@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { formatCurrencyFull } from "@/lib/chart-config"
-import { CHART_COLORS } from "@/lib/palette"
+import { CHART_COLORS, CHART_TOKENS, withAlpha } from "@/lib/palette"
 
 const STRATEGIES = ["远期理财", "美元资产", "36存单", "长期理财", "短期理财", "中期理财", "进攻计划", "麻麻理财"]
 const TACTICS = ["养老年金", "个人养老金", "定期存款", "理财产品", "现金产品", "债券基金", "偏股基金", "稳健理财", "增额寿险", "货币基金"]
@@ -258,30 +258,37 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
                 const statusColor = STATUS_COLORS[unit.status] ?? "bg-gray-400"
                 // Show different secondary info based on groupBy
                 const secondaryInfo = groupBy === "tactics" ? unit.strategy : unit.tactics
+                const colorToken = CHART_TOKENS[colorIndex] ?? "chart-1"
                 return (
                   <Card
                     key={unit.id}
-                    className="relative overflow-hidden border-0"
-                    style={{ backgroundColor: CHART_COLORS[colorIndex] }}
+                    className="relative overflow-hidden border"
+                    style={{
+                      backgroundColor: withAlpha(colorToken, 0.1),
+                      borderColor: withAlpha(colorToken, 0.2),
+                    }}
                   >
                     <div className={cn("absolute left-0 top-0 h-full w-1", statusColor)} />
                     {/* Unit code as large watermark - full height, right aligned */}
                     <div className="pointer-events-none absolute inset-0 flex items-center justify-end overflow-hidden pr-3">
-                      <span className="text-3xl font-black leading-none text-white/30">
+                      <span
+                        className="text-3xl font-black leading-none"
+                        style={{ color: withAlpha(colorToken, 0.35) }}
+                      >
                         {getSeriesPrefix(unit.unitCode)}
                       </span>
                     </div>
-                    <CardContent className="relative space-y-0.5 p-2 pl-3 text-white">
-                      <p className="text-xs font-bold">
+                    <CardContent className="relative space-y-0.5 p-2 pl-3">
+                      <p className="text-foreground text-xs font-bold">
                         {formatCurrencyFull(unit.amount)}
                       </p>
-                      <p className="truncate text-[10px] opacity-80">
+                      <p className="text-muted-foreground truncate text-[10px]">
                         {secondaryInfo}
                       </p>
                       {unit.daysUntilMaturity != null && unit.daysUntilMaturity <= 30 && (
                         <p className={cn(
                           "text-[10px] font-medium",
-                          unit.daysUntilMaturity <= 0 ? "text-red-200" : "text-yellow-200"
+                          unit.daysUntilMaturity <= 0 ? "text-destructive" : "text-amber-600 dark:text-amber-400"
                         )}>
                           {unit.daysUntilMaturity <= 0 ? "已到期" : `${unit.daysUntilMaturity}天`}
                         </p>
