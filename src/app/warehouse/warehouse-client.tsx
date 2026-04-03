@@ -150,15 +150,15 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
   const totalAmount = filtered.reduce((sum, u) => sum + u.amount, 0)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold">
-            <Warehouse className="text-primary size-6" />
+          <h1 className="flex items-center gap-2 text-xl font-bold sm:text-2xl">
+            <Warehouse className="text-primary size-5 sm:size-6" />
             资本仓库
           </h1>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-muted-foreground text-xs sm:text-sm">
             {groupedUnits.length}个系列 · {filtered.length}个单位 ·{" "}
             {formatCurrencyFull(totalAmount)}
           </p>
@@ -169,17 +169,17 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
             placeholder="搜索单位..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-[200px] pl-9"
+            className="w-full pl-9 sm:w-[200px]"
           />
         </div>
       </div>
 
       {/* Filter Panel - Always visible */}
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="space-y-1.5">
-          <Label className="text-xs">分组</Label>
+      <div className="flex flex-wrap items-end gap-2 sm:gap-3">
+        <div className="space-y-1">
+          <Label className="text-[10px] sm:text-xs">分组</Label>
           <Select value={groupBy} onValueChange={(v) => setGroupBy(v as GroupByOption)}>
-            <SelectTrigger className="h-9 w-[110px]">
+            <SelectTrigger className="h-8 w-[90px] text-xs sm:h-9 sm:w-[110px] sm:text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -189,12 +189,12 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
             </SelectContent>
           </Select>
         </div>
-        <div className="bg-border mx-1 h-9 w-px" />
-        <div className="space-y-1.5">
-          <Label className="text-xs">状态</Label>
+        <div className="bg-border mx-0.5 hidden h-8 w-px sm:mx-1 sm:block sm:h-9" />
+        <div className="space-y-1">
+          <Label className="text-[10px] sm:text-xs">状态</Label>
           <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="h-9 w-[120px]">
-              <SelectValue placeholder="全部状态" />
+            <SelectTrigger className="h-8 w-[85px] text-xs sm:h-9 sm:w-[120px] sm:text-sm">
+              <SelectValue placeholder="全部" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">全部状态</SelectItem>
@@ -204,11 +204,11 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs">策略</Label>
+        <div className="space-y-1">
+          <Label className="text-[10px] sm:text-xs">策略</Label>
           <Select value={filterStrategy} onValueChange={setFilterStrategy}>
-            <SelectTrigger className="h-9 w-[120px]">
-              <SelectValue placeholder="全部策略" />
+            <SelectTrigger className="h-8 w-[85px] text-xs sm:h-9 sm:w-[120px] sm:text-sm">
+              <SelectValue placeholder="全部" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">全部策略</SelectItem>
@@ -218,11 +218,11 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs">战术</Label>
+        <div className="space-y-1">
+          <Label className="text-[10px] sm:text-xs">战术</Label>
           <Select value={filterTactics} onValueChange={setFilterTactics}>
-            <SelectTrigger className="h-9 w-[120px]">
-              <SelectValue placeholder="全部战术" />
+            <SelectTrigger className="h-8 w-[85px] text-xs sm:h-9 sm:w-[120px] sm:text-sm">
+              <SelectValue placeholder="全部" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">全部战术</SelectItem>
@@ -233,8 +233,8 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
           </Select>
         </div>
         {activeFilterCount > 0 && (
-          <Button variant="ghost" size="sm" onClick={resetFilters} className="h-9">
-            <X className="mr-1 size-4" />
+          <Button variant="ghost" size="sm" onClick={resetFilters} className="h-8 text-xs sm:h-9 sm:text-sm">
+            <X className="mr-1 size-3 sm:size-4" />
             重置
           </Button>
         )}
@@ -246,18 +246,18 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
         const groupTotal = groupUnits.reduce((sum, u) => sum + u.amount, 0)
 
         return (
-          <div key={groupName} className="space-y-3">
-            <div className="flex items-center gap-2">
+          <div key={groupName} className="space-y-2 sm:space-y-3">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <div
-                className="size-3 rounded-sm"
+                className="size-2.5 rounded-sm sm:size-3"
                 style={{ backgroundColor: withAlpha(colorToken, 1) }}
               />
-              <h2 className="text-sm font-semibold">{groupName}</h2>
-              <span className="text-muted-foreground text-xs">
+              <h2 className="text-xs font-semibold sm:text-sm">{groupName}</h2>
+              <span className="text-muted-foreground text-[10px] sm:text-xs">
                 {groupUnits.length}个 · {formatCurrencyFull(groupTotal)}
               </span>
             </div>
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-10">
+            <div className="grid grid-cols-2 gap-1.5 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10">
               {groupUnits.map((unit) => {
                 const statusToken = getStatusToken(unit.status)
                 // Show different secondary info based on groupBy
@@ -272,28 +272,28 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
                     }}
                   >
                     <div
-                      className="absolute left-0 top-0 h-full w-1"
+                      className="absolute left-0 top-0 h-full w-0.5 sm:w-1"
                       style={{ backgroundColor: withAlpha(statusToken, 1) }}
                     />
                     {/* Unit code as large watermark - full height, right aligned */}
-                    <div className="pointer-events-none absolute inset-0 flex items-center justify-end overflow-hidden pr-3">
+                    <div className="pointer-events-none absolute inset-0 flex items-center justify-end overflow-hidden pr-1.5 sm:pr-3">
                       <span
-                        className="text-3xl font-black leading-none"
+                        className="text-xl font-black leading-none sm:text-3xl"
                         style={{ color: withAlpha(colorToken, 0.35) }}
                       >
                         {getSeriesPrefix(unit.unitCode)}
                       </span>
                     </div>
-                    <CardContent className="relative space-y-0.5 p-2 pl-3">
-                      <p className="text-foreground text-xs font-bold">
+                    <CardContent className="relative space-y-0.5 p-1.5 pl-2 sm:p-2 sm:pl-3">
+                      <p className="text-foreground text-[10px] font-bold sm:text-xs">
                         {formatCurrencyFull(unit.amount)}
                       </p>
-                      <p className="text-muted-foreground truncate text-[10px]">
+                      <p className="text-muted-foreground truncate text-[9px] sm:text-[10px]">
                         {secondaryInfo}
                       </p>
                       {unit.daysUntilMaturity != null && unit.daysUntilMaturity <= 30 && (
                         <p className={cn(
-                          "text-[10px] font-medium",
+                          "text-[9px] font-medium sm:text-[10px]",
                           unit.daysUntilMaturity <= 0 ? "text-destructive" : "text-amber-600 dark:text-amber-400"
                         )}>
                           {unit.daysUntilMaturity <= 0 ? "已到期" : `${unit.daysUntilMaturity}天`}
