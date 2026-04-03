@@ -2,14 +2,10 @@
 
 import { useEffect, useState, useTransition } from "react"
 import { usePathname, useSearchParams, useRouter } from "next/navigation"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { ChevronLeft, ChevronRight } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { getAvailableYears } from "@/app/actions/get-available-years"
+import { cn } from "@/lib/utils"
 
 /**
  * Paths where the global year selector should be visible.
@@ -47,30 +43,75 @@ export function GlobalYearSelector() {
 
   if (!YEAR_ENABLED_PATHS.has(pathname)) return null
 
-  const currentYear = searchParams.get("year") ?? years[0]?.toString() ?? ""
+  const currentYear = Number(searchParams.get("year") ?? years[0] ?? CURRENT_YEAR)
+  const currentIndex = years.indexOf(currentYear)
+  const canGoPrev = currentIndex < years.length - 1 // years are sorted desc
+  const canGoNext = currentIndex > 0
+
+  const navigateToYear = (year: number) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set("year", year.toString())
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`)
+    })
+  }
+
+  const goPrev = () => {
+    const prevYear = years[currentIndex + 1]
+    if (canGoPrev && prevYear !== undefined) navigateToYear(prevYear)
+  }
+
+  const goNext = () => {
+    const nextYear = years[currentIndex - 1]
+    if (canGoNext && nextYear !== undefined) navigateToYear(nextYear)
+  }
 
   return (
-    <Select
-      value={currentYear}
-      onValueChange={(val) => {
-        const params = new URLSearchParams(searchParams.toString())
-        params.set("year", val)
-        startTransition(() => {
-          router.push(`${pathname}?${params.toString()}`)
-        })
-      }}
-      disabled={isPending}
-    >
-      <SelectTrigger className="w-[100px] h-8 text-sm">
-        <SelectValue placeholder="年份" />
-      </SelectTrigger>
-      <SelectContent>
+    <div className="flex items-center gap-1">
+      {/* Previous year (older) */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="size-7"
+        onClick={goPrev}
+        disabled={!canGoPrev || isPending}
+        aria-label="上一年"
+      >
+        <ChevronLeft className="size-4" />
+      </Button>
+
+      {/* Year labels */}
+      <div className="flex items-center">
         {years.map((year) => (
-          <SelectItem key={year} value={year.toString()}>
-            {year}年
-          </SelectItem>
+          <Button
+            key={year}
+            variant="ghost"
+            size="sm"
+            className={cn(
+              "h-7 px-2 text-sm font-medium",
+              year === currentYear
+                ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+            onClick={() => navigateToYear(year)}
+            disabled={isPending}
+          >
+            {year}
+          </Button>
         ))}
-      </SelectContent>
-    </Select>
+      </div>
+
+      {/* Next year (newer) */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="size-7"
+        onClick={goNext}
+        disabled={!canGoNext || isPending}
+        aria-label="下一年"
+      >
+        <ChevronRight className="size-4" />
+      </Button>
+    </div>
   )
 }
