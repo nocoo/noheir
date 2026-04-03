@@ -264,14 +264,14 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
                     className="relative overflow-hidden border-0"
                     style={{ backgroundColor: CHART_COLORS[colorIndex] }}
                   >
-                    <div className={cn("absolute right-0 top-0 h-full w-1", statusColor)} />
+                    <div className={cn("absolute left-0 top-0 h-full w-1", statusColor)} />
                     {/* Unit code as large watermark - full height, right aligned */}
-                    <div className="pointer-events-none absolute inset-0 flex items-center justify-end overflow-hidden pr-1">
+                    <div className="pointer-events-none absolute inset-0 flex items-center justify-end overflow-hidden pr-3">
                       <span className="text-3xl font-black leading-none text-white/30">
                         {getSeriesPrefix(unit.unitCode)}
                       </span>
                     </div>
-                    <CardContent className="relative space-y-0.5 p-2 text-white">
+                    <CardContent className="relative space-y-0.5 p-2 pl-3 text-white">
                       <p className="text-xs font-bold">
                         {formatCurrencyFull(unit.amount)}
                       </p>
