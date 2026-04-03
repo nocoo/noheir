@@ -6,10 +6,6 @@ import { toast } from "sonner"
 import {
   Settings,
   Save,
-  Sun,
-  Moon,
-  Monitor,
-  Palette,
   Target,
   TrendingUp,
 } from "lucide-react"
@@ -24,7 +20,6 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
-import { Separator } from "@/components/ui/separator"
 import { DEFAULT_SITE_NAME } from "@/domain/settings/site-name"
 import { clampSavingsRate, getSavingsRateTone } from "@/domain/settings/savings-rate"
 import {
@@ -34,15 +29,7 @@ import {
   DEFAULT_MAX_RETURN_RATE,
 } from "@/domain/settings/return-rate"
 import {
-  THEME_OPTIONS,
-  COLOR_SCHEME_OPTIONS,
-  getIncomeColorHex,
-  getExpenseColorHex,
-} from "@/domain/settings/theme"
-import type { Theme, ColorScheme } from "@/domain/types"
-import {
   saveGeneralSettings,
-  saveThemeSettings,
   saveReturnRateSettings,
 } from "@/app/actions/settings-actions"
 import { cn } from "@/lib/utils"
@@ -62,14 +49,6 @@ export function SettingsClient({ siteName: initialSiteName, settingsJson }: Sett
     Number(settingsJson.savings_rate_target ?? 30),
   )
 
-  // Theme settings
-  const [theme, setTheme] = useState<Theme>(
-    (settingsJson.theme as Theme) ?? "system",
-  )
-  const [colorScheme, setColorScheme] = useState<ColorScheme>(
-    (settingsJson.color_scheme as ColorScheme) ?? "default",
-  )
-
   // Return rate settings
   const [minReturnRate, setMinReturnRate] = useState(
     Number(settingsJson.min_return_rate ?? DEFAULT_MIN_RETURN_RATE),
@@ -80,70 +59,28 @@ export function SettingsClient({ siteName: initialSiteName, settingsJson }: Sett
 
   const savingsRateTone = getSavingsRateTone(savingsTarget)
 
-  // Apply theme and color scheme to DOM immediately when changed
-  const applyThemeToDOM = (newTheme: Theme) => {
-    const root = document.documentElement
-    if (newTheme === "dark") {
-      root.classList.add("dark")
-    } else if (newTheme === "light") {
-      root.classList.remove("dark")
-    } else {
-      // system
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
-      if (prefersDark) {
-        root.classList.add("dark")
-      } else {
-        root.classList.remove("dark")
-      }
-    }
-    localStorage.setItem("theme", newTheme)
-  }
-
-  const applyColorSchemeToDOM = (newScheme: ColorScheme) => {
-    const root = document.documentElement
-    if (newScheme === "swapped") {
-      root.classList.add("color-scheme-swapped")
-    } else {
-      root.classList.remove("color-scheme-swapped")
-    }
-    localStorage.setItem("colorScheme", newScheme)
-  }
-
-  const handleThemeChange = (newTheme: Theme) => {
-    setTheme(newTheme)
-    applyThemeToDOM(newTheme)
-  }
-
-  const handleColorSchemeChange = (newScheme: ColorScheme) => {
-    setColorScheme(newScheme)
-    applyColorSchemeToDOM(newScheme)
-  }
-
   const handleSave = () => {
     startTransition(async () => {
       // Save all settings in parallel
-      const [generalResult, themeResult, returnRateResult] = await Promise.all([
+      const [generalResult, returnRateResult] = await Promise.all([
         saveGeneralSettings({
           siteName,
           savingsRateTarget: savingsTarget,
           expectedReturnRate: maxReturnRate,
-          darkMode: theme === "dark",
+          darkMode: false,
         }),
-        saveThemeSettings({ theme, colorScheme }),
         saveReturnRateSettings({ minReturnRate, maxReturnRate }),
       ])
 
-      if (generalResult.success && themeResult.success && returnRateResult.success) {
+      if (generalResult.success && returnRateResult.success) {
         toast.success("设置已保存")
         router.refresh()
       } else {
         const errorMsg = !generalResult.success
           ? generalResult.error
-          : !themeResult.success
-            ? themeResult.error
-            : !returnRateResult.success
-              ? returnRateResult.error
-              : "未知错误"
+          : !returnRateResult.success
+            ? returnRateResult.error
+            : "未知错误"
         toast.error(errorMsg)
       }
     })
@@ -176,76 +113,6 @@ export function SettingsClient({ siteName: initialSiteName, settingsJson }: Sett
               value={siteName}
               onChange={(e) => setSiteName(e.target.value)}
             />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Theme Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Palette className="size-4" />
-            主题设置
-          </CardTitle>
-          <CardDescription>选择应用的外观主题和颜色方案</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Theme Mode */}
-          <div className="space-y-3">
-            <Label>主题模式</Label>
-            <div className="grid grid-cols-3 gap-3">
-              {THEME_OPTIONS.map((opt) => {
-                const Icon = opt.value === "light" ? Sun : opt.value === "dark" ? Moon : Monitor
-                return (
-                  <Button
-                    key={opt.value}
-                    variant={theme === opt.value ? "default" : "outline"}
-                    onClick={() => handleThemeChange(opt.value)}
-                    className="flex h-20 flex-col items-center gap-2"
-                  >
-                    <Icon className="size-5" />
-                    <span className="text-sm">{opt.label}</span>
-                  </Button>
-                )
-              })}
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Color Scheme */}
-          <div className="space-y-3">
-            <Label>颜色方案</Label>
-            <div className="grid grid-cols-2 gap-3">
-              {COLOR_SCHEME_OPTIONS.map((opt) => (
-                <Button
-                  key={opt.value}
-                  variant={colorScheme === opt.value ? "default" : "outline"}
-                  onClick={() => handleColorSchemeChange(opt.value)}
-                  className="flex h-24 flex-col items-center gap-3"
-                >
-                  <div className="flex items-center gap-4">
-                    <div
-                      className="size-8 rounded-full border-2 border-background"
-                      style={{ backgroundColor: getIncomeColorHex(opt.value) }}
-                    />
-                    <span className="text-sm">收入</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div
-                      className="size-8 rounded-full border-2 border-background"
-                      style={{ backgroundColor: getExpenseColorHex(opt.value) }}
-                    />
-                    <span className="text-sm">支出</span>
-                  </div>
-                </Button>
-              ))}
-            </div>
-            <p className="text-muted-foreground text-sm">
-              {colorScheme === "default"
-                ? "默认：收入为绿色，支出为红色"
-                : "切换：收入为红色，支出为绿色"}
-            </p>
           </div>
         </CardContent>
       </Card>
