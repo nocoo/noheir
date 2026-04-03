@@ -2,13 +2,12 @@
 
 import { getAuthedClient } from "@/lib/api-helpers"
 import type { ActionResult } from "@/lib/action-result"
-import type { AccountTypeConfig, BalanceAnchor, Theme, ColorScheme } from "@/domain/types"
+import type { AccountTypeConfig, BalanceAnchor } from "@/domain/types"
 
 // ── Helper: read-modify-write the settings JSON column ──
 
 async function patchSettingsJson(
   patchFn: (parsed: Record<string, unknown>) => Record<string, unknown>,
-  extraFields?: Record<string, unknown>,
 ): Promise<ActionResult> {
   try {
     const { userId, client } = await getAuthedClient()
@@ -21,7 +20,6 @@ async function patchSettingsJson(
 
     const payload: Record<string, unknown> = {
       settings: JSON.stringify(patched),
-      ...extraFields,
     }
 
     await client.saveSettings(userId, payload)
@@ -37,32 +35,13 @@ async function patchSettingsJson(
 // ── General Settings ──
 
 export async function saveGeneralSettings(data: {
-  siteName: string
   savingsRateTarget: number
   expectedReturnRate: number
-  darkMode: boolean
-}): Promise<ActionResult> {
-  return patchSettingsJson(
-    (parsed) => ({
-      ...parsed,
-      savings_rate_target: data.savingsRateTarget,
-      expected_return_rate: data.expectedReturnRate,
-      dark_mode: data.darkMode,
-    }),
-    { siteName: data.siteName },
-  )
-}
-
-// ── Theme Settings ──
-
-export async function saveThemeSettings(data: {
-  theme: Theme
-  colorScheme: ColorScheme
 }): Promise<ActionResult> {
   return patchSettingsJson((parsed) => ({
     ...parsed,
-    theme: data.theme,
-    color_scheme: data.colorScheme,
+    savings_rate_target: data.savingsRateTarget,
+    expected_return_rate: data.expectedReturnRate,
   }))
 }
 

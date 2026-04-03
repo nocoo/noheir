@@ -16,11 +16,9 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
-import { DEFAULT_SITE_NAME } from "@/domain/settings/site-name"
 import { clampSavingsRate, getSavingsRateTone } from "@/domain/settings/savings-rate"
 import {
   clampMinReturnRate,
@@ -35,16 +33,14 @@ import {
 import { cn } from "@/lib/utils"
 
 interface SettingsClientProps {
-  siteName: string
   settingsJson: Record<string, unknown>
 }
 
-export function SettingsClient({ siteName: initialSiteName, settingsJson }: SettingsClientProps) {
+export function SettingsClient({ settingsJson }: SettingsClientProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
-  // General settings
-  const [siteName, setSiteName] = useState(initialSiteName || DEFAULT_SITE_NAME)
+  // Savings rate settings
   const [savingsTarget, setSavingsTarget] = useState(
     Number(settingsJson.savings_rate_target ?? 30),
   )
@@ -64,10 +60,8 @@ export function SettingsClient({ siteName: initialSiteName, settingsJson }: Sett
       // Save all settings in parallel
       const [generalResult, returnRateResult] = await Promise.all([
         saveGeneralSettings({
-          siteName,
           savingsRateTarget: savingsTarget,
           expectedReturnRate: maxReturnRate,
-          darkMode: false,
         }),
         saveReturnRateSettings({ minReturnRate, maxReturnRate }),
       ])
@@ -98,24 +92,6 @@ export function SettingsClient({ siteName: initialSiteName, settingsJson }: Sett
           应用偏好与配置
         </p>
       </div>
-
-      {/* General Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">基本设置</CardTitle>
-          <CardDescription>应用名称</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="siteName">应用名称</Label>
-            <Input
-              id="siteName"
-              value={siteName}
-              onChange={(e) => setSiteName(e.target.value)}
-            />
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Savings Rate Settings */}
       <Card>
