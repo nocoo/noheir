@@ -86,6 +86,21 @@ describe("parseChineseCSV", () => {
     expect(result.transactions).toHaveLength(0);
     expect(result.warnings).toHaveLength(1);
     expect(result.warnings[0]?.message).toContain("均为 0");
+    expect(result.skippedRefunds).toBe(0);
+  });
+
+  test("skips full-refund rows silently with skippedRefunds count", () => {
+    const csv = [
+      header,
+      "2025-01-01,日常支出,生活消耗,0.00,0.00,人民币,招商银行,,<全额退款：原支出金额:10.58，退款金额:10.58>补漏胶",
+      "2025-01-02,日常支出,超市,0.00,0.00,人民币,招商银行,,(已全额退款)小蛋糕",
+      "2025-01-03,支出,吃饭,0.00,20.00,人民币,支付宝,,正常支出",
+    ].join("\n");
+    const result = parseChineseCSV(csv);
+    expect(result.transactions).toHaveLength(1);
+    expect(result.transactions[0]?.note).toBe("正常支出");
+    expect(result.warnings).toHaveLength(0); // full refunds don't generate warnings
+    expect(result.skippedRefunds).toBe(2);
   });
 
   test("returns error for empty CSV", () => {

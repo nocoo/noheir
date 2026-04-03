@@ -51,6 +51,8 @@ export interface ChineseCSVParseResult {
   transactions: ParsedTransactionRow[];
   errors: ParseError[];
   warnings: ParseWarning[];
+  /** Count of full-refund records (0 amount with refund note) safely skipped */
+  skippedRefunds: number;
 }
 
 // ── Internal helpers ──
@@ -147,17 +149,24 @@ function determineType(
  *
  * Returns parsed rows matching the D1 transactions schema, plus errors/warnings.
  */
+/** Detect if a note indicates a full refund (e.g., "<全额退款：原支出金额:10.58，退款金额:10.58>商品名") */
+function isFullRefundNote(note: string): boolean {
+  return note.startsWith("<全额退款") || note.includes("(已全额退款)");
+}
+
 export function parseChineseCSV(content: string): ChineseCSVParseResult {
   const lines = content.trim().split(/\r?\n/);
   const transactions: ParsedTransactionRow[] = [];
   const errors: ParseError[] = [];
   const warnings: ParseWarning[] = [];
+  let skippedRefunds = 0;
 
   if (lines.length < 2) {
     return {
       transactions,
       errors: [{ row: 0, message: "CSV 文件为空或只有表头", data: [] }],
       warnings,
+      skippedRefunds,
     };
   }
 
@@ -176,6 +185,7 @@ export function parseChineseCSV(content: string): ChineseCSVParseResult {
         },
       ],
       warnings,
+      skippedRefunds,
     };
   }
 
@@ -226,10 +236,16 @@ export function parseChineseCSV(content: string): ChineseCSVParseResult {
 
       // Skip zero-amount rows
       if (amountCents === 0) {
-        warnings.push({
-          row: i + 1,
-          message: "流入和流出金额均为 0，跳过此记录",
-        });
+        if (isFullRefundNote(note)) {
+          // Full refund: safe to skip silently, just count it
+          skippedRefunds++;
+        } else {
+          // Other zero-amount: warn user
+          warnings.push({
+            row: i + 1,
+            message: "流入和流出金额均为 0，跳过此记录",
+          });
+        }
         continue;
       }
 
@@ -304,5 +320,5 @@ export function parseChineseCSV(content: string): ChineseCSVParseResult {
     }
   }
 
-  return { transactions, errors, warnings };
+  return { transactions, errors, warnings, skippedRefunds };
 }
