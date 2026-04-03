@@ -135,6 +135,20 @@ export const STRATEGY_TOKEN_MAP: Record<string, string> = {
   麻麻理财: "chart-10", // rose
 };
 
+/** Tactics → chart token mapping */
+export const TACTICS_TOKEN_MAP: Record<string, string> = {
+  养老年金: "chart-24", // blue
+  个人养老金: "chart-14", // indigo
+  定期存款: "chart-2", // teal
+  理财产品: "chart-3", // jade
+  现金产品: "chart-5", // lime
+  债券基金: "chart-15", // cobalt
+  偏股基金: "chart-9", // red
+  稳健理财: "chart-4", // green
+  增额寿险: "chart-12", // orchid
+  货币基金: "chart-18", // seafoam
+};
+
 /** Currency → chart token mapping */
 export const CURRENCY_TOKEN_MAP: Record<string, string> = {
   CNY: "chart-9", // red
@@ -144,10 +158,10 @@ export const CURRENCY_TOKEN_MAP: Record<string, string> = {
 
 /** Unit status → chart token mapping */
 export const STATUS_TOKEN_MAP: Record<string, string> = {
-  已成立: "chart-3", // jade
-  计划中: "chart-23", // gray
+  已成立: "chart-3", // jade (green)
+  计划中: "chart-24", // blue
   筹集中: "chart-6", // amber
-  已归档: "chart-16", // steel
+  已归档: "chart-16", // steel (gray, intentional for archived)
 };
 
 /** Maturity period → chart token mapping */
@@ -159,44 +173,125 @@ export const MATURITY_TOKEN_MAP: Record<string, string> = {
   "90天以上": "chart-3", // jade
 };
 
-const DEFAULT_TOKEN = "chart-23"; // gray fallback
+// Note: DEFAULT_TOKEN removed - we now use hashToChartToken for unknown values
+
+// ── Vivid color indices (excluding gray/steel: 16, 23) ──
+// Used for hash-based color assignment to ensure vibrant colors
+
+const VIVID_COLOR_INDICES = [
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 24,
+] as const;
+
+/**
+ * Stable hash function (DJB2) for string to number.
+ * Same input always produces same output.
+ */
+function stableHash(str: string): number {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash + str.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+}
+
+/**
+ * Get a stable chart token for any string using hash.
+ * Excludes gray/steel colors (16, 23) to ensure vibrant output.
+ * Same input always produces same color.
+ */
+export function hashToChartToken(value: string): string {
+  const hash = stableHash(value);
+  const index = hash % VIVID_COLOR_INDICES.length;
+  const colorNum = VIVID_COLOR_INDICES[index];
+  return `chart-${colorNum}`;
+}
+
+/**
+ * Get chart token for a strategy.
+ * Uses predefined mapping if available, otherwise hash-based.
+ */
+export function getStrategyToken(strategy: string): string {
+  return STRATEGY_TOKEN_MAP[strategy] ?? hashToChartToken(strategy);
+}
+
+/**
+ * Get chart token for a tactics.
+ * Uses predefined mapping if available, otherwise hash-based.
+ */
+export function getTacticsToken(tactics: string): string {
+  return TACTICS_TOKEN_MAP[tactics] ?? hashToChartToken(tactics);
+}
+
+/**
+ * Get chart token for a status.
+ * Uses predefined mapping if available, otherwise hash-based.
+ */
+export function getStatusToken(status: string): string {
+  return STATUS_TOKEN_MAP[status] ?? hashToChartToken(status);
+}
+
+/**
+ * Get chart token for a currency.
+ * Uses predefined mapping if available, otherwise hash-based.
+ */
+export function getCurrencyToken(currency: string): string {
+  return CURRENCY_TOKEN_MAP[currency] ?? hashToChartToken(currency);
+}
+
+/**
+ * Get chart token for a maturity period.
+ * Uses predefined mapping if available, otherwise hash-based.
+ */
+export function getMaturityToken(period: string): string {
+  return MATURITY_TOKEN_MAP[period] ?? hashToChartToken(period);
+}
 
 /** Get CSS-variable color string for a strategy (for SVG/Recharts). */
 export function strategyColor(strategy: string): string {
-  return v(STRATEGY_TOKEN_MAP[strategy] ?? DEFAULT_TOKEN);
+  return v(getStrategyToken(strategy));
+}
+
+/** Get CSS-variable color string for a tactics (for SVG/Recharts). */
+export function tacticsColor(tactics: string): string {
+  return v(getTacticsToken(tactics));
 }
 
 /** Get CSS-variable color string for a currency (for SVG/Recharts). */
 export function currencyColor(currency: string): string {
-  return v(CURRENCY_TOKEN_MAP[currency] ?? DEFAULT_TOKEN);
+  return v(getCurrencyToken(currency));
 }
 
 /** Get CSS-variable color string for a unit status (for SVG/Recharts). */
 export function statusColor(status: string): string {
-  return v(STATUS_TOKEN_MAP[status] ?? DEFAULT_TOKEN);
+  return v(getStatusToken(status));
 }
 
 /** Get CSS-variable color string for a maturity period (for SVG/Recharts). */
 export function maturityColor(period: string): string {
-  return v(MATURITY_TOKEN_MAP[period] ?? DEFAULT_TOKEN);
+  return v(getMaturityToken(period));
 }
 
 /** Resolve strategy color for ECharts. */
 export function resolveStrategyColor(strategy: string): string {
-  return resolveColor(STRATEGY_TOKEN_MAP[strategy] ?? DEFAULT_TOKEN);
+  return resolveColor(getStrategyToken(strategy));
+}
+
+/** Resolve tactics color for ECharts. */
+export function resolveTacticsColor(tactics: string): string {
+  return resolveColor(getTacticsToken(tactics));
 }
 
 /** Resolve currency color for ECharts. */
 export function resolveCurrencyColor(currency: string): string {
-  return resolveColor(CURRENCY_TOKEN_MAP[currency] ?? DEFAULT_TOKEN);
+  return resolveColor(getCurrencyToken(currency));
 }
 
 /** Resolve status color for ECharts. */
 export function resolveStatusColor(status: string): string {
-  return resolveColor(STATUS_TOKEN_MAP[status] ?? DEFAULT_TOKEN);
+  return resolveColor(getStatusToken(status));
 }
 
 /** Resolve maturity color for ECharts. */
 export function resolveMaturityColor(period: string): string {
-  return resolveColor(MATURITY_TOKEN_MAP[period] ?? DEFAULT_TOKEN);
+  return resolveColor(getMaturityToken(period));
 }

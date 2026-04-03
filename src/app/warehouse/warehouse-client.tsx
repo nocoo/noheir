@@ -18,7 +18,13 @@ import {
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { formatCurrencyFull } from "@/lib/chart-config"
-import { CHART_COLORS, CHART_TOKENS, withAlpha } from "@/lib/palette"
+import {
+  withAlpha,
+  getStrategyToken,
+  getTacticsToken,
+  getStatusToken,
+  hashToChartToken,
+} from "@/lib/palette"
 
 const STRATEGIES = ["远期理财", "美元资产", "36存单", "长期理财", "短期理财", "中期理财", "进攻计划", "麻麻理财"]
 const TACTICS = ["养老年金", "个人养老金", "定期存款", "理财产品", "现金产品", "债券基金", "偏股基金", "稳健理财", "增额寿险", "货币基金"]
@@ -63,13 +69,18 @@ function getSeriesPrefix(unitCode: string): string {
   return match?.[1] ?? unitCode
 }
 
-/** Get a consistent color for a group based on hash of name */
-function getGroupColorIndex(name: string): number {
-  let hash = 0
-  for (let i = 0; i < name.length; i++) {
-    hash = (hash * 31 + name.charCodeAt(i)) % CHART_COLORS.length
+/** Get chart token for a group based on groupBy type */
+function getGroupToken(groupName: string, groupBy: GroupByOption): string {
+  switch (groupBy) {
+    case "strategy":
+      return getStrategyToken(groupName)
+    case "tactics":
+      return getTacticsToken(groupName)
+    case "status":
+      return getStatusToken(groupName)
+    default:
+      return hashToChartToken(groupName)
   }
-  return hash
 }
 
 /** Get group key from unit based on groupBy option */
@@ -238,7 +249,7 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
 
       {/* Grouped Waffle Grid */}
       {groupedUnits.map(([groupName, groupUnits]) => {
-        const colorIndex = getGroupColorIndex(groupName)
+        const colorToken = getGroupToken(groupName, groupBy)
         const groupTotal = groupUnits.reduce((sum, u) => sum + u.amount, 0)
 
         return (
@@ -246,7 +257,7 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
             <div className="flex items-center gap-2">
               <div
                 className="size-3 rounded-sm"
-                style={{ backgroundColor: CHART_COLORS[colorIndex] }}
+                style={{ backgroundColor: withAlpha(colorToken, 1) }}
               />
               <h2 className="text-sm font-semibold">{groupName}</h2>
               <span className="text-muted-foreground text-xs">
@@ -258,7 +269,6 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
                 const statusColor = STATUS_COLORS[unit.status] ?? "bg-gray-400"
                 // Show different secondary info based on groupBy
                 const secondaryInfo = groupBy === "tactics" ? unit.strategy : unit.tactics
-                const colorToken = CHART_TOKENS[colorIndex] ?? "chart-1"
                 return (
                   <Card
                     key={unit.id}

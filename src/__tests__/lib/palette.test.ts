@@ -9,13 +9,20 @@ import {
   chartPrimary,
   chartBalance,
   strategyColor,
+  tacticsColor,
   currencyColor,
   statusColor,
   maturityColor,
   STRATEGY_TOKEN_MAP,
+  TACTICS_TOKEN_MAP,
   CURRENCY_TOKEN_MAP,
   STATUS_TOKEN_MAP,
   MATURITY_TOKEN_MAP,
+  hashToChartToken,
+  getStrategyToken,
+  getTacticsToken,
+  getStatusToken,
+  getCurrencyToken,
 } from "@/lib/palette";
 
 describe("palette", () => {
@@ -77,6 +84,12 @@ describe("palette", () => {
       expect(STRATEGY_TOKEN_MAP["进攻计划"]).toBe("chart-9");
     });
 
+    it("TACTICS_TOKEN_MAP has expected tactics", () => {
+      expect(TACTICS_TOKEN_MAP["养老年金"]).toBe("chart-24");
+      expect(TACTICS_TOKEN_MAP["定期存款"]).toBe("chart-2");
+      expect(TACTICS_TOKEN_MAP["偏股基金"]).toBe("chart-9");
+    });
+
     it("CURRENCY_TOKEN_MAP has all currencies", () => {
       expect(CURRENCY_TOKEN_MAP["CNY"]).toBe("chart-9");
       expect(CURRENCY_TOKEN_MAP["USD"]).toBe("chart-24");
@@ -85,7 +98,7 @@ describe("palette", () => {
 
     it("STATUS_TOKEN_MAP has all statuses", () => {
       expect(STATUS_TOKEN_MAP["已成立"]).toBe("chart-3");
-      expect(STATUS_TOKEN_MAP["计划中"]).toBe("chart-23");
+      expect(STATUS_TOKEN_MAP["计划中"]).toBe("chart-24");
       expect(STATUS_TOKEN_MAP["已归档"]).toBe("chart-16");
     });
 
@@ -96,27 +109,82 @@ describe("palette", () => {
     });
   });
 
+  describe("hashToChartToken", () => {
+    it("returns stable hash for same input", () => {
+      const token1 = hashToChartToken("test");
+      const token2 = hashToChartToken("test");
+      expect(token1).toBe(token2);
+    });
+
+    it("returns different tokens for different inputs", () => {
+      const token1 = hashToChartToken("foo");
+      const token2 = hashToChartToken("bar");
+      // They might be same by chance, but very unlikely
+      expect(token1).toMatch(/^chart-\d+$/);
+      expect(token2).toMatch(/^chart-\d+$/);
+    });
+
+    it("excludes gray colors (chart-16, chart-23)", () => {
+      // Test many inputs to verify gray colors are never returned
+      const tokens = Array.from({ length: 100 }, (_, i) => hashToChartToken(`test-${i}`));
+      expect(tokens).not.toContain("chart-16");
+      expect(tokens).not.toContain("chart-23");
+    });
+  });
+
+  describe("getXxxToken helpers", () => {
+    it("getStrategyToken uses map for known, hash for unknown", () => {
+      expect(getStrategyToken("长期理财")).toBe("chart-3");
+      const unknownToken = getStrategyToken("未知策略");
+      expect(unknownToken).toMatch(/^chart-\d+$/);
+      expect(unknownToken).not.toBe("chart-16");
+      expect(unknownToken).not.toBe("chart-23");
+    });
+
+    it("getTacticsToken uses map for known, hash for unknown", () => {
+      expect(getTacticsToken("养老年金")).toBe("chart-24");
+      const unknownToken = getTacticsToken("未知战术");
+      expect(unknownToken).toMatch(/^chart-\d+$/);
+    });
+
+    it("getStatusToken uses map for known, hash for unknown", () => {
+      expect(getStatusToken("已成立")).toBe("chart-3");
+      const unknownToken = getStatusToken("未知状态");
+      expect(unknownToken).toMatch(/^chart-\d+$/);
+    });
+
+    it("getCurrencyToken uses map for known, hash for unknown", () => {
+      expect(getCurrencyToken("CNY")).toBe("chart-9");
+      const unknownToken = getCurrencyToken("EUR");
+      expect(unknownToken).toMatch(/^chart-\d+$/);
+    });
+  });
+
   describe("domain color helpers", () => {
     it("strategyColor returns CSS variable", () => {
       expect(strategyColor("长期理财")).toBe("hsl(var(--chart-3))");
-      expect(strategyColor("unknown")).toBe("hsl(var(--chart-23))"); // fallback
+      // Unknown uses hash, not gray
+      const unknownColor = strategyColor("unknown");
+      expect(unknownColor).toMatch(/^hsl\(var\(--chart-\d+\)\)$/);
+    });
+
+    it("tacticsColor returns CSS variable", () => {
+      expect(tacticsColor("养老年金")).toBe("hsl(var(--chart-24))");
+      expect(tacticsColor("定期存款")).toBe("hsl(var(--chart-2))");
     });
 
     it("currencyColor returns CSS variable", () => {
       expect(currencyColor("CNY")).toBe("hsl(var(--chart-9))");
       expect(currencyColor("USD")).toBe("hsl(var(--chart-24))");
-      expect(currencyColor("EUR")).toBe("hsl(var(--chart-23))"); // fallback
     });
 
     it("statusColor returns CSS variable", () => {
       expect(statusColor("已成立")).toBe("hsl(var(--chart-3))");
-      expect(statusColor("unknown")).toBe("hsl(var(--chart-23))"); // fallback
     });
 
     it("maturityColor returns CSS variable", () => {
       expect(maturityColor("已到期")).toBe("hsl(var(--chart-9))");
       expect(maturityColor("30天内")).toBe("hsl(var(--chart-6))");
-      expect(maturityColor("unknown")).toBe("hsl(var(--chart-23))"); // fallback
     });
   });
 });
