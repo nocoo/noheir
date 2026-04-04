@@ -1,18 +1,25 @@
 import { AppShell } from "@/components/layout"
 import { getAuthedClient } from "@/lib/api-helpers"
-import { toDomainUnit, toUnitDisplayInfo } from "@/lib/capital-mappers"
-import type { UnitDisplayInfo } from "@/domain/types"
+import { toDomainUnit, toDomainProduct, toUnitDisplayInfo } from "@/lib/capital-mappers"
+import type { UnitDisplayInfo, DomainProduct } from "@/domain/types"
 import { WarehouseClient } from "./warehouse-client"
 
 export default async function WarehousePage() {
   let units: UnitDisplayInfo[] = []
+  let products: DomainProduct[] = []
 
   try {
     const { userId, client } = await getAuthedClient()
-    const result = await client.listUnits(userId, { with_products: true })
-    units = result.units
+    const [unitsResult, productsResult] = await Promise.all([
+      client.listUnits(userId, { with_products: true }),
+      client.listProducts(userId),
+    ])
+    units = unitsResult.units
       .map((raw) => toDomainUnit(raw as Record<string, unknown>))
       .map(toUnitDisplayInfo)
+    products = productsResult.products.map((raw) =>
+      toDomainProduct(raw as Record<string, unknown>),
+    )
   } catch {
     // Not authenticated or Worker unavailable
   }
@@ -37,7 +44,7 @@ export default async function WarehousePage() {
 
   return (
     <AppShell>
-      <WarehouseClient units={serialized} />
+      <WarehouseClient units={serialized} products={products} />
     </AppShell>
   )
 }

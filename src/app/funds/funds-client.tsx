@@ -33,14 +33,6 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -56,33 +48,15 @@ import {
   StatusBadge,
   CurrencyBadge,
 } from "@/components/ui/colored-badge"
+import { UnitEditor, type SerializedUnit } from "@/components/capital/unit-editor"
 import { cn } from "@/lib/utils"
 import { formatCurrencyFull } from "@/lib/chart-config"
-import {
-  createUnit,
-  updateUnit,
-  deleteUnit,
-} from "@/app/actions/unit-actions"
-
-interface SerializedUnit {
-  id: string
-  unitCode: string
-  amount: number
-  currency: string
-  status: string
-  strategy: string
-  tactics: string
-  productId: string | null
-  productName: string | null
-  startDate: string | null
-  endDate: string | null
-  note: string | null
-  daysUntilMaturity?: number | undefined
-  isAvailable?: boolean | undefined
-}
+import { deleteUnit } from "@/app/actions/unit-actions"
+import type { DomainProduct } from "@/domain/types"
 
 interface FundsClientProps {
   units: SerializedUnit[]
+  products: DomainProduct[]
 }
 
 const STRATEGIES = [
@@ -103,7 +77,7 @@ const STATUSES = ["已成立", "计划中", "筹集中", "已归档"]
 type SortField = "unitCode" | "amount" | "endDate" | "status" | "strategy"
 type SortDir = "asc" | "desc"
 
-export function FundsClient({ units }: FundsClientProps) {
+export function FundsClient({ units, products }: FundsClientProps) {
   const router = useRouter()
   const [search, setSearch] = useState("")
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -263,36 +237,21 @@ export function FundsClient({ units }: FundsClientProps) {
               </Badge>
             )}
           </Button>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={handleCreate} size="sm">
-                <Plus className="mr-1 size-4" />
-                新增
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingUnit ? "编辑单位" : "新增资本单位"}
-                </DialogTitle>
-                <DialogDescription>
-                  {editingUnit
-                    ? "修改资本单位信息"
-                    : "创建新的资本单位并关联投资策略"}
-                </DialogDescription>
-              </DialogHeader>
-              <UnitForm
-                unit={editingUnit}
-                onClose={() => setDialogOpen(false)}
-                onSuccess={() => {
-                  setDialogOpen(false)
-                  router.refresh()
-                }}
-              />
-            </DialogContent>
-          </Dialog>
+          <Button onClick={handleCreate} size="sm">
+            <Plus className="mr-1 size-4" />
+            新增
+          </Button>
         </div>
       </div>
+
+      {/* Unit Editor Dialog */}
+      <UnitEditor
+        unit={editingUnit}
+        products={products}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSuccess={() => router.refresh()}
+      />
 
       {/* Filter Panel */}
       {showFilters && (
@@ -519,214 +478,5 @@ export function FundsClient({ units }: FundsClientProps) {
         loading={isPending}
       />
     </div>
-  )
-}
-
-// ── Unit Form ──
-
-function UnitForm({
-  unit,
-  onClose,
-  onSuccess,
-}: {
-  unit: SerializedUnit | null
-  onClose: () => void
-  onSuccess: () => void
-}) {
-  const [unitCode, setUnitCode] = useState(unit?.unitCode ?? "")
-  const [amount, setAmount] = useState(
-    unit?.amount != null ? String(unit.amount) : "",
-  )
-  const [currency, setCurrency] = useState(unit?.currency ?? "CNY")
-  const [strategy, setStrategy] = useState(unit?.strategy ?? "")
-  const [tactics, setTactics] = useState(unit?.tactics ?? "")
-  const [status, setStatus] = useState(unit?.status ?? "已成立")
-  const [startDate, setStartDate] = useState(unit?.startDate ?? "")
-  const [endDate, setEndDate] = useState(unit?.endDate ?? "")
-  const [note, setNote] = useState(unit?.note ?? "")
-  const [isPending, startTransition] = useTransition()
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    startTransition(async () => {
-      if (unit) {
-        // Update existing unit
-        const result = await updateUnit(unit.id, {
-          unitCode,
-          amount: Number(amount),
-          currency,
-          status,
-          strategy,
-          tactics,
-          startDate: startDate || null,
-          endDate: endDate || null,
-          note: note || null,
-        })
-        if (result.success) {
-          toast.success("单位已更新")
-          onSuccess()
-        } else {
-          toast.error(result.error)
-        }
-      } else {
-        // Create new unit
-        const payload: Parameters<typeof createUnit>[0] = {
-          unitCode,
-          amount: Number(amount),
-          currency,
-          status,
-          strategy,
-          tactics,
-        }
-        if (startDate) payload.startDate = startDate
-        if (endDate) payload.endDate = endDate
-        if (note) payload.note = note
-
-        const result = await createUnit(payload)
-        if (result.success) {
-          toast.success("单位已创建")
-          onSuccess()
-        } else {
-          toast.error(result.error)
-        }
-      }
-    })
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="unitCode">
-            编号 <span className="text-destructive">*</span>
-          </Label>
-          <Input
-            id="unitCode"
-            value={unitCode}
-            onChange={(e) => setUnitCode(e.target.value)}
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="amount">
-            金额 <span className="text-destructive">*</span>
-          </Label>
-          <Input
-            id="amount"
-            type="number"
-            step="0.01"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            required
-          />
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>币种</Label>
-          <Select value={currency} onValueChange={setCurrency}>
-            <SelectTrigger>
-              <SelectValue placeholder="选择币种" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="CNY">CNY</SelectItem>
-              <SelectItem value="USD">USD</SelectItem>
-              <SelectItem value="HKD">HKD</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label>状态</Label>
-          <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger>
-              <SelectValue placeholder="选择状态" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="已成立">已成立</SelectItem>
-              <SelectItem value="计划中">计划中</SelectItem>
-              <SelectItem value="筹集中">筹集中</SelectItem>
-              <SelectItem value="已归档">已归档</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>
-            策略 <span className="text-destructive">*</span>
-          </Label>
-          <Select value={strategy} onValueChange={setStrategy}>
-            <SelectTrigger>
-              <SelectValue placeholder="选择策略" />
-            </SelectTrigger>
-            <SelectContent>
-              {STRATEGIES.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {s}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label>
-            战术 <span className="text-destructive">*</span>
-          </Label>
-          <Select value={tactics} onValueChange={setTactics}>
-            <SelectTrigger>
-              <SelectValue placeholder="选择战术" />
-            </SelectTrigger>
-            <SelectContent>
-              {TACTICS.map((t) => (
-                <SelectItem key={t} value={t}>
-                  {t}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="startDate">开始日期</Label>
-          <Input
-            id="startDate"
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="endDate">到期日期</Label>
-          <Input
-            id="endDate"
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-        </div>
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="note">备注</Label>
-        <Input
-          id="note"
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-        />
-      </div>
-      <div className="flex justify-end gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onClose}
-          disabled={isPending}
-        >
-          取消
-        </Button>
-        <Button type="submit" disabled={isPending}>
-          {isPending ? "保存中..." : unit ? "保存" : "创建"}
-        </Button>
-      </div>
-    </form>
   )
 }

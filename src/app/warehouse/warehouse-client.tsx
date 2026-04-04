@@ -8,13 +8,6 @@ import {
   CardContent,
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { formatCurrencyFull } from "@/lib/chart-config"
 import {
@@ -24,6 +17,8 @@ import {
   getStatusToken,
   hashToChartToken,
 } from "@/lib/palette"
+import { UnitEditor, type SerializedUnit } from "@/components/capital/unit-editor"
+import type { DomainProduct } from "@/domain/types"
 
 const STRATEGIES = ["远期理财", "美元资产", "36存单", "长期理财", "短期理财", "中期理财", "进攻计划", "麻麻理财"]
 const TACTICS = ["养老年金", "个人养老金", "定期存款", "理财产品", "现金产品", "债券基金", "偏股基金", "稳健理财", "增额寿险", "货币基金"]
@@ -36,26 +31,9 @@ const GROUP_BY_OPTIONS: { value: GroupByOption; label: string }[] = [
   { value: "tactics", label: "按战术" },
 ]
 
-interface SerializedUnit {
-  id: string
-  unitCode: string
-  amount: number
-  currency: string
-  status: string
-  strategy: string
-  tactics: string
-  productId: string | null
-  productName: string | null
-  productChannel: string | null
-  startDate: string | null
-  endDate: string | null
-  note: string | null
-  daysUntilMaturity?: number | undefined
-  isAvailable?: boolean | undefined
-}
-
 interface WarehouseClientProps {
   units: SerializedUnit[]
+  products: DomainProduct[]
 }
 
 /** Extract series prefix from unitCode (e.g., "CU01-001" → "CU01") */
@@ -132,7 +110,7 @@ function saveFilters(filters: FilterState) {
   }
 }
 
-export function WarehouseClient({ units }: WarehouseClientProps) {
+export function WarehouseClient({ units, products }: WarehouseClientProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -145,8 +123,8 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
   const [filterProduct, setFilterProduct] = useState(() => loadFilters().product)
   const [groupBy, setGroupBy] = useState<GroupByOption>(() => loadFilters().groupBy)
 
-  // Derive unique channels and products from data
-  const { channels, products } = useMemo(() => {
+  // Derive unique channels and product names from data (for filter chips)
+  const { channels, productNames } = useMemo(() => {
     const channelSet = new Set<string>()
     const productSet = new Set<string>()
     for (const u of units) {
@@ -155,7 +133,7 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
     }
     return {
       channels: Array.from(channelSet).sort(),
-      products: Array.from(productSet).sort(),
+      productNames: Array.from(productSet).sort(),
     }
   }, [units])
 
@@ -175,6 +153,7 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
   const initialSearch = searchParams.get("q") ?? ""
   const [search, setSearch] = useState(initialSearch)
   const [selectedUnit, setSelectedUnit] = useState<SerializedUnit | null>(null)
+  const [editorOpen, setEditorOpen] = useState(false)
 
   // "/" to focus search (vim-style)
   useEffect(() => {
@@ -492,14 +471,14 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
         )}
 
         {/* Row 6: Product (derived from data) */}
-        {products.length > 0 && (
+        {productNames.length > 0 && (
           <div className="flex items-center gap-1.5 sm:gap-2">
             <div className="text-muted-foreground flex w-12 shrink-0 items-center gap-1 text-[10px] sm:w-14 sm:text-xs">
               <Package className="size-3 sm:size-3.5" />
               <span>产品</span>
             </div>
             <div className="flex flex-wrap gap-1 sm:gap-1.5">
-              {products.map((p) => (
+              {productNames.map((p) => (
                 <button
                   key={p}
                   onClick={() => toggleFilter(filterProduct, p, setFilterProduct)}
@@ -556,7 +535,10 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
                       backgroundColor: withAlpha(colorToken, 0.1),
                       borderColor: withAlpha(colorToken, 0.2),
                     }}
-                    onClick={() => setSelectedUnit(unit)}
+                    onClick={() => {
+                      setSelectedUnit(unit)
+                      setEditorOpen(true)
+                    }}
                   >
                     <div
                       className="absolute left-0 top-0 h-full w-0.5 sm:w-1"
@@ -601,119 +583,17 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
         </div>
       )}
 
-      {/* Unit Detail Dialog */}
-      <UnitDetailDialog
+      {/* Unit Editor Dialog */}
+      <UnitEditor
         unit={selectedUnit}
-        open={selectedUnit !== null}
+        products={products}
+        open={editorOpen}
         onOpenChange={(open) => {
+          setEditorOpen(open)
           if (!open) setSelectedUnit(null)
         }}
+        onSuccess={() => router.refresh()}
       />
     </div>
-  )
-}
-
-// ── Unit Detail Dialog ──
-
-function UnitDetailDialog({
-  unit,
-  open,
-  onOpenChange,
-}: {
-  unit: SerializedUnit | null
-  open: boolean
-  onOpenChange: (open: boolean) => void
-}) {
-  if (!unit) return null
-
-  const statusToken = getStatusToken(unit.status)
-  const strategyToken = getStrategyToken(unit.strategy)
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <span
-              className="text-2xl font-black"
-              style={{ color: withAlpha(strategyToken, 1) }}
-            >
-              {unit.unitCode}
-            </span>
-            <Badge
-              variant="outline"
-              style={{
-                borderColor: withAlpha(statusToken, 0.5),
-                backgroundColor: withAlpha(statusToken, 0.1),
-                color: withAlpha(statusToken, 1),
-              }}
-            >
-              {unit.status}
-            </Badge>
-          </DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          {/* Amount */}
-          <div className="rounded-lg bg-muted/50 p-4 text-center">
-            <p className="text-muted-foreground text-sm">金额</p>
-            <p className="text-2xl font-bold">{formatCurrencyFull(unit.amount)}</p>
-            <p className="text-muted-foreground text-xs">{unit.currency}</p>
-          </div>
-
-          {/* Details Grid */}
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <p className="text-muted-foreground text-xs">策略</p>
-              <p className="font-medium">{unit.strategy}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground text-xs">战术</p>
-              <p className="font-medium">{unit.tactics}</p>
-            </div>
-            {unit.productName && (
-              <div className="col-span-2">
-                <p className="text-muted-foreground text-xs">关联产品</p>
-                <p className="font-medium">{unit.productName}</p>
-              </div>
-            )}
-            {unit.startDate && (
-              <div>
-                <p className="text-muted-foreground text-xs">开始日期</p>
-                <p className="font-medium">{unit.startDate}</p>
-              </div>
-            )}
-            {unit.endDate && (
-              <div>
-                <p className="text-muted-foreground text-xs">到期日期</p>
-                <p className="font-medium">{unit.endDate}</p>
-              </div>
-            )}
-            {unit.daysUntilMaturity != null && (
-              <div>
-                <p className="text-muted-foreground text-xs">距到期</p>
-                <p className={cn(
-                  "font-medium",
-                  unit.daysUntilMaturity <= 0
-                    ? "text-destructive"
-                    : unit.daysUntilMaturity <= 30
-                      ? "text-amber-600 dark:text-amber-400"
-                      : ""
-                )}>
-                  {unit.daysUntilMaturity <= 0 ? "已到期" : `${unit.daysUntilMaturity} 天`}
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Note */}
-          {unit.note && (
-            <div className="rounded-lg border p-3">
-              <p className="text-muted-foreground mb-1 text-xs">备注</p>
-              <p className="text-sm whitespace-pre-wrap">{unit.note}</p>
-            </div>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
   )
 }
