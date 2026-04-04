@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { Warehouse, Search, X } from "lucide-react"
+import { Warehouse, Search, X, Layers, Flag, Compass, Target, RotateCcw } from "lucide-react"
 import {
   Card,
   CardContent,
@@ -89,18 +89,68 @@ function getGroupKey(unit: SerializedUnit, groupBy: GroupByOption): string {
   }
 }
 
+const STORAGE_KEY = "warehouse-filters"
+
+interface FilterState {
+  groupBy: GroupByOption
+  status: string
+  strategy: string
+  tactics: string
+}
+
+const DEFAULT_FILTERS: FilterState = {
+  groupBy: "strategy",
+  status: "all",
+  strategy: "all",
+  tactics: "all",
+}
+
+function loadFilters(): FilterState {
+  if (typeof window === "undefined") return DEFAULT_FILTERS
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) {
+      const parsed = JSON.parse(saved) as Partial<FilterState>
+      return { ...DEFAULT_FILTERS, ...parsed }
+    }
+  } catch {
+    // ignore
+  }
+  return DEFAULT_FILTERS
+}
+
+function saveFilters(filters: FilterState) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(filters))
+  } catch {
+    // ignore
+  }
+}
+
 export function WarehouseClient({ units }: WarehouseClientProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const searchInputRef = useRef<HTMLInputElement>(null)
 
+  // Initialize filters - use lazy initializer to read from localStorage
+  const [filterStatus, setFilterStatus] = useState(() => loadFilters().status)
+  const [filterStrategy, setFilterStrategy] = useState(() => loadFilters().strategy)
+  const [filterTactics, setFilterTactics] = useState(() => loadFilters().tactics)
+  const [groupBy, setGroupBy] = useState<GroupByOption>(() => loadFilters().groupBy)
+
+  // Save filters to localStorage when they change
+  useEffect(() => {
+    saveFilters({
+      groupBy,
+      status: filterStatus,
+      strategy: filterStrategy,
+      tactics: filterTactics,
+    })
+  }, [groupBy, filterStatus, filterStrategy, filterTactics])
+
   // Initialize search from URL parameter
   const initialSearch = searchParams.get("q") ?? ""
   const [search, setSearch] = useState(initialSearch)
-  const [filterStatus, setFilterStatus] = useState("all")
-  const [filterStrategy, setFilterStrategy] = useState("all")
-  const [filterTactics, setFilterTactics] = useState("all")
-  const [groupBy, setGroupBy] = useState<GroupByOption>("strategy")
   const [selectedUnit, setSelectedUnit] = useState<SerializedUnit | null>(null)
 
   // "/" to focus search (vim-style)
@@ -137,6 +187,15 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
   }, [search]) // eslint-disable-line react-hooks/exhaustive-deps -- intentionally sync only on search change
 
   const activeFilterCount = [filterStatus, filterStrategy, filterTactics].filter(f => f !== "all").length
+  const hasActiveFilters = activeFilterCount > 0 || search || groupBy !== "strategy"
+
+  const resetAllFilters = () => {
+    setGroupBy(DEFAULT_FILTERS.groupBy)
+    setFilterStatus(DEFAULT_FILTERS.status)
+    setFilterStrategy(DEFAULT_FILTERS.strategy)
+    setFilterTactics(DEFAULT_FILTERS.tactics)
+    setSearch("")
+  }
 
   // Filter units
   const filtered = useMemo(() => {
@@ -234,7 +293,10 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
       <div className="space-y-1.5 sm:space-y-2">
         {/* Row 1: Group By */}
         <div className="flex items-center gap-1.5 sm:gap-2">
-          <span className="text-muted-foreground w-8 shrink-0 text-[10px] sm:w-10 sm:text-xs">分组</span>
+          <div className="text-muted-foreground flex w-12 shrink-0 items-center gap-1 text-[10px] sm:w-14 sm:text-xs">
+            <Layers className="size-3 sm:size-3.5" />
+            <span>分组</span>
+          </div>
           {GROUP_BY_OPTIONS.map((opt) => (
             <button
               key={opt.value}
@@ -249,11 +311,25 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
               {opt.label}
             </button>
           ))}
+          {/* Reset All Button */}
+          {hasActiveFilters && (
+            <button
+              onClick={resetAllFilters}
+              className="text-muted-foreground hover:text-foreground ml-auto flex items-center gap-1 text-[10px] sm:text-xs"
+              title="重置所有筛选"
+            >
+              <RotateCcw className="size-3" />
+              <span className="hidden sm:inline">重置</span>
+            </button>
+          )}
         </div>
 
         {/* Row 2: Status */}
         <div className="flex items-center gap-1.5 sm:gap-2">
-          <span className="text-muted-foreground w-8 shrink-0 text-[10px] sm:w-10 sm:text-xs">状态</span>
+          <div className="text-muted-foreground flex w-12 shrink-0 items-center gap-1 text-[10px] sm:w-14 sm:text-xs">
+            <Flag className="size-3 sm:size-3.5" />
+            <span>状态</span>
+          </div>
           {STATUSES.map((s) => (
             <button
               key={s}
@@ -283,7 +359,10 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
 
         {/* Row 3: Strategy */}
         <div className="flex items-center gap-1.5 sm:gap-2">
-          <span className="text-muted-foreground w-8 shrink-0 text-[10px] sm:w-10 sm:text-xs">策略</span>
+          <div className="text-muted-foreground flex w-12 shrink-0 items-center gap-1 text-[10px] sm:w-14 sm:text-xs">
+            <Compass className="size-3 sm:size-3.5" />
+            <span>策略</span>
+          </div>
           <div className="flex flex-wrap gap-1 sm:gap-1.5">
             {STRATEGIES.map((s) => (
               <button
@@ -315,7 +394,10 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
 
         {/* Row 4: Tactics */}
         <div className="flex items-center gap-1.5 sm:gap-2">
-          <span className="text-muted-foreground w-8 shrink-0 text-[10px] sm:w-10 sm:text-xs">战术</span>
+          <div className="text-muted-foreground flex w-12 shrink-0 items-center gap-1 text-[10px] sm:w-14 sm:text-xs">
+            <Target className="size-3 sm:size-3.5" />
+            <span>战术</span>
+          </div>
           <div className="flex flex-wrap gap-1 sm:gap-1.5">
             {TACTICS.map((t) => (
               <button
