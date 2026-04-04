@@ -103,10 +103,11 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
   const [groupBy, setGroupBy] = useState<GroupByOption>("strategy")
   const [selectedUnit, setSelectedUnit] = useState<SerializedUnit | null>(null)
 
-  // ⌘K / Ctrl+K to focus search
+  // "/" to focus search (vim-style)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+      // Only trigger if not already in an input/textarea
+      if (e.key === "/" && !["INPUT", "TEXTAREA"].includes((e.target as HTMLElement)?.tagName)) {
         e.preventDefault()
         searchInputRef.current?.focus()
       }
@@ -213,7 +214,7 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
           <Search className="text-muted-foreground absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2" />
           <Input
             ref={searchInputRef}
-            placeholder="搜索 ⌘K"
+            placeholder="筛选 /"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="h-8 w-[120px] pl-8 pr-7 text-xs sm:h-9 sm:w-[160px] sm:text-sm"
