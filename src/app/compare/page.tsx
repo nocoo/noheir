@@ -1,11 +1,12 @@
 import { AppShell } from "@/components/layout"
 import { getAuthedClient } from "@/lib/api-helpers"
-import type { YearlyComparison } from "@/domain/types"
-import { buildYearComparisonChartData } from "@/domain/dashboard/year-comparison"
+import type { MonthlyData } from "@/domain/types"
+import { MONTH_NAMES } from "@/lib/constants"
 import { YearComparisonClient } from "./year-comparison-client"
 
 export default async function ComparePage() {
-  let yearlyComparisons: YearlyComparison[] = []
+  const yearlyMonthlyData: Record<number, MonthlyData[]> = {}
+  let availableYears: number[] = []
   let targetSavingsRate = 30 // default
 
   try {
@@ -25,9 +26,9 @@ export default async function ComparePage() {
       targetSavingsRate = settingsJson.savings_rate_target
     }
 
-    const availableYears = metadata.years.sort((a, b) => a - b) // ascending for chart
+    availableYears = metadata.years.sort((a, b) => a - b) // ascending
 
-    // Fetch yearly summaries in parallel — one lightweight SQL per year
+    // Fetch all yearly summaries with monthly breakdown in parallel
     const summaries = await Promise.all(
       availableYears.map(async (year) => {
         const summary = await client.getYearlySummary(userId, year)
@@ -35,23 +36,24 @@ export default async function ComparePage() {
       })
     )
 
-    yearlyComparisons = summaries.map(({ year, summary }) => ({
-      year,
-      totalIncome: summary.totals.income / 100,
-      totalExpense: summary.totals.expense / 100,
-      balance: (summary.totals.income - summary.totals.expense) / 100,
-      categoryBreakdown: [],
-    }))
+    // Build a map: { 2024: MonthlyData[], 2025: MonthlyData[], ... }
+    for (const { year, summary } of summaries) {
+      yearlyMonthlyData[year] = summary.months.map((m) => ({
+        month: MONTH_NAMES[m.month - 1] ?? `${m.month}月`,
+        income: m.income / 100,
+        expense: m.expense / 100,
+        balance: (m.income - m.expense) / 100,
+      }))
+    }
   } catch {
     // Not authenticated or Worker unavailable
   }
 
-  const chartData = buildYearComparisonChartData(yearlyComparisons)
-
   return (
     <AppShell>
       <YearComparisonClient
-        chartData={chartData}
+        yearlyMonthlyData={yearlyMonthlyData}
+        availableYears={availableYears}
         targetSavingsRate={targetSavingsRate}
       />
     </AppShell>

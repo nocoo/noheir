@@ -4,11 +4,7 @@ import { buildSavingsRate } from "@/domain/dashboard/overview"
 import type { DomainTransaction, MonthlyData } from "@/domain/types"
 import { toDomainTransaction } from "@/lib/transaction-mappers"
 import { OverviewClient } from "./overview-client"
-
-const MONTH_NAMES = [
-  "一月", "二月", "三月", "四月", "五月", "六月",
-  "七月", "八月", "九月", "十月", "十一月", "十二月",
-]
+import { MONTH_NAMES } from "@/lib/constants"
 
 export default async function OverviewPage({
   searchParams,

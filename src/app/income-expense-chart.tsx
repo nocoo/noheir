@@ -2,7 +2,7 @@
 
 import {
   ComposedChart,
-  Area,
+  Bar,
   Line,
   XAxis,
   YAxis,
@@ -46,16 +46,6 @@ export function IncomeExpenseChart({ monthlyData, targetSavingsRate }: IncomeExp
       <div className="h-[400px]">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={displayData}>
-            <defs>
-              <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-income)" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="var(--color-income)" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="expenseGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-expense)" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="var(--color-expense)" stopOpacity={0} />
-              </linearGradient>
-            </defs>
             <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
             <XAxis
               dataKey="month"
@@ -158,23 +148,19 @@ export function IncomeExpenseChart({ monthlyData, targetSavingsRate }: IncomeExp
                 position: "insideTopRight",
               }}
             />
-            <Area
+            <Bar
               yAxisId="left"
-              type="monotone"
               dataKey="income"
               name="收入"
-              stroke="var(--color-income)"
-              strokeWidth={2}
-              fill="url(#incomeGrad)"
+              fill="var(--color-income)"
+              radius={[4, 4, 0, 0]}
             />
-            <Area
+            <Bar
               yAxisId="left"
-              type="monotone"
               dataKey="expense"
               name="支出"
-              stroke="var(--color-expense)"
-              strokeWidth={2}
-              fill="url(#expenseGrad)"
+              fill="var(--color-expense)"
+              radius={[4, 4, 0, 0]}
             />
             <Line
               yAxisId="right"
