@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect, useRef } from "react"
+import { useState, useMemo, useEffect, useRef, useSyncExternalStore, useCallback } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Warehouse, Search, X, Layers, Flag, Compass, Target, RotateCcw, Building2, Package } from "lucide-react"
 import {
@@ -88,18 +88,34 @@ const DEFAULT_FILTERS: FilterState = {
   product: "all",
 }
 
-function loadFilters(): FilterState {
-  if (typeof window === "undefined") return DEFAULT_FILTERS
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (saved) {
-      const parsed = JSON.parse(saved) as Partial<FilterState>
-      return { ...DEFAULT_FILTERS, ...parsed }
+// SSR-safe localStorage hook using useSyncExternalStore
+function useLocalStorageFilters() {
+  const subscribe = useCallback((callback: () => void) => {
+    window.addEventListener("storage", callback)
+    return () => window.removeEventListener("storage", callback)
+  }, [])
+
+  const getSnapshot = useCallback(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      return saved ?? null
+    } catch {
+      return null
     }
+  }, [])
+
+  const getServerSnapshot = useCallback(() => null, [])
+
+  const stored = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+
+  if (!stored) return DEFAULT_FILTERS
+
+  try {
+    const parsed = JSON.parse(stored) as Partial<FilterState>
+    return { ...DEFAULT_FILTERS, ...parsed }
   } catch {
-    // ignore
+    return DEFAULT_FILTERS
   }
-  return DEFAULT_FILTERS
 }
 
 function saveFilters(filters: FilterState) {
@@ -115,13 +131,16 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
   const router = useRouter()
   const searchInputRef = useRef<HTMLInputElement>(null)
 
-  // Initialize filters - use lazy initializer to read from localStorage
-  const [filterStatus, setFilterStatus] = useState(() => loadFilters().status)
-  const [filterStrategy, setFilterStrategy] = useState(() => loadFilters().strategy)
-  const [filterTactics, setFilterTactics] = useState(() => loadFilters().tactics)
-  const [filterChannel, setFilterChannel] = useState(() => loadFilters().channel)
-  const [filterProduct, setFilterProduct] = useState(() => loadFilters().product)
-  const [groupBy, setGroupBy] = useState<GroupByOption>(() => loadFilters().groupBy)
+  // Load initial filters from localStorage (SSR-safe)
+  const storedFilters = useLocalStorageFilters()
+
+  // Filter state - initialized from localStorage
+  const [filterStatus, setFilterStatus] = useState(storedFilters.status)
+  const [filterStrategy, setFilterStrategy] = useState(storedFilters.strategy)
+  const [filterTactics, setFilterTactics] = useState(storedFilters.tactics)
+  const [filterChannel, setFilterChannel] = useState(storedFilters.channel)
+  const [filterProduct, setFilterProduct] = useState(storedFilters.product)
+  const [groupBy, setGroupBy] = useState<GroupByOption>(storedFilters.groupBy)
 
   // Derive unique channels and product names from data (for filter chips)
   const { channels, productNames } = useMemo(() => {
