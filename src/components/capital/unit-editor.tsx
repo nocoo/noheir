@@ -106,19 +106,51 @@ export function UnitEditor({
   onOpenChange,
   onSuccess,
 }: UnitEditorProps) {
+  // Use key to force re-mount inner form when unit changes
+  // This ensures form state is always initialized from current unit
+  const formKey = unit?.id ?? "new"
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
+        <UnitEditorForm
+          key={formKey}
+          unit={unit}
+          products={products}
+          onOpenChange={onOpenChange}
+          onSuccess={onSuccess}
+        />
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// ── Inner Form Component ──
+
+function UnitEditorForm({
+  unit,
+  products,
+  onOpenChange,
+  onSuccess,
+}: {
+  unit: SerializedUnit | null
+  products: DomainProduct[]
+  onOpenChange: (open: boolean) => void
+  onSuccess: () => void
+}) {
   const isEditing = unit !== null
 
-  // Unit form state
-  const [unitCode, setUnitCode] = useState("")
-  const [amount, setAmount] = useState("")
-  const [currency, setCurrency] = useState("CNY")
-  const [strategy, setStrategy] = useState("")
-  const [tactics, setTactics] = useState("")
-  const [status, setStatus] = useState("已成立")
-  const [startDate, setStartDate] = useState("")
-  const [endDate, setEndDate] = useState("")
-  const [note, setNote] = useState("")
-  const [productId, setProductId] = useState<string | null>(null)
+  // Unit form state - initialized from unit prop
+  const [unitCode, setUnitCode] = useState(unit?.unitCode ?? "")
+  const [amount, setAmount] = useState(unit?.amount != null ? String(unit.amount) : "")
+  const [currency, setCurrency] = useState(unit?.currency ?? "CNY")
+  const [strategy, setStrategy] = useState(unit?.strategy ?? "")
+  const [tactics, setTactics] = useState(unit?.tactics ?? "")
+  const [status, setStatus] = useState(unit?.status ?? "已成立")
+  const [startDate, setStartDate] = useState(unit?.startDate ?? "")
+  const [endDate, setEndDate] = useState(unit?.endDate ?? "")
+  const [note, setNote] = useState(unit?.note ?? "")
+  const [productId, setProductId] = useState<string | null>(unit?.productId ?? null)
 
   // Product selector state
   const [productSearchOpen, setProductSearchOpen] = useState(false)
@@ -131,32 +163,6 @@ export function UnitEditor({
 
   const [isPending, startTransition] = useTransition()
   const [isCreatingProduct, startProductTransition] = useTransition()
-
-  // Reset form when dialog opens with different unit
-  const resetForm = (u: SerializedUnit | null) => {
-    setUnitCode(u?.unitCode ?? "")
-    setAmount(u?.amount != null ? String(u.amount) : "")
-    setCurrency(u?.currency ?? "CNY")
-    setStrategy(u?.strategy ?? "")
-    setTactics(u?.tactics ?? "")
-    setStatus(u?.status ?? "已成立")
-    setStartDate(u?.startDate ?? "")
-    setEndDate(u?.endDate ?? "")
-    setNote(u?.note ?? "")
-    setProductId(u?.productId ?? null)
-    setShowQuickCreate(false)
-    setNewProductName("")
-    setNewProductChannel("")
-    setNewProductCategory("")
-  }
-
-  // Handle open state changes
-  const handleOpenChange = (newOpen: boolean) => {
-    if (newOpen) {
-      resetForm(unit)
-    }
-    onOpenChange(newOpen)
-  }
 
   // Get selected product info
   const selectedProduct = useMemo(() => {
@@ -263,24 +269,23 @@ export function UnitEditor({
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            {isEditing ? "编辑资本单位" : "新增资本单位"}
-          </DialogTitle>
-          <DialogDescription>
-            {isEditing
-              ? "修改资本单位信息和关联产品"
-              : "创建新的资本单位并关联投资产品"}
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <DialogHeader>
+        <DialogTitle>
+          {isEditing ? "编辑资本单位" : "新增资本单位"}
+        </DialogTitle>
+        <DialogDescription>
+          {isEditing
+            ? "修改资本单位信息和关联产品"
+            : "创建新的资本单位并关联投资产品"}
+        </DialogDescription>
+      </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Section: Basic Info */}
-          <div className="space-y-3">
-            <h4 className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
-              基本信息
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Section: Basic Info */}
+        <div className="space-y-3">
+          <h4 className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+            基本信息
             </h4>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
@@ -620,7 +625,6 @@ export function UnitEditor({
             </Button>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+    </>
   )
 }
