@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { Warehouse, Search, X, Layers, Flag, Compass, Target, RotateCcw } from "lucide-react"
+import { Warehouse, Search, X, Layers, Flag, Compass, Target, RotateCcw, Building2, Package } from "lucide-react"
 import {
   Card,
   CardContent,
@@ -46,6 +46,7 @@ interface SerializedUnit {
   tactics: string
   productId: string | null
   productName: string | null
+  productChannel: string | null
   startDate: string | null
   endDate: string | null
   note: string | null
@@ -96,6 +97,8 @@ interface FilterState {
   status: string
   strategy: string
   tactics: string
+  channel: string
+  product: string
 }
 
 const DEFAULT_FILTERS: FilterState = {
@@ -103,6 +106,8 @@ const DEFAULT_FILTERS: FilterState = {
   status: "all",
   strategy: "all",
   tactics: "all",
+  channel: "all",
+  product: "all",
 }
 
 function loadFilters(): FilterState {
@@ -136,7 +141,23 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
   const [filterStatus, setFilterStatus] = useState(() => loadFilters().status)
   const [filterStrategy, setFilterStrategy] = useState(() => loadFilters().strategy)
   const [filterTactics, setFilterTactics] = useState(() => loadFilters().tactics)
+  const [filterChannel, setFilterChannel] = useState(() => loadFilters().channel)
+  const [filterProduct, setFilterProduct] = useState(() => loadFilters().product)
   const [groupBy, setGroupBy] = useState<GroupByOption>(() => loadFilters().groupBy)
+
+  // Derive unique channels and products from data
+  const { channels, products } = useMemo(() => {
+    const channelSet = new Set<string>()
+    const productSet = new Set<string>()
+    for (const u of units) {
+      if (u.productChannel) channelSet.add(u.productChannel)
+      if (u.productName) productSet.add(u.productName)
+    }
+    return {
+      channels: Array.from(channelSet).sort(),
+      products: Array.from(productSet).sort(),
+    }
+  }, [units])
 
   // Save filters to localStorage when they change
   useEffect(() => {
@@ -145,8 +166,10 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
       status: filterStatus,
       strategy: filterStrategy,
       tactics: filterTactics,
+      channel: filterChannel,
+      product: filterProduct,
     })
-  }, [groupBy, filterStatus, filterStrategy, filterTactics])
+  }, [groupBy, filterStatus, filterStrategy, filterTactics, filterChannel, filterProduct])
 
   // Initialize search from URL parameter
   const initialSearch = searchParams.get("q") ?? ""
@@ -186,7 +209,7 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
     router.replace(newUrl, { scroll: false })
   }, [search]) // eslint-disable-line react-hooks/exhaustive-deps -- intentionally sync only on search change
 
-  const activeFilterCount = [filterStatus, filterStrategy, filterTactics].filter(f => f !== "all").length
+  const activeFilterCount = [filterStatus, filterStrategy, filterTactics, filterChannel, filterProduct].filter(f => f !== "all").length
   const hasActiveFilters = activeFilterCount > 0 || search || groupBy !== "strategy"
 
   const resetAllFilters = () => {
@@ -194,6 +217,8 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
     setFilterStatus(DEFAULT_FILTERS.status)
     setFilterStrategy(DEFAULT_FILTERS.strategy)
     setFilterTactics(DEFAULT_FILTERS.tactics)
+    setFilterChannel(DEFAULT_FILTERS.channel)
+    setFilterProduct(DEFAULT_FILTERS.product)
     setSearch("")
   }
 
@@ -207,6 +232,7 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
           u.strategy.toLowerCase().includes(q) ||
           u.tactics.toLowerCase().includes(q) ||
           (u.productName ?? "").toLowerCase().includes(q) ||
+          (u.productChannel ?? "").toLowerCase().includes(q) ||
           u.status.toLowerCase().includes(q) ||
           u.currency.toLowerCase().includes(q)
         if (!matches) return false
@@ -217,9 +243,13 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
       if (filterStrategy !== "all" && u.strategy !== filterStrategy) return false
       // Tactics filter
       if (filterTactics !== "all" && u.tactics !== filterTactics) return false
+      // Channel filter
+      if (filterChannel !== "all" && u.productChannel !== filterChannel) return false
+      // Product filter
+      if (filterProduct !== "all" && u.productName !== filterProduct) return false
       return true
     })
-  }, [units, search, filterStatus, filterStrategy, filterTactics])
+  }, [units, search, filterStatus, filterStrategy, filterTactics, filterChannel, filterProduct])
 
   // Group by selected option and sort
   const groupedUnits = useMemo(() => {
@@ -426,6 +456,74 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
             )}
           </div>
         </div>
+
+        {/* Row 5: Channel (derived from data) */}
+        {channels.length > 0 && (
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="text-muted-foreground flex w-12 shrink-0 items-center gap-1 text-[10px] sm:w-14 sm:text-xs">
+              <Building2 className="size-3 sm:size-3.5" />
+              <span>渠道</span>
+            </div>
+            <div className="flex flex-wrap gap-1 sm:gap-1.5">
+              {channels.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => toggleFilter(filterChannel, c, setFilterChannel)}
+                  className={cn(
+                    "rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors sm:px-2.5 sm:py-1 sm:text-xs",
+                    filterChannel === c
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted hover:bg-muted/80 text-muted-foreground"
+                  )}
+                >
+                  {c}
+                </button>
+              ))}
+              {filterChannel !== "all" && (
+                <button
+                  onClick={() => setFilterChannel("all")}
+                  className="text-muted-foreground hover:text-foreground ml-1"
+                >
+                  <X className="size-3" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Row 6: Product (derived from data) */}
+        {products.length > 0 && (
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="text-muted-foreground flex w-12 shrink-0 items-center gap-1 text-[10px] sm:w-14 sm:text-xs">
+              <Package className="size-3 sm:size-3.5" />
+              <span>产品</span>
+            </div>
+            <div className="flex flex-wrap gap-1 sm:gap-1.5">
+              {products.map((p) => (
+                <button
+                  key={p}
+                  onClick={() => toggleFilter(filterProduct, p, setFilterProduct)}
+                  className={cn(
+                    "rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors sm:px-2.5 sm:py-1 sm:text-xs",
+                    filterProduct === p
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted hover:bg-muted/80 text-muted-foreground"
+                  )}
+                >
+                  {p}
+                </button>
+              ))}
+              {filterProduct !== "all" && (
+                <button
+                  onClick={() => setFilterProduct("all")}
+                  className="text-muted-foreground hover:text-foreground ml-1"
+                >
+                  <X className="size-3" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Grouped Waffle Grid */}
