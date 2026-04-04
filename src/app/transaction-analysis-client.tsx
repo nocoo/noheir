@@ -108,7 +108,6 @@ export function TransactionAnalysisClient({
       {/* Monthly Trend */}
       <MonthlyTrendChart
         title={labels.trend}
-        description={labels.trendDesc}
         monthlyData={monthlyData}
         averageValue={avgMonthly}
         colorHex={colorHex}
@@ -148,7 +147,6 @@ export function TransactionAnalysisClient({
       {/* Top Transactions */}
       <TopTransactionsTable
         title={labels.top}
-        description={labels.topDesc}
         transactions={topTransactions}
         variant={variant}
         colorClass={colorClass}

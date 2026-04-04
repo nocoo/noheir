@@ -139,7 +139,6 @@ export function AccountAnalysisClient({
       <Card>
         <CardHeader>
           <CardTitle>账户收支对比</CardTitle>
-          <CardDescription>各账户收入、支出与结余</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-[400px]">

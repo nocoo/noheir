@@ -19,6 +19,7 @@ interface OverviewClientProps {
   totalExpense: number
   balance: number
   savingsRate: number
+  targetSavingsRate: number
 }
 
 export function OverviewClient({
@@ -28,6 +29,7 @@ export function OverviewClient({
   totalExpense,
   balance,
   savingsRate,
+  targetSavingsRate,
 }: OverviewClientProps) {
   // Filter to last month's transactions
   const oneMonthAgo = new Date()
@@ -79,7 +81,7 @@ export function OverviewClient({
       </div>
 
       {/* Income vs Expense Trend Chart */}
-      <IncomeExpenseChart monthlyData={monthlyData} />
+      <IncomeExpenseChart monthlyData={monthlyData} targetSavingsRate={targetSavingsRate} />
 
       {/* Recent Transactions */}
       <RecentTransactionsTable

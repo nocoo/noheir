@@ -32,7 +32,7 @@ export interface TopTransaction {
 
 export interface TopTransactionsTableProps {
   title: string
-  description: string
+  description?: string
   transactions: TopTransaction[]
   variant: "income" | "expense"
   colorClass: string
@@ -51,7 +51,7 @@ export function TopTransactionsTable({
           <Trophy className="text-primary size-5" />
           {title}
         </CardTitle>
-        <CardDescription>{description}</CardDescription>
+        {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
       <CardContent>
         <Table>

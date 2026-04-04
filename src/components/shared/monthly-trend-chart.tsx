@@ -16,7 +16,7 @@ import { ChartCard } from "@/components/shared/chart-card"
 
 export interface MonthlyTrendChartProps {
   title: string
-  description: string
+  description?: string
   monthlyData: MonthlyData[]
   averageValue: number
   colorHex: string
@@ -37,7 +37,7 @@ export function MonthlyTrendChart({
   const labelText = dataKey === "income" ? "收入" : "支出"
 
   return (
-    <ChartCard title={title} description={description} icon={icon}>
+    <ChartCard title={title} {...(description ? { description } : {})} icon={icon}>
       <div className="h-[300px]">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={monthlyData}>

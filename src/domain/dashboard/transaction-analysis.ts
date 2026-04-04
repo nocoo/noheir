@@ -7,7 +7,6 @@ export interface TransactionAnalysisLabels {
   monthly: string;
   count: string;
   trend: string;
-  trendDesc: string;
   category: string;
   categoryDesc: string;
   account: string;
@@ -15,7 +14,6 @@ export interface TransactionAnalysisLabels {
   detail: string;
   detailDesc: string;
   top: string;
-  topDesc: string;
 }
 
 export const buildFilteredTransactions = (
@@ -66,7 +64,6 @@ export const buildTransactionLabels = (
     monthly: isIncome ? "月均收入" : "月均支出",
     count: isIncome ? "收入笔数" : "支出笔数",
     trend: isIncome ? "月度收入趋势" : "月度支出趋势",
-    trendDesc: isIncome ? "每月收入变化趋势" : "每月支出变化趋势",
     category: isIncome ? "收入类别分布" : "支出类别分布",
     categoryDesc: "横向条形图，配合筛选器查看不同层级",
     account: isIncome ? "收款账户分布" : "支付账户分布",
@@ -74,6 +71,5 @@ export const buildTransactionLabels = (
     detail: isIncome ? "收入明细" : "支出明细",
     detailDesc: isIncome ? "各类别收入详情（点击展开/折叠）" : "各类别支出详情",
     top: isIncome ? "单次收入 Top 50" : "单次支出 Top 50",
-    topDesc: isIncome ? "最高的50笔收入记录" : "最高的50笔支出记录",
   };
 };
