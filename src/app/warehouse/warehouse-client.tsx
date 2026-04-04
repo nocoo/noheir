@@ -1,13 +1,12 @@
 "use client"
 
-import { useState, useMemo, useEffect, useRef, useCallback } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Warehouse, Search, X } from "lucide-react"
 import {
   Card,
   CardContent,
 } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   Dialog,
@@ -98,7 +97,6 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
   // Initialize search from URL parameter
   const initialSearch = searchParams.get("q") ?? ""
   const [search, setSearch] = useState(initialSearch)
-  const [searchOpen, setSearchOpen] = useState(false)
   const [filterStatus, setFilterStatus] = useState("all")
   const [filterStrategy, setFilterStrategy] = useState("all")
   const [filterTactics, setFilterTactics] = useState("all")
@@ -110,17 +108,16 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault()
-        setSearchOpen(true)
-        setTimeout(() => searchInputRef.current?.focus(), 0)
+        searchInputRef.current?.focus()
       }
-      if (e.key === "Escape" && searchOpen) {
-        setSearchOpen(false)
+      if (e.key === "Escape" && document.activeElement === searchInputRef.current) {
         setSearch("")
+        searchInputRef.current?.blur()
       }
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [searchOpen])
+  }, [])
 
   // Sync URL when search changes
   useEffect(() => {
@@ -139,14 +136,6 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
   }, [search]) // eslint-disable-line react-hooks/exhaustive-deps -- intentionally sync only on search change
 
   const activeFilterCount = [filterStatus, filterStrategy, filterTactics].filter(f => f !== "all").length
-
-  const resetFilters = useCallback(() => {
-    setFilterStatus("all")
-    setFilterStrategy("all")
-    setFilterTactics("all")
-    setSearch("")
-    setSearchOpen(false)
-  }, [])
 
   // Filter units
   const filtered = useMemo(() => {
@@ -219,148 +208,141 @@ export function WarehouseClient({ units }: WarehouseClientProps) {
           </p>
         </div>
 
-        {/* Search - right aligned */}
-        <div className="shrink-0">
-          {searchOpen || search ? (
-            <div className="relative">
-              <Search className="text-muted-foreground absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2" />
-              <Input
-                ref={searchInputRef}
-                placeholder="搜索..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onBlur={() => !search && setSearchOpen(false)}
-                className="h-8 w-[140px] pl-8 pr-8 text-xs sm:h-9 sm:w-[180px] sm:text-sm"
-                autoFocus
-              />
-              {search && (
-                <button
-                  onClick={() => { setSearch(""); searchInputRef.current?.focus() }}
-                  className="text-muted-foreground hover:text-foreground absolute right-2 top-1/2 -translate-y-1/2"
-                >
-                  <X className="size-3.5" />
-                </button>
-              )}
-            </div>
-          ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setSearchOpen(true)}
-              className="h-8 gap-1.5 text-xs sm:h-9 sm:text-sm"
+        {/* Search - right aligned, always visible */}
+        <div className="relative shrink-0">
+          <Search className="text-muted-foreground absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2" />
+          <Input
+            ref={searchInputRef}
+            placeholder="搜索 ⌘K"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-8 w-[120px] pl-8 pr-7 text-xs sm:h-9 sm:w-[160px] sm:text-sm"
+          />
+          {search && (
+            <button
+              onClick={() => { setSearch(""); searchInputRef.current?.focus() }}
+              className="text-muted-foreground hover:text-foreground absolute right-2 top-1/2 -translate-y-1/2"
             >
-              <Search className="size-3.5" />
-              <span className="hidden sm:inline">搜索</span>
-              <kbd className="bg-muted text-muted-foreground pointer-events-none ml-1 hidden rounded px-1.5 py-0.5 font-mono text-[10px] sm:inline-block">
-                ⌘K
-              </kbd>
-            </Button>
+              <X className="size-3.5" />
+            </button>
           )}
         </div>
       </div>
 
-      {/* Filter Chips Row */}
-      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-        {/* Group By Chips */}
-        <span className="text-muted-foreground mr-1 text-[10px] sm:text-xs">分组</span>
-        {GROUP_BY_OPTIONS.map((opt) => (
-          <button
-            key={opt.value}
-            onClick={() => setGroupBy(opt.value)}
-            className={cn(
-              "rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors sm:px-2.5 sm:py-1 sm:text-xs",
-              groupBy === opt.value
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted hover:bg-muted/80 text-muted-foreground"
-            )}
-          >
-            {opt.label}
-          </button>
-        ))}
-
-        <div className="bg-border mx-1 h-4 w-px sm:mx-2" />
-
-        {/* Status Chips */}
-        <span className="text-muted-foreground mr-1 text-[10px] sm:text-xs">状态</span>
-        {STATUSES.map((s) => (
-          <button
-            key={s}
-            onClick={() => toggleFilter(filterStatus, s, setFilterStatus)}
-            className={cn(
-              "rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors sm:px-2.5 sm:py-1 sm:text-xs",
-              filterStatus === s
-                ? "text-primary-foreground"
-                : "bg-muted hover:bg-muted/80 text-muted-foreground"
-            )}
-            style={filterStatus === s ? {
-              backgroundColor: withAlpha(getStatusToken(s), 1),
-            } : undefined}
-          >
-            {s}
-          </button>
-        ))}
-
-        <div className="bg-border mx-1 h-4 w-px sm:mx-2" />
-
-        {/* Strategy Chips - collapsible on mobile */}
-        <span className="text-muted-foreground mr-1 text-[10px] sm:text-xs">策略</span>
-        <div className="flex flex-wrap gap-1 sm:gap-1.5">
-          {STRATEGIES.map((s) => (
+      {/* Filter Rows */}
+      <div className="space-y-1.5 sm:space-y-2">
+        {/* Row 1: Group By */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <span className="text-muted-foreground w-8 shrink-0 text-[10px] sm:w-10 sm:text-xs">分组</span>
+          {GROUP_BY_OPTIONS.map((opt) => (
             <button
-              key={s}
-              onClick={() => toggleFilter(filterStrategy, s, setFilterStrategy)}
+              key={opt.value}
+              onClick={() => setGroupBy(opt.value)}
               className={cn(
                 "rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors sm:px-2.5 sm:py-1 sm:text-xs",
-                filterStrategy === s
+                groupBy === opt.value
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted hover:bg-muted/80 text-muted-foreground"
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Row 2: Status */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <span className="text-muted-foreground w-8 shrink-0 text-[10px] sm:w-10 sm:text-xs">状态</span>
+          {STATUSES.map((s) => (
+            <button
+              key={s}
+              onClick={() => toggleFilter(filterStatus, s, setFilterStatus)}
+              className={cn(
+                "rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors sm:px-2.5 sm:py-1 sm:text-xs",
+                filterStatus === s
                   ? "text-primary-foreground"
                   : "bg-muted hover:bg-muted/80 text-muted-foreground"
               )}
-              style={filterStrategy === s ? {
-                backgroundColor: withAlpha(getStrategyToken(s), 1),
+              style={filterStatus === s ? {
+                backgroundColor: withAlpha(getStatusToken(s), 1),
               } : undefined}
             >
               {s}
             </button>
           ))}
-        </div>
-
-        <div className="bg-border mx-1 h-4 w-px sm:mx-2" />
-
-        {/* Tactics Chips */}
-        <span className="text-muted-foreground mr-1 text-[10px] sm:text-xs">战术</span>
-        <div className="flex flex-wrap gap-1 sm:gap-1.5">
-          {TACTICS.map((t) => (
+          {filterStatus !== "all" && (
             <button
-              key={t}
-              onClick={() => toggleFilter(filterTactics, t, setFilterTactics)}
-              className={cn(
-                "rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors sm:px-2.5 sm:py-1 sm:text-xs",
-                filterTactics === t
-                  ? "text-primary-foreground"
-                  : "bg-muted hover:bg-muted/80 text-muted-foreground"
-              )}
-              style={filterTactics === t ? {
-                backgroundColor: withAlpha(getTacticsToken(t), 1),
-              } : undefined}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-
-        {/* Reset */}
-        {(activeFilterCount > 0 || search) && (
-          <>
-            <div className="bg-border mx-1 h-4 w-px sm:mx-2" />
-            <button
-              onClick={resetFilters}
-              className="text-muted-foreground hover:text-foreground flex items-center gap-0.5 text-[10px] sm:text-xs"
+              onClick={() => setFilterStatus("all")}
+              className="text-muted-foreground hover:text-foreground ml-1"
             >
               <X className="size-3" />
-              重置
             </button>
-          </>
-        )}
+          )}
+        </div>
+
+        {/* Row 3: Strategy */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <span className="text-muted-foreground w-8 shrink-0 text-[10px] sm:w-10 sm:text-xs">策略</span>
+          <div className="flex flex-wrap gap-1 sm:gap-1.5">
+            {STRATEGIES.map((s) => (
+              <button
+                key={s}
+                onClick={() => toggleFilter(filterStrategy, s, setFilterStrategy)}
+                className={cn(
+                  "rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors sm:px-2.5 sm:py-1 sm:text-xs",
+                  filterStrategy === s
+                    ? "text-primary-foreground"
+                    : "bg-muted hover:bg-muted/80 text-muted-foreground"
+                )}
+                style={filterStrategy === s ? {
+                  backgroundColor: withAlpha(getStrategyToken(s), 1),
+                } : undefined}
+              >
+                {s}
+              </button>
+            ))}
+            {filterStrategy !== "all" && (
+              <button
+                onClick={() => setFilterStrategy("all")}
+                className="text-muted-foreground hover:text-foreground ml-1"
+              >
+                <X className="size-3" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Row 4: Tactics */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <span className="text-muted-foreground w-8 shrink-0 text-[10px] sm:w-10 sm:text-xs">战术</span>
+          <div className="flex flex-wrap gap-1 sm:gap-1.5">
+            {TACTICS.map((t) => (
+              <button
+                key={t}
+                onClick={() => toggleFilter(filterTactics, t, setFilterTactics)}
+                className={cn(
+                  "rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors sm:px-2.5 sm:py-1 sm:text-xs",
+                  filterTactics === t
+                    ? "text-primary-foreground"
+                    : "bg-muted hover:bg-muted/80 text-muted-foreground"
+                )}
+                style={filterTactics === t ? {
+                  backgroundColor: withAlpha(getTacticsToken(t), 1),
+                } : undefined}
+              >
+                {t}
+              </button>
+            ))}
+            {filterTactics !== "all" && (
+              <button
+                onClick={() => setFilterTactics("all")}
+                className="text-muted-foreground hover:text-foreground ml-1"
+              >
+                <X className="size-3" />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Grouped Waffle Grid */}
