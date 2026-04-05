@@ -220,7 +220,7 @@ export function FundsClient({ units, products }: FundsClientProps) {
               placeholder="搜索单位..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-[200px] pl-9"
+              className="h-9 w-[200px] pl-9"
             />
           </div>
           <Button
