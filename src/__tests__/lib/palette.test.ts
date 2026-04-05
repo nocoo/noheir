@@ -98,7 +98,7 @@ describe("palette", () => {
 
     it("STATUS_TOKEN_MAP has all statuses", () => {
       expect(STATUS_TOKEN_MAP["已成立"]).toBe("chart-3");
-      expect(STATUS_TOKEN_MAP["计划中"]).toBe("chart-24");
+      expect(STATUS_TOKEN_MAP["计划中"]).toBe("chart-9");
       expect(STATUS_TOKEN_MAP["已归档"]).toBe("chart-16");
     });
 

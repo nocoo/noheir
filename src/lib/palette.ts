@@ -159,7 +159,7 @@ export const CURRENCY_TOKEN_MAP: Record<string, string> = {
 /** Unit status → chart token mapping */
 export const STATUS_TOKEN_MAP: Record<string, string> = {
   已成立: "chart-3", // jade (green)
-  计划中: "chart-24", // blue
+  计划中: "chart-9", // red
   筹集中: "chart-6", // amber
   已归档: "chart-16", // steel (gray, intentional for archived)
 };
