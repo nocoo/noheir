@@ -409,19 +409,17 @@ export function FundsClient({ units, products }: FundsClientProps) {
                     <span
                       className={cn(
                         "text-sm",
-                        unit.daysUntilAvailable != null &&
-                          unit.daysUntilAvailable <= 0
-                          ? "text-destructive font-medium"
-                          : unit.daysUntilAvailable != null &&
-                              unit.daysUntilAvailable <= 30
-                            ? "text-amber-600"
+                        unit.isAvailable
+                          ? "text-green-600 font-medium"
+                          : unit.daysUntilAvailable != null
+                            ? "text-destructive font-medium"
                             : "text-muted-foreground",
                       )}
                     >
                       {unit.availableDate ?? "—"}
                       {unit.daysUntilAvailable != null && (
                         <span className="ml-1 text-xs">
-                          ({unit.daysUntilAvailable}天)
+                          ({unit.isAvailable ? "可用" : `${unit.daysUntilAvailable}天`})
                         </span>
                       )}
                     </span>
