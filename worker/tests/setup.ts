@@ -56,7 +56,25 @@ CREATE TABLE IF NOT EXISTS capital_units (
   start_date TEXT,
   end_date TEXT,
   note TEXT,
-  created_at INTEGER NOT NULL
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS contribution_logs (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  unit_id TEXT NOT NULL REFERENCES capital_units(id) ON DELETE CASCADE,
+  product_id TEXT REFERENCES financial_products(id) ON DELETE RESTRICT,
+  product_name TEXT,
+  operation_type TEXT NOT NULL,
+  amount_cents INTEGER NOT NULL,
+  balance_after_cents INTEGER,
+  operation_date TEXT NOT NULL,
+  source TEXT DEFAULT 'manual',
+  note TEXT,
+  deleted_at INTEGER,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS transactions (
@@ -110,6 +128,7 @@ CREATE TABLE IF NOT EXISTS settings (
 `;
 
 const TABLES = [
+  "contribution_logs",
   "settings",
   "capital_units",
   "financial_products",

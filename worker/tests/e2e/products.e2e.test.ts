@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach } from "bun:test";
 import { api, rawFetch, TEST_USER_A } from "./helpers/client";
 import { cleanupUser } from "./helpers/cleanup";
-import { makeProduct } from "./helpers/seed";
+import { makeProduct, makeUnit, makeContributionLog } from "./helpers/seed";
 
 const userId = TEST_USER_A;
 
@@ -139,5 +139,59 @@ describe("E2E: Products", () => {
       userId,
     });
     expect(res.total_returned).toBe(1);
+  });
+
+  // ── Deletion guard with contribution logs ──
+
+  test("DELETE /api/products/:id returns 409 when product has contribution logs", async () => {
+    const { product } = await api<{ product: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/products",
+      userId,
+      body: makeProduct(),
+    });
+    const { unit } = await api<{ unit: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit(),
+    });
+
+    // Create a contribution log referencing the product
+    await api({
+      method: "POST",
+      path: "/api/contribution-logs",
+      userId,
+      body: makeContributionLog({ unitId: unit.id, productId: product.id }),
+    });
+
+    // Try to delete product
+    const res = await rawFetch({
+      method: "DELETE",
+      path: `/api/products/${product.id}`,
+      userId,
+    });
+
+    expect(res.status).toBe(409);
+    const body = (await res.json()) as { error: string; hasContributionLogs: boolean };
+    expect(body.hasContributionLogs).toBe(true);
+    expect(body.error).toContain("contribution history");
+  });
+
+  test("DELETE /api/products/:id succeeds when product has no contribution logs", async () => {
+    const { product } = await api<{ product: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/products",
+      userId,
+      body: makeProduct(),
+    });
+
+    const res = await api<{ success: boolean }>({
+      method: "DELETE",
+      path: `/api/products/${product.id}`,
+      userId,
+    });
+
+    expect(res.success).toBe(true);
   });
 });

@@ -153,4 +153,115 @@ describe("E2E: Units", () => {
     expect(res.units).toHaveLength(1);
     expect(res.units[0]!.product).toBeNull();
   });
+
+  // ── Auto-logging on productId change ──
+
+  test("PUT /api/units/:id auto-logs on productId change", async () => {
+    const { product } = await api<{ product: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/products",
+      userId,
+      body: makeProduct(),
+    });
+    const { unit } = await api<{ unit: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit(),
+    });
+
+    // Assign product to unit
+    await api({
+      method: "PUT",
+      path: `/api/units/${unit.id}`,
+      userId,
+      body: { productId: product.id },
+    });
+
+    // Check contribution log was created
+    const logs = await api<{ logs: Array<Record<string, unknown>> }>({
+      method: "POST",
+      path: "/api/contribution-logs/search",
+      userId,
+      body: { source: "auto" },
+    });
+
+    expect(logs.logs).toHaveLength(1);
+    expect(logs.logs[0]!.operationType).toBe("invest");
+    expect(logs.logs[0]!.productId).toBe(product.id);
+  });
+
+  test("PUT /api/units/:id creates withdraw + invest when switching products", async () => {
+    const { product: productA } = await api<{ product: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/products",
+      userId,
+      body: makeProduct({ name: "Product A" }),
+    });
+    const { product: productB } = await api<{ product: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/products",
+      userId,
+      body: makeProduct({ name: "Product B" }),
+    });
+
+    // Create unit with productA
+    const { unit } = await api<{ unit: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit({ productId: productA.id }),
+    });
+
+    // Switch to productB
+    await api({
+      method: "PUT",
+      path: `/api/units/${unit.id}`,
+      userId,
+      body: { productId: productB.id },
+    });
+
+    // Check both logs were created
+    const logs = await api<{ logs: Array<Record<string, unknown>> }>({
+      method: "POST",
+      path: "/api/contribution-logs/search",
+      userId,
+      body: { source: "auto" },
+    });
+
+    expect(logs.logs).toHaveLength(2);
+    const withdraw = logs.logs.find(l => l.operationType === "withdraw");
+    const invest = logs.logs.find(l => l.operationType === "invest");
+
+    expect(withdraw).toBeDefined();
+    expect(withdraw!.productId).toBe(productA.id);
+    expect(invest).toBeDefined();
+    expect(invest!.productId).toBe(productB.id);
+  });
+
+  test("PUT /api/units/:id rejects productId with other fields", async () => {
+    const { product } = await api<{ product: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/products",
+      userId,
+      body: makeProduct(),
+    });
+    const { unit } = await api<{ unit: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit(),
+    });
+
+    const res = await rawFetch({
+      method: "PUT",
+      path: `/api/units/${unit.id}`,
+      userId,
+      body: { productId: product.id, note: "This should fail" },
+    });
+
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toContain("productId must be updated alone");
+  });
 });

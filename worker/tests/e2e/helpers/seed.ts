@@ -68,3 +68,14 @@ export function makeUnit(overrides: Record<string, unknown> = {}) {
     ...overrides,
   };
 }
+
+export function makeContributionLog(overrides: Record<string, unknown> = {}) {
+  return {
+    operationType: "invest",
+    amountCents: 100000,
+    operationDate: "2026-04-01",
+    source: "manual",
+    note: "E2E test contribution",
+    ...overrides,
+  };
+}
