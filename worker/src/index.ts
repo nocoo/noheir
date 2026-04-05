@@ -361,13 +361,10 @@ app.delete("/api/products/:id", async (c) => {
     const ok = await repos.products.delete(userId, id);
     return ok ? c.json({ success: true }) : c.json({ error: "Not found" }, 404);
   } catch (err) {
-    // D1/SQLite RESTRICT constraint violation (product has contribution logs)
-    // Various SQLite wrappers report this differently
-    if (err instanceof Error && (
-      err.message.includes("FOREIGN KEY constraint failed") ||
-      err.message.includes("FOREIGN KEY") ||
-      err.message.includes("constraint")
-    )) {
+    // SQLite RESTRICT foreign key constraint violation
+    // D1: "FOREIGN KEY constraint failed"
+    // better-sqlite3/bun:sqlite: "FOREIGN KEY constraint failed"
+    if (err instanceof Error && err.message.includes("FOREIGN KEY")) {
       return c.json({
         error: "Cannot delete product with contribution history. Archive it instead.",
         hasContributionLogs: true,

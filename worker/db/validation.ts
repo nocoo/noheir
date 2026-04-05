@@ -65,8 +65,8 @@ export const createUnitSchema = z.object({
     message: `tactics must be one of: ${TACTICS.join(", ")}`,
   }),
   productId: z.string().uuid().optional().nullable(),
-  startDate: z.string().optional().nullable(),
-  endDate: z.string().optional().nullable(),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "startDate must be YYYY-MM-DD").optional().nullable(),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "endDate must be YYYY-MM-DD").optional().nullable(),
   note: z.string().optional().nullable(),
 });
 
@@ -82,8 +82,8 @@ export const updateUnitSchema = z.object({
     message: `tactics must be one of: ${TACTICS.join(", ")}`,
   }).optional(),
   productId: z.string().uuid().optional().nullable(),
-  startDate: z.string().optional().nullable(),
-  endDate: z.string().optional().nullable(),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "startDate must be YYYY-MM-DD").optional().nullable(),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "endDate must be YYYY-MM-DD").optional().nullable(),
   note: z.string().optional().nullable(),
 }).refine(
   (data) => Object.keys(data).length > 0,
