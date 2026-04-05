@@ -606,7 +606,16 @@ app.post("/api/contribution-logs/seed", async (c) => {
         continue;
       }
 
-      const operationDate = unit.startDate ?? new Date(unit.createdAt).toISOString().slice(0, 10);
+      // Get operation date: prefer startDate, fallback to createdAt
+      let operationDate: string;
+      if (unit.startDate) {
+        operationDate = unit.startDate;
+      } else if (unit.createdAt instanceof Date) {
+        operationDate = unit.createdAt.toISOString().slice(0, 10);
+      } else {
+        // createdAt is a timestamp number (seconds)
+        operationDate = new Date(Number(unit.createdAt) * 1000).toISOString().slice(0, 10);
+      }
       const now = Date.now();
 
       statements.push(
