@@ -107,7 +107,8 @@ test("DELETE /api/products/:id returns 409 when product has contribution logs", 
 | PUT | `/api/contribution-logs/:id` | 更新 |
 | DELETE | `/api/contribution-logs/:id` | 软删除 |
 | POST | `/api/contribution-logs/:id/restore` | 恢复 |
-| POST | `/api/contribution-logs/seed` | 一次性数据填充（幂等，可断点续传） |
+
+> **Note:** Seed endpoint (`POST /api/contribution-logs/seed`) 已于 2026-04-05 执行并移除。初始数据已填充完成。
 
 ### Search Request
 
