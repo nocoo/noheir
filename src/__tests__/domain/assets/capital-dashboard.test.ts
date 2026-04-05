@@ -51,7 +51,7 @@ describe("capital-dashboard domain", () => {
   it("builds idle units", () => {
     const idle = buildIdleUnits([
       makeUnit(),
-      makeUnit({ product: { id: "p1", name: "X", code: null, channel: null, category: null, currency: null, lockPeriodDays: null, annualReturnRate: null } }),
+      makeUnit({ product: { id: "p1", name: "X", code: null, channel: null, category: null, currency: null, lockPeriodDays: null, annualReturnRate: null, isArchived: false } }),
     ]);
     expect(idle.length).toBe(1);
   });

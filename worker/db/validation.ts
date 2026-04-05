@@ -30,6 +30,7 @@ export const createProductSchema = z.object({
   currency: z.enum(CURRENCIES).default("CNY"),
   lockPeriodDays: z.number().int().min(0).optional().nullable(),
   annualReturnRate: z.number().optional().nullable(),
+  isArchived: z.boolean().default(false),
 });
 
 export const updateProductSchema = z.object({
@@ -44,6 +45,7 @@ export const updateProductSchema = z.object({
   currency: z.enum(CURRENCIES).optional(),
   lockPeriodDays: z.number().int().min(0).optional().nullable(),
   annualReturnRate: z.number().optional().nullable(),
+  isArchived: z.boolean().optional(),
 }).refine(
   (data) => Object.keys(data).length > 0,
   { message: "At least one field must be provided for update" },

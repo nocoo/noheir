@@ -27,6 +27,7 @@ export function toDomainProduct(raw: Record<string, unknown>): DomainProduct {
       raw.lockPeriodDays != null ? Number(raw.lockPeriodDays) : null,
     annualReturnRate:
       raw.annualReturnRate != null ? Number(raw.annualReturnRate) : null,
+    isArchived: Boolean(raw.isArchived),
   }
 }
 

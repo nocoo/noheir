@@ -16,6 +16,7 @@ const makeProduct = (
   currency: null,
   lockPeriodDays: 90,
   annualReturnRate: 0.03,
+  isArchived: false,
   ...overrides,
 });
 

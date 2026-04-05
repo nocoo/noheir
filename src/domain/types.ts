@@ -92,6 +92,7 @@ export interface DomainProduct {
   currency: string | null;
   lockPeriodDays: number | null;
   annualReturnRate: number | null;
+  isArchived: boolean;
 }
 
 export interface DomainUnit {

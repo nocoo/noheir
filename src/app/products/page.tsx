@@ -11,7 +11,8 @@ export default async function ProductsPage() {
   try {
     const { userId, client } = await getAuthedClient()
     const [productsResult, unitsResult] = await Promise.all([
-      client.listProducts(userId),
+      // Include archived products for the frontend to filter
+      client.listProducts(userId, { includeArchived: true }),
       client.listUnits(userId, { with_products: true }),
     ])
     products = productsResult.products.map((raw) =>

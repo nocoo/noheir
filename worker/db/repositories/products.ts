@@ -1,4 +1,4 @@
-import { eq, and } from "drizzle-orm";
+import { eq, and, type SQL } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { financialProducts } from "../schema";
 import type { FinancialProduct, NewFinancialProduct } from "../types";
@@ -6,27 +6,33 @@ import type { FinancialProduct, NewFinancialProduct } from "../types";
 export function createProductsRepo(db: DrizzleD1Database) {
   return {
     async findAll(userId: string, filters?: {
-      channel?: string;
-      category?: string;
-      currency?: string;
+      channel?: string | undefined;
+      category?: string | undefined;
+      currency?: string | undefined;
+      includeArchived?: boolean | undefined;
     }): Promise<FinancialProduct[]> {
-      let query = db
-        .select()
-        .from(financialProducts)
-        .where(eq(financialProducts.userId, userId))
-        .$dynamic();
+      // Build conditions array
+      const conditions: SQL[] = [eq(financialProducts.userId, userId)];
 
       if (filters?.channel) {
-        query = query.where(and(eq(financialProducts.userId, userId), eq(financialProducts.channel, filters.channel)));
+        conditions.push(eq(financialProducts.channel, filters.channel));
       }
       if (filters?.category) {
-        query = query.where(and(eq(financialProducts.userId, userId), eq(financialProducts.category, filters.category)));
+        conditions.push(eq(financialProducts.category, filters.category));
       }
       if (filters?.currency) {
-        query = query.where(and(eq(financialProducts.userId, userId), eq(financialProducts.currency, filters.currency)));
+        conditions.push(eq(financialProducts.currency, filters.currency));
+      }
+      // By default, exclude archived products
+      if (!filters?.includeArchived) {
+        conditions.push(eq(financialProducts.isArchived, false));
       }
 
-      return await query.all();
+      return await db
+        .select()
+        .from(financialProducts)
+        .where(and(...conditions))
+        .all();
     },
 
     async findById(userId: string, id: string): Promise<FinancialProduct | null> {

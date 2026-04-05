@@ -11,6 +11,7 @@ export async function createProduct(data: {
   currency?: string
   lockPeriodDays?: number | null
   annualReturnRate?: number | null
+  isArchived?: boolean
 }): Promise<ActionResult<{ id: string }>> {
   try {
     const { userId, client } = await getAuthedClient()
@@ -22,6 +23,7 @@ export async function createProduct(data: {
       currency: data.currency || "CNY",
       lockPeriodDays: data.lockPeriodDays ?? undefined,
       annualReturnRate: data.annualReturnRate ?? undefined,
+      isArchived: data.isArchived ?? false,
     })
     const product = result.product as Record<string, unknown>
     return { success: true, data: { id: String(product.id) } }
@@ -43,6 +45,7 @@ export async function updateProduct(
     currency?: string
     lockPeriodDays?: number | null
     annualReturnRate?: number | null
+    isArchived?: boolean
   },
 ): Promise<ActionResult> {
   try {
@@ -56,6 +59,7 @@ export async function updateProduct(
     if (data.currency !== undefined) payload.currency = data.currency
     if (data.lockPeriodDays !== undefined) payload.lockPeriodDays = data.lockPeriodDays
     if (data.annualReturnRate !== undefined) payload.annualReturnRate = data.annualReturnRate
+    if (data.isArchived !== undefined) payload.isArchived = data.isArchived
     await client.updateProduct(userId, id, payload)
     return { success: true, data: undefined }
   } catch (err) {

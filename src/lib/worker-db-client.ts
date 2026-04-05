@@ -210,11 +210,12 @@ export class WorkerDbClient {
 
   // ── Products ──
 
-  async listProducts(userId: string, filters?: { channel?: string; category?: string; currency?: string }) {
+  async listProducts(userId: string, filters?: { channel?: string; category?: string; currency?: string; includeArchived?: boolean }) {
     const params = new URLSearchParams();
     if (filters?.channel) params.set("channel", filters.channel);
     if (filters?.category) params.set("category", filters.category);
     if (filters?.currency) params.set("currency", filters.currency);
+    if (filters?.includeArchived) params.set("includeArchived", "true");
     const qs = params.toString();
     return this.request<{
       products: unknown[];

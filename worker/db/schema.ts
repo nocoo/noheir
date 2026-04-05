@@ -29,6 +29,7 @@ export const financialProducts = sqliteTable("financial_products", {
   currency: text("currency").default("CNY"),
   lockPeriodDays: integer("lock_period_days").default(0),
   annualReturnRate: real("annual_return_rate"),
+  isArchived: integer("is_archived", { mode: "boolean" }).default(false),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),

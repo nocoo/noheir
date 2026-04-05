@@ -16,6 +16,8 @@ import {
   ArrowUp,
   ArrowDown,
   Warehouse,
+  Archive,
+  ArchiveRestore,
 } from "lucide-react"
 import {
   Card,
@@ -117,6 +119,7 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
   const [filterChannel, setFilterChannel] = useState("all")
   const [filterCategory, setFilterCategory] = useState("all")
   const [filterCurrency, setFilterCurrency] = useState("all")
+  const [showArchived, setShowArchived] = useState(false)
 
   // Sort state
   const [sortColumn, setSortColumn] = useState<SortColumn>("name")
@@ -161,17 +164,20 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
 
   const activeFilterCount = [filterChannel, filterCategory, filterCurrency].filter(
     (f) => f !== "all",
-  ).length
+  ).length + (showArchived ? 1 : 0)
 
   const resetFilters = () => {
     setFilterChannel("all")
     setFilterCategory("all")
     setFilterCurrency("all")
+    setShowArchived(false)
   }
 
   const filteredAndSorted = useMemo(() => {
     // First filter
     const result = products.filter((p) => {
+      // Archive filter - by default, hide archived products
+      if (!showArchived && p.isArchived) return false
       // Text search
       if (search) {
         const q = search.toLowerCase()
@@ -216,7 +222,7 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
     })
 
     return result
-  }, [products, search, filterChannel, filterCategory, filterCurrency, sortColumn, sortDirection])
+  }, [products, search, filterChannel, filterCategory, filterCurrency, showArchived, sortColumn, sortDirection])
 
   const handleEdit = (product: DomainProduct) => {
     setEditingProduct(product)
@@ -246,6 +252,21 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
     })
   }
 
+  const handleToggleArchive = (product: DomainProduct) => {
+    startTransition(async () => {
+      const result = await updateProduct(product.id, { isArchived: !product.isArchived })
+      if (result.success) {
+        toast.success(product.isArchived ? "已取消存档" : "已存档")
+        router.refresh()
+      } else {
+        toast.error(result.error)
+      }
+    })
+  }
+
+  // Count active (non-archived) products
+  const activeProductCount = products.filter((p) => !p.isArchived).length
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -256,7 +277,10 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
             产品管理
           </h1>
           <p className="text-muted-foreground text-sm">
-            金融产品目录 · ({filteredAndSorted.length} / {products.length} 个产品)
+            金融产品目录 · ({filteredAndSorted.length} / {activeProductCount} 个产品)
+            {showArchived && (
+              <span className="ml-1 text-amber-600">(含已存档)</span>
+            )}
           </p>
         </div>
         <div className="flex gap-2">
@@ -376,6 +400,19 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Archived Filter */}
+            <div className="flex items-end">
+              <Button
+                variant={showArchived ? "secondary" : "outline"}
+                size="sm"
+                className="w-full"
+                onClick={() => setShowArchived(!showArchived)}
+              >
+                <Archive className="mr-1 size-4" />
+                {showArchived ? "隐藏已存档" : "显示已存档"}
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -436,14 +473,21 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
                     {getSortIcon("annualReturnRate")}
                   </button>
                 </TableHead>
-                <TableHead className="w-20">操作</TableHead>
+                <TableHead className="w-20 text-right">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredAndSorted.map((product) => (
-                <TableRow key={product.id}>
+                <TableRow key={product.id} className={product.isArchived ? "opacity-60" : ""}>
                   <TableCell className="font-medium">
-                    {product.name}
+                    <div className="flex items-center gap-2">
+                      {product.name}
+                      {product.isArchived && (
+                        <Badge variant="outline" className="text-xs text-amber-600">
+                          已存档
+                        </Badge>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="text-muted-foreground text-xs">
                     {product.code ?? "—"}
@@ -477,8 +521,8 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
                       "—"
                     )}
                   </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
                       {productUnitStats.has(product.id) && (
                         <TooltipProvider>
                           <Tooltip>
@@ -500,6 +544,28 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
                           </Tooltip>
                         </TooltipProvider>
                       )}
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-7"
+                              onClick={() => handleToggleArchive(product)}
+                              disabled={isPending}
+                            >
+                              {product.isArchived ? (
+                                <ArchiveRestore className="size-3.5" />
+                              ) : (
+                                <Archive className="size-3.5" />
+                              )}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{product.isArchived ? "取消存档" : "存档"}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                       <Button
                         variant="ghost"
                         size="icon"

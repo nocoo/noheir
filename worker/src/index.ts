@@ -301,8 +301,11 @@ app.delete("/api/transfers/:id", async (c) => {
 app.get("/api/products", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
-  const { channel, category, currency } = c.req.query();
-  const products = await repos.products.findAll(userId, pickDefined({ channel, category, currency }));
+  const { channel, category, currency, includeArchived } = c.req.query();
+  const products = await repos.products.findAll(userId, {
+    ...pickDefined({ channel, category, currency }),
+    includeArchived: includeArchived === "true",
+  });
   return c.json({ products, total_returned: products.length });
 });
 
