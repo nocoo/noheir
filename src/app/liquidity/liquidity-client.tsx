@@ -1,7 +1,8 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
-import { Droplets, Calendar, TrendingUp, BarChart3, ExternalLink, Warehouse } from "lucide-react"
+import { Droplets, Calendar, TrendingUp, BarChart3, ExternalLink, Warehouse, ChevronDown } from "lucide-react"
 import {
   BarChart,
   Bar,
@@ -19,6 +20,11 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 import {
   Table,
   TableBody,
@@ -38,6 +44,7 @@ import {
   formatCurrencyK,
   yAxisWidth,
 } from "@/lib/chart-config"
+import { CAPITAL_TABLE_COLUMNS } from "@/lib/table-columns"
 import { StatCard } from "@/components/shared/stat-card"
 import { cn } from "@/lib/utils"
 import type { UpcomingUnit } from "@/domain/assets/liquidity-ladder"
@@ -72,6 +79,21 @@ export function LiquidityClient({
   peakAmount,
   upcomingUnits,
 }: LiquidityClientProps) {
+  // Track collapsed state for each month
+  const [collapsedMonths, setCollapsedMonths] = useState<Set<string>>(new Set())
+
+  const toggleMonth = (monthKey: string) => {
+    setCollapsedMonths((prev) => {
+      const next = new Set(prev)
+      if (next.has(monthKey)) {
+        next.delete(monthKey)
+      } else {
+        next.add(monthKey)
+      }
+      return next
+    })
+  }
+
   // Group units by month
   const unitsByMonth = upcomingUnits.reduce((acc, unit) => {
     const key = unit.monthKey
@@ -213,85 +235,100 @@ export function LiquidityClient({
         </CardHeader>
         <CardContent>
           {sortedMonths.length > 0 ? (
-            <div className="space-y-6">
+            <div className="space-y-4">
               {sortedMonths.map((monthKey) => {
                 const monthData = unitsByMonth[monthKey]
                 if (!monthData) return null
                 const monthTotal = monthData.units.reduce((sum, u) => sum + u.amount, 0)
+                const isCollapsed = collapsedMonths.has(monthKey)
 
                 return (
-                  <div key={monthKey} className="space-y-2">
-                    {/* Month Header */}
-                    <div className="flex items-center justify-between border-b pb-2">
-                      <h3 className="font-semibold">{monthData.monthLabel}</h3>
+                  <Collapsible
+                    key={monthKey}
+                    open={!isCollapsed}
+                    onOpenChange={() => toggleMonth(monthKey)}
+                  >
+                    {/* Month Header - Clickable */}
+                    <CollapsibleTrigger className="flex w-full items-center justify-between border-b pb-2 hover:bg-muted/50 -mx-2 px-2 rounded transition-colors">
+                      <div className="flex items-center gap-2">
+                        <ChevronDown
+                          className={cn(
+                            "size-4 transition-transform",
+                            isCollapsed && "-rotate-90"
+                          )}
+                        />
+                        <h3 className="font-semibold">{monthData.monthLabel}</h3>
+                      </div>
                       <span className="text-muted-foreground text-sm">
                         {monthData.units.length} 个单元 · {formatCurrencyFull(monthTotal)}
                       </span>
-                    </div>
+                    </CollapsibleTrigger>
 
                     {/* Units Table */}
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-[100px]">编号</TableHead>
-                          <TableHead>策略</TableHead>
-                          <TableHead>战术</TableHead>
-                          <TableHead>产品</TableHead>
-                          <TableHead className="text-right">金额</TableHead>
-                          <TableHead className="text-right">解禁日</TableHead>
-                          <TableHead className="text-right">倒计时</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {monthData.units.map((unit) => (
-                          <TableRow key={unit.id}>
-                            <TableCell>
-                              <Link href={`/warehouse?q=${unit.unitCode}`}>
-                                <UnitCodeBadge unitCode={unit.unitCode} />
-                              </Link>
-                            </TableCell>
-                            <TableCell>
-                              <StrategyBadge strategy={unit.strategy} />
-                            </TableCell>
-                            <TableCell>
-                              <TacticsBadge tactics={unit.tactics} />
-                            </TableCell>
-                            <TableCell>
-                              {unit.productName ? (
-                                <Link href={`/products?q=${encodeURIComponent(unit.productName)}`}>
-                                  <ProductBadge productName={unit.productName} />
-                                </Link>
-                              ) : (
-                                <span className="text-muted-foreground text-sm">—</span>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-right font-medium">
-                              {formatCurrencyFull(unit.amount)}
-                            </TableCell>
-                            <TableCell className="text-muted-foreground text-right text-sm">
-                              {unit.availableDate}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <span
-                                className={cn(
-                                  "text-sm font-medium",
-                                  unit.daysUntilAvailable <= 0
-                                    ? "text-green-600 dark:text-green-400"
-                                    : unit.daysUntilAvailable <= 30
-                                      ? "text-amber-600 dark:text-amber-400"
-                                      : "text-muted-foreground"
-                                )}
-                              >
-                                {unit.daysUntilAvailable <= 0
-                                  ? "已可用"
-                                  : `${unit.daysUntilAvailable}天`}
-                              </span>
-                            </TableCell>
+                    <CollapsibleContent>
+                      <Table className="mt-2">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className={CAPITAL_TABLE_COLUMNS.unitCode}>编号</TableHead>
+                            <TableHead className={CAPITAL_TABLE_COLUMNS.strategy}>策略</TableHead>
+                            <TableHead className={CAPITAL_TABLE_COLUMNS.tactics}>战术</TableHead>
+                            <TableHead className={CAPITAL_TABLE_COLUMNS.product}>产品</TableHead>
+                            <TableHead className={CAPITAL_TABLE_COLUMNS.amount}>金额</TableHead>
+                            <TableHead className={CAPITAL_TABLE_COLUMNS.date}>解禁日</TableHead>
+                            <TableHead className={CAPITAL_TABLE_COLUMNS.countdown}>倒计时</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
+                        </TableHeader>
+                        <TableBody>
+                          {monthData.units.map((unit) => (
+                            <TableRow key={unit.id}>
+                              <TableCell>
+                                <Link href={`/warehouse?q=${unit.unitCode}`}>
+                                  <UnitCodeBadge unitCode={unit.unitCode} />
+                                </Link>
+                              </TableCell>
+                              <TableCell>
+                                <StrategyBadge strategy={unit.strategy} />
+                              </TableCell>
+                              <TableCell>
+                                <TacticsBadge tactics={unit.tactics} />
+                              </TableCell>
+                              <TableCell>
+                                {unit.productName ? (
+                                  <Link href={`/products?q=${encodeURIComponent(unit.productName)}`}>
+                                    <ProductBadge productName={unit.productName} />
+                                  </Link>
+                                ) : (
+                                  <span className="text-muted-foreground text-sm">—</span>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-right font-medium">
+                                {formatCurrencyFull(unit.amount)}
+                              </TableCell>
+                              <TableCell className="text-muted-foreground text-right text-sm">
+                                {unit.availableDate}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <span
+                                  className={cn(
+                                    "text-sm font-medium",
+                                    unit.daysUntilAvailable <= 0
+                                      ? "text-green-600 dark:text-green-400"
+                                      : unit.daysUntilAvailable <= 30
+                                        ? "text-amber-600 dark:text-amber-400"
+                                        : "text-muted-foreground"
+                                  )}
+                                >
+                                  {unit.daysUntilAvailable <= 0
+                                    ? "已可用"
+                                    : `${unit.daysUntilAvailable}天`}
+                                </span>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CollapsibleContent>
+                  </Collapsible>
                 )
               })}
             </div>
