@@ -374,7 +374,13 @@ app.get("/api/units", async (c) => {
 
   if (with_products === "true") {
     const units = await repos.units.findAllWithProducts(userId, filters);
-    return c.json({ units, total_returned: units.length });
+
+    // Enrich with availability info
+    const unitIds = units.map((u) => u.id);
+    const latestInvestLogs = await repos.contributionLogs.getLatestInvestLogs(userId, unitIds);
+    const enrichedUnits = repos.units.enrichWithAvailability(units, latestInvestLogs);
+
+    return c.json({ units: enrichedUnits, total_returned: enrichedUnits.length });
   }
 
   const units = await repos.units.findAll(userId, filters);
@@ -384,7 +390,20 @@ app.get("/api/units", async (c) => {
 app.get("/api/units/:id", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
-  const row = await repos.units.findById(userId, c.req.param("id"));
+  const id = c.req.param("id");
+  const { with_products } = c.req.query();
+
+  if (with_products === "true") {
+    const unit = await repos.units.findByIdWithProduct(userId, id);
+    if (!unit) return c.json({ error: "Not found" }, 404);
+
+    // Enrich with availability info
+    const latestInvestLogs = await repos.contributionLogs.getLatestInvestLogs(userId, [id]);
+    const [enrichedUnit] = repos.units.enrichWithAvailability([unit], latestInvestLogs);
+    return c.json({ unit: enrichedUnit });
+  }
+
+  const row = await repos.units.findById(userId, id);
   return row ? c.json({ unit: row }) : c.json({ error: "Not found" }, 404);
 });
 
@@ -512,7 +531,26 @@ app.put("/api/units/:id", async (c) => {
   }
 
   // Non-productId updates: use normal path
-  const row = await repos.units.update(userId, id, stripUndefined(parsed.data));
+  // Handle archive state machine for endDate
+  const updateData = { ...stripUndefined(parsed.data) };
+
+  if (parsed.data.status !== undefined) {
+    const oldStatus = original.status;
+    const newStatus = parsed.data.status;
+
+    // Any → 已归档: auto-set endDate to today (if not explicitly provided)
+    if (newStatus === "已归档" && oldStatus !== "已归档") {
+      if (updateData.endDate === undefined) {
+        updateData.endDate = new Date().toISOString().slice(0, 10);
+      }
+    }
+    // 已归档 → Any other: clear endDate to null
+    else if (oldStatus === "已归档" && newStatus !== "已归档") {
+      updateData.endDate = null;
+    }
+  }
+
+  const row = await repos.units.update(userId, id, updateData);
   if (!row) {
     return c.json({ error: "Not found" }, 404);
   }

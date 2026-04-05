@@ -321,4 +321,94 @@ describe("ContributionLogsRepo", () => {
     const page3 = await repos.contributionLogs.search(userId, { limit: 2, offset: 4 });
     expect(page3.logs).toHaveLength(1);
   });
+
+  test("getLatestInvestLogs returns latest invest per unit", async () => {
+    const repos = getTestRepos();
+    const unit1 = await repos.units.create(userId, { ...baseUnit, unitCode: "U-001" });
+    const unit2 = await repos.units.create(userId, { ...baseUnit, unitCode: "U-002" });
+    const unit3 = await repos.units.create(userId, { ...baseUnit, unitCode: "U-003" });
+
+    // Unit 1: multiple invest logs, latest is 2026-03-01
+    await repos.contributionLogs.create(userId, {
+      unitId: unit1.id,
+      operationType: "invest",
+      amountCents: 100000,
+      operationDate: "2026-01-01",
+    });
+    await repos.contributionLogs.create(userId, {
+      unitId: unit1.id,
+      operationType: "invest",
+      amountCents: 200000,
+      operationDate: "2026-03-01",
+    });
+    await repos.contributionLogs.create(userId, {
+      unitId: unit1.id,
+      operationType: "withdraw", // Not invest, should be ignored
+      amountCents: -50000,
+      operationDate: "2026-04-01",
+    });
+
+    // Unit 2: single invest log
+    await repos.contributionLogs.create(userId, {
+      unitId: unit2.id,
+      operationType: "invest",
+      amountCents: 300000,
+      operationDate: "2026-02-15",
+    });
+
+    // Unit 3: no invest logs (only withdraw)
+    await repos.contributionLogs.create(userId, {
+      unitId: unit3.id,
+      operationType: "withdraw",
+      amountCents: -100000,
+      operationDate: "2026-02-01",
+    });
+
+    const result = await repos.contributionLogs.getLatestInvestLogs(userId, [unit1.id, unit2.id, unit3.id]);
+
+    expect(result.size).toBe(2); // unit3 has no invest log
+
+    const log1 = result.get(unit1.id);
+    expect(log1).toBeDefined();
+    expect(log1!.operationDate).toBe("2026-03-01"); // Latest invest
+    expect(log1!.amountCents).toBe(200000);
+
+    const log2 = result.get(unit2.id);
+    expect(log2).toBeDefined();
+    expect(log2!.operationDate).toBe("2026-02-15");
+
+    expect(result.get(unit3.id)).toBeUndefined();
+  });
+
+  test("getLatestInvestLogs returns empty map for empty input", async () => {
+    const repos = getTestRepos();
+    const result = await repos.contributionLogs.getLatestInvestLogs(userId, []);
+    expect(result.size).toBe(0);
+  });
+
+  test("getLatestInvestLogs ignores soft-deleted logs", async () => {
+    const repos = getTestRepos();
+    const unit = await repos.units.create(userId, baseUnit);
+
+    const oldLog = await repos.contributionLogs.create(userId, {
+      unitId: unit.id,
+      operationType: "invest",
+      amountCents: 100000,
+      operationDate: "2026-01-01",
+    });
+    await repos.contributionLogs.create(userId, {
+      unitId: unit.id,
+      operationType: "invest",
+      amountCents: 200000,
+      operationDate: "2026-03-01",
+    });
+
+    // Soft delete the newer log
+    await repos.contributionLogs.softDelete(userId, (await repos.contributionLogs.search(userId, { unitId: unit.id })).logs.find(l => l.operationDate === "2026-03-01")!.id);
+
+    const result = await repos.contributionLogs.getLatestInvestLogs(userId, [unit.id]);
+    const log = result.get(unit.id);
+    expect(log).toBeDefined();
+    expect(log!.operationDate).toBe("2026-01-01"); // Falls back to older log
+  });
 });

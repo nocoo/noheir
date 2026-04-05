@@ -41,7 +41,8 @@ CREATE TABLE IF NOT EXISTS financial_products (
   lock_period_days INTEGER DEFAULT 0,
   annual_return_rate REAL,
   is_archived INTEGER DEFAULT 0,
-  created_at INTEGER NOT NULL
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS capital_units (

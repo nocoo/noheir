@@ -264,4 +264,185 @@ describe("E2E: Units", () => {
     const body = await res.json();
     expect(body.error).toContain("productId must be updated alone");
   });
+
+  // ── Archive state machine: endDate auto-set/clear ──
+
+  test("PUT /api/units/:id auto-sets endDate when archiving", async () => {
+    const { unit: created } = await api<{ unit: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit(),
+    });
+    expect(created.endDate).toBeNull();
+
+    const { unit: archived } = await api<{ unit: Record<string, unknown> }>({
+      method: "PUT",
+      path: `/api/units/${created.id}`,
+      userId,
+      body: { status: "已归档" },
+    });
+    expect(archived.status).toBe("已归档");
+    expect(archived.endDate).toBeString();
+    // Should be today's date
+    const today = new Date().toISOString().slice(0, 10);
+    expect(archived.endDate).toBe(today);
+  });
+
+  test("PUT /api/units/:id allows user override of endDate when archiving", async () => {
+    const { unit: created } = await api<{ unit: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit(),
+    });
+
+    const { unit: archived } = await api<{ unit: Record<string, unknown> }>({
+      method: "PUT",
+      path: `/api/units/${created.id}`,
+      userId,
+      body: { status: "已归档", endDate: "2026-01-15" },
+    });
+    expect(archived.status).toBe("已归档");
+    expect(archived.endDate).toBe("2026-01-15");
+  });
+
+  test("PUT /api/units/:id clears endDate when un-archiving", async () => {
+    const { unit: created } = await api<{ unit: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit(),
+    });
+
+    // First archive
+    await api({
+      method: "PUT",
+      path: `/api/units/${created.id}`,
+      userId,
+      body: { status: "已归档" },
+    });
+
+    // Then un-archive
+    const { unit: unarchived } = await api<{ unit: Record<string, unknown> }>({
+      method: "PUT",
+      path: `/api/units/${created.id}`,
+      userId,
+      body: { status: "已成立" },
+    });
+    expect(unarchived.status).toBe("已成立");
+    expect(unarchived.endDate).toBeNull();
+  });
+
+  // ── Availability fields ──
+
+  test("GET /api/units?with_products=true includes availability fields", async () => {
+    const { product } = await api<{ product: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/products",
+      userId,
+      body: makeProduct({ lockPeriodDays: 30 }),
+    });
+    const { unit } = await api<{ unit: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit({ productId: product.id }),
+    });
+
+    // Create invest log
+    const today = new Date().toISOString().slice(0, 10);
+    await api({
+      method: "POST",
+      path: "/api/contribution-logs",
+      userId,
+      body: {
+        unitId: unit.id,
+        productId: product.id,
+        operationType: "invest",
+        amountCents: 1000000,
+        operationDate: today,
+      },
+    });
+
+    const res = await api<{ units: Array<Record<string, unknown>> }>({
+      method: "GET",
+      path: "/api/units?with_products=true",
+      userId,
+    });
+
+    expect(res.units).toHaveLength(1);
+    const u = res.units[0]!;
+    expect(u.availableDate).toBeString();
+    expect(u.isAvailable).toBe(false); // 30 day lock
+    expect(u.daysUntilAvailable).toBe(30);
+    expect(u.latestInvestDate).toBe(today);
+  });
+
+  test("GET /api/units?with_products=true returns null availability without invest log", async () => {
+    const { product } = await api<{ product: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/products",
+      userId,
+      body: makeProduct(),
+    });
+    await api({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit({ productId: product.id }),
+    });
+
+    const res = await api<{ units: Array<Record<string, unknown>> }>({
+      method: "GET",
+      path: "/api/units?with_products=true",
+      userId,
+    });
+
+    const u = res.units[0]!;
+    expect(u.availableDate).toBeNull();
+    expect(u.isAvailable).toBe(false);
+    expect(u.daysUntilAvailable).toBeNull();
+    expect(u.latestInvestDate).toBeNull();
+  });
+
+  test("GET /api/units/:id?with_products=true includes availability fields", async () => {
+    const { product } = await api<{ product: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/products",
+      userId,
+      body: makeProduct({ lockPeriodDays: 0 }), // No lock
+    });
+    const { unit: created } = await api<{ unit: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit({ productId: product.id }),
+    });
+
+    // Create invest log
+    const today = new Date().toISOString().slice(0, 10);
+    await api({
+      method: "POST",
+      path: "/api/contribution-logs",
+      userId,
+      body: {
+        unitId: created.id,
+        productId: product.id,
+        operationType: "invest",
+        amountCents: 1000000,
+        operationDate: today,
+      },
+    });
+
+    const { unit } = await api<{ unit: Record<string, unknown> }>({
+      method: "GET",
+      path: `/api/units/${created.id}?with_products=true`,
+      userId,
+    });
+
+    expect(unit.availableDate).toBe(today);
+    expect(unit.isAvailable).toBe(true); // No lock, immediately available
+    expect(unit.daysUntilAvailable).toBe(0);
+  });
 });

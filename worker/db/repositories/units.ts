@@ -1,10 +1,34 @@
 import { eq, and } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { capitalUnits, financialProducts } from "../schema";
-import type { CapitalUnit, NewCapitalUnit, UnitWithProduct } from "../types";
+import type { CapitalUnit, NewCapitalUnit, UnitWithProduct, ContributionLog } from "../types";
+import { computeAvailability, type AvailabilityInfo } from "../../lib/availability";
+
+export interface UnitWithAvailability extends UnitWithProduct, AvailabilityInfo {}
 
 export function createUnitsRepo(db: DrizzleD1Database) {
   return {
+    /**
+     * Enrich units with availability info using latest invest logs.
+     * Called from API layer after fetching latest invest logs from contribution logs repo.
+     */
+    enrichWithAvailability(
+      units: UnitWithProduct[],
+      latestInvestLogs: Map<string, ContributionLog>
+    ): UnitWithAvailability[] {
+      return units.map((unit) => {
+        const latestInvest = latestInvestLogs.get(unit.id) ?? null;
+        const availability = computeAvailability(
+          latestInvest ? { operationDate: latestInvest.operationDate } : null,
+          unit.product ? { lockPeriodDays: unit.product.lockPeriodDays } : null
+        );
+        return {
+          ...unit,
+          ...availability,
+        };
+      });
+    },
+
     async findAll(userId: string, filters?: {
       status?: string;
       strategy?: string;
@@ -81,6 +105,23 @@ export function createUnitsRepo(db: DrizzleD1Database) {
         .where(and(eq(capitalUnits.id, id), eq(capitalUnits.userId, userId)))
         .get();
       return row ?? null;
+    },
+
+    async findByIdWithProduct(userId: string, id: string): Promise<UnitWithProduct | null> {
+      const row = await db
+        .select({
+          unit: capitalUnits,
+          product: financialProducts,
+        })
+        .from(capitalUnits)
+        .leftJoin(financialProducts, eq(capitalUnits.productId, financialProducts.id))
+        .where(and(eq(capitalUnits.id, id), eq(capitalUnits.userId, userId)))
+        .get();
+      if (!row) return null;
+      return {
+        ...row.unit,
+        product: row.product,
+      };
     },
 
     async create(userId: string, data: Omit<NewCapitalUnit, "id" | "userId" | "createdAt">): Promise<CapitalUnit> {

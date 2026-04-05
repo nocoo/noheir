@@ -1,4 +1,4 @@
-import { eq, and, gte, lte, isNull, isNotNull, desc } from "drizzle-orm";
+import { eq, and, gte, lte, isNull, isNotNull, desc, inArray } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { contributionLogs, capitalUnits, financialProducts } from "../schema";
 import type {
@@ -27,6 +27,45 @@ export interface ContributionLogsSearchResult {
 
 export function createContributionLogsRepo(db: DrizzleD1Database) {
   return {
+    /**
+     * Get the latest invest log for each unit in the given list.
+     * Returns a Map from unitId to the latest invest ContributionLog.
+     */
+    async getLatestInvestLogs(
+      userId: string,
+      unitIds: string[]
+    ): Promise<Map<string, ContributionLog>> {
+      if (unitIds.length === 0) {
+        return new Map();
+      }
+
+      // For each unitId, get the latest invest log by operationDate desc, createdAt desc
+      // Using a subquery approach: get all invest logs, then pick latest per unit in JS
+      // (D1/SQLite doesn't support DISTINCT ON, so we do grouping in application)
+      const rows = await db
+        .select()
+        .from(contributionLogs)
+        .where(
+          and(
+            eq(contributionLogs.userId, userId),
+            inArray(contributionLogs.unitId, unitIds),
+            eq(contributionLogs.operationType, "invest"),
+            isNull(contributionLogs.deletedAt)
+          )
+        )
+        .orderBy(desc(contributionLogs.operationDate), desc(contributionLogs.createdAt))
+        .all();
+
+      // Group by unitId, take the first (latest) for each
+      const result = new Map<string, ContributionLog>();
+      for (const row of rows) {
+        if (!result.has(row.unitId)) {
+          result.set(row.unitId, row);
+        }
+      }
+      return result;
+    },
+
     async findById(userId: string, id: string): Promise<ContributionLog | null> {
       const row = await db
         .select()

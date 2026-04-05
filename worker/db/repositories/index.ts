@@ -30,7 +30,7 @@ export { createUsersRepo, type UsersRepo } from "./users";
 export { createTransactionsRepo, type TransactionsRepo } from "./transactions";
 export { createTransfersRepo, type TransfersRepo } from "./transfers";
 export { createProductsRepo, type ProductsRepo } from "./products";
-export { createUnitsRepo, type UnitsRepo } from "./units";
+export { createUnitsRepo, type UnitsRepo, type UnitWithAvailability } from "./units";
 export { createSettingsRepo, type SettingsRepo } from "./settings";
 export { createMetadataRepo, type MetadataRepo } from "./metadata";
 export { createReportsRepo, type ReportsRepo } from "./reports";
