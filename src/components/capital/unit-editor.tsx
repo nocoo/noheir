@@ -149,7 +149,7 @@ function UnitEditorForm({
   const [tactics, setTactics] = useState(unit?.tactics ?? "")
   const [status, setStatus] = useState(unit?.status ?? "已成立")
   const [startDate, setStartDate] = useState(unit?.startDate ?? "")
-  const [endDate, setEndDate] = useState(unit?.endDate ?? "")
+  // endDate is managed automatically by backend based on status (归档日期)
   const [note, setNote] = useState(unit?.note ?? "")
   const [productId, setProductId] = useState<string | null>(unit?.productId ?? null)
 
@@ -233,7 +233,7 @@ function UnitEditorForm({
           tactics,
           productId: productId,
           startDate: startDate || null,
-          endDate: endDate || null,
+          // endDate is managed automatically by backend based on status
           note: note.trim() || null,
         })
         if (result.success) {
@@ -254,7 +254,7 @@ function UnitEditorForm({
         }
         if (productId) payload.productId = productId
         if (startDate) payload.startDate = startDate
-        if (endDate) payload.endDate = endDate
+        // endDate is managed automatically by backend based on status
         if (note.trim()) payload.note = note.trim()
 
         const result = await createUnit(payload)
@@ -570,32 +570,19 @@ function UnitEditorForm({
             <h4 className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
               时间与备注
             </h4>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="startDate" className="text-xs">
-                  开始日期
-                </Label>
-                <Input
-                  id="startDate"
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="h-9"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="endDate" className="text-xs">
-                  到期日期
-                </Label>
-                <Input
-                  id="endDate"
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="h-9"
-                />
-              </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="startDate" className="text-xs">
+                开始日期
+              </Label>
+              <Input
+                id="startDate"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="h-9"
+              />
             </div>
+            {/* endDate (归档日期) is managed automatically by backend when status = 已归档 */}
             <div className="space-y-1.5">
               <Label htmlFor="note" className="text-xs">
                 备注

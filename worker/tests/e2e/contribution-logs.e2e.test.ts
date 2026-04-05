@@ -36,11 +36,13 @@ describe("E2E: Contribution Logs", () => {
   });
 
   test("POST /api/contribution-logs validates unitId exists", async () => {
+    // Use a valid UUID format that doesn't exist in the database
+    const nonExistentUnitId = "00000000-0000-0000-0000-000000000000";
     const res = await rawFetch({
       method: "POST",
       path: "/api/contribution-logs",
       userId,
-      body: makeContributionLog({ unitId: "non-existent-unit-id" }),
+      body: makeContributionLog({ unitId: nonExistentUnitId }),
     });
 
     expect(res.status).toBe(404);

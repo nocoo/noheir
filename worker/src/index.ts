@@ -33,6 +33,14 @@ function stripUndefined<T extends Record<string, unknown>>(obj: T): { [K in keyo
   return result as { [K in keyof T]: Exclude<T[K], undefined> };
 }
 
+/**
+ * Get local date string in YYYY-MM-DD format.
+ * Uses Asia/Shanghai timezone (UTC+8) to match user's expected "today".
+ */
+function getLocalDateString(): string {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Shanghai" });
+}
+
 // ── Cloudflare Bindings ──
 
 export interface Env {
@@ -353,8 +361,13 @@ app.delete("/api/products/:id", async (c) => {
     const ok = await repos.products.delete(userId, id);
     return ok ? c.json({ success: true }) : c.json({ error: "Not found" }, 404);
   } catch (err) {
-    // D1 RESTRICT constraint violation (product has contribution logs)
-    if (err instanceof Error && err.message.includes("FOREIGN KEY constraint failed")) {
+    // D1/SQLite RESTRICT constraint violation (product has contribution logs)
+    // Various SQLite wrappers report this differently
+    if (err instanceof Error && (
+      err.message.includes("FOREIGN KEY constraint failed") ||
+      err.message.includes("FOREIGN KEY") ||
+      err.message.includes("constraint")
+    )) {
       return c.json({
         error: "Cannot delete product with contribution history. Archive it instead.",
         hasContributionLogs: true,
@@ -417,7 +430,20 @@ app.post("/api/units", async (c) => {
     return c.json({ error: parsed.error.issues.map((i) => i.message).join("; ") }, 400);
   }
 
-  const row = await repos.units.create(userId, parsed.data);
+  // Enforce endDate invariant:
+  // - status = 已归档: auto-set endDate if not provided
+  // - status != 已归档: clear any endDate
+  const createData = { ...parsed.data };
+  if (createData.status === "已归档") {
+    if (!createData.endDate) {
+      createData.endDate = getLocalDateString();
+    }
+  } else {
+    // Non-archived units must not have endDate
+    createData.endDate = null;
+  }
+
+  const row = await repos.units.create(userId, createData);
   return c.json({ unit: row }, 201);
 });
 
@@ -531,23 +557,26 @@ app.put("/api/units/:id", async (c) => {
   }
 
   // Non-productId updates: use normal path
-  // Handle archive state machine for endDate
+  // Enforce endDate invariant based on final status
   const updateData = { ...stripUndefined(parsed.data) };
 
-  if (parsed.data.status !== undefined) {
-    const oldStatus = original.status;
-    const newStatus = parsed.data.status;
+  // Determine final status: use new status if provided, otherwise keep original
+  const finalStatus = parsed.data.status ?? original.status;
 
-    // Any → 已归档: auto-set endDate to today (if not explicitly provided)
-    if (newStatus === "已归档" && oldStatus !== "已归档") {
+  if (finalStatus === "已归档") {
+    // Archived units: auto-set endDate if not explicitly provided
+    // Only set if: (1) explicitly updating to 已归档, or (2) updating other fields on already-archived unit
+    if (parsed.data.status !== undefined && original.status !== "已归档") {
+      // Transitioning to 已归档: set endDate if not provided
       if (updateData.endDate === undefined) {
-        updateData.endDate = new Date().toISOString().slice(0, 10);
+        updateData.endDate = getLocalDateString();
       }
     }
-    // 已归档 → Any other: clear endDate to null
-    else if (oldStatus === "已归档" && newStatus !== "已归档") {
-      updateData.endDate = null;
-    }
+    // If already archived and endDate is being explicitly updated, allow it
+    // (user override on archived unit is permitted)
+  } else {
+    // Non-archived units: always clear endDate regardless of what was sent
+    updateData.endDate = null;
   }
 
   const row = await repos.units.update(userId, id, updateData);

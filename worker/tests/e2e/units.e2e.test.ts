@@ -284,8 +284,8 @@ describe("E2E: Units", () => {
     });
     expect(archived.status).toBe("已归档");
     expect(archived.endDate).toBeString();
-    // Should be today's date
-    const today = new Date().toISOString().slice(0, 10);
+    // Should be today's date in Asia/Shanghai timezone
+    const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Shanghai" });
     expect(archived.endDate).toBe(today);
   });
 
@@ -332,6 +332,50 @@ describe("E2E: Units", () => {
     });
     expect(unarchived.status).toBe("已成立");
     expect(unarchived.endDate).toBeNull();
+  });
+
+  test("POST /api/units clears endDate for non-archived status", async () => {
+    // Even if endDate is explicitly provided, it should be cleared for non-archived units
+    const { unit } = await api<{ unit: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit({ endDate: "2026-12-31" }), // Explicitly provide endDate
+    });
+    // Default status is "已成立", so endDate should be cleared to null
+    expect(unit.endDate).toBeNull();
+  });
+
+  test("POST /api/units auto-sets endDate when creating archived unit", async () => {
+    const { unit } = await api<{ unit: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit({ status: "已归档" }),
+    });
+    expect(unit.status).toBe("已归档");
+    expect(unit.endDate).toBeString();
+    const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Shanghai" });
+    expect(unit.endDate).toBe(today);
+  });
+
+  test("PUT /api/units/:id clears endDate even when status unchanged", async () => {
+    // Create a unit, then try to update with endDate - it should be cleared
+    const { unit: created } = await api<{ unit: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit(),
+    });
+
+    const { unit: updated } = await api<{ unit: Record<string, unknown> }>({
+      method: "PUT",
+      path: `/api/units/${created.id}`,
+      userId,
+      body: { note: "test", endDate: "2026-12-31" }, // Try to set endDate
+    });
+    // Status is still "已成立", so endDate should be cleared
+    expect(updated.endDate).toBeNull();
   });
 
   // ── Availability fields ──
