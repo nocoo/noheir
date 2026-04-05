@@ -6,6 +6,7 @@ import {
   buildMonthlyAvailability,
   buildSeries,
   buildSummaryStats,
+  buildUpcomingUnits,
 } from "@/domain/assets/liquidity-ladder"
 import { LiquidityClient } from "./liquidity-client"
 
@@ -24,6 +25,7 @@ export default async function LiquidityPage() {
   const monthlyData = buildMonthlyAvailability(units)
   const series = buildSeries(monthlyData)
   const summaryStats = buildSummaryStats(monthlyData)
+  const upcomingUnits = buildUpcomingUnits(units)
 
   // Transform for Recharts: each month row has a field per strategy
   const chartData = monthlyData.months.map((month, i) => {
@@ -46,6 +48,7 @@ export default async function LiquidityPage() {
         avgMonth={summaryStats.avgMonth}
         peakMonth={summaryStats.peakMonth.month}
         peakAmount={summaryStats.peakMonth.amount}
+        upcomingUnits={upcomingUnits}
       />
     </AppShell>
   )

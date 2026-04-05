@@ -1,6 +1,7 @@
 "use client"
 
-import { Droplets, Calendar, TrendingUp, BarChart3 } from "lucide-react"
+import Link from "next/link"
+import { Droplets, Calendar, TrendingUp, BarChart3, ExternalLink, Warehouse } from "lucide-react"
 import {
   BarChart,
   Bar,
@@ -19,11 +20,22 @@ import {
   CardDescription,
 } from "@/components/ui/card"
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import {
   formatCurrencyFull,
   formatCurrencyK,
   yAxisWidth,
 } from "@/lib/chart-config"
 import { StatCard } from "@/components/shared/stat-card"
+import { cn } from "@/lib/utils"
+import type { UpcomingUnit } from "@/domain/assets/liquidity-ladder"
 
 interface LiquidityClientProps {
   chartData: Record<string, string | number>[]
@@ -32,6 +44,7 @@ interface LiquidityClientProps {
   avgMonth: number
   peakMonth: string
   peakAmount: number
+  upcomingUnits: UpcomingUnit[]
 }
 
 const COLORS = [
@@ -52,7 +65,21 @@ export function LiquidityClient({
   avgMonth,
   peakMonth,
   peakAmount,
+  upcomingUnits,
 }: LiquidityClientProps) {
+  // Group units by month
+  const unitsByMonth = upcomingUnits.reduce((acc, unit) => {
+    const key = unit.monthKey
+    if (!acc[key]) {
+      acc[key] = { monthLabel: unit.monthLabel, units: [] }
+    }
+    acc[key].units.push(unit)
+    return acc
+  }, {} as Record<string, { monthLabel: string; units: UpcomingUnit[] }>)
+
+  // Sort months chronologically
+  const sortedMonths = Object.keys(unitsByMonth).sort()
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -103,7 +130,7 @@ export function LiquidityClient({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[500px]">
+          <div className="h-[400px]">
             {chartData.length > 0 && strategies.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
@@ -159,33 +186,123 @@ export function LiquidityClient({
         </CardContent>
       </Card>
 
-      {/* Insights */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card className="border-l-4 border-l-primary">
-          <CardContent className="p-4">
-            <h3 className="mb-2 font-semibold">💡 使用场景</h3>
-            <ul className="text-muted-foreground space-y-1 text-sm">
-              <li>• 查看每月资金到账情况，规划大额支出</li>
-              <li>• 识别到期高峰，提前准备再投资方案</li>
-              <li>• 配合&ldquo;阶梯策略&rdquo;，平滑资金到期时间</li>
-              <li>• 评估流动性风险，避免资金过度集中到期</li>
-            </ul>
-          </CardContent>
-        </Card>
+      {/* Upcoming Units Table - Grouped by Month */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>即将解禁明细</CardTitle>
+              <CardDescription>
+                未来24个月内到期的资金单元，共 {upcomingUnits.length} 个
+              </CardDescription>
+            </div>
+            <Link
+              href="/warehouse?availability=soon"
+              className="text-primary hover:text-primary/80 flex items-center gap-1 text-sm"
+            >
+              <Warehouse className="size-4" />
+              在仓库查看
+              <ExternalLink className="size-3" />
+            </Link>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {sortedMonths.length > 0 ? (
+            <div className="space-y-6">
+              {sortedMonths.map((monthKey) => {
+                const monthData = unitsByMonth[monthKey]
+                if (!monthData) return null
+                const monthTotal = monthData.units.reduce((sum, u) => sum + u.amount, 0)
 
-        <Card className="border-l-4 border-l-primary">
-          <CardContent className="p-4">
-            <h3 className="mb-2 font-semibold">📊 阅读指南</h3>
-            <ul className="text-muted-foreground space-y-1 text-sm">
-              <li>• <strong>X轴</strong>: 未来24个月，按月显示</li>
-              <li>• <strong>Y轴</strong>: 当月解锁金额</li>
-              <li>• <strong>堆叠颜色</strong>: 按投资策略分类</li>
-              <li>• <strong>悬停</strong>: 查看当月详细金额和合计</li>
-              <li>• <strong>柱高</strong>: 代表当月到期资金总量</li>
-            </ul>
-          </CardContent>
-        </Card>
-      </div>
+                return (
+                  <div key={monthKey} className="space-y-2">
+                    {/* Month Header */}
+                    <div className="flex items-center justify-between border-b pb-2">
+                      <h3 className="font-semibold">{monthData.monthLabel}</h3>
+                      <span className="text-muted-foreground text-sm">
+                        {monthData.units.length} 个单元 · {formatCurrencyFull(monthTotal)}
+                      </span>
+                    </div>
+
+                    {/* Units Table */}
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[100px]">编号</TableHead>
+                          <TableHead>策略</TableHead>
+                          <TableHead>战术</TableHead>
+                          <TableHead>产品</TableHead>
+                          <TableHead className="text-right">金额</TableHead>
+                          <TableHead className="text-right">解禁日</TableHead>
+                          <TableHead className="text-right">倒计时</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {monthData.units.map((unit) => (
+                          <TableRow key={unit.id}>
+                            <TableCell>
+                              <Link
+                                href={`/warehouse?q=${unit.unitCode}`}
+                                className="text-primary hover:underline font-mono text-sm"
+                              >
+                                {unit.unitCode}
+                              </Link>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{unit.strategy}</Badge>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground text-sm">
+                              {unit.tactics}
+                            </TableCell>
+                            <TableCell>
+                              {unit.productName ? (
+                                <Link
+                                  href={`/products?q=${encodeURIComponent(unit.productName)}`}
+                                  className="hover:text-primary text-sm hover:underline"
+                                >
+                                  {unit.productName}
+                                </Link>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right font-medium">
+                              {formatCurrencyFull(unit.amount)}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground text-right text-sm">
+                              {unit.availableDate}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <span
+                                className={cn(
+                                  "text-sm font-medium",
+                                  unit.daysUntilAvailable <= 0
+                                    ? "text-green-600 dark:text-green-400"
+                                    : unit.daysUntilAvailable <= 30
+                                      ? "text-amber-600 dark:text-amber-400"
+                                      : "text-muted-foreground"
+                                )}
+                              >
+                                {unit.daysUntilAvailable <= 0
+                                  ? "已可用"
+                                  : `${unit.daysUntilAvailable}天`}
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="text-muted-foreground py-8 text-center">
+              暂无即将解禁的资金单元
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

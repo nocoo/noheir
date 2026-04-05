@@ -129,3 +129,63 @@ export const buildSummaryStats = (monthlyData: {
     peakMonth,
   };
 };
+
+export type UpcomingUnit = {
+  id: string;
+  unitCode: string;
+  amount: number;
+  currency: string;
+  strategy: string;
+  tactics: string;
+  productName: string | null;
+  productChannel: string | null;
+  availableDate: string;
+  monthKey: string;
+  monthLabel: string;
+  daysUntilAvailable: number;
+};
+
+/**
+ * Build list of units becoming available in the next N months
+ */
+export const buildUpcomingUnits = (
+  units: UnitDisplayInfo[],
+  monthsAhead = 24,
+): UpcomingUnit[] => {
+  const today = new Date();
+  const cutoffDate = addMonths(today, monthsAhead);
+
+  return units
+    .filter((unit) => {
+      if (unit.status !== "已成立") return false;
+      if (!unit.availableDate) return false;
+      const availDate = new Date(unit.availableDate);
+      // Include units available from today onwards, up to cutoff
+      return availDate >= today && availDate <= cutoffDate;
+    })
+    .map((unit) => {
+      // Safe to assert: filter above ensures availableDate exists
+      const availableDateStr = unit.availableDate as string;
+      const availDate = new Date(availableDateStr);
+      const monthKey = format(availDate, "yyyy-MM");
+      const monthLabel = format(availDate, "yyyy年M月", { locale: zhCN });
+      const diffTime = availDate.getTime() - today.getTime();
+      const daysUntilAvailable = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      return {
+        id: unit.id,
+        unitCode: unit.unitCode,
+        amount: unit.amount,
+        currency: unit.currency,
+        strategy: unit.strategy,
+        tactics: unit.tactics,
+        productName: unit.product?.name ?? null,
+        productChannel: unit.product?.channel ?? null,
+        availableDate: availableDateStr,
+        monthKey,
+        monthLabel,
+        daysUntilAvailable,
+      };
+    })
+    .sort((a, b) => a.availableDate.localeCompare(b.availableDate));
+};
