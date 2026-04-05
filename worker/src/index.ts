@@ -9,6 +9,9 @@ import {
   updateProductSchema,
   createUnitSchema,
   updateUnitSchema,
+  createContributionLogSchema,
+  updateContributionLogSchema,
+  searchContributionLogsSchema,
 } from "../db/validation";
 
 /** Strip undefined values from an object at runtime.
@@ -44,6 +47,7 @@ type Variables = {
   userId: string;
   repos: AllRepos;
   db: DrizzleD1Database;
+  d1: D1Database;  // Raw D1 binding for batch operations
 };
 
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -116,6 +120,7 @@ app.use("*", async (c, next) => {
   c.set("userId", userId);
   c.set("repos", repos);
   c.set("db", db);
+  c.set("d1", d1Binding);
 
   return next();
 });
@@ -339,8 +344,21 @@ app.put("/api/products/:id", async (c) => {
 app.delete("/api/products/:id", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
-  const ok = await repos.products.delete(userId, c.req.param("id"));
-  return ok ? c.json({ success: true }) : c.json({ error: "Not found" }, 404);
+  const id = c.req.param("id");
+
+  try {
+    const ok = await repos.products.delete(userId, id);
+    return ok ? c.json({ success: true }) : c.json({ error: "Not found" }, 404);
+  } catch (err) {
+    // D1 RESTRICT constraint violation (product has contribution logs)
+    if (err instanceof Error && err.message.includes("FOREIGN KEY constraint failed")) {
+      return c.json({
+        error: "Cannot delete product with contribution history. Archive it instead.",
+        hasContributionLogs: true,
+      }, 409);
+    }
+    throw err; // Re-throw other errors for global handler
+  }
 });
 
 // ── Units ──
@@ -384,15 +402,119 @@ app.post("/api/units", async (c) => {
 app.put("/api/units/:id", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
+  const d1 = c.get("d1");
+  const id = c.req.param("id");
   const body = await c.req.json();
 
+  // Validation (includes productId-only constraint)
   const parsed = updateUnitSchema.safeParse(body);
   if (!parsed.success) {
     return c.json({ error: parsed.error.issues.map((i) => i.message).join("; ") }, 400);
   }
 
-  const row = await repos.units.update(userId, c.req.param("id"), stripUndefined(parsed.data));
-  return row ? c.json({ unit: row }) : c.json({ error: "Not found" }, 404);
+  // Get original unit before update
+  const original = await repos.units.findById(userId, id);
+  if (!original) {
+    return c.json({ error: "Not found" }, 404);
+  }
+
+  const productIdChanging = parsed.data.productId !== undefined
+    && original.productId !== parsed.data.productId;
+
+  if (productIdChanging) {
+    const newProductId = parsed.data.productId;
+
+    // Phase 1: CAS UPDATE - include original product_id in WHERE
+    const updateSql = original.productId
+      ? `UPDATE capital_units SET product_id = ?, updated_at = ? WHERE id = ? AND user_id = ? AND product_id = ?`
+      : `UPDATE capital_units SET product_id = ?, updated_at = ? WHERE id = ? AND user_id = ? AND product_id IS NULL`;
+
+    const now = Date.now();
+    const updateStmt = original.productId
+      ? d1.prepare(updateSql).bind(newProductId, now, id, userId, original.productId)
+      : d1.prepare(updateSql).bind(newProductId, now, id, userId);
+
+    const updateResult = await updateStmt.run();
+
+    // CAS check
+    if (!updateResult.meta.changes || updateResult.meta.changes === 0) {
+      return c.json({
+        error: "Conflict: unit was modified by another request. Please retry.",
+      }, 409);
+    }
+
+    // Phase 2: Insert logs (UPDATE succeeded, we "own" this transition)
+    const today = new Date().toISOString().slice(0, 10);
+    const logStatements: D1PreparedStatement[] = [];
+
+    if (original.productId) {
+      const oldProduct = await repos.products.findById(userId, original.productId);
+      logStatements.push(
+        d1.prepare(
+          `INSERT INTO contribution_logs
+           (id, user_id, unit_id, product_id, product_name, operation_type, amount_cents, operation_date, source, note, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        ).bind(
+          crypto.randomUUID(), userId, id, original.productId, oldProduct?.name ?? null,
+          "withdraw", -original.amountCents, today, "auto",
+          `Auto: moved out to ${newProductId ? "another product" : "unassigned"}`,
+          now, now
+        )
+      );
+    }
+
+    if (newProductId) {
+      const newProduct = await repos.products.findById(userId, newProductId);
+      logStatements.push(
+        d1.prepare(
+          `INSERT INTO contribution_logs
+           (id, user_id, unit_id, product_id, product_name, operation_type, amount_cents, operation_date, source, note, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        ).bind(
+          crypto.randomUUID(), userId, id, newProductId, newProduct?.name ?? null,
+          "invest", original.amountCents, today, "auto",
+          `Auto: moved in from ${original.productId ? "another product" : "unassigned"}`,
+          now, now
+        )
+      );
+    }
+
+    try {
+      if (logStatements.length > 0) {
+        await d1.batch(logStatements);
+      }
+    } catch (logError) {
+      // Phase 3: Compensate - rollback the UPDATE
+      const rollbackSql = newProductId
+        ? `UPDATE capital_units SET product_id = ?, updated_at = ? WHERE id = ? AND user_id = ? AND product_id = ?`
+        : `UPDATE capital_units SET product_id = ?, updated_at = ? WHERE id = ? AND user_id = ? AND product_id IS NULL`;
+
+      try {
+        if (newProductId) {
+          await d1.prepare(rollbackSql).bind(original.productId, Date.now(), id, userId, newProductId).run();
+        } else {
+          await d1.prepare(rollbackSql).bind(original.productId, Date.now(), id, userId).run();
+        }
+      } catch {
+        // Rollback failed - log for manual intervention but don't mask original error
+        console.error(`Failed to rollback unit ${id} productId change after log insert failure`);
+      }
+
+      throw logError; // Re-throw to trigger 500
+    }
+
+    // Return updated unit
+    const row = await repos.units.findById(userId, id);
+    return c.json({ unit: row });
+  }
+
+  // Non-productId updates: use normal path
+  const row = await repos.units.update(userId, id, stripUndefined(parsed.data));
+  if (!row) {
+    return c.json({ error: "Not found" }, 404);
+  }
+
+  return c.json({ unit: row });
 });
 
 app.delete("/api/units/:id", async (c) => {
@@ -400,6 +522,190 @@ app.delete("/api/units/:id", async (c) => {
   const repos = c.get("repos");
   const ok = await repos.units.delete(userId, c.req.param("id"));
   return ok ? c.json({ success: true }) : c.json({ error: "Not found" }, 404);
+});
+
+// ── Contribution Logs ──
+
+app.post("/api/contribution-logs/search", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const body = await c.req.json();
+
+  const parsed = searchContributionLogsSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: parsed.error.issues.map((i) => i.message).join("; ") }, 400);
+  }
+
+  const result = await repos.contributionLogs.search(userId, parsed.data);
+  return c.json(result);
+});
+
+app.get("/api/contribution-logs/summary/unit/:unitId", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const unitId = c.req.param("unitId");
+
+  // Verify unit exists
+  const unit = await repos.units.findById(userId, unitId);
+  if (!unit) {
+    return c.json({ error: "Unit not found" }, 404);
+  }
+
+  const summary = await repos.contributionLogs.summarizeByUnit(userId, unitId);
+  return c.json({ summary });
+});
+
+app.get("/api/contribution-logs/summary/product/:productId", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const productId = c.req.param("productId");
+
+  // Verify product exists
+  const product = await repos.products.findById(userId, productId);
+  if (!product) {
+    return c.json({ error: "Product not found" }, 404);
+  }
+
+  const summary = await repos.contributionLogs.summarizeByProduct(userId, productId);
+  return c.json({ summary });
+});
+
+app.post("/api/contribution-logs/seed", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const d1 = c.get("d1");
+
+  // Get all units with products
+  const units = await repos.units.findAllWithProducts(userId, {});
+
+  let created = 0;
+  let skipped = 0;
+  const BATCH_SIZE = 50;
+
+  // Process in batches for partial atomicity
+  for (let i = 0; i < units.length; i += BATCH_SIZE) {
+    const batch = units.slice(i, i + BATCH_SIZE);
+    const statements: D1PreparedStatement[] = [];
+
+    for (const unit of batch) {
+      if (!unit.productId) {
+        skipped++;
+        continue;
+      }
+
+      // Check if already seeded for this unit (including soft-deleted, for true idempotency)
+      const existing = await repos.contributionLogs.search(userId, {
+        unitId: unit.id,
+        source: "import",
+        limit: 1,
+        includeDeleted: true,
+      });
+
+      if (existing.logs.length > 0) {
+        skipped++;
+        continue;
+      }
+
+      const operationDate = unit.startDate ?? new Date(unit.createdAt).toISOString().slice(0, 10);
+      const now = Date.now();
+
+      statements.push(
+        d1.prepare(
+          `INSERT INTO contribution_logs
+           (id, user_id, unit_id, product_id, product_name, operation_type, amount_cents, balance_after_cents, operation_date, source, note, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        ).bind(
+          crypto.randomUUID(), userId, unit.id, unit.productId, unit.product?.name ?? null,
+          "invest", unit.amountCents, unit.amountCents, operationDate, "import",
+          "Initial investment (data migration)",
+          now, now
+        )
+      );
+      created++;
+    }
+
+    // Execute batch atomically
+    if (statements.length > 0) {
+      await d1.batch(statements);
+    }
+  }
+
+  return c.json({
+    success: true,
+    created,
+    skipped,
+    message: skipped > 0
+      ? `Created ${created} logs, skipped ${skipped} (already seeded or no product)`
+      : `Created ${created} logs`,
+  });
+});
+
+app.get("/api/contribution-logs/:id", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const row = await repos.contributionLogs.findById(userId, c.req.param("id"));
+  return row ? c.json({ log: row }) : c.json({ error: "Not found" }, 404);
+});
+
+app.post("/api/contribution-logs", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const body = await c.req.json();
+
+  const parsed = createContributionLogSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: parsed.error.issues.map((i) => i.message).join("; ") }, 400);
+  }
+
+  // Verify unit exists
+  const unit = await repos.units.findById(userId, parsed.data.unitId);
+  if (!unit) {
+    return c.json({ error: "Unit not found" }, 404);
+  }
+
+  // Verify product exists if provided
+  let productName: string | null = null;
+  if (parsed.data.productId) {
+    const product = await repos.products.findById(userId, parsed.data.productId);
+    if (!product) {
+      return c.json({ error: "Product not found" }, 404);
+    }
+    productName = product.name;
+  }
+
+  const row = await repos.contributionLogs.create(userId, {
+    ...parsed.data,
+    productName: parsed.data.productName ?? productName,
+  });
+  return c.json({ log: row }, 201);
+});
+
+app.put("/api/contribution-logs/:id", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const body = await c.req.json();
+
+  const parsed = updateContributionLogSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: parsed.error.issues.map((i) => i.message).join("; ") }, 400);
+  }
+
+  const row = await repos.contributionLogs.update(userId, c.req.param("id"), stripUndefined(parsed.data));
+  return row ? c.json({ log: row }) : c.json({ error: "Not found" }, 404);
+});
+
+app.delete("/api/contribution-logs/:id", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const ok = await repos.contributionLogs.softDelete(userId, c.req.param("id"));
+  return ok ? c.json({ success: true }) : c.json({ error: "Not found" }, 404);
+});
+
+app.post("/api/contribution-logs/:id/restore", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const row = await repos.contributionLogs.restore(userId, c.req.param("id"));
+  return row ? c.json({ log: row }) : c.json({ error: "Not found or not deleted" }, 404);
 });
 
 // ── Settings ──

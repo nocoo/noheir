@@ -9,15 +9,15 @@ import type {
 } from "../types";
 
 export interface ContributionLogsSearchParams {
-  unitId?: string;
-  productId?: string;
-  operationType?: string;
-  source?: string;
-  startDate?: string;
-  endDate?: string;
-  includeDeleted?: boolean;
-  limit?: number;
-  offset?: number;
+  unitId?: string | undefined;
+  productId?: string | undefined;
+  operationType?: string | undefined;
+  source?: string | undefined;
+  startDate?: string | undefined;
+  endDate?: string | undefined;
+  includeDeleted?: boolean | undefined;
+  limit?: number | undefined;
+  offset?: number | undefined;
 }
 
 export interface ContributionLogsSearchResult {
