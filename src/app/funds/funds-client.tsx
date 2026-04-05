@@ -408,18 +408,24 @@ export function FundsClient({ units, products }: FundsClientProps) {
                   <TableCell>
                     <span
                       className={cn(
-                        "text-sm",
+                        "text-sm font-medium",
                         unit.isAvailable
-                          ? "text-green-600 dark:text-green-400 font-medium"
-                          : unit.daysUntilAvailable != null
-                            ? "text-destructive font-medium"
-                            : "text-muted-foreground",
+                          ? "text-green-600 dark:text-green-400"
+                          : unit.daysUntilAvailable != null && unit.daysUntilAvailable <= 30
+                            ? "text-amber-600 dark:text-amber-400"
+                            : unit.daysUntilAvailable != null
+                              ? "text-destructive"
+                              : "text-muted-foreground",
                       )}
                     >
                       {unit.availableDate ?? "—"}
                       {unit.daysUntilAvailable != null && (
                         <span className="ml-1 text-xs">
-                          ({unit.isAvailable ? "可用" : `${unit.daysUntilAvailable}天`})
+                          ({unit.isAvailable
+                            ? "可用"
+                            : unit.daysUntilAvailable <= 30
+                              ? `${unit.daysUntilAvailable}天`
+                              : "锁定中"})
                         </span>
                       )}
                     </span>

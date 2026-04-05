@@ -304,11 +304,15 @@ export function CapitalDecisionsClient({
                               d.daysUntilAvailable <= 0
                                 ? "text-green-600 dark:text-green-400"
                                 : d.daysUntilAvailable <= 30
-                                  ? "text-destructive"
-                                  : "text-muted-foreground",
+                                  ? "text-amber-600 dark:text-amber-400"
+                                  : "text-destructive",
                             )}
                           >
-                            ({d.daysUntilAvailable <= 0 ? "可用" : `${d.daysUntilAvailable}天`})
+                            ({d.daysUntilAvailable <= 0
+                              ? "可用"
+                              : d.daysUntilAvailable <= 30
+                                ? `${d.daysUntilAvailable}天`
+                                : "锁定中"})
                           </span>
                         )}
                       </TableCell>

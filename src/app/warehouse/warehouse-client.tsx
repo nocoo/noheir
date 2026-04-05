@@ -579,14 +579,20 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
                       <p className="text-muted-foreground truncate text-[9px] sm:text-[10px]">
                         {secondaryInfo}
                       </p>
-                      {unit.daysUntilAvailable != null && unit.daysUntilAvailable <= 30 && (
+                      {unit.daysUntilAvailable != null && (
                         <p className={cn(
                           "text-[9px] font-medium sm:text-[10px]",
                           unit.daysUntilAvailable <= 0
                             ? "text-green-600 dark:text-green-400"
-                            : "text-destructive"
+                            : unit.daysUntilAvailable <= 30
+                              ? "text-amber-600 dark:text-amber-400"
+                              : "text-destructive"
                         )}>
-                          {unit.daysUntilAvailable <= 0 ? "已可用" : `${unit.daysUntilAvailable}天`}
+                          {unit.daysUntilAvailable <= 0
+                            ? "已可用"
+                            : unit.daysUntilAvailable <= 30
+                              ? `${unit.daysUntilAvailable}天`
+                              : "锁定中"}
                         </p>
                       )}
                     </CardContent>
