@@ -39,30 +39,35 @@ export function createContributionLogsRepo(db: DrizzleD1Database) {
         return new Map();
       }
 
-      // For each unitId, get the latest invest log by operationDate desc, createdAt desc
-      // Using a subquery approach: get all invest logs, then pick latest per unit in JS
-      // (D1/SQLite doesn't support DISTINCT ON, so we do grouping in application)
-      const rows = await db
-        .select()
-        .from(contributionLogs)
-        .where(
-          and(
-            eq(contributionLogs.userId, userId),
-            inArray(contributionLogs.unitId, unitIds),
-            eq(contributionLogs.operationType, "invest"),
-            isNull(contributionLogs.deletedAt)
-          )
-        )
-        .orderBy(desc(contributionLogs.operationDate), desc(contributionLogs.createdAt))
-        .all();
-
-      // Group by unitId, take the first (latest) for each
+      // Batch queries to avoid D1 parameter limits
+      // D1 seems to have issues with large IN clauses (> ~50 params)
+      const BATCH_SIZE = 50;
       const result = new Map<string, ContributionLog>();
-      for (const row of rows) {
-        if (!result.has(row.unitId)) {
-          result.set(row.unitId, row);
+
+      for (let i = 0; i < unitIds.length; i += BATCH_SIZE) {
+        const batch = unitIds.slice(i, i + BATCH_SIZE);
+        const rows = await db
+          .select()
+          .from(contributionLogs)
+          .where(
+            and(
+              eq(contributionLogs.userId, userId),
+              inArray(contributionLogs.unitId, batch),
+              eq(contributionLogs.operationType, "invest"),
+              isNull(contributionLogs.deletedAt)
+            )
+          )
+          .orderBy(desc(contributionLogs.operationDate), desc(contributionLogs.createdAt))
+          .all();
+
+        // Group by unitId, take the first (latest) for each
+        for (const row of rows) {
+          if (!result.has(row.unitId)) {
+            result.set(row.unitId, row);
+          }
         }
       }
+
       return result;
     },
 
