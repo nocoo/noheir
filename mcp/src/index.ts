@@ -12,6 +12,46 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod"
 import { WorkerClient } from "./worker-client.js"
 
+/** Map MCP snake_case fields to Worker API camelCase fields */
+function toWorkerProductPayload(params: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...params }
+  if ("lock_period_days" in result) {
+    result.lockPeriodDays = result.lock_period_days
+    delete result.lock_period_days
+  }
+  if ("annual_return_rate" in result) {
+    result.annualReturnRate = result.annual_return_rate
+    delete result.annual_return_rate
+  }
+  return result
+}
+
+/** Map MCP snake_case fields to Worker API camelCase fields, convert amount to cents */
+function toWorkerUnitPayload(params: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...params }
+  if ("unit_code" in result) {
+    result.unitCode = result.unit_code
+    delete result.unit_code
+  }
+  if ("product_id" in result) {
+    result.productId = result.product_id
+    delete result.product_id
+  }
+  if ("start_date" in result) {
+    result.startDate = result.start_date
+    delete result.start_date
+  }
+  if ("end_date" in result) {
+    result.endDate = result.end_date
+    delete result.end_date
+  }
+  if ("amount" in result && result.amount !== undefined) {
+    result.amountCents = Math.round((result.amount as number) * 100)
+    delete result.amount
+  }
+  return result
+}
+
 function getEnvConfig() {
   const workerUrl = process.env.WORKER_URL
   const workerToken = process.env.WORKER_TOKEN
@@ -208,7 +248,8 @@ Required fields: name, channel, category. Optional: code, currency (default CNY)
       annual_return_rate: z.number().optional().describe("Annual return rate as percentage (e.g. 3.5 for 3.5%)"),
     },
     async (params) => {
-      const result = await client.createProduct(params)
+      const payload = toWorkerProductPayload(params)
+      const result = await client.createProduct(payload)
       return {
         content: [{ type: "text" as const, text: JSON.stringify(result) }],
       }
@@ -231,7 +272,8 @@ Required fields: name, channel, category. Optional: code, currency (default CNY)
     },
     async (params) => {
       const { id, ...data } = params
-      const result = await client.updateProduct(id, data)
+      const payload = toWorkerProductPayload(data)
+      const result = await client.updateProduct(id, payload)
       return {
         content: [{ type: "text" as const, text: JSON.stringify(result) }],
       }
@@ -313,7 +355,8 @@ Required fields: unit_code, amount, strategy, tactics. Optional: currency (defau
       note: z.string().optional().describe("Optional note"),
     },
     async (params) => {
-      const result = await client.createUnit(params)
+      const payload = toWorkerUnitPayload(params)
+      const result = await client.createUnit(payload)
       return {
         content: [{ type: "text" as const, text: JSON.stringify(result) }],
       }
@@ -339,7 +382,8 @@ Required fields: unit_code, amount, strategy, tactics. Optional: currency (defau
     },
     async (params) => {
       const { id, ...data } = params
-      const result = await client.updateUnit(id, data)
+      const payload = toWorkerUnitPayload(data)
+      const result = await client.updateUnit(id, payload)
       return {
         content: [{ type: "text" as const, text: JSON.stringify(result) }],
       }
