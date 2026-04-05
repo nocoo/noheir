@@ -27,7 +27,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
+import {
+  UnitCodeBadge,
+  StrategyBadge,
+  TacticsBadge,
+  ProductBadge,
+} from "@/components/ui/colored-badge"
 import {
   formatCurrencyFull,
   formatCurrencyK,
@@ -241,26 +246,20 @@ export function LiquidityClient({
                         {monthData.units.map((unit) => (
                           <TableRow key={unit.id}>
                             <TableCell>
-                              <Link
-                                href={`/warehouse?q=${unit.unitCode}`}
-                                className="text-primary hover:underline font-mono text-sm"
-                              >
-                                {unit.unitCode}
+                              <Link href={`/warehouse?q=${unit.unitCode}`}>
+                                <UnitCodeBadge unitCode={unit.unitCode} />
                               </Link>
                             </TableCell>
                             <TableCell>
-                              <Badge variant="outline">{unit.strategy}</Badge>
+                              <StrategyBadge strategy={unit.strategy} />
                             </TableCell>
-                            <TableCell className="text-muted-foreground text-sm">
-                              {unit.tactics}
+                            <TableCell>
+                              <TacticsBadge tactics={unit.tactics} />
                             </TableCell>
                             <TableCell>
                               {unit.productName ? (
-                                <Link
-                                  href={`/products?q=${encodeURIComponent(unit.productName)}`}
-                                  className="hover:text-primary text-sm hover:underline"
-                                >
-                                  {unit.productName}
+                                <Link href={`/products?q=${encodeURIComponent(unit.productName)}`}>
+                                  <ProductBadge productName={unit.productName} />
                                 </Link>
                               ) : (
                                 <span className="text-muted-foreground text-sm">—</span>

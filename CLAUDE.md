@@ -46,6 +46,31 @@ cd worker && bun run dev
 | pre-commit | Unit tests only | `.husky/pre-commit` |
 | pre-push | Unit + Lint | `.husky/pre-push` |
 
+## Visual Design Principles
+
+### Unified Badge System
+
+All domain labels (unitCode, strategy, tactics, status, currency, product) MUST use the unified Badge components from `src/components/ui/colored-badge.tsx`:
+
+| Data Type | Component | Color Source |
+|-----------|-----------|--------------|
+| Unit Code (e.g., C10, A01) | `<UnitCodeBadge unitCode={...} />` | Hash by prefix |
+| Strategy (e.g., 远期理财) | `<StrategyBadge strategy={...} />` | `STRATEGY_TOKEN_MAP` |
+| Tactics (e.g., 定期存款) | `<TacticsBadge tactics={...} />` | `TACTICS_TOKEN_MAP` |
+| Status (e.g., 已成立) | `<StatusBadge status={...} />` | `STATUS_TOKEN_MAP` |
+| Currency (e.g., CNY, USD) | `<CurrencyBadge currency={...} />` | `CURRENCY_TOKEN_MAP` |
+| Product Name | `<ProductBadge productName={...} />` | Hash by name |
+
+**Key principle**: The same label (e.g., `C10` or `远期理财`) must display with identical color and style across ALL pages. Never use raw `<Badge>` for domain-specific data.
+
+### Availability Status Colors
+
+| State | Color | Label |
+|-------|-------|-------|
+| Available (≤0 days) | Green | "已可用" / "可用" |
+| Soon (1-30 days) | Amber | "N天" |
+| Locked (>30 days) | Red/Destructive | "锁定中" |
+
 ## Retrospective
 
 - D1 uses SQLite syntax — use `strftime('%Y', date)` instead of `EXTRACT(YEAR FROM date)`.

@@ -164,3 +164,15 @@ export function CategoryBadge({
 }) {
   return <ColoredBadge label={category} className={className} />
 }
+
+/** Product name badge (generic auto-colored) */
+export function ProductBadge({
+  productName,
+  className,
+}: {
+  productName: string
+  className?: string
+}) {
+  const token = hashToChartToken(productName)
+  return <ChartColorBadge label={productName} token={token} className={className} />
+}

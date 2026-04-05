@@ -27,6 +27,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  UnitCodeBadge,
+  StrategyBadge,
+  CurrencyBadge,
+} from "@/components/ui/colored-badge"
 import { cn } from "@/lib/utils"
 import { formatCurrencyFull } from "@/lib/chart-config"
 
@@ -288,12 +293,15 @@ export function CapitalDecisionsClient({
                           {config?.label ?? d.urgency}
                         </Badge>
                       </TableCell>
-                      <TableCell className="font-medium">
-                        {d.unitCode}
-                      </TableCell>
-                      <TableCell>{d.strategy}</TableCell>
                       <TableCell>
-                        {formatCurrencyFull(d.amount)} {d.currency}
+                        <UnitCodeBadge unitCode={d.unitCode} />
+                      </TableCell>
+                      <TableCell>
+                        <StrategyBadge strategy={d.strategy} />
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {formatCurrencyFull(d.amount)}{" "}
+                        <CurrencyBadge currency={d.currency} className="ml-1 text-xs" />
                       </TableCell>
                       <TableCell>
                         {d.availableDate ?? "—"}

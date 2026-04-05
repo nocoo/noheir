@@ -37,6 +37,10 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import {
+  UnitCodeBadge,
+  ProductBadge,
+} from "@/components/ui/colored-badge"
 import { StatCard } from "@/components/shared/stat-card"
 import { formatCurrencyFull } from "@/lib/chart-config"
 import { ContributionLogForm } from "@/components/capital/contribution-log-form"
@@ -373,11 +377,19 @@ export function CapitalLogsClient({
                         {log.amount >= 0 ? "+" : ""}
                         {formatCurrencyFull(log.amount)}
                       </TableCell>
-                      <TableCell className="text-xs">
-                        {log.unit?.unitCode ?? "-"}
+                      <TableCell>
+                        {log.unit?.unitCode ? (
+                          <UnitCodeBadge unitCode={log.unit.unitCode} />
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
                       </TableCell>
-                      <TableCell className="text-xs">
-                        {log.productName ?? log.product?.name ?? "-"}
+                      <TableCell>
+                        {log.productName || log.product?.name ? (
+                          <ProductBadge productName={log.productName ?? log.product?.name ?? ""} />
+                        ) : (
+                          <span className="text-muted-foreground text-xs">-</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="text-xs">
