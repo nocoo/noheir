@@ -579,12 +579,12 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
                       <p className="text-muted-foreground truncate text-[9px] sm:text-[10px]">
                         {secondaryInfo}
                       </p>
-                      {unit.daysUntilMaturity != null && unit.daysUntilMaturity <= 30 && (
+                      {unit.daysUntilAvailable != null && unit.daysUntilAvailable <= 30 && (
                         <p className={cn(
                           "text-[9px] font-medium sm:text-[10px]",
-                          unit.daysUntilMaturity <= 0 ? "text-destructive" : "text-amber-600 dark:text-amber-400"
+                          unit.daysUntilAvailable <= 0 ? "text-destructive" : "text-amber-600 dark:text-amber-400"
                         )}>
-                          {unit.daysUntilMaturity <= 0 ? "已到期" : `${unit.daysUntilMaturity}天`}
+                          {unit.daysUntilAvailable <= 0 ? "已可用" : `${unit.daysUntilAvailable}天`}
                         </p>
                       )}
                     </CardContent>

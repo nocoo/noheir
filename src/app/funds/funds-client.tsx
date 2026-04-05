@@ -74,7 +74,7 @@ const TACTICS = [
 
 const STATUSES = ["已成立", "计划中", "筹集中", "已归档"]
 
-type SortField = "unitCode" | "amount" | "endDate" | "status" | "strategy"
+type SortField = "unitCode" | "amount" | "availableDate" | "status" | "strategy"
 type SortDir = "asc" | "desc"
 
 export function FundsClient({ units, products }: FundsClientProps) {
@@ -153,9 +153,9 @@ export function FundsClient({ units, products }: FundsClientProps) {
       switch (sortField) {
         case "amount":
           return (a.amount - b.amount) * dir
-        case "endDate":
+        case "availableDate":
           return (
-            ((a.endDate ?? "9999") > (b.endDate ?? "9999") ? 1 : -1) * dir
+            ((a.availableDate ?? "9999") > (b.availableDate ?? "9999") ? 1 : -1) * dir
           )
         case "status":
           return a.status.localeCompare(b.status) * dir
@@ -368,13 +368,13 @@ export function FundsClient({ units, products }: FundsClientProps) {
                     {getSortIcon("status")}
                   </button>
                 </TableHead>
-                <TableHead aria-sort={getAriaSort("endDate")}>
+                <TableHead aria-sort={getAriaSort("availableDate")}>
                   <button
-                    onClick={() => toggleSort("endDate")}
+                    onClick={() => toggleSort("availableDate")}
                     className="hover:text-foreground flex items-center text-sm transition-colors"
                   >
-                    到期日
-                    {getSortIcon("endDate")}
+                    可用日期
+                    {getSortIcon("availableDate")}
                   </button>
                 </TableHead>
                 <TableHead className="w-20">操作</TableHead>
@@ -409,19 +409,19 @@ export function FundsClient({ units, products }: FundsClientProps) {
                     <span
                       className={cn(
                         "text-sm",
-                        unit.daysUntilMaturity != null &&
-                          unit.daysUntilMaturity <= 0
+                        unit.daysUntilAvailable != null &&
+                          unit.daysUntilAvailable <= 0
                           ? "text-destructive font-medium"
-                          : unit.daysUntilMaturity != null &&
-                              unit.daysUntilMaturity <= 30
+                          : unit.daysUntilAvailable != null &&
+                              unit.daysUntilAvailable <= 30
                             ? "text-amber-600"
                             : "text-muted-foreground",
                       )}
                     >
-                      {unit.endDate ?? "—"}
-                      {unit.daysUntilMaturity != null && (
+                      {unit.availableDate ?? "—"}
+                      {unit.daysUntilAvailable != null && (
                         <span className="ml-1 text-xs">
-                          ({unit.daysUntilMaturity}天)
+                          ({unit.daysUntilAvailable}天)
                         </span>
                       )}
                     </span>

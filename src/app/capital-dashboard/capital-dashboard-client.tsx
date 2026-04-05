@@ -27,7 +27,7 @@ import {
   buildIdleUnits,
   buildCurrencyDistribution,
   buildStatusDistribution,
-  buildMaturityDistribution,
+  buildAvailabilityDistribution,
 } from "@/domain/assets/capital-dashboard"
 import type { UnitDisplayInfo } from "@/domain/types"
 
@@ -173,7 +173,7 @@ export function CapitalDashboardClient({
   }
 
   // Filtered units and computed aggregations
-  const { filteredUnits, totalsByCurrency, totalAll, idleUnits, currencyDistribution, statusDistribution, maturityDistribution } = useMemo(() => {
+  const { filteredUnits, totalsByCurrency, totalAll, idleUnits, currencyDistribution, statusDistribution, availabilityDistribution } = useMemo(() => {
     const filtered = units.filter((u) => {
       if (filterStatus !== "all" && u.status !== filterStatus) return false
       if (filterStrategy !== "all" && u.strategy !== filterStrategy) return false
@@ -195,7 +195,7 @@ export function CapitalDashboardClient({
       value: d.amount,
       percentage: d.percentage,
     }))
-    const maturityDist = buildMaturityDistribution(filtered, total).map((d) => ({
+    const availabilityDist = buildAvailabilityDistribution(filtered, total).map((d) => ({
       name: d.period,
       value: d.amount,
       percentage: d.percentage,
@@ -208,7 +208,7 @@ export function CapitalDashboardClient({
       idleUnits: idle,
       currencyDistribution: currDist,
       statusDistribution: statusDist,
-      maturityDistribution: maturityDist,
+      availabilityDistribution: availabilityDist,
     }
   }, [units, filterStatus, filterStrategy, filterTactics, filterCurrency])
 
@@ -366,9 +366,9 @@ export function CapitalDashboardClient({
           data={statusDistribution}
         />
         <DistributionPie
-          title="到期分布"
-          description="按到期时间的配置"
-          data={maturityDistribution}
+          title="可用性分布"
+          description="按可用时间的配置"
+          data={availabilityDistribution}
         />
       </div>
     </div>

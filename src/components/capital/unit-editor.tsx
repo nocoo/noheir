@@ -85,8 +85,9 @@ export interface SerializedUnit {
   startDate: string | null
   endDate: string | null
   note: string | null
-  daysUntilMaturity?: number | undefined
-  isAvailable?: boolean | undefined
+  availableDate?: string | null
+  daysUntilAvailable?: number | null
+  isAvailable?: boolean
 }
 
 interface UnitEditorProps {

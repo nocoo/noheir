@@ -1,6 +1,6 @@
 import { AppShell } from "@/components/layout"
 import { getAuthedClient } from "@/lib/api-helpers"
-import { toDomainProduct, toDomainUnit, toUnitDisplayInfo } from "@/lib/capital-mappers"
+import { toDomainProduct, toUnitDisplayInfo } from "@/lib/capital-mappers"
 import type { DomainProduct, UnitDisplayInfo } from "@/domain/types"
 import { ProductsClient } from "./products-client"
 
@@ -19,8 +19,7 @@ export default async function ProductsPage() {
       toDomainProduct(raw as Record<string, unknown>),
     )
     units = unitsResult.units
-      .map((raw) => toDomainUnit(raw as Record<string, unknown>))
-      .map(toUnitDisplayInfo)
+      .map((raw) => toUnitDisplayInfo(raw as Record<string, unknown>))
   } catch {
     // Not authenticated or Worker unavailable
   }

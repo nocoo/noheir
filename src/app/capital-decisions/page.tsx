@@ -1,6 +1,6 @@
 import { AppShell } from "@/components/layout"
 import { getAuthedClient } from "@/lib/api-helpers"
-import { toDomainUnit, toUnitDisplayInfo } from "@/lib/capital-mappers"
+import { toUnitDisplayInfo } from "@/lib/capital-mappers"
 import {
   classifyDecisions,
   buildDecisionStats,
@@ -15,8 +15,7 @@ export default async function CapitalDecisionsPage() {
     const { userId, client } = await getAuthedClient()
     const result = await client.listUnits(userId, { with_products: true })
     units = result.units
-      .map((raw) => toDomainUnit(raw as Record<string, unknown>))
-      .map(toUnitDisplayInfo)
+      .map((raw) => toUnitDisplayInfo(raw as Record<string, unknown>))
   } catch {
     // Not authenticated or Worker unavailable
   }
@@ -34,8 +33,8 @@ export default async function CapitalDecisionsPage() {
     tactics: d.unit.tactics,
     status: d.unit.status,
     productName: d.unit.product?.name ?? null,
-    endDate: d.unit.endDate,
-    daysUntilMaturity: d.unit.daysUntilMaturity,
+    availableDate: d.unit.availableDate,
+    daysUntilAvailable: d.unit.daysUntilAvailable,
     urgency: d.urgency,
     reason: d.reason,
     action: d.details,

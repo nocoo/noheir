@@ -1,6 +1,6 @@
 import { AppShell } from "@/components/layout"
 import { getAuthedClient } from "@/lib/api-helpers"
-import { toDomainUnit, toDomainProduct, toUnitDisplayInfo } from "@/lib/capital-mappers"
+import { toDomainProduct, toUnitDisplayInfo } from "@/lib/capital-mappers"
 import type { UnitDisplayInfo, DomainProduct } from "@/domain/types"
 import { WarehouseClient } from "./warehouse-client"
 
@@ -15,8 +15,7 @@ export default async function WarehousePage() {
       client.listProducts(userId),
     ])
     units = unitsResult.units
-      .map((raw) => toDomainUnit(raw as Record<string, unknown>))
-      .map(toUnitDisplayInfo)
+      .map((raw) => toUnitDisplayInfo(raw as Record<string, unknown>))
     products = productsResult.products.map((raw) =>
       toDomainProduct(raw as Record<string, unknown>),
     )
@@ -38,7 +37,8 @@ export default async function WarehousePage() {
     startDate: u.startDate,
     endDate: u.endDate,
     note: u.note,
-    daysUntilMaturity: u.daysUntilMaturity,
+    availableDate: u.availableDate,
+    daysUntilAvailable: u.daysUntilAvailable,
     isAvailable: u.isAvailable,
   }))
 

@@ -1,6 +1,6 @@
 import { AppShell } from "@/components/layout"
 import { getAuthedClient } from "@/lib/api-helpers"
-import { toDomainUnit, toUnitDisplayInfo } from "@/lib/capital-mappers"
+import { toUnitDisplayInfo } from "@/lib/capital-mappers"
 import type { UnitDisplayInfo } from "@/domain/types"
 import { buildStrategyHierarchy, buildTotalAmount } from "@/domain/assets/strategy-sunburst"
 import { StrategyClient } from "./strategy-client"
@@ -12,8 +12,7 @@ export default async function StrategyPage() {
     const { userId, client } = await getAuthedClient()
     const result = await client.listUnits(userId, { with_products: true })
     units = result.units
-      .map((raw) => toDomainUnit(raw as Record<string, unknown>))
-      .map(toUnitDisplayInfo)
+      .map((raw) => toUnitDisplayInfo(raw as Record<string, unknown>))
   } catch {
     // Not authenticated or Worker unavailable
   }

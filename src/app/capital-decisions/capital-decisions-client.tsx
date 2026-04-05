@@ -38,8 +38,8 @@ interface SerializedDecision {
   tactics: string
   status: string
   productName: string | null
-  endDate: string | null
-  daysUntilMaturity?: number | undefined
+  availableDate: string | null
+  daysUntilAvailable?: number | null
   urgency: string
   reason: string
   action: string
@@ -296,19 +296,19 @@ export function CapitalDecisionsClient({
                         {formatCurrencyFull(d.amount)} {d.currency}
                       </TableCell>
                       <TableCell>
-                        {d.endDate ?? "—"}
-                        {d.daysUntilMaturity != null && (
+                        {d.availableDate ?? "—"}
+                        {d.daysUntilAvailable != null && (
                           <span
                             className={cn(
                               "ml-1 text-xs",
-                              d.daysUntilMaturity <= 0
+                              d.daysUntilAvailable <= 0
                                 ? "text-destructive"
-                                : d.daysUntilMaturity <= 30
+                                : d.daysUntilAvailable <= 30
                                   ? "text-amber-600"
                                   : "text-muted-foreground",
                             )}
                           >
-                            ({d.daysUntilMaturity}天)
+                            ({d.daysUntilAvailable}天)
                           </span>
                         )}
                       </TableCell>
