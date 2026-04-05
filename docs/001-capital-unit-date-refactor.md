@@ -159,32 +159,32 @@ Frontend receives pre-computed fields from API, no longer derives from `endDate`
 
 ## Implementation Tasks
 
-### Phase 1: Backend (worker/)
-- [ ] 1.1 Add `computeAvailability()` helper in `worker/db/repositories/units.ts` or new `worker/lib/availability.ts`
-- [ ] 1.2 Add repository method: `getLatestInvestLogs(userId, unitIds)` in `worker/db/repositories/contribution-logs.ts`
-- [ ] 1.3 Enhance `GET /units` and `GET /units/:id` to return `availableDate`, `isAvailable`, `daysUntilAvailable`
-- [ ] 1.4 Update unit update logic: auto-set/clear `endDate` based on status transitions
-- [ ] 1.5 Add backend tests in `worker/tests/`
+### Phase 1: Backend (worker/) ✅
+- [x] 1.1 Add `computeAvailability()` helper in `worker/lib/availability.ts`
+- [x] 1.2 Add repository method: `getLatestInvestLogs(userId, unitIds)` in `worker/db/repositories/contribution-logs.ts`
+- [x] 1.3 Enhance `GET /units` and `GET /units/:id` to return `availableDate`, `isAvailable`, `daysUntilAvailable`
+- [x] 1.4 Update unit update logic: auto-set/clear `endDate` based on status transitions
+- [x] 1.5 Add backend tests in `worker/tests/`
 
-### Phase 2: Frontend Types & Mappers (src/)
-- [ ] 2.1 Update `src/domain/types.ts`: add `availableDate`, `isAvailable`, `daysUntilAvailable`; keep `endDate` for archive only
-- [ ] 2.2 Update `src/lib/capital-mappers.ts`: remove `daysUntilMaturity` derivation from `endDate`, map new fields from API
-- [ ] 2.3 Rename `daysUntilMaturity` → `daysUntilAvailable` in types
+### Phase 2: Frontend Types & Mappers (src/) ✅
+- [x] 2.1 Update `src/domain/types.ts`: add `availableDate`, `isAvailable`, `daysUntilAvailable`; keep `endDate` for archive only
+- [x] 2.2 Update `src/lib/capital-mappers.ts`: remove `daysUntilMaturity` derivation from `endDate`, map new fields from API
+- [x] 2.3 Rename `daysUntilMaturity` → `daysUntilAvailable` in types
 
-### Phase 3: Frontend Pages (src/)
-- [ ] 3.1 `/funds`: display `availableDate`, sort by `availableDate`, update column header to "可用日期"
-- [ ] 3.2 `/capital-decisions`: replace `endDate` usage with `availableDate`
-- [ ] 3.3 `/warehouse`: replace `endDate` usage with `availableDate`
-- [ ] 3.4 `capital-dashboard.ts`: rename `buildMaturityDistribution` → `buildAvailabilityDistribution`, use `availableDate`
-- [ ] 3.5 `liquidity-ladder.ts`: rename `buildMonthlyMaturities` → `buildMonthlyAvailability`, use `availableDate`
-- [ ] 3.6 Unit Editor: remove `endDate` input field
+### Phase 3: Frontend Pages (src/) ✅
+- [x] 3.1 `/funds`: display `availableDate`, sort by `availableDate`, update column header to "可用日期"
+- [x] 3.2 `/capital-decisions`: replace `endDate` usage with `availableDate`
+- [x] 3.3 `/warehouse`: replace `endDate` usage with `availableDate`
+- [x] 3.4 `capital-dashboard.ts`: rename `buildMaturityDistribution` → `buildAvailabilityDistribution`, use `availableDate`
+- [x] 3.5 `liquidity-ladder.ts`: rename `buildMonthlyMaturities` → `buildMonthlyAvailability`, use `availableDate`
+- [x] 3.6 Unit Editor: remove `endDate` input field
 
-### Phase 4: Tests & Cleanup
-- [ ] 4.1 Add/update backend tests in `worker/tests/` for availability computation
-- [ ] 4.2 Update frontend unit tests in `src/__tests__/`
-- [ ] 4.3 Update e2e tests in `worker/tests/e2e/`
-- [ ] 4.4 Update MCP tools documentation
-- [ ] 4.5 Rename test fixtures: maturity → available where applicable
+### Phase 4: Tests & Cleanup ✅
+- [x] 4.1 Add/update backend tests in `worker/tests/` for availability computation
+- [x] 4.2 Update frontend unit tests in `src/__tests__/`
+- [x] 4.3 Update e2e tests in `worker/tests/e2e/`
+- [x] 4.4 Update MCP tools documentation (N/A - no MCP docs exist)
+- [x] 4.5 Rename test fixtures: maturity → available where applicable
 
 ---
 
