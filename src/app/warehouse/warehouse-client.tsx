@@ -582,7 +582,9 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
                       {unit.daysUntilAvailable != null && unit.daysUntilAvailable <= 30 && (
                         <p className={cn(
                           "text-[9px] font-medium sm:text-[10px]",
-                          unit.daysUntilAvailable <= 0 ? "text-destructive" : "text-amber-600 dark:text-amber-400"
+                          unit.daysUntilAvailable <= 0
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-destructive"
                         )}>
                           {unit.daysUntilAvailable <= 0 ? "已可用" : `${unit.daysUntilAvailable}天`}
                         </p>

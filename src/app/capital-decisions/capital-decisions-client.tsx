@@ -302,13 +302,13 @@ export function CapitalDecisionsClient({
                             className={cn(
                               "ml-1 text-xs",
                               d.daysUntilAvailable <= 0
-                                ? "text-destructive"
+                                ? "text-green-600 dark:text-green-400"
                                 : d.daysUntilAvailable <= 30
-                                  ? "text-amber-600"
+                                  ? "text-destructive"
                                   : "text-muted-foreground",
                             )}
                           >
-                            ({d.daysUntilAvailable}天)
+                            ({d.daysUntilAvailable <= 0 ? "可用" : `${d.daysUntilAvailable}天`})
                           </span>
                         )}
                       </TableCell>

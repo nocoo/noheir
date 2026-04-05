@@ -410,7 +410,7 @@ export function FundsClient({ units, products }: FundsClientProps) {
                       className={cn(
                         "text-sm",
                         unit.isAvailable
-                          ? "text-green-600 font-medium"
+                          ? "text-green-600 dark:text-green-400 font-medium"
                           : unit.daysUntilAvailable != null
                             ? "text-destructive font-medium"
                             : "text-muted-foreground",
