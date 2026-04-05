@@ -8,6 +8,7 @@ import type {
   transactions,
   transfers,
   settings,
+  contributionLogs,
 } from "./schema";
 
 // ── Select types (rows read from DB) ──
@@ -18,6 +19,7 @@ export type CapitalUnit = typeof capitalUnits.$inferSelect;
 export type Transaction = typeof transactions.$inferSelect;
 export type Transfer = typeof transfers.$inferSelect;
 export type Setting = typeof settings.$inferSelect;
+export type ContributionLog = typeof contributionLogs.$inferSelect;
 
 // ── Insert types (rows to write) ──
 
@@ -27,11 +29,27 @@ export type NewCapitalUnit = typeof capitalUnits.$inferInsert;
 export type NewTransaction = typeof transactions.$inferInsert;
 export type NewTransfer = typeof transfers.$inferInsert;
 export type NewSetting = typeof settings.$inferInsert;
+export type NewContributionLog = typeof contributionLogs.$inferInsert;
 
 // ── Composite types ──
 
 export interface UnitWithProduct extends CapitalUnit {
   product: FinancialProduct | null;
+}
+
+// ── Contribution log composite types ──
+
+export interface ContributionLogWithRelations extends ContributionLog {
+  unit: CapitalUnit | null;
+  product: FinancialProduct | null;
+}
+
+export interface ContributionSummary {
+  totalInvested: number;
+  totalWithdrawn: number;
+  netAmount: number;
+  logCount: number;
+  unitCount?: number; // Only for product summary
 }
 
 // ── Metadata response shape (must match get_financial_metadata RPC) ──

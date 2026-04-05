@@ -123,3 +123,28 @@ export const settings = sqliteTable("settings", {
     .notNull()
     .$defaultFn(() => new Date()),
 });
+
+// ============================================================================
+// 7. contribution_logs — Capital contribution history
+// ============================================================================
+
+export const contributionLogs = sqliteTable("contribution_logs", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  unitId: text("unit_id").notNull().references(() => capitalUnits.id, { onDelete: "cascade" }),
+  productId: text("product_id").references(() => financialProducts.id, { onDelete: "restrict" }),
+  productName: text("product_name"), // Snapshot for audit trail
+  operationType: text("operation_type").notNull(), // "invest" | "withdraw" | "adjust"
+  amountCents: integer("amount_cents").notNull(), // Positive = invest, negative = withdraw
+  balanceAfterCents: integer("balance_after_cents"), // Balance snapshot after operation
+  operationDate: text("operation_date").notNull(), // YYYY-MM-DD
+  source: text("source").default("manual"), // "manual" | "auto" | "import"
+  note: text("note"),
+  deletedAt: integer("deleted_at", { mode: "timestamp" }), // Soft delete
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});

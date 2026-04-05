@@ -326,32 +326,53 @@ describe("Unit validation schemas", () => {
     });
 
     test("accepts null to clear optional fields", () => {
-      // productId, startDate, endDate, note can all be cleared with null
+      // startDate, endDate, note can all be cleared with null
+      // Note: productId must be updated alone per new constraint
       const result = updateUnitSchema.safeParse({
-        productId: null,
         startDate: null,
         endDate: null,
         note: null,
       });
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.productId).toBeNull();
         expect(result.data.startDate).toBeNull();
         expect(result.data.endDate).toBeNull();
         expect(result.data.note).toBeNull();
       }
     });
 
-    test("accepts mix of values and nulls", () => {
+    test("accepts productId alone to unlink product", () => {
+      // productId must be updated alone (new constraint for auto-logging)
+      const result = updateUnitSchema.safeParse({
+        productId: null,
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.productId).toBeNull();
+      }
+    });
+
+    test("rejects productId with other fields", () => {
+      // productId cannot be combined with other fields
       const result = updateUnitSchema.safeParse({
         amountCents: 7000000,
-        productId: null, // unlink product
+        productId: null,
+        note: "新备注",
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].message).toContain("productId must be updated alone");
+      }
+    });
+
+    test("accepts mix of values and nulls without productId", () => {
+      const result = updateUnitSchema.safeParse({
+        amountCents: 7000000,
         note: "新备注",
       });
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.amountCents).toBe(7000000);
-        expect(result.data.productId).toBeNull();
         expect(result.data.note).toBe("新备注");
       }
     });

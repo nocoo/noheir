@@ -67,6 +67,18 @@ export const CURRENCIES = [
   "HKD",
 ] as const;
 
+export const CONTRIBUTION_OPERATION_TYPES = [
+  "invest",
+  "withdraw",
+  "adjust",
+] as const;
+
+export const CONTRIBUTION_SOURCES = [
+  "manual",
+  "auto",
+  "import",
+] as const;
+
 // Derived types
 export type Channel = (typeof CHANNELS)[number];
 export type ProductCategory = (typeof PRODUCT_CATEGORIES)[number];
@@ -74,3 +86,5 @@ export type Strategy = (typeof STRATEGIES)[number];
 export type Tactics = (typeof TACTICS)[number];
 export type UnitStatus = (typeof UNIT_STATUSES)[number];
 export type Currency = (typeof CURRENCIES)[number];
+export type ContributionOperationType = (typeof CONTRIBUTION_OPERATION_TYPES)[number];
+export type ContributionSource = (typeof CONTRIBUTION_SOURCES)[number];
