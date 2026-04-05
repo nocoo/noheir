@@ -7,6 +7,7 @@ import { createUnitsRepo } from "./units";
 import { createSettingsRepo } from "./settings";
 import { createMetadataRepo } from "./metadata";
 import { createReportsRepo } from "./reports";
+import { createContributionLogsRepo } from "./contribution-logs";
 
 export function createAllRepos(db: DrizzleD1Database) {
   return {
@@ -18,6 +19,7 @@ export function createAllRepos(db: DrizzleD1Database) {
     settings: createSettingsRepo(db),
     metadata: createMetadataRepo(db),
     reports: createReportsRepo(db),
+    contributionLogs: createContributionLogsRepo(db),
   };
 }
 
@@ -32,7 +34,9 @@ export { createUnitsRepo, type UnitsRepo } from "./units";
 export { createSettingsRepo, type SettingsRepo } from "./settings";
 export { createMetadataRepo, type MetadataRepo } from "./metadata";
 export { createReportsRepo, type ReportsRepo } from "./reports";
+export { createContributionLogsRepo, type ContributionLogsRepo } from "./contribution-logs";
 
 // Re-export search param and result types
 export type { TransactionSearchParams, TransactionWithMatch, TransactionSearchResult } from "./transactions";
 export type { TransferSearchParams, TransferWithMatch, TransferSearchResult } from "./transfers";
+export type { ContributionLogsSearchParams, ContributionLogsSearchResult } from "./contribution-logs";
