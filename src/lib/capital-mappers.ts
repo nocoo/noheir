@@ -10,6 +10,9 @@ import type {
   InvestmentStrategy,
   InvestmentTactics,
   UnitStatus,
+  DomainContributionLog,
+  ContributionOperationType,
+  ContributionSource,
 } from "@/domain/types"
 
 export function toDomainProduct(raw: Record<string, unknown>): DomainProduct {
@@ -61,4 +64,26 @@ export function toUnitDisplayInfo(unit: DomainUnit): UnitDisplayInfo {
   }
 
   return { ...unit }
+}
+
+export function toDomainContributionLog(raw: Record<string, unknown>): DomainContributionLog {
+  const unit = raw.unit as Record<string, unknown> | null | undefined
+  const product = raw.product as Record<string, unknown> | null | undefined
+
+  return {
+    id: String(raw.id ?? ""),
+    unitId: String(raw.unitId ?? ""),
+    productId: raw.productId != null ? String(raw.productId) : null,
+    productName: raw.productName != null ? String(raw.productName) : null,
+    operationType: String(raw.operationType ?? "invest") as ContributionOperationType,
+    amount: Number(raw.amountCents ?? 0) / 100,  // cents to yuan
+    balanceAfter: raw.balanceAfterCents != null ? Number(raw.balanceAfterCents) / 100 : null,
+    operationDate: String(raw.operationDate ?? ""),
+    source: String(raw.source ?? "manual") as ContributionSource,
+    note: raw.note != null ? String(raw.note) : null,
+    unit: unit ? toDomainUnit(unit) : null,
+    product: product ? toDomainProduct(product) : null,
+    isDeleted: raw.deletedAt != null,
+    createdAt: new Date(Number(raw.createdAt ?? 0)),
+  }
 }

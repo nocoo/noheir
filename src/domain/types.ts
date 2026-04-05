@@ -114,6 +114,36 @@ export interface UnitDisplayInfo extends DomainUnit {
   isAvailable?: boolean;
 }
 
+// ── Contribution Log types ──
+
+export type ContributionOperationType = "invest" | "withdraw" | "adjust";
+export type ContributionSource = "manual" | "auto" | "import";
+
+export interface DomainContributionLog {
+  id: string;
+  unitId: string;
+  productId: string | null;
+  productName: string | null;
+  operationType: ContributionOperationType;
+  amount: number; // Display value (cents / 100), positive = invest, negative = withdraw
+  balanceAfter: number | null;
+  operationDate: string;
+  source: ContributionSource;
+  note: string | null;
+  unit: DomainUnit | null;
+  product: DomainProduct | null;
+  isDeleted: boolean;
+  createdAt: Date;
+}
+
+export interface ContributionSummary {
+  totalInvested: number; // cents
+  totalWithdrawn: number; // cents
+  netAmount: number; // cents
+  logCount: number;
+  unitCount?: number; // only for product summary
+}
+
 // ── Insight types ──
 
 export interface RecurringPayment {

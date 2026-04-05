@@ -292,6 +292,103 @@ export class WorkerDbClient {
     );
   }
 
+  // ── Contribution Logs ──
+
+  async searchContributionLogs(userId: string, params: {
+    unitId?: string;
+    productId?: string;
+    operationType?: string;
+    source?: string;
+    startDate?: string;
+    endDate?: string;
+    includeDeleted?: boolean;
+    limit?: number;
+    offset?: number;
+  } = {}) {
+    return this.request<{
+      logs: unknown[];
+      total: number;
+    }>("POST", "/api/contribution-logs/search", userId, params);
+  }
+
+  async getContributionLogsSummaryByUnit(userId: string, unitId: string) {
+    return this.request<{
+      summary: {
+        totalInvested: number;
+        totalWithdrawn: number;
+        netAmount: number;
+        logCount: number;
+      };
+    }>("GET", `/api/contribution-logs/summary/unit/${unitId}`, userId);
+  }
+
+  async getContributionLogsSummaryByProduct(userId: string, productId: string) {
+    return this.request<{
+      summary: {
+        totalInvested: number;
+        totalWithdrawn: number;
+        netAmount: number;
+        logCount: number;
+        unitCount: number;
+      };
+    }>("GET", `/api/contribution-logs/summary/product/${productId}`, userId);
+  }
+
+  async getContributionLog(userId: string, id: string) {
+    return this.request<{ log: unknown }>(
+      "GET", `/api/contribution-logs/${id}`, userId,
+    );
+  }
+
+  async createContributionLog(userId: string, data: {
+    unitId: string;
+    productId?: string | null;
+    productName?: string | null;
+    operationType: string;
+    amountCents: number;
+    balanceAfterCents?: number | null;
+    operationDate: string;
+    source?: string;
+    note?: string | null;
+  }) {
+    return this.request<{ log: unknown }>(
+      "POST", "/api/contribution-logs", userId, data,
+    );
+  }
+
+  async updateContributionLog(userId: string, id: string, data: {
+    operationType?: string;
+    amountCents?: number;
+    balanceAfterCents?: number | null;
+    operationDate?: string;
+    note?: string | null;
+  }) {
+    return this.request<{ log: unknown }>(
+      "PUT", `/api/contribution-logs/${id}`, userId, data,
+    );
+  }
+
+  async deleteContributionLog(userId: string, id: string) {
+    return this.request<{ success: boolean }>(
+      "DELETE", `/api/contribution-logs/${id}`, userId,
+    );
+  }
+
+  async restoreContributionLog(userId: string, id: string) {
+    return this.request<{ log: unknown }>(
+      "POST", `/api/contribution-logs/${id}/restore`, userId,
+    );
+  }
+
+  async seedContributionLogs(userId: string) {
+    return this.request<{
+      success: boolean;
+      created: number;
+      skipped: number;
+      message: string;
+    }>("POST", "/api/contribution-logs/seed", userId);
+  }
+
   // ── Settings ──
 
   async getSettings(userId: string) {
