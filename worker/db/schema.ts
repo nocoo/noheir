@@ -33,6 +33,9 @@ export const financialProducts = sqliteTable("financial_products", {
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
 });
 
 // ============================================================================
@@ -53,6 +56,9 @@ export const capitalUnits = sqliteTable("capital_units", {
   endDate: text("end_date"),
   note: text("note"),
   createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),
 });
