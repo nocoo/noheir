@@ -35,6 +35,10 @@ const makeUnit = (
   endDate: "2024-06-01",
   note: null,
   product: makeProduct(),
+  availableDate: "2024-06-01",
+  isAvailable: false,
+  daysUntilAvailable: null,
+  latestInvestDate: null,
   ...overrides,
 });
 

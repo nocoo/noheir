@@ -2,27 +2,27 @@ import { addMonths, format, isBefore, startOfMonth } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import type { UnitDisplayInfo } from "../types";
 
-export type MonthlyMaturity = {
+export type MonthlyAvailability = {
   month: string;
   monthLabel: string;
   strategy: string;
   amount: number;
 };
 
-export const buildMonthlyMaturities = (
+export const buildMonthlyAvailability = (
   units: UnitDisplayInfo[],
   monthsAhead = 24,
 ) => {
   if (!units || units.length === 0) {
     return {
-      monthlyMaturities: [] as MonthlyMaturity[],
+      monthlyAvailability: [] as MonthlyAvailability[],
       strategies: [] as string[],
       months: [] as string[],
     };
   }
 
   const establishedUnits = units.filter(
-    (unit) => unit.status === "已成立" && unit.endDate && unit.product,
+    (unit) => unit.status === "已成立" && unit.availableDate && unit.product,
   );
   const today = new Date();
   const months: string[] = [];
@@ -36,12 +36,12 @@ export const buildMonthlyMaturities = (
   const monthlyMap = new Map<string, Map<string, number>>();
 
   establishedUnits.forEach((unit) => {
-    if (!unit.endDate || !unit.strategy) return;
-    const endDate = new Date(unit.endDate);
-    const monthKey = format(endDate, "yyyy-MM");
+    if (!unit.availableDate || !unit.strategy) return;
+    const availableDate = new Date(unit.availableDate);
+    const monthKey = format(availableDate, "yyyy-MM");
     const strategy = unit.strategy;
 
-    if (isBefore(startOfMonth(endDate), startOfMonth(today))) return;
+    if (isBefore(startOfMonth(availableDate), startOfMonth(today))) return;
 
     if (!monthlyMap.has(monthKey)) {
       monthlyMap.set(monthKey, new Map());
@@ -52,13 +52,13 @@ export const buildMonthlyMaturities = (
     strategySet.add(strategy);
   });
 
-  const monthlyMaturities: MonthlyMaturity[] = [];
+  const monthlyAvailability: MonthlyAvailability[] = [];
   monthlyMap.forEach((strategyMap, month) => {
     const monthDate = new Date(month + "-01");
     const monthLabel = format(monthDate, "yyyy年M月", { locale: zhCN });
 
     strategyMap.forEach((amount, strategy) => {
-      monthlyMaturities.push({ month, monthLabel, strategy, amount });
+      monthlyAvailability.push({ month, monthLabel, strategy, amount });
     });
   });
 
@@ -67,24 +67,24 @@ export const buildMonthlyMaturities = (
     const monthLabel = format(monthDate, "yyyy年M月", { locale: zhCN });
     strategySet.forEach((strategy) => {
       if (
-        !monthlyMaturities.find(
+        !monthlyAvailability.find(
           (m) => m.month === month && m.strategy === strategy,
         )
       ) {
-        monthlyMaturities.push({ month, monthLabel, strategy, amount: 0 });
+        monthlyAvailability.push({ month, monthLabel, strategy, amount: 0 });
       }
     });
   });
 
   return {
-    monthlyMaturities,
+    monthlyAvailability,
     strategies: Array.from(strategySet).sort(),
     months,
   };
 };
 
 export const buildSeries = (monthlyData: {
-  monthlyMaturities: MonthlyMaturity[];
+  monthlyAvailability: MonthlyAvailability[];
   strategies: string[];
   months: string[];
 }) => {
@@ -93,7 +93,7 @@ export const buildSeries = (monthlyData: {
     type: "bar" as const,
     stack: "total",
     data: monthlyData.months.map((month) => {
-      const item = monthlyData.monthlyMaturities.find(
+      const item = monthlyData.monthlyAvailability.find(
         (m) => m.month === month && m.strategy === strategy,
       );
       return item?.amount ?? 0;
@@ -102,12 +102,12 @@ export const buildSeries = (monthlyData: {
 };
 
 export const buildSummaryStats = (monthlyData: {
-  monthlyMaturities: MonthlyMaturity[];
+  monthlyAvailability: MonthlyAvailability[];
   months: string[];
 }) => {
   const next12Months = monthlyData.months.slice(0, 12);
   const total = next12Months.reduce((sum, month) => {
-    const monthTotal = monthlyData.monthlyMaturities
+    const monthTotal = monthlyData.monthlyAvailability
       .filter((m) => m.month === month)
       .reduce((s, m) => s + m.amount, 0);
     return sum + monthTotal;
@@ -115,7 +115,7 @@ export const buildSummaryStats = (monthlyData: {
 
   const peakMonth = next12Months.reduce(
     (max, month) => {
-      const monthTotal = monthlyData.monthlyMaturities
+      const monthTotal = monthlyData.monthlyAvailability
         .filter((m) => m.month === month)
         .reduce((s, m) => s + m.amount, 0);
       return monthTotal > max.amount ? { month, amount: monthTotal } : max;

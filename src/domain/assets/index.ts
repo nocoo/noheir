@@ -6,7 +6,7 @@ export {
   buildIncomingLiquidity,
   buildCurrencyDistribution,
   buildStatusDistribution,
-  buildMaturityDistribution,
+  buildAvailabilityDistribution,
   buildStrategyChartData,
 } from "./capital-dashboard";
 
@@ -31,10 +31,10 @@ export {
   buildTotalAmount,
 } from "./strategy-sunburst";
 
-export type { MonthlyMaturity } from "./liquidity-ladder";
+export type { MonthlyAvailability } from "./liquidity-ladder";
 
 export {
-  buildMonthlyMaturities,
+  buildMonthlyAvailability,
   buildSeries,
   buildSummaryStats,
 } from "./liquidity-ladder";

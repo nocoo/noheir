@@ -86,29 +86,29 @@ export const buildStatusDistribution = (
   }));
 };
 
-export const buildMaturityDistribution = (
+export const buildAvailabilityDistribution = (
   units: UnitDisplayInfo[],
   totalAssetsAll: number,
 ) => {
-  let expired = 0;
+  let available = 0;
   let within7d = 0;
   let within30d = 0;
   let within90d = 0;
   let beyond90d = 0;
 
   units.forEach((unit) => {
-    if (!unit.endDate || unit.status !== "已成立") return;
+    if (unit.availableDate === null || unit.status !== "已成立") return;
     if (unit.isAvailable) {
-      expired += unit.amount;
+      available += unit.amount;
       return;
     }
 
-    if (unit.daysUntilMaturity !== undefined) {
-      if (unit.daysUntilMaturity <= 7) {
+    if (unit.daysUntilAvailable !== null) {
+      if (unit.daysUntilAvailable <= 7) {
         within7d += unit.amount;
-      } else if (unit.daysUntilMaturity <= 30) {
+      } else if (unit.daysUntilAvailable <= 30) {
         within30d += unit.amount;
-      } else if (unit.daysUntilMaturity <= 90) {
+      } else if (unit.daysUntilAvailable <= 90) {
         within90d += unit.amount;
       } else {
         beyond90d += unit.amount;
@@ -117,7 +117,7 @@ export const buildMaturityDistribution = (
   });
 
   const buckets: Array<[string, number]> = [
-    ["已到期", expired],
+    ["已可用", available],
     ["7天内", within7d],
     ["30天内", within30d],
     ["90天内", within90d],

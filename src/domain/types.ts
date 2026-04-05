@@ -111,8 +111,14 @@ export interface DomainUnit {
 }
 
 export interface UnitDisplayInfo extends DomainUnit {
-  daysUntilMaturity?: number;
-  isAvailable?: boolean;
+  /** Computed: latestInvest.operationDate + product.lockPeriodDays */
+  availableDate: string | null;
+  /** Whether the unit is available (today >= availableDate) */
+  isAvailable: boolean;
+  /** Days until available (positive = locked, 0 or negative = available since N days) */
+  daysUntilAvailable: number | null;
+  /** Most recent invest log operationDate */
+  latestInvestDate: string | null;
 }
 
 // ── Contribution Log types ──

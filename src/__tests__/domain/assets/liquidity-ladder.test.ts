@@ -1,9 +1,10 @@
 import { describe, expect, it } from "bun:test";
 import type { UnitDisplayInfo, DomainProduct } from "@/domain/types";
 import {
-  buildMonthlyMaturities,
+  buildMonthlyAvailability,
   buildSeries,
   buildSummaryStats,
+  type MonthlyAvailability,
 } from "@/domain/assets/liquidity-ladder";
 import { format, addMonths, startOfMonth } from "date-fns";
 
@@ -34,71 +35,75 @@ const makeUnit = (
   endDate: null,
   note: null,
   product: makeProduct(),
+  availableDate: null,
+  isAvailable: false,
+  daysUntilAvailable: null,
+  latestInvestDate: null,
   ...overrides,
 });
 
 describe("liquidity-ladder domain", () => {
   it("builds empty data when no units", () => {
-    const data = buildMonthlyMaturities([]);
+    const data = buildMonthlyAvailability([]);
     expect(data.months.length).toBe(0);
     expect(data.strategies.length).toBe(0);
-    expect(data.monthlyMaturities.length).toBe(0);
+    expect(data.monthlyAvailability.length).toBe(0);
   });
 
-  it("builds maturities from units with end dates", () => {
-    // Create a unit maturing 3 months from now
+  it("builds availability from units with available dates", () => {
+    // Create a unit becoming available 3 months from now
     const futureDate = format(
       startOfMonth(addMonths(new Date(), 3)),
       "yyyy-MM-dd",
     );
     const units = [
-      makeUnit({ endDate: futureDate, strategy: "长期理财" }),
+      makeUnit({ availableDate: futureDate, strategy: "长期理财" }),
       makeUnit({
         id: "2",
         unitCode: "A02",
-        endDate: futureDate,
+        availableDate: futureDate,
         strategy: "短期理财",
         amount: 5000,
       }),
     ];
-    const data = buildMonthlyMaturities(units);
+    const data = buildMonthlyAvailability(units);
     expect(data.strategies.length).toBe(2);
     expect(data.months.length).toBe(24);
-    expect(data.monthlyMaturities.length).toBeGreaterThan(0);
+    expect(data.monthlyAvailability.length).toBeGreaterThan(0);
   });
 
-  it("filters out units without end_date or product", () => {
+  it("filters out units without availableDate or product", () => {
     const futureDate = format(
       startOfMonth(addMonths(new Date(), 2)),
       "yyyy-MM-dd",
     );
     const units = [
-      makeUnit({ endDate: null }), // no end_date
-      makeUnit({ id: "2", endDate: futureDate, product: null }), // no product
-      makeUnit({ id: "3", endDate: futureDate }), // valid
+      makeUnit({ availableDate: null }), // no availableDate
+      makeUnit({ id: "2", availableDate: futureDate, product: null }), // no product
+      makeUnit({ id: "3", availableDate: futureDate }), // valid
     ];
-    const data = buildMonthlyMaturities(units);
+    const data = buildMonthlyAvailability(units);
     // Only the valid unit should contribute
-    const totalAmount = data.monthlyMaturities
-      .filter((m) => m.amount > 0)
-      .reduce((sum, m) => sum + m.amount, 0);
+    const totalAmount = data.monthlyAvailability
+      .filter((m: MonthlyAvailability) => m.amount > 0)
+      .reduce((sum: number, m: MonthlyAvailability) => sum + m.amount, 0);
     expect(totalAmount).toBe(10000);
   });
 
-  it("ignores past maturities", () => {
+  it("ignores past availability dates", () => {
     const units = [
-      makeUnit({ endDate: "2020-01-01" }), // past
+      makeUnit({ availableDate: "2020-01-01" }), // past
     ];
-    const data = buildMonthlyMaturities(units);
-    const totalAmount = data.monthlyMaturities
-      .filter((m) => m.amount > 0)
-      .reduce((sum, m) => sum + m.amount, 0);
+    const data = buildMonthlyAvailability(units);
+    const totalAmount = data.monthlyAvailability
+      .filter((m: MonthlyAvailability) => m.amount > 0)
+      .reduce((sum: number, m: MonthlyAvailability) => sum + m.amount, 0);
     expect(totalAmount).toBe(0);
   });
 
   it("builds series from monthly data", () => {
     const data = {
-      monthlyMaturities: [
+      monthlyAvailability: [
         { month: "2024-01", monthLabel: "2024年1月", strategy: "A", amount: 10 },
         { month: "2024-02", monthLabel: "2024年2月", strategy: "A", amount: 20 },
       ],
@@ -112,7 +117,7 @@ describe("liquidity-ladder domain", () => {
 
   it("builds summary stats", () => {
     const data = {
-      monthlyMaturities: [
+      monthlyAvailability: [
         { month: "2024-01", monthLabel: "2024年1月", strategy: "A", amount: 10 },
         { month: "2024-02", monthLabel: "2024年2月", strategy: "A", amount: 50 },
       ],

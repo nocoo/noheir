@@ -4,7 +4,7 @@ import {
   buildDeploymentRate,
   buildIdleUnits,
   buildIncomingLiquidity,
-  buildMaturityDistribution,
+  buildAvailabilityDistribution,
   buildStatusDistribution,
   buildTotalAssetsAll,
   buildTotalAssetsByCurrency,
@@ -25,6 +25,10 @@ const makeUnit = (
   startDate: null,
   endDate: null,
   note: null,
+  availableDate: null,
+  isAvailable: false,
+  daysUntilAvailable: null,
+  latestInvestDate: null,
   ...overrides,
 });
 
@@ -77,10 +81,10 @@ describe("capital-dashboard domain", () => {
     const status = buildStatusDistribution(units, 150);
     expect(status[0]?.amount).toBe(150);
 
-    const maturity = buildMaturityDistribution(
-      [makeUnit({ endDate: "2024-01-10", isAvailable: true })],
+    const availability = buildAvailabilityDistribution(
+      [makeUnit({ availableDate: "2024-01-10", isAvailable: true })],
       100,
     );
-    expect(maturity[0]?.period).toBe("已到期");
+    expect(availability[0]?.period).toBe("已可用");
   });
 });

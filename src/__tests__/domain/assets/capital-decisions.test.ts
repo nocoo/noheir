@@ -35,8 +35,12 @@ const makeUnit = (
   tactics: "稳健理财",
   productId: null,
   startDate: "2024-01-01",
-  endDate: "2024-06-01",
+  endDate: null,
   note: null,
+  availableDate: "2024-06-01",
+  isAvailable: false,
+  daysUntilAvailable: null,
+  latestInvestDate: null,
   ...overrides,
 });
 
@@ -67,7 +71,7 @@ describe("capital-decisions domain", () => {
         makeUnit({
           product: makeProduct(),
           isAvailable: true,
-          daysUntilMaturity: -10,
+          daysUntilAvailable: -10,
         }),
       ]);
       expect(decisions[0]?.urgency).toBe("medium");
@@ -79,7 +83,7 @@ describe("capital-decisions domain", () => {
         makeUnit({
           product: makeProduct(),
           isAvailable: true,
-          daysUntilMaturity: -60,
+          daysUntilAvailable: -60,
         }),
       ]);
       expect(decisions[0]?.urgency).toBe("low");
@@ -90,7 +94,7 @@ describe("capital-decisions domain", () => {
       const decisions = classifyDecisions([
         makeUnit({
           product: makeProduct(),
-          daysUntilMaturity: 0,
+          daysUntilAvailable: 0,
         }),
       ]);
       expect(decisions[0]?.urgency).toBe("high");
@@ -102,7 +106,7 @@ describe("capital-decisions domain", () => {
       const decisions = classifyDecisions([
         makeUnit({
           product: makeProduct(),
-          daysUntilMaturity: 1,
+          daysUntilAvailable: 1,
         }),
       ]);
       expect(decisions[0]?.details).toContain("明日");
@@ -112,7 +116,7 @@ describe("capital-decisions domain", () => {
       const decisions = classifyDecisions([
         makeUnit({
           product: makeProduct(),
-          daysUntilMaturity: 5,
+          daysUntilAvailable: 5,
         }),
       ]);
       expect(decisions[0]?.urgency).toBe("high");
@@ -123,7 +127,7 @@ describe("capital-decisions domain", () => {
       const decisions = classifyDecisions([
         makeUnit({
           product: makeProduct(),
-          daysUntilMaturity: 20,
+          daysUntilAvailable: 20,
         }),
       ]);
       expect(decisions[0]?.urgency).toBe("medium");

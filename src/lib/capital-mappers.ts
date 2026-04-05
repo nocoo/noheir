@@ -49,22 +49,20 @@ export function toDomainUnit(raw: Record<string, unknown>): DomainUnit {
   }
 }
 
-export function toUnitDisplayInfo(unit: DomainUnit): UnitDisplayInfo {
-  const today = new Date()
-
-  if (unit.endDate) {
-    const end = new Date(unit.endDate)
-    const daysUntilMaturity = Math.ceil(
-      (end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
-    )
-    return {
-      ...unit,
-      daysUntilMaturity,
-      isAvailable: daysUntilMaturity <= 0,
-    }
+/**
+ * Maps raw API unit response (with availability fields) to UnitDisplayInfo.
+ * Availability fields (availableDate, isAvailable, daysUntilAvailable, latestInvestDate)
+ * are computed by the backend and passed through directly.
+ */
+export function toUnitDisplayInfo(raw: Record<string, unknown>): UnitDisplayInfo {
+  const unit = toDomainUnit(raw)
+  return {
+    ...unit,
+    availableDate: raw.availableDate != null ? String(raw.availableDate) : null,
+    isAvailable: Boolean(raw.isAvailable),
+    daysUntilAvailable: raw.daysUntilAvailable != null ? Number(raw.daysUntilAvailable) : null,
+    latestInvestDate: raw.latestInvestDate != null ? String(raw.latestInvestDate) : null,
   }
-
-  return { ...unit }
 }
 
 export function toDomainContributionLog(raw: Record<string, unknown>): DomainContributionLog {

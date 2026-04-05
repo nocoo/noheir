@@ -50,16 +50,16 @@ export const classifyDecisions = (
     }
 
     if (unit.isAvailable) {
-      const daysSinceUnlock =
-        unit.daysUntilMaturity !== undefined
-          ? -unit.daysUntilMaturity
+      const daysSinceAvailable =
+        unit.daysUntilAvailable !== null
+          ? -unit.daysUntilAvailable
           : undefined;
-      if (daysSinceUnlock !== undefined && daysSinceUnlock <= 30) {
+      if (daysSinceAvailable !== undefined && daysSinceAvailable <= 30) {
         decisions.push({
           unit,
           reason: "刚解锁",
           urgency: "medium",
-          details: `"${unit.product.name}"刚解锁 ${daysSinceUnlock} 天，建议关注再配置机会`,
+          details: `"${unit.product.name}"刚解锁 ${daysSinceAvailable} 天，建议关注再配置机会`,
         });
       } else {
         decisions.push({
@@ -73,15 +73,15 @@ export const classifyDecisions = (
     }
 
     if (
-      unit.daysUntilMaturity !== undefined &&
-      unit.daysUntilMaturity <= 7
+      unit.daysUntilAvailable !== null &&
+      unit.daysUntilAvailable <= 7
     ) {
       const daysText =
-        unit.daysUntilMaturity === 0
+        unit.daysUntilAvailable === 0
           ? "今日"
-          : unit.daysUntilMaturity === 1
+          : unit.daysUntilAvailable === 1
             ? "明日"
-            : `${unit.daysUntilMaturity}天后`;
+            : `${unit.daysUntilAvailable}天后`;
       decisions.push({
         unit,
         reason: "即将解锁",
@@ -92,14 +92,14 @@ export const classifyDecisions = (
     }
 
     if (
-      unit.daysUntilMaturity !== undefined &&
-      unit.daysUntilMaturity <= 30
+      unit.daysUntilAvailable !== null &&
+      unit.daysUntilAvailable <= 30
     ) {
       decisions.push({
         unit,
         reason: "即将解锁",
         urgency: "medium",
-        details: `"${unit.product.name}" ${unit.daysUntilMaturity}天后解锁，可提前规划再配置`,
+        details: `"${unit.product.name}" ${unit.daysUntilAvailable}天后解锁，可提前规划再配置`,
       });
     }
   });
