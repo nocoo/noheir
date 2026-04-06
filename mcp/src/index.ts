@@ -12,6 +12,15 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod"
 import { WorkerClient } from "./worker-client.js"
 
+/**
+ * Convert string "null" to actual null for nullable fields.
+ * MCP tool parameters are strings, so when user wants to clear a field,
+ * they pass the string "null" which needs to be converted to JSON null.
+ */
+function normalizeNullableString(value: unknown): unknown {
+  return value === "null" ? null : value
+}
+
 /** Map MCP snake_case fields to Worker API camelCase fields */
 function toWorkerProductPayload(params: Record<string, unknown>): Record<string, unknown> {
   const result: Record<string, unknown> = { ...params }
@@ -22,6 +31,10 @@ function toWorkerProductPayload(params: Record<string, unknown>): Record<string,
   if ("annual_return_rate" in result) {
     result.annualReturnRate = result.annual_return_rate
     delete result.annual_return_rate
+  }
+  // Handle nullable string fields
+  if ("code" in result) {
+    result.code = normalizeNullableString(result.code)
   }
   return result
 }
@@ -34,16 +47,19 @@ function toWorkerUnitPayload(params: Record<string, unknown>): Record<string, un
     delete result.unit_code
   }
   if ("product_id" in result) {
-    result.productId = result.product_id
+    result.productId = normalizeNullableString(result.product_id)
     delete result.product_id
   }
   if ("start_date" in result) {
-    result.startDate = result.start_date
+    result.startDate = normalizeNullableString(result.start_date)
     delete result.start_date
   }
   if ("end_date" in result) {
-    result.endDate = result.end_date
+    result.endDate = normalizeNullableString(result.end_date)
     delete result.end_date
+  }
+  if ("note" in result) {
+    result.note = normalizeNullableString(result.note)
   }
   if ("amount" in result && result.amount !== undefined) {
     result.amountCents = Math.round((result.amount as number) * 100)
