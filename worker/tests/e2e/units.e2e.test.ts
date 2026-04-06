@@ -634,4 +634,155 @@ describe("E2E: Units", () => {
     expect(res.availability.available_now).toEqual({ count: 0, amount_cents: 0 });
     expect(res.availability.available_30d).toEqual({ count: 0, amount_cents: 0 });
   });
+
+  // ── Fields and Pagination ──
+
+  test("GET /api/units?fields=minimal returns minimal fields only", async () => {
+    await api({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit({ unitCode: "U1", note: "secret note" }),
+    });
+
+    const res = await api<{ units: Array<Record<string, unknown>>; total_count: number }>({
+      method: "GET",
+      path: "/api/units?fields=minimal",
+      userId,
+    });
+
+    expect(res.units).toHaveLength(1);
+    const u = res.units[0]!;
+    // Should have minimal fields
+    expect(u.id).toBeString();
+    expect(u.unitCode).toBe("U1");
+    expect(u.amountCents).toBe(5000000);
+    expect(u.status).toBe("已成立");
+    expect(u.strategy).toBe("短期理财");
+    expect(u.tactics).toBe("理财产品");
+    expect(u.currency).toBe("CNY");
+    expect(u.productId).toBeNull();
+    // Should NOT have extra fields
+    expect(u.note).toBeUndefined();
+    expect(u.availableDate).toBeUndefined();
+    expect(u.product).toBeUndefined();
+  });
+
+  test("GET /api/units?fields=standard returns availability fields", async () => {
+    const { product } = await api<{ product: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/products",
+      userId,
+      body: makeProduct({ lockPeriodDays: 30 }),
+    });
+    const { unit } = await api<{ unit: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit({ productId: product.id }),
+    });
+
+    const today = new Date().toISOString().slice(0, 10);
+    await api({
+      method: "POST",
+      path: "/api/contribution-logs",
+      userId,
+      body: {
+        unitId: unit.id,
+        productId: product.id,
+        operationType: "invest",
+        amountCents: 1000000,
+        operationDate: today,
+      },
+    });
+
+    const res = await api<{ units: Array<Record<string, unknown>> }>({
+      method: "GET",
+      path: "/api/units?fields=standard",
+      userId,
+    });
+
+    const u = res.units[0]!;
+    // Should have availability fields
+    expect(u.availableDate).toBeString();
+    expect(u.isAvailable).toBe(false);
+    expect(u.daysUntilAvailable).toBe(30);
+    expect(u.latestInvestDate).toBe(today);
+    // Should NOT have full product
+    expect(u.product).toBeUndefined();
+    expect(u.note).toBeUndefined();
+  });
+
+  test("GET /api/units?fields=full returns all fields including product", async () => {
+    const { product } = await api<{ product: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/products",
+      userId,
+      body: makeProduct(),
+    });
+    await api({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit({ productId: product.id, note: "test note" }),
+    });
+
+    const res = await api<{ units: Array<Record<string, unknown>> }>({
+      method: "GET",
+      path: "/api/units?fields=full",
+      userId,
+    });
+
+    const u = res.units[0]!;
+    expect(u.note).toBe("test note");
+    expect(u.product).toBeDefined();
+    expect((u.product as Record<string, unknown>).name).toBe("招银理财月度宝");
+  });
+
+  test("GET /api/units with pagination returns correct slice", async () => {
+    // Create 5 units
+    for (let i = 1; i <= 5; i++) {
+      await api({
+        method: "POST",
+        path: "/api/units",
+        userId,
+        body: makeUnit({ unitCode: `U${i}` }),
+      });
+    }
+
+    const res = await api<{ units: Array<Record<string, unknown>>; total_returned: number; total_count: number }>({
+      method: "GET",
+      path: "/api/units?limit=2&offset=1",
+      userId,
+    });
+
+    expect(res.total_count).toBe(5);
+    expect(res.total_returned).toBe(2);
+    expect(res.units).toHaveLength(2);
+  });
+
+  test("GET /api/units?with_products=true still works (backward compatibility)", async () => {
+    const { product } = await api<{ product: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/products",
+      userId,
+      body: makeProduct(),
+    });
+    await api({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit({ productId: product.id }),
+    });
+
+    const res = await api<{ units: Array<Record<string, unknown>> }>({
+      method: "GET",
+      path: "/api/units?with_products=true",
+      userId,
+    });
+
+    const u = res.units[0]!;
+    expect(u.product).toBeDefined();
+    expect(u.availableDate).toBeDefined(); // Should have availability too
+  });
 });

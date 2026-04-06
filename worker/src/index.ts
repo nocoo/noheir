@@ -426,22 +426,67 @@ app.get("/api/units/summary", async (c) => {
 app.get("/api/units", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
-  const { status, strategy, tactics, currency, with_products } = c.req.query();
+  const { status, strategy, tactics, currency, with_products, fields, limit, offset } = c.req.query();
   const filters = pickDefined({ status, strategy, tactics, currency });
 
-  if (with_products === "true") {
-    const units = await repos.units.findAllWithProducts(userId, filters);
+  // Parse pagination params
+  const limitNum = Math.min(Math.max(parseInt(limit ?? "50", 10) || 50, 1), 200);
+  const offsetNum = Math.max(parseInt(offset ?? "0", 10) || 0, 0);
 
-    // Enrich with availability info
-    const unitIds = units.map((u) => u.id);
-    const latestInvestLogs = await repos.contributionLogs.getLatestInvestLogs(userId, unitIds);
-    const enrichedUnits = repos.units.enrichWithAvailability(units, latestInvestLogs);
+  // Determine field level: minimal (default), standard, full
+  const fieldLevel = fields === "standard" || fields === "full" ? fields : "minimal";
 
-    return c.json({ units: enrichedUnits, total_returned: enrichedUnits.length });
+  // For backward compatibility, with_products=true implies full
+  const effectiveFieldLevel = with_products === "true" ? "full" : fieldLevel;
+
+  if (effectiveFieldLevel === "minimal") {
+    // Minimal: direct query, no joins, no availability
+    const allUnits = await repos.units.findAll(userId, filters);
+    const paginatedUnits = allUnits.slice(offsetNum, offsetNum + limitNum);
+    // Return minimal fields only
+    const minimalUnits = paginatedUnits.map((u) => ({
+      id: u.id,
+      unitCode: u.unitCode,
+      amountCents: u.amountCents,
+      status: u.status,
+      strategy: u.strategy,
+      tactics: u.tactics,
+      currency: u.currency,
+      productId: u.productId,
+    }));
+    return c.json({ units: minimalUnits, total_returned: minimalUnits.length, total_count: allUnits.length });
   }
 
-  const units = await repos.units.findAll(userId, filters);
-  return c.json({ units, total_returned: units.length });
+  // Standard or Full: need product join + availability calculation
+  const allUnits = await repos.units.findAllWithProducts(userId, filters);
+  const unitIds = allUnits.map((u) => u.id);
+  const latestInvestLogs = await repos.contributionLogs.getLatestInvestLogs(userId, unitIds);
+  const enrichedUnits = repos.units.enrichWithAvailability(allUnits, latestInvestLogs);
+
+  // Paginate
+  const paginatedUnits = enrichedUnits.slice(offsetNum, offsetNum + limitNum);
+
+  if (effectiveFieldLevel === "standard") {
+    // Standard: include availability but not full product details
+    const standardUnits = paginatedUnits.map((u) => ({
+      id: u.id,
+      unitCode: u.unitCode,
+      amountCents: u.amountCents,
+      status: u.status,
+      strategy: u.strategy,
+      tactics: u.tactics,
+      currency: u.currency,
+      productId: u.productId,
+      availableDate: u.availableDate,
+      isAvailable: u.isAvailable,
+      daysUntilAvailable: u.daysUntilAvailable,
+      latestInvestDate: u.latestInvestDate,
+    }));
+    return c.json({ units: standardUnits, total_returned: standardUnits.length, total_count: enrichedUnits.length });
+  }
+
+  // Full: return everything
+  return c.json({ units: paginatedUnits, total_returned: paginatedUnits.length, total_count: enrichedUnits.length });
 });
 
 app.get("/api/units/:id", async (c) => {
