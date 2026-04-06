@@ -2,6 +2,48 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.0] - 2026-04-06
+
+MCP server optimization with progressive disclosure, summary tools, and context-efficient field selection.
+
+### Features
+
+- **MCP Summary Tools** — New `get_units_summary` and `get_products_summary` tools for lightweight aggregation without fetching raw data
+- **Field Selection** — `list_units` and `list_products` now support `fields` parameter with presets: `minimal` (~100B/unit), `standard` (~180B/unit), `full` (~450B/unit)
+- **Availability Filter** — `list_units` supports `available_within_days` parameter for server-side filtering of upcoming available units
+- **Pagination** — Both list tools support `limit`/`offset` pagination (default: 50, max: 200)
+- **Product Archive Support** — `list_products` now exposes `include_archived` parameter
+- **Contribution Logs** — Full lifecycle logging for capital unit investments with auto-logging on unit operations
+- **Availability System** — Computed availability dates based on `latestInvestLog.operationDate + product.lockPeriodDays`
+- **Product Archive** — Archive products instead of delete, with isArchived filter support
+
+### Improvements
+
+- **MCP Tool Descriptions** — Rewrote all tool descriptions following six-component framework (Purpose, Guidelines, Limitations, Parameters, Length, Examples)
+- **Progressive Disclosure Pattern** — Summary → Filtered List → Single Item workflow reduces context consumption from 20-50KB to <2KB
+- **Nullable Field Handling** — MCP tools properly convert string "null" to JSON null for nullable parameters
+- **Pagination Stability** — Consistent `ORDER BY desc(createdAt)` across all list queries
+
+### UI/UX
+
+- **Availability Status Colors** — Green for available (≤0 days), Amber for soon (1-30 days), Red for locked (>30 days)
+- **Unified Domain Badges** — Consistent badge styling for unitCode, strategy, tactics, status, currency, product across all pages
+- **Warehouse Filters** — Channel and product filters with localStorage persistence
+- **Liquidity Page** — Collapsible month sections with upcoming units table
+- **UnitEditor Component** — Unified dialog for creating/editing units with product association
+- **Comparison Charts** — Year/month pickers with standardized bar charts
+
+### Architecture
+
+- **Worker Summary Endpoints** — `GET /api/units/summary` and `GET /api/products/summary` for aggregated statistics
+- **Availability Computation** — Server-side computation in `worker/lib/availability.ts`
+- **Contribution Logs Schema** — New `contribution_logs` table tracking invest/recall/adjust operations
+
+### Tests
+
+- 686 tests passing (unit + Worker E2E + MCP)
+- New E2E tests for summary endpoints, field presets, pagination, and availability filters
+
 ## [2.0.0] - 2026-04-02
 
 Major architecture migration from Supabase to Cloudflare D1 + Worker, with restored settings functionality and improved dashboard experience.
