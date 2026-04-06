@@ -12,6 +12,9 @@ import type { Context } from "hono";
 import type { AllRepos } from "../../db/repositories";
 import { productEntity } from "./entities/product";
 import { unitEntity } from "./entities/unit";
+import { registerQueryTools } from "./tools/query";
+import { registerSummaryTools } from "./tools/summary";
+import { registerDeleteTools } from "./tools/delete";
 
 // ============================================================================
 // Types
@@ -92,7 +95,6 @@ function createMcpServerInstance(userId: string, repos: AllRepos) {
   });
 
   // Register entity tools with appropriate repos slices
-  // EntityContext<ProductRepos> = { repos: ProductRepos }
   registerEntityTools(server, productEntity, {
     repos: { products: repos.products, userId },
   });
@@ -101,9 +103,36 @@ function createMcpServerInstance(userId: string, repos: AllRepos) {
     repos: { units: repos.units, contributionLogs: repos.contributionLogs, userId },
   });
 
-  // TODO: Register custom tools
-  // registerQueryTools(server, ctx);
-  // registerReportTools(server, ctx);
+  // Register query tools (transactions, transfers, summary, monthly report)
+  registerQueryTools(server, {
+    repos: {
+      transactions: repos.transactions,
+      transfers: repos.transfers,
+      metadata: repos.metadata,
+      reports: repos.reports,
+      userId,
+    },
+  });
+
+  // Register summary tools (products summary, units summary)
+  registerSummaryTools(server, {
+    repos: {
+      products: repos.products,
+      units: repos.units,
+      contributionLogs: repos.contributionLogs,
+      userId,
+    },
+  });
+
+  // Register delete tools (delete_product, delete_unit)
+  registerDeleteTools(server, {
+    repos: {
+      products: repos.products,
+      units: repos.units,
+      contributionLogs: repos.contributionLogs,
+      userId,
+    },
+  });
 
   return server;
 }
