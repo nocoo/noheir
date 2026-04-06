@@ -771,7 +771,12 @@ CREATE INDEX idx_mcp_refresh_tokens_expires ON mcp_refresh_tokens(expires_at);
 
 | # | Commit | 内容 | 状态 |
 |---|--------|------|------|
-| 20 | `chore(base-mcp): publish v0.1.0` | API 验证通过，发布正式版 | |
+| 20 | `chore(base-mcp): publish v0.1.0` | API 验证通过，发布正式版 | ✅ |
+
+**Phase 4 完成统计**：
+- `@nocoo/base-mcp@0.1.0` 发布到 npm
+- noheir Worker 更新到正式版依赖
+- GitHub 仓库标签: v0.1.0
 
 ### 2.10 回滚计划
 
