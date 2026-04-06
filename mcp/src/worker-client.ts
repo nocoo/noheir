@@ -134,6 +134,19 @@ export class WorkerClient {
     )
   }
 
+  getProductsSummary(filters?: { includeArchived?: boolean | undefined }) {
+    const qs = new URLSearchParams()
+    if (filters?.includeArchived) qs.set("includeArchived", "true")
+    const str = qs.toString()
+    return this.request<{
+      total_count: number
+      archived_count: number
+      by_channel: Record<string, number>
+      by_category: Record<string, number>
+      by_currency: Record<string, number>
+    }>("GET", `/api/products/summary${str ? `?${str}` : ""}`)
+  }
+
   // ── Units ──
 
   getUnitsSummary() {

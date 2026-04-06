@@ -289,6 +289,44 @@ describe("WorkerClient", () => {
   });
 
   // ────────────────────────────────────────────────────────────────────────────
+  // Products Summary
+  // ────────────────────────────────────────────────────────────────────────────
+
+  describe("getProductsSummary", () => {
+    it("calls GET /api/products/summary with no params", async () => {
+      fetchSpy.mockResolvedValueOnce(mockFetchResponse({
+        total_count: 10,
+        archived_count: 2,
+        by_channel: { "招商银行": 5 },
+        by_category: {},
+        by_currency: {},
+      }));
+
+      const result = await client.getProductsSummary();
+
+      const [url] = fetchSpy.mock.calls[0] as [string, RequestInit];
+      expect(url).toBe(`${BASE_URL}/api/products/summary`);
+      expect(result.total_count).toBe(10);
+      expect(result.archived_count).toBe(2);
+    });
+
+    it("includes includeArchived param when true", async () => {
+      fetchSpy.mockResolvedValueOnce(mockFetchResponse({
+        total_count: 12,
+        archived_count: 2,
+        by_channel: {},
+        by_category: {},
+        by_currency: {},
+      }));
+
+      await client.getProductsSummary({ includeArchived: true });
+
+      const [url] = fetchSpy.mock.calls[0] as [string, RequestInit];
+      expect(url).toContain("includeArchived=true");
+    });
+  });
+
+  // ────────────────────────────────────────────────────────────────────────────
   // Units Summary
   // ────────────────────────────────────────────────────────────────────────────
 

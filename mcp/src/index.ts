@@ -299,6 +299,36 @@ Required fields: name, channel, category. Optional: code, currency (default CNY)
     },
   )
 
+  // ── get_products_summary ────────────────────────────────────────────────────
+  server.tool(
+    "get_products_summary",
+    `Get aggregated statistics about financial products without fetching individual records.
+
+WHEN TO USE:
+- First call before listing products, to understand data shape and totals
+- When you need counts grouped by channel, category, or currency
+
+RESPONSE INCLUDES:
+- total_count: Number of active products (or all if include_archived=true)
+- archived_count: Number of archived products
+- by_channel, by_category, by_currency: Count breakdowns
+
+LIMITATIONS:
+- By default, only active (non-archived) products are counted in breakdowns
+- Set include_archived=true to include archived products in all counts`,
+    {
+      include_archived: z.boolean().optional().describe("Include archived products in counts (default: false)"),
+    },
+    async (params) => {
+      const result = await client.getProductsSummary({
+        includeArchived: params.include_archived ?? undefined,
+      })
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(result) }],
+      }
+    },
+  )
+
   // ── get_units_summary ───────────────────────────────────────────────────────
   server.tool(
     "get_units_summary",
