@@ -22,6 +22,7 @@ import {
   Tags,
   FileUp,
   Database,
+  KeyRound,
   type LucideIcon,
 } from "lucide-react";
 
@@ -86,6 +87,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/settings", label: "通用设置", icon: Settings },
       { href: "/ai-settings", label: "AI设置", icon: Cpu },
+      { href: "/mcp-tokens", label: "MCP配置", icon: KeyRound },
       { href: "/account-types", label: "账户设置", icon: Tags },
       { href: "/import", label: "数据导入", icon: FileUp },
       { href: "/manage", label: "数据管理", icon: Database },
