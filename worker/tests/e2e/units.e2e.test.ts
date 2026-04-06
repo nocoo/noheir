@@ -569,12 +569,12 @@ describe("E2E: Units", () => {
   });
 
   test("GET /api/units/summary categorizes availability correctly", async () => {
-    // Create a product with 30-day lock
+    // Create a product with 31-day lock (to test "locked" category which is > 30 days)
     const { product } = await api<{ product: Record<string, unknown> }>({
       method: "POST",
       path: "/api/products",
       userId,
-      body: makeProduct({ lockPeriodDays: 30 }),
+      body: makeProduct({ lockPeriodDays: 31 }),
     });
 
     // Unit 1: With product and invest log → will be locked (30 days)
@@ -628,7 +628,7 @@ describe("E2E: Units", () => {
       userId,
     });
 
-    // Unit 1: locked (30 days > 0), Unit 2 & 3: unknown
+    // Unit 1: locked (31 days > 30), Unit 2 & 3: unknown
     expect(res.availability.locked).toEqual({ count: 1, amount_cents: 1000000 });
     expect(res.availability.unknown).toEqual({ count: 2, amount_cents: 5000000 });
     expect(res.availability.available_now).toEqual({ count: 0, amount_cents: 0 });
@@ -784,5 +784,131 @@ describe("E2E: Units", () => {
     const u = res.units[0]!;
     expect(u.product).toBeDefined();
     expect(u.availableDate).toBeDefined(); // Should have availability too
+  });
+
+  // ── available_within_days filter ──
+
+  test("GET /api/units?available_within_days filters units by availability", async () => {
+    // Create product with 30-day lock
+    const { product } = await api<{ product: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/products",
+      userId,
+      body: makeProduct({ lockPeriodDays: 30 }),
+    });
+
+    // Create product with 7-day lock
+    const { product: product7 } = await api<{ product: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/products",
+      userId,
+      body: makeProduct({ name: "7-day product", lockPeriodDays: 7 }),
+    });
+
+    // Unit 1: 30-day lock
+    const { unit: unit1 } = await api<{ unit: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit({ unitCode: "U1", productId: product.id }),
+    });
+
+    // Unit 2: 7-day lock
+    const { unit: unit2 } = await api<{ unit: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit({ unitCode: "U2", productId: product7.id }),
+    });
+
+    // Unit 3: No product (unknown availability)
+    await api({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit({ unitCode: "U3" }),
+    });
+
+    const today = new Date().toISOString().slice(0, 10);
+    // Add invest logs
+    await api({
+      method: "POST",
+      path: "/api/contribution-logs",
+      userId,
+      body: {
+        unitId: unit1.id,
+        productId: product.id,
+        operationType: "invest",
+        amountCents: 1000000,
+        operationDate: today,
+      },
+    });
+    await api({
+      method: "POST",
+      path: "/api/contribution-logs",
+      userId,
+      body: {
+        unitId: unit2.id,
+        productId: product7.id,
+        operationType: "invest",
+        amountCents: 1000000,
+        operationDate: today,
+      },
+    });
+
+    // Filter for units available within 10 days
+    const res = await api<{ units: Array<Record<string, unknown>>; total_count: number }>({
+      method: "GET",
+      path: "/api/units?available_within_days=10",
+      userId,
+    });
+
+    // Only unit2 (7 days) should match; unit1 (30 days) and unit3 (unknown) excluded
+    expect(res.units).toHaveLength(1);
+    expect((res.units[0] as Record<string, unknown>).unitCode).toBe("U2");
+  });
+
+  test("GET /api/units?available_within_days upgrades minimal to standard", async () => {
+    // Create product with 0-day lock (immediately available)
+    const { product } = await api<{ product: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/products",
+      userId,
+      body: makeProduct({ lockPeriodDays: 0 }),
+    });
+
+    const { unit } = await api<{ unit: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit({ productId: product.id }),
+    });
+
+    const today = new Date().toISOString().slice(0, 10);
+    await api({
+      method: "POST",
+      path: "/api/contribution-logs",
+      userId,
+      body: {
+        unitId: unit.id,
+        productId: product.id,
+        operationType: "invest",
+        amountCents: 1000000,
+        operationDate: today,
+      },
+    });
+
+    // Request minimal fields but with available_within_days filter
+    const res = await api<{ units: Array<Record<string, unknown>> }>({
+      method: "GET",
+      path: "/api/units?fields=minimal&available_within_days=30",
+      userId,
+    });
+
+    // Should return standard fields (upgraded from minimal due to filter)
+    const u = res.units[0]!;
+    expect(u.availableDate).toBeDefined();
+    expect(u.isAvailable).toBe(true);
+    expect(u.daysUntilAvailable).toBe(0);
   });
 });

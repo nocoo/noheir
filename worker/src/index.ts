@@ -426,12 +426,15 @@ app.get("/api/units/summary", async (c) => {
 app.get("/api/units", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
-  const { status, strategy, tactics, currency, with_products, fields, limit, offset } = c.req.query();
+  const { status, strategy, tactics, currency, with_products, fields, limit, offset, available_within_days } = c.req.query();
   const filters = pickDefined({ status, strategy, tactics, currency });
 
   // Parse pagination params
   const limitNum = Math.min(Math.max(parseInt(limit ?? "50", 10) || 50, 1), 200);
   const offsetNum = Math.max(parseInt(offset ?? "0", 10) || 0, 0);
+
+  // Parse available_within_days filter
+  const availableWithinDays = available_within_days !== undefined ? parseInt(available_within_days, 10) : undefined;
 
   // Determine field level: minimal (default), standard, full
   const fieldLevel = fields === "standard" || fields === "full" ? fields : "minimal";
@@ -439,7 +442,11 @@ app.get("/api/units", async (c) => {
   // For backward compatibility, with_products=true implies full
   const effectiveFieldLevel = with_products === "true" ? "full" : fieldLevel;
 
-  if (effectiveFieldLevel === "minimal") {
+  // available_within_days requires standard or full (forces upgrade if minimal)
+  const needsAvailability = availableWithinDays !== undefined && !isNaN(availableWithinDays);
+  const computeLevel = needsAvailability && effectiveFieldLevel === "minimal" ? "standard" : effectiveFieldLevel;
+
+  if (computeLevel === "minimal") {
     // Minimal: direct query, no joins, no availability
     const allUnits = await repos.units.findAll(userId, filters);
     const paginatedUnits = allUnits.slice(offsetNum, offsetNum + limitNum);
@@ -461,12 +468,21 @@ app.get("/api/units", async (c) => {
   const allUnits = await repos.units.findAllWithProducts(userId, filters);
   const unitIds = allUnits.map((u) => u.id);
   const latestInvestLogs = await repos.contributionLogs.getLatestInvestLogs(userId, unitIds);
-  const enrichedUnits = repos.units.enrichWithAvailability(allUnits, latestInvestLogs);
+  let enrichedUnits = repos.units.enrichWithAvailability(allUnits, latestInvestLogs);
 
-  // Paginate
+  // Apply available_within_days filter if specified
+  if (needsAvailability) {
+    enrichedUnits = enrichedUnits.filter((u) => {
+      // unknown availability = no data, exclude from filter
+      if (u.daysUntilAvailable === null) return false;
+      return u.daysUntilAvailable <= availableWithinDays;
+    });
+  }
+
+  // Paginate after filtering
   const paginatedUnits = enrichedUnits.slice(offsetNum, offsetNum + limitNum);
 
-  if (effectiveFieldLevel === "standard") {
+  if (effectiveFieldLevel === "standard" || (effectiveFieldLevel === "minimal" && needsAvailability)) {
     // Standard: include availability but not full product details
     const standardUnits = paginatedUnits.map((u) => ({
       id: u.id,
