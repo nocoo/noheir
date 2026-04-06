@@ -1,3 +1,4 @@
+import { AppShell } from "@/components/layout";
 import { McpTokensClient } from "./mcp-tokens-client";
 
 export const metadata = {
@@ -10,5 +11,9 @@ export default function McpTokensPage() {
     ? `${process.env.WORKER_URL}/mcp`
     : "https://noheir.worker.hexly.ai/mcp";
 
-  return <McpTokensClient mcpUrl={mcpUrl} />;
+  return (
+    <AppShell>
+      <McpTokensClient mcpUrl={mcpUrl} />
+    </AppShell>
+  );
 }
