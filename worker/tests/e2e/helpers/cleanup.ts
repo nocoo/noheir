@@ -9,9 +9,29 @@
  *
  * This ensures FK order is respected (units reference products).
  */
-import { api } from "./client";
+import { api, rawFetch } from "./client";
+
+/**
+ * Ensure a test user exists in the users table.
+ * This is required before creating products/units due to FK constraints.
+ */
+export async function ensureTestUser(userId: string): Promise<void> {
+  await api({
+    method: "PUT",
+    path: "/api/users/me",
+    userId,
+    body: {
+      email: `${userId}@test.local`,
+      name: userId,
+      providerAccountId: userId,
+    },
+  });
+}
 
 export async function cleanupUser(userId: string): Promise<void> {
+  // 0. Ensure user exists first (for FK constraints)
+  await ensureTestUser(userId);
+
   // 1. Wipe transactions + transfers via import
   await api({
     method: "POST",

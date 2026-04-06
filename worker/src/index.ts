@@ -109,12 +109,18 @@ app.get("/api/health", (c) => handleHealthCheck(c));
 
 // ── MCP OAuth Endpoints (no auth required) ──
 
+// Helper to get D1 binding based on X-Target-DB header
+function getD1Binding(c: { req: { header: (name: string) => string | undefined }; env: Env }): D1Database {
+  const targetDb = c.req.header("X-Target-DB") ?? "production";
+  return (targetDb === "test" && c.env.DB_TEST) ? c.env.DB_TEST : c.env.DB;
+}
+
 // OAuth metadata discovery
 app.get("/.well-known/oauth-authorization-server", (c) => handleOAuthMetadata(c));
 
 // Dynamic Client Registration
 app.post("/mcp/register", async (c) => {
-  const db = drizzle(c.env.DB);
+  const db = drizzle(getD1Binding(c));
   const repos = createAllRepos(db);
   const ctx = { repos: { mcpOAuth: repos.mcpOAuth }, env: c.env };
   return handleRegister(c, ctx);
@@ -122,7 +128,7 @@ app.post("/mcp/register", async (c) => {
 
 // Authorization endpoint (redirects to login)
 app.get("/mcp/authorize", async (c) => {
-  const db = drizzle(c.env.DB);
+  const db = drizzle(getD1Binding(c));
   const repos = createAllRepos(db);
   const ctx = { repos: { mcpOAuth: repos.mcpOAuth }, env: c.env };
   return handleAuthorize(c, ctx);
@@ -130,7 +136,7 @@ app.get("/mcp/authorize", async (c) => {
 
 // Token endpoint
 app.post("/mcp/token", async (c) => {
-  const db = drizzle(c.env.DB);
+  const db = drizzle(getD1Binding(c));
   const repos = createAllRepos(db);
   const ctx = { repos: { mcpOAuth: repos.mcpOAuth }, env: c.env };
   return handleToken(c, ctx);
@@ -138,7 +144,7 @@ app.post("/mcp/token", async (c) => {
 
 // Token revocation
 app.post("/mcp/revoke", async (c) => {
-  const db = drizzle(c.env.DB);
+  const db = drizzle(getD1Binding(c));
   const repos = createAllRepos(db);
   const ctx = { repos: { mcpOAuth: repos.mcpOAuth }, env: c.env };
   return handleRevoke(c, ctx);
@@ -152,7 +158,7 @@ app.get("/mcp/callback", async (c) => {
     return c.json({ error: "invalid_request", error_description: "Missing user_id" }, 400);
   }
 
-  const db = drizzle(c.env.DB);
+  const db = drizzle(getD1Binding(c));
   const repos = createAllRepos(db);
   const ctx = { repos: { mcpOAuth: repos.mcpOAuth }, env: c.env };
   return handleCallback(c, ctx, userId);
@@ -162,7 +168,7 @@ app.get("/mcp/callback", async (c) => {
 
 // Main MCP endpoint (Streamable HTTP)
 app.post("/mcp", async (c) => {
-  const db = drizzle(c.env.DB);
+  const db = drizzle(getD1Binding(c));
   const repos = createAllRepos(db);
   const ctx = { repos, env: c.env };
   return handleMcpPost(c, ctx);
