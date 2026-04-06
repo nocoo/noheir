@@ -144,6 +144,20 @@ app.post("/mcp/revoke", async (c) => {
   return handleRevoke(c, ctx);
 });
 
+// OAuth callback (after user login on frontend)
+// Frontend redirects here with user_id after session validation
+app.get("/mcp/callback", async (c) => {
+  const userId = c.req.query("user_id");
+  if (!userId) {
+    return c.json({ error: "invalid_request", error_description: "Missing user_id" }, 400);
+  }
+
+  const db = drizzle(c.env.DB);
+  const repos = createAllRepos(db);
+  const ctx = { repos: { mcpOAuth: repos.mcpOAuth }, env: c.env };
+  return handleCallback(c, ctx, userId);
+});
+
 // ── MCP Server Endpoints (OAuth token auth, not WORKER_SHARED_SECRET) ──
 
 // Main MCP endpoint (Streamable HTTP)
@@ -228,15 +242,6 @@ async function handleUserSync(c: {
 }
 
 app.put("/api/users/me", (c) => handleUserSync(c));
-
-// ── MCP OAuth Callback (authenticated - after user login) ──
-
-app.get("/mcp/callback", async (c) => {
-  const userId = c.get("userId");
-  const repos = c.get("repos");
-  const ctx = { repos: { mcpOAuth: repos.mcpOAuth }, env: c.env };
-  return handleCallback(c, ctx, userId);
-});
 
 // ── Transactions ──
 

@@ -151,6 +151,21 @@ export function createUnitsRepo(db: DrizzleD1Database) {
         .all();
       return rows.length > 0;
     },
+
+    /**
+     * Unlink all units from a product (set productId to null).
+     * Used when archiving/deleting a product.
+     * Returns count of units unlinked.
+     */
+    async unlinkProduct(userId: string, productId: string): Promise<number> {
+      const rows = await db
+        .update(capitalUnits)
+        .set({ productId: null })
+        .where(and(eq(capitalUnits.userId, userId), eq(capitalUnits.productId, productId)))
+        .returning()
+        .all();
+      return rows.length;
+    },
   };
 }
 

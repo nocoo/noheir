@@ -100,7 +100,7 @@ function createMcpServerInstance(userId: string, repos: AllRepos) {
   });
 
   registerEntityTools(server, unitEntity, {
-    repos: { units: repos.units, contributionLogs: repos.contributionLogs, userId },
+    repos: { units: repos.units, products: repos.products, contributionLogs: repos.contributionLogs, userId },
   });
 
   // Register query tools (transactions, transfers, summary, monthly report)
@@ -165,9 +165,10 @@ export async function handleMcpPost(
   const server = createMcpServerInstance(authResult.userId, ctx.repos);
 
   // 4. Create transport and handle request
+  // Stateless mode: no session tracking, each request is independent
   const transport = new WebStandardStreamableHTTPServerTransport({
-    sessionIdGenerator: () => crypto.randomUUID(), // Stateless mode - generate unique IDs but don't track sessions
     enableJsonResponse: true,
+    // sessionIdGenerator omitted = true stateless mode (no session IDs)
   });
 
   await server.connect(transport);

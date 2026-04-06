@@ -217,6 +217,28 @@ export function createMcpTokensRepo(db: DrizzleD1Database) {
         .returning();
       return result.length;
     },
+
+    /**
+     * Revoke all access tokens for a user+client combination (token family).
+     * Used for security when refresh token reuse is detected.
+     */
+    async revokeByUserAndClient(userId: string, clientId: string): Promise<number> {
+      const result = await db
+        .update(mcpTokens)
+        .set({
+          revoked: true,
+          revokedAt: new Date().toISOString(),
+        })
+        .where(
+          and(
+            eq(mcpTokens.userId, userId),
+            eq(mcpTokens.clientId, clientId),
+            eq(mcpTokens.revoked, false)
+          )
+        )
+        .returning();
+      return result.length;
+    },
   };
 }
 
@@ -323,6 +345,28 @@ export function createMcpRefreshTokensRepo(db: DrizzleD1Database) {
         .where(
           and(
             eq(mcpRefreshTokens.userId, userId),
+            eq(mcpRefreshTokens.revoked, false)
+          )
+        )
+        .returning();
+      return result.length;
+    },
+
+    /**
+     * Revoke all refresh tokens for a user+client combination (token family).
+     * Used for security when refresh token reuse is detected.
+     */
+    async revokeByUserAndClient(userId: string, clientId: string): Promise<number> {
+      const result = await db
+        .update(mcpRefreshTokens)
+        .set({
+          revoked: true,
+          revokedAt: new Date().toISOString(),
+        })
+        .where(
+          and(
+            eq(mcpRefreshTokens.userId, userId),
+            eq(mcpRefreshTokens.clientId, clientId),
             eq(mcpRefreshTokens.revoked, false)
           )
         )

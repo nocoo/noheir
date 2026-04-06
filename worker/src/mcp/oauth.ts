@@ -474,12 +474,24 @@ async function handleRefreshTokenGrant(
     }
   );
 
-  // If reuse detected, revoke the access token we just created too
+  // If reuse detected, revoke entire token family (all access + refresh tokens for this user+client)
   if (rotateResult.reuseDetected) {
+    // Revoke the access token we just created
     await ctx.repos.mcpOAuth.tokens.revoke(newTokenRecord.id);
+
+    // Revoke entire token family for security
+    await ctx.repos.mcpOAuth.tokens.revokeByUserAndClient(
+      oldRefreshToken.userId,
+      oldRefreshToken.clientId
+    );
+    await ctx.repos.mcpOAuth.refreshTokens.revokeByUserAndClient(
+      oldRefreshToken.userId,
+      oldRefreshToken.clientId
+    );
+
     return c.json({
       error: "invalid_grant",
-      error_description: "Refresh token reuse detected. All tokens revoked.",
+      error_description: "Refresh token reuse detected. All tokens for this client have been revoked.",
     }, 400);
   }
 

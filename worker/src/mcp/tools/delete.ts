@@ -66,13 +66,14 @@ USE WHEN:
           return error(`Failed to archive product: ${id}`);
         }
 
-        // Note: Units with this product_id will still reference it
-        // but the product won't appear in active product lists
+        // Unlink all units from this product
+        const unlinkedCount = await repos.units.unlinkProduct(repos.userId, id);
 
         return ok({
           success: true,
           message: `Product '${product.name}' has been archived`,
           product_id: id,
+          unlinked_units: unlinkedCount,
         });
       },
     },

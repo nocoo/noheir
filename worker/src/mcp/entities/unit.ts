@@ -3,6 +3,10 @@
  *
  * Provides CRUD operations for capital units (理财单元).
  * Includes availability enrichment based on product lock periods.
+ *
+ * Business constraints (matching REST API behavior):
+ * - endDate invariant: status=已归档 requires endDate, others must have null
+ * - productId changes require CAS and auto-generate contribution logs
  */
 
 import { type EntityConfig } from "@nocoo/base-mcp";
@@ -18,8 +22,44 @@ import type { AllRepos, UnitWithAvailability } from "../../../db/repositories";
 // EntityContext<UnitRepos> = { repos: UnitRepos }
 export interface UnitRepos {
   units: AllRepos["units"];
+  products: AllRepos["products"];
   contributionLogs: AllRepos["contributionLogs"];
   userId: string;
+}
+
+// ============================================================================
+// Helpers
+// ============================================================================
+
+/**
+ * Get local date string in YYYY-MM-DD format (Asia/Shanghai timezone).
+ */
+function getLocalDateString(): string {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Shanghai" });
+}
+
+/**
+ * Enforce endDate invariant:
+ * - status = 已归档: auto-set endDate if not provided
+ * - status != 已归档: clear any endDate
+ */
+function applyEndDateInvariant(
+  data: Record<string, unknown>,
+  existingStatus?: string
+): Record<string, unknown> {
+  const result = { ...data };
+  const effectiveStatus = (data.status ?? existingStatus) as string | undefined;
+
+  if (effectiveStatus === "已归档") {
+    if (!result.endDate) {
+      result.endDate = getLocalDateString();
+    }
+  } else {
+    // Non-archived units must not have endDate
+    result.endDate = null;
+  }
+
+  return result;
 }
 
 // ============================================================================
@@ -73,7 +113,8 @@ export const unitEntity: EntityConfig<UnitWithAvailability | CapitalUnit, UnitRe
     getBySlug: async () => null, // Units don't have slugs
 
     create: async (ctx, input) => {
-      return ctx.repos.units.create(ctx.repos.userId, {
+      // Build create data
+      const rawData = {
         unitCode: input.unit_code as string,
         amountCents: input.amount_cents as number,
         currency: input.currency as string | undefined,
@@ -84,12 +125,21 @@ export const unitEntity: EntityConfig<UnitWithAvailability | CapitalUnit, UnitRe
         startDate: input.start_date as string | undefined,
         endDate: input.end_date as string | undefined,
         note: input.note as string | undefined,
-      });
+      };
+
+      // Apply endDate invariant
+      const createData = applyEndDateInvariant(rawData);
+
+      return ctx.repos.units.create(ctx.repos.userId, createData as Parameters<typeof ctx.repos.units.create>[1]);
     },
 
     update: async (ctx, id, input) => {
-      const updateData: Record<string, unknown> = {};
+      // Get original unit for CAS and invariant checks
+      const original = await ctx.repos.units.findById(ctx.repos.userId, id);
+      if (!original) return null;
 
+      // Build update data
+      const updateData: Record<string, unknown> = {};
       if (input.unit_code !== undefined) updateData.unitCode = input.unit_code;
       if (input.amount_cents !== undefined) updateData.amountCents = input.amount_cents;
       if (input.currency !== undefined) updateData.currency = input.currency;
@@ -101,7 +151,64 @@ export const unitEntity: EntityConfig<UnitWithAvailability | CapitalUnit, UnitRe
       if (input.end_date !== undefined) updateData.endDate = input.end_date;
       if (input.note !== undefined) updateData.note = input.note;
 
-      return ctx.repos.units.update(ctx.repos.userId, id, updateData);
+      // Apply endDate invariant
+      const finalData = applyEndDateInvariant(updateData, original.status ?? undefined);
+
+      // Check if productId is changing
+      const productIdChanging = input.product_id !== undefined
+        && original.productId !== input.product_id;
+
+      if (productIdChanging) {
+        // CAS check: re-fetch and verify no concurrent modification
+        const current = await ctx.repos.units.findById(ctx.repos.userId, id);
+        if (!current || current.productId !== original.productId) {
+          // Concurrent modification detected - return null to trigger conflict error
+          return null;
+        }
+
+        // Update the unit
+        const updated = await ctx.repos.units.update(ctx.repos.userId, id, finalData);
+        if (!updated) return null;
+
+        // Create contribution logs for the product change
+        const today = getLocalDateString();
+        const newProductId = input.product_id as string | null;
+
+        // Withdraw log for old product
+        if (original.productId) {
+          const oldProduct = await ctx.repos.products.findById(ctx.repos.userId, original.productId);
+          await ctx.repos.contributionLogs.create(ctx.repos.userId, {
+            unitId: id,
+            productId: original.productId,
+            productName: oldProduct?.name ?? null,
+            operationType: "withdraw",
+            amountCents: -original.amountCents,
+            operationDate: today,
+            source: "auto",
+            note: `Auto: moved out to ${newProductId ? "another product" : "unassigned"}`,
+          });
+        }
+
+        // Invest log for new product
+        if (newProductId) {
+          const newProduct = await ctx.repos.products.findById(ctx.repos.userId, newProductId);
+          await ctx.repos.contributionLogs.create(ctx.repos.userId, {
+            unitId: id,
+            productId: newProductId,
+            productName: newProduct?.name ?? null,
+            operationType: "invest",
+            amountCents: original.amountCents,
+            operationDate: today,
+            source: "auto",
+            note: `Auto: moved in from ${original.productId ? "another product" : "unassigned"}`,
+          });
+        }
+
+        return updated;
+      }
+
+      // No productId change - simple update
+      return ctx.repos.units.update(ctx.repos.userId, id, finalData);
     },
 
     // Note: delete is handled by custom tool (delete_unit) due to relation checks
@@ -159,7 +266,10 @@ LIMITATIONS:
 - Max 200 results per call; use offset for pagination`,
     get: "Get a single capital unit by ID with availability info.",
     create: "Create a new capital unit. Required: unit_code, amount_cents.",
-    update: "Update an existing capital unit. Only provided fields are updated.",
+    update: `Update an existing capital unit. Only provided fields are updated.
+
+IMPORTANT: Changing product_id will automatically create contribution logs
+(withdraw from old product, invest to new product) for audit trail.`,
   },
 
   projection: {
