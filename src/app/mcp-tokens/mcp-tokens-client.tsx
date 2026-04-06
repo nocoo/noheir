@@ -14,29 +14,25 @@ import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
 // Derive MCP URL from current hostname
+// MCP endpoint is at /api/mcp on the main domain
 // ---------------------------------------------------------------------------
 
 function getMcpUrl(): string {
   if (typeof window === "undefined") {
-    return "https://noheir.worker.hexly.ai/mcp";
+    return "https://noheir.hexly.ai/api/mcp";
   }
 
   const hostname = window.location.hostname;
+  const protocol = window.location.protocol;
+  const port = window.location.port;
 
-  // Local development
-  if (hostname === "localhost" || hostname === "127.0.0.1") {
-    return "http://localhost:8788/mcp";
+  // Build base URL
+  let baseUrl = `${protocol}//${hostname}`;
+  if (port && port !== "80" && port !== "443") {
+    baseUrl += `:${port}`;
   }
 
-  // Production: noheir.hexly.ai -> noheir.worker.hexly.ai
-  // Pattern: {app}.hexly.ai -> {app}.worker.hexly.ai
-  if (hostname.endsWith(".hexly.ai")) {
-    const appName = hostname.replace(".hexly.ai", "");
-    return `https://${appName}.worker.hexly.ai/mcp`;
-  }
-
-  // Fallback to production
-  return "https://noheir.worker.hexly.ai/mcp";
+  return `${baseUrl}/api/mcp`;
 }
 
 // ---------------------------------------------------------------------------
@@ -106,6 +102,7 @@ export function McpTokensClient() {
     "claude-code": `{
   "mcpServers": {
     "noheir": {
+      "type": "http",
       "url": "${mcpUrl}"
     }
   }
@@ -125,6 +122,7 @@ export function McpTokensClient() {
     cursor: `{
   "mcpServers": {
     "noheir": {
+      "type": "http",
       "url": "${mcpUrl}"
     }
   }
