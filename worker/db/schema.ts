@@ -155,3 +155,79 @@ export const contributionLogs = sqliteTable("contribution_logs", {
     .notNull()
     .$defaultFn(() => new Date()),
 });
+
+// ============================================================================
+// 8. MCP OAuth — Dynamic Client Registration & Token Management
+// ============================================================================
+
+// MCP OAuth Clients (Dynamic Client Registration)
+export const mcpClients = sqliteTable("mcp_clients", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  clientId: text("client_id").notNull().unique(),
+  clientSecretHash: text("client_secret_hash"),
+  clientName: text("client_name").notNull(),
+  clientUri: text("client_uri"),
+  logoUri: text("logo_uri"),
+  redirectUris: text("redirect_uris").notNull(), // JSON array
+  grantTypes: text("grant_types").notNull(), // JSON array
+  responseTypes: text("response_types").notNull(), // JSON array
+  tokenEndpointAuthMethod: text("token_endpoint_auth_method").notNull().default("none"),
+  scope: text("scope").notNull().default("noheir:read noheir:write"),
+  contacts: text("contacts"), // JSON array
+  tosUri: text("tos_uri"),
+  policyUri: text("policy_uri"),
+  softwareId: text("software_id"),
+  softwareVersion: text("software_version"),
+  createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
+  updatedAt: text("updated_at").$defaultFn(() => new Date().toISOString()),
+});
+
+// MCP Authorization Sessions (authorize → callback intermediate state)
+export const mcpAuthSessions = sqliteTable("mcp_auth_sessions", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  state: text("state").notNull().unique(),
+  clientId: text("client_id").notNull().references(() => mcpClients.clientId, { onDelete: "cascade" }),
+  redirectUri: text("redirect_uri").notNull(),
+  codeChallenge: text("code_challenge").notNull(),
+  codeChallengeMethod: text("code_challenge_method").notNull().default("S256"),
+  scope: text("scope").notNull(),
+  nonce: text("nonce"),
+  code: text("code"),
+  userId: text("user_id"),
+  expiresAt: integer("expires_at").notNull(), // Unix timestamp
+  consumed: integer("consumed", { mode: "boolean" }).default(false),
+  createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
+});
+
+// MCP Access Tokens
+export const mcpTokens = sqliteTable("mcp_tokens", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  accessTokenHash: text("access_token_hash").notNull().unique(),
+  accessTokenPreview: text("access_token_preview").notNull(),
+  clientId: text("client_id").notNull().references(() => mcpClients.clientId, { onDelete: "cascade" }),
+  userId: text("user_id").notNull(),
+  scope: text("scope").notNull(),
+  clientName: text("client_name"),
+  issuedAt: text("issued_at").notNull().$defaultFn(() => new Date().toISOString()),
+  expiresAt: text("expires_at").notNull(),
+  revoked: integer("revoked", { mode: "boolean" }).default(false),
+  revokedAt: text("revoked_at"),
+  lastUsedAt: text("last_used_at"),
+  lastUsedIp: text("last_used_ip"),
+});
+
+// MCP Refresh Tokens (supports rotation)
+export const mcpRefreshTokens = sqliteTable("mcp_refresh_tokens", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  refreshTokenHash: text("refresh_token_hash").notNull().unique(),
+  accessTokenId: text("access_token_id").notNull().references(() => mcpTokens.id, { onDelete: "cascade" }),
+  clientId: text("client_id").notNull().references(() => mcpClients.clientId, { onDelete: "cascade" }),
+  userId: text("user_id").notNull(),
+  scope: text("scope").notNull(),
+  issuedAt: text("issued_at").notNull().$defaultFn(() => new Date().toISOString()),
+  expiresAt: text("expires_at").notNull(),
+  rotatedAt: text("rotated_at"),
+  rotatedTo: text("rotated_to"),
+  revoked: integer("revoked", { mode: "boolean" }).default(false),
+  revokedAt: text("revoked_at"),
+});

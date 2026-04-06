@@ -9,6 +9,10 @@ import type {
   transfers,
   settings,
   contributionLogs,
+  mcpClients,
+  mcpAuthSessions,
+  mcpTokens,
+  mcpRefreshTokens,
 } from "./schema";
 
 // ── Select types (rows read from DB) ──
@@ -152,3 +156,14 @@ export interface FlowSummaryResponse {
   account_to_category: FlowAccountCategoryRow[];
   category_to_subcategory: FlowCategoryRow[];
 }
+
+// ── MCP OAuth types ──
+
+export type McpClient = typeof mcpClients.$inferSelect;
+export type NewMcpClient = typeof mcpClients.$inferInsert;
+export type McpAuthSession = typeof mcpAuthSessions.$inferSelect;
+export type NewMcpAuthSession = typeof mcpAuthSessions.$inferInsert;
+export type McpToken = typeof mcpTokens.$inferSelect;
+export type NewMcpToken = typeof mcpTokens.$inferInsert;
+export type McpRefreshToken = typeof mcpRefreshTokens.$inferSelect;
+export type NewMcpRefreshToken = typeof mcpRefreshTokens.$inferInsert;
