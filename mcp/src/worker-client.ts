@@ -171,6 +171,9 @@ export class WorkerClient {
     tactics?: string | undefined
     currency?: string | undefined
     with_products?: boolean | undefined
+    fields?: "minimal" | "standard" | "full" | undefined
+    limit?: number | undefined
+    offset?: number | undefined
   }) {
     const qs = new URLSearchParams()
     if (filters?.status) qs.set("status", filters.status)
@@ -178,10 +181,14 @@ export class WorkerClient {
     if (filters?.tactics) qs.set("tactics", filters.tactics)
     if (filters?.currency) qs.set("currency", filters.currency)
     if (filters?.with_products) qs.set("with_products", "true")
+    if (filters?.fields) qs.set("fields", filters.fields)
+    if (filters?.limit !== undefined) qs.set("limit", String(filters.limit))
+    if (filters?.offset !== undefined) qs.set("offset", String(filters.offset))
     const str = qs.toString()
     return this.request<{
       units: Record<string, unknown>[]
       total_returned: number
+      total_count: number
     }>("GET", `/api/units${str ? `?${str}` : ""}`)
   }
 

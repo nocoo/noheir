@@ -359,13 +359,30 @@ LIMITATIONS:
   // ── list_units ──────────────────────────────────────────────────────────────
   server.tool(
     "list_units",
-    `List all capital units (资金单元) with optional filters. Set with_products=true to include linked product details.`,
+    `Get a filtered list of capital units (资金单元) with configurable detail level.
+
+WHEN TO USE:
+- After calling get_units_summary to understand the data shape
+- When you need specific unit records matching certain criteria
+- Use fields="minimal" for quick lookups, fields="full" for detailed analysis
+
+LIMITATIONS:
+- Max 200 results per call; use offset for pagination
+- Availability fields (availableDate, isAvailable, daysUntilAvailable) only available with fields="standard" or "full"
+- Availability calculation requires both: (1) unit linked to product with lockPeriodDays, and (2) at least one invest log
+
+PARAMETERS:
+- fields: Controls response size. "minimal" (~100B/unit) for basic info + productId, "standard" (~180B/unit) adds computed availability, "full" (~450B/unit) includes nested product and all metadata
+- with_products: Deprecated, use fields="full" instead. If true, implies fields="full"`,
     {
       status: z.string().optional().describe("Filter by unit status"),
       strategy: z.string().optional().describe("Filter by investment strategy"),
       tactics: z.string().optional().describe("Filter by investment tactics"),
       currency: z.string().optional().describe("Filter by currency"),
-      with_products: z.boolean().optional().describe("Include linked product details (default: false)"),
+      fields: z.enum(["minimal", "standard", "full"]).optional().describe("Response detail level: minimal (~100B/unit), standard (~180B/unit with availability), full (~450B/unit with nested product). Default: minimal"),
+      limit: z.number().int().min(1).max(200).optional().describe("Max results (default: 50, max: 200)"),
+      offset: z.number().int().min(0).optional().describe("Pagination offset (default: 0)"),
+      with_products: z.boolean().optional().describe("Deprecated: use fields='full' instead. Include linked product details"),
     },
     async (params) => {
       const result = await client.listUnits({
@@ -374,6 +391,9 @@ LIMITATIONS:
         tactics: params.tactics ?? undefined,
         currency: params.currency ?? undefined,
         with_products: params.with_products ?? undefined,
+        fields: params.fields ?? undefined,
+        limit: params.limit ?? undefined,
+        offset: params.offset ?? undefined,
       })
       return {
         content: [{ type: "text" as const, text: JSON.stringify(result) }],

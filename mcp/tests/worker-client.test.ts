@@ -361,7 +361,7 @@ describe("WorkerClient", () => {
 
   describe("listUnits", () => {
     it("calls GET /api/units with no params", async () => {
-      fetchSpy.mockResolvedValueOnce(mockFetchResponse({ units: [], total_returned: 0 }));
+      fetchSpy.mockResolvedValueOnce(mockFetchResponse({ units: [], total_returned: 0, total_count: 0 }));
 
       await client.listUnits();
 
@@ -370,7 +370,7 @@ describe("WorkerClient", () => {
     });
 
     it("includes filter params in query string", async () => {
-      fetchSpy.mockResolvedValueOnce(mockFetchResponse({ units: [], total_returned: 0 }));
+      fetchSpy.mockResolvedValueOnce(mockFetchResponse({ units: [], total_returned: 0, total_count: 0 }));
 
       await client.listUnits({ status: "已成立", strategy: "短期理财" });
 
@@ -380,12 +380,39 @@ describe("WorkerClient", () => {
     });
 
     it("includes with_products param", async () => {
-      fetchSpy.mockResolvedValueOnce(mockFetchResponse({ units: [], total_returned: 0 }));
+      fetchSpy.mockResolvedValueOnce(mockFetchResponse({ units: [], total_returned: 0, total_count: 0 }));
 
       await client.listUnits({ with_products: true });
 
       const [url] = fetchSpy.mock.calls[0] as [string, RequestInit];
       expect(url).toContain("with_products=true");
+    });
+
+    it("includes fields param", async () => {
+      fetchSpy.mockResolvedValueOnce(mockFetchResponse({ units: [], total_returned: 0, total_count: 0 }));
+
+      await client.listUnits({ fields: "standard" });
+
+      const [url] = fetchSpy.mock.calls[0] as [string, RequestInit];
+      expect(url).toContain("fields=standard");
+    });
+
+    it("includes limit and offset params", async () => {
+      fetchSpy.mockResolvedValueOnce(mockFetchResponse({ units: [], total_returned: 0, total_count: 0 }));
+
+      await client.listUnits({ limit: 10, offset: 20 });
+
+      const [url] = fetchSpy.mock.calls[0] as [string, RequestInit];
+      expect(url).toContain("limit=10");
+      expect(url).toContain("offset=20");
+    });
+
+    it("returns total_count for pagination", async () => {
+      fetchSpy.mockResolvedValueOnce(mockFetchResponse({ units: [], total_returned: 0, total_count: 100 }));
+
+      const result = await client.listUnits({ limit: 10 });
+
+      expect(result.total_count).toBe(100);
     });
   });
 
