@@ -13,6 +13,14 @@ import {
   updateContributionLogSchema,
   searchContributionLogsSchema,
 } from "../db/validation";
+import {
+  handleOAuthMetadata,
+  handleRegister,
+  handleAuthorize,
+  handleCallback,
+  handleToken,
+  handleRevoke,
+} from "./mcp/oauth";
 
 /** Strip undefined values from an object at runtime.
  *  Returns a clean Record<string, string> that satisfies exactOptionalPropertyTypes. */
@@ -47,6 +55,7 @@ export interface Env {
   DB: D1Database;
   DB_TEST: D1Database;
   WORKER_SHARED_SECRET: string;
+  SITE_URL?: string;
 }
 
 // ── Hono Context Variables ──
@@ -93,11 +102,50 @@ async function handleHealthCheck(c: {
 
 app.get("/api/health", (c) => handleHealthCheck(c));
 
+// ── MCP OAuth Endpoints (no auth required) ──
+
+// OAuth metadata discovery
+app.get("/.well-known/oauth-authorization-server", (c) => handleOAuthMetadata(c));
+
+// Dynamic Client Registration
+app.post("/mcp/register", async (c) => {
+  const db = drizzle(c.env.DB);
+  const repos = createAllRepos(db);
+  const ctx = { repos: { mcpOAuth: repos.mcpOAuth }, env: c.env };
+  return handleRegister(c, ctx);
+});
+
+// Authorization endpoint (redirects to login)
+app.get("/mcp/authorize", async (c) => {
+  const db = drizzle(c.env.DB);
+  const repos = createAllRepos(db);
+  const ctx = { repos: { mcpOAuth: repos.mcpOAuth }, env: c.env };
+  return handleAuthorize(c, ctx);
+});
+
+// Token endpoint
+app.post("/mcp/token", async (c) => {
+  const db = drizzle(c.env.DB);
+  const repos = createAllRepos(db);
+  const ctx = { repos: { mcpOAuth: repos.mcpOAuth }, env: c.env };
+  return handleToken(c, ctx);
+});
+
+// Token revocation
+app.post("/mcp/revoke", async (c) => {
+  const db = drizzle(c.env.DB);
+  const repos = createAllRepos(db);
+  const ctx = { repos: { mcpOAuth: repos.mcpOAuth }, env: c.env };
+  return handleRevoke(c, ctx);
+});
+
 // ── Auth middleware (all routes below require Bearer token + X-User-Id) ──
 
 app.use("*", async (c, next) => {
-  // Skip for already-handled routes (health check)
+  // Skip for already-handled routes (health check, OAuth endpoints)
   if (c.req.path === "/api/health") return next();
+  if (c.req.path === "/.well-known/oauth-authorization-server") return next();
+  if (c.req.path.startsWith("/mcp/")) return next();
 
   // 1. Verify Bearer token
   const authHeader = c.req.header("Authorization");
@@ -159,6 +207,15 @@ async function handleUserSync(c: {
 }
 
 app.put("/api/users/me", (c) => handleUserSync(c));
+
+// ── MCP OAuth Callback (authenticated - after user login) ──
+
+app.get("/mcp/callback", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const ctx = { repos: { mcpOAuth: repos.mcpOAuth }, env: c.env };
+  return handleCallback(c, ctx, userId);
+});
 
 // ── Transactions ──
 

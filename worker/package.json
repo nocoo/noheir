@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@nocoo/base-mcp": "0.1.0-alpha.1",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.7.10",
     "zod": "^4.3.6"
