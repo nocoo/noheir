@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.0] - 2026-04-07
+
+MCP server upgrade to base-mcp framework with OAuth 2.1 + Streamable HTTP transport, plus comprehensive E2E test coverage.
+
+### Features
+
+- **MCP OAuth 2.1** — Full OAuth 2.1 authentication with PKCE for secure MCP access
+- **Streamable HTTP Transport** — Replaced stdio-based MCP with HTTP transport for better integration
+- **base-mcp Framework** — Migrated MCP implementation to @nocoo/base-mcp@0.1.0 for cleaner entity/tool registration
+
+### Tests
+
+- **MCP E2E Test Suite** — 63 E2E tests covering all 16 MCP tools:
+  - Product tools: list, get, create, update
+  - Unit tools: list, get, create, update  
+  - Query tools: query_transactions, query_transfers, get_summary, get_monthly_report
+  - Summary tools: get_products_summary, get_units_summary
+  - Delete tools: delete_product, delete_unit
+- **OAuth Token Helper** — `mcp-auth.ts` enables E2E testing without browser login
+- **D1 Test Isolation** — X-Target-DB header support for isolated test database
+
+### Architecture
+
+- **MCP Settings Page** — OAuth client registration with manual token copy flow
+- **Worker MCP Integration** — MCP server embedded in Cloudflare Worker at `/mcp/*` routes
+
 ## [2.1.0] - 2026-04-06
 
 MCP server optimization with progressive disclosure, summary tools, and context-efficient field selection.
