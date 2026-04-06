@@ -4,7 +4,7 @@
 
 Optimize the NoHeir MCP server to reduce context consumption while maintaining full functionality and flexibility. Based on MCP specification best practices and research findings on tool description quality.
 
-**Status**: In Progress  
+**Status**: Completed  
 **Linear**: (TBD)
 
 ## Current Implementation Gap Analysis
@@ -361,13 +361,13 @@ WHERE user_id = ? AND is_archived = true
 3. ✅ `feat(worker): add products summary endpoint`
 4. ✅ `feat(mcp): add get_units_summary tool`
 5. ✅ `feat(mcp): add get_products_summary tool`
-6. ⬜ `feat(worker): add fields and pagination to units endpoint`
-7. ⬜ `feat(mcp): add fields parameter to list_units`
-8. ⬜ `feat(worker): add available_within_days filter to units endpoint`
-9. ⬜ `feat(mcp): add available_within_days filter to list_units`
-10. ⬜ `feat(worker): add fields and pagination to products endpoint`
-11. ⬜ `feat(mcp): add fields and pagination to list_products`
-12. ⬜ `docs(mcp): improve tool descriptions with six-component framework`
+6. ✅ `feat(worker): add fields and pagination to units endpoint`
+7. ✅ `feat(mcp): add fields parameter to list_units`
+8. ✅ `feat(worker): add available_within_days filter to units endpoint`
+9. ✅ `feat(mcp): add available_within_days filter to list_units`
+10. ✅ `feat(worker): add fields and pagination to products endpoint`
+11. ✅ `feat(mcp): add fields and pagination to list_products`
+12. ✅ `docs(mcp): improve tool descriptions with six-component framework` — Integrated into commits 4, 5, 7, 11
 
 ## Testing Strategy
 
