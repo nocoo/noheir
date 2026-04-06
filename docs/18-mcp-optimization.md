@@ -97,38 +97,59 @@ Add lightweight aggregation tools that return statistics without raw data.
 
 **Parameters**: None (returns full summary)
 
-**Response** (~500B):
+**Implementation Notes**:
+- Availability calculation requires: `latestInvestLog.operationDate` + `product.lockPeriodDays`
+- Units without product or without invest log have `availableDate = null`, counted as "unknown"
+- All amounts returned in cents (`amount_cents`) to match DB schema
+
+**Response** (~600B):
 ```json
 {
   "total_count": 45,
-  "total_amount": 1234567.89,
+  "total_amount_cents": 123456789,
   "by_strategy": {
-    "远期理财": { "count": 5, "amount": 200000 },
-    "36存单": { "count": 12, "amount": 360000 }
+    "远期理财": { "count": 5, "amount_cents": 20000000 },
+    "36存单": { "count": 12, "amount_cents": 36000000 }
   },
   "by_status": {
-    "已成立": { "count": 40, "amount": 1100000 },
-    "计划中": { "count": 5, "amount": 134567.89 }
+    "已成立": { "count": 40, "amount_cents": 110000000 },
+    "计划中": { "count": 5, "amount_cents": 13456789 }
   },
   "by_tactics": {
-    "定期存款": { "count": 20, "amount": 600000 }
+    "定期存款": { "count": 20, "amount_cents": 60000000 }
   },
   "availability": {
-    "available_now": { "count": 5, "amount": 150000 },
-    "available_30d": { "count": 3, "amount": 90000 },
-    "locked": { "count": 37, "amount": 994567.89 }
+    "available_now": { "count": 5, "amount_cents": 15000000 },
+    "available_30d": { "count": 3, "amount_cents": 9000000 },
+    "locked": { "count": 30, "amount_cents": 89456789 },
+    "unknown": { "count": 7, "amount_cents": 10000000 }
   }
 }
 ```
+
+**Availability Calculation Logic** (from `worker/lib/availability.ts`):
+1. Fetch all units with product join
+2. Fetch latest invest log per unit from contribution_logs (operationType = 'invest')
+3. For each unit: `availableDate = latestInvestDate + product.lockPeriodDays`
+4. Categorize: `available_now` (days ≤ 0), `available_30d` (1-30 days), `locked` (> 30 days), `unknown` (no data)
 
 #### 1.2 `get_products_summary`
 
 **Purpose**: Get aggregated statistics about financial products.
 
+**Parameters**:
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `include_archived` | boolean | `false` | Include archived products in counts |
+
+**Note**: Matches existing `list_products` behavior which excludes archived by default.
+
 **Response** (~300B):
 ```json
 {
   "total_count": 25,
+  "archived_count": 3,
   "by_channel": { "招商银行": 8, "支付宝": 5 },
   "by_category": { "定期存款": 10, "理财产品": 8 },
   "by_currency": { "CNY": 22, "USD": 3 }
@@ -145,23 +166,29 @@ New parameters:
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `fields` | enum | `"minimal"` \| `"standard"` \| `"full"` (default: `"standard"`) |
-| `available_within_days` | number | Filter units becoming available within N days |
+| `fields` | enum | `"minimal"` \| `"standard"` \| `"full"` (default: `"minimal"`) |
+| `available_within_days` | number | Filter units becoming available within N days (requires `fields="standard"` or `"full"`) |
 | `limit` | number | Max results (default: 50, max: 200) |
 | `offset` | number | Pagination offset |
 
 **Field presets**:
 
-| Preset | Fields Included | Size |
-|--------|-----------------|------|
-| `minimal` | `id`, `unitCode`, `amountCents`, `status` | ~80B/unit |
-| `standard` | + `strategy`, `tactics`, `currency`, `availableDate`, `isAvailable` | ~150B/unit |
-| `full` | + `product.*`, `note`, `startDate`, `endDate`, timestamps | ~400B/unit |
+| Preset | Fields Included | Size | Notes |
+|--------|-----------------|------|-------|
+| `minimal` | `id`, `unitCode`, `amountCents`, `status`, `strategy`, `tactics`, `currency`, `productId` | ~100B/unit | Basic info + productId for relationship lookup |
+| `standard` | + `availableDate`, `isAvailable`, `daysUntilAvailable`, `latestInvestDate` | ~180B/unit | Requires product join + contribution_logs lookup |
+| `full` | + `product.*`, `note`, `startDate`, `endDate`, timestamps | ~450B/unit | Complete data with nested product |
+
+**Key Implementation Details**:
+- `minimal`: Direct query on `capital_units` table only, no joins
+- `standard`: Joins `financial_products` + queries `contribution_logs` for latest invest date, then computes availability per `worker/lib/availability.ts`
+- `full`: Same as `standard` but includes all product fields and unit metadata
+- `available_within_days`: Server-side filter applied AFTER availability computation; only valid with `standard` or `full`
 
 **Example call for upcoming availability check**:
 ```json
 {
-  "fields": "minimal",
+  "fields": "standard",
   "available_within_days": 30,
   "limit": 10
 }
@@ -174,15 +201,18 @@ New parameters:
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `fields` | enum | `"minimal"` \| `"full"` (default: `"full"`) |
+| `include_archived` | boolean | Include archived products (default: `false`) |
 | `limit` | number | Max results (default: 50, max: 200) |
 | `offset` | number | Pagination offset |
+
+**Note**: `include_archived` matches existing Worker behavior where archived products are excluded by default.
 
 **Field presets**:
 
 | Preset | Fields Included |
 |--------|-----------------|
-| `minimal` | `id`, `name`, `channel`, `category` |
-| `full` | All fields |
+| `minimal` | `id`, `name`, `channel`, `category`, `currency` |
+| `full` | All fields including `lockPeriodDays`, `annualReturnRate`, timestamps |
 
 ### Phase 3: Tool Description Quality Improvements
 
@@ -206,12 +236,13 @@ WHEN TO USE:
 
 LIMITATIONS:
 - Max 200 results per call; use offset for pagination
-- with_products=true increases response size ~3x
-- available_within_days filter requires product to have lockPeriodDays set
+- Availability fields (`availableDate`, `isAvailable`, `daysUntilAvailable`) only available with `fields="standard"` or `"full"`
+- `available_within_days` filter requires `fields="standard"` or `"full"` (ignored with `minimal`)
+- Availability calculation requires both: (1) unit linked to product with `lockPeriodDays`, and (2) at least one invest log in contribution_logs
 
 PARAMETERS:
-- fields: Controls response size. "minimal" (~80B/unit) for IDs and amounts only, "standard" (~150B/unit) adds strategy/status/availability, "full" (~400B/unit) includes everything
-- available_within_days: Server-side filter for units becoming available soon. More efficient than fetching all and filtering client-side
+- fields: Controls response size and data. "minimal" (~100B/unit) for basic info + productId, "standard" (~180B/unit) adds computed availability, "full" (~450B/unit) includes nested product and all metadata
+- available_within_days: Server-side filter for units becoming available within N days. Requires fields="standard" or "full"
 ```
 
 ### Phase 4: Workflow Optimization
@@ -227,16 +258,19 @@ Document recommended tool call sequences for common tasks.
 
 #### Pattern B: Availability Check
 ```
-1. get_units_summary               → Check availability.available_30d count
-2. list_units (available_within_days=30, fields="standard") → Get upcoming units
+1. get_units_summary                                       → Check availability.available_30d count
+2. list_units (available_within_days=30, fields="standard") → Get upcoming units with availability info
 ```
 
 #### Pattern C: Product-Unit Relationship
 ```
-1. get_products_summary  → Understand product distribution
-2. list_products         → Get product IDs
-3. list_units (with_products=true, fields="minimal") → See unit-product links
+1. get_products_summary                     → Understand product distribution
+2. list_products (fields="minimal")         → Get product IDs and names
+3. list_units (fields="minimal")            → Get units with productId field
+4. (optional) get_unit (with_product=true)  → Drill into specific unit with full product details
 ```
+
+Note: `minimal` preset includes `productId` for relationship lookup. Use `get_unit(id, with_product=true)` for full nested product data.
 
 ## Implementation
 
@@ -260,24 +294,48 @@ GET /api/products/summary   → Aggregated product statistics
 ### Database Queries
 
 #### Units Summary Query
-```sql
-SELECT 
-  COUNT(*) as total_count,
-  SUM(amount_cents) as total_amount_cents,
-  strategy,
-  status,
-  tactics
-FROM capital_units
-WHERE user_id = ?
-GROUP BY GROUPING SETS (
-  (strategy),
-  (status),
-  (tactics),
-  ()
-)
+
+D1/SQLite doesn't support `GROUPING SETS`, so we use application-level aggregation:
+
+```typescript
+// 1. Fetch all units with product join
+const units = await repos.units.findAllWithProducts(userId);
+
+// 2. Fetch latest invest logs for all units
+const latestInvestLogs = await repos.contributionLogs.getLatestInvestLogs(userId, unitIds);
+
+// 3. Compute availability for each unit
+const unitsWithAvailability = repos.units.enrichWithAvailability(units, latestInvestLogs);
+
+// 4. Aggregate in application code
+const summary = {
+  total_count: units.length,
+  total_amount_cents: units.reduce((sum, u) => sum + u.amountCents, 0),
+  by_strategy: groupByWithSum(units, 'strategy'),
+  by_status: groupByWithSum(units, 'status'),
+  by_tactics: groupByWithSum(units, 'tactics'),
+  availability: categorizeByAvailability(unitsWithAvailability),
+};
 ```
 
-Note: D1/SQLite doesn't support GROUPING SETS. Will need multiple queries or application-level aggregation.
+#### Products Summary Query
+
+```sql
+-- Active products summary (include_archived = false)
+SELECT 
+  COUNT(*) as total_count,
+  channel,
+  category,
+  currency
+FROM financial_products
+WHERE user_id = ? AND is_archived = false
+GROUP BY channel, category, currency
+
+-- Archived count (separate query)
+SELECT COUNT(*) as archived_count
+FROM financial_products
+WHERE user_id = ? AND is_archived = true
+```
 
 ### Atomic Commits
 
