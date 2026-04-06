@@ -414,6 +414,15 @@ describe("WorkerClient", () => {
 
       expect(result.total_count).toBe(100);
     });
+
+    it("includes available_within_days param", async () => {
+      fetchSpy.mockResolvedValueOnce(mockFetchResponse({ units: [], total_returned: 0, total_count: 0 }));
+
+      await client.listUnits({ available_within_days: 30 });
+
+      const [url] = fetchSpy.mock.calls[0] as [string, RequestInit];
+      expect(url).toContain("available_within_days=30");
+    });
   });
 
   describe("getUnit", () => {

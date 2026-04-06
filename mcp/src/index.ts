@@ -369,10 +369,12 @@ WHEN TO USE:
 LIMITATIONS:
 - Max 200 results per call; use offset for pagination
 - Availability fields (availableDate, isAvailable, daysUntilAvailable) only available with fields="standard" or "full"
+- available_within_days filter requires availability data and excludes units with unknown availability
 - Availability calculation requires both: (1) unit linked to product with lockPeriodDays, and (2) at least one invest log
 
 PARAMETERS:
 - fields: Controls response size. "minimal" (~100B/unit) for basic info + productId, "standard" (~180B/unit) adds computed availability, "full" (~450B/unit) includes nested product and all metadata
+- available_within_days: Server-side filter for units becoming available within N days. Auto-upgrades to standard fields. Units with unknown availability excluded.
 - with_products: Deprecated, use fields="full" instead. If true, implies fields="full"`,
     {
       status: z.string().optional().describe("Filter by unit status"),
@@ -380,6 +382,7 @@ PARAMETERS:
       tactics: z.string().optional().describe("Filter by investment tactics"),
       currency: z.string().optional().describe("Filter by currency"),
       fields: z.enum(["minimal", "standard", "full"]).optional().describe("Response detail level: minimal (~100B/unit), standard (~180B/unit with availability), full (~450B/unit with nested product). Default: minimal"),
+      available_within_days: z.number().int().min(0).optional().describe("Filter units becoming available within N days. Auto-upgrades to standard fields."),
       limit: z.number().int().min(1).max(200).optional().describe("Max results (default: 50, max: 200)"),
       offset: z.number().int().min(0).optional().describe("Pagination offset (default: 0)"),
       with_products: z.boolean().optional().describe("Deprecated: use fields='full' instead. Include linked product details"),
@@ -394,6 +397,7 @@ PARAMETERS:
         fields: params.fields ?? undefined,
         limit: params.limit ?? undefined,
         offset: params.offset ?? undefined,
+        available_within_days: params.available_within_days ?? undefined,
       })
       return {
         content: [{ type: "text" as const, text: JSON.stringify(result) }],

@@ -174,6 +174,7 @@ export class WorkerClient {
     fields?: "minimal" | "standard" | "full" | undefined
     limit?: number | undefined
     offset?: number | undefined
+    available_within_days?: number | undefined
   }) {
     const qs = new URLSearchParams()
     if (filters?.status) qs.set("status", filters.status)
@@ -184,6 +185,7 @@ export class WorkerClient {
     if (filters?.fields) qs.set("fields", filters.fields)
     if (filters?.limit !== undefined) qs.set("limit", String(filters.limit))
     if (filters?.offset !== undefined) qs.set("offset", String(filters.offset))
+    if (filters?.available_within_days !== undefined) qs.set("available_within_days", String(filters.available_within_days))
     const str = qs.toString()
     return this.request<{
       units: Record<string, unknown>[]
