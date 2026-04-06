@@ -97,11 +97,12 @@ export class WorkerClient {
 
   // ── Products ──
 
-  listProducts(filters?: { channel?: string | undefined; category?: string | undefined; currency?: string | undefined }) {
+  listProducts(filters?: { channel?: string | undefined; category?: string | undefined; currency?: string | undefined; includeArchived?: boolean | undefined }) {
     const qs = new URLSearchParams()
     if (filters?.channel) qs.set("channel", filters.channel)
     if (filters?.category) qs.set("category", filters.category)
     if (filters?.currency) qs.set("currency", filters.currency)
+    if (filters?.includeArchived) qs.set("includeArchived", "true")
     const str = qs.toString()
     return this.request<{
       products: Record<string, unknown>[]

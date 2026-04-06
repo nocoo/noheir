@@ -199,17 +199,21 @@ Use year/month for the target period. Call get_summary first to discover availab
   // ── list_products ───────────────────────────────────────────────────────────
   server.tool(
     "list_products",
-    `List all financial products (理财产品) with optional filters.`,
+    `List all financial products (理财产品) with optional filters.
+
+By default, archived products are excluded. Set include_archived=true to include them.`,
     {
       channel: z.string().optional().describe("Filter by distribution channel"),
       category: z.string().optional().describe("Filter by product category"),
       currency: z.string().optional().describe("Filter by currency: 'CNY', 'USD', or 'HKD'"),
+      include_archived: z.boolean().optional().describe("Include archived products (default: false)"),
     },
     async (params) => {
       const result = await client.listProducts({
         channel: params.channel ?? undefined,
         category: params.category ?? undefined,
         currency: params.currency ?? undefined,
+        includeArchived: params.include_archived ?? undefined,
       })
       return {
         content: [{ type: "text" as const, text: JSON.stringify(result) }],

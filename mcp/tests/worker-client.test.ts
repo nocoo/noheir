@@ -219,6 +219,24 @@ describe("WorkerClient", () => {
       expect(url).toContain("channel=");
       expect(url).toContain("category=");
     });
+
+    it("includes includeArchived param when true", async () => {
+      fetchSpy.mockResolvedValueOnce(mockFetchResponse({ products: [], total_returned: 0 }));
+
+      await client.listProducts({ includeArchived: true });
+
+      const [url] = fetchSpy.mock.calls[0] as [string, RequestInit];
+      expect(url).toContain("includeArchived=true");
+    });
+
+    it("omits includeArchived param when false or undefined", async () => {
+      fetchSpy.mockResolvedValueOnce(mockFetchResponse({ products: [], total_returned: 0 }));
+
+      await client.listProducts({ includeArchived: false });
+
+      const [url] = fetchSpy.mock.calls[0] as [string, RequestInit];
+      expect(url).not.toContain("includeArchived");
+    });
   });
 
   describe("getProduct", () => {
