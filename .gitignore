@@ -6,6 +6,10 @@ node_modules
 .next-e2e/
 out/
 dist/
+*.tsbuildinfo
+
+# Wrangler dev artifacts
+worker/.wrangler/
 
 # Environment
 .env*

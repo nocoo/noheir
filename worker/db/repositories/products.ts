@@ -1,4 +1,4 @@
-import { eq, and, sql, type SQL } from "drizzle-orm";
+import { eq, and, sql, desc, type SQL } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { financialProducts } from "../schema";
 import type { FinancialProduct, NewFinancialProduct } from "../types";
@@ -32,6 +32,7 @@ export function createProductsRepo(db: DrizzleD1Database) {
         .select()
         .from(financialProducts)
         .where(and(...conditions))
+        .orderBy(desc(financialProducts.createdAt))
         .all();
     },
 

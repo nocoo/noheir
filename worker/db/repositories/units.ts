@@ -1,4 +1,4 @@
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { capitalUnits, financialProducts } from "../schema";
 import type { CapitalUnit, NewCapitalUnit, UnitWithProduct, ContributionLog } from "../types";
@@ -55,6 +55,7 @@ export function createUnitsRepo(db: DrizzleD1Database) {
         .select()
         .from(capitalUnits)
         .where(and(...conditions))
+        .orderBy(desc(capitalUnits.createdAt))
         .all();
     },
 
@@ -89,7 +90,7 @@ export function createUnitsRepo(db: DrizzleD1Database) {
         .from(capitalUnits)
         .leftJoin(financialProducts, eq(capitalUnits.productId, financialProducts.id))
         .where(and(...conditions))
-        .orderBy(capitalUnits.createdAt)
+        .orderBy(desc(capitalUnits.createdAt))
         .all();
 
       return rows.map((row) => ({
