@@ -9,12 +9,20 @@
 const WORKER_URL = process.env.WORKER_URL || "https://noheir.worker.hexly.ai";
 
 export async function POST(request: Request) {
+  const body = await request.text();
+  const authHeader = request.headers.get("Authorization");
+
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+  if (authHeader) {
+    headers["Authorization"] = authHeader;
+  }
+
   const workerResponse = await fetch(`${WORKER_URL}/mcp`, {
     method: "POST",
-    headers: request.headers,
-    body: request.body,
-    // @ts-expect-error - duplex is required for streaming request bodies
-    duplex: "half",
+    headers,
+    body,
   });
 
   return new Response(workerResponse.body, {
