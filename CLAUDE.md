@@ -37,7 +37,6 @@ cd worker && bun run dev
 |-------|-------|--------|
 | Unit | `tests/{domain,viewmodels,contexts,hooks,lib,services,smoke}/` | `bun run test:unit` |
 | Worker E2E | `worker/tests/e2e/` | `bun run test:e2e` (in worker/) |
-| MCP | `mcp/tests/` | `bun run test:mcp` |
 
 ### Git Hooks
 
@@ -75,5 +74,4 @@ All domain labels (unitCode, strategy, tactics, status, currency, product) MUST 
 
 - D1 uses SQLite syntax — use `strftime('%Y', date)` instead of `EXTRACT(YEAR FROM date)`.
 - Wrangler D1 queries require `--remote` flag for production database.
-- MCP server now uses Worker-based auth (WORKER_URL, WORKER_TOKEN, USER_ID) instead of direct Supabase connection.
-- MCP tools use snake_case (product_id, unit_code) but Worker API uses camelCase (productId, unitCode). Must convert in MCP handlers.
+- MCP server is now integrated into Worker at `worker/src/mcp/` with OAuth 2.1 + Streamable HTTP (replaced stdio-based `mcp/`).

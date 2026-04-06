@@ -5,14 +5,11 @@ import { AiSettingsClient } from "./ai-settings-client"
 export default async function AiSettingsPage() {
   let aiConfig: Record<string, unknown> = {}
   const mcpParams = {
-    workerUrl: process.env.WORKER_URL ?? "",
-    workerToken: process.env.WORKER_TOKEN ?? "",
-    userId: "",
+    workerUrl: `${process.env.WORKER_URL ?? ""}/mcp`,
   }
 
   try {
     const { userId, client } = await getAuthedClient()
-    mcpParams.userId = userId
 
     const result = await client.getSettings(userId)
     const row = (result.settings as Record<string, unknown>) ?? {}

@@ -35,8 +35,6 @@ interface AiSettingsClientProps {
   aiConfig: Record<string, unknown>
   mcpParams: {
     workerUrl: string
-    workerToken: string
-    userId: string
   }
 }
 
@@ -56,12 +54,9 @@ export function AiSettingsClient({ aiConfig, mcpParams }: AiSettingsClientProps)
 
   const mcpJson = buildMcpConfigJson({
     workerUrl: mcpParams.workerUrl,
-    workerToken: mcpParams.workerToken,
-    userId: mcpParams.userId,
-    projectPath: "<path-to-project>",
   })
 
-  const hasMcpCredentials = mcpParams.workerUrl && mcpParams.workerToken && mcpParams.userId
+  const hasMcpCredentials = Boolean(mcpParams.workerUrl)
 
   const handleCopyMcp = async () => {
     try {
@@ -202,14 +197,14 @@ export function AiSettingsClient({ aiConfig, mcpParams }: AiSettingsClientProps)
           {hasMcpCredentials ? (
             <>
               <div className="space-y-2">
-                <Label>当前用户 ID</Label>
+                <Label>MCP 服务器端点</Label>
                 <code className="bg-muted block rounded p-2 font-mono text-xs">
-                  {mcpParams.userId}
+                  {mcpParams.workerUrl}
                 </code>
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label>MCP 配置</Label>
+                  <Label>Claude Desktop 配置</Label>
                   <Button
                     variant="outline"
                     size="sm"
@@ -229,7 +224,7 @@ export function AiSettingsClient({ aiConfig, mcpParams }: AiSettingsClientProps)
                 </pre>
                 <p className="text-muted-foreground flex items-center gap-1 text-xs">
                   <Terminal className="size-3" />
-                  将此配置添加到 Claude Desktop 配置文件中，并替换 &lt;path-to-project&gt;
+                  首次连接会通过浏览器进行 OAuth 登录授权
                 </p>
               </div>
             </>

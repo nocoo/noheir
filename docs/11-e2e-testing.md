@@ -189,8 +189,7 @@ bun test
 ## Git Hooks Integration
 
 - **pre-commit**: `bun run test:unit` (UT only, fast)
-- **pre-push**: `bun run test:unit && bun run lint && bun run test:e2e && bun run test:mcp` (UT + Lint + E2E + MCP, if Supabase running)
+- **pre-push**: `bun run test:unit && bun run lint` (UT + Lint)
 
-> E2E and MCP integration tests require Docker + local Supabase running. If `supabase` CLI
-> is not available or local Supabase is not running, E2E/MCP tests skip gracefully with a
-> visible warning box.
+> **Note**: This document describes the legacy Supabase-based E2E tests. The project has
+> migrated to Cloudflare D1. Current E2E tests are in `worker/tests/e2e/`.

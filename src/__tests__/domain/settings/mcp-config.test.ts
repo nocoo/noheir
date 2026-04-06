@@ -15,80 +15,54 @@ describe("mcp-config domain", () => {
   });
 
   describe("buildMcpConfigJson", () => {
-    it("generates valid config JSON with worker auth", () => {
+    it("generates valid config JSON with OAuth URL", () => {
       const result = buildMcpConfigJson({
-        workerUrl: "https://noheir.worker.hexly.ai",
-        workerToken: "test-token",
-        userId: "user-123",
-        projectPath: "/path/to/project",
+        workerUrl: "https://noheir.worker.hexly.ai/mcp",
       });
 
       const parsed = JSON.parse(result);
       expect(parsed).toHaveProperty("mcpServers");
       expect(parsed.mcpServers).toHaveProperty("noheir");
-      expect(parsed.mcpServers.noheir.command).toBe("bun");
-      expect(parsed.mcpServers.noheir.args).toContain("run");
-      expect(parsed.mcpServers.noheir.env.WORKER_URL).toBe(
-        "https://noheir.worker.hexly.ai",
+      expect(parsed.mcpServers.noheir.url).toBe(
+        "https://noheir.worker.hexly.ai/mcp",
       );
-      expect(parsed.mcpServers.noheir.env.WORKER_TOKEN).toBe("test-token");
-      expect(parsed.mcpServers.noheir.env.USER_ID).toBe("user-123");
+      // Gen 3 uses OAuth - no command, args, or env needed
+      expect(parsed.mcpServers.noheir.command).toBeUndefined();
+      expect(parsed.mcpServers.noheir.env).toBeUndefined();
     });
 
     it("produces pretty-printed JSON with 2-space indent", () => {
       const result = buildMcpConfigJson({
-        workerUrl: "https://localhost",
-        workerToken: "key",
-        userId: "u1",
-        projectPath: "/p",
+        workerUrl: "https://localhost/mcp",
       });
       expect(result).toContain("  ");
       expect(() => JSON.parse(result)).not.toThrow();
     });
 
-    it("uses placeholder values for missing params", () => {
+    it("uses default URL when not provided", () => {
       const result = buildMcpConfigJson({});
       const parsed = JSON.parse(result);
-      expect(parsed.mcpServers.noheir.env.WORKER_URL).toBe("YOUR_WORKER_URL");
-      expect(parsed.mcpServers.noheir.env.WORKER_TOKEN).toBe("YOUR_WORKER_TOKEN");
-      expect(parsed.mcpServers.noheir.env.USER_ID).toBe("YOUR_USER_ID");
-    });
-
-    it("uses default project path when not provided", () => {
-      const result = buildMcpConfigJson({
-        workerUrl: "https://localhost",
-        workerToken: "key",
-        userId: "u1",
-      });
-      const parsed = JSON.parse(result);
-      expect(parsed.mcpServers.noheir.args[1]).toContain("<path-to-project>");
+      expect(parsed.mcpServers.noheir.url).toBe("https://noheir.worker.hexly.ai/mcp");
     });
   });
 
   describe("isMcpConfigComplete", () => {
-    it("returns true when all params are filled", () => {
+    it("returns true when URL is filled", () => {
       expect(
         isMcpConfigComplete({
-          workerUrl: "https://noheir.worker.hexly.ai",
-          workerToken: "test-token",
-          userId: "user-123",
-          projectPath: "/path/to/project",
+          workerUrl: "https://noheir.worker.hexly.ai/mcp",
         }),
       ).toBe(true);
     });
 
     it("returns false when params are missing", () => {
       expect(isMcpConfigComplete({})).toBe(false);
-      expect(isMcpConfigComplete({ workerUrl: "https://test" })).toBe(false);
     });
 
     it("returns false when params contain placeholder values", () => {
       expect(
         isMcpConfigComplete({
           workerUrl: "YOUR_WORKER_URL",
-          workerToken: "test-token",
-          userId: "user-123",
-          projectPath: "/path",
         }),
       ).toBe(false);
     });
