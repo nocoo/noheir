@@ -7,6 +7,19 @@ Optimize the NoHeir MCP server to reduce context consumption while maintaining f
 **Status**: Planning  
 **Linear**: (TBD)
 
+## Current Implementation Gap Analysis
+
+Before implementing this plan, the following gaps exist between Worker API and MCP layer:
+
+| Feature | Worker API | MCP Tool | WorkerClient | Gap |
+|---------|------------|----------|--------------|-----|
+| `includeArchived` for products | ✅ `GET /api/products?includeArchived=true` | ❌ Not exposed | ❌ Not passed | MCP cannot request archived products |
+| Units summary | ❌ Not implemented | ❌ Not implemented | ❌ N/A | New endpoint needed |
+| Products summary | ❌ Not implemented | ❌ Not implemented | ❌ N/A | New endpoint needed |
+| Field selection (`fields` param) | ❌ Not implemented | ❌ Not implemented | ❌ N/A | New feature |
+| Pagination (`limit`/`offset`) | ❌ Not implemented | ❌ Not implemented | ❌ N/A | New feature |
+| `available_within_days` filter | ❌ Not implemented | ❌ Not implemented | ❌ N/A | New feature |
+
 ## Problem Statement
 
 Current MCP implementation issues:
@@ -205,7 +218,11 @@ New parameters:
 | `limit` | number | Max results (default: 50, max: 200) |
 | `offset` | number | Pagination offset |
 
-**Note**: `include_archived` matches existing Worker behavior where archived products are excluded by default.
+**Implementation Note**: Worker API already supports `includeArchived` query param (`worker/src/index.ts:312`), but it is NOT exposed in:
+- `mcp/src/index.ts` - `list_products` tool schema
+- `mcp/src/worker-client.ts` - `listProducts()` method
+
+This needs to be added as part of Phase 2 implementation.
 
 **Field presets**:
 
@@ -339,32 +356,56 @@ WHERE user_id = ? AND is_archived = true
 
 ### Atomic Commits
 
-1. `feat(worker): add units summary endpoint`
-2. `feat(worker): add products summary endpoint`
-3. `feat(mcp): add get_units_summary tool`
-4. `feat(mcp): add get_products_summary tool`
-5. `feat(mcp): add fields parameter to list_units`
-6. `feat(mcp): add available_within_days filter to list_units`
-7. `feat(mcp): add pagination to list_units and list_products`
-8. `docs(mcp): improve tool descriptions with six-component framework`
-9. `test(mcp): add tests for new summary tools`
-10. `test(worker): add tests for summary endpoints`
+1. `feat(mcp): expose include_archived param for list_products` — Fix existing gap
+2. `feat(worker): add units summary endpoint`
+3. `feat(worker): add products summary endpoint`
+4. `feat(mcp): add get_units_summary tool`
+5. `feat(mcp): add get_products_summary tool`
+6. `feat(worker): add fields and pagination to units endpoint`
+7. `feat(mcp): add fields parameter to list_units`
+8. `feat(worker): add available_within_days filter to units endpoint`
+9. `feat(mcp): add available_within_days filter to list_units`
+10. `feat(worker): add fields and pagination to products endpoint`
+11. `feat(mcp): add fields and pagination to list_products`
+12. `docs(mcp): improve tool descriptions with six-component framework`
 
 ## Testing Strategy
 
-### Unit Tests
-- Summary aggregation logic
-- Field preset filtering
-- Parameter validation
+**Current Test Coverage Gap**: Existing tests in `mcp/tests/` only cover basic `with_products` functionality. None of the new capabilities have test coverage yet.
 
-### Integration Tests
-- Summary endpoint returns correct aggregates
-- Field presets return expected fields only
-- Pagination works correctly
+### Required New Tests
 
-### E2E Tests
-- Full MCP tool call roundtrip for new tools
-- Verify response sizes meet targets
+#### Worker E2E Tests (`worker/tests/e2e/`)
+
+| Test File | Test Cases |
+|-----------|------------|
+| `units-summary.e2e.test.ts` | Summary aggregation by strategy/status/tactics; availability categorization; empty state |
+| `products-summary.e2e.test.ts` | Summary aggregation; include_archived behavior; empty state |
+| `units-fields.e2e.test.ts` | Field presets (minimal/standard/full); pagination; available_within_days filter |
+| `products-fields.e2e.test.ts` | Field presets; pagination; include_archived param |
+
+#### MCP E2E Tests (`mcp/tests/`)
+
+| Test File | Test Cases |
+|-----------|------------|
+| `summary-tools.e2e.test.ts` | `get_units_summary` roundtrip; `get_products_summary` roundtrip |
+| `list-enhancements.e2e.test.ts` | `list_units` with fields/pagination/available_within_days; `list_products` with fields/pagination/include_archived |
+
+### Test Implementation Order
+
+Tests should be written BEFORE implementing features (TDD):
+
+1. Write failing Worker E2E tests for summary endpoints
+2. Implement summary endpoints, verify tests pass
+3. Write failing MCP E2E tests for summary tools
+4. Implement MCP tools, verify tests pass
+5. Repeat for list enhancements
+
+### Regression Protection
+
+After implementation, all new tests must pass in CI:
+- `bun run test:e2e` (worker/)
+- `bun run test:mcp` (mcp/)
 
 ## Success Metrics
 
