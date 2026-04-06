@@ -30,10 +30,10 @@ export async function cleanupUser(userId: string): Promise<void> {
     await api({ method: "DELETE", path: `/api/units/${u.id}`, userId });
   }
 
-  // 3. Delete all products
+  // 3. Delete all products (including archived)
   const { products } = await api<{ products: Array<{ id: string }> }>({
     method: "GET",
-    path: "/api/products",
+    path: "/api/products?includeArchived=true",
     userId,
   });
   for (const p of products) {

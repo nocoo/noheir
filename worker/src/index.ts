@@ -335,12 +335,37 @@ app.get("/api/products/summary", async (c) => {
 app.get("/api/products", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
-  const { channel, category, currency, includeArchived } = c.req.query();
-  const products = await repos.products.findAll(userId, {
+  const { channel, category, currency, includeArchived, fields, limit, offset } = c.req.query();
+
+  // Parse pagination params
+  const limitNum = Math.min(Math.max(parseInt(limit ?? "50", 10) || 50, 1), 200);
+  const offsetNum = Math.max(parseInt(offset ?? "0", 10) || 0, 0);
+
+  const allProducts = await repos.products.findAll(userId, {
     ...pickDefined({ channel, category, currency }),
     includeArchived: includeArchived === "true",
   });
-  return c.json({ products, total_returned: products.length });
+
+  // Paginate
+  const paginatedProducts = allProducts.slice(offsetNum, offsetNum + limitNum);
+
+  // Determine field level: minimal or full (default: full for backward compatibility)
+  const fieldLevel = fields === "minimal" ? "minimal" : "full";
+
+  if (fieldLevel === "minimal") {
+    // Return minimal fields only
+    const minimalProducts = paginatedProducts.map((p) => ({
+      id: p.id,
+      name: p.name,
+      channel: p.channel,
+      category: p.category,
+      currency: p.currency,
+    }));
+    return c.json({ products: minimalProducts, total_returned: minimalProducts.length, total_count: allProducts.length });
+  }
+
+  // Full: return everything
+  return c.json({ products: paginatedProducts, total_returned: paginatedProducts.length, total_count: allProducts.length });
 });
 
 app.get("/api/products/:id", async (c) => {
@@ -388,9 +413,9 @@ app.delete("/api/products/:id", async (c) => {
     return ok ? c.json({ success: true }) : c.json({ error: "Not found" }, 404);
   } catch (err) {
     // SQLite RESTRICT foreign key constraint violation
-    // D1: "FOREIGN KEY constraint failed"
-    // better-sqlite3/bun:sqlite: "FOREIGN KEY constraint failed"
-    if (err instanceof Error && err.message.includes("FOREIGN KEY")) {
+    // Error can be wrapped in DrizzleQueryError with cause chain
+    const errMsg = err instanceof Error ? (err.message + (err.cause instanceof Error ? err.cause.message : "")) : "";
+    if (errMsg.includes("FOREIGN KEY")) {
       return c.json({
         error: "Cannot delete product with contribution history. Archive it instead.",
         hasContributionLogs: true,

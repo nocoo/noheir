@@ -329,4 +329,99 @@ describe("E2E: Products", () => {
     expect(res.by_channel["招商银行"]).toBe(1);
     expect(res.by_channel["支付宝"]).toBe(1);
   });
+
+  // ── Fields and Pagination ──
+
+  test("GET /api/products?fields=minimal returns minimal fields only", async () => {
+    await api({
+      method: "POST",
+      path: "/api/products",
+      userId,
+      body: makeProduct({ name: "Test Product", lockPeriodDays: 30, annualReturnRate: 3.5 }),
+    });
+
+    const res = await api<{ products: Array<Record<string, unknown>>; total_count: number }>({
+      method: "GET",
+      path: "/api/products?fields=minimal",
+      userId,
+    });
+
+    expect(res.products).toHaveLength(1);
+    const p = res.products[0]!;
+    // Should have minimal fields
+    expect(p.id).toBeString();
+    expect(p.name).toBe("Test Product");
+    expect(p.channel).toBe("招商银行");
+    expect(p.category).toBe("理财产品"); // default from makeProduct()
+    expect(p.currency).toBe("CNY");
+    // Should NOT have extra fields
+    expect(p.lockPeriodDays).toBeUndefined();
+    expect(p.annualReturnRate).toBeUndefined();
+    expect(p.createdAt).toBeUndefined();
+  });
+
+  test("GET /api/products?fields=full returns all fields (default)", async () => {
+    await api({
+      method: "POST",
+      path: "/api/products",
+      userId,
+      body: makeProduct({ name: "Full Product", lockPeriodDays: 30 }),
+    });
+
+    const res = await api<{ products: Array<Record<string, unknown>> }>({
+      method: "GET",
+      path: "/api/products?fields=full",
+      userId,
+    });
+
+    const p = res.products[0]!;
+    expect(p.lockPeriodDays).toBe(30);
+    expect(p.createdAt).toBeDefined();
+  });
+
+  test("GET /api/products with pagination returns correct slice", async () => {
+    // Create 5 products
+    for (let i = 1; i <= 5; i++) {
+      await api({
+        method: "POST",
+        path: "/api/products",
+        userId,
+        body: makeProduct({ name: `Product ${i}` }),
+      });
+    }
+
+    const res = await api<{ products: Array<Record<string, unknown>>; total_returned: number; total_count: number }>({
+      method: "GET",
+      path: "/api/products?limit=2&offset=1",
+      userId,
+    });
+
+    expect(res.total_count).toBe(5);
+    expect(res.total_returned).toBe(2);
+    expect(res.products).toHaveLength(2);
+  });
+
+  test("GET /api/products returns total_count for pagination", async () => {
+    await api({
+      method: "POST",
+      path: "/api/products",
+      userId,
+      body: makeProduct({ name: "P1" }),
+    });
+    await api({
+      method: "POST",
+      path: "/api/products",
+      userId,
+      body: makeProduct({ name: "P2" }),
+    });
+
+    const res = await api<{ total_count: number; total_returned: number }>({
+      method: "GET",
+      path: "/api/products?limit=1",
+      userId,
+    });
+
+    expect(res.total_count).toBe(2);
+    expect(res.total_returned).toBe(1);
+  });
 });

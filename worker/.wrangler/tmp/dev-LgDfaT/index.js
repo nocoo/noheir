@@ -1218,13 +1218,13 @@ var init_units_summary = __esm({
   }
 });
 
-// .wrangler/tmp/bundle-1FIwbJ/middleware-loader.entry.ts
+// .wrangler/tmp/bundle-2YtnMI/middleware-loader.entry.ts
 init_modules_watch_stub();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
 init_performance2();
 
-// .wrangler/tmp/bundle-1FIwbJ/middleware-insertion-facade.js
+// .wrangler/tmp/bundle-2YtnMI/middleware-insertion-facade.js
 init_modules_watch_stub();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
@@ -25857,12 +25857,26 @@ app.get("/api/products/summary", async (c) => {
 app.get("/api/products", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
-  const { channel: channel2, category, currency, includeArchived } = c.req.query();
-  const products = await repos.products.findAll(userId, {
+  const { channel: channel2, category, currency, includeArchived, fields, limit, offset } = c.req.query();
+  const limitNum = Math.min(Math.max(parseInt(limit ?? "50", 10) || 50, 1), 200);
+  const offsetNum = Math.max(parseInt(offset ?? "0", 10) || 0, 0);
+  const allProducts = await repos.products.findAll(userId, {
     ...pickDefined({ channel: channel2, category, currency }),
     includeArchived: includeArchived === "true"
   });
-  return c.json({ products, total_returned: products.length });
+  const paginatedProducts = allProducts.slice(offsetNum, offsetNum + limitNum);
+  const fieldLevel = fields === "minimal" ? "minimal" : "full";
+  if (fieldLevel === "minimal") {
+    const minimalProducts = paginatedProducts.map((p) => ({
+      id: p.id,
+      name: p.name,
+      channel: p.channel,
+      category: p.category,
+      currency: p.currency
+    }));
+    return c.json({ products: minimalProducts, total_returned: minimalProducts.length, total_count: allProducts.length });
+  }
+  return c.json({ products: paginatedProducts, total_returned: paginatedProducts.length, total_count: allProducts.length });
 });
 app.get("/api/products/:id", async (c) => {
   const userId = c.get("userId");
@@ -25900,7 +25914,8 @@ app.delete("/api/products/:id", async (c) => {
     const ok = await repos.products.delete(userId, id);
     return ok ? c.json({ success: true }) : c.json({ error: "Not found" }, 404);
   } catch (err) {
-    if (err instanceof Error && err.message.includes("FOREIGN KEY")) {
+    const errMsg = err instanceof Error ? err.message + (err.cause instanceof Error ? err.cause.message : "") : "";
+    if (errMsg.includes("FOREIGN KEY")) {
       return c.json({
         error: "Cannot delete product with contribution history. Archive it instead.",
         hasContributionLogs: true
@@ -26423,7 +26438,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env2, _ctx, middlewareCtx
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// .wrangler/tmp/bundle-1FIwbJ/middleware-insertion-facade.js
+// .wrangler/tmp/bundle-2YtnMI/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -26459,7 +26474,7 @@ function __facade_invoke__(request, env2, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// .wrangler/tmp/bundle-1FIwbJ/middleware-loader.entry.ts
+// .wrangler/tmp/bundle-2YtnMI/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;
