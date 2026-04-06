@@ -199,14 +199,27 @@ Use year/month for the target period. Call get_summary first to discover availab
   // ── list_products ───────────────────────────────────────────────────────────
   server.tool(
     "list_products",
-    `List all financial products (理财产品) with optional filters.
+    `Get a filtered list of financial products (理财产品) with configurable detail level.
 
-By default, archived products are excluded. Set include_archived=true to include them.`,
+WHEN TO USE:
+- After calling get_products_summary to understand data shape
+- When you need specific product records matching certain criteria
+
+LIMITATIONS:
+- Max 200 results per call; use offset for pagination
+- By default, archived products are excluded
+
+PARAMETERS:
+- fields: Controls response size. "minimal" for id/name/channel/category/currency only, "full" (default) includes all fields
+- include_archived: Include archived products (default: false)`,
     {
       channel: z.string().optional().describe("Filter by distribution channel"),
       category: z.string().optional().describe("Filter by product category"),
       currency: z.string().optional().describe("Filter by currency: 'CNY', 'USD', or 'HKD'"),
       include_archived: z.boolean().optional().describe("Include archived products (default: false)"),
+      fields: z.enum(["minimal", "full"]).optional().describe("Response detail level: minimal or full. Default: full"),
+      limit: z.number().int().min(1).max(200).optional().describe("Max results (default: 50, max: 200)"),
+      offset: z.number().int().min(0).optional().describe("Pagination offset (default: 0)"),
     },
     async (params) => {
       const result = await client.listProducts({
@@ -214,6 +227,9 @@ By default, archived products are excluded. Set include_archived=true to include
         category: params.category ?? undefined,
         currency: params.currency ?? undefined,
         includeArchived: params.include_archived ?? undefined,
+        fields: params.fields ?? undefined,
+        limit: params.limit ?? undefined,
+        offset: params.offset ?? undefined,
       })
       return {
         content: [{ type: "text" as const, text: JSON.stringify(result) }],

@@ -97,16 +97,28 @@ export class WorkerClient {
 
   // ── Products ──
 
-  listProducts(filters?: { channel?: string | undefined; category?: string | undefined; currency?: string | undefined; includeArchived?: boolean | undefined }) {
+  listProducts(filters?: {
+    channel?: string | undefined
+    category?: string | undefined
+    currency?: string | undefined
+    includeArchived?: boolean | undefined
+    fields?: "minimal" | "full" | undefined
+    limit?: number | undefined
+    offset?: number | undefined
+  }) {
     const qs = new URLSearchParams()
     if (filters?.channel) qs.set("channel", filters.channel)
     if (filters?.category) qs.set("category", filters.category)
     if (filters?.currency) qs.set("currency", filters.currency)
     if (filters?.includeArchived) qs.set("includeArchived", "true")
+    if (filters?.fields) qs.set("fields", filters.fields)
+    if (filters?.limit !== undefined) qs.set("limit", String(filters.limit))
+    if (filters?.offset !== undefined) qs.set("offset", String(filters.offset))
     const str = qs.toString()
     return this.request<{
       products: Record<string, unknown>[]
       total_returned: number
+      total_count: number
     }>("GET", `/api/products${str ? `?${str}` : ""}`)
   }
 

@@ -202,7 +202,7 @@ describe("WorkerClient", () => {
 
   describe("listProducts", () => {
     it("calls GET /api/products with no params", async () => {
-      fetchSpy.mockResolvedValueOnce(mockFetchResponse({ products: [], total_returned: 0 }));
+      fetchSpy.mockResolvedValueOnce(mockFetchResponse({ products: [], total_returned: 0, total_count: 0 }));
 
       await client.listProducts();
 
@@ -211,7 +211,7 @@ describe("WorkerClient", () => {
     });
 
     it("includes filter params in query string", async () => {
-      fetchSpy.mockResolvedValueOnce(mockFetchResponse({ products: [], total_returned: 0 }));
+      fetchSpy.mockResolvedValueOnce(mockFetchResponse({ products: [], total_returned: 0, total_count: 0 }));
 
       await client.listProducts({ channel: "招商银行", category: "债券基金" });
 
@@ -221,7 +221,7 @@ describe("WorkerClient", () => {
     });
 
     it("includes includeArchived param when true", async () => {
-      fetchSpy.mockResolvedValueOnce(mockFetchResponse({ products: [], total_returned: 0 }));
+      fetchSpy.mockResolvedValueOnce(mockFetchResponse({ products: [], total_returned: 0, total_count: 0 }));
 
       await client.listProducts({ includeArchived: true });
 
@@ -230,12 +230,39 @@ describe("WorkerClient", () => {
     });
 
     it("omits includeArchived param when false or undefined", async () => {
-      fetchSpy.mockResolvedValueOnce(mockFetchResponse({ products: [], total_returned: 0 }));
+      fetchSpy.mockResolvedValueOnce(mockFetchResponse({ products: [], total_returned: 0, total_count: 0 }));
 
       await client.listProducts({ includeArchived: false });
 
       const [url] = fetchSpy.mock.calls[0] as [string, RequestInit];
       expect(url).not.toContain("includeArchived");
+    });
+
+    it("includes fields param", async () => {
+      fetchSpy.mockResolvedValueOnce(mockFetchResponse({ products: [], total_returned: 0, total_count: 0 }));
+
+      await client.listProducts({ fields: "minimal" });
+
+      const [url] = fetchSpy.mock.calls[0] as [string, RequestInit];
+      expect(url).toContain("fields=minimal");
+    });
+
+    it("includes limit and offset params", async () => {
+      fetchSpy.mockResolvedValueOnce(mockFetchResponse({ products: [], total_returned: 0, total_count: 0 }));
+
+      await client.listProducts({ limit: 10, offset: 20 });
+
+      const [url] = fetchSpy.mock.calls[0] as [string, RequestInit];
+      expect(url).toContain("limit=10");
+      expect(url).toContain("offset=20");
+    });
+
+    it("returns total_count for pagination", async () => {
+      fetchSpy.mockResolvedValueOnce(mockFetchResponse({ products: [], total_returned: 0, total_count: 50 }));
+
+      const result = await client.listProducts({ limit: 10 });
+
+      expect(result.total_count).toBe(50);
     });
   });
 
