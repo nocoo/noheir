@@ -53,44 +53,13 @@ export function McpAuthClient({
   const [error, setError] = useState<string | null>(null);
   const workerUrl = useMemo(() => getWorkerUrl(), []);
 
-  const handleAuthorize = async () => {
+  const handleAuthorize = () => {
     setStatus("authorizing");
     setError(null);
 
-    try {
-      // Call the callback endpoint with user_id
-      const callbackUrl = `${workerUrl}/mcp/callback?state=${encodeURIComponent(state)}&user_id=${encodeURIComponent(userId)}`;
-      const response = await fetch(callbackUrl, {
-        method: "GET",
-        redirect: "manual", // Don't follow redirects, we need to handle them
-      });
-
-      // The callback should redirect to the client's redirect_uri
-      // We check for a redirect response (3xx status)
-      if (response.status >= 300 && response.status < 400) {
-        const redirectUrl = response.headers.get("Location");
-        if (redirectUrl) {
-          setStatus("success");
-          // Small delay to show success state, then redirect
-          setTimeout(() => {
-            window.location.href = redirectUrl;
-          }, 1000);
-          return;
-        }
-      }
-
-      // If not a redirect, try to parse error
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error_description || data.error || "授权失败");
-      }
-
-      // Unexpected success response
-      setStatus("success");
-    } catch (err) {
-      setStatus("error");
-      setError(err instanceof Error ? err.message : "授权失败，请重试");
-    }
+    // Redirect directly to worker callback - browser follows the redirect chain
+    const callbackUrl = `${workerUrl}/mcp/callback?state=${encodeURIComponent(state)}&user_id=${encodeURIComponent(userId)}`;
+    window.location.href = callbackUrl;
   };
 
   // Auto-authorize on mount for better UX
