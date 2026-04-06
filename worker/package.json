@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@nocoo/base-mcp": "0.1.0-alpha.1",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.7.10",

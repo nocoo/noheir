@@ -21,6 +21,11 @@ import {
   handleToken,
   handleRevoke,
 } from "./mcp/oauth";
+import {
+  handleMcpPost,
+  handleMcpGet,
+  handleMcpDelete,
+} from "./mcp/server";
 
 /** Strip undefined values from an object at runtime.
  *  Returns a clean Record<string, string> that satisfies exactOptionalPropertyTypes. */
@@ -139,13 +144,29 @@ app.post("/mcp/revoke", async (c) => {
   return handleRevoke(c, ctx);
 });
 
+// ── MCP Server Endpoints (OAuth token auth, not WORKER_SHARED_SECRET) ──
+
+// Main MCP endpoint (Streamable HTTP)
+app.post("/mcp", async (c) => {
+  const db = drizzle(c.env.DB);
+  const repos = createAllRepos(db);
+  const ctx = { repos, env: c.env };
+  return handleMcpPost(c, ctx);
+});
+
+// SSE notifications (not implemented in v1)
+app.get("/mcp", (c) => handleMcpGet(c));
+
+// Session close (no-op in stateless mode)
+app.delete("/mcp", (c) => handleMcpDelete(c));
+
 // ── Auth middleware (all routes below require Bearer token + X-User-Id) ──
 
 app.use("*", async (c, next) => {
-  // Skip for already-handled routes (health check, OAuth endpoints)
+  // Skip for already-handled routes (health check, OAuth endpoints, MCP)
   if (c.req.path === "/api/health") return next();
   if (c.req.path === "/.well-known/oauth-authorization-server") return next();
-  if (c.req.path.startsWith("/mcp/")) return next();
+  if (c.req.path.startsWith("/mcp")) return next(); // /mcp and /mcp/*
 
   // 1. Verify Bearer token
   const authHeader = c.req.header("Authorization");
