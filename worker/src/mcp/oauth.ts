@@ -242,24 +242,24 @@ export async function handleCallback(
   const state = c.req.query("state");
 
   if (!state) {
-    return c.json({ error: "invalid_request", error_description: "state is required" }, 400);
+    return c.html(errorHtml("Missing state parameter"), 400);
   }
 
   // Find auth session
   const session = await ctx.repos.mcpOAuth.authSessions.findByState(state);
   if (!session) {
-    return c.json({ error: "invalid_request", error_description: "Invalid or expired state" }, 400);
+    return c.html(errorHtml("Invalid or expired authorization session"), 400);
   }
 
   // Check expiration
   const now = Math.floor(Date.now() / 1000);
   if (session.expiresAt < now) {
-    return c.json({ error: "invalid_request", error_description: "Authorization session expired" }, 400);
+    return c.html(errorHtml("Authorization session has expired. Please try again."), 400);
   }
 
   // Check if already consumed
   if (session.consumed) {
-    return c.json({ error: "invalid_request", error_description: "Authorization code already used" }, 400);
+    return c.html(errorHtml("Authorization code has already been used."), 400);
   }
 
   // Generate authorization code
@@ -273,7 +273,8 @@ export async function handleCallback(
   redirectUrl.searchParams.set("code", code);
   redirectUrl.searchParams.set("state", state);
 
-  return c.redirect(redirectUrl.toString());
+  // Return success HTML that auto-redirects
+  return c.html(successHtml(redirectUrl.toString()));
 }
 
 // ============================================================================
@@ -557,4 +558,214 @@ export async function handleRevoke(
 
   // RFC 7009: unknown tokens should return 200 OK
   return c.json({}, 200);
+}
+
+// ============================================================================
+// HTML Templates (basalt design system with theme support)
+// ============================================================================
+
+const ACCENT_COLOR = "#10b981"; // emerald-500, noheir brand color
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function successHtml(redirectUrl: string): string {
+  const safeUrl = escapeHtml(redirectUrl);
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="refresh" content="1;url=${safeUrl}">
+  <title>Authorization Successful - noheir</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0a0a0a;
+        --bg-secondary: #171717;
+        --text: #fafafa;
+        --text-muted: #a3a3a3;
+        --text-hint: #525252;
+      }
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #fafafa;
+        --bg-secondary: #f5f5f5;
+        --text: #0a0a0a;
+        --text-muted: #525252;
+        --text-hint: #a3a3a3;
+      }
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      text-align: center;
+      padding: 2rem;
+    }
+    .icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 1.5rem;
+      background: var(--bg-secondary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .icon svg {
+      width: 32px;
+      height: 32px;
+      color: ${ACCENT_COLOR};
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    p {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+    .hint {
+      font-size: 0.75rem;
+      color: var(--text-hint);
+    }
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--text-hint);
+      border-top-color: ${ACCENT_COLOR};
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 0.5rem;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+      </svg>
+    </div>
+    <h1>Authorization Successful</h1>
+    <p>You have authorized access to noheir.</p>
+    <p class="hint"><span class="spinner"></span>Redirecting back to your client...</p>
+  </div>
+  <script>
+    // Fallback redirect in case meta refresh fails
+    setTimeout(function() {
+      window.location.href = "${safeUrl}";
+    }, 1000);
+  </script>
+</body>
+</html>`;
+}
+
+function errorHtml(message: string): string {
+  const escaped = escapeHtml(message);
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Authorization Failed - noheir</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0a0a0a;
+        --bg-secondary: #171717;
+        --text: #fafafa;
+        --text-muted: #a3a3a3;
+        --text-hint: #525252;
+      }
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #fafafa;
+        --bg-secondary: #f5f5f5;
+        --text: #0a0a0a;
+        --text-muted: #525252;
+        --text-hint: #a3a3a3;
+      }
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      text-align: center;
+      padding: 2rem;
+    }
+    .icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 1.5rem;
+      background: var(--bg-secondary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .icon svg {
+      width: 32px;
+      height: 32px;
+      color: #ef4444;
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    p {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+    .hint {
+      font-size: 0.75rem;
+      color: var(--text-hint);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </div>
+    <h1>Authorization Failed</h1>
+    <p>${escaped}</p>
+    <p class="hint">Please close this window and try again.</p>
+  </div>
+</body>
+</html>`;
 }
