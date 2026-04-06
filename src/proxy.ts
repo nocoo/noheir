@@ -1,54 +1,87 @@
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { resolveProxyAction, type ProxyAction } from "@/lib/proxy-logic";
+
+// Public routes that don't require authentication
+const PUBLIC_ROUTES = [
+  "/login",
+  "/terms",
+  "/privacy",
+];
+
+// Public route prefixes
+const PUBLIC_PREFIXES = [
+  "/.well-known/",  // OAuth metadata
+  "/api/mcp",       // MCP OAuth endpoints (has its own Bearer token auth)
+];
+
+function isPublicRoute(pathname: string): boolean {
+  // Exact matches
+  if (PUBLIC_ROUTES.includes(pathname)) return true;
+  // Prefix matches
+  return PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
+
+function isProtectedApiRoute(pathname: string): boolean {
+  if (!pathname.startsWith("/api/")) return false;
+  // Auth API routes handle auth themselves
+  if (pathname.startsWith("/api/auth/")) return false;
+  // MCP has its own Bearer token auth
+  if (pathname === "/api/mcp" || pathname.startsWith("/api/mcp/")) return false;
+  // All other API routes require auth
+  return true;
+}
 
 // Build redirect URL respecting reverse proxy headers
-function buildRedirectUrl(req: NextRequest, pathname: string): URL {
+function buildLoginUrl(req: NextRequest, callbackPath: string): URL {
   const forwardedHost = req.headers.get("x-forwarded-host");
   const forwardedProto = req.headers.get("x-forwarded-proto") || "https";
 
+  let baseUrl: string;
   if (forwardedHost) {
-    return new URL(pathname, `${forwardedProto}://${forwardedHost}`);
+    baseUrl = `${forwardedProto}://${forwardedHost}`;
+  } else {
+    baseUrl = req.nextUrl.origin;
   }
 
-  return new URL(pathname, req.nextUrl.origin);
+  const url = new URL("/login", baseUrl);
+  url.searchParams.set("callbackUrl", callbackPath);
+  return url;
 }
 
-/** Convert a ProxyAction into a NextResponse */
-function actionToResponse(action: ProxyAction, req: NextRequest): NextResponse {
-  switch (action.type) {
-    case "next":
-      return NextResponse.next();
-    case "redirect":
-      return NextResponse.redirect(buildRedirectUrl(req, action.to));
-    case "json":
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-}
+export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
 
-// Next.js 16 proxy convention (replaces middleware.ts)
-const authHandler = auth(async (req) => {
-  const pathname = req.nextUrl.pathname;
-
-  // Allow auth routes (OAuth flow)
-  if (pathname.startsWith("/api/auth")) {
+  // Skip static assets and Next.js internals
+  if (pathname.startsWith("/_next/") || pathname.includes(".")) {
     return NextResponse.next();
   }
 
-  const isLoggedIn = !!req.auth;
-  const action = resolveProxyAction({ isLoggedIn, pathname });
-  return actionToResponse(action, req);
-});
+  // Public routes - no auth check needed
+  if (isPublicRoute(pathname)) {
+    return NextResponse.next();
+  }
 
-// Export as named 'proxy' function for Next.js 16
-export function proxy(request: NextRequest) {
-  return authHandler(request, {} as never);
+  // API routes have their own auth handling
+  if (isProtectedApiRoute(pathname)) {
+    const session = await auth();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    return NextResponse.next();
+  }
+
+  // Protected page routes - require session
+  const session = await auth();
+  if (!session) {
+    return NextResponse.redirect(buildLoginUrl(request, pathname));
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    // Match all paths except static files and health check
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.ico$|.*\\.svg$|api/live).*)",
+    // Match all paths except static files
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.ico$|.*\\.svg$).*)",
   ],
 };
