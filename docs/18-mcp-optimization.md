@@ -15,7 +15,7 @@ Before implementing this plan, the following gaps exist between Worker API and M
 |---------|------------|----------|--------------|-----|
 | `includeArchived` for products | ✅ `GET /api/products?includeArchived=true` | ✅ `include_archived` param | ✅ `includeArchived` option | Fixed in Commit 1 |
 | Units summary | ✅ `GET /api/units/summary` | ✅ `get_units_summary` | ✅ `getUnitsSummary()` | Implemented in Commits 2, 4 |
-| Products summary | ✅ `GET /api/products/summary` | ❌ Not implemented | ❌ N/A | Implemented in Commit 3 |
+| Products summary | ✅ `GET /api/products/summary` | ✅ `get_products_summary` | ✅ `getProductsSummary()` | Implemented in Commits 3, 5 |
 | Field selection (`fields` param) | ❌ Not implemented | ❌ Not implemented | ❌ N/A | New feature |
 | Pagination (`limit`/`offset`) | ❌ Not implemented | ❌ Not implemented | ❌ N/A | New feature |
 | `available_within_days` filter | ❌ Not implemented | ❌ Not implemented | ❌ N/A | New feature |
@@ -360,7 +360,7 @@ WHERE user_id = ? AND is_archived = true
 2. ✅ `feat(worker): add units summary endpoint`
 3. ✅ `feat(worker): add products summary endpoint`
 4. ✅ `feat(mcp): add get_units_summary tool`
-5. ⬜ `feat(mcp): add get_products_summary tool`
+5. ✅ `feat(mcp): add get_products_summary tool`
 6. ⬜ `feat(worker): add fields and pagination to units endpoint`
 7. ⬜ `feat(mcp): add fields parameter to list_units`
 8. ⬜ `feat(worker): add available_within_days filter to units endpoint`
