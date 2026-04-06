@@ -306,6 +306,32 @@ app.delete("/api/transfers/:id", async (c) => {
 
 // ── Products ──
 
+app.get("/api/products/summary", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const { includeArchived } = c.req.query();
+
+  const { buildProductsSummary } = await import("../lib/products-summary");
+
+  // Fetch active products
+  const activeProducts = await repos.products.findAll(userId, { includeArchived: false });
+
+  // Count archived products
+  const archivedCount = await repos.products.countArchived(userId);
+
+  // Build summary
+  let summary = buildProductsSummary(activeProducts, archivedCount);
+
+  // If includeArchived, also add archived products to the breakdown
+  if (includeArchived === "true") {
+    const archivedProducts = await repos.products.findAll(userId, { includeArchived: true });
+    // Recompute with all products
+    summary = buildProductsSummary(archivedProducts, archivedCount);
+  }
+
+  return c.json(summary);
+});
+
 app.get("/api/products", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");

@@ -1,4 +1,4 @@
-import { eq, and, type SQL } from "drizzle-orm";
+import { eq, and, sql, type SQL } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { financialProducts } from "../schema";
 import type { FinancialProduct, NewFinancialProduct } from "../types";
@@ -69,6 +69,15 @@ export function createProductsRepo(db: DrizzleD1Database) {
         .returning()
         .all();
       return rows.length > 0;
+    },
+
+    async countArchived(userId: string): Promise<number> {
+      const result = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(financialProducts)
+        .where(and(eq(financialProducts.userId, userId), eq(financialProducts.isArchived, true)))
+        .get();
+      return result?.count ?? 0;
     },
   };
 }

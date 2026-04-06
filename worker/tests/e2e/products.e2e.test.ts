@@ -194,4 +194,139 @@ describe("E2E: Products", () => {
 
     expect(res.success).toBe(true);
   });
+
+  // ── Summary Endpoint ──
+
+  test("GET /api/products/summary returns empty summary when no products", async () => {
+    const res = await api<{
+      total_count: number;
+      archived_count: number;
+      by_channel: Record<string, number>;
+      by_category: Record<string, number>;
+      by_currency: Record<string, number>;
+    }>({
+      method: "GET",
+      path: "/api/products/summary",
+      userId,
+    });
+
+    expect(res.total_count).toBe(0);
+    expect(res.archived_count).toBe(0);
+    expect(Object.keys(res.by_channel)).toHaveLength(0);
+    expect(Object.keys(res.by_category)).toHaveLength(0);
+    expect(Object.keys(res.by_currency)).toHaveLength(0);
+  });
+
+  test("GET /api/products/summary aggregates by channel/category/currency", async () => {
+    // Create products with different channels/categories/currencies
+    await api({
+      method: "POST",
+      path: "/api/products",
+      userId,
+      body: makeProduct({ name: "P1", channel: "招商银行", category: "理财产品", currency: "CNY" }),
+    });
+    await api({
+      method: "POST",
+      path: "/api/products",
+      userId,
+      body: makeProduct({ name: "P2", channel: "招商银行", category: "定期存款", currency: "CNY" }),
+    });
+    await api({
+      method: "POST",
+      path: "/api/products",
+      userId,
+      body: makeProduct({ name: "P3", channel: "支付宝", category: "理财产品", currency: "USD" }),
+    });
+
+    const res = await api<{
+      total_count: number;
+      archived_count: number;
+      by_channel: Record<string, number>;
+      by_category: Record<string, number>;
+      by_currency: Record<string, number>;
+    }>({
+      method: "GET",
+      path: "/api/products/summary",
+      userId,
+    });
+
+    expect(res.total_count).toBe(3);
+    expect(res.archived_count).toBe(0);
+
+    // By channel
+    expect(res.by_channel["招商银行"]).toBe(2);
+    expect(res.by_channel["支付宝"]).toBe(1);
+
+    // By category
+    expect(res.by_category["理财产品"]).toBe(2);
+    expect(res.by_category["定期存款"]).toBe(1);
+
+    // By currency
+    expect(res.by_currency["CNY"]).toBe(2);
+    expect(res.by_currency["USD"]).toBe(1);
+  });
+
+  test("GET /api/products/summary excludes archived products by default", async () => {
+    // Create active and archived products
+    await api({
+      method: "POST",
+      path: "/api/products",
+      userId,
+      body: makeProduct({ name: "Active", channel: "招商银行" }),
+    });
+    await api({
+      method: "POST",
+      path: "/api/products",
+      userId,
+      body: makeProduct({ name: "Archived", channel: "支付宝", isArchived: true }),
+    });
+
+    const res = await api<{
+      total_count: number;
+      archived_count: number;
+      by_channel: Record<string, number>;
+    }>({
+      method: "GET",
+      path: "/api/products/summary",
+      userId,
+    });
+
+    // Only active products in breakdown
+    expect(res.total_count).toBe(1);
+    expect(res.archived_count).toBe(1);
+    expect(res.by_channel["招商银行"]).toBe(1);
+    expect(res.by_channel["支付宝"]).toBeUndefined();
+  });
+
+  test("GET /api/products/summary?includeArchived=true includes archived products", async () => {
+    // Create active and archived products
+    await api({
+      method: "POST",
+      path: "/api/products",
+      userId,
+      body: makeProduct({ name: "Active", channel: "招商银行" }),
+    });
+    await api({
+      method: "POST",
+      path: "/api/products",
+      userId,
+      body: makeProduct({ name: "Archived", channel: "支付宝", isArchived: true }),
+    });
+
+    const res = await api<{
+      total_count: number;
+      archived_count: number;
+      by_channel: Record<string, number>;
+    }>({
+      method: "GET",
+      path: "/api/products/summary?includeArchived=true",
+      userId,
+    });
+
+    // All products in breakdown
+    expect(res.total_count).toBe(2);
+    expect(res.archived_count).toBe(1);
+    expect(res.by_channel["招商银行"]).toBe(1);
+    expect(res.by_channel["支付宝"]).toBe(1);
+  });
 });

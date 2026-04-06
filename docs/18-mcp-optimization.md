@@ -14,7 +14,7 @@ Before implementing this plan, the following gaps exist between Worker API and M
 | Feature | Worker API | MCP Tool | WorkerClient | Gap |
 |---------|------------|----------|--------------|-----|
 | `includeArchived` for products | ✅ `GET /api/products?includeArchived=true` | ✅ `include_archived` param | ✅ `includeArchived` option | Fixed in Commit 1 |
-| Units summary | ❌ Not implemented | ❌ Not implemented | ❌ N/A | New endpoint needed |
+| Units summary | ✅ `GET /api/units/summary` | ❌ Not implemented | ❌ N/A | Implemented in Commit 2 |
 | Products summary | ❌ Not implemented | ❌ Not implemented | ❌ N/A | New endpoint needed |
 | Field selection (`fields` param) | ❌ Not implemented | ❌ Not implemented | ❌ N/A | New feature |
 | Pagination (`limit`/`offset`) | ❌ Not implemented | ❌ Not implemented | ❌ N/A | New feature |
@@ -357,7 +357,7 @@ WHERE user_id = ? AND is_archived = true
 ### Atomic Commits
 
 1. ✅ `feat(mcp): expose include_archived param for list_products` — Fix existing gap
-2. ⬜ `feat(worker): add units summary endpoint`
+2. ✅ `feat(worker): add units summary endpoint`
 3. ⬜ `feat(worker): add products summary endpoint`
 4. ⬜ `feat(mcp): add get_units_summary tool`
 5. ⬜ `feat(mcp): add get_products_summary tool`
