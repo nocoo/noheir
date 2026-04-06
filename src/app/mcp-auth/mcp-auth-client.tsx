@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Shield, Check, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,21 +12,46 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 
+// ---------------------------------------------------------------------------
+// Derive Worker URL from current hostname
+// ---------------------------------------------------------------------------
+
+function getWorkerUrl(): string {
+  if (typeof window === "undefined") {
+    return "https://noheir.worker.hexly.ai";
+  }
+
+  const hostname = window.location.hostname;
+
+  // Local development
+  if (hostname === "localhost" || hostname === "127.0.0.1") {
+    return "http://localhost:8788";
+  }
+
+  // Production: noheir.hexly.ai -> noheir.worker.hexly.ai
+  if (hostname.endsWith(".hexly.ai")) {
+    const appName = hostname.replace(".hexly.ai", "");
+    return `https://${appName}.worker.hexly.ai`;
+  }
+
+  // Fallback to production
+  return "https://noheir.worker.hexly.ai";
+}
+
 interface McpAuthClientProps {
   state: string;
   clientName: string;
   userId: string;
-  workerUrl: string;
 }
 
 export function McpAuthClient({
   state,
   clientName,
   userId,
-  workerUrl,
 }: McpAuthClientProps) {
   const [status, setStatus] = useState<"pending" | "authorizing" | "success" | "error">("pending");
   const [error, setError] = useState<string | null>(null);
+  const workerUrl = useMemo(() => getWorkerUrl(), []);
 
   const handleAuthorize = async () => {
     setStatus("authorizing");

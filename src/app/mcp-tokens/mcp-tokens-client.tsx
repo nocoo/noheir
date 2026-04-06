@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { KeyRound, Copy, Check, Terminal, ExternalLink } from "lucide-react";
 import {
   Card,
@@ -12,8 +12,31 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-interface McpTokensClientProps {
-  mcpUrl: string;
+// ---------------------------------------------------------------------------
+// Derive MCP URL from current hostname
+// ---------------------------------------------------------------------------
+
+function getMcpUrl(): string {
+  if (typeof window === "undefined") {
+    return "https://noheir.worker.hexly.ai/mcp";
+  }
+
+  const hostname = window.location.hostname;
+
+  // Local development
+  if (hostname === "localhost" || hostname === "127.0.0.1") {
+    return "http://localhost:8788/mcp";
+  }
+
+  // Production: noheir.hexly.ai -> noheir.worker.hexly.ai
+  // Pattern: {app}.hexly.ai -> {app}.worker.hexly.ai
+  if (hostname.endsWith(".hexly.ai")) {
+    const appName = hostname.replace(".hexly.ai", "");
+    return `https://${appName}.worker.hexly.ai/mcp`;
+  }
+
+  // Fallback to production
+  return "https://noheir.worker.hexly.ai/mcp";
 }
 
 // ---------------------------------------------------------------------------
@@ -74,8 +97,9 @@ function CodeBlock({ code, lang }: { code: string; lang?: string }) {
 // Main component
 // ---------------------------------------------------------------------------
 
-export function McpTokensClient({ mcpUrl }: McpTokensClientProps) {
+export function McpTokensClient() {
   const [activeTab, setActiveTab] = useState<"claude-code" | "claude-desktop" | "cursor">("claude-code");
+  const mcpUrl = useMemo(() => getMcpUrl(), []);
 
   // Config templates for different clients
   const configs = {

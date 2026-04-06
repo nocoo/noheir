@@ -7,13 +7,9 @@ export const metadata = {
 };
 
 export default function McpTokensPage() {
-  const mcpUrl = process.env.WORKER_URL
-    ? `${process.env.WORKER_URL}/mcp`
-    : "https://noheir.worker.hexly.ai/mcp";
-
   return (
     <AppShell>
-      <McpTokensClient mcpUrl={mcpUrl} />
+      <McpTokensClient />
     </AppShell>
   );
 }

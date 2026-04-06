@@ -36,14 +36,11 @@ export default async function McpAuthPage({ searchParams }: McpAuthPageProps) {
     );
   }
 
-  const workerUrl = process.env.WORKER_URL || "https://noheir.worker.hexly.ai";
-
   return (
     <McpAuthClient
       state={params.state}
       clientName={params.client_name || "未知客户端"}
       userId={session.user.id || ""}
-      workerUrl={workerUrl}
     />
   );
 }
