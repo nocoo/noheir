@@ -51,6 +51,7 @@ import {
 import { UnitEditor, type SerializedUnit } from "@/components/capital/unit-editor"
 import { cn } from "@/lib/utils"
 import { formatCurrencyFull } from "@/lib/chart-config"
+import { CAPITAL_TABLE_COLUMNS } from "@/lib/table-columns"
 import { deleteUnit } from "@/app/actions/unit-actions"
 import type { DomainProduct } from "@/domain/types"
 
@@ -330,7 +331,7 @@ export function FundsClient({ units, products }: FundsClientProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead aria-sort={getAriaSort("unitCode")}>
+                <TableHead className={CAPITAL_TABLE_COLUMNS.unitCode} aria-sort={getAriaSort("unitCode")}>
                   <button
                     onClick={() => toggleSort("unitCode")}
                     className="hover:text-foreground flex items-center text-sm transition-colors"
@@ -339,7 +340,7 @@ export function FundsClient({ units, products }: FundsClientProps) {
                     {getSortIcon("unitCode")}
                   </button>
                 </TableHead>
-                <TableHead aria-sort={getAriaSort("amount")}>
+                <TableHead className={CAPITAL_TABLE_COLUMNS.amount} aria-sort={getAriaSort("amount")}>
                   <button
                     onClick={() => toggleSort("amount")}
                     className="hover:text-foreground flex items-center text-sm transition-colors"
@@ -348,7 +349,7 @@ export function FundsClient({ units, products }: FundsClientProps) {
                     {getSortIcon("amount")}
                   </button>
                 </TableHead>
-                <TableHead aria-sort={getAriaSort("strategy")}>
+                <TableHead className={CAPITAL_TABLE_COLUMNS.strategy} aria-sort={getAriaSort("strategy")}>
                   <button
                     onClick={() => toggleSort("strategy")}
                     className="hover:text-foreground flex items-center text-sm transition-colors"
@@ -357,9 +358,9 @@ export function FundsClient({ units, products }: FundsClientProps) {
                     {getSortIcon("strategy")}
                   </button>
                 </TableHead>
-                <TableHead>战术</TableHead>
-                <TableHead>产品</TableHead>
-                <TableHead aria-sort={getAriaSort("status")}>
+                <TableHead className={CAPITAL_TABLE_COLUMNS.tactics}>战术</TableHead>
+                <TableHead className={CAPITAL_TABLE_COLUMNS.product}>产品</TableHead>
+                <TableHead className={CAPITAL_TABLE_COLUMNS.status} aria-sort={getAriaSort("status")}>
                   <button
                     onClick={() => toggleSort("status")}
                     className="hover:text-foreground flex items-center text-sm transition-colors"
@@ -368,7 +369,7 @@ export function FundsClient({ units, products }: FundsClientProps) {
                     {getSortIcon("status")}
                   </button>
                 </TableHead>
-                <TableHead aria-sort={getAriaSort("availableDate")}>
+                <TableHead className={CAPITAL_TABLE_COLUMNS.date} aria-sort={getAriaSort("availableDate")}>
                   <button
                     onClick={() => toggleSort("availableDate")}
                     className="hover:text-foreground flex items-center text-sm transition-colors"
@@ -377,7 +378,7 @@ export function FundsClient({ units, products }: FundsClientProps) {
                     {getSortIcon("availableDate")}
                   </button>
                 </TableHead>
-                <TableHead className="w-20">操作</TableHead>
+                <TableHead className={CAPITAL_TABLE_COLUMNS.actions}>操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

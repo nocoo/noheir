@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/colored-badge"
 import { cn } from "@/lib/utils"
 import { formatCurrencyFull } from "@/lib/chart-config"
+import { CAPITAL_TABLE_COLUMNS } from "@/lib/table-columns"
 
 interface SerializedDecision {
   unitCode: string
@@ -235,7 +236,7 @@ export function CapitalDecisionsClient({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead aria-sort={getAriaSort("urgency")}>
+                <TableHead className={CAPITAL_TABLE_COLUMNS.urgency} aria-sort={getAriaSort("urgency")}>
                   <button
                     onClick={() => handleSort("urgency")}
                     className="hover:text-foreground flex items-center text-sm transition-colors"
@@ -244,7 +245,7 @@ export function CapitalDecisionsClient({
                     {getSortIcon("urgency")}
                   </button>
                 </TableHead>
-                <TableHead aria-sort={getAriaSort("unitCode")}>
+                <TableHead className={CAPITAL_TABLE_COLUMNS.unitCode} aria-sort={getAriaSort("unitCode")}>
                   <button
                     onClick={() => handleSort("unitCode")}
                     className="hover:text-foreground flex items-center text-sm transition-colors"
@@ -253,7 +254,7 @@ export function CapitalDecisionsClient({
                     {getSortIcon("unitCode")}
                   </button>
                 </TableHead>
-                <TableHead aria-sort={getAriaSort("strategy")}>
+                <TableHead className={CAPITAL_TABLE_COLUMNS.strategy} aria-sort={getAriaSort("strategy")}>
                   <button
                     onClick={() => handleSort("strategy")}
                     className="hover:text-foreground flex items-center text-sm transition-colors"
@@ -262,7 +263,7 @@ export function CapitalDecisionsClient({
                     {getSortIcon("strategy")}
                   </button>
                 </TableHead>
-                <TableHead aria-sort={getAriaSort("amount")}>
+                <TableHead className={CAPITAL_TABLE_COLUMNS.amount} aria-sort={getAriaSort("amount")}>
                   <button
                     onClick={() => handleSort("amount")}
                     className="hover:text-foreground flex items-center text-sm transition-colors"
@@ -271,9 +272,9 @@ export function CapitalDecisionsClient({
                     {getSortIcon("amount")}
                   </button>
                 </TableHead>
-                <TableHead>到期</TableHead>
-                <TableHead>原因</TableHead>
-                <TableHead>建议操作</TableHead>
+                <TableHead className={CAPITAL_TABLE_COLUMNS.date}>到期</TableHead>
+                <TableHead className={CAPITAL_TABLE_COLUMNS.reason}>原因</TableHead>
+                <TableHead className={CAPITAL_TABLE_COLUMNS.reason}>建议操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

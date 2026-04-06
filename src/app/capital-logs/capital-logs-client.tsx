@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/colored-badge"
 import { StatCard } from "@/components/shared/stat-card"
 import { formatCurrencyFull } from "@/lib/chart-config"
+import { CAPITAL_TABLE_COLUMNS } from "@/lib/table-columns"
 import { ContributionLogForm } from "@/components/capital/contribution-log-form"
 import { deleteContributionLog, restoreContributionLog } from "@/app/actions/contribution-log-actions"
 import type {
@@ -334,14 +335,14 @@ export function CapitalLogsClient({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[100px]">日期</TableHead>
-                <TableHead className="w-[80px]">类型</TableHead>
-                <TableHead className="text-right">金额</TableHead>
-                <TableHead>资金单元</TableHead>
-                <TableHead>产品</TableHead>
-                <TableHead className="w-[80px]">来源</TableHead>
-                <TableHead>备注</TableHead>
-                <TableHead className="w-[100px]">操作</TableHead>
+                <TableHead className={CAPITAL_TABLE_COLUMNS.date}>日期</TableHead>
+                <TableHead className={CAPITAL_TABLE_COLUMNS.operationType}>类型</TableHead>
+                <TableHead className={CAPITAL_TABLE_COLUMNS.amount}>金额</TableHead>
+                <TableHead className={CAPITAL_TABLE_COLUMNS.unitCode}>资金单元</TableHead>
+                <TableHead className={CAPITAL_TABLE_COLUMNS.product}>产品</TableHead>
+                <TableHead className={CAPITAL_TABLE_COLUMNS.source}>来源</TableHead>
+                <TableHead className={CAPITAL_TABLE_COLUMNS.note}>备注</TableHead>
+                <TableHead className={CAPITAL_TABLE_COLUMNS.actions}>操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
