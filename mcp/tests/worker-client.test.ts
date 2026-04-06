@@ -289,6 +289,35 @@ describe("WorkerClient", () => {
   });
 
   // ────────────────────────────────────────────────────────────────────────────
+  // Units Summary
+  // ────────────────────────────────────────────────────────────────────────────
+
+  describe("getUnitsSummary", () => {
+    it("calls GET /api/units/summary", async () => {
+      fetchSpy.mockResolvedValueOnce(mockFetchResponse({
+        total_count: 5,
+        total_amount_cents: 1000000,
+        by_strategy: {},
+        by_status: {},
+        by_tactics: {},
+        availability: {
+          available_now: { count: 0, amount_cents: 0 },
+          available_30d: { count: 0, amount_cents: 0 },
+          locked: { count: 0, amount_cents: 0 },
+          unknown: { count: 5, amount_cents: 1000000 },
+        },
+      }));
+
+      const result = await client.getUnitsSummary();
+
+      const [url] = fetchSpy.mock.calls[0] as [string, RequestInit];
+      expect(url).toBe(`${BASE_URL}/api/units/summary`);
+      expect(result.total_count).toBe(5);
+      expect(result.availability.unknown.count).toBe(5);
+    });
+  });
+
+  // ────────────────────────────────────────────────────────────────────────────
   // Units CRUD
   // ────────────────────────────────────────────────────────────────────────────
 

@@ -299,6 +299,33 @@ Required fields: name, channel, category. Optional: code, currency (default CNY)
     },
   )
 
+  // ── get_units_summary ───────────────────────────────────────────────────────
+  server.tool(
+    "get_units_summary",
+    `Get aggregated statistics about capital units without fetching individual records.
+
+WHEN TO USE:
+- First call before listing units, to understand data shape and totals
+- When you need counts/amounts grouped by strategy, status, or tactics
+- To check upcoming availability without fetching all unit details
+
+RESPONSE INCLUDES:
+- total_count, total_amount_cents: Overall totals
+- by_strategy, by_status, by_tactics: Breakdown with count and amount_cents
+- availability: Categorized as available_now (≤0 days), available_30d (1-30 days), locked (>30 days), unknown (no data)
+
+LIMITATIONS:
+- Amounts are in cents (divide by 100 for display)
+- Availability requires unit linked to product with lockPeriodDays AND at least one invest log`,
+    {},
+    async () => {
+      const result = await client.getUnitsSummary()
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(result) }],
+      }
+    },
+  )
+
   // ── list_units ──────────────────────────────────────────────────────────────
   server.tool(
     "list_units",

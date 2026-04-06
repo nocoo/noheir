@@ -136,6 +136,22 @@ export class WorkerClient {
 
   // ── Units ──
 
+  getUnitsSummary() {
+    return this.request<{
+      total_count: number
+      total_amount_cents: number
+      by_strategy: Record<string, { count: number; amount_cents: number }>
+      by_status: Record<string, { count: number; amount_cents: number }>
+      by_tactics: Record<string, { count: number; amount_cents: number }>
+      availability: {
+        available_now: { count: number; amount_cents: number }
+        available_30d: { count: number; amount_cents: number }
+        locked: { count: number; amount_cents: number }
+        unknown: { count: number; amount_cents: number }
+      }
+    }>("GET", "/api/units/summary")
+  }
+
   listUnits(filters?: {
     status?: string | undefined
     strategy?: string | undefined
