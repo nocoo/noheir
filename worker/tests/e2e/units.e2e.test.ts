@@ -489,4 +489,149 @@ describe("E2E: Units", () => {
     expect(unit.isAvailable).toBe(true); // No lock, immediately available
     expect(unit.daysUntilAvailable).toBe(0);
   });
+
+  // ── Summary Endpoint ──
+
+  test("GET /api/units/summary returns empty summary when no units", async () => {
+    const res = await api<{
+      total_count: number;
+      total_amount_cents: number;
+      by_strategy: Record<string, unknown>;
+      by_status: Record<string, unknown>;
+      by_tactics: Record<string, unknown>;
+      availability: Record<string, unknown>;
+    }>({
+      method: "GET",
+      path: "/api/units/summary",
+      userId,
+    });
+
+    expect(res.total_count).toBe(0);
+    expect(res.total_amount_cents).toBe(0);
+    expect(Object.keys(res.by_strategy)).toHaveLength(0);
+    expect(Object.keys(res.by_status)).toHaveLength(0);
+    expect(Object.keys(res.by_tactics)).toHaveLength(0);
+    expect(res.availability).toEqual({
+      available_now: { count: 0, amount_cents: 0 },
+      available_30d: { count: 0, amount_cents: 0 },
+      locked: { count: 0, amount_cents: 0 },
+      unknown: { count: 0, amount_cents: 0 },
+    });
+  });
+
+  test("GET /api/units/summary aggregates by strategy/status/tactics", async () => {
+    // Create units with different strategies/statuses/tactics
+    await api({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit({ unitCode: "U1", amountCents: 1000000, strategy: "短期理财", status: "已成立", tactics: "理财产品" }),
+    });
+    await api({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit({ unitCode: "U2", amountCents: 2000000, strategy: "短期理财", status: "已成立", tactics: "债券基金" }),
+    });
+    await api({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit({ unitCode: "U3", amountCents: 3000000, strategy: "长期理财", status: "计划中", tactics: "理财产品" }),
+    });
+
+    const res = await api<{
+      total_count: number;
+      total_amount_cents: number;
+      by_strategy: Record<string, { count: number; amount_cents: number }>;
+      by_status: Record<string, { count: number; amount_cents: number }>;
+      by_tactics: Record<string, { count: number; amount_cents: number }>;
+    }>({
+      method: "GET",
+      path: "/api/units/summary",
+      userId,
+    });
+
+    expect(res.total_count).toBe(3);
+    expect(res.total_amount_cents).toBe(6000000);
+
+    // By strategy
+    expect(res.by_strategy["短期理财"]).toEqual({ count: 2, amount_cents: 3000000 });
+    expect(res.by_strategy["长期理财"]).toEqual({ count: 1, amount_cents: 3000000 });
+
+    // By status
+    expect(res.by_status["已成立"]).toEqual({ count: 2, amount_cents: 3000000 });
+    expect(res.by_status["计划中"]).toEqual({ count: 1, amount_cents: 3000000 });
+
+    // By tactics
+    expect(res.by_tactics["理财产品"]).toEqual({ count: 2, amount_cents: 4000000 });
+    expect(res.by_tactics["债券基金"]).toEqual({ count: 1, amount_cents: 2000000 });
+  });
+
+  test("GET /api/units/summary categorizes availability correctly", async () => {
+    // Create a product with 30-day lock
+    const { product } = await api<{ product: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/products",
+      userId,
+      body: makeProduct({ lockPeriodDays: 30 }),
+    });
+
+    // Unit 1: With product and invest log → will be locked (30 days)
+    const { unit: unit1 } = await api<{ unit: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit({ unitCode: "U1", amountCents: 1000000, productId: product.id }),
+    });
+
+    const today = new Date().toISOString().slice(0, 10);
+    await api({
+      method: "POST",
+      path: "/api/contribution-logs",
+      userId,
+      body: {
+        unitId: unit1.id,
+        productId: product.id,
+        operationType: "invest",
+        amountCents: 1000000,
+        operationDate: today,
+      },
+    });
+
+    // Unit 2: Without product → unknown availability
+    await api({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit({ unitCode: "U2", amountCents: 2000000 }),
+    });
+
+    // Unit 3: With product but no invest log → unknown availability
+    await api({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit({ unitCode: "U3", amountCents: 3000000, productId: product.id }),
+    });
+
+    const res = await api<{
+      availability: {
+        available_now: { count: number; amount_cents: number };
+        available_30d: { count: number; amount_cents: number };
+        locked: { count: number; amount_cents: number };
+        unknown: { count: number; amount_cents: number };
+      };
+    }>({
+      method: "GET",
+      path: "/api/units/summary",
+      userId,
+    });
+
+    // Unit 1: locked (30 days > 0), Unit 2 & 3: unknown
+    expect(res.availability.locked).toEqual({ count: 1, amount_cents: 1000000 });
+    expect(res.availability.unknown).toEqual({ count: 2, amount_cents: 5000000 });
+    expect(res.availability.available_now).toEqual({ count: 0, amount_cents: 0 });
+    expect(res.availability.available_30d).toEqual({ count: 0, amount_cents: 0 });
+  });
 });

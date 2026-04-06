@@ -376,6 +376,27 @@ app.delete("/api/products/:id", async (c) => {
 
 // ── Units ──
 
+app.get("/api/units/summary", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+
+  // Import summary builder dynamically to avoid circular deps
+  const { buildUnitsSummary } = await import("../lib/units-summary");
+
+  // Fetch all units with products (needed for lock period)
+  const units = await repos.units.findAllWithProducts(userId);
+
+  // Fetch latest invest logs for availability calculation
+  const unitIds = units.map((u) => u.id);
+  const latestInvestLogs = await repos.contributionLogs.getLatestInvestLogs(userId, unitIds);
+
+  // Enrich with availability and build summary
+  const unitsWithAvailability = repos.units.enrichWithAvailability(units, latestInvestLogs);
+  const summary = buildUnitsSummary(unitsWithAvailability);
+
+  return c.json(summary);
+});
+
 app.get("/api/units", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
