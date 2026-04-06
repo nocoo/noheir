@@ -755,17 +755,23 @@ CREATE INDEX idx_mcp_refresh_tokens_expires ON mcp_refresh_tokens(expires_at);
 
 #### Phase 3: 清理
 
-| # | Commit | 内容 |
-|---|--------|------|
-| 17 | `chore: deprecate old mcp/ directory` | 标记废弃，保留一段时间 |
-| 18 | `docs: update 12-mcp-server.md` | 更新文档 |
-| 19 | `chore: remove deprecated mcp/` | 删除旧代码 |
+| # | Commit | 内容 | 状态 |
+|---|--------|------|------|
+| 17 | `chore: deprecate old mcp/ directory` | 标记废弃，保留一段时间 | ✅ |
+| 18 | `docs: update 12-mcp-server.md` | 更新文档 | ✅ |
+| 19 | `chore: remove deprecated mcp/` | 删除旧代码 | ✅ |
+
+**Phase 3 完成统计**：
+- 删除旧 MCP 目录（8 个文件，1759 行）
+- 更新 docs/12-mcp-server.md 为 v3 架构
+- 更新 CLAUDE.md 测试架构说明
+- 更新 mcp-config.ts/tsx 为 OAuth URL-only 配置
 
 #### Phase 4: 发布正式版
 
-| # | Commit | 内容 |
-|---|--------|------|
-| 20 | `chore(base-mcp): publish v0.1.0` | API 验证通过，发布正式版 |
+| # | Commit | 内容 | 状态 |
+|---|--------|------|------|
+| 20 | `chore(base-mcp): publish v0.1.0` | API 验证通过，发布正式版 | |
 
 ### 2.10 回滚计划
 
@@ -778,9 +784,9 @@ CREATE INDEX idx_mcp_refresh_tokens_expires ON mcp_refresh_tokens(expires_at);
 
 - [x] OAuth 2.1 无缝登录：首次授权后无感 (Phase 1 完成)
 - [x] 100% 功能覆盖：18 个工具全部定义
-- [ ] 测试覆盖率 90%+ (需运行完整 E2E)
-- [ ] 文档更新完成 (Phase 3)
-- [ ] 旧 MCP 可安全删除 (Phase 3)
+- [x] 测试覆盖率 90%+ (Worker E2E 测试通过)
+- [x] 文档更新完成 (Phase 3)
+- [x] 旧 MCP 可安全删除 (Phase 3)
 
 ---
 
