@@ -5,11 +5,13 @@
  * Implements OAuth 2.1 token validation for authentication.
  */
 
-import { createMcpServer, validateMcpToken, validateOrigin } from "@nocoo/base-mcp";
+import { createMcpServer, registerEntityTools, validateOrigin } from "@nocoo/base-mcp";
 import { hashToken } from "@nocoo/base-mcp/auth";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import type { Context } from "hono";
 import type { AllRepos } from "../../db/repositories";
+import { productEntity } from "./entities/product";
+import { unitEntity } from "./entities/unit";
 
 // ============================================================================
 // Types
@@ -89,13 +91,19 @@ function createMcpServerInstance(userId: string, repos: AllRepos) {
     version: "3.0.0",
   });
 
-  // TODO: Register entity tools
-  // registerEntityTools(server, productEntity, { repos, userId });
-  // registerEntityTools(server, unitEntity, { repos, userId });
+  // Register entity tools with appropriate repos slices
+  // EntityContext<ProductRepos> = { repos: ProductRepos }
+  registerEntityTools(server, productEntity, {
+    repos: { products: repos.products, userId },
+  });
+
+  registerEntityTools(server, unitEntity, {
+    repos: { units: repos.units, contributionLogs: repos.contributionLogs, userId },
+  });
 
   // TODO: Register custom tools
-  // registerQueryTools(server, { repos, userId });
-  // registerReportTools(server, { repos, userId });
+  // registerQueryTools(server, ctx);
+  // registerReportTools(server, ctx);
 
   return server;
 }
@@ -113,7 +121,7 @@ export async function handleMcpPost(
 ): Promise<Response> {
   // 1. Origin validation (DNS rebinding protection)
   const siteUrl = c.env?.SITE_URL || "https://noheir.hexly.ai";
-  const originResult = validateOrigin(c.req.header("origin"), siteUrl);
+  const originResult = validateOrigin(c.req.header("origin") ?? null, siteUrl);
   if (!originResult.valid) {
     return c.json({ error: originResult.error }, originResult.status as 400 | 403);
   }
@@ -129,7 +137,7 @@ export async function handleMcpPost(
 
   // 4. Create transport and handle request
   const transport = new WebStandardStreamableHTTPServerTransport({
-    sessionIdGenerator: undefined, // Stateless mode
+    sessionIdGenerator: () => crypto.randomUUID(), // Stateless mode - generate unique IDs but don't track sessions
     enableJsonResponse: true,
   });
 
