@@ -79,7 +79,16 @@ const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 app.use(
   "*",
   cors({
-    origin: "*",
+    // Only allow requests from the frontend domain
+    origin: (origin) => {
+      if (!origin) return null; // Allow server-to-server requests (no Origin header)
+      const allowedOrigins = [
+        "https://noheir.hexly.ai",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+      ];
+      return allowedOrigins.includes(origin) ? origin : null;
+    },
     allowHeaders: [
       "Content-Type",
       "Authorization",

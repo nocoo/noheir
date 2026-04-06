@@ -24,6 +24,7 @@ const PUBLIC_PATHS = [
   "/terms",
   "/privacy",
   "/.well-known/",  // OAuth metadata, etc.
+  "/api/mcp/",      // MCP OAuth endpoints (register, authorize, token, etc.)
 ];
 
 function isPublicPath(pathname: string): boolean {

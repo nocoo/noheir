@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
 // Derive MCP URL from current hostname
-// MCP endpoint is at /api/mcp on the main domain
+// MCP endpoint is proxied at /api/mcp on the main domain
 // ---------------------------------------------------------------------------
 
 function getMcpUrl(): string {
@@ -22,11 +22,7 @@ function getMcpUrl(): string {
     return "https://noheir.hexly.ai/api/mcp";
   }
 
-  const hostname = window.location.hostname;
-  const protocol = window.location.protocol;
-  const port = window.location.port;
-
-  // Build base URL
+  const { protocol, hostname, port } = window.location;
   let baseUrl = `${protocol}//${hostname}`;
   if (port && port !== "80" && port !== "443") {
     baseUrl += `:${port}`;
