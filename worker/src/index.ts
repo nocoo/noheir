@@ -60,6 +60,7 @@ export interface Env {
   DB: D1Database;
   DB_TEST: D1Database;
   WORKER_SHARED_SECRET: string;
+  WORKER_SECRET: string; // For Next.js MCP server SQL API
   SITE_URL?: string;
 }
 
@@ -189,13 +190,122 @@ app.get("/mcp", (c) => handleMcpGet(c));
 // Session close (no-op in stateless mode)
 app.delete("/mcp", (c) => handleMcpDelete(c));
 
+// ── SQL API Endpoints (for Next.js MCP server) ──
+// These use WORKER_SECRET auth (separate from WORKER_SHARED_SECRET for frontend)
+
+/**
+ * /api/v1/query - Execute read-only SQL queries
+ * Body: { sql: string, params?: unknown[] }
+ * Returns: { results: T[], meta: { changes: number, duration: number } }
+ */
+app.post("/api/v1/query", async (c) => {
+  // Verify WORKER_SECRET
+  const authHeader = c.req.header("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return c.json({ error: "Missing Authorization header" }, 401);
+  }
+  const token = authHeader.slice(7);
+  const secret = c.env.WORKER_SECRET;
+  if (!secret || !timingSafeEqual(token, secret)) {
+    return c.json({ error: "Invalid token" }, 403);
+  }
+
+  try {
+    const body = await c.req.json<{ sql: string; params?: unknown[] }>();
+    if (!body.sql || typeof body.sql !== "string") {
+      return c.json({ error: "sql is required" }, 400);
+    }
+
+    const d1 = getD1Binding(c);
+    const start = Date.now();
+    const stmt = d1.prepare(body.sql).bind(...(body.params ?? []));
+    const result = await stmt.all();
+    const duration = Date.now() - start;
+
+    return c.json({
+      results: result.results,
+      meta: { changes: result.meta.changes ?? 0, duration },
+    });
+  } catch (err) {
+    return c.json(
+      { error: err instanceof Error ? err.message : "Query failed" },
+      500,
+    );
+  }
+});
+
+/**
+ * /api/v1/execute - Execute write SQL queries (INSERT/UPDATE/DELETE)
+ * Body: { sql: string, params?: unknown[] } or { statements: { sql: string, params?: unknown[] }[] }
+ * Returns: { meta: { changes: number, duration: number } } or { results: ...[] }
+ */
+app.post("/api/v1/execute", async (c) => {
+  // Verify WORKER_SECRET
+  const authHeader = c.req.header("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return c.json({ error: "Missing Authorization header" }, 401);
+  }
+  const token = authHeader.slice(7);
+  const secret = c.env.WORKER_SECRET;
+  if (!secret || !timingSafeEqual(token, secret)) {
+    return c.json({ error: "Invalid token" }, 403);
+  }
+
+  try {
+    const body = await c.req.json<{
+      sql?: string;
+      params?: unknown[];
+      statements?: { sql: string; params?: unknown[] }[];
+    }>();
+
+    const d1 = getD1Binding(c);
+    const start = Date.now();
+
+    // Batch mode
+    if (body.statements && Array.isArray(body.statements)) {
+      const stmts = body.statements.map((s) =>
+        d1.prepare(s.sql).bind(...(s.params ?? [])),
+      );
+      const batchResults = await d1.batch(stmts);
+      const duration = Date.now() - start;
+
+      return c.json({
+        results: batchResults.map((r) => ({
+          results: r.results,
+          meta: { changes: r.meta.changes ?? 0, duration },
+        })),
+      });
+    }
+
+    // Single statement mode
+    if (!body.sql || typeof body.sql !== "string") {
+      return c.json({ error: "sql is required" }, 400);
+    }
+
+    const stmt = d1.prepare(body.sql).bind(...(body.params ?? []));
+    const result = await stmt.run();
+    const duration = Date.now() - start;
+
+    return c.json({
+      results: [],
+      meta: { changes: result.meta.changes ?? 0, duration },
+    });
+  } catch (err) {
+    return c.json(
+      { error: err instanceof Error ? err.message : "Execute failed" },
+      500,
+    );
+  }
+});
+
 // ── Auth middleware (all routes below require Bearer token + X-User-Id) ──
 
 app.use("*", async (c, next) => {
-  // Skip for already-handled routes (health check, OAuth endpoints, MCP)
+  // Skip for already-handled routes (health check, OAuth endpoints, MCP, SQL API)
   if (c.req.path === "/api/health") return next();
   if (c.req.path === "/.well-known/oauth-authorization-server") return next();
   if (c.req.path.startsWith("/mcp")) return next(); // /mcp and /mcp/*
+  if (c.req.path.startsWith("/api/v1/")) return next(); // SQL API
 
   // 1. Verify Bearer token
   const authHeader = c.req.header("Authorization");
