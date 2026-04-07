@@ -23,6 +23,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@nocoo/base-mcp": "link:../base-mcp",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -42,6 +43,7 @@
     "remark-gfm": "^4.0.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
+    "ulid": "^3.0.2",
     "zod": "^4.3.6"
   },
   "devDependencies": {

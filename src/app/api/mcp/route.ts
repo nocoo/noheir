@@ -1,54 +1,66 @@
 /**
- * MCP Proxy Route
+ * MCP Server Endpoint
  *
- * Proxies all MCP requests to the Worker, keeping the Worker URL internal.
- * This allows clients to use the main domain for MCP while the actual
- * processing happens on the Worker.
+ * Handles MCP protocol requests using Streamable HTTP transport.
+ * Validates OAuth tokens and dispatches to registered tools.
  */
 
-const WORKER_URL = process.env.WORKER_URL || "https://noheir.worker.hexly.ai";
+import { NextResponse } from "next/server";
+import { getDb } from "@/lib/db";
+import { validateMcpToken, validateOrigin } from "@/lib/mcp/auth";
+import { createMcpServer } from "@/lib/mcp/server";
+import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
+
+function errorResponse(message: string, status = 400): NextResponse {
+  return NextResponse.json({ error: message }, { status });
+}
 
 export async function POST(request: Request) {
-  const body = await request.text();
-  const authHeader = request.headers.get("Authorization");
+  const siteUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
 
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-  };
-  if (authHeader) {
-    headers["Authorization"] = authHeader;
+  // Step 1: Validate Origin header (DNS rebinding prevention)
+  const originError = validateOrigin(
+    request.headers.get("origin"),
+    siteUrl,
+  );
+  if (originError) {
+    return errorResponse(originError.error, originError.status);
   }
 
-  const workerResponse = await fetch(`${WORKER_URL}/mcp`, {
-    method: "POST",
-    headers,
-    body,
+  // Step 2: Validate Bearer token
+  const db = getDb();
+  const authResult = await validateMcpToken(
+    db,
+    request.headers.get("authorization"),
+  );
+  if (!authResult.valid) {
+    return errorResponse(authResult.error, authResult.status);
+  }
+
+  // Step 3: Create MCP server and handle request via stateless transport
+  const server = createMcpServer(db, authResult.token.user_id);
+  const transport = new WebStandardStreamableHTTPServerTransport({
+    enableJsonResponse: true, // JSON-only, no SSE — stateless Phase 1
   });
 
-  return new Response(workerResponse.body, {
-    status: workerResponse.status,
-    headers: workerResponse.headers,
-  });
+  try {
+    await server.connect(transport);
+    return await transport.handleRequest(request);
+  } finally {
+    transport.close().catch(() => {});
+    server.close().catch(() => {});
+  }
 }
 
-export async function GET() {
-  const workerResponse = await fetch(`${WORKER_URL}/mcp`, {
-    method: "GET",
-  });
-
-  return new Response(workerResponse.body, {
-    status: workerResponse.status,
-    headers: workerResponse.headers,
-  });
+/**
+ * GET SSE stream is not supported in stateless mode.
+ * Per MCP spec, return 405 so Streamable HTTP clients know to use POST only.
+ * Clients must be configured with type "streamable-http" (not "sse").
+ */
+export function GET() {
+  return errorResponse("SSE transport not supported. Use Streamable HTTP (POST).", 405);
 }
 
-export async function DELETE() {
-  const workerResponse = await fetch(`${WORKER_URL}/mcp`, {
-    method: "DELETE",
-  });
-
-  return new Response(workerResponse.body, {
-    status: workerResponse.status,
-    headers: workerResponse.headers,
-  });
+export function DELETE() {
+  return errorResponse("Session termination not supported in stateless mode.", 405);
 }

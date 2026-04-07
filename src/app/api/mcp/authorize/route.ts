@@ -2,7 +2,7 @@
  * MCP OAuth Authorize Endpoint
  *
  * Handles authorization flow:
- * 1. Forward params to Worker to create auth session
+ * 1. Validate params and create auth session in DB
  * 2. Check if user is logged in
  * 3. If logged in, redirect to callback
  * 4. If not, redirect to login with callback URL
@@ -10,48 +10,84 @@
 
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { getDb } from "@/lib/db";
+import { getMcpClientByClientId } from "@/services/mcp-clients";
+import { createAuthSession, AUTH_CODE_TTL } from "@/services/mcp-auth-codes";
 
-const WORKER_URL = process.env.WORKER_URL || "https://noheir.worker.hexly.ai";
+function errorResponse(message: string, status = 400): NextResponse {
+  return NextResponse.json({ error: message }, { status });
+}
 
 export async function GET(request: Request) {
-  const url = new URL(request.url);
-  const state = url.searchParams.get("state");
+  try {
+    const url = new URL(request.url);
+    const params = url.searchParams;
 
-  if (!state) {
-    return NextResponse.json({ error: "Missing state parameter" }, { status: 400 });
+    const responseType = params.get("response_type");
+    const clientId = params.get("client_id");
+    const redirectUri = params.get("redirect_uri");
+    const codeChallenge = params.get("code_challenge");
+    const codeChallengeMethod = params.get("code_challenge_method");
+    const state = params.get("state");
+    const scope = params.get("scope") ?? "mcp:full";
+
+    // Validate required params
+    if (!responseType || !clientId || !redirectUri || !codeChallenge || !codeChallengeMethod || !state) {
+      return errorResponse("Missing required parameters: response_type, client_id, redirect_uri, code_challenge, code_challenge_method, state");
+    }
+
+    if (responseType !== "code") {
+      return errorResponse("response_type must be 'code'");
+    }
+
+    if (codeChallengeMethod !== "S256") {
+      return errorResponse("code_challenge_method must be 'S256'");
+    }
+
+    // Verify client exists
+    const db = getDb();
+    const client = await getMcpClientByClientId(db, clientId);
+    if (!client) {
+      return errorResponse("Unknown client_id", 401);
+    }
+
+    // Verify redirect_uri matches registered URIs
+    const registeredUris: string[] = JSON.parse(client.redirect_uris);
+    if (!registeredUris.includes(redirectUri)) {
+      return errorResponse("redirect_uri does not match any registered URIs");
+    }
+
+    // Store authorization session keyed by state
+    const now = Math.floor(Date.now() / 1000);
+    await createAuthSession(db, {
+      state,
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      code_challenge: codeChallenge,
+      code_challenge_method: codeChallengeMethod,
+      scope,
+      expires_at: now + AUTH_CODE_TTL,
+    });
+
+    // Build the MCP callback URL
+    const siteUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+    const callbackUrl = `${siteUrl}/api/mcp/callback?state=${encodeURIComponent(state)}`;
+
+    // If user already has a session, go straight to callback
+    const session = await auth();
+    if (session?.user?.id) {
+      return NextResponse.redirect(callbackUrl);
+    }
+
+    // Otherwise, redirect to login page which handles Google OAuth.
+    // After login, NextAuth will redirect back to callbackUrl.
+    const loginUrl = `${siteUrl}/login?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+    return NextResponse.redirect(loginUrl);
+  } catch (error) {
+    console.error("[mcp/authorize] Error:", error);
+    return errorResponse(
+      error instanceof Error ? error.message : "Internal server error",
+      500,
+    );
   }
-
-  // Forward to Worker to create auth session
-  const workerUrl = new URL(`${WORKER_URL}/mcp/authorize`);
-  url.searchParams.forEach((value, key) => {
-    workerUrl.searchParams.set(key, value);
-  });
-
-  const workerResponse = await fetch(workerUrl.toString(), {
-    method: "GET",
-  });
-
-  // If Worker returns error, forward it
-  if (!workerResponse.ok) {
-    const errorData = await workerResponse.json().catch(() => ({ error: "Unknown error" }));
-    return NextResponse.json(errorData, { status: workerResponse.status });
-  }
-
-  // Worker created auth session successfully
-  // Now check if user is logged in
-  const session = await auth();
-
-  // Build callback URL
-  const siteUrl = process.env.NEXTAUTH_URL || "https://noheir.hexly.ai";
-  const callbackUrl = `${siteUrl}/api/mcp/callback?state=${encodeURIComponent(state)}`;
-
-  if (session?.user?.id) {
-    // User is logged in, go directly to callback
-    return NextResponse.redirect(callbackUrl);
-  }
-
-  // User not logged in, redirect to login
-  const loginUrl = new URL("/login", siteUrl);
-  loginUrl.searchParams.set("callbackUrl", callbackUrl);
-  return NextResponse.redirect(loginUrl.toString());
 }
