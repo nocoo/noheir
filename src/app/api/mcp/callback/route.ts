@@ -1,7 +1,7 @@
 /**
- * MCP OAuth Callback Proxy
+ * MCP OAuth Callback Endpoint
  *
- * This endpoint is called after user login, forwarding to Worker with user_id.
+ * Called after user login, forwards to Worker with user_id to generate auth code.
  */
 
 import { NextResponse } from "next/server";
@@ -19,10 +19,14 @@ export async function GET(request: Request) {
 
   // Get user session
   const session = await auth();
+  const siteUrl = process.env.NEXTAUTH_URL || "https://noheir.hexly.ai";
+
   if (!session?.user?.id) {
     // Redirect to login with callback
-    const callbackUrl = `/api/mcp/callback?state=${encodeURIComponent(state)}`;
-    return NextResponse.redirect(new URL(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`, request.url));
+    const callbackUrl = `${siteUrl}/api/mcp/callback?state=${encodeURIComponent(state)}`;
+    const loginUrl = new URL("/login", siteUrl);
+    loginUrl.searchParams.set("callbackUrl", callbackUrl);
+    return NextResponse.redirect(loginUrl.toString());
   }
 
   // Forward to Worker with user_id
