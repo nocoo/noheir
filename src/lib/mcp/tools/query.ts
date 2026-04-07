@@ -8,7 +8,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { ToolContext } from "./types";
 import { ok } from "./types";
-import { compact, shortId, categoryPath } from "./compact";
+import { compact, shortId, categoryPath, round2, currencyCode } from "./compact";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -168,8 +168,8 @@ Keyword search is fuzzy and matches across note, all category levels, and accoun
         id: shortId(t.id),
         date: t.date,
         type: t.type,
-        amount: t.amount_cents / 100,
-        currency: t.currency,
+        amount: round2(t.amount_cents / 100),
+        currency: currencyCode(t.currency),
         account: t.account,
         category: categoryPath(t.primary_category, t.secondary_category, t.tertiary_category),
         note: t.note,
@@ -272,9 +272,9 @@ All parameters are optional and combine with AND logic.`,
       const transfers = result.results.map((t) => compact({
         id: shortId(t.id),
         date: t.date,
-        inflow: t.inflow_amount_cents ? t.inflow_amount_cents / 100 : null,
-        outflow: t.outflow_amount_cents ? t.outflow_amount_cents / 100 : null,
-        currency: t.currency,
+        inflow: t.inflow_amount_cents ? round2(t.inflow_amount_cents / 100) : null,
+        outflow: t.outflow_amount_cents ? round2(t.outflow_amount_cents / 100) : null,
+        currency: currencyCode(t.currency),
         account: t.account,
         category: categoryPath(t.primary_category, t.secondary_category),
         type: t.transaction_type,
@@ -401,8 +401,8 @@ Use year/month for the target period. Call get_summary first to discover availab
         [userId, year, month, ...currencyParams],
       );
 
-      const income = (totalsResult?.income ?? 0) / 100;
-      const expense = (totalsResult?.expense ?? 0) / 100;
+      const income = round2((totalsResult?.income ?? 0) / 100);
+      const expense = round2((totalsResult?.expense ?? 0) / 100);
 
       return ok({
         year,
@@ -410,11 +410,11 @@ Use year/month for the target period. Call get_summary first to discover availab
         currency: currency ?? "all",
         income,
         expense,
-        net: income - expense,
+        net: round2(income - expense),
         categories: categoryResult.results.map((r) => ({
           type: r.type,
           category: r.primary_category,
-          amount: r.total / 100,
+          amount: round2(r.total / 100),
         })),
       });
     },
@@ -491,7 +491,7 @@ Examples:
         args.group_by.forEach((g, i) => {
           row[g] = r[`dim${i + 1}`];
         });
-        row.total = (r.total as number) / 100;
+        row.total = round2((r.total as number) / 100);
         row.count = r.count;
         return row;
       });

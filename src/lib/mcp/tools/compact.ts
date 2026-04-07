@@ -5,7 +5,16 @@
  * - Omitting null/undefined values
  * - Omitting default values (empty arrays, false booleans)
  * - Shortening UUIDs in list contexts
+ * - Rounding floats to avoid precision noise
  */
+
+/**
+ * Round a number to 2 decimal places (for currency amounts).
+ * Avoids floating point noise like 92206.57999999999
+ */
+export function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
 
 /**
  * Remove null, undefined, empty arrays, and false values from an object.
@@ -46,4 +55,20 @@ export function compactArray<T extends Record<string, unknown>>(arr: T[]): Parti
  */
 export function categoryPath(...parts: (string | null | undefined)[]): string {
   return parts.filter((p): p is string => p != null && p !== "").join("/");
+}
+
+/**
+ * Convert Chinese currency names to ISO 4217 codes.
+ */
+const CURRENCY_MAP: Record<string, string> = {
+  "人民币": "CNY",
+  "美元": "USD",
+  "港币": "HKD",
+  "日元": "JPY",
+  "欧元": "EUR",
+  "英镑": "GBP",
+};
+
+export function currencyCode(currency: string): string {
+  return CURRENCY_MAP[currency] ?? currency;
 }

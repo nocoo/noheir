@@ -7,6 +7,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ToolContext } from "./types";
 import { ok } from "./types";
+import { round2, currencyCode } from "./compact";
 
 // ---------------------------------------------------------------------------
 // Register Summary Tools
@@ -100,7 +101,7 @@ USE WHEN:
           count: r.count,
         })),
         by_currency: currenciesResult.results.map((r) => ({
-          currency: r.currency,
+          currency: currencyCode(r.currency),
           count: r.count,
         })),
         lock_period_distribution: lockPeriodsResult.results.map((r) => ({
@@ -200,9 +201,9 @@ USE WHEN:
           count: r.count,
         })),
         by_currency: currencyTotalsResult.results.map((r) => ({
-          currency: r.currency,
+          currency: currencyCode(r.currency),
           count: r.count,
-          total: r.total_cents / 100,
+          total: round2(r.total_cents / 100),
         })),
         product_linkage: {
           linked: linkageResult?.linked ?? 0,

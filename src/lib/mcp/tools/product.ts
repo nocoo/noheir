@@ -114,28 +114,42 @@ LIMITATIONS:
   // ── get_product ──
   server.tool(
     "get_product",
-    "Get a single financial product by ID.",
+    "Get a single financial product by ID (full or short). Returns full details including complete ID.",
     {
-      id: z.string().describe("Product ID"),
+      id: z.string().describe("Product ID (full ULID or 8-char prefix from list_products)"),
     },
     async (args) => {
       const { db, userId } = ctx;
 
-      const product = await db.firstOrNull<Product>(
+      // Support both full ID and short ID (8-char prefix)
+      const isShortId = args.id.length <= 8;
+      const idCondition = isShortId ? "id LIKE ?" : "id = ?";
+      const idParam = isShortId ? `${args.id}%` : args.id;
+
+      const result = await db.query<Product>(
         `SELECT id, name, code, channel, category, currency,
                 lock_period_days, annual_return_rate, is_archived,
                 created_at, updated_at
          FROM financial_products
-         WHERE id = ? AND user_id = ?`,
-        [args.id, userId],
+         WHERE ${idCondition} AND user_id = ?
+         LIMIT 2`,
+        [idParam, userId],
       );
 
-      if (!product) {
+      if (result.results.length === 0) {
         return error(`Product not found: ${args.id}`);
       }
+      if (result.results.length > 1) {
+        return error(`Ambiguous short ID '${args.id}' matches multiple products. Use full ID.`);
+      }
+
+      const product = result.results[0];
+      if (!product) {
+        return error(`Product not found: ${args.id}`);
+      };
 
       return ok({
-        id: product.id,
+        id: product.id, // Full ID
         name: product.name,
         code: product.code,
         channel: product.channel,

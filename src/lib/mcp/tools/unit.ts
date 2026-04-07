@@ -10,7 +10,7 @@ import { z } from "zod";
 import type { ToolContext } from "./types";
 import { ok, error } from "./types";
 import { ulid } from "ulid";
-import { compact, shortId } from "./compact";
+import { compact, shortId, round2, currencyCode } from "./compact";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -61,7 +61,7 @@ interface UnitEnriched {
   end?: string | null;
   note?: string | null;
   days_left?: number | null;
-  avail?: "available" | "locked" | null;
+  avail?: string | null; // "a" = available, "l" = locked
 }
 
 function enrichWithAvailability(
@@ -91,8 +91,8 @@ function enrichWithAvailability(
   return compact({
     id: shortId(unit.id),
     code: unit.unit_code,
-    amount: unit.amount_cents / 100,
-    currency: unit.currency,
+    amount: round2(unit.amount_cents / 100),
+    currency: currencyCode(unit.currency),
     status: unit.status,
     strategy: unit.strategy,
     tactics: unit.tactics,
@@ -101,7 +101,7 @@ function enrichWithAvailability(
     end: unit.end_date,
     note: unit.note,
     days_left: daysToAvailable,
-    avail: availabilityStatus === "unknown" ? null : availabilityStatus,
+    avail: availabilityStatus === "unknown" ? null : availabilityStatus[0], // A or L
   }) as UnitEnriched;
 }
 
@@ -215,12 +215,17 @@ LIMITATIONS:
   // ── get_unit ──
   server.tool(
     "get_unit",
-    "Get a single capital unit by ID with availability info.",
+    "Get a single capital unit by ID (full or short). Returns full details including complete ID for update/delete.",
     {
-      id: z.string().describe("Unit ID"),
+      id: z.string().describe("Unit ID (full ULID or 8-char prefix from list_units)"),
     },
     async (args) => {
       const { db, userId } = ctx;
+
+      // Support both full ID and short ID (8-char prefix)
+      const isShortId = args.id.length <= 8;
+      const idCondition = isShortId ? "u.id LIKE ?" : "u.id = ?";
+      const idParam = isShortId ? `${args.id}%` : args.id;
 
       const unitSql = `
         SELECT u.id, u.unit_code, u.amount_cents, u.currency, u.status,
@@ -229,14 +234,23 @@ LIMITATIONS:
                p.name as product_name, p.lock_period_days as product_lock_period_days
         FROM capital_units u
         LEFT JOIN financial_products p ON u.product_id = p.id
-        WHERE u.id = ? AND u.user_id = ?
+        WHERE ${idCondition} AND u.user_id = ?
+        LIMIT 2
       `;
 
-      const unit = await db.firstOrNull<UnitWithProduct>(unitSql, [args.id, userId]);
+      const result = await db.query<UnitWithProduct>(unitSql, [idParam, userId]);
 
-      if (!unit) {
+      if (result.results.length === 0) {
         return error(`Unit not found: ${args.id}`);
       }
+      if (result.results.length > 1) {
+        return error(`Ambiguous short ID '${args.id}' matches multiple units. Use full ID.`);
+      }
+
+      const unit = result.results[0];
+      if (!unit) {
+        return error(`Unit not found: ${args.id}`);
+      };
 
       // Get latest invest log
       const logSql = `
@@ -247,12 +261,14 @@ LIMITATIONS:
         LIMIT 1
       `;
 
-      const log = await db.firstOrNull<ContributionLog>(logSql, [args.id]);
+      const log = await db.firstOrNull<ContributionLog>(logSql, [unit.id]);
 
       const enriched = enrichWithAvailability(unit, log);
 
+      // Return full ID for subsequent update/delete operations
       return ok({
         ...enriched,
+        id: unit.id, // Full ID, overrides short ID from enrichWithAvailability
         created_at: unit.created_at,
         updated_at: unit.updated_at,
       });
@@ -327,7 +343,7 @@ LIMITATIONS:
       return ok({
         id,
         unit_code: args.unit_code,
-        amount: args.amount_cents / 100,
+        amount: round2(args.amount_cents / 100),
         currency: args.currency ?? "CNY",
         status,
         strategy: args.strategy ?? null,
