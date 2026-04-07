@@ -5,5 +5,6 @@
  */
 
 export { registerQueryTools } from "./query";
+export { registerProductTools } from "./product";
 export type { ToolContext, McpToolResult } from "./types";
 export { ok, error } from "./types";
