@@ -39,8 +39,8 @@ interface UnitWithProduct extends Unit {
 interface ContributionLog {
   id: string;
   unit_id: string;
-  action: string;
-  created_at: string;
+  operation_type: string;
+  operation_date: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -72,7 +72,7 @@ function enrichWithAvailability(
   let availabilityStatus: "available" | "locked" | "unknown" = "unknown";
 
   if (unit.product_lock_period_days !== null && latestInvestLog) {
-    const investDate = new Date(latestInvestLog.created_at);
+    const investDate = new Date(latestInvestLog.operation_date);
     const unlockDate = new Date(investDate);
     unlockDate.setDate(unlockDate.getDate() + unit.product_lock_period_days);
 
@@ -190,15 +190,15 @@ LIMITATIONS:
       const placeholders = unitIds.map(() => "?").join(", ");
 
       const logsSql = `
-        SELECT cl.id, cl.unit_id, cl.action, cl.created_at
+        SELECT cl.id, cl.unit_id, cl.operation_type, cl.operation_date
         FROM contribution_logs cl
         INNER JOIN (
-          SELECT unit_id, MAX(created_at) as max_created
+          SELECT unit_id, MAX(operation_date) as max_date
           FROM contribution_logs
-          WHERE unit_id IN (${placeholders}) AND action = 'invest'
+          WHERE unit_id IN (${placeholders}) AND operation_type = 'invest'
           GROUP BY unit_id
-        ) latest ON cl.unit_id = latest.unit_id AND cl.created_at = latest.max_created
-        WHERE cl.action = 'invest'
+        ) latest ON cl.unit_id = latest.unit_id AND cl.operation_date = latest.max_date
+        WHERE cl.operation_type = 'invest'
       `;
 
       const logsResult = await db.query<ContributionLog>(logsSql, unitIds);
@@ -241,10 +241,10 @@ LIMITATIONS:
 
       // Get latest invest log
       const logSql = `
-        SELECT id, unit_id, action, created_at
+        SELECT id, unit_id, operation_type, operation_date
         FROM contribution_logs
-        WHERE unit_id = ? AND action = 'invest'
-        ORDER BY created_at DESC
+        WHERE unit_id = ? AND operation_type = 'invest'
+        ORDER BY operation_date DESC
         LIMIT 1
       `;
 
@@ -456,27 +456,37 @@ LIMITATIONS:
 
       // If product_id changed, log contribution
       if (args.product_id !== undefined && args.product_id !== existing.product_id) {
-        const logId = ulid();
         const logNow = new Date().toISOString();
 
         // Log withdraw from old product (if any)
         if (existing.product_id) {
+          const withdrawLogId = ulid();
+          // Get product name for the log
+          const oldProduct = await db.firstOrNull<{ name: string }>(
+            "SELECT name FROM financial_products WHERE id = ?",
+            [existing.product_id],
+          );
           await db.execute(
-            `INSERT INTO contribution_logs (id, user_id, unit_id, product_id, action, amount_cents, currency, created_at)
-             SELECT ?, user_id, id, product_id, 'withdraw', amount_cents, currency, ?
+            `INSERT INTO contribution_logs (id, user_id, unit_id, product_id, product_name, operation_type, amount_cents, balance_after_cents, operation_date, source, created_at, updated_at)
+             SELECT ?, user_id, id, ?, ?, 'withdraw', amount_cents, 0, ?, 'mcp', ?, ?
              FROM capital_units WHERE id = ?`,
-            [logId, logNow, args.id],
+            [withdrawLogId, existing.product_id, oldProduct?.name ?? null, logNow, logNow, logNow, args.id],
           );
         }
 
         // Log invest to new product (if any)
         if (args.product_id) {
           const investLogId = ulid();
+          // Get product name for the log
+          const newProduct = await db.firstOrNull<{ name: string }>(
+            "SELECT name FROM financial_products WHERE id = ?",
+            [args.product_id],
+          );
           await db.execute(
-            `INSERT INTO contribution_logs (id, user_id, unit_id, product_id, action, amount_cents, currency, created_at)
-             SELECT ?, user_id, id, ?, 'invest', amount_cents, currency, ?
+            `INSERT INTO contribution_logs (id, user_id, unit_id, product_id, product_name, operation_type, amount_cents, balance_after_cents, operation_date, source, created_at, updated_at)
+             SELECT ?, user_id, id, ?, ?, 'invest', amount_cents, amount_cents, ?, 'mcp', ?, ?
              FROM capital_units WHERE id = ?`,
-            [investLogId, args.product_id, logNow, args.id],
+            [investLogId, args.product_id, newProduct?.name ?? null, logNow, logNow, logNow, args.id],
           );
         }
       }
@@ -500,10 +510,10 @@ LIMITATIONS:
 
       // Get latest invest log
       const logSql = `
-        SELECT id, unit_id, action, created_at
+        SELECT id, unit_id, operation_type, operation_date
         FROM contribution_logs
-        WHERE unit_id = ? AND action = 'invest'
-        ORDER BY created_at DESC
+        WHERE unit_id = ? AND operation_type = 'invest'
+        ORDER BY operation_date DESC
         LIMIT 1
       `;
 
