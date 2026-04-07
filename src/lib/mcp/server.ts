@@ -5,7 +5,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { APP_VERSION } from "@/lib/version";
 import type { Db } from "@/lib/db";
-import { registerQueryTools, registerProductTools, registerUnitTools } from "./tools";
+import { registerQueryTools, registerProductTools, registerUnitTools, registerDeleteTools } from "./tools";
 
 /** Create a new McpServer instance with all tools registered. */
 export function createMcpServer(db: Db, userId: string): McpServer {
@@ -23,7 +23,9 @@ export function createMcpServer(db: Db, userId: string): McpServer {
   // Phase 3: Unit CRUD
   registerUnitTools(server, ctx);
 
-  // TODO: Phase 4 - Custom Tools (delete_product, delete_unit)
+  // Phase 4: Delete Tools
+  registerDeleteTools(server, ctx);
+
   // TODO: Phase 5 - Summary Tools
 
   return server;
