@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { createMcpClient } from "@/services/mcp-clients";
-import { isLoopbackRedirectUri } from "@/lib/mcp/pkce";
+import { isLoopbackRedirectUri } from "@nocoo/base-mcp/auth";
 
 interface RegisterRequest {
   client_name?: string;

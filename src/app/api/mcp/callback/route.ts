@@ -8,7 +8,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { getAuthSessionByState, upgradeAuthSession } from "@/services/mcp-auth-codes";
-import { generateToken } from "@/lib/mcp/pkce";
+import { generateToken } from "@nocoo/base-mcp/auth";
 
 // Check if email is in allowed list
 const allowedEmails = (process.env.ALLOWED_EMAILS ?? "")
