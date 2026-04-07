@@ -19,7 +19,6 @@ export async function GET(request: Request) {
 
   const workerResponse = await fetch(workerUrl.toString(), {
     method: "GET",
-    headers: request.headers,
     redirect: "manual",
   });
 
