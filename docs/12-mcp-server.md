@@ -1,50 +1,64 @@
 # MCP Server v3
 
+> **⚠️ 架构已变更**：MCP OAuth 已从 Worker 迁移到 Next.js。
+> 详见 [20-mcp-oauth-nextjs-architecture.md](./20-mcp-oauth-nextjs-architecture.md)
+
 ## Overview
 
-The MCP (Model Context Protocol) server is integrated into the Worker at `worker/src/mcp/`. It exposes financial data query and management capabilities to AI Agents (Claude Desktop, Cursor) via Streamable HTTP transport with OAuth 2.1 authentication.
+The MCP (Model Context Protocol) server is now integrated into Next.js at `src/app/api/mcp/`. It exposes financial data query and management capabilities to AI Agents (Claude Desktop, Cursor, Claude Code) via Streamable HTTP transport with OAuth 2.1 authentication.
 
-Agents can use 18 tools to query transactions, transfers, metadata, monthly reports, and perform full CRUD operations on financial products and capital units.
+**Current Status**: OAuth flow complete, MCP tools pending migration.
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  MCP Client (Claude Desktop / Cursor)                       │
+│  MCP Client (Claude Desktop / Cursor / Claude Code)         │
 │                                                             │
-│  1. POST /mcp → 401 Unauthorized                            │
+│  1. POST /api/mcp → 401 Unauthorized                        │
 │  2. GET /.well-known/oauth-authorization-server → discover  │
-│  3. POST /mcp/register → dynamic client registration        │
+│  3. POST /api/mcp/register → dynamic client registration    │
 │  4. Generate PKCE code_verifier + code_challenge            │
-│  5. Open browser → /mcp/authorize?...                       │
+│  5. Open browser → /api/mcp/authorize?...                   │
 └──────────────────────────────┬──────────────────────────────┘
                                │
                                ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  Worker (Hono + MCP)                                        │
+│  Next.js (Railway)                                          │
 │                                                             │
 │  OAuth Endpoints:                                           │
 │  ├─ GET  /.well-known/oauth-authorization-server            │
-│  ├─ POST /mcp/register                                      │
-│  ├─ GET  /mcp/authorize → redirect to login if needed       │
-│  ├─ GET  /mcp/callback → generate authorization code        │
-│  ├─ POST /mcp/token → exchange code for tokens              │
-│  └─ POST /mcp/revoke → revoke tokens                        │
+│  ├─ POST /api/mcp/register                                  │
+│  ├─ GET  /api/mcp/authorize → redirect to login if needed   │
+│  ├─ GET  /api/mcp/callback → generate authorization code    │
+│  ├─ POST /api/mcp/token → exchange code for tokens          │
+│  └─ POST /api/mcp/revoke → revoke tokens                    │
 │                                                             │
 │  MCP Endpoint:                                              │
-│  └─ POST /mcp → Streamable HTTP (OAuth Bearer Token)        │
+│  └─ POST /api/mcp → Streamable HTTP (OAuth Bearer Token)    │
+│                     ↓                                       │
+│              SQL API Client                                 │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Worker (Cloudflare) — SQL API Only                         │
+│  ├─ POST /api/v1/query → SELECT                             │
+│  └─ POST /api/v1/execute → INSERT/UPDATE/DELETE             │
+│            ↓                                                │
+│         D1 Database                                         │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ## Client Configuration
 
-### Claude Desktop
+### Claude Desktop / Claude Code
 
 ```json
 {
   "mcpServers": {
     "noheir": {
-      "url": "https://noheir.worker.hexly.ai/mcp"
+      "url": "https://noheir.hexly.ai/api/mcp"
     }
   }
 }
@@ -59,16 +73,26 @@ Add the MCP server URL in Cursor settings → MCP Servers.
 ## Directory Structure
 
 ```
-worker/src/mcp/
-├── server.ts              # MCP server factory + /mcp handlers
-├── oauth.ts               # OAuth 2.1 handlers (register, authorize, callback, token, revoke)
-├── entities/
-│   ├── product.ts         # Product entity (Simple Entity)
-│   └── unit.ts            # Unit entity (Entity + Hooks)
-└── tools/
-    ├── query.ts           # Query tools (transactions, transfers, summary, report)
-    ├── summary.ts         # Summary tools (products, units)
-    └── delete.ts          # Delete tools (with business logic)
+src/
+├── app/
+│   ├── .well-known/oauth-authorization-server/
+│   │   └── route.ts              # OAuth metadata (RFC 8414)
+│   └── api/mcp/
+│       ├── route.ts              # MCP server endpoint
+│       ├── authorize/route.ts    # OAuth authorize
+│       ├── callback/route.ts     # OAuth callback
+│       ├── register/route.ts     # Client registration
+│       ├── token/route.ts        # Token exchange
+│       └── revoke/route.ts       # Token revocation
+├── lib/
+│   ├── db.ts                     # SQL API client
+│   └── mcp/
+│       ├── auth.ts               # Token validation
+│       └── server.ts             # MCP server factory (tools TODO)
+└── services/
+    ├── mcp-clients.ts            # Client CRUD
+    ├── mcp-auth-codes.ts         # Auth session CRUD
+    └── mcp-tokens.ts             # Token CRUD
 ```
 
 ## Tools
