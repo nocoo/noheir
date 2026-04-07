@@ -419,4 +419,84 @@ Use year/month for the target period. Call get_summary first to discover availab
       });
     },
   );
+
+  // ── aggregate_transactions ──
+  server.tool(
+    "aggregate_transactions",
+    `Aggregate transactions by specified dimensions. Returns grouped totals.
+
+More efficient than fetching raw records when you only need summaries.
+
+Examples:
+- By category for a year: group_by=["category"], year=2025
+- By account and month: group_by=["account", "month"], year=2025`,
+    {
+      group_by: z.array(z.enum(["category", "account", "month", "type"]))
+        .min(1)
+        .max(3)
+        .describe("Dimensions to group by (1-3)"),
+      type: z.enum(["income", "expense"]).optional().describe("Filter by type"),
+      year: z.number().int().optional().describe("Filter by year"),
+      month: z.number().int().min(1).max(12).optional().describe("Filter by month"),
+      currency: z.string().optional().describe("Filter by currency"),
+    },
+    async (args) => {
+      const { db, userId } = ctx;
+
+      const conditions: string[] = ["user_id = ?"];
+      const values: unknown[] = [userId];
+
+      if (args.type) {
+        conditions.push("type = ?");
+        values.push(args.type);
+      }
+      if (args.year) {
+        conditions.push("year = ?");
+        values.push(args.year);
+      }
+      if (args.month) {
+        conditions.push("month = ?");
+        values.push(args.month);
+      }
+      if (args.currency) {
+        conditions.push("currency = ?");
+        values.push(args.currency);
+      }
+
+      // Map group_by to SQL columns
+      const columnMap: Record<string, string> = {
+        category: "primary_category",
+        account: "account",
+        month: "month",
+        type: "type",
+      };
+
+      const groupCols = args.group_by.map((g) => columnMap[g]);
+      const selectCols = groupCols.map((col, i) => `${col} as dim${i + 1}`).join(", ");
+
+      const sql = `
+        SELECT ${selectCols}, SUM(amount_cents) as total, COUNT(*) as count
+        FROM transactions
+        WHERE ${conditions.join(" AND ")}
+        GROUP BY ${groupCols.join(", ")}
+        ORDER BY total DESC
+        LIMIT 100
+      `;
+
+      const result = await db.query<Record<string, unknown>>(sql, values);
+
+      // Transform to cleaner output
+      const groups = result.results.map((r) => {
+        const row: Record<string, unknown> = {};
+        args.group_by.forEach((g, i) => {
+          row[g] = r[`dim${i + 1}`];
+        });
+        row.total = (r.total as number) / 100;
+        row.count = r.count;
+        return row;
+      });
+
+      return ok({ groups, dimensions: args.group_by });
+    },
+  );
 }
