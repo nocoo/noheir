@@ -6,8 +6,8 @@ README.md
 - **Platform**: Railway (Railpack builder, Caddy SPA serving)
 - **Auto-deploy**: Push to `main` branch triggers build & deploy
 - **Region**: Asia Southeast 1 (Singapore)
-- **Architecture**: Pure client-side SPA — no SSR, no API routes. All backend via Cloudflare Worker + D1.
-- **Compile-time env vars** (set in Railway): `VITE_WORKER_URL`
+- **Architecture**: Next.js handles MCP OAuth + API routes; Cloudflare Worker provides SQL API to D1.
+- **Compile-time env vars** (set in Railway): `WORKER_URL`, `WORKER_SECRET`, `NEXTAUTH_URL`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`
 
 ## Backend (Cloudflare Worker + D1)
 
@@ -74,4 +74,5 @@ All domain labels (unitCode, strategy, tactics, status, currency, product) MUST 
 
 - D1 uses SQLite syntax — use `strftime('%Y', date)` instead of `EXTRACT(YEAR FROM date)`.
 - Wrangler D1 queries require `--remote` flag for production database.
-- MCP server is now integrated into Worker at `worker/src/mcp/` with OAuth 2.1 + Streamable HTTP (replaced stdio-based `mcp/`).
+- MCP server moved from Worker to Next.js API routes (`src/app/api/mcp/`). Worker now only provides SQL API.
+- **Local npm links don't work in Docker builds**: `"@nocoo/base-mcp": "link:../base-mcp"` causes `FileNotFound` during Railway/Docker builds because the linked package doesn't exist in the build container. Solution: inline needed functions directly into the project (e.g., `src/lib/mcp/pkce.ts`) or publish to npm registry.

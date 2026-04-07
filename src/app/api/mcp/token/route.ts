@@ -8,7 +8,7 @@
 
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
-import { verifyPkceS256 } from "@nocoo/base-mcp/auth";
+import { verifyPkceS256 } from "@/lib/mcp/pkce";
 import { getAuthCodeByCode, consumeAuthCode } from "@/services/mcp-auth-codes";
 import { getMcpClientByClientId } from "@/services/mcp-clients";
 import {
