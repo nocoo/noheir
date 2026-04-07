@@ -4,25 +4,23 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { APP_VERSION } from "@/lib/version";
-// import type { Db } from "@/lib/db";
-
-// TODO: Import entities and tools when migrating
+import type { Db } from "@/lib/db";
+import { registerQueryTools } from "./tools";
 
 /** Create a new McpServer instance with all tools registered. */
-export function createMcpServer(_db: unknown, _userId: string): McpServer {
+export function createMcpServer(db: Db, userId: string): McpServer {
   const server = new McpServer({ name: "noheir", version: APP_VERSION });
 
-  // Store context for tools (can be accessed via server.getRequestMeta())
-  // For now, we'll pass context directly to handlers
+  // Context for all tools
+  const ctx = { db, userId };
 
-  // TODO: Register entity tools (products, units)
-  // registerEntityTools(server, productEntity, { repos: { products, userId } });
-  // registerEntityTools(server, unitEntity, { repos: { units, products, contributionLogs, userId } });
+  // Phase 1: Query Tools
+  registerQueryTools(server, ctx);
 
-  // TODO: Register custom tools (query, summary, delete)
-  // registerQueryTools(server, { repos: { transactions, transfers, metadata, reports, userId } });
-  // registerSummaryTools(server, { repos: { products, units, contributionLogs, userId } });
-  // registerDeleteTools(server, { repos: { products, units, contributionLogs, userId } });
+  // TODO: Phase 2 - Product CRUD
+  // TODO: Phase 3 - Unit CRUD
+  // TODO: Phase 4 - Custom Tools (delete_product, delete_unit)
+  // TODO: Phase 5 - Summary Tools
 
   return server;
 }
