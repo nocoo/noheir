@@ -340,30 +340,30 @@ WORKER_SECRET=<shared-secret>  # 与 Next.js 匹配
 ### 8.2 原子化 Commit 计划
 
 ```
-Phase 1: 基础查询工具 (P0)
+Phase 1: 基础查询工具 (P0) ✅ DONE
 ├── feat(mcp): add query_transactions tool
 ├── feat(mcp): add query_transfers tool
 ├── feat(mcp): add get_summary tool
 └── test(mcp): add query tools tests
 
-Phase 2: Product CRUD (P0)
+Phase 2: Product CRUD (P0) ✅ DONE
 ├── feat(mcp): add product entity definition
 ├── feat(mcp): register product CRUD tools
 └── test(mcp): add product tools tests
 
-Phase 3: Unit CRUD (P0 + P1)
+Phase 3: Unit CRUD (P0 + P1) ✅ DONE
 ├── feat(mcp): add unit entity with availability enrichment
 ├── feat(mcp): register unit list/get tools
 ├── feat(mcp): add unit create with endDate invariant
 ├── feat(mcp): add unit update with productId CAS
 └── test(mcp): add unit tools tests
 
-Phase 4: Custom Tools (P1)
+Phase 4: Custom Tools (P1) ✅ DONE
 ├── feat(mcp): add delete_product with unlink logic
 ├── feat(mcp): add delete_unit with validation
 └── test(mcp): add delete tools tests
 
-Phase 5: Summary Tools (P1)
+Phase 5: Summary Tools (P1) ✅ DONE
 ├── feat(mcp): add get_monthly_report tool
 ├── feat(mcp): add get_products_summary tool
 ├── feat(mcp): add get_units_summary tool
