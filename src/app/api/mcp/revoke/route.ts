@@ -1,23 +1,43 @@
 /**
- * MCP OAuth Revoke Proxy
+ * MCP OAuth Token Revocation Endpoint
+ *
+ * Implements RFC 7009 Token Revocation.
  */
 
-const WORKER_URL = process.env.WORKER_URL || "https://noheir.worker.hexly.ai";
+import { NextResponse } from "next/server";
+import { getDb } from "@/lib/db";
+import { sha256, revokeToken, getValidTokenByHash } from "@/services/mcp-tokens";
+
+function oauthError(error: string, description: string, status = 400): NextResponse {
+  return NextResponse.json({ error, error_description: description }, { status });
+}
 
 export async function POST(request: Request) {
-  const body = await request.text();
-  const contentType = request.headers.get("Content-Type") || "application/x-www-form-urlencoded";
+  try {
+    // Parse form-urlencoded body (OAuth spec)
+    const body = await request.formData();
+    const token = body.get("token") as string | null;
 
-  const workerResponse = await fetch(`${WORKER_URL}/mcp/revoke`, {
-    method: "POST",
-    headers: {
-      "Content-Type": contentType,
-    },
-    body,
-  });
+    if (!token) {
+      return oauthError("invalid_request", "token is required");
+    }
 
-  return new Response(workerResponse.body, {
-    status: workerResponse.status,
-    headers: workerResponse.headers,
-  });
+    const db = getDb();
+    const tokenHash = await sha256(token);
+    const existingToken = await getValidTokenByHash(db, tokenHash);
+
+    if (existingToken) {
+      await revokeToken(db, existingToken.id);
+    }
+
+    // RFC 7009: always return 200, even if token was invalid or already revoked
+    return new NextResponse(null, { status: 200 });
+  } catch (error) {
+    console.error("[mcp/revoke] Error:", error);
+    return oauthError(
+      "server_error",
+      error instanceof Error ? error.message : "Internal server error",
+      500,
+    );
+  }
 }
