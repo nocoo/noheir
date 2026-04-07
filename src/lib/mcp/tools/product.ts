@@ -9,6 +9,7 @@ import { z } from "zod";
 import type { ToolContext } from "./types";
 import { ok, error } from "./types";
 import { ulid } from "ulid";
+import { compact, shortId } from "./compact";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -93,16 +94,17 @@ LIMITATIONS:
 
       const result = await db.query<Product>(sql, [...values, limit, offset]);
 
-      const products = result.results.map((p) => ({
-        id: p.id,
+      // Compact output: short ID, omit nulls/defaults
+      const products = result.results.map((p) => compact({
+        id: shortId(p.id),
         name: p.name,
         code: p.code,
         channel: p.channel,
         category: p.category,
         currency: p.currency,
-        lock_period_days: p.lock_period_days,
-        annual_return_rate: p.annual_return_rate,
-        is_archived: p.is_archived === 1,
+        lock_days: p.lock_period_days || null, // omit if 0
+        return_rate: p.annual_return_rate,
+        archived: p.is_archived === 1 ? true : null, // omit if false
       }));
 
       return ok({ products, count: products.length, limit, offset });

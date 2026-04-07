@@ -8,6 +8,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { ToolContext } from "./types";
 import { ok } from "./types";
+import { compact, shortId, categoryPath } from "./compact";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -162,19 +163,17 @@ Keyword search is fuzzy and matches across note, all category levels, and accoun
         tags: string | null;
       }>(sql, [...values, limit, offset]);
 
-      // Transform to user-friendly format
-      const transactions = result.results.map((t) => ({
-        id: t.id,
+      // Transform to compact format (P0: short ID, P1: omit nulls, P3: category path)
+      const transactions = result.results.map((t) => compact({
+        id: shortId(t.id),
         date: t.date,
         type: t.type,
         amount: t.amount_cents / 100,
         currency: t.currency,
         account: t.account,
-        category: t.primary_category,
-        secondary_category: t.secondary_category,
-        tertiary_category: t.tertiary_category,
+        category: categoryPath(t.primary_category, t.secondary_category, t.tertiary_category),
         note: t.note,
-        tags: t.tags ? JSON.parse(t.tags) : [],
+        tags: t.tags ? JSON.parse(t.tags) : null,
       }));
 
       return ok({ transactions, count: transactions.length, limit, offset });
@@ -270,18 +269,17 @@ All parameters are optional and combine with AND logic.`,
         tags: string | null;
       }>(sql, [...values, limit, offset]);
 
-      const transfers = result.results.map((t) => ({
-        id: t.id,
+      const transfers = result.results.map((t) => compact({
+        id: shortId(t.id),
         date: t.date,
-        inflow_amount: t.inflow_amount_cents / 100,
-        outflow_amount: t.outflow_amount_cents / 100,
+        inflow: t.inflow_amount_cents ? t.inflow_amount_cents / 100 : null,
+        outflow: t.outflow_amount_cents ? t.outflow_amount_cents / 100 : null,
         currency: t.currency,
         account: t.account,
-        category: t.primary_category,
-        secondary_category: t.secondary_category,
-        transaction_type: t.transaction_type,
+        category: categoryPath(t.primary_category, t.secondary_category),
+        type: t.transaction_type,
         note: t.note,
-        tags: t.tags ? JSON.parse(t.tags) : [],
+        tags: t.tags ? JSON.parse(t.tags) : null,
       }));
 
       return ok({ transfers, count: transfers.length, limit, offset });
@@ -291,38 +289,21 @@ All parameters are optional and combine with AND logic.`,
   // ── get_summary ──
   server.tool(
     "get_summary",
-    `Get metadata summary of the user's financial data. Returns all available filter values and record counts.
+    `Get metadata summary of the user's financial data.
+
+By default returns only counts. Use 'include' to request specific filter options.
 
 ALWAYS call this tool first before using query_transactions or query_transfers.`,
-    {},
-    async () => {
+    {
+      include: z.array(z.enum(["years", "accounts", "categories", "currencies"]))
+        .optional()
+        .describe("Optional: which filter options to include (default: none, only counts)"),
+    },
+    async (args) => {
       const { db, userId } = ctx;
+      const include = new Set(args.include ?? []);
 
-      // Get years
-      const yearsResult = await db.query<{ year: number }>(
-        `SELECT DISTINCT year FROM transactions WHERE user_id = ? ORDER BY year DESC`,
-        [userId],
-      );
-
-      // Get accounts
-      const accountsResult = await db.query<{ account: string }>(
-        `SELECT DISTINCT account FROM transactions WHERE user_id = ? ORDER BY account`,
-        [userId],
-      );
-
-      // Get categories
-      const categoriesResult = await db.query<{ primary_category: string }>(
-        `SELECT DISTINCT primary_category FROM transactions WHERE user_id = ? ORDER BY primary_category`,
-        [userId],
-      );
-
-      // Get currencies
-      const currenciesResult = await db.query<{ currency: string }>(
-        `SELECT DISTINCT currency FROM transactions WHERE user_id = ? ORDER BY currency`,
-        [userId],
-      );
-
-      // Get counts
+      // Always get counts (cheap query)
       const countResult = await db.firstOrNull<{
         transaction_count: number;
         transfer_count: number;
@@ -333,14 +314,45 @@ ALWAYS call this tool first before using query_transactions or query_transfers.`
         [userId, userId],
       );
 
-      return ok({
-        years: yearsResult.results.map((r) => r.year),
-        accounts: accountsResult.results.map((r) => r.account),
-        categories: categoriesResult.results.map((r) => r.primary_category),
-        currencies: currenciesResult.results.map((r) => r.currency),
+      const result: Record<string, unknown> = {
         transaction_count: countResult?.transaction_count ?? 0,
         transfer_count: countResult?.transfer_count ?? 0,
-      });
+      };
+
+      // Only fetch requested filter options
+      if (include.has("years")) {
+        const yearsResult = await db.query<{ year: number }>(
+          `SELECT DISTINCT year FROM transactions WHERE user_id = ? ORDER BY year DESC`,
+          [userId],
+        );
+        result.years = yearsResult.results.map((r) => r.year);
+      }
+
+      if (include.has("accounts")) {
+        const accountsResult = await db.query<{ account: string }>(
+          `SELECT DISTINCT account FROM transactions WHERE user_id = ? ORDER BY account`,
+          [userId],
+        );
+        result.accounts = accountsResult.results.map((r) => r.account);
+      }
+
+      if (include.has("categories")) {
+        const categoriesResult = await db.query<{ primary_category: string }>(
+          `SELECT DISTINCT primary_category FROM transactions WHERE user_id = ? ORDER BY primary_category`,
+          [userId],
+        );
+        result.categories = categoriesResult.results.map((r) => r.primary_category);
+      }
+
+      if (include.has("currencies")) {
+        const currenciesResult = await db.query<{ currency: string }>(
+          `SELECT DISTINCT currency FROM transactions WHERE user_id = ? ORDER BY currency`,
+          [userId],
+        );
+        result.currencies = currenciesResult.results.map((r) => r.currency);
+      }
+
+      return ok(result);
     },
   );
 

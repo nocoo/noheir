@@ -10,6 +10,7 @@ import { z } from "zod";
 import type { ToolContext } from "./types";
 import { ok, error } from "./types";
 import { ulid } from "ulid";
+import { compact, shortId } from "./compact";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -49,19 +50,18 @@ interface ContributionLog {
 
 interface UnitEnriched {
   id: string;
-  unit_code: string;
+  code: string;
   amount: number;
   currency: string;
   status: string;
-  strategy: string | null;
-  tactics: string | null;
-  product_id: string | null;
-  product_name: string | null;
-  start_date: string | null;
-  end_date: string | null;
-  note: string | null;
-  days_to_available: number | null;
-  availability_status: "available" | "locked" | "unknown";
+  strategy?: string | null;
+  tactics?: string | null;
+  product?: string | null;
+  start?: string | null;
+  end?: string | null;
+  note?: string | null;
+  days_left?: number | null;
+  avail?: "available" | "locked" | null;
 }
 
 function enrichWithAvailability(
@@ -88,22 +88,21 @@ function enrichWithAvailability(
     }
   }
 
-  return {
-    id: unit.id,
-    unit_code: unit.unit_code,
+  return compact({
+    id: shortId(unit.id),
+    code: unit.unit_code,
     amount: unit.amount_cents / 100,
     currency: unit.currency,
     status: unit.status,
     strategy: unit.strategy,
     tactics: unit.tactics,
-    product_id: unit.product_id,
-    product_name: unit.product_name,
-    start_date: unit.start_date,
-    end_date: unit.end_date,
+    product: unit.product_name, // Use name instead of ID for readability
+    start: unit.start_date,
+    end: unit.end_date,
     note: unit.note,
-    days_to_available: daysToAvailable,
-    availability_status: availabilityStatus,
-  };
+    days_left: daysToAvailable,
+    avail: availabilityStatus === "unknown" ? null : availabilityStatus,
+  }) as UnitEnriched;
 }
 
 // ---------------------------------------------------------------------------
