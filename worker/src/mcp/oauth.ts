@@ -221,13 +221,8 @@ export async function handleAuthorize(
     expiresAt: Math.floor(Date.now() / 1000) + AUTH_CODE_EXPIRY_SECONDS,
   });
 
-  // Redirect to login page with state
-  const siteUrl = c.env?.SITE_URL || "https://noheir.hexly.ai";
-  const loginUrl = new URL("/mcp-auth", siteUrl);
-  loginUrl.searchParams.set("state", params.state);
-  loginUrl.searchParams.set("client_name", client.clientName);
-
-  return c.redirect(loginUrl.toString());
+  // Return success - Next.js frontend handles login check and redirect
+  return c.json({ success: true, state: params.state }, 200);
 }
 
 // ============================================================================
