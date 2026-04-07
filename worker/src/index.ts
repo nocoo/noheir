@@ -13,19 +13,6 @@ import {
   updateContributionLogSchema,
   searchContributionLogsSchema,
 } from "../db/validation";
-import {
-  handleOAuthMetadata,
-  handleRegister,
-  handleAuthorize,
-  handleCallback,
-  handleToken,
-  handleRevoke,
-} from "./mcp/oauth";
-import {
-  handleMcpPost,
-  handleMcpGet,
-  handleMcpDelete,
-} from "./mcp/server";
 
 /** Strip undefined values from an object at runtime.
  *  Returns a clean Record<string, string> that satisfies exactOptionalPropertyTypes. */
@@ -117,78 +104,11 @@ async function handleHealthCheck(c: {
 
 app.get("/api/health", (c) => handleHealthCheck(c));
 
-// ── MCP OAuth Endpoints (no auth required) ──
-
 // Helper to get D1 binding based on X-Target-DB header
 function getD1Binding(c: { req: { header: (name: string) => string | undefined }; env: Env }): D1Database {
   const targetDb = c.req.header("X-Target-DB") ?? "production";
   return (targetDb === "test" && c.env.DB_TEST) ? c.env.DB_TEST : c.env.DB;
 }
-
-// OAuth metadata discovery
-app.get("/.well-known/oauth-authorization-server", (c) => handleOAuthMetadata(c));
-
-// Dynamic Client Registration
-app.post("/mcp/register", async (c) => {
-  const db = drizzle(getD1Binding(c));
-  const repos = createAllRepos(db);
-  const ctx = { repos: { mcpOAuth: repos.mcpOAuth }, env: c.env };
-  return handleRegister(c, ctx);
-});
-
-// Authorization endpoint (redirects to login)
-app.get("/mcp/authorize", async (c) => {
-  const db = drizzle(getD1Binding(c));
-  const repos = createAllRepos(db);
-  const ctx = { repos: { mcpOAuth: repos.mcpOAuth }, env: c.env };
-  return handleAuthorize(c, ctx);
-});
-
-// Token endpoint
-app.post("/mcp/token", async (c) => {
-  const db = drizzle(getD1Binding(c));
-  const repos = createAllRepos(db);
-  const ctx = { repos: { mcpOAuth: repos.mcpOAuth }, env: c.env };
-  return handleToken(c, ctx);
-});
-
-// Token revocation
-app.post("/mcp/revoke", async (c) => {
-  const db = drizzle(getD1Binding(c));
-  const repos = createAllRepos(db);
-  const ctx = { repos: { mcpOAuth: repos.mcpOAuth }, env: c.env };
-  return handleRevoke(c, ctx);
-});
-
-// OAuth callback (after user login on frontend)
-// Frontend redirects here with user_id after session validation
-app.get("/mcp/callback", async (c) => {
-  const userId = c.req.query("user_id");
-  if (!userId) {
-    return c.json({ error: "invalid_request", error_description: "Missing user_id" }, 400);
-  }
-
-  const db = drizzle(getD1Binding(c));
-  const repos = createAllRepos(db);
-  const ctx = { repos: { mcpOAuth: repos.mcpOAuth }, env: c.env };
-  return handleCallback(c, ctx, userId);
-});
-
-// ── MCP Server Endpoints (OAuth token auth, not WORKER_SHARED_SECRET) ──
-
-// Main MCP endpoint (Streamable HTTP)
-app.post("/mcp", async (c) => {
-  const db = drizzle(getD1Binding(c));
-  const repos = createAllRepos(db);
-  const ctx = { repos, env: c.env };
-  return handleMcpPost(c, ctx);
-});
-
-// SSE notifications (not implemented in v1)
-app.get("/mcp", (c) => handleMcpGet(c));
-
-// Session close (no-op in stateless mode)
-app.delete("/mcp", (c) => handleMcpDelete(c));
 
 // ── SQL API Endpoints (for Next.js MCP server) ──
 // These use WORKER_SECRET auth (separate from WORKER_SHARED_SECRET for frontend)
@@ -301,10 +221,8 @@ app.post("/api/v1/execute", async (c) => {
 // ── Auth middleware (all routes below require Bearer token + X-User-Id) ──
 
 app.use("*", async (c, next) => {
-  // Skip for already-handled routes (health check, OAuth endpoints, MCP, SQL API)
+  // Skip for already-handled routes (health check, SQL API)
   if (c.req.path === "/api/health") return next();
-  if (c.req.path === "/.well-known/oauth-authorization-server") return next();
-  if (c.req.path.startsWith("/mcp")) return next(); // /mcp and /mcp/*
   if (c.req.path.startsWith("/api/v1/")) return next(); // SQL API
 
   // 1. Verify Bearer token

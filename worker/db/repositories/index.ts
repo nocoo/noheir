@@ -8,7 +8,6 @@ import { createSettingsRepo } from "./settings";
 import { createMetadataRepo } from "./metadata";
 import { createReportsRepo } from "./reports";
 import { createContributionLogsRepo } from "./contribution-logs";
-import { createMcpOAuthRepo } from "./mcp-oauth";
 
 export function createAllRepos(db: DrizzleD1Database) {
   return {
@@ -21,7 +20,6 @@ export function createAllRepos(db: DrizzleD1Database) {
     metadata: createMetadataRepo(db),
     reports: createReportsRepo(db),
     contributionLogs: createContributionLogsRepo(db),
-    mcpOAuth: createMcpOAuthRepo(db),
   };
 }
 
@@ -37,18 +35,6 @@ export { createSettingsRepo, type SettingsRepo } from "./settings";
 export { createMetadataRepo, type MetadataRepo } from "./metadata";
 export { createReportsRepo, type ReportsRepo } from "./reports";
 export { createContributionLogsRepo, type ContributionLogsRepo } from "./contribution-logs";
-export {
-  createMcpOAuthRepo,
-  createMcpClientsRepo,
-  createMcpAuthSessionsRepo,
-  createMcpTokensRepo,
-  createMcpRefreshTokensRepo,
-  type McpOAuthRepo,
-  type McpClientsRepo,
-  type McpAuthSessionsRepo,
-  type McpTokensRepo,
-  type McpRefreshTokensRepo,
-} from "./mcp-oauth";
 
 // Re-export search param and result types
 export type { TransactionSearchParams, TransactionWithMatch, TransactionSearchResult } from "./transactions";
