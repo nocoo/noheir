@@ -1,0 +1,6 @@
+[allowlist]
+description = "Test fixtures and example values"
+
+[[allowlist.regexes]]
+description = "Test worker shared secret (not a real credential)"
+regex = '''b5edfb5b65dd841904149c2b6e59e7d5977ad8ade330c2768893f81e32bb7605'''
