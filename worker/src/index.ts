@@ -463,8 +463,8 @@ app.get("/api/products", async (c) => {
   const repos = c.get("repos");
   const { channel, category, currency, includeArchived, fields, limit, offset } = c.req.query();
 
-  // Parse pagination params
-  const limitNum = Math.min(Math.max(parseInt(limit ?? "50", 10) || 50, 1), 200);
+  // Parse pagination params: limit is optional, no limit if not specified
+  const limitNum = limit !== undefined ? Math.min(Math.max(parseInt(limit, 10) || 50, 1), 200) : undefined;
   const offsetNum = Math.max(parseInt(offset ?? "0", 10) || 0, 0);
 
   const allProducts = await repos.products.findAll(userId, {
@@ -473,7 +473,9 @@ app.get("/api/products", async (c) => {
   });
 
   // Paginate
-  const paginatedProducts = allProducts.slice(offsetNum, offsetNum + limitNum);
+  const paginatedProducts = limitNum !== undefined
+    ? allProducts.slice(offsetNum, offsetNum + limitNum)
+    : allProducts.slice(offsetNum);
 
   // Determine field level: minimal or full (default: full for backward compatibility)
   const fieldLevel = fields === "minimal" ? "minimal" : "full";
@@ -580,8 +582,8 @@ app.get("/api/units", async (c) => {
   const { status, strategy, tactics, currency, with_products, fields, limit, offset, available_within_days } = c.req.query();
   const filters = pickDefined({ status, strategy, tactics, currency });
 
-  // Parse pagination params
-  const limitNum = Math.min(Math.max(parseInt(limit ?? "50", 10) || 50, 1), 200);
+  // Parse pagination params: limit is optional, no limit if not specified
+  const limitNum = limit !== undefined ? Math.min(Math.max(parseInt(limit, 10) || 50, 1), 200) : undefined;
   const offsetNum = Math.max(parseInt(offset ?? "0", 10) || 0, 0);
 
   // Parse available_within_days filter
@@ -600,7 +602,9 @@ app.get("/api/units", async (c) => {
   if (computeLevel === "minimal") {
     // Minimal: direct query, no joins, no availability
     const allUnits = await repos.units.findAll(userId, filters);
-    const paginatedUnits = allUnits.slice(offsetNum, offsetNum + limitNum);
+    const paginatedUnits = limitNum !== undefined
+      ? allUnits.slice(offsetNum, offsetNum + limitNum)
+      : allUnits.slice(offsetNum);
     // Return minimal fields only
     const minimalUnits = paginatedUnits.map((u) => ({
       id: u.id,
@@ -631,7 +635,9 @@ app.get("/api/units", async (c) => {
   }
 
   // Paginate after filtering
-  const paginatedUnits = enrichedUnits.slice(offsetNum, offsetNum + limitNum);
+  const paginatedUnits = limitNum !== undefined
+    ? enrichedUnits.slice(offsetNum, offsetNum + limitNum)
+    : enrichedUnits.slice(offsetNum);
 
   if (effectiveFieldLevel === "standard" || (effectiveFieldLevel === "minimal" && needsAvailability)) {
     // Standard: include availability but not full product details
