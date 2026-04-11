@@ -215,17 +215,29 @@ LIMITATIONS:
   // ── get_unit ──
   server.tool(
     "get_unit",
-    "Get a single capital unit by ID (full or short). Returns full details including complete ID for update/delete.",
+    "Get a single capital unit by ID or unit_code. Returns full details including complete ID for update/delete.",
     {
-      id: z.string().describe("Unit ID (full ULID or 8-char prefix from list_units)"),
+      id: z.string().describe("Unit ID (full UUID, 8-char prefix) or unit_code (e.g., C01, A10)"),
     },
     async (args) => {
       const { db, userId } = ctx;
 
-      // Support both full ID and short ID (8-char prefix)
-      const isShortId = args.id.length <= 8;
-      const idCondition = isShortId ? "u.id LIKE ?" : "u.id = ?";
-      const idParam = isShortId ? `${args.id}%` : args.id;
+      // Detect if input looks like a unit_code (letter + digits, e.g., C01, A10)
+      const isUnitCode = /^[A-Za-z]\d+$/.test(args.id);
+
+      let idCondition: string;
+      let idParam: string;
+
+      if (isUnitCode) {
+        // Query by unit_code (exact match, case-insensitive)
+        idCondition = "UPPER(u.unit_code) = UPPER(?)";
+        idParam = args.id;
+      } else {
+        // Support both full ID and short ID (8-char prefix)
+        const isShortId = args.id.length <= 8;
+        idCondition = isShortId ? "u.id LIKE ?" : "u.id = ?";
+        idParam = isShortId ? `${args.id}%` : args.id;
+      }
 
       const unitSql = `
         SELECT u.id, u.unit_code, u.amount_cents, u.currency, u.status,
