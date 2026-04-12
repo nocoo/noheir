@@ -130,6 +130,14 @@ Keyword search is fuzzy and matches across note, all category levels, and accoun
         tertiary_categories: "tertiary_category",
         accounts: "account",
         currency: "currency",
+        // Special fields handled by key-specific logic in buildWhereConditions
+        keyword: "",
+        start_date: "",
+        end_date: "",
+        min_amount_cents: "",
+        max_amount_cents: "",
+        year: "",
+        month: "",
       });
 
       // Always filter by user
