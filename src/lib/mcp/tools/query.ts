@@ -15,14 +15,14 @@ import { compact, shortId, categoryPath, round2, currencyCode } from "./compact"
 // ---------------------------------------------------------------------------
 
 /** Filter undefined values from object for SQL params */
-function filterDefined<T extends object>(obj: T): Partial<T> {
+export function filterDefined<T extends object>(obj: T): Partial<T> {
   return Object.fromEntries(
     Object.entries(obj).filter(([, v]) => v !== undefined),
   ) as Partial<T>;
 }
 
 /** Build WHERE conditions from search params */
-function buildWhereConditions(
+export function buildWhereConditions(
   params: Record<string, unknown>,
   fieldMappings: Record<string, string>,
 ): { conditions: string[]; values: unknown[] } {

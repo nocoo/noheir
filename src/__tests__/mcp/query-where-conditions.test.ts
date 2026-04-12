@@ -5,56 +5,7 @@
  */
 
 import { describe, it, expect } from "bun:test";
-
-// Re-implement buildWhereConditions for isolated testing
-// (The original is not exported; if we want true coverage, export it or test via integration)
-function buildWhereConditions(
-  params: Record<string, unknown>,
-  fieldMappings: Record<string, string>,
-): { conditions: string[]; values: unknown[] } {
-  const conditions: string[] = [];
-  const values: unknown[] = [];
-
-  for (const [key, dbField] of Object.entries(fieldMappings)) {
-    const value = params[key];
-    if (value === undefined) continue;
-
-    if (Array.isArray(value) && value.length > 0) {
-      const placeholders = value.map(() => "?").join(", ");
-      conditions.push(`${dbField} IN (${placeholders})`);
-      values.push(...value);
-    } else if (typeof value === "string" && key === "keyword") {
-      conditions.push(`(note LIKE ? OR primary_category LIKE ? OR secondary_category LIKE ? OR account LIKE ?)`);
-      const like = `%${value}%`;
-      values.push(like, like, like, like);
-    } else if (typeof value === "number" || typeof value === "string") {
-      if (key === "start_date") {
-        conditions.push(`date >= ?`);
-        values.push(value);
-      } else if (key === "end_date") {
-        conditions.push(`date <= ?`);
-        values.push(value);
-      } else if (key === "min_amount_cents") {
-        conditions.push(`amount_cents >= ?`);
-        values.push(value);
-      } else if (key === "max_amount_cents") {
-        conditions.push(`amount_cents <= ?`);
-        values.push(value);
-      } else if (key === "year") {
-        conditions.push(`strftime('%Y', date) = ?`);
-        values.push(String(value));
-      } else if (key === "month") {
-        conditions.push(`CAST(strftime('%m', date) AS INTEGER) = ?`);
-        values.push(value);
-      } else {
-        conditions.push(`${dbField} = ?`);
-        values.push(value);
-      }
-    }
-  }
-
-  return { conditions, values };
-}
+import { buildWhereConditions, filterDefined } from "@/lib/mcp/tools/query";
 
 // Field mappings as used in query_transactions
 const TRANSACTION_FIELD_MAPPINGS = {
@@ -291,5 +242,47 @@ describe("regression: date filtering bug", () => {
     );
 
     expect(fixedConditions).toContain("date >= ?");
+  });
+});
+
+describe("filterDefined", () => {
+  it("should remove undefined values", () => {
+    const result = filterDefined({ a: 1, b: undefined, c: "hello" });
+    expect(result).toEqual({ a: 1, c: "hello" });
+  });
+
+  it("should keep null values", () => {
+    const result = filterDefined({ a: null, b: 2 });
+    expect(result).toEqual({ a: null, b: 2 });
+  });
+
+  it("should keep empty strings", () => {
+    const result = filterDefined({ a: "", b: "hello" });
+    expect(result).toEqual({ a: "", b: "hello" });
+  });
+
+  it("should keep zero", () => {
+    const result = filterDefined({ a: 0, b: 1 });
+    expect(result).toEqual({ a: 0, b: 1 });
+  });
+
+  it("should keep false", () => {
+    const result = filterDefined({ a: false, b: true });
+    expect(result).toEqual({ a: false, b: true });
+  });
+
+  it("should keep arrays including empty arrays", () => {
+    const result = filterDefined({ a: [], b: [1, 2] });
+    expect(result).toEqual({ a: [], b: [1, 2] });
+  });
+
+  it("should handle empty object", () => {
+    const result = filterDefined({});
+    expect(result).toEqual({});
+  });
+
+  it("should handle object with all undefined", () => {
+    const result = filterDefined({ a: undefined, b: undefined });
+    expect(result).toEqual({});
   });
 });

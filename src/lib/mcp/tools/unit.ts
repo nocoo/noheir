@@ -32,12 +32,12 @@ interface Unit {
   updated_at: string;
 }
 
-interface UnitWithProduct extends Unit {
+export interface UnitWithProduct extends Unit {
   product_name: string | null;
   product_lock_period_days: number | null;
 }
 
-interface ContributionLog {
+export interface ContributionLog {
   id: string;
   unit_id: string;
   operation_type: string;
@@ -48,7 +48,7 @@ interface ContributionLog {
 // Availability Enrichment
 // ---------------------------------------------------------------------------
 
-interface UnitEnriched {
+export interface UnitEnriched {
   id: string;
   code: string;
   amount: number;
@@ -64,7 +64,7 @@ interface UnitEnriched {
   avail?: string | null; // "a" = available, "l" = locked
 }
 
-function enrichWithAvailability(
+export function enrichWithAvailability(
   unit: UnitWithProduct,
   latestInvestLog: ContributionLog | null,
 ): UnitEnriched {
