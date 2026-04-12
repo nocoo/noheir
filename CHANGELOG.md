@@ -2,6 +2,43 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.2] - 2026-04-12
+
+MCP query bug fix and comprehensive L1 test coverage for MCP utilities.
+
+### Fixes
+
+- **query_transactions date filtering** — Fixed bug where date/amount/keyword filters were silently ignored due to missing field mappings
+
+### Tests
+
+- **MCP L1 Unit Tests** — 88 new unit tests for MCP pure functions:
+  - `compact.test.ts` — 26 tests for round2, compact, shortId, compactArray, categoryPath, currencyCode
+  - `types.test.ts` — 9 tests for ok/error helpers
+  - `unit-availability.test.ts` — 16 tests for enrichWithAvailability with Date mocking
+  - `auth.test.ts` — 17 tests for extractBearerToken, validateOrigin
+  - `query-where-conditions.test.ts` — 20 tests for buildWhereConditions + regression test
+
+### Refactoring
+
+- Export helper functions from MCP modules for testability
+- Remove unused mock-db.ts
+
+## [2.2.1] - 2026-04-10
+
+CI/CD setup and security fixes.
+
+### Features
+
+- **GitHub Actions CI** — Added CI workflow with base-ci@v2026
+- **Gitleaks Integration** — Security scanning with allowlist for test fixtures
+
+### Fixes
+
+- **get_unit tool** — Support unit_code parameter in MCP get_unit tool
+- **Worker endpoints** — Remove default limit on units/products endpoints
+- **CVE fixes** — Update hono, @hono/node-server, next to address security vulnerabilities
+
 ## [2.2.0] - 2026-04-07
 
 MCP server upgrade to base-mcp framework with OAuth 2.1 + Streamable HTTP transport, plus comprehensive E2E test coverage.
