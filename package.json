@@ -20,7 +20,8 @@
     "worker:dev": "cd worker && wrangler dev",
     "worker:deploy": "cd worker && wrangler deploy",
     "worker:typecheck": "cd worker && tsc --noEmit",
-    "prepare": "husky"
+    "prepare": "husky",
+    "release": "bun run scripts/release.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
