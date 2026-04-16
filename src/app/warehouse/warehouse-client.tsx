@@ -620,7 +620,7 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
                 return (
                   <Card
                     key={unit.id}
-                    className="relative cursor-pointer overflow-hidden border transition-shadow hover:shadow-md"
+                    className="relative cursor-pointer overflow-hidden border transition-shadow"
                     style={{
                       backgroundColor: withAlpha(colorToken, 0.1),
                       borderColor: withAlpha(colorToken, 0.2),
