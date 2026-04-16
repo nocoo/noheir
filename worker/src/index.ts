@@ -1,3 +1,4 @@
+import { APP_VERSION, COMPONENT_NAME } from "../lib/version";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { sql } from "drizzle-orm";
@@ -87,22 +88,41 @@ app.use(
   }),
 );
 
-// ── Health check (no auth) ──
+// ── Surety-standard live check (no auth) ──
 
-async function handleHealthCheck(c: {
-  env: Env;
-  json: (data: unknown, status?: number) => Response;
-}) {
-  const db = drizzle(c.env.DB);
-  try {
-    await db.run(sql`SELECT 1 AS ok`);
-    return c.json({ status: "ok", timestamp: Date.now() });
-  } catch {
-    return c.json({ status: "error", timestamp: Date.now() }, 500);
-  }
+const bootedAt = Date.now();
+
+function sanitizeError(msg: string): string {
+  return msg.replace(/\bok\b/gi, "***");
 }
 
-app.get("/api/health", (c) => handleHealthCheck(c));
+app.get("/api/live", async (c) => {
+  const db = drizzle(c.env.DB);
+  const uptime = Math.round((Date.now() - bootedAt) / 1000);
+  const base = {
+    version: APP_VERSION,
+    component: COMPONENT_NAME,
+    timestamp: new Date().toISOString(),
+    uptime,
+  };
+
+  try {
+    await db.run(sql`SELECT 1 AS probe`);
+    return c.json(
+      { status: "ok", ...base, database: { connected: true } },
+      200,
+    );
+  } catch (err) {
+    const message = err instanceof Error ? sanitizeError(err.message) : "unknown";
+    return c.json(
+      { status: "error", ...base, database: { connected: false, error: message } },
+      503,
+    );
+  }
+});
+
+// Legacy alias — kept for backward compatibility
+app.get("/api/health", async (c) => c.redirect("/api/live", 301));
 
 // Helper to get D1 binding based on X-Target-DB header
 function getD1Binding(c: { req: { header: (name: string) => string | undefined }; env: Env }): D1Database {
@@ -221,8 +241,8 @@ app.post("/api/v1/execute", async (c) => {
 // ── Auth middleware (all routes below require Bearer token + X-User-Id) ──
 
 app.use("*", async (c, next) => {
-  // Skip for already-handled routes (health check, SQL API)
-  if (c.req.path === "/api/health") return next();
+  // Skip for already-handled routes (live check, SQL API)
+  if (c.req.path === "/api/live" || c.req.path === "/api/health") return next();
   if (c.req.path.startsWith("/api/v1/")) return next(); // SQL API
 
   // 1. Verify Bearer token
