@@ -1,3 +1,7 @@
 [[IgnoredVulns]]
 id = "GHSA-67mh-4wv8-2f99"
 reason = "Transitive dependency via @esbuild-kit/core-utils (drizzle-kit). Cannot fix without drizzle-kit update."
+
+[[IgnoredVulns]]
+id = "GHSA-458j-xx4x-4375"
+reason = "hono 4.12.12 → 4.12.14 medium severity, indirect exposure only"

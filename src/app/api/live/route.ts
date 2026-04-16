@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
 import { APP_NAME, APP_VERSION } from "@/lib/version";
+
+export const dynamic = "force-dynamic";
 
 /**
  * GET /api/live — Liveness health check.
@@ -7,11 +8,13 @@ import { APP_NAME, APP_VERSION } from "@/lib/version";
  * No auth required. Returns app name, version, and timestamp.
  * Used by monitoring, load balancers, and deployment health checks.
  */
-export function GET() {
-  return NextResponse.json({
-    status: "ok",
-    name: APP_NAME,
-    version: APP_VERSION,
-    timestamp: Date.now(),
-  });
+export async function GET() {
+  return Response.json(
+    {
+      status: "ok",
+      version: APP_VERSION,
+      component: APP_NAME,
+    },
+    { headers: { "Cache-Control": "no-store" } },
+  );
 }
