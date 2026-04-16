@@ -4,4 +4,4 @@ reason = "Transitive dependency via @esbuild-kit/core-utils (drizzle-kit). Canno
 
 [[IgnoredVulns]]
 id = "GHSA-458j-xx4x-4375"
-reason = "hono 4.12.12 → 4.12.14 medium severity, indirect exposure only"
+reason = "bun.lock still resolves hono 4.12.12 via @modelcontextprotocol/sdk transitive dep; package.json has 4.12.14 but lockfile not yet updated"
