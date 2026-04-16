@@ -55,8 +55,8 @@ function run(
     let stderr = "";
 
     if (capture) {
-      child.stdout!.on("data", (d: Buffer) => (stdout += d.toString()));
-      child.stderr!.on("data", (d: Buffer) => (stderr += d.toString()));
+      child.stdout?.on("data", (d: Buffer) => (stdout += d.toString()));
+      child.stderr?.on("data", (d: Buffer) => (stderr += d.toString()));
     }
 
     child.on("close", (code) => {
@@ -81,7 +81,10 @@ function bumpVersion(
   current: string,
   arg: string,
 ): string {
-  const [major, minor, patch] = current.split(".").map(Number);
+  const parts = current.split(".").map(Number);
+  const major = parts[0] ?? 0;
+  const minor = parts[1] ?? 0;
+  const patch = parts[2] ?? 0;
 
   switch (arg) {
     case "patch":
@@ -131,9 +134,9 @@ async function getCommitsSinceTag(tag: string | null): Promise<CommitInfo[]> {
       if (!m) return null;
       return {
         hash,
-        type: m[1],
+        type: m[1] ?? "",
         scope: m[2] ?? "",
-        subject: m[4],
+        subject: m[4] ?? "",
         breaking: m[3] === "!",
       } satisfies CommitInfo;
     })
