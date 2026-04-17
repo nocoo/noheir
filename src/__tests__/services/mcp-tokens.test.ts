@@ -12,14 +12,9 @@ import type {
 } from "../../services/mcp-tokens";
 
 /**
- * NOTE: auth.test.ts uses mock.module("@/services/mcp-tokens") which globally
- * replaces sha256, getValidTokenByHash, and updateLastUsed with mocks in bun's
- * module registry. We import everything from the module but must be aware that
- * those 3 functions may be mocked when running the full test suite.
- *
- * We test sha256/getValidTokenByHash/updateLastUsed logic via integration
- * through createMcpToken and other functions that call them, or by directly
- * testing the crypto primitives.
+ * NOTE: auth.test.ts installs a mock.module("@/services/mcp-tokens") in a
+ * beforeAll hook and restores the real module in afterAll, so the exported
+ * helpers below behave as their real implementations when this suite runs.
  */
 import {
   randomHex,
@@ -28,9 +23,9 @@ import {
   generateRefreshToken,
   createMcpToken,
   getMcpTokenById,
-  getValidTokenByHash as _getValidTokenByHash,
+  getValidTokenByHash,
   getValidTokenByRefreshHash,
-  updateLastUsed as _updateLastUsed,
+  updateLastUsed,
   revokeToken,
   revokeTokensByClientAndUser,
   listMcpTokens,
@@ -109,37 +104,22 @@ describe("randomHex", () => {
 });
 
 describe("sha256", () => {
-  // Test the actual crypto implementation directly to avoid mock.module interference
-  async function realSha256(input: string): Promise<string> {
-    const encoded = new TextEncoder().encode(input);
-    const buffer = await crypto.subtle.digest("SHA-256", encoded);
-    return Array.from(new Uint8Array(buffer))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-  }
-
   it("should produce a 64-char hex string", async () => {
-    const hash = await realSha256("hello");
+    const hash = await sha256("hello");
     expect(hash).toHaveLength(64);
     expect(hash).toMatch(/^[0-9a-f]+$/);
   });
 
   it("should be deterministic", async () => {
-    const a = await realSha256("test-input");
-    const b = await realSha256("test-input");
+    const a = await sha256("test-input");
+    const b = await sha256("test-input");
     expect(a).toBe(b);
   });
 
   it("should produce different hashes for different inputs", async () => {
-    const a = await realSha256("input-a");
-    const b = await realSha256("input-b");
+    const a = await sha256("input-a");
+    const b = await sha256("input-b");
     expect(a).not.toBe(b);
-  });
-
-  it("should match the exported sha256 function signature", async () => {
-    // Verify the exported sha256 is callable (may be mocked in full suite)
-    const result = await sha256("test");
-    expect(typeof result).toBe("string");
   });
 });
 
@@ -267,20 +247,10 @@ describe("getMcpTokenById", () => {
 });
 
 describe("getValidTokenByHash", () => {
-  // Inline implementation to avoid mock.module interference from auth.test.ts
-  async function realGetValidTokenByHash(db: Db, accessTokenHash: string) {
-    const now = new Date().toISOString();
-    return db.firstOrNull<McpToken>(
-      `SELECT * FROM mcp_tokens
-     WHERE access_token_hash = ? AND revoked = 0 AND expires_at > ?`,
-      [accessTokenHash, now],
-    );
-  }
-
   it("should query with hash and check revoked/expired", async () => {
     const { db, calls } = createMockDb({ firstOrNullResult: fakeToken });
 
-    const result = await realGetValidTokenByHash(db, "hash_abc");
+    const result = await getValidTokenByHash(db, "hash_abc");
 
     expect(result).toEqual(fakeToken);
     expect(at(calls, 0).sql).toContain("access_token_hash = ?");
@@ -291,7 +261,7 @@ describe("getValidTokenByHash", () => {
 
   it("should return null when no valid token", async () => {
     const { db } = createMockDb({ firstOrNullResult: null });
-    const result = await realGetValidTokenByHash(db, "hash_abc");
+    const result = await getValidTokenByHash(db, "hash_abc");
     expect(result).toBeNull();
   });
 });
@@ -319,19 +289,10 @@ describe("getValidTokenByRefreshHash", () => {
 });
 
 describe("updateLastUsed", () => {
-  // Inline implementation to avoid mock.module interference from auth.test.ts
-  async function realUpdateLastUsed(db: Db, id: string) {
-    const now = new Date().toISOString();
-    await db.execute(
-      "UPDATE mcp_tokens SET last_used_at = ? WHERE id = ?",
-      [now, id],
-    );
-  }
-
   it("should update last_used_at for the given token id", async () => {
     const { db, calls } = createMockDb();
 
-    await realUpdateLastUsed(db, "01TEST");
+    await updateLastUsed(db, "01TEST");
 
     expect(calls).toHaveLength(1);
     expect(at(calls, 0).sql).toContain("UPDATE mcp_tokens SET last_used_at = ?");
