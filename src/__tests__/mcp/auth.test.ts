@@ -1,11 +1,40 @@
 /**
  * Tests for MCP auth utilities
  *
- * L1 unit tests for extractBearerToken and validateOrigin.
+ * L1 unit tests for extractBearerToken, validateOrigin, and validateMcpToken.
  */
 
-import { describe, it, expect } from "bun:test";
-import { extractBearerToken, validateOrigin } from "@/lib/mcp/auth";
+import { describe, it, expect, mock } from "bun:test";
+import { extractBearerToken, validateOrigin, validateMcpToken } from "@/lib/mcp/auth";
+import type { McpToken } from "@/services/mcp-tokens";
+
+// Mock the mcp-tokens service
+const mockGetValidTokenByHash = mock(() => Promise.resolve(null as McpToken | null));
+const mockUpdateLastUsed = mock(() => Promise.resolve());
+const mockSha256 = mock((input: string) => Promise.resolve(`hashed-${input}`));
+
+mock.module("@/services/mcp-tokens", () => ({
+  getValidTokenByHash: mockGetValidTokenByHash,
+  updateLastUsed: mockUpdateLastUsed,
+  sha256: mockSha256,
+}));
+
+const fakeDb = {} as Parameters<typeof validateMcpToken>[0];
+
+const fakeToken: McpToken = {
+  id: "tok-1",
+  access_token_hash: "hashed-abc123",
+  access_token_preview: "abc1…",
+  client_id: "client-1",
+  user_id: "user-1",
+  client_name: "Test Client",
+  scope: "read write",
+  revoked: 0,
+  revoked_at: null,
+  expires_at: "2099-12-31T00:00:00Z",
+  last_used_at: null,
+  issued_at: "2026-01-01T00:00:00Z",
+};
 
 describe("extractBearerToken", () => {
   it("should extract token from valid Bearer header", () => {
@@ -36,8 +65,60 @@ describe("extractBearerToken", () => {
   });
 
   it("should return null for token with space (malformed)", () => {
-    // The regex requires \S+ (non-whitespace), so "Bearer abc 123" doesn't match
     expect(extractBearerToken("Bearer abc 123")).toBeNull();
+  });
+});
+
+describe("validateMcpToken", () => {
+  it("returns error for null auth header", async () => {
+    const result = await validateMcpToken(fakeDb, null);
+    expect(result.valid).toBe(false);
+    if (!result.valid) {
+      expect(result.status).toBe(401);
+      expect(result.error).toContain("Missing");
+    }
+  });
+
+  it("returns error for malformed auth header", async () => {
+    const result = await validateMcpToken(fakeDb, "Basic abc");
+    expect(result.valid).toBe(false);
+    if (!result.valid) {
+      expect(result.status).toBe(401);
+    }
+  });
+
+  it("returns error for invalid/expired token", async () => {
+    mockGetValidTokenByHash.mockResolvedValueOnce(null);
+    const result = await validateMcpToken(fakeDb, "Bearer invalid-token");
+    expect(result.valid).toBe(false);
+    if (!result.valid) {
+      expect(result.status).toBe(401);
+      expect(result.error).toContain("Invalid");
+    }
+  });
+
+  it("returns success for valid token", async () => {
+    mockGetValidTokenByHash.mockResolvedValueOnce(fakeToken);
+    const result = await validateMcpToken(fakeDb, "Bearer abc123");
+    expect(result.valid).toBe(true);
+    if (result.valid) {
+      expect(result.token.id).toBe("tok-1");
+    }
+  });
+
+  it("calls updateLastUsed on success (fire-and-forget)", async () => {
+    mockGetValidTokenByHash.mockResolvedValueOnce(fakeToken);
+    mockUpdateLastUsed.mockClear();
+    await validateMcpToken(fakeDb, "Bearer abc123");
+    expect(mockUpdateLastUsed).toHaveBeenCalled();
+  });
+
+  it("swallows updateLastUsed errors silently", async () => {
+    mockGetValidTokenByHash.mockResolvedValueOnce(fakeToken);
+    mockUpdateLastUsed.mockRejectedValueOnce(new Error("db error"));
+    // Should not throw
+    const result = await validateMcpToken(fakeDb, "Bearer abc123");
+    expect(result.valid).toBe(true);
   });
 });
 
@@ -102,7 +183,6 @@ describe("validateOrigin", () => {
 
   describe("edge cases", () => {
     it("should handle invalid siteUrl gracefully", () => {
-      // With invalid siteUrl, still check other rules
       const result = validateOrigin("https://evil.com", "not-a-url");
       expect(result).not.toBeNull();
       expect(result?.valid).toBe(false);
@@ -113,11 +193,7 @@ describe("validateOrigin", () => {
     });
 
     it("should block origin with path (origin format should not have path)", () => {
-      // URL.origin strips path, so "https://noheir.hexly.ai/path" origin is "https://noheir.hexly.ai"
-      // But validateOrigin compares the full input string, not parsed origin
-      // In practice this doesn't happen as browsers send clean origin headers
       const result = validateOrigin("https://noheir.hexly.ai/path", siteUrl);
-      // The implementation compares raw strings, so path makes it not match
       expect(result?.valid).toBe(false);
     });
   });
