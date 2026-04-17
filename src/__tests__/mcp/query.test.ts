@@ -169,6 +169,21 @@ describe("query_transactions", () => {
     expect(at(calls, 0).sql).toContain("primary_category IN");
   });
 
+  it("should apply tags array filter using JSON LIKE patterns", async () => {
+    const { handler, calls } = setup();
+    await handler({ tags: ["food", "work"], limit: 50, offset: 0 });
+
+    const { sql, params } = at(calls, 0);
+    // Tags are stored as JSON strings — the filter must use LIKE, not IN.
+    expect(sql).toContain("tags LIKE ?");
+    expect(sql).not.toContain("tags IN");
+    // Each tag contributes two LIKE patterns (normal + double-encoded).
+    expect(params).toContain('%"food"%');
+    expect(params).toContain('%"work"%');
+    expect(params).toContain('%\\"food\\"%');
+    expect(params).toContain('%\\"work\\"%');
+  });
+
   it("should apply year and month filters", async () => {
     const { handler, calls } = setup();
     await handler({ year: 2025, month: 6, limit: 50, offset: 0 });

@@ -34,9 +34,20 @@ export function buildWhereConditions(
     if (value === undefined) continue;
 
     if (Array.isArray(value) && value.length > 0) {
-      const placeholders = value.map(() => "?").join(", ");
-      conditions.push(`${dbField} IN (${placeholders})`);
-      values.push(...value);
+      if (key === "tags") {
+        // Tags are stored as JSON strings (e.g. '["foo","bar"]').
+        // Use LIKE patterns to match any of the requested tags. Covers both
+        // normal JSON and double-encoded legacy migrations.
+        const tagConditions = value.map(() => `(${dbField} LIKE ? OR ${dbField} LIKE ?)`);
+        conditions.push(`(${tagConditions.join(" OR ")})`);
+        for (const v of value) {
+          values.push(`%"${v}"%`, `%\\"${v}\\"%`);
+        }
+      } else {
+        const placeholders = value.map(() => "?").join(", ");
+        conditions.push(`${dbField} IN (${placeholders})`);
+        values.push(...value);
+      }
     } else if (typeof value === "string" && key === "keyword") {
       conditions.push(`(note LIKE ? OR primary_category LIKE ? OR secondary_category LIKE ? OR account LIKE ?)`);
       const like = `%${value}%`;
@@ -129,6 +140,7 @@ Keyword search is fuzzy and matches across note, all category levels, and accoun
         secondary_categories: "secondary_category",
         tertiary_categories: "tertiary_category",
         accounts: "account",
+        tags: "tags",
         currency: "currency",
         // Special fields handled by key-specific logic in buildWhereConditions
         keyword: "",
