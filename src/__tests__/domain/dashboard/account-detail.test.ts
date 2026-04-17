@@ -228,8 +228,12 @@ describe("sortDisplayEntries", () => {
       { ...baseEntry, id: "tfr", type: "transfer" },
     ];
     const sorted = sortDisplayEntries(entries, "type", "asc");
-    // Chinese sort: 收入, 支出, 转账
-    expect(sorted.map((e) => e.id)).toBeDefined();
+    // Chinese labels sort by Unicode code point:
+    //   支出 (U+652F) < 收入 (U+6536) < 转账 (U+8F6C)
+    expect(sorted.map((e) => e.id)).toEqual(["exp", "inc", "tfr"]);
+
+    const sortedDesc = sortDisplayEntries(entries, "type", "desc");
+    expect(sortedDesc.map((e) => e.id)).toEqual(["tfr", "inc", "exp"]);
   });
 
   it("sorts by primaryCategory", () => {
