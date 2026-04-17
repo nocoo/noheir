@@ -6,6 +6,7 @@ import {
   buildIncomingLiquidity,
   buildAvailabilityDistribution,
   buildStatusDistribution,
+  buildStrategyChartData,
   buildTotalAssetsAll,
   buildTotalAssetsByCurrency,
 } from "@/domain/assets/capital-dashboard";
@@ -86,5 +87,56 @@ describe("capital-dashboard domain", () => {
       100,
     );
     expect(availability[0]?.period).toBe("已可用");
+  });
+
+  it("buckets availability into 7d, 30d, 90d, beyond", () => {
+    const units = [
+      makeUnit({ availableDate: "2026-01-01", isAvailable: false, daysUntilAvailable: 3, amount: 10 }),
+      makeUnit({ availableDate: "2026-01-01", isAvailable: false, daysUntilAvailable: 15, amount: 20 }),
+      makeUnit({ availableDate: "2026-01-01", isAvailable: false, daysUntilAvailable: 60, amount: 30 }),
+      makeUnit({ availableDate: "2026-01-01", isAvailable: false, daysUntilAvailable: 120, amount: 40 }),
+    ];
+    const result = buildAvailabilityDistribution(units, 100);
+    expect(result.find((r) => r.period === "7天内")?.amount).toBe(10);
+    expect(result.find((r) => r.period === "30天内")?.amount).toBe(20);
+    expect(result.find((r) => r.period === "90天内")?.amount).toBe(30);
+    expect(result.find((r) => r.period === "90天以上")?.amount).toBe(40);
+  });
+
+  it("skips units without availableDate or not established", () => {
+    const units = [
+      makeUnit({ availableDate: null, daysUntilAvailable: 5, amount: 10 }),
+      makeUnit({ availableDate: "2026-01-01", status: "计划中", daysUntilAvailable: 5, amount: 10 }),
+    ];
+    const result = buildAvailabilityDistribution(units, 100);
+    expect(result).toHaveLength(0);
+  });
+
+  it("handles 0 totalAssetsAll for percentage", () => {
+    const units = [
+      makeUnit({ availableDate: "2026-01-01", isAvailable: true, amount: 50 }),
+    ];
+    const result = buildAvailabilityDistribution(units, 0);
+    expect(result[0]?.percentage).toBe(0);
+    expect(result[0]?.amount).toBe(50);
+  });
+});
+
+describe("buildStrategyChartData", () => {
+  it("maps strategy allocation to chart data", () => {
+    const input = [
+      { strategy: "长期理财" as const, total_amount: 10000, percentage: 60 },
+      { strategy: "短期理财" as const, total_amount: 5000, percentage: 30 },
+    ];
+    const result = buildStrategyChartData(input);
+    expect(result).toHaveLength(2);
+    expect(result[0]?.name).toBe("长期理财");
+    expect(result[0]?.value).toBe(10000);
+    expect(result[0]?.percentage).toBe(60);
+    expect(result[1]?.name).toBe("短期理财");
+  });
+
+  it("handles empty allocation", () => {
+    expect(buildStrategyChartData([])).toEqual([]);
   });
 });
