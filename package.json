@@ -6,7 +6,7 @@
     "dev": "next dev --port 7004",
     "build": "next build",
     "start": "next start --port 7004",
-    "lint": "eslint --max-warnings=0",
+    "lint": "eslint --cache --cache-location node_modules/.cache/eslint/ --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "test": "bun test src/__tests__",
     "test:worker": "bun test ./worker/tests/*.test.ts",
@@ -72,7 +72,7 @@
   ],
   "lint-staged": {
     "*.{ts,tsx}": [
-      "eslint --max-warnings=0 --no-warn-ignored"
+      "eslint --cache --cache-location node_modules/.cache/eslint/ --max-warnings=0 --no-warn-ignored"
     ]
   },
   "overrides": {
