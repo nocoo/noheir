@@ -48,10 +48,16 @@ run_phase() {
 
 # ---- pre-commit phases ----
 PC_START="$(ts)"
-run_phase tests bun run test:coverage || exit 1
-run_phase lintstaged bunx lint-staged || exit 1
-run_phase typecheck bun run typecheck || exit 1
+bash scripts/precommit-parallel.sh >/tmp/bench-pc-$$.log 2>&1
+PC_RC=$?
 PC_END="$(ts)"
+if [ $PC_RC -ne 0 ]; then
+  echo "PRECOMMIT FAIL rc=$PC_RC" >&2
+  tail -60 /tmp/bench-pc-$$.log >&2
+  rm -f /tmp/bench-pc-$$.log
+  exit $PC_RC
+fi
+rm -f /tmp/bench-pc-$$.log
 PRECOMMIT_S="$(python3 -c "print(f'{$PC_END-$PC_START:.3f}')")"
 echo "METRIC precommit_s=$PRECOMMIT_S"
 

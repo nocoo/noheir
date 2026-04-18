@@ -1,0 +1,38 @@
+#!/bin/sh
+# Run pre-commit checks in parallel: tests, lint-staged, typecheck.
+# Aborts on first failure; prints output of failing job.
+set -u
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+LOGDIR="$(mktemp -d -t precommit.XXXXXX)"
+trap 'rm -rf "$LOGDIR"' EXIT
+
+run_bg() {
+  local name="$1"; shift
+  ( "$@" >"$LOGDIR/$name.log" 2>&1; echo $? >"$LOGDIR/$name.rc" ) &
+  eval "${name}_PID=$!"
+}
+
+cd "$ROOT"
+
+run_bg tests bun run test:coverage
+run_bg lintstaged bunx lint-staged
+run_bg typecheck bun run typecheck
+
+FAIL=0
+for name in tests lintstaged typecheck; do
+  pid_var="${name}_PID"
+  eval "pid=\$$pid_var"
+  wait "$pid"
+done
+
+for name in tests lintstaged typecheck; do
+  rc=$(cat "$LOGDIR/$name.rc" 2>/dev/null || echo 1)
+  if [ "$rc" != "0" ]; then
+    echo "❌ $name failed (rc=$rc)"
+    cat "$LOGDIR/$name.log"
+    FAIL=1
+  fi
+done
+
+exit "$FAIL"
