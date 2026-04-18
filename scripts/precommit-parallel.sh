@@ -16,17 +16,17 @@ run_bg() {
 cd "$ROOT"
 
 run_bg tests bun run test:coverage
-run_bg lintstaged bunx lint-staged
+run_bg lint bun run lint
 run_bg typecheck bun run typecheck
 
 FAIL=0
-for name in tests lintstaged typecheck; do
+for name in tests lint typecheck; do
   pid_var="${name}_PID"
   eval "pid=\$$pid_var"
   wait "$pid"
 done
 
-for name in tests lintstaged typecheck; do
+for name in tests lint typecheck; do
   rc=$(cat "$LOGDIR/$name.rc" 2>/dev/null || echo 1)
   if [ "$rc" != "0" ]; then
     echo "❌ $name failed (rc=$rc)"
