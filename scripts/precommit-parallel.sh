@@ -1,5 +1,5 @@
 #!/bin/sh
-# Run pre-commit checks in parallel: tests, lint-staged, typecheck.
+# Run pre-commit checks in parallel: tests, lint, typecheck.
 # Aborts on first failure; prints output of failing job.
 set -u
 
