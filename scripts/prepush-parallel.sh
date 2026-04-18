@@ -17,8 +17,8 @@ run_bg() {
   JOBS="$JOBS $name:$!"
 }
 
-run_bg tests bun run test:coverage
-run_bg lint bun run lint
+run_bg tests bun run scripts/check-coverage.ts
+run_bg lint ./node_modules/.bin/eslint --cache --cache-location node_modules/.cache/eslint/ --max-warnings=0
 
 if [ "${SKIP_SECURITY:-0}" != "1" ]; then
   if command -v osv-scanner >/dev/null 2>&1; then

@@ -15,9 +15,9 @@ run_bg() {
 
 cd "$ROOT"
 
-run_bg tests bun run test:coverage
-run_bg lint bun run lint
-run_bg typecheck bun run typecheck
+run_bg tests bun run scripts/check-coverage.ts
+run_bg lint ./node_modules/.bin/eslint --cache --cache-location node_modules/.cache/eslint/ --max-warnings=0
+run_bg typecheck ./node_modules/.bin/tsc --noEmit
 
 FAIL=0
 for name in tests lint typecheck; do
