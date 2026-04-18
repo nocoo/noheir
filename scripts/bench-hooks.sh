@@ -63,9 +63,16 @@ echo "METRIC precommit_s=$PRECOMMIT_S"
 
 # ---- pre-push phases ----
 PP_START="$(ts)"
-run_phase tests2 bun run test:coverage || exit 1
-run_phase lint bun run lint || exit 1
+SKIP_SECURITY=1 SKIP_E2E=1 bash scripts/prepush-parallel.sh >/tmp/bench-pp-$$.log 2>&1
+PP_RC=$?
 PP_END="$(ts)"
+if [ $PP_RC -ne 0 ]; then
+  echo "PREPUSH FAIL rc=$PP_RC" >&2
+  tail -60 /tmp/bench-pp-$$.log >&2
+  rm -f /tmp/bench-pp-$$.log
+  exit $PP_RC
+fi
+rm -f /tmp/bench-pp-$$.log
 PREPUSH_S="$(python3 -c "print(f'{$PP_END-$PP_START:.3f}')")"
 echo "METRIC prepush_s=$PREPUSH_S"
 

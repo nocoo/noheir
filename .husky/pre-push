@@ -1,33 +1,3 @@
 #!/bin/sh
 set -e
-bun run test:coverage
-bun run lint
-
-# Security scans — skip gracefully if tools not installed
-if command -v osv-scanner >/dev/null 2>&1; then
-  osv-scanner --lockfile=bun.lock
-else
-  echo ""
-  echo "\033[1;33m⚠  osv-scanner not installed — vulnerability scan SKIPPED\033[0m"
-  echo ""
-fi
-
-if command -v gitleaks >/dev/null 2>&1; then
-  gitleaks protect --staged --no-banner
-else
-  echo ""
-  echo "\033[1;33m⚠  gitleaks not installed — secret scan SKIPPED\033[0m"
-  echo ""
-fi
-
-# E2E tests — skip gracefully if Worker not running
-if curl -sf http://localhost:8787/api/live >/dev/null 2>&1; then
-  bun run test:e2e
-else
-  echo ""
-  echo "\033[1;33m╔════════════════════════════════════════════════════════╗\033[0m"
-  echo "\033[1;33m║  ⚠  Worker not running — E2E tests SKIPPED           ║\033[0m"
-  echo "\033[1;33m║  Run 'bun run worker:dev' to enable E2E tests        ║\033[0m"
-  echo "\033[1;33m╚════════════════════════════════════════════════════════╝\033[0m"
-  echo ""
-fi
+sh "$(dirname "$0")/../scripts/prepush-parallel.sh"
