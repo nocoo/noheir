@@ -12,3 +12,5 @@ Currently at ~1.6s total (pre-commit ~1.0s + pre-push ~0.6s warm). Bottlenecks:
 - **Parallel orchestrator in single bun process (parallel-runner.ts)** — tried, regressed due to high variance (occasional 4s spikes). Stick with shell `&` backgrounding which is more stable.
 - **Test sharding** — bun test is already 0.2s warm; not worth sharding.
 - **Skip pre-push tests if pre-commit passed recently** — could write `.git/hooks-state` with last-passed timestamp + commit SHA, skip identical work in pre-push if HEAD unchanged. Risk: stale state. ~0.2s savings only.
+- **eslint --concurrency** — tested off/auto/2/4. Concurrency >1 hurts (worker startup ~0.5s overhead vs ~0.6s warm single-thread). Stay with default off.
+- **@typescript/native-preview (tsgo)** — TS native compiler is much faster but requires adding a dep + rewiring scripts. Out of scope for hook-only optimization, but would be the biggest single win if adopted project-wide.
