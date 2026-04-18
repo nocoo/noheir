@@ -1,6 +1,17 @@
 # Deferred optimization ideas for git hooks
 
-Currently at ~1.6s total (pre-commit ~1.0s + pre-push ~0.6s warm). Bottlenecks:
+Final optimized state: best total ~1.25s (vs 7.55s baseline = -83%). Bottleneck distribution:
+- pre-commit (~0.65-0.95s, parallel max of): tests=0.2s, lint=0.6s, tsc --build=0.6-0.85s
+- pre-push (~0.6s, parallel max of): tests=0.2s, lint=0.6s
+
+Applied optimizations (already shipped):
+1. **eslint --cache** — lint dropped from ~4s to ~0.6s warm.
+2. **Parallel pre-commit** — tests+lint+typecheck run concurrently via shell `&` backgrounding (`scripts/precommit-parallel.sh`).
+3. **Parallel pre-push** — tests+lint (and optional osv-scanner/gitleaks/e2e) run concurrently (`scripts/prepush-parallel.sh`).
+4. **Replaced lint-staged with full cached eslint** in pre-commit — cached full lint is faster and broader than lint-staged invoking eslint without cache.
+5. **Direct binary invocation** — `./node_modules/.bin/eslint` and `./node_modules/.bin/tsc` instead of `bun run X` to skip package.json script lookup.
+6. **`tsc --build`** instead of `tsc --noEmit` — incremental-aware, lets tsc skip work entirely on no-op rebuilds (~50ms vs 1s).
+
 
 - **typecheck (~0.85s warm)** — single-threaded `tsc --noEmit`. To speed up:
   - Project references / `tsc --build` could allow incremental + parallel (but project is a single tsconfig today).
