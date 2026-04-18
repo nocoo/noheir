@@ -1,12 +1,16 @@
 /**
  * E2E test client factory.
  *
- * Creates a WorkerDbClient pointed at the local wrangler dev server
- * with `targetDb: "test"` so all queries go to the remote test D1.
+ * Defaults to a local `wrangler dev` server with `targetDb: "test"` so all
+ * queries go to the local test D1 binding. In CI (or any environment that
+ * targets an already-deployed Worker), set `WORKER_URL` and `WORKER_SECRET`
+ * to override.
  */
 
-const WORKER_BASE_URL = "http://127.0.0.1:8787";
+const WORKER_BASE_URL =
+  process.env.WORKER_URL ?? "http://127.0.0.1:8787";
 const WORKER_SECRET =
+  process.env.WORKER_SECRET ??
   "b5edfb5b65dd841904149c2b6e59e7d5977ad8ade330c2768893f81e32bb7605";
 
 // ── Lightweight HTTP helper (no WorkerDbClient dependency) ──
@@ -19,6 +23,11 @@ export interface FetchOptions {
   body?: unknown;
   token?: string;
   omitAuth?: boolean;
+  /**
+   * Override the default fetch redirect behavior. Useful for asserting
+   * 3xx responses directly (e.g. /api/health → /api/live).
+   */
+  redirect?: RequestRedirect;
 }
 
 /**
@@ -44,6 +53,9 @@ export async function rawFetch(opts: FetchOptions): Promise<Response> {
   };
   if (opts.body !== undefined) {
     init.body = JSON.stringify(opts.body);
+  }
+  if (opts.redirect !== undefined) {
+    init.redirect = opts.redirect;
   }
 
   return fetch(`${WORKER_BASE_URL}${opts.path}`, init);
