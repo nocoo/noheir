@@ -1,1 +1,3 @@
 {"type":"config","name":"Speed up pre-commit / pre-push hooks","metricName":"total_s","metricUnit":"s","bestDirection":"lower"}
+{"run":1,"commit":"1197eaa","metric":12.701,"metrics":{"precommit_s":5.901,"prepush_s":6.8},"status":"keep","description":"baseline: pre-commit (test:coverage + lint-staged + typecheck) + pre-push (test:coverage + lint)","timestamp":1776551171763,"segment":0,"confidence":null,"iterationTokens":194,"asi":{"hypothesis":"establish baseline","note":"tests are duplicated across pre-commit and pre-push; lint-staged shells out to bunx; typecheck and lint may be parallelizable"}}
+{"type":"config","name":"Speed up pre-commit / pre-push hooks (warm)","metricName":"total_s","metricUnit":"s","bestDirection":"lower"}

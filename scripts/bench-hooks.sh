@@ -44,22 +44,21 @@ run_phase() {
   fi
   rm -f /tmp/bench-hooks-$$.log
   echo "METRIC ${name}_s=$dur"
-  printf '%s' "$dur" >&2
 }
 
 # ---- pre-commit phases ----
 PC_START="$(ts)"
-TESTS_S="$(run_phase tests bun run test:coverage)" || exit 1
-LS_S="$(run_phase lintstaged bunx lint-staged)" || exit 1
-TC_S="$(run_phase typecheck bun run typecheck)" || exit 1
+run_phase tests bun run test:coverage || exit 1
+run_phase lintstaged bunx lint-staged || exit 1
+run_phase typecheck bun run typecheck || exit 1
 PC_END="$(ts)"
 PRECOMMIT_S="$(python3 -c "print(f'{$PC_END-$PC_START:.3f}')")"
 echo "METRIC precommit_s=$PRECOMMIT_S"
 
 # ---- pre-push phases ----
 PP_START="$(ts)"
-TESTS2_S="$(run_phase tests2 bun run test:coverage)" || exit 1
-LINT_S="$(run_phase lint bun run lint)" || exit 1
+run_phase tests2 bun run test:coverage || exit 1
+run_phase lint bun run lint || exit 1
 PP_END="$(ts)"
 PREPUSH_S="$(python3 -c "print(f'{$PP_END-$PP_START:.3f}')")"
 echo "METRIC prepush_s=$PREPUSH_S"
