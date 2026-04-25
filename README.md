@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="public/logo/logo-128.png" alt="Noheir Logo" width="128" height="128">
+  <img src="public/logo-128.png" alt="Noheir Logo" width="128" height="128">
   <h1>Noheir（个人财务管理）</h1>
   <p>收支分析、储蓄率追踪、多账户管理、资产配置与财务健康评估</p>
 </div>
