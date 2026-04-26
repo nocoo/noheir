@@ -2,12 +2,13 @@ README.md
 
 ## Deployment
 
-- **Production URL**: https://noheir.hexly.ai
-- **Platform**: Railway (Railpack builder, Caddy SPA serving)
-- **Auto-deploy**: Push to `main` branch triggers build & deploy
-- **Region**: Asia Southeast 1 (Singapore)
-- **Architecture**: Next.js handles MCP OAuth + API routes; Cloudflare Worker provides SQL API to D1.
-- **Compile-time env vars** (set in Railway): `WORKER_URL`, `WORKER_SECRET`, `NEXTAUTH_URL`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`
+- **Architecture**: Next.js (standalone, port 7004) handles UI + NextAuth + MCP OAuth + API routes; Cloudflare Worker provides SQL API to D1.
+- **Image**: `Dockerfile` (multi-stage, `oven/bun:1`) → published to GHCR as `ghcr.io/<owner>/noheir:latest` and `:<sha>`.
+- **Edge**: Cloudflare in front of an origin VPS. Origin terminates TLS with a Cloudflare Origin Certificate and enforces **Authenticated Origin Pulls (mTLS)** via Caddy, so direct-to-IP traffic is rejected.
+- **CI/CD**: `.github/workflows/ci.yml` runs lint + unit tests on every push/PR. `.github/workflows/release.yml` is chained via `workflow_run` — on green CI for `main` it builds & pushes the image, then SSHes into the VPS to `docker compose pull && up -d --no-deps app`, runs an in-container health check, and finally smoke-tests via the public URL.
+- **Runtime env vars** (injected by the host's `.env`, never baked into the image): `WORKER_URL`, `WORKER_TOKEN`, `AUTH_SECRET`, `NEXTAUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ALLOWED_EMAILS`.
+- **GitHub Actions secrets** required by `release.yml`: `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`, `GHCR_PULL_USER`, `GHCR_PULL_TOKEN` (PAT with `read:packages`). Host-side compose file references the same image tag.
+- See [docs/04-run.md](./docs/04-run.md) for the full deploy guide.
 
 ## Backend (Cloudflare Worker + D1)
 
@@ -75,4 +76,5 @@ All domain labels (unitCode, strategy, tactics, status, currency, product) MUST 
 - D1 uses SQLite syntax — use `strftime('%Y', date)` instead of `EXTRACT(YEAR FROM date)`.
 - Wrangler D1 queries require `--remote` flag for production database.
 - MCP server moved from Worker to Next.js API routes (`src/app/api/mcp/`). Worker now only provides SQL API.
-- **Local npm links don't work in Docker builds**: `"@nocoo/base-mcp": "link:../base-mcp"` causes `FileNotFound` during Railway/Docker builds because the linked package doesn't exist in the build container. Solution: inline needed functions directly into the project (e.g., `src/lib/mcp/pkce.ts`) or publish to npm registry.
+- **Local npm links don't work in Docker builds**: `"@nocoo/base-mcp": "link:../base-mcp"` causes `FileNotFound` during Docker builds because the linked package doesn't exist in the build container. Solution: inline needed functions directly into the project (e.g., `src/lib/mcp/pkce.ts`) or publish to npm registry.
+- **Middleware whitelist must include `/api/auth/`**: `src/proxy.ts` redirects unauthenticated requests to `/login`. NextAuth's own endpoints (`/api/auth/session`, `/providers`, `/csrf`, `/callback/*`, …) must be in `PUBLIC_PREFIXES`, otherwise the client receives an HTML login page instead of JSON and breaks with `Unexpected token '<'`. Marking them only as "not protected" inside `isProtectedApiRoute` is **not** enough — they fall through to the protected-page branch.
