@@ -3,15 +3,13 @@
  *
  * Defaults to a local `wrangler dev` server with `targetDb: "test"` so all
  * queries go to the local test D1 binding. In CI (or any environment that
- * targets an already-deployed Worker), set `WORKER_URL` and `WORKER_SECRET`
+ * targets an already-deployed Worker), set `WORKER_URL` and `WORKER_TOKEN`
  * to override.
  */
 
 const WORKER_BASE_URL =
   process.env.WORKER_URL ?? "http://127.0.0.1:8787";
-const WORKER_SECRET =
-  process.env.WORKER_SECRET ??
-  "b5edfb5b65dd841904149c2b6e59e7d5977ad8ade330c2768893f81e32bb7605";
+const WORKER_TOKEN = process.env.WORKER_TOKEN ?? "";
 
 // ── Lightweight HTTP helper (no WorkerDbClient dependency) ──
 
@@ -40,7 +38,7 @@ export async function rawFetch(opts: FetchOptions): Promise<Response> {
   };
 
   if (!opts.omitAuth) {
-    headers["Authorization"] = `Bearer ${opts.token ?? WORKER_SECRET}`;
+    headers["Authorization"] = `Bearer ${opts.token ?? WORKER_TOKEN}`;
   }
   if (opts.userId) {
     headers["X-User-Id"] = opts.userId;
@@ -75,7 +73,7 @@ export async function api<T>(opts: FetchOptions): Promise<T> {
 // ── Constants ──
 
 export const BASE_URL = WORKER_BASE_URL;
-export const SECRET = WORKER_SECRET;
+export const SECRET = WORKER_TOKEN;
 
 export const TEST_USER_A = "e2e-user-alpha";
 export const TEST_USER_B = "e2e-user-beta";

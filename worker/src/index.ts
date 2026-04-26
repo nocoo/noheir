@@ -47,8 +47,7 @@ function getLocalDateString(): string {
 export interface Env {
   DB: D1Database;
   DB_TEST: D1Database;
-  WORKER_SHARED_SECRET: string;
-  WORKER_SECRET: string; // For Next.js MCP server SQL API
+  WORKER_TOKEN: string;
   SITE_URL?: string;
 }
 
@@ -131,7 +130,7 @@ function getD1Binding(c: { req: { header: (name: string) => string | undefined }
 }
 
 // ── SQL API Endpoints (for Next.js MCP server) ──
-// These use WORKER_SECRET auth (separate from WORKER_SHARED_SECRET for frontend)
+// All authed routes verify a single shared secret: WORKER_TOKEN.
 
 /**
  * /api/v1/query - Execute read-only SQL queries
@@ -139,13 +138,12 @@ function getD1Binding(c: { req: { header: (name: string) => string | undefined }
  * Returns: { results: T[], meta: { changes: number, duration: number } }
  */
 app.post("/api/v1/query", async (c) => {
-  // Verify WORKER_SECRET
   const authHeader = c.req.header("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
     return c.json({ error: "Missing Authorization header" }, 401);
   }
   const token = authHeader.slice(7);
-  const secret = c.env.WORKER_SECRET;
+  const secret = c.env.WORKER_TOKEN;
   if (!secret || !timingSafeEqual(token, secret)) {
     return c.json({ error: "Invalid token" }, 403);
   }
@@ -180,13 +178,12 @@ app.post("/api/v1/query", async (c) => {
  * Returns: { meta: { changes: number, duration: number } } or { results: ...[] }
  */
 app.post("/api/v1/execute", async (c) => {
-  // Verify WORKER_SECRET
   const authHeader = c.req.header("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
     return c.json({ error: "Missing Authorization header" }, 401);
   }
   const token = authHeader.slice(7);
-  const secret = c.env.WORKER_SECRET;
+  const secret = c.env.WORKER_TOKEN;
   if (!secret || !timingSafeEqual(token, secret)) {
     return c.json({ error: "Invalid token" }, 403);
   }
@@ -252,7 +249,7 @@ app.use("*", async (c, next) => {
   }
 
   const token = authHeader.slice(7);
-  const secret = c.env.WORKER_SHARED_SECRET;
+  const secret = c.env.WORKER_TOKEN;
 
   if (!secret || !timingSafeEqual(token, secret)) {
     return c.json({ error: "Invalid token" }, 403);

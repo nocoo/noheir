@@ -4,7 +4,7 @@ compatibility_date = "2025-06-01"
 compatibility_flags = ["nodejs_compat"]
 
 [vars]
-# WORKER_SHARED_SECRET is set via `wrangler secret put WORKER_SHARED_SECRET`
+# WORKER_TOKEN is set via `wrangler secret put WORKER_TOKEN`
 
 [[d1_databases]]
 binding = "DB"
