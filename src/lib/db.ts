@@ -154,10 +154,10 @@ let _db: Db | undefined;
 export function getDb(): Db {
   if (!_db) {
     const url = process.env.WORKER_URL;
-    const secret = process.env.WORKER_SECRET;
+    const secret = process.env.WORKER_TOKEN;
 
     if (!url || !secret) {
-      throw new Error("WORKER_URL and WORKER_SECRET are required");
+      throw new Error("WORKER_URL and WORKER_TOKEN are required");
     }
 
     _db = createDb(url, secret);
