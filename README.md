@@ -40,10 +40,10 @@ bun run dev
 
 ## 🌐 生产部署
 
-- **平台**：[Railway](https://railway.com)（Railpack 自动识别 Vite SPA → Caddy 托管）
-- **线上地址**：[https://noheir.hexly.ai](https://noheir.hexly.ai)
-- **自动部署**：推送 `main` 分支即触发
-- **详细部署文档**：[docs/04-run.md](./docs/04-run.md#生产部署railway)
+- **形态**：Docker 镜像（多阶段 `oven/bun:1`）→ GitHub Container Registry → 自托管 VPS
+- **接入**：Cloudflare 边缘 + 源站 mTLS（Authenticated Origin Pulls）
+- **CI/CD**：GitHub Actions —— `CI` 通过后自动触发 `Release`，构建镜像并 SSH 部署
+- **详细部署文档**：[docs/04-run.md](./docs/04-run.md#生产部署)
 
 ## 🤖 Agent 指南（必读）
 
