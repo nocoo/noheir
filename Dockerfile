@@ -10,11 +10,11 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build-time env vars (placeholders for standalone build)
+# Build-time placeholders only for libs that read env at module-init (next-auth).
+# Real secrets (WORKER_TOKEN, GOOGLE_*, ALLOWED_EMAILS, real AUTH_SECRET/NEXTAUTH_URL)
+# are injected at runtime via the container's env — never baked into the image.
 ENV AUTH_SECRET=build-placeholder
 ENV NEXTAUTH_URL=http://localhost:8080
-ENV WORKER_URL=http://placeholder
-ENV WORKER_TOKEN=placeholder
 
 RUN bun run build
 
