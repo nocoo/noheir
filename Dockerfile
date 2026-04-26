@@ -14,7 +14,7 @@ COPY . .
 # Real secrets (WORKER_TOKEN, GOOGLE_*, ALLOWED_EMAILS, real AUTH_SECRET/NEXTAUTH_URL)
 # are injected at runtime via the container's env — never baked into the image.
 ENV AUTH_SECRET=build-placeholder
-ENV NEXTAUTH_URL=http://localhost:8080
+ENV NEXTAUTH_URL=http://localhost:7004
 
 RUN bun run build
 
@@ -23,7 +23,7 @@ FROM oven/bun:1 AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV PORT=8080
+ENV PORT=7004
 ENV HOSTNAME=0.0.0.0
 
 # Copy standalone build
@@ -31,6 +31,6 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
-EXPOSE 8080
+EXPOSE 7004
 
 CMD ["bun", "server.js"]
