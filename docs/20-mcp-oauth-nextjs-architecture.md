@@ -17,7 +17,7 @@
                                    │
                                    ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│  Next.js (Railway)                                                  │
+│  Next.js (jp2.nocoo.cloud, Docker)                                  │
 │                                                                     │
 │  OAuth Endpoints:                                                   │
 │  ├─ GET  /.well-known/oauth-authorization-server → 元数据           │
@@ -277,7 +277,7 @@ export function validateOrigin(origin: string | null, siteUrl: string): McpAuthE
 
 ## 6. 环境变量
 
-### Next.js (Railway)
+### Next.js (jp2.nocoo.cloud, Docker)
 
 ```env
 NEXTAUTH_URL=https://noheir.hexly.ai

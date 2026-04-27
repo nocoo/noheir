@@ -4,8 +4,8 @@ README.md
 
 - **Architecture**: Next.js (standalone, port 7004) handles UI + NextAuth + MCP OAuth + API routes; Cloudflare Worker provides SQL API to D1.
 - **Image**: `Dockerfile` (multi-stage, `oven/bun:1`) → published to GHCR as `ghcr.io/<owner>/noheir:latest` and `:<sha>`.
-- **Edge**: Cloudflare in front of an origin VPS. Origin terminates TLS with a Cloudflare Origin Certificate and enforces **Authenticated Origin Pulls (mTLS)** via Caddy, so direct-to-IP traffic is rejected.
-- **CI/CD**: `.github/workflows/ci.yml` runs lint + unit tests on every push/PR. `.github/workflows/release.yml` is chained via `workflow_run` — on green CI for `main` it builds & pushes the image, then SSHes into the VPS to `docker compose pull && up -d --no-deps app`, runs an in-container health check, and finally smoke-tests via the public URL.
+- **Edge**: Cloudflare in front of an origin VPS (jp2.nocoo.cloud, Azure 日本). A shared `proxy-caddy` at `/opt/proxy/` terminates TLS with a Cloudflare Origin Certificate (`*.hexly.ai`) and enforces **Authenticated Origin Pulls (mTLS)**, so direct-to-IP traffic is rejected. App containers (`noheir-app`, `neo-app`, …) join the shared docker network `edge`; Caddy reverse-proxies to them by container name.
+- **CI/CD**: `.github/workflows/ci.yml` runs lint + unit tests on every push/PR. `.github/workflows/release.yml` is chained via `workflow_run` — on green CI for `main` it builds & pushes the image, then SSHes into the VPS to `docker compose pull && up -d --no-deps app`, runs an in-container health check, and finally smoke-tests via the public URL. Only the app container rolls; `proxy-caddy` is never touched by app deploys.
 - **Runtime env vars** (injected by the host's `.env`, never baked into the image): `WORKER_URL`, `WORKER_TOKEN`, `AUTH_SECRET`, `NEXTAUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ALLOWED_EMAILS`.
 - **GitHub Actions secrets** required by `release.yml`: `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`, `GHCR_PULL_USER`, `GHCR_PULL_TOKEN` (PAT with `read:packages`). Host-side compose file references the same image tag.
 - See [docs/04-run.md](./docs/04-run.md) for the full deploy guide.

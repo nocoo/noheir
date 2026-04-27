@@ -24,7 +24,7 @@ The MCP (Model Context Protocol) server is now integrated into Next.js at `src/a
                                │
                                ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  Next.js (Railway)                                          │
+│  Next.js (jp2.nocoo.cloud, Docker)                          │
 │                                                             │
 │  OAuth Endpoints:                                           │
 │  ├─ GET  /.well-known/oauth-authorization-server            │
