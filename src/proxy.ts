@@ -13,6 +13,7 @@ const PUBLIC_PREFIXES = [
   "/.well-known/",  // OAuth metadata
   "/api/mcp",       // MCP OAuth endpoints (has its own Bearer token auth)
   "/api/auth/",     // NextAuth endpoints handle their own auth
+  "/api/live",      // Public health check
 ];
 
 function isPublicRoute(pathname: string): boolean {
