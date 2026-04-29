@@ -86,10 +86,18 @@ RETURNS:
         LIMIT ?
       `;
 
-      const [unitsResult, countResult] = await Promise.all([
+      const [unitsResult, countResult, summaryResult] = await Promise.all([
         db.query<UnitWithProduct>(unitsSql, [...values, fetchLimit]),
         db.firstOrNull<{ total: number }>(
           `SELECT COUNT(*) as total FROM capital_units u WHERE ${conditions.join(" AND ")}`,
+          values,
+        ),
+        // SQL aggregate for full summary (always from complete dataset)
+        db.query<{ currency: string; total_cents: number }>(
+          `SELECT u.currency, SUM(u.amount_cents) as total_cents
+           FROM capital_units u
+           WHERE ${conditions.join(" AND ")}
+           GROUP BY u.currency`,
           values,
         ),
       ]);
@@ -125,8 +133,15 @@ RETURNS:
         );
       }
 
-      // Build summary
-      const summary = buildSummary(units);
+      // Build summary: use in-memory for full breakdown when not truncated,
+      // use SQL aggregate for amounts when truncated (full dataset accurate)
+      let summary: PortfolioSummary;
+      if (!truncated) {
+        summary = buildSummary(units);
+      } else {
+        // Truncated: use SQL aggregate for accurate total amounts
+        summary = buildSummaryFromAggregates(realTotal, summaryResult.results);
+      }
 
       // Build product response
       const productResponse = compact({
@@ -171,6 +186,31 @@ interface PortfolioSummary {
   by_tactics: Record<string, number>;
 }
 
+/** Build summary from SQL aggregates (always represents full dataset, not truncated) */
+function buildSummaryFromAggregates(
+  totalUnits: number,
+  amountRows: Array<{ currency: string; total_cents: number }>,
+): PortfolioSummary {
+  const totalAmountByCurrency: Record<string, number> = {};
+  for (const row of amountRows) {
+    const currency = currencyCode(row.currency);
+    totalAmountByCurrency[currency] = round2(
+      (totalAmountByCurrency[currency] ?? 0) + round2(row.total_cents / 100),
+    );
+  }
+
+  return {
+    total_units: totalUnits,
+    total_amount_by_currency: totalAmountByCurrency,
+    // Status/strategy/tactics distribution requires full scan — omitted for performance
+    // Agents can use list_units with filters for detailed breakdowns
+    by_status: {},
+    by_strategy: {},
+    by_tactics: {},
+  };
+}
+
+/** Build summary from in-memory units (for non-truncated cases, includes all breakdowns) */
 function buildSummary(units: UnitWithProduct[]): PortfolioSummary {
   const summary: PortfolioSummary = {
     total_units: units.length,
@@ -204,3 +244,4 @@ function buildSummary(units: UnitWithProduct[]): PortfolioSummary {
 
   return summary;
 }
+

@@ -260,4 +260,54 @@ describe("get_product_portfolio", () => {
     const unitsQuery = calls.find((c) => c.sql.includes("capital_units") && !c.sql.includes("status !="));
     expect(unitsQuery).toBeDefined();
   });
+
+  it("returns truncated completeness and real total when units exceed hard cap", async () => {
+    // Generate 1001 fake units to trigger truncation (hard cap = 1000)
+    const manyUnits = Array.from({ length: 1001 }, (_, i) => ({
+      ...SAMPLE_UNIT_1,
+      id: `01UNIT${String(i).padStart(20, "0")}`,
+      unit_code: `C${i}`,
+    }));
+    const manyLogs = manyUnits.map((u, i) => ({
+      id: `01LOG${String(i).padStart(21, "0")}`,
+      unit_id: u.id,
+      operation_type: "invest",
+      operation_date: "2026-01-15",
+    }));
+
+    const { db } = createSequentialMockDb([
+      // resolveProduct
+      { type: "query", results: [SAMPLE_PRODUCT] },
+      // units query (1001 results, triggers truncation)
+      { type: "query", results: manyUnits },
+      // count query (real total)
+      { type: "firstOrNull", result: { total: 1200 } },
+      // amount aggregate
+      { type: "query", results: [{ currency: "CNY", total_cents: 60000000 }] },
+      // invest logs (only for returned 1000 units)
+      { type: "query", results: manyLogs.slice(0, 1000) },
+    ]);
+
+    const { server, tools } = createMockServer();
+    registerPortfolioTools(server, { db, userId });
+
+    const handler = getTool(tools, "get_product_portfolio");
+    const result = await handler({ product_id: "01ABC123" });
+    const parsed = JSON.parse(result.content[0]?.text ?? "{}");
+
+    // Should be truncated
+    expect(parsed.completeness.complete).toBe(false);
+    expect(parsed.completeness.truncated).toBe(true);
+
+    // Total should reflect real count (1200), not capped (1000)
+    expect(parsed.completeness.total).toBe(1200);
+    expect(parsed.completeness.returned).toBe(1000);
+
+    // Units should be capped at 1000
+    expect(parsed.units).toHaveLength(1000);
+
+    // Summary should reflect full dataset (from SQL aggregate)
+    expect(parsed.summary.total_units).toBe(1200);
+    expect(parsed.summary.total_amount_by_currency.CNY).toBe(600000);
+  });
 });
