@@ -7,7 +7,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { ToolContext } from "./types";
-import { ok, okWithPage, error } from "./types";
+import { ok, okWithPage, okWithCompleteness, error } from "./types";
 import { ulid } from "ulid";
 import { compact, shortId } from "./compact";
 
@@ -127,7 +127,20 @@ LIMITATIONS:
   // ── get_product ──
   server.tool(
     "get_product",
-    "Get a single financial product by ID (full or short). Returns full details including complete ID.",
+    `Get a single financial product by ID (full or short).
+
+WHEN TO USE:
+- When you need details of a specific product without its units
+- When you have a product ID and want to check its properties
+
+DO NOT USE FOR:
+- Getting product with all linked units (use get_product_portfolio)
+- Browsing products (use list_products)
+
+RETURNS:
+- Full product details
+- linked_units_count and linked_units_amount for quick assessment
+- next hint pointing to get_product_portfolio if units exist`,
     {
       id: z.string().describe("Product ID (full ULID or 8-char prefix from list_products)"),
     },
@@ -159,9 +172,30 @@ LIMITATIONS:
       const product = result.results[0];
       if (!product) {
         return error(`Product not found: ${args.id}`);
-      };
+      }
 
-      return ok({
+      // Query linked units summary
+      const [countResult, amountResult] = await Promise.all([
+        db.firstOrNull<{ total: number }>(
+          "SELECT COUNT(*) as total FROM capital_units WHERE product_id = ? AND user_id = ?",
+          [product.id, userId],
+        ),
+        db.query<{ currency: string; total_cents: number }>(
+          `SELECT currency, SUM(amount_cents) as total_cents
+           FROM capital_units
+           WHERE product_id = ? AND user_id = ?
+           GROUP BY currency`,
+          [product.id, userId],
+        ),
+      ]);
+
+      const linkedUnitsCount = countResult?.total ?? 0;
+      const linkedUnitsAmount: Record<string, number> = {};
+      for (const row of amountResult.results) {
+        linkedUnitsAmount[row.currency] = Math.round(row.total_cents) / 100;
+      }
+
+      const productData = {
         id: product.id, // Full ID
         name: product.name,
         code: product.code,
@@ -173,7 +207,16 @@ LIMITATIONS:
         is_archived: product.is_archived === 1,
         created_at: product.created_at,
         updated_at: product.updated_at,
-      });
+        linked_units_count: linkedUnitsCount,
+        linked_units_amount: linkedUnitsCount > 0 ? linkedUnitsAmount : null,
+      };
+
+      // Navigation hint when units exist
+      const next = linkedUnitsCount > 0
+        ? { recommended: "related_tool" as const, tool: "get_product_portfolio", args: { product_id: product.id } }
+        : undefined;
+
+      return okWithCompleteness(productData, { complete: true, truncated: false }, next);
     },
   );
 
