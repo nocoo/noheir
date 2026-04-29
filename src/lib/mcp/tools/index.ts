@@ -9,5 +9,6 @@ export { registerProductTools } from "./product";
 export { registerUnitTools } from "./unit";
 export { registerDeleteTools } from "./delete";
 export { registerSummaryTools } from "./summary";
+export { registerPortfolioTools } from "./portfolio";
 export type { ToolContext, McpToolResult } from "./types";
 export { ok, error } from "./types";

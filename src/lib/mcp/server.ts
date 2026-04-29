@@ -11,6 +11,7 @@ import {
   registerUnitTools,
   registerDeleteTools,
   registerSummaryTools,
+  registerPortfolioTools,
 } from "./tools";
 
 /** Create a new McpServer instance with all tools registered. */
@@ -34,6 +35,9 @@ export function createMcpServer(db: Db, userId: string): McpServer {
 
   // Phase 5: Summary Tools
   registerSummaryTools(server, ctx);
+
+  // Phase 6: Portfolio Tools
+  registerPortfolioTools(server, ctx);
 
   return server;
 }
