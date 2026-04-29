@@ -11,6 +11,7 @@ import type { ToolContext } from "./types";
 import { ok, okWithPage, error } from "./types";
 import { ulid } from "ulid";
 import { compact, shortId, round2, currencyCode } from "./compact";
+import { resolveProduct } from "./resolver";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -56,6 +57,8 @@ export interface UnitEnriched {
   status: string;
   strategy?: string | null;
   tactics?: string | null;
+  product_id?: string | null; // short ID for display
+  product_id_full?: string | null; // full ID for subsequent calls
   product?: string | null;
   start?: string | null;
   end?: string | null;
@@ -96,6 +99,8 @@ export function enrichWithAvailability(
     status: unit.status,
     strategy: unit.strategy,
     tactics: unit.tactics,
+    product_id: unit.product_id ? shortId(unit.product_id) : null,
+    product_id_full: unit.product_id || null,
     product: unit.product_name, // Use name instead of ID for readability
     start: unit.start_date,
     end: unit.end_date,
@@ -132,6 +137,8 @@ LIMITATIONS:
       strategy: z.string().optional().describe("Filter by strategy (e.g., 远期理财)"),
       tactics: z.string().optional().describe("Filter by tactics (e.g., 定期存款)"),
       currency: z.enum(["CNY", "USD", "HKD"]).optional().describe("Filter by currency"),
+      product_id: z.string().optional().describe("Filter by linked product ID (full or 8-char prefix)"),
+      product_name: z.string().optional().describe("Filter by linked product name (exact match)"),
       limit: z.number().int().min(1).max(200).optional().describe("Max results (default: 50, max: 200)"),
       offset: z.number().int().min(0).optional().describe("Skip N results for pagination"),
     },
@@ -140,6 +147,18 @@ LIMITATIONS:
 
       const conditions: string[] = ["u.user_id = ?"];
       const values: unknown[] = [userId];
+
+      // Resolve product filter if provided
+      if (args.product_id || args.product_name) {
+        const resolved = await resolveProduct(db, userId, {
+          ...(args.product_id ? { product_id: args.product_id } : {}),
+          ...(args.product_name ? { product_name: args.product_name } : {}),
+        });
+        if (resolved.error) return error(resolved.error);
+        if (!resolved.product) return error("Product not found");
+        conditions.push("u.product_id = ?");
+        values.push(resolved.product.id);
+      }
 
       if (args.status) {
         conditions.push("u.status = ?");
