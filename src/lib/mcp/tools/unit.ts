@@ -240,7 +240,7 @@ LIMITATIONS:
 
       const hasMore = offset + enrichedUnits.length < total;
       return okWithPage(
-        { units: enrichedUnits, count: enrichedUnits.length, limit, offset },
+        { units: enrichedUnits },
         { returned: enrichedUnits.length, total, limit, offset, has_more: hasMore },
         hasMore ? { recommended: "paginate", tool: "list_units", args: { offset: offset + limit, limit } } : undefined,
       );

@@ -117,7 +117,7 @@ LIMITATIONS:
 
       const hasMore = offset + products.length < total;
       return okWithPage(
-        { products, count: products.length, limit, offset },
+        { products },
         { returned: products.length, total, limit, offset, has_more: hasMore },
         hasMore ? { recommended: "paginate", tool: "list_products", args: { offset: offset + limit, limit } } : undefined,
       );

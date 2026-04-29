@@ -213,7 +213,7 @@ LIMITATIONS:
 
       const hasMore = offset + transactions.length < total;
       return okWithPage(
-        { transactions, count: transactions.length, limit, offset },
+        { transactions },
         { returned: transactions.length, total, limit, offset, has_more: hasMore },
         hasMore ? { recommended: "paginate", tool: "query_transactions", args: { offset: offset + limit, limit } } : undefined,
       );
@@ -340,7 +340,7 @@ LIMITATIONS:
 
       const hasMore = offset + transfers.length < total;
       return okWithPage(
-        { transfers, count: transfers.length, limit, offset },
+        { transfers },
         { returned: transfers.length, total, limit, offset, has_more: hasMore },
         hasMore ? { recommended: "paginate", tool: "query_transfers", args: { offset: offset + limit, limit } } : undefined,
       );

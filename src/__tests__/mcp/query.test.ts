@@ -117,7 +117,7 @@ describe("query_transactions", () => {
     const data = parseResult(result);
 
     expect(data.transactions).toEqual([]);
-    expect(data.count).toBe(0);
+    expect(data.page.returned).toBe(0);
   });
 
   it("should always filter by user_id", async () => {
