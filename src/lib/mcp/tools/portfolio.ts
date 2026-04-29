@@ -86,10 +86,18 @@ RETURNS:
         LIMIT ?
       `;
 
-      const unitsResult = await db.query<UnitWithProduct>(unitsSql, [...values, fetchLimit]);
+      const [unitsResult, countResult] = await Promise.all([
+        db.query<UnitWithProduct>(unitsSql, [...values, fetchLimit]),
+        db.firstOrNull<{ total: number }>(
+          `SELECT COUNT(*) as total FROM capital_units u WHERE ${conditions.join(" AND ")}`,
+          values,
+        ),
+      ]);
+
       const allUnits = unitsResult.results;
       const truncated = allUnits.length > PORTFOLIO_HARD_CAP;
       const units = truncated ? allUnits.slice(0, PORTFOLIO_HARD_CAP) : allUnits;
+      const realTotal = countResult?.total ?? units.length;
 
       // Get latest invest logs for availability calculation
       let enrichedUnits: UnitEnriched[] = [];
@@ -133,8 +141,6 @@ RETURNS:
         archived: product.is_archived === 1 ? true : null,
       });
 
-      const totalUnits = truncated ? PORTFOLIO_HARD_CAP : units.length;
-
       return okWithCompleteness(
         {
           product: productResponse,
@@ -144,7 +150,7 @@ RETURNS:
         {
           complete: !truncated,
           truncated,
-          total: totalUnits,
+          total: realTotal,
           returned: enrichedUnits.length,
         },
         truncated ? { recommended: "narrow" } : undefined,

@@ -202,7 +202,9 @@ SELECT COUNT(*) as total FROM table WHERE conditions
 
 #### 1.3 Backward Compatibility
 
-Keep old top-level `count`, `limit`, `offset` fields for 1-2 releases, mark as deprecated in tool description. Remove after confirming no clients depend on them.
+~~Keep old top-level `count`, `limit`, `offset` fields for 1-2 releases, mark as deprecated in tool description. Remove after confirming no clients depend on them.~~
+
+**Update**: Deprecated fields have been removed. The `page` object now contains all pagination metadata (`returned`, `total`, `limit`, `offset`, `has_more`).
 
 ### Phase 2: Add `get_product_portfolio` Tool
 

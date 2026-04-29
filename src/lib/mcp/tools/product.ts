@@ -116,10 +116,16 @@ LIMITATIONS:
       }));
 
       const hasMore = offset + products.length < total;
+      const nextArgs: Record<string, unknown> = { offset: offset + limit, limit };
+      if (args.channel) nextArgs.channel = args.channel;
+      if (args.category) nextArgs.category = args.category;
+      if (args.currency) nextArgs.currency = args.currency;
+      if (args.include_archived) nextArgs.include_archived = args.include_archived;
+
       return okWithPage(
         { products },
         { returned: products.length, total, limit, offset, has_more: hasMore },
-        hasMore ? { recommended: "paginate", tool: "list_products", args: { offset: offset + limit, limit } } : undefined,
+        hasMore ? { recommended: "paginate", tool: "list_products", args: nextArgs } : undefined,
       );
     },
   );

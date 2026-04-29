@@ -8,7 +8,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { ToolContext } from "./types";
-import { ok, okWithPage, error } from "./types";
+import { ok, okWithPage, okWithCompleteness, error } from "./types";
 import { ulid } from "ulid";
 import { compact, shortId, round2, currencyCode } from "./compact";
 import { resolveProduct } from "./resolver";
@@ -209,7 +209,7 @@ LIMITATIONS:
 
       if (units.length === 0) {
         return okWithPage(
-          { units: [], count: 0, limit, offset },
+          { units: [] },
           { returned: 0, total, limit, offset, has_more: false },
         );
       }
@@ -239,10 +239,18 @@ LIMITATIONS:
       );
 
       const hasMore = offset + enrichedUnits.length < total;
+      const nextArgs: Record<string, unknown> = { offset: offset + limit, limit };
+      if (args.status) nextArgs.status = args.status;
+      if (args.strategy) nextArgs.strategy = args.strategy;
+      if (args.tactics) nextArgs.tactics = args.tactics;
+      if (args.currency) nextArgs.currency = args.currency;
+      if (args.product_id) nextArgs.product_id = args.product_id;
+      if (args.product_name) nextArgs.product_name = args.product_name;
+
       return okWithPage(
         { units: enrichedUnits },
         { returned: enrichedUnits.length, total, limit, offset, has_more: hasMore },
-        hasMore ? { recommended: "paginate", tool: "list_units", args: { offset: offset + limit, limit } } : undefined,
+        hasMore ? { recommended: "paginate", tool: "list_units", args: nextArgs } : undefined,
       );
     },
   );
@@ -326,12 +334,15 @@ RETURNS:
       const enriched = enrichWithAvailability(unit, log);
 
       // Return full ID for subsequent update/delete operations
-      return ok({
-        ...enriched,
-        id: unit.id, // Full ID, overrides short ID from enrichWithAvailability
-        created_at: unit.created_at,
-        updated_at: unit.updated_at,
-      });
+      return okWithCompleteness(
+        {
+          ...enriched,
+          id: unit.id, // Full ID, overrides short ID from enrichWithAvailability
+          created_at: unit.created_at,
+          updated_at: unit.updated_at,
+        },
+        { complete: true, truncated: false },
+      );
     },
   );
 

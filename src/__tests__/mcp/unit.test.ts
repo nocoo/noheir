@@ -129,7 +129,7 @@ describe("list_units", () => {
     const result = await getTool(tools, "list_units")({});
     const data = parseResult(result);
     expect(data.units).toEqual([]);
-    expect(data.count).toBe(0);
+    expect(data.page.returned).toBe(0);
   });
 
   it("should return enriched units with availability", async () => {

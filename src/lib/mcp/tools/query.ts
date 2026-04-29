@@ -212,10 +212,26 @@ LIMITATIONS:
       }));
 
       const hasMore = offset + transactions.length < total;
+      const nextArgs: Record<string, unknown> = { offset: offset + limit, limit };
+      if (args.keyword) nextArgs.keyword = args.keyword;
+      if (args.type) nextArgs.type = args.type;
+      if (args.categories) nextArgs.categories = args.categories;
+      if (args.secondary_categories) nextArgs.secondary_categories = args.secondary_categories;
+      if (args.tertiary_categories) nextArgs.tertiary_categories = args.tertiary_categories;
+      if (args.accounts) nextArgs.accounts = args.accounts;
+      if (args.tags) nextArgs.tags = args.tags;
+      if (args.start_date) nextArgs.start_date = args.start_date;
+      if (args.end_date) nextArgs.end_date = args.end_date;
+      if (args.min_amount !== undefined) nextArgs.min_amount = args.min_amount;
+      if (args.max_amount !== undefined) nextArgs.max_amount = args.max_amount;
+      if (args.year !== undefined) nextArgs.year = args.year;
+      if (args.month !== undefined) nextArgs.month = args.month;
+      if (args.currency) nextArgs.currency = args.currency;
+
       return okWithPage(
         { transactions },
         { returned: transactions.length, total, limit, offset, has_more: hasMore },
-        hasMore ? { recommended: "paginate", tool: "query_transactions", args: { offset: offset + limit, limit } } : undefined,
+        hasMore ? { recommended: "paginate", tool: "query_transactions", args: nextArgs } : undefined,
       );
     },
   );
@@ -339,10 +355,19 @@ LIMITATIONS:
       }));
 
       const hasMore = offset + transfers.length < total;
+      const nextArgs: Record<string, unknown> = { offset: offset + limit, limit };
+      if (args.keyword) nextArgs.keyword = args.keyword;
+      if (args.accounts) nextArgs.accounts = args.accounts;
+      if (args.start_date) nextArgs.start_date = args.start_date;
+      if (args.end_date) nextArgs.end_date = args.end_date;
+      if (args.year !== undefined) nextArgs.year = args.year;
+      if (args.month !== undefined) nextArgs.month = args.month;
+      if (args.currency) nextArgs.currency = args.currency;
+
       return okWithPage(
         { transfers },
         { returned: transfers.length, total, limit, offset, has_more: hasMore },
-        hasMore ? { recommended: "paginate", tool: "query_transfers", args: { offset: offset + limit, limit } } : undefined,
+        hasMore ? { recommended: "paginate", tool: "query_transfers", args: nextArgs } : undefined,
       );
     },
   );
