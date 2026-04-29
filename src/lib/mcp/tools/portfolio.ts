@@ -43,7 +43,8 @@ RETURNS:
 - Product details
 - All linked capital units (hard cap: 1000)
 - Summary: total units, amounts by currency, status/strategy/tactics distribution
-- Completeness indicator (truncated if >1000 units)`,
+- Completeness indicator (truncated if >1000 units)
+- When truncated: summary.total_units and total_amount_by_currency reflect full dataset (SQL aggregate); distribution maps are omitted`,
     {
       product_id: z.string().optional().describe("Product ID (full ULID or 8-char prefix)"),
       product_name: z.string().optional().describe("Product name (exact match; error if ambiguous)"),
