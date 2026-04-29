@@ -19,14 +19,18 @@ export function registerSummaryTools(server: McpServer, ctx: ToolContext): void 
     "get_products_summary",
     `Get aggregated summary of financial products.
 
-Returns:
+WHEN TO USE:
+- Before listing products to understand data shape
+- When you need an overview of the user's product portfolio
+
+DO NOT USE FOR:
+- Getting individual product details (use get_product)
+- Listing products with filters (use list_products)
+
+RETURNS:
 - Total products (active vs archived)
 - Breakdown by channel, category, currency
-- Lock period distribution
-
-USE WHEN:
-- Before listing products to understand data shape
-- To provide an overview of the user's product portfolio`,
+- Lock period distribution`,
     {},
     async () => {
       const { db, userId } = ctx;
@@ -117,15 +121,20 @@ USE WHEN:
     "get_units_summary",
     `Get aggregated summary of capital units.
 
-Returns:
+WHEN TO USE:
+- Before listing units to understand data shape
+- When you need an overview of the user's capital allocation
+
+DO NOT USE FOR:
+- Getting individual unit details (use get_unit)
+- Listing units with filters (use list_units)
+- Getting product-specific unit details (use get_product_portfolio)
+
+RETURNS:
 - Total units by status
 - Breakdown by strategy, tactics, currency
 - Total amounts by currency
-- Product linkage stats
-
-USE WHEN:
-- Before listing units to understand data shape
-- To provide an overview of the user's capital allocation`,
+- Product linkage stats`,
     {},
     async () => {
       const { db, userId } = ctx;

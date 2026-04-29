@@ -91,11 +91,18 @@ export function registerQueryTools(server: McpServer, ctx: ToolContext): void {
     "query_transactions",
     `Search and filter personal financial transactions (income and expense records).
 
-IMPORTANT: Call get_summary first to discover available filter values (categories, accounts, currencies, tags, years) before querying. Do not guess parameter values.
+WHEN TO USE:
+- When searching for specific transactions by category, account, date range, or amount
+- After calling get_summary to discover available filter values
 
-All parameters are optional and combine with AND logic — use multiple filters to narrow results progressively. When the user's request is vague, start broad (fewer filters) and refine based on results.
+DO NOT USE FOR:
+- Getting aggregated totals or statistics (use get_summary, get_monthly_report)
+- Querying internal transfers (use query_transfers)
 
-Keyword search is fuzzy and matches across note, all category levels, and account fields.`,
+LIMITATIONS:
+- Max 500 results per call; use offset for pagination
+- Call get_summary first to discover valid filter values (categories, accounts, etc.)
+- Keyword search matches note, categories, and account fields`,
     {
       keyword: z.string().optional().describe("Fuzzy search keyword — matches note, categories, and account"),
       type: z.enum(["income", "expense"]).optional().describe("Filter by transaction type"),
@@ -218,9 +225,17 @@ Keyword search is fuzzy and matches across note, all category levels, and accoun
     "query_transfers",
     `Search and filter internal transfers (account movements).
 
-IMPORTANT: Call get_summary first to discover available filter values before querying.
+WHEN TO USE:
+- When searching for transfers between accounts
+- After calling get_summary to discover available filter values
 
-All parameters are optional and combine with AND logic.`,
+DO NOT USE FOR:
+- Querying income/expense transactions (use query_transactions)
+- Getting aggregated totals (use get_summary, get_monthly_report)
+
+LIMITATIONS:
+- Max 500 results per call; use offset for pagination
+- Call get_summary first to discover valid filter values`,
     {
       keyword: z.string().optional().describe("Fuzzy search keyword"),
       accounts: z.array(z.string()).optional().describe("Filter by account names"),
@@ -337,9 +352,17 @@ All parameters are optional and combine with AND logic.`,
     "get_summary",
     `Get metadata summary of the user's financial data.
 
-By default returns only counts. Use 'include' to request specific filter options.
+WHEN TO USE:
+- Before querying transactions or transfers to discover available filter values
+- When you need an overview of data coverage (counts, years, accounts, categories)
 
-ALWAYS call this tool first before using query_transactions or query_transfers.`,
+DO NOT USE FOR:
+- Detailed transaction queries (use query_transactions)
+- Monthly financial reports (use get_monthly_report)
+
+RETURNS:
+- Transaction and transfer counts
+- Optional: available years, accounts, categories, currencies (use 'include' parameter)`,
     {
       include: z.array(z.enum(["years", "accounts", "categories", "currencies"]))
         .optional()
@@ -405,9 +428,20 @@ ALWAYS call this tool first before using query_transactions or query_transfers.`
   // ── get_monthly_report ──
   server.tool(
     "get_monthly_report",
-    `Get aggregated financial report for a specific month. Returns income/expense totals, net amount, and category breakdowns.
+    `Get aggregated financial report for a specific month.
 
-Use year/month for the target period. Call get_summary first to discover available years.`,
+WHEN TO USE:
+- When you need income/expense totals and category breakdowns for a specific month
+- After calling get_summary to discover available years
+
+DO NOT USE FOR:
+- Querying individual transactions (use query_transactions)
+- Cross-month analysis (use aggregate_transactions)
+
+RETURNS:
+- Income/expense totals and net amount
+- Category breakdowns
+- Currency-specific totals`,
     {
       year: z.number().int().describe("Year to report on (required)"),
       month: z.number().int().min(1).max(12).describe("Month to report on (1-12, required)"),
@@ -471,11 +505,17 @@ Use year/month for the target period. Call get_summary first to discover availab
     "aggregate_transactions",
     `Aggregate transactions by specified dimensions. Returns grouped totals.
 
-More efficient than fetching raw records when you only need summaries.
+WHEN TO USE:
+- When you need summarized data grouped by category, account, month, or type
+- More efficient than fetching raw records when you only need totals
 
-Examples:
-- By category for a year: group_by=["category"], year=2025
-- By account and month: group_by=["account", "month"], year=2025`,
+DO NOT USE FOR:
+- Getting raw transaction records (use query_transactions)
+- Monthly reports with category breakdowns (use get_monthly_report)
+
+LIMITATIONS:
+- Max 3 group_by dimensions
+- Returns totals only, no individual records`,
     {
       group_by: z.array(z.enum(["category", "account", "month", "type"]))
         .min(1)

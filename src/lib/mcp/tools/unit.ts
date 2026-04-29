@@ -250,7 +250,20 @@ LIMITATIONS:
   // ── get_unit ──
   server.tool(
     "get_unit",
-    "Get a single capital unit by ID or unit_code. Returns full details including complete ID for update/delete.",
+    `Get a single capital unit by ID or unit_code.
+
+WHEN TO USE:
+- When you need details of a specific unit without listing all units
+- When you have a unit ID or unit_code and want to check its properties
+
+DO NOT USE FOR:
+- Getting all units for a product (use get_product_portfolio)
+- Listing units with filters (use list_units)
+
+RETURNS:
+- Full unit details including complete ID
+- Product relation info (name, lock period)
+- Availability status (based on product lock period)`,
     {
       id: z.string().describe("Unit ID (full UUID, 8-char prefix) or unit_code (e.g., C01, A10)"),
     },
@@ -325,7 +338,14 @@ LIMITATIONS:
   // ── create_unit ──
   server.tool(
     "create_unit",
-    "Create a new capital unit. Required: unit_code, amount_cents.",
+    `Create a new capital unit.
+
+WHEN TO USE:
+- When adding a new capital unit (理财单元) to the system
+- Required fields: unit_code, amount_cents
+
+RETURNS:
+- Created unit with generated ID`,
     {
       unit_code: z.string().describe("单元代码 (必填, e.g., C10, A01)"),
       amount_cents: z.number().int().describe("金额(分) (必填)"),
@@ -408,7 +428,14 @@ LIMITATIONS:
   // ── update_unit ──
   server.tool(
     "update_unit",
-    "Update an existing capital unit. Only provided fields are updated.",
+    `Update an existing capital unit.
+
+WHEN TO USE:
+- When modifying unit properties (code, amount, status, strategy, etc.)
+- Only provided fields are updated; others remain unchanged
+
+RETURNS:
+- Updated unit with all current fields`,
     {
       id: z.string().describe("Unit ID"),
       unit_code: z.string().optional().describe("单元代码"),

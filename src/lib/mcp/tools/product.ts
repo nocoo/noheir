@@ -223,7 +223,14 @@ RETURNS:
   // ── create_product ──
   server.tool(
     "create_product",
-    "Create a new financial product. Required: name.",
+    `Create a new financial product.
+
+WHEN TO USE:
+- When adding a new financial product to the system
+- Required field: name
+
+RETURNS:
+- Created product with generated ID`,
     {
       name: z.string().describe("产品名称 (必填)"),
       code: z.string().optional().describe("产品代码"),
@@ -277,7 +284,14 @@ RETURNS:
   // ── update_product ──
   server.tool(
     "update_product",
-    "Update an existing financial product. Only provided fields are updated.",
+    `Update an existing financial product.
+
+WHEN TO USE:
+- When modifying product properties (name, code, channel, etc.)
+- Only provided fields are updated; others remain unchanged
+
+RETURNS:
+- Updated product with all current fields`,
     {
       id: z.string().describe("Product ID"),
       name: z.string().optional().describe("产品名称"),
