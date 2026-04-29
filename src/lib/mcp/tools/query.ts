@@ -7,7 +7,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { ToolContext } from "./types";
-import { ok } from "./types";
+import { ok, okWithPage } from "./types";
 import { compact, shortId, categoryPath, round2, currencyCode } from "./compact";
 
 // ---------------------------------------------------------------------------
@@ -169,19 +169,27 @@ Keyword search is fuzzy and matches across note, all category levels, and accoun
         LIMIT ? OFFSET ?
       `;
 
-      const result = await db.query<{
-        id: string;
-        date: string;
-        type: string;
-        amount_cents: number;
-        currency: string;
-        account: string;
-        primary_category: string;
-        secondary_category: string | null;
-        tertiary_category: string | null;
-        note: string | null;
-        tags: string | null;
-      }>(sql, [...values, limit, offset]);
+      const [result, countResult] = await Promise.all([
+        db.query<{
+          id: string;
+          date: string;
+          type: string;
+          amount_cents: number;
+          currency: string;
+          account: string;
+          primary_category: string;
+          secondary_category: string | null;
+          tertiary_category: string | null;
+          note: string | null;
+          tags: string | null;
+        }>(sql, [...values, limit, offset]),
+        db.firstOrNull<{ total: number }>(
+          `SELECT COUNT(*) as total FROM transactions ${whereClause}`,
+          values,
+        ),
+      ]);
+
+      const total = countResult?.total ?? 0;
 
       // Transform to compact format (P0: short ID, P1: omit nulls, P3: category path)
       const transactions = result.results.map((t) => compact({
@@ -196,7 +204,12 @@ Keyword search is fuzzy and matches across note, all category levels, and accoun
         tags: t.tags ? JSON.parse(t.tags) : null,
       }));
 
-      return ok({ transactions, count: transactions.length, limit, offset });
+      const hasMore = offset + transactions.length < total;
+      return okWithPage(
+        { transactions, count: transactions.length, limit, offset },
+        { returned: transactions.length, total, limit, offset, has_more: hasMore },
+        hasMore ? { recommended: "paginate", tool: "query_transactions", args: { offset: offset + limit, limit } } : undefined,
+      );
     },
   );
 
@@ -275,19 +288,27 @@ All parameters are optional and combine with AND logic.`,
         LIMIT ? OFFSET ?
       `;
 
-      const result = await db.query<{
-        id: string;
-        date: string;
-        inflow_amount_cents: number;
-        outflow_amount_cents: number;
-        currency: string;
-        account: string;
-        primary_category: string | null;
-        secondary_category: string | null;
-        transaction_type: string | null;
-        note: string | null;
-        tags: string | null;
-      }>(sql, [...values, limit, offset]);
+      const [result, countResult] = await Promise.all([
+        db.query<{
+          id: string;
+          date: string;
+          inflow_amount_cents: number;
+          outflow_amount_cents: number;
+          currency: string;
+          account: string;
+          primary_category: string | null;
+          secondary_category: string | null;
+          transaction_type: string | null;
+          note: string | null;
+          tags: string | null;
+        }>(sql, [...values, limit, offset]),
+        db.firstOrNull<{ total: number }>(
+          `SELECT COUNT(*) as total FROM transfers ${whereClause}`,
+          values,
+        ),
+      ]);
+
+      const total = countResult?.total ?? 0;
 
       const transfers = result.results.map((t) => compact({
         id: shortId(t.id),
@@ -302,7 +323,12 @@ All parameters are optional and combine with AND logic.`,
         tags: t.tags ? JSON.parse(t.tags) : null,
       }));
 
-      return ok({ transfers, count: transfers.length, limit, offset });
+      const hasMore = offset + transfers.length < total;
+      return okWithPage(
+        { transfers, count: transfers.length, limit, offset },
+        { returned: transfers.length, total, limit, offset, has_more: hasMore },
+        hasMore ? { recommended: "paginate", tool: "query_transfers", args: { offset: offset + limit, limit } } : undefined,
+      );
     },
   );
 

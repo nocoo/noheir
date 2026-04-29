@@ -8,7 +8,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { ToolContext } from "./types";
-import { ok, error } from "./types";
+import { ok, okWithPage, error } from "./types";
 import { ulid } from "ulid";
 import { compact, shortId, round2, currencyCode } from "./compact";
 
@@ -177,11 +177,22 @@ LIMITATIONS:
         LIMIT ? OFFSET ?
       `;
 
-      const unitsResult = await db.query<UnitWithProduct>(unitsSql, [...values, limit, offset]);
+      const [unitsResult, countResult] = await Promise.all([
+        db.query<UnitWithProduct>(unitsSql, [...values, limit, offset]),
+        db.firstOrNull<{ total: number }>(
+          `SELECT COUNT(*) as total FROM capital_units u LEFT JOIN financial_products p ON u.product_id = p.id WHERE ${conditions.join(" AND ")}`,
+          values,
+        ),
+      ]);
+
+      const total = countResult?.total ?? 0;
       const units = unitsResult.results;
 
       if (units.length === 0) {
-        return ok({ units: [], count: 0, limit, offset });
+        return okWithPage(
+          { units: [], count: 0, limit, offset },
+          { returned: 0, total, limit, offset, has_more: false },
+        );
       }
 
       // Get latest invest logs for availability calculation
@@ -208,7 +219,12 @@ LIMITATIONS:
         enrichWithAvailability(unit, logsMap.get(unit.id) ?? null),
       );
 
-      return ok({ units: enrichedUnits, count: enrichedUnits.length, limit, offset });
+      const hasMore = offset + enrichedUnits.length < total;
+      return okWithPage(
+        { units: enrichedUnits, count: enrichedUnits.length, limit, offset },
+        { returned: enrichedUnits.length, total, limit, offset, has_more: hasMore },
+        hasMore ? { recommended: "paginate", tool: "list_units", args: { offset: offset + limit, limit } } : undefined,
+      );
     },
   );
 

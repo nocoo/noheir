@@ -7,7 +7,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { ToolContext } from "./types";
-import { ok, error } from "./types";
+import { ok, okWithPage, error } from "./types";
 import { ulid } from "ulid";
 import { compact, shortId } from "./compact";
 
@@ -92,7 +92,15 @@ LIMITATIONS:
         LIMIT ? OFFSET ?
       `;
 
-      const result = await db.query<Product>(sql, [...values, limit, offset]);
+      const [result, countResult] = await Promise.all([
+        db.query<Product>(sql, [...values, limit, offset]),
+        db.firstOrNull<{ total: number }>(
+          `SELECT COUNT(*) as total FROM financial_products WHERE ${conditions.join(" AND ")}`,
+          values,
+        ),
+      ]);
+
+      const total = countResult?.total ?? 0;
 
       // Compact output: short ID, omit nulls/defaults
       const products = result.results.map((p) => compact({
@@ -107,7 +115,12 @@ LIMITATIONS:
         archived: p.is_archived === 1 ? true : null, // omit if false
       }));
 
-      return ok({ products, count: products.length, limit, offset });
+      const hasMore = offset + products.length < total;
+      return okWithPage(
+        { products, count: products.length, limit, offset },
+        { returned: products.length, total, limit, offset, has_more: hasMore },
+        hasMore ? { recommended: "paginate", tool: "list_products", args: { offset: offset + limit, limit } } : undefined,
+      );
     },
   );
 
