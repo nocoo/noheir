@@ -2,6 +2,86 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.0] - 2026-04-29
+
+### Features
+
+- **mcp** — enhance get_product with linked units info
+- **mcp** — add get_product_portfolio tool
+- **mcp** — add product_id filter and response to list_units
+- **mcp** — apply unified envelope to all browse tools
+- **mcp** — add envelope types and product resolver
+- **worker** — add /api/live with D1 probe, surety standard
+- **web** — upgrade /api/live to surety standard
+- **scripts** — add automated release script
+- **api** — add GET /api/live health check endpoint (#7)
+
+### Fixes
+
+- **mcp** — use SQL aggregate for portfolio summary when truncated
+- **mcp** — address review findings
+- **proxy** — mark /api/live as public
+- **ui** — prevent wrapping in fixed-width capital table columns
+- **ui** — keep badges on a single line in tables
+- **proxy** — allow /api/auth/* through middleware
+- resolve OSV vulnerability and clean unused ignores
+- correct logo path in README
+- **ui** — use B05 background tokens for table bg-muted
+- **worker/db** — add is_archived migration for fresh envs
+- **ui** — align bg-card usage to B05 luminance spec
+- **tests** — assert concrete order in sort-by-type test
+- **tests** — scope mcp-tokens mock.module so it does not leak
+- **mcp/query** — apply tags filter via JSON LIKE patterns
+- **ui** — remove shadow-sm/shadow-md from non-overlay components
+- **ui** — replace basalt anti-patterns in form components
+- resolve TypeScript 'possibly undefined' errors in release script
+- **deps** — upgrade hono (4.12.14 not yet on npm, ignore CVE)
+- **ci** — 迁移到 base-ci@v2026，禁用缺失的 L2 E2E
+
+### Refactoring
+
+- **mcp** — remove deprecated pagination fields
+- **worker** — unify WORKER_SECRET/WORKER_SHARED_SECRET to WORKER_TOKEN
+- **db** — unify WORKER_SECRET to WORKER_TOKEN in Next.js side
+
+### Documentation
+
+- **mcp** — clarify truncation behavior in portfolio description
+- add MCP agent-friendly improvement plan
+- **mcp** — standardize tool descriptions
+- **claude** — refresh deployment overview, log /api/auth middleware lesson
+- **readme** — point production-deploy section at new run guide
+- **run** — rewrite deployment guide for self-hosted Docker + GHCR
+
+### Tests
+
+- **e2e** — make L2 runner CI-aware via WORKER_URL/WORKER_SECRET
+- **noheir** — boost mcp-tokens, mcp/query, mcp/unit coverage
+- **mcp-auth** — cover validateMcpToken with mocked dependencies
+- **capital-dashboard** — cover availability buckets and buildStrategyChartData
+- **liquidity-ladder** — cover buildUpcomingUnits with various edge cases
+- **account-detail** — cover buildAccountType, anchors, sort by type/category, edge cases
+- **transaction-mappers** — cover toDomainTransfer and buildMonthlyData
+- **year-comparison** — cover buildYearVsYearData and buildMonthVsMonthData branches
+
+### Chores
+
+- **git** — ignore worker/.dev.vars
+- **deps** — bump hono override 4.12.12 -> 4.12.14 (GHSA-458j-xx4x-4375)
+- remove stale hono CVE ignores from osv-scanner.toml
+
+### CI
+
+- add Release workflow — auto CD to jp2 after CI passes
+- upgrade base-ci to v2026.1
+- enable L2 API E2E job
+- ignore GHSA-458j-xx4x-4375 hono medium CVE
+
+### Build
+
+- **docker** — use port 7004 to align with local dev
+- **docker** — drop WORKER_* build-time placeholders
+
 ## [2.2.2] - 2026-04-12
 
 MCP query bug fix and comprehensive L1 test coverage for MCP utilities.
