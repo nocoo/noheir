@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach } from "bun:test";
+import { describe, test, expect, beforeEach } from "vitest";
 import { api, TEST_USER_A } from "./helpers/client";
 import { cleanupUser } from "./helpers/cleanup";
 import { makeTransaction, makeTransfer } from "./helpers/seed";

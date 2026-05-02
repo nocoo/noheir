@@ -1,9 +1,10 @@
-import { describe, test, expect } from "bun:test";
+import { describe, test, expect } from "vitest";
 import {
   createProductSchema,
   updateProductSchema,
   createUnitSchema,
   updateUnitSchema,
+  updateContributionLogSchema,
 } from "../db/validation";
 
 describe("Product validation schemas", () => {
@@ -378,3 +379,23 @@ describe("Unit validation schemas", () => {
     });
   });
 });
+
+describe("updateContributionLogSchema", () => {
+  test("rejects empty object", () => {
+    const result = updateContributionLogSchema.safeParse({});
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toContain(
+        "At least one field must be provided",
+      );
+    }
+  });
+
+  test("accepts a single field update", () => {
+    const result = updateContributionLogSchema.safeParse({
+      amountCents: 1234,
+    });
+    expect(result.success).toBe(true);
+  });
+});
+

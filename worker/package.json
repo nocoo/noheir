@@ -6,7 +6,10 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "types": "wrangler types",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
@@ -17,6 +20,10 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250620.0",
+    "@types/better-sqlite3": "^7.6.13",
+    "@vitest/coverage-v8": "^4.1.5",
+    "better-sqlite3": "^12.9.0",
+    "vitest": "^4.1.5",
     "wrangler": "^4.21.2"
   }
 }

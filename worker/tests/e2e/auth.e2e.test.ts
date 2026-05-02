@@ -1,4 +1,4 @@
-import { describe, test, expect } from "bun:test";
+import { describe, test, expect } from "vitest";
 import { rawFetch, TEST_USER_A } from "./helpers/client";
 
 describe("E2E: Auth middleware", () => {

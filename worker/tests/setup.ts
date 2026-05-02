@@ -11,13 +11,13 @@
  *     await repos.transactions.create(userId, data);
  *   });
  */
-import { Database } from "bun:sqlite";
-import { drizzle } from "drizzle-orm/bun-sqlite";
-import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
+import Database from "better-sqlite3";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import { createAllRepos, type AllRepos } from "../db/repositories";
 
-let sqlite: InstanceType<typeof Database>;
-let db: BunSQLiteDatabase;
+let sqlite: Database.Database;
+let db: BetterSQLite3Database;
 let repos: AllRepos;
 
 const SCHEMA_DDL = `
@@ -144,8 +144,6 @@ export function createTestDb() {
   sqlite = new Database(":memory:");
   sqlite.exec("PRAGMA foreign_keys = ON;");
   sqlite.exec(SCHEMA_DDL);
-  // Cast: bun-sqlite and d1 Drizzle instances are structurally compatible
-  // for our repository layer (both use the same SQL builder).
   db = drizzle(sqlite);
   repos = createAllRepos(db as unknown as Parameters<typeof createAllRepos>[0]);
 }
@@ -162,7 +160,7 @@ export function getTestRepos(): AllRepos {
   return repos;
 }
 
-export function getTestDb(): BunSQLiteDatabase {
+export function getTestDb(): BetterSQLite3Database {
   if (!db) createTestDb();
   return db;
 }

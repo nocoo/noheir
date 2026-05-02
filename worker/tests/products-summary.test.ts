@@ -2,7 +2,7 @@
  * Unit tests for products-summary.ts
  */
 
-import { describe, test, expect } from "bun:test";
+import { describe, test, expect } from "vitest";
 import { buildProductsSummary, type ProductsSummary } from "../lib/products-summary";
 import type { FinancialProduct } from "../db/types";
 

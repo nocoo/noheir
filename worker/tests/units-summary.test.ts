@@ -2,7 +2,7 @@
  * Unit tests for units-summary.ts
  */
 
-import { describe, test, expect } from "bun:test";
+import { describe, test, expect } from "vitest";
 import { buildUnitsSummary, type UnitsSummary } from "../lib/units-summary";
 import type { UnitWithAvailability } from "../db/repositories/units";
 
