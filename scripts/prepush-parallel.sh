@@ -17,7 +17,7 @@ run_bg() {
   JOBS="$JOBS $name:$!"
 }
 
-run_bg tests bun run scripts/check-coverage.ts
+run_bg tests npm run test:coverage
 run_bg lint ./node_modules/.bin/eslint --cache --cache-location node_modules/.cache/eslint/ --max-warnings=0
 
 if [ "${SKIP_SECURITY:-0}" != "1" ]; then
