@@ -4,7 +4,7 @@
  * Tests list_units, get_unit, create_unit, and update_unit via mock McpServer.
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect } from "vitest";
 import type { Db, DbMeta, DbQueryResult } from "@/lib/db";
 import { registerUnitTools, type UnitWithProduct } from "@/lib/mcp/tools/unit";
 

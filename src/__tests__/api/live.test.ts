@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import { GET } from "@/app/api/live/route";
 
 describe("GET /api/live", () => {

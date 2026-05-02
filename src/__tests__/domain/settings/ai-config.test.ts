@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import {
   PREDEFINED_AI_MODELS,
   PREDEFINED_AI_URLS,

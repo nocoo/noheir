@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import { parseChineseTransferCSV } from "@/domain/import/parse-chinese-transfer-csv";
 
 describe("parseChineseTransferCSV", () => {

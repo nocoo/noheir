@@ -4,7 +4,7 @@
  * Tests enrichWithAvailability function which calculates availability status.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import {
   enrichWithAvailability,
   type UnitWithProduct,

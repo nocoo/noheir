@@ -4,36 +4,30 @@
  * L1 unit tests for extractBearerToken, validateOrigin, and validateMcpToken.
  */
 
-import { describe, it, expect, mock, beforeAll, afterAll } from "bun:test";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { extractBearerToken, validateOrigin, validateMcpToken } from "@/lib/mcp/auth";
 import type { McpToken } from "@/services/mcp-tokens";
 
-// Mock the mcp-tokens service — installed in beforeAll and restored in afterAll
-// so the module mock does not leak into other test files (e.g. mcp-tokens.test.ts).
-const mockGetValidTokenByHash = mock(() => Promise.resolve(null as McpToken | null));
-const mockUpdateLastUsed = mock(() => Promise.resolve());
-const mockSha256 = mock((input: string) => Promise.resolve(`hashed-${input}`));
+const { mockGetValidTokenByHash, mockUpdateLastUsed, mockSha256 } = vi.hoisted(() => ({
+  mockGetValidTokenByHash: vi.fn(() => Promise.resolve(null as McpToken | null)),
+  mockUpdateLastUsed: vi.fn(() => Promise.resolve()),
+  mockSha256: vi.fn((input: string) => Promise.resolve(`hashed-${input}`)),
+}));
 
-// Captured before the mock is installed so afterAll can re-register the full,
-// real export surface (bun's mock.module replaces the module wholesale).
-let originalMcpTokensExports: Record<string, unknown> | null = null;
-
-beforeAll(async () => {
-  originalMcpTokensExports = {
-    ...(await import("@/services/mcp-tokens")),
-  };
-  mock.module("@/services/mcp-tokens", () => ({
-    ...originalMcpTokensExports,
+vi.mock("@/services/mcp-tokens", async () => {
+  const actual = await vi.importActual<typeof import("@/services/mcp-tokens")>("@/services/mcp-tokens");
+  return {
+    ...actual,
     getValidTokenByHash: mockGetValidTokenByHash,
     updateLastUsed: mockUpdateLastUsed,
     sha256: mockSha256,
-  }));
+  };
 });
 
-afterAll(() => {
-  if (originalMcpTokensExports) {
-    mock.module("@/services/mcp-tokens", () => originalMcpTokensExports);
-  }
+beforeEach(() => {
+  mockGetValidTokenByHash.mockReset();
+  mockUpdateLastUsed.mockReset();
+  mockSha256.mockImplementation((input: string) => Promise.resolve(`hashed-${input}`));
 });
 
 const fakeDb = {} as Parameters<typeof validateMcpToken>[0];
@@ -133,7 +127,6 @@ describe("validateMcpToken", () => {
   it("swallows updateLastUsed errors silently", async () => {
     mockGetValidTokenByHash.mockResolvedValueOnce(fakeToken);
     mockUpdateLastUsed.mockRejectedValueOnce(new Error("db error"));
-    // Should not throw
     const result = await validateMcpToken(fakeDb, "Bearer abc123");
     expect(result.valid).toBe(true);
   });

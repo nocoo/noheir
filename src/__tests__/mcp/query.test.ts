@@ -5,7 +5,7 @@
  * get_monthly_report, and aggregate_transactions via mock McpServer.
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect } from "vitest";
 import type { Db, DbMeta, DbQueryResult } from "@/lib/db";
 import { registerQueryTools } from "@/lib/mcp/tools/query";
 

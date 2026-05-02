@@ -2,7 +2,7 @@
  * Tests for MCP entity resolver (resolveProduct)
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect } from "vitest";
 import type { Db, DbQueryResult } from "@/lib/db";
 import { resolveProduct, type ResolvedProduct } from "@/lib/mcp/tools/resolver";
 

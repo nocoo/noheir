@@ -2,7 +2,7 @@
  * Tests for MCP envelope utilities (okWithPage, okWithCompleteness)
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect } from "vitest";
 import {
   ok,
   okWithPage,

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import { buildSavingsRate } from "@/domain/dashboard/overview";
 
 describe("overview domain", () => {

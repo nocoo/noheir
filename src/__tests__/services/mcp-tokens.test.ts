@@ -4,18 +4,13 @@
  * Tests all CRUD operations and helper functions for MCP OAuth tokens.
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect } from "vitest";
 import type { Db, DbMeta, DbQueryResult } from "../../lib/db";
 import type {
   McpToken,
   CreateMcpTokenInput,
 } from "../../services/mcp-tokens";
 
-/**
- * NOTE: auth.test.ts installs a mock.module("@/services/mcp-tokens") in a
- * beforeAll hook and restores the real module in afterAll, so the exported
- * helpers below behave as their real implementations when this suite runs.
- */
 import {
   randomHex,
   sha256,

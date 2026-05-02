@@ -2,7 +2,7 @@
  * Tests for MCP compact utilities
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect } from "vitest";
 import { round2, compact, shortId, compactArray, categoryPath, currencyCode } from "@/lib/mcp/tools/compact";
 
 describe("round2", () => {
