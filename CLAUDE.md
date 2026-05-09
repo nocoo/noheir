@@ -36,8 +36,9 @@ cd worker && bun run dev
 
 | Layer | Files | Runner |
 |-------|-------|--------|
-| Unit | `tests/{domain,viewmodels,contexts,hooks,lib,services,smoke}/` | `bun run test:unit` |
-| Worker E2E | `worker/tests/e2e/` | `bun run test:e2e` (in worker/) |
+| Unit | `src/__tests__/` | `bun run test` |
+| Worker Unit | `worker/tests/` (excl. e2e/) | `bun run test:worker` |
+| Worker E2E | `worker/tests/e2e/` | `bun run test:worker:e2e` |
 
 ### Git Hooks
 
