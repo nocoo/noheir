@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.1] - 2026-05-09
+
+### Features
+
+- **products** — add cyclic lock mechanism for periodic open/lock windows
+- **warehouse** — use availability color for card background, strategy color for left line
+
+### Fixes
+
+- **deps** — override fast-uri to 3.1.2 to resolve GHSA-q3j6 and GHSA-v39h
+- **cyclic-lock** — correct availableDate semantics, validation, and API response
+- **warehouse** — make card grid columns scale down more gradually
+- **lint** — add coverage/ to eslint globalIgnores
+- **worker** — restore vitest.config.ts mistakenly removed in 115c4be
+- **deps** — upgrade hono to fix CVEs (GHSA-69xw, GHSA-9vqf)
+- **deps** — override ip-address to 10.2.0 to resolve GHSA-v2v4-37r5-5v8g
+
+### Documentation
+
+- fix test commands and add worker unit test layer in CLAUDE.md
+- update test references from bun test to vitest
+
+### Tests
+
+- **src** — migrate src/__tests__ from bun:test to vitest
+
+### Chores
+
+- remove orphaned vitest sub-configs superseded by root config
+- **worker** — migrate tests from bun:test to vitest
+- **scripts** — drop bun-based check-coverage in favor of vitest --coverage
+- **test** — add vitest with @vitest/coverage-v8 and 95% thresholds
+
 ## [2.3.0] - 2026-04-29
 
 ### Features
