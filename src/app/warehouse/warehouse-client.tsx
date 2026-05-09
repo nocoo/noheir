@@ -16,6 +16,7 @@ import {
   getStrategyToken,
   getTacticsToken,
   getStatusToken,
+  getAvailabilityToken,
   hashToChartToken,
 } from "@/lib/palette"
 import { UnitEditor, type SerializedUnit } from "@/components/capital/unit-editor"
@@ -614,7 +615,8 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
             </div>
             <div className="grid grid-cols-2 gap-1.5 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8 3xl:grid-cols-9 4xl:grid-cols-10">
               {groupUnits.map((unit) => {
-                const statusToken = getStatusToken(unit.status)
+                const strategyToken = getStrategyToken(unit.strategy)
+                const availabilityToken = getAvailabilityToken(unit.daysUntilAvailable, unit.status)
                 // Show different secondary info based on groupBy
                 const secondaryInfo = groupBy === "tactics" ? unit.strategy : unit.tactics
                 return (
@@ -622,8 +624,8 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
                     key={unit.id}
                     className="relative cursor-pointer overflow-hidden border transition-shadow"
                     style={{
-                      backgroundColor: withAlpha(colorToken, 0.1),
-                      borderColor: withAlpha(colorToken, 0.2),
+                      backgroundColor: withAlpha(availabilityToken, 0.1),
+                      borderColor: withAlpha(availabilityToken, 0.2),
                     }}
                     onClick={() => {
                       setSelectedUnit(unit)
@@ -632,13 +634,13 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
                   >
                     <div
                       className="absolute left-0 top-0 h-full w-0.5 sm:w-1"
-                      style={{ backgroundColor: withAlpha(statusToken, 1) }}
+                      style={{ backgroundColor: withAlpha(strategyToken, 1) }}
                     />
                     {/* Unit code as large watermark - full height, right aligned */}
                     <div className="pointer-events-none absolute inset-0 flex items-center justify-end overflow-hidden pr-1.5 sm:pr-3">
                       <span
                         className="text-xl font-black leading-none sm:text-3xl"
-                        style={{ color: withAlpha(colorToken, 0.35) }}
+                        style={{ color: withAlpha(strategyToken, 0.35) }}
                       >
                         {getSeriesPrefix(unit.unitCode)}
                       </span>
@@ -650,22 +652,25 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
                       <p className="text-muted-foreground truncate text-[9px] sm:text-[10px]">
                         {secondaryInfo}
                       </p>
-                      {unit.daysUntilAvailable != null && (
-                        <p className={cn(
-                          "text-[9px] font-medium sm:text-[10px]",
-                          unit.daysUntilAvailable <= 0
-                            ? "text-green-600 dark:text-green-400"
-                            : unit.daysUntilAvailable <= 30
-                              ? "text-amber-600 dark:text-amber-400"
-                              : "text-destructive"
-                        )}>
+                      {unit.daysUntilAvailable != null ? (
+                        <p
+                          className="text-[9px] font-medium sm:text-[10px]"
+                          style={{ color: withAlpha(availabilityToken, 1) }}
+                        >
                           {unit.daysUntilAvailable <= 0
                             ? "已可用"
                             : unit.daysUntilAvailable <= 30
                               ? `${unit.daysUntilAvailable}天`
                               : "锁定中"}
                         </p>
-                      )}
+                      ) : unit.status === "计划中" ? (
+                        <p
+                          className="text-[9px] font-medium sm:text-[10px]"
+                          style={{ color: withAlpha(availabilityToken, 1) }}
+                        >
+                          计划中
+                        </p>
+                      ) : null}
                     </CardContent>
                   </Card>
                 )

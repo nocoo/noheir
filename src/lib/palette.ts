@@ -246,6 +246,20 @@ export function getMaturityToken(period: string): string {
   return MATURITY_TOKEN_MAP[period] ?? hashToChartToken(period);
 }
 
+/**
+ * Get chart token for availability status based on days until available and unit status.
+ */
+export function getAvailabilityToken(
+  daysUntilAvailable: number | null | undefined,
+  status: string,
+): string {
+  if (status === "计划中") return "chart-7"; // orange
+  if (daysUntilAvailable == null) return "chart-4"; // green fallback
+  if (daysUntilAvailable <= 0) return "chart-4"; // green
+  if (daysUntilAvailable <= 30) return "chart-6"; // amber
+  return "chart-9"; // red
+}
+
 /** Get CSS-variable color string for a strategy (for SVG/Recharts). */
 export function strategyColor(strategy: string): string {
   return v(getStrategyToken(strategy));
