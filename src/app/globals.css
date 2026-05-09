@@ -12,6 +12,10 @@
  * Financial: Income (Emerald) / Expense (Rose)
  */
 @theme inline {
+  --breakpoint-xs: 480px;
+  --breakpoint-3xl: 1800px;
+  --breakpoint-4xl: 2400px;
+
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));

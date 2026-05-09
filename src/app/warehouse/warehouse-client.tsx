@@ -612,7 +612,7 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
                 {groupUnits.length}个 · {formatCurrencyFull(groupTotal)}
               </span>
             </div>
-            <div className="grid grid-cols-2 gap-1.5 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10">
+            <div className="grid grid-cols-2 gap-1.5 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8 3xl:grid-cols-9 4xl:grid-cols-10">
               {groupUnits.map((unit) => {
                 const statusToken = getStatusToken(unit.status)
                 // Show different secondary info based on groupBy
