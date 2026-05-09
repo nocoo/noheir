@@ -13,6 +13,7 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     "_archive/**",
+    "coverage/**",
     "worker/**",
   ]),
   // tseslint strict — replaces manual rules
