@@ -25,6 +25,8 @@ export function toDomainProduct(raw: Record<string, unknown>): DomainProduct {
     currency: raw.currency != null ? String(raw.currency) : null,
     lockPeriodDays:
       raw.lockPeriodDays != null ? Number(raw.lockPeriodDays) : null,
+    openDays: raw.openDays != null ? Number(raw.openDays) : null,
+    cycleDays: raw.cycleDays != null ? Number(raw.cycleDays) : null,
     annualReturnRate:
       raw.annualReturnRate != null ? Number(raw.annualReturnRate) : null,
     isArchived: Boolean(raw.isArchived),
@@ -61,6 +63,7 @@ export function toUnitDisplayInfo(raw: Record<string, unknown>): UnitDisplayInfo
     availableDate: raw.availableDate != null ? String(raw.availableDate) : null,
     isAvailable: Boolean(raw.isAvailable),
     daysUntilAvailable: raw.daysUntilAvailable != null ? Number(raw.daysUntilAvailable) : null,
+    daysUntilLocked: raw.daysUntilLocked != null ? Number(raw.daysUntilLocked) : null,
     latestInvestDate: raw.latestInvestDate != null ? String(raw.latestInvestDate) : null,
   }
 }

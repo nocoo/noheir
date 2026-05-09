@@ -39,6 +39,8 @@ CREATE TABLE IF NOT EXISTS financial_products (
   category TEXT,
   currency TEXT DEFAULT 'CNY',
   lock_period_days INTEGER DEFAULT 0,
+  open_days INTEGER,
+  cycle_days INTEGER,
   annual_return_rate REAL,
   is_archived INTEGER DEFAULT 0,
   created_at INTEGER NOT NULL,

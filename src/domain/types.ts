@@ -91,6 +91,8 @@ export interface DomainProduct {
   category: string | null;
   currency: string | null;
   lockPeriodDays: number | null;
+  openDays: number | null;
+  cycleDays: number | null;
   annualReturnRate: number | null;
   isArchived: boolean;
 }
@@ -117,6 +119,8 @@ export interface UnitDisplayInfo extends DomainUnit {
   isAvailable: boolean;
   /** Days until available (positive = locked, 0 or negative = available since N days) */
   daysUntilAvailable: number | null;
+  /** Days until open window closes (cyclic products in open window only) */
+  daysUntilLocked: number | null;
   /** Most recent invest log operationDate */
   latestInvestDate: string | null;
 }

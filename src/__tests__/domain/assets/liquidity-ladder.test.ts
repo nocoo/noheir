@@ -17,6 +17,8 @@ const makeProduct = (): DomainProduct => ({
   category: "固定收益",
   currency: null,
   lockPeriodDays: 90,
+  openDays: null,
+  cycleDays: null,
   annualReturnRate: 0.03,
   isArchived: false,
 });
@@ -39,6 +41,7 @@ const makeUnit = (
   availableDate: null,
   isAvailable: false,
   daysUntilAvailable: null,
+  daysUntilLocked: null,
   latestInvestDate: null,
   ...overrides,
 });

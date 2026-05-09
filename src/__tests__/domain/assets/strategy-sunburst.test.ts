@@ -15,6 +15,8 @@ const makeProduct = (
   category: "固定收益",
   currency: null,
   lockPeriodDays: 90,
+  openDays: null,
+  cycleDays: null,
   annualReturnRate: 0.03,
   isArchived: false,
   ...overrides,
@@ -38,6 +40,7 @@ const makeUnit = (
   availableDate: "2024-06-01",
   isAvailable: false,
   daysUntilAvailable: null,
+  daysUntilLocked: null,
   latestInvestDate: null,
   ...overrides,
 });

@@ -29,9 +29,20 @@ export const createProductSchema = z.object({
   }).optional().nullable(),
   currency: z.enum(CURRENCIES).default("CNY"),
   lockPeriodDays: z.number().int().min(0).optional().nullable(),
+  openDays: z.number().int().min(1).optional().nullable(),
+  cycleDays: z.number().int().min(1).optional().nullable(),
   annualReturnRate: z.number().optional().nullable(),
   isArchived: z.boolean().default(false),
-});
+}).refine(
+  (data) => {
+    const hasOpen = data.openDays != null;
+    const hasCycle = data.cycleDays != null;
+    if (hasOpen !== hasCycle) return false;
+    if (hasOpen && hasCycle && data.cycleDays! <= data.openDays!) return false;
+    return true;
+  },
+  { message: "openDays and cycleDays must both be set, and cycleDays must be greater than openDays" },
+);
 
 export const updateProductSchema = z.object({
   name: z.string().min(1).optional(),
@@ -44,11 +55,22 @@ export const updateProductSchema = z.object({
   }).optional().nullable(),
   currency: z.enum(CURRENCIES).optional(),
   lockPeriodDays: z.number().int().min(0).optional().nullable(),
+  openDays: z.number().int().min(1).optional().nullable(),
+  cycleDays: z.number().int().min(1).optional().nullable(),
   annualReturnRate: z.number().optional().nullable(),
   isArchived: z.boolean().optional(),
 }).refine(
   (data) => Object.keys(data).length > 0,
   { message: "At least one field must be provided for update" },
+).refine(
+  (data) => {
+    const hasOpen = data.openDays !== undefined;
+    const hasCycle = data.cycleDays !== undefined;
+    if (hasOpen !== hasCycle) return false;
+    if (hasOpen && hasCycle && data.openDays != null && data.cycleDays != null && data.cycleDays <= data.openDays) return false;
+    return true;
+  },
+  { message: "openDays and cycleDays must both be set, and cycleDays must be greater than openDays" },
 );
 
 // ── Units ──

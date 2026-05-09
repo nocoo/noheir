@@ -658,7 +658,9 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
                           style={{ color: withAlpha(availabilityToken, 1) }}
                         >
                           {unit.daysUntilAvailable <= 0
-                            ? "已可用"
+                            ? unit.daysUntilLocked != null
+                              ? `已可用 · 剩${unit.daysUntilLocked}天`
+                              : "已可用"
                             : unit.daysUntilAvailable <= 30
                               ? `${unit.daysUntilAvailable}天`
                               : "锁定中"}

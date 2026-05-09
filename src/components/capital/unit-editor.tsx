@@ -87,6 +87,7 @@ export interface SerializedUnit {
   note: string | null
   availableDate?: string | null
   daysUntilAvailable?: number | null
+  daysUntilLocked?: number | null
   isAvailable?: boolean
 }
 

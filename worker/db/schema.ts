@@ -28,6 +28,8 @@ export const financialProducts = sqliteTable("financial_products", {
   category: text("category"),
   currency: text("currency").default("CNY"),
   lockPeriodDays: integer("lock_period_days").default(0),
+  openDays: integer("open_days"),
+  cycleDays: integer("cycle_days"),
   annualReturnRate: real("annual_return_rate"),
   isArchived: integer("is_archived", { mode: "boolean" }).default(false),
   createdAt: integer("created_at", { mode: "timestamp" })

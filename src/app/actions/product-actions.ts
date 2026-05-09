@@ -10,6 +10,8 @@ export async function createProduct(data: {
   category?: string | null
   currency?: string
   lockPeriodDays?: number | null
+  openDays?: number | null
+  cycleDays?: number | null
   annualReturnRate?: number | null
   isArchived?: boolean
 }): Promise<ActionResult<{ id: string }>> {
@@ -22,6 +24,8 @@ export async function createProduct(data: {
       category: data.category ?? undefined,
       currency: data.currency || "CNY",
       lockPeriodDays: data.lockPeriodDays ?? undefined,
+      openDays: data.openDays ?? undefined,
+      cycleDays: data.cycleDays ?? undefined,
       annualReturnRate: data.annualReturnRate ?? undefined,
       isArchived: data.isArchived ?? false,
     })
@@ -44,6 +48,8 @@ export async function updateProduct(
     category?: string | null
     currency?: string
     lockPeriodDays?: number | null
+    openDays?: number | null
+    cycleDays?: number | null
     annualReturnRate?: number | null
     isArchived?: boolean
   },
@@ -58,6 +64,8 @@ export async function updateProduct(
     if (data.category !== undefined) payload.category = data.category
     if (data.currency !== undefined) payload.currency = data.currency
     if (data.lockPeriodDays !== undefined) payload.lockPeriodDays = data.lockPeriodDays
+    if (data.openDays !== undefined) payload.openDays = data.openDays
+    if (data.cycleDays !== undefined) payload.cycleDays = data.cycleDays
     if (data.annualReturnRate !== undefined) payload.annualReturnRate = data.annualReturnRate
     if (data.isArchived !== undefined) payload.isArchived = data.isArchived
     await client.updateProduct(userId, id, payload)

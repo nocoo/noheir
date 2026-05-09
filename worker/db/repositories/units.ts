@@ -20,7 +20,11 @@ export function createUnitsRepo(db: DrizzleD1Database) {
         const latestInvest = latestInvestLogs.get(unit.id) ?? null;
         const availability = computeAvailability(
           latestInvest ? { operationDate: latestInvest.operationDate } : null,
-          unit.product ? { lockPeriodDays: unit.product.lockPeriodDays } : null
+          unit.product ? {
+            lockPeriodDays: unit.product.lockPeriodDays,
+            openDays: unit.product.openDays,
+            cycleDays: unit.product.cycleDays,
+          } : null
         );
         return {
           ...unit,

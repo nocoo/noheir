@@ -510,9 +510,18 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
                     <CurrencyBadge currency={product.currency ?? "CNY"} />
                   </TableCell>
                   <TableCell>
-                    {product.lockPeriodDays != null
-                      ? `${product.lockPeriodDays}天`
-                      : "—"}
+                    {product.lockPeriodDays != null ? (
+                      <div>
+                        <span>{product.lockPeriodDays}天</span>
+                        {product.openDays != null && product.cycleDays != null && (
+                          <span className="text-muted-foreground ml-1 text-xs">
+                            ({product.openDays}/{product.cycleDays})
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      "—"
+                    )}
                   </TableCell>
                   <TableCell>
                     {product.annualReturnRate != null ? (
@@ -636,6 +645,12 @@ function ProductForm({
   const [lockDays, setLockDays] = useState(
     product?.lockPeriodDays != null ? String(product.lockPeriodDays) : "",
   )
+  const [openDays, setOpenDays] = useState(
+    product?.openDays != null ? String(product.openDays) : "",
+  )
+  const [cycleDays, setCycleDays] = useState(
+    product?.cycleDays != null ? String(product.cycleDays) : "",
+  )
   const [rate, setRate] = useState(
     product?.annualReturnRate != null
       ? String(product.annualReturnRate * 100)
@@ -654,6 +669,8 @@ function ProductForm({
         data.category = category || null
         data.currency = currency || "CNY"
         data.lockPeriodDays = lockDays ? Number(lockDays) : null
+        data.openDays = openDays ? Number(openDays) : null
+        data.cycleDays = cycleDays ? Number(cycleDays) : null
         data.annualReturnRate = rate ? Number(rate) / 100 : null
 
         const result = await updateProduct(product.id, data)
@@ -671,6 +688,8 @@ function ProductForm({
         if (category) data.category = category
         if (currency) data.currency = currency
         if (lockDays) data.lockPeriodDays = Number(lockDays)
+        if (openDays) data.openDays = Number(openDays)
+        if (cycleDays) data.cycleDays = Number(cycleDays)
         if (rate) data.annualReturnRate = Number(rate) / 100
 
         const result = await createProduct(data)
@@ -773,6 +792,37 @@ function ProductForm({
           />
         </div>
       </div>
+      {lockDays && Number(lockDays) > 0 && (
+        <div className="grid grid-cols-2 gap-4 rounded-md border border-dashed p-3">
+          <div className="col-span-2">
+            <Label className="text-muted-foreground text-xs">
+              周期性锁定（可选）：初始锁定到期后，循环开放/锁定
+            </Label>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="openDays">开放天数</Label>
+            <Input
+              id="openDays"
+              type="number"
+              min="1"
+              placeholder="如 3"
+              value={openDays}
+              onChange={(e) => setOpenDays(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="cycleDays">周期天数</Label>
+            <Input
+              id="cycleDays"
+              type="number"
+              min="1"
+              placeholder="如 30"
+              value={cycleDays}
+              onChange={(e) => setCycleDays(e.target.value)}
+            />
+          </div>
+        </div>
+      )}
       <div className="flex justify-end gap-2">
         <Button
           type="button"

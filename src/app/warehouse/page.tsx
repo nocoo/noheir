@@ -39,6 +39,7 @@ export default async function WarehousePage() {
     note: u.note,
     availableDate: u.availableDate,
     daysUntilAvailable: u.daysUntilAvailable,
+    daysUntilLocked: u.daysUntilLocked,
     isAvailable: u.isAvailable,
   }))
 
