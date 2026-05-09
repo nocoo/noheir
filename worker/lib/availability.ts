@@ -71,9 +71,11 @@ export function computeAvailability(
   const positionInCycle = daysSinceUnlock % product.cycleDays;
 
   if (positionInCycle < product.openDays) {
-    // In open window
+    // In open window — availableDate = current window start
+    const windowStart = new Date(todayStart);
+    windowStart.setDate(windowStart.getDate() - positionInCycle);
     return {
-      availableDate: initialUnlockDateStr,
+      availableDate: formatDateString(windowStart),
       isAvailable: true,
       daysUntilAvailable: 0,
       daysUntilLocked: product.openDays - positionInCycle,
@@ -81,10 +83,12 @@ export function computeAvailability(
     };
   }
 
-  // In locked window
+  // In locked window — availableDate = next open window start
   const daysUntilNextOpen = product.cycleDays - positionInCycle;
+  const nextOpenDate = new Date(todayStart);
+  nextOpenDate.setDate(nextOpenDate.getDate() + daysUntilNextOpen);
   return {
-    availableDate: initialUnlockDateStr,
+    availableDate: formatDateString(nextOpenDate),
     isAvailable: false,
     daysUntilAvailable: daysUntilNextOpen,
     daysUntilLocked: null,

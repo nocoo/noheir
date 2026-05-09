@@ -67,7 +67,12 @@ export const updateProductSchema = z.object({
     const hasOpen = data.openDays !== undefined;
     const hasCycle = data.cycleDays !== undefined;
     if (hasOpen !== hasCycle) return false;
-    if (hasOpen && hasCycle && data.openDays != null && data.cycleDays != null && data.cycleDays <= data.openDays) return false;
+    if (!hasOpen) return true;
+    // Both present: must be both null or both non-null
+    const openNull = data.openDays === null;
+    const cycleNull = data.cycleDays === null;
+    if (openNull !== cycleNull) return false;
+    if (!openNull && !cycleNull && data.cycleDays! <= data.openDays!) return false;
     return true;
   },
   { message: "openDays and cycleDays must both be set, and cycleDays must be greater than openDays" },

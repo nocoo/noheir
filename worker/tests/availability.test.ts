@@ -178,11 +178,13 @@ describe("computeAvailability", () => {
       // lockPeriodDays=10, openDays=3, cycleDays=30
       // Invested 2026-03-20, unlock 2026-03-30
       // Today 2026-03-30 → day 0 since unlock → positionInCycle=0 < openDays=3 → OPEN
+      // availableDate = window start = today - 0 = 2026-03-30
       const result = computeAvailability(
         { operationDate: "2026-03-20" },
         { lockPeriodDays: 10, openDays: 3, cycleDays: 30 },
         new Date("2026-03-30")
       );
+      expect(result.availableDate).toBe("2026-03-30");
       expect(result.isAvailable).toBe(true);
       expect(result.daysUntilAvailable).toBe(0);
       expect(result.daysUntilLocked).toBe(3);
@@ -190,23 +192,27 @@ describe("computeAvailability", () => {
 
     it("is available in the middle of an open window", () => {
       // Same config, today 2026-03-31 → day 1, positionInCycle=1 < 3 → OPEN
+      // availableDate = window start = today - 1 = 2026-03-30
       const result = computeAvailability(
         { operationDate: "2026-03-20" },
         { lockPeriodDays: 10, openDays: 3, cycleDays: 30 },
         new Date("2026-03-31")
       );
+      expect(result.availableDate).toBe("2026-03-30");
       expect(result.isAvailable).toBe(true);
       expect(result.daysUntilAvailable).toBe(0);
       expect(result.daysUntilLocked).toBe(2);
     });
 
     it("is available on the last day of the open window", () => {
-      // Today 2026-04-01 → day 2, positionInCycle=2 < 3 → OPEN, daysUntilLocked=1
+      // Today 2026-04-01 → day 2, positionInCycle=2 < 3 → OPEN
+      // availableDate = window start = today - 2 = 2026-03-30
       const result = computeAvailability(
         { operationDate: "2026-03-20" },
         { lockPeriodDays: 10, openDays: 3, cycleDays: 30 },
         new Date("2026-04-01")
       );
+      expect(result.availableDate).toBe("2026-03-30");
       expect(result.isAvailable).toBe(true);
       expect(result.daysUntilAvailable).toBe(0);
       expect(result.daysUntilLocked).toBe(1);
@@ -214,11 +220,13 @@ describe("computeAvailability", () => {
 
     it("reports daysUntilLocked correctly in a later cycle", () => {
       // Today 2026-04-29 → day 30, positionInCycle=30%30=0 → OPEN, cycle 2
+      // availableDate = window start = today - 0 = 2026-04-29
       const result = computeAvailability(
         { operationDate: "2026-03-20" },
         { lockPeriodDays: 10, openDays: 3, cycleDays: 30 },
         new Date("2026-04-29")
       );
+      expect(result.availableDate).toBe("2026-04-29");
       expect(result.isAvailable).toBe(true);
       expect(result.daysUntilAvailable).toBe(0);
       expect(result.daysUntilLocked).toBe(3);
@@ -228,12 +236,13 @@ describe("computeAvailability", () => {
   describe("cyclic lock — locked window", () => {
     it("is locked on the first day of the locked window", () => {
       // Today 2026-04-02 → day 3, positionInCycle=3 >= openDays=3 → LOCKED
-      // daysUntilAvailable = cycleDays - positionInCycle = 30 - 3 = 27
+      // daysUntilAvailable = 30 - 3 = 27, availableDate = today + 27 = 2026-04-29
       const result = computeAvailability(
         { operationDate: "2026-03-20" },
         { lockPeriodDays: 10, openDays: 3, cycleDays: 30 },
         new Date("2026-04-02")
       );
+      expect(result.availableDate).toBe("2026-04-29");
       expect(result.isAvailable).toBe(false);
       expect(result.daysUntilAvailable).toBe(27);
       expect(result.daysUntilLocked).toBeNull();
@@ -241,12 +250,13 @@ describe("computeAvailability", () => {
 
     it("is locked in the middle of the locked window", () => {
       // Today 2026-04-15 → day 16, positionInCycle=16 >= 3 → LOCKED
-      // daysUntilAvailable = 30 - 16 = 14
+      // daysUntilAvailable = 30 - 16 = 14, availableDate = today + 14 = 2026-04-29
       const result = computeAvailability(
         { operationDate: "2026-03-20" },
         { lockPeriodDays: 10, openDays: 3, cycleDays: 30 },
         new Date("2026-04-15")
       );
+      expect(result.availableDate).toBe("2026-04-29");
       expect(result.isAvailable).toBe(false);
       expect(result.daysUntilAvailable).toBe(14);
       expect(result.daysUntilLocked).toBeNull();
@@ -254,12 +264,13 @@ describe("computeAvailability", () => {
 
     it("is locked on the last day before the next open window", () => {
       // Today 2026-04-28 → day 29, positionInCycle=29 >= 3 → LOCKED
-      // daysUntilAvailable = 30 - 29 = 1
+      // daysUntilAvailable = 30 - 29 = 1, availableDate = today + 1 = 2026-04-29
       const result = computeAvailability(
         { operationDate: "2026-03-20" },
         { lockPeriodDays: 10, openDays: 3, cycleDays: 30 },
         new Date("2026-04-28")
       );
+      expect(result.availableDate).toBe("2026-04-29");
       expect(result.isAvailable).toBe(false);
       expect(result.daysUntilAvailable).toBe(1);
       expect(result.daysUntilLocked).toBeNull();

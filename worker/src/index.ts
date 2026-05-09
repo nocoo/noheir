@@ -670,6 +670,7 @@ app.get("/api/units", async (c) => {
       availableDate: u.availableDate,
       isAvailable: u.isAvailable,
       daysUntilAvailable: u.daysUntilAvailable,
+      daysUntilLocked: u.daysUntilLocked,
       latestInvestDate: u.latestInvestDate,
     }));
     return c.json({ units: standardUnits, total_returned: standardUnits.length, total_count: enrichedUnits.length });
