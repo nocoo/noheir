@@ -34,6 +34,7 @@ export default async function WarehousePage() {
     productId: u.productId,
     productName: u.product?.name ?? null,
     productChannel: u.product?.channel ?? null,
+    latestInvestDate: u.latestInvestDate,
     startDate: u.startDate,
     endDate: u.endDate,
     note: u.note,

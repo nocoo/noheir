@@ -33,11 +33,13 @@ export default async function FundsPage() {
     tactics: u.tactics,
     productId: u.productId,
     productName: u.product?.name ?? null,
+    latestInvestDate: u.latestInvestDate,
     startDate: u.startDate,
     endDate: u.endDate,
     note: u.note,
     availableDate: u.availableDate,
     daysUntilAvailable: u.daysUntilAvailable,
+    daysUntilLocked: u.daysUntilLocked,
     isAvailable: u.isAvailable,
   }))
 

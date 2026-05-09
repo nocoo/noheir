@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useTransition, useMemo } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { toast } from "sonner"
 import {
@@ -106,10 +106,18 @@ const CATEGORIES = [
 
 export function ProductsClient({ products, units }: ProductsClientProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [search, setSearch] = useState("")
-  const [dialogOpen, setDialogOpen] = useState(false)
+
+  const editFromParam = useMemo(() => {
+    const editId = searchParams.get("edit")
+    if (!editId) return null
+    return products.find((p) => p.id === editId) ?? null
+  }, [searchParams, products])
+
+  const [dialogOpen, setDialogOpen] = useState(() => editFromParam !== null)
   const [editingProduct, setEditingProduct] = useState<DomainProduct | null>(
-    null,
+    editFromParam,
   )
   const [deleteTarget, setDeleteTarget] = useState<DomainProduct | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -307,7 +315,10 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
               </Badge>
             )}
           </Button>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <Dialog open={dialogOpen} onOpenChange={(open) => {
+            setDialogOpen(open)
+            if (searchParams.has("edit")) router.replace("/products")
+          }}>
             <DialogTrigger asChild>
               <Button onClick={handleCreate} size="sm">
                 <Plus className="mr-1 size-4" />

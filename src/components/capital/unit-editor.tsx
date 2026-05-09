@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useMemo } from "react"
 import { toast } from "sonner"
-import { Plus, Package, X, Check, ChevronsUpDown } from "lucide-react"
+import { Plus, Package, X, Check, ChevronsUpDown, ExternalLink } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -37,9 +37,11 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
+import Link from "next/link"
 import { createUnit, updateUnit } from "@/app/actions/unit-actions"
 import { createProduct } from "@/app/actions/product-actions"
 import type { DomainProduct } from "@/domain/types"
+import { InvestmentTimeline } from "./investment-timeline"
 
 // ── Constants ──
 
@@ -82,6 +84,7 @@ export interface SerializedUnit {
   productId: string | null
   productName: string | null
   productChannel?: string | null
+  latestInvestDate?: string | null
   startDate: string | null
   endDate: string | null
   note: string | null
@@ -500,6 +503,16 @@ function UnitEditorForm({
                   </Command>
                 </PopoverContent>
               </Popover>
+              {selectedProduct && (
+                <Link
+                  href={`/products?edit=${selectedProduct.id}`}
+                  className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs transition-colors"
+                  target="_blank"
+                >
+                  <ExternalLink className="size-3" />
+                  查看产品详情
+                </Link>
+              )}
             </div>
 
             {/* Quick Product Create Form */}
@@ -563,6 +576,23 @@ function UnitEditorForm({
               </div>
             )}
           </div>
+
+          {selectedProduct && unit?.latestInvestDate && selectedProduct.lockPeriodDays != null && selectedProduct.lockPeriodDays > 0 && (
+            <>
+              <Separator />
+              <div className="space-y-3">
+                <h4 className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+                  投资时间线
+                </h4>
+                <InvestmentTimeline
+                  latestInvestDate={unit.latestInvestDate}
+                  lockPeriodDays={selectedProduct.lockPeriodDays}
+                  openDays={selectedProduct.openDays}
+                  cycleDays={selectedProduct.cycleDays}
+                />
+              </div>
+            </>
+          )}
 
           <Separator />
 

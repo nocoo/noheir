@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { AppShell } from "@/components/layout"
 import { getAuthedClient } from "@/lib/api-helpers"
 import { toDomainProduct, toUnitDisplayInfo } from "@/lib/capital-mappers"
@@ -39,7 +40,9 @@ export default async function ProductsPage() {
 
   return (
     <AppShell>
-      <ProductsClient products={products} units={serializedUnits} />
+      <Suspense>
+        <ProductsClient products={products} units={serializedUnits} />
+      </Suspense>
     </AppShell>
   )
 }
