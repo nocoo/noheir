@@ -85,7 +85,7 @@ docker run --rm -p 7004:7004 --env-file .env.local noheir:local
    - `.env`（chmod 600）：上表中的所有运行时变量
 4. 共享 docker network：`docker network create edge`（一次性，由 proxy 和所有 app 共用）
 5. SSH 公钥：单独生成一对部署密钥（每个项目一对），公钥放进 `~/.ssh/authorized_keys`，私钥配进 GitHub Actions secret
-6. 防火墙：仅放行 52722（部署用，可按需收紧到 GitHub Actions IP 段或临时开启）、80、443
+6. 防火墙：仅放行 22（部署用，可按需收紧到 GitHub Actions IP 段或临时开启）、80、443
 
 ### CI / CD
 
@@ -113,7 +113,6 @@ Release 步骤要点：
 |------|------|
 | `VPS_HOST` | 源站 hostname / IP |
 | `VPS_USER` | SSH 用户 |
-| `VPS_PORT` | SSH 端口（当前为 `52722`；secret 未配置时 workflow 会兜底使用 `52722`） |
 | `VPS_SSH_KEY` | 部署私钥 |
 | `GHCR_PULL_USER` | GHCR 拉取账号 |
 | `GHCR_PULL_TOKEN` | PAT（classic，scope `read:packages`） |
