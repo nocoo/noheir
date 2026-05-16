@@ -71,7 +71,9 @@
   "trustedDependencies": [
     "esbuild",
     "sharp",
-    "unrs-resolver"
+    "unrs-resolver",
+    "@tailwindcss/oxide",
+    "next"
   ],
   "lint-staged": {
     "*.{ts,tsx}": [
