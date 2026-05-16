@@ -52,8 +52,10 @@
     },
   },
   "trustedDependencies": [
+    "@tailwindcss/oxide",
     "esbuild",
     "sharp",
+    "next",
     "unrs-resolver",
   ],
   "overrides": {
