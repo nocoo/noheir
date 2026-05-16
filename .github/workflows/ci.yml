@@ -9,9 +9,10 @@ on:
 
 jobs:
   quality:
-    uses: nocoo/base-ci/.github/workflows/bun-quality.yml@v2026.2
+    uses: nocoo/base-ci/.github/workflows/bun-quality.yml@v2026.4
     with:
       ignore-scripts: true
+      extra-install-dirs: "worker"
       pre-command: "bun run build"
       test-command: "bun run test:coverage"
       typecheck-command: "bun run typecheck"
