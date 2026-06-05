@@ -17,7 +17,7 @@ cd "$ROOT"
 
 run_bg tests npm run test:coverage
 run_bg lint ./node_modules/.bin/eslint --cache --cache-location node_modules/.cache/eslint/ --max-warnings=0
-run_bg typecheck ./node_modules/.bin/tsc --build
+run_bg typecheck ./node_modules/.bin/tsc --noEmit
 
 FAIL=0
 for name in tests lint typecheck; do
