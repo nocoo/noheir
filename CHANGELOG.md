@@ -2,6 +2,42 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.2] - 2026-06-06
+
+### Features
+
+- **unit-editor** — add product link and investment timeline visualization
+
+### Fixes
+
+- **version** — read APP_VERSION from package.json instead of hardcoding
+- **ci** — use full tsc --noEmit in pre-commit instead of incremental --build
+- **deps** — add ws@8.20.1 override to resolve CVE
+
+### Chores
+
+- **deps** — bump @playwright/test to 1.60.0
+- **deps** — bump tailwindcss and @tailwindcss/postcss to 4.3.0
+- **deps** — bump tailwind-merge to 3.6.0
+- **deps** — bump echarts to 6.1.0
+- **deps** — bump date-fns to 4.4.0
+- **deps** — bump vitest and @vitest/coverage-v8 to 4.1.8
+- **deps** — bump @types/react to 19.2.17 and @types/bun to 1.3.14
+- **deps** — bump react and react-dom to 19.2.7
+- **deps** — bump postcss to 8.5.15
+- **deps** — bump hono to 4.12.23
+- **deps** — bump qs to 6.15.2
+- **deps** — upgrade next to 16.2.7
+- **deps** — declare trustedDependencies for ignore-scripts compatibility
+- **ci** — bump base-ci to v2026.2 with ignore-scripts: true
+- **deps** — align eslint-config-next to 16.2.6
+- use VPS_PORT secret for SSH deploy port (jp2 SSH 22→52722)
+- **deps** — upgrade next to 16.2.6
+
+### CI
+
+- **security** — bump base-ci to v2026.4 with extra-install-dirs=worker (Shai-Hulud defense)
+
 ## [2.3.1] - 2026-05-09
 
 ### Features
