@@ -519,36 +519,103 @@ export async function createRecurringExpense(
 6. **货币换算**：保留 `currency` 字段但不做汇率。
 7. **年视图**：12 宫格紧凑视图本期完全不做，避免 scope 漂移。本期日历只出月视图。
 
-## Implementation Phases（送入 plan 阶段时再细化）
+## Implementation Phases
 
-```
-Phase 1 (DB + Worker)
-├── schema 加两表（categories, recurring_expenses）
-├── 0007 迁移
-├── repositories（含级联 SET NULL）
-├── 8 个 Worker SQL 端点
-└── worker 测试
+每个 Phase 独立落地、独立测试、独立回滚。下述每个步骤就是一个**原子 commit**：
 
-Phase 2 (Domain + Actions)
-├── rule-types.ts (Zod, colorToken 枚举校验)
-├── occurrences.ts + 测试
-├── occurrences-aggregate.ts + 测试
-├── 9 个 Server Actions（recurring-expense × 6 + category × 3）
-├── WorkerDbClient 8 方法
-└── action 测试
+- 编号 `P{phase}-C{n}`，commit message 前缀 `feat(...)` / `chore(...)` / `test(...)` / `refactor(...)`
+- 每个 commit 后跑 `bun run test && bun run test:worker && bun run typecheck && bun run lint` 必须全绿
+- DB migration 只在 P1-C2 一次落地；后续 commit 不再改 schema，避免 drift
+- 部署顺序：`worker` 先（含 migration） → `web`（Server Actions 调用 worker），任何 commit 不可破坏旧 worker / 旧 web 单边运行
 
-Phase 3 (UI)
-├── color-token-picker
-├── frequency-picker
-├── recurring-expense-form
-├── category-form
-├── recurring-expense-calendar
-├── summary-cards
-├── plan/calendar 页面
-├── plan/categories 页面
-├── sidebar 加 NavGroup
-└── 视觉冒烟
-```
+### Phase 1 — DB + Worker（独立可部署）
+
+落地后效果：worker 端能跑 8 个新 SQL 端点、新表 + 索引存在；web 端不动，行为零变化。
+
+| Commit | 改动 | 测试文件 / Gate | Migration / Deploy |
+|---|---|---|---|
+| **P1-C1** `feat(schema): add expense_categories + recurring_expenses tables` | `worker/db/schema.ts` 加两个 `sqliteTable` 定义 + `uniqueIndex("expense_categories_user_name_uniq")`；不改 SQL 文件 | `worker/tests/expense-categories.test.ts` + `worker/tests/recurring-expenses.test.ts` 新建占位（仅 import schema 类型，确保编译通过）；`bun run typecheck` | 无 migration / 无 deploy（纯类型层） |
+| **P1-C2** `feat(db): add 0007_recurring_expenses migration` | `worker/db/migrations/0007_recurring_expenses.sql`：建两表 + 显式 `CREATE UNIQUE INDEX` + `PRAGMA foreign_keys` 注释。SQL 与 P1-C1 schema 保持一致 | 本 commit 不跑测试（migration 仅在 deploy 时执行）；CI gate：`drizzle-kit check`（如有）；本地 `wrangler d1 migrations apply noheir-db --local` 验证可应用 | **deploy gate**：本 commit merge 后**先**手动 `wrangler d1 migrations apply noheir-db --remote` 应用到 production，再 merge 后续 commit |
+| **P1-C3** `feat(worker): expense_categories repository` | `worker/db/repositories/expense-categories.ts`：list/getById/create/update/delete，全部按 `userId` 过滤；`(userId, name)` 唯一冲突返 `409` 友好错误 | `worker/tests/expense-categories.test.ts`：CRUD、`userId` 隔离、unique 冲突、空字段拒绝 | 无 deploy（worker 还没暴露端点） |
+| **P1-C4** `feat(worker): recurring_expenses repository` | `worker/db/repositories/recurring-expenses.ts`：list（join expense_categories 一并返回 `categoryName`/`colorToken`）/getById/create/update/delete；`status` 字段在 update payload 里允许写但暴露给上层 endpoint 时再做过滤（见 P1-C6） | `worker/tests/recurring-expenses.test.ts`：CRUD、`userId` 隔离、join 后字段映射、`endedAt` 默认 null、删除 category 后 `categoryId` 自动 SET NULL（**关键：明确测此外键行为**） | 无 deploy |
+| **P1-C5** `feat(worker): expense-categories SQL endpoints` | `worker/src/index.ts` 加 4 个端点（GET 列表 / POST 创建 / PUT update / DELETE）；沿用 `X-User-Id` header + `Authorization: Bearer ${WORKER_TOKEN}` + `X-Target-DB` 约定；error 走现有 `errorResponse(...)` helper | 整合测试：用 `worker/tests/expense-categories.test.ts` 加端点级 fetch 测试（status code、payload shape、CORS） | **deploy gate**：merge 后 deploy worker，验证 `curl -H "Authorization: Bearer ..." -H "X-User-Id: u1"  /api/expense-categories` 200 OK |
+| **P1-C6** `feat(worker): recurring-expenses SQL endpoints` | `worker/src/index.ts` 加 4 个端点；**`PUT /api/recurring-expenses/:id` 在 body 里收到 `status` 字段时直接 400 `status_field_protected`** —— 状态变更只能经 Action 层（Action 内部直接调 worker 的同一个 PUT 但走专用字段如 `_statusUpdate: 'pause'/'resume'/'end'` ？❌ 不优雅）。改为：worker 层暴露 PUT 时 **silently 丢弃 body 中的 `status`/`endedAt` 字段**，Action 层在自己内部用同一 PUT 端点但传 `_internal: true` 头来 opt-in 写 status。具体见**[Decision A]** | 端点级测试：PUT body 含 `status` 不带 `_internal` 头 → status 字段未被改；带 `_internal` 头 → 改 | deploy worker（与 P1-C5 同一次 deploy 也可） |
+| **P1-C7** `chore(worker): pin recurring-expenses status guard with regression test` | 加测试：模拟 client 用普通 PUT 想改 `status`，验证 DB 中 status 不变 | 仅测试，无生产代码改动 | 无 deploy |
+
+**[Decision A] worker 层如何阻止 client 直接改 `status`**：选择 "PUT 端点 silently drop status/endedAt unless `X-Internal-Action: 1` header present"。
+- 优点：endpoint shape 不变；client（web actions）可控；review 可见
+- 缺点：多一个魔法 header，需在 spec 文档显式声明
+- 备选：单独加 `POST /api/recurring-expenses/:id/status` 端点 → 引入新约定违反"沿用现有"原则
+- 决定：用 header，spec 已记录
+
+**Phase 1 验收**：
+- worker 单测全绿，覆盖率不下降
+- 远端 D1 应用 0007 migration 后，`wrangler d1 execute noheir-db --remote --command "PRAGMA table_info(recurring_expenses);"` 输出 14 列
+- web 端完全没动；`bun run dev` 走旧路径无 regression
+
+---
+
+### Phase 2 — Domain + Actions（独立可部署）
+
+落地后效果：web 端可以创建规则、调用纯函数算 occurrences；UI 还没接，但可在 Server Action 单测里端到端跑通。
+
+| Commit | 改动 | 测试 / Gate |
+|---|---|---|
+| **P2-C1** `feat(types): add RecurrenceRule and Zod schema` | `src/lib/recurring-expense/rule-types.ts`：`RecurrenceRule` interface + `recurringExpenseInputSchema` (Zod)；`colorToken` 校验为 `CHART_TOKENS` 闭集；`frequency` 枚举；`interval ≥ 1`；`startDate` ISO 校验 | `src/__tests__/recurring-expense/rule-types.test.ts`：合法 / 非法每个字段一个 case |
+| **P2-C2** `feat(domain): computeOccurrences pure function` | `src/lib/recurring-expense/occurrences.ts`：实现统一公式 `effectiveTo = min(toDate, endDate??+∞, endedAt??+∞)`；4 种 frequency × interval 锚点（spec 已规约） | `occurrences.test.ts`：必测点完整覆盖（spec Testing Strategy 表）— **gate: 此文件单独 ≥ 95% 覆盖率** |
+| **P2-C3** `feat(domain): sumWindow aggregate` | `src/lib/recurring-expense/occurrences-aggregate.ts`：`sumWindow(rules, window)`、`sumMonth(rules, viewMonth)`；调用 `computeOccurrences` | `occurrences-aggregate.test.ts`：跨月、空规则集、paused 不计入 |
+| **P2-C4** `feat(domain): rule mappers + format helpers` | `src/lib/recurring-expense/mappers.ts`（raw row ↔ domain）+ `format.ts`（"每 3 个月"等人类语描述）；`src/lib/expense-category/mappers.ts` | mappers 测试（往返）；format 测试（snapshot 即可） |
+| **P2-C5** `feat(client): WorkerDbClient methods for categories` | `src/lib/worker-db-client.ts` 加 4 个分类方法 | client 测试：mock fetch，验证 URL / headers / body shape |
+| **P2-C6** `feat(client): WorkerDbClient methods for recurring expenses` | 加 4 个 recurring 方法；`updateRecurringExpense(userId, id, payload, opts?: { internal: boolean })`，`internal=true` 时附 `X-Internal-Action: 1` | client 测试：默认请求不带 internal header；`internal=true` 时带 |
+| **P2-C7** `feat(actions): expense-category Server Actions` | `src/app/actions/expense-category-actions.ts`：create/update/delete；返回 `ActionResult` | `src/__tests__/actions/expense-category-actions.test.ts`：Zod 失败、auth 失败、worker 错误传播 |
+| **P2-C8** `feat(actions): recurring-expense CRUD Server Actions` | `src/app/actions/recurring-expense-actions.ts`：create/update/delete（**update 不允许传 `status`/`endedAt`，Zod schema 在 input 层 strip**） | action 测试：Zod 校验、yuan↔cents 转换、worker 调用参数 |
+| **P2-C9** `feat(actions): recurring-expense state machine actions` | 同一文件加 `pauseRecurringExpense` / `resumeRecurringExpense` / `endRecurringExpense`：内部调 `client.updateRecurringExpense(..., { internal: true })`，分别写 `{status, endedAt}` 三种组合 | action 测试：状态转移合法（active↔paused 双向 / *→ended 单向）；`endedAt` 在 end 时为 today、其他为 null |
+| **P2-C10** `chore(navigation): add 资金计划 NavGroup (data only)` | `src/lib/navigation.ts` 加 NavGroup（指向 `/plan/calendar` 和 `/plan/categories`），但**先在 navigation.ts 用 feature flag `FEATURE_PLAN_CALENDAR=false` gate**，避免 sidebar 显示死链。flag 落代码常量，commit 时为 false | 无新测试；`bun run typecheck` 验证 import |
+
+**Phase 2 验收**：
+- 全部新增 lib/ 文件 ≥ 90% 覆盖率（`occurrences` ≥ 95%）
+- Server Action 测试覆盖 ActionResult 错误路径
+- `bun run dev` 不出现 sidebar 新链（feature flag 为 false）
+- 旧功能完全不受影响
+
+---
+
+### Phase 3 — UI（独立可部署，最后一刀）
+
+落地后效果：用户可见两个新页面，全功能跑通。
+
+| Commit | 改动 | 测试 / Gate |
+|---|---|---|
+| **P3-C1** `feat(ui): color-token-picker component` | `src/components/plan/color-token-picker.tsx`：复用 popover + 24 个色块网格；受控；onChange 传 token 字符串 | 组件测试（vitest + RTL）：渲染 24 个色块、点击触发 onChange、键盘选择、a11y 焦点 |
+| **P3-C2** `feat(ui): frequency-picker component` | 周期选择器（daily/weekly/monthly/yearly + interval + dayOfMonth/monthOfYear/weekday 条件渲染） | 组件测试：切换 frequency 时条件字段切换、interval 数字校验 |
+| **P3-C3** `feat(ui): category-form` | `src/components/plan/category-form.tsx`：name + color-token-picker + 提交调 Server Action | 组件测试：提交成功 / 失败、color picker 集成 |
+| **P3-C4** `feat(ui): recurring-expense-form` | 创建/编辑共用表单，复用 frequency-picker；金额 yuan input；categoryId select | 组件测试：所有字段、Zod 错误回显、edit mode 预填 |
+| **P3-C5** `feat(ui): recurring-expense-calendar` | `src/components/plan/recurring-expense-calendar.tsx`：CSS Grid 7×N 月视图；接收 `rules` + `viewMonth`，调 `computeOccurrences` 算每格；圆点叠加（max 3 + `+N`） | 组件测试：单测纯渲染（mock rules + 固定 viewMonth），快照固定布局 |
+| **P3-C6** `feat(ui): summary-cards (3 KPIs)` | 当月 / 30 天 / 12 月 三卡；前者用视图月、后两者用真实 today；副标题"自今日起" | 组件测试：调用 `sumWindow` 时传入正确 window |
+| **P3-C7** `feat(ui): occurrence-detail-popover` | 日格点击弹层，列出当日所有项 + 分类徽章 | 组件测试 |
+| **P3-C8** `feat(ui): recurring-expense-list with status chips` | 旁侧列表，三态 chip + `expired` 派生态；右键/三点菜单（pause/resume/end/delete） | 组件测试：派生态显示、菜单项条件可见 |
+| **P3-C9** `feat(page): /plan/categories page + client component` | Server Component 拉数据；Client 用 P3-C3 的 form | 页面集成测试（playwright 或 RTL）：增 / 改 / 删 走通 |
+| **P3-C10** `feat(page): /plan/calendar page + client orchestration` | Server Component 拉 rules + categories；Client 拼装 calendar + list + summary cards + form dialog | 页面集成测试：创建规则后日历出现徽章；切月不闪烁；点击日格弹 popover |
+| **P3-C11** `feat(navigation): enable plan calendar feature flag` | 把 P2-C10 的 `FEATURE_PLAN_CALENDAR` 改为 `true`，sidebar 显示新分区 | 无新代码；`bun run dev` 视觉冒烟（手动） |
+| **P3-C12** `chore(release): version bump + smoke test` | 按现有 release 流程，跑 `bun run test && bun run test:worker && bun run typecheck && bun run lint && bun run build` | release tag |
+
+**Phase 3 验收**：
+- 整体覆盖率不下降；`src/lib/recurring-expense/` ≥ 90%
+- `bun run dev` 走 spec 9 个成功标准全部手测通过（spec § Objective 列表）
+- Lighthouse / first-render ≤ 2s（spec 标准 #9）
+
+---
+
+### 跨 Phase 公共原则
+
+- **不允许在一个 commit 里跨 worker / web 改写**（Phase 1 全 worker、Phase 2/3 全 web）。
+- **不允许在 docs commit 里改代码**，反之亦然。
+- **migration 只能在 P1-C2 落地**，后续要改 schema 必须新开 0008 migration 走单独 spec/PR。
+- **feature flag 模式**：sidebar 链接和页面路由在 P2-C10 加好但 flag=false，P3-C11 才打开 —— 让前 11 个 Phase 3 commit 可以独立 merge 不影响线上 UI。
+- **回滚单元**：每个 commit 都能 `git revert` 单独回滚，因为：
+  - Phase 1 commits 之间靠 worker test 隔离
+  - Phase 2 commits 在 feature flag 后面
+  - Phase 3 commits 在 feature flag 后面，未启用时是 dead code
 
 每个 Phase 收尾跑：`bun run test && bun run test:worker && bun run typecheck && bun run lint`。
 
