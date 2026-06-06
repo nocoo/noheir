@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 // ============================================================================
 // 1. users — Identity (AD-1: Canonical Principal)
@@ -232,4 +232,78 @@ export const mcpRefreshTokens = sqliteTable("mcp_refresh_tokens", {
   rotatedTo: text("rotated_to"),
   revoked: integer("revoked", { mode: "boolean" }).default(false),
   revokedAt: text("revoked_at"),
+});
+
+// ============================================================================
+// expense_categories — user-defined spending categories for recurring rules
+// 002-recurring-expense-calendar.md § Data Model
+// ============================================================================
+
+export const expenseCategories = sqliteTable(
+  "expense_categories",
+  {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    // chart token name (e.g. "chart-7"); rendered as hsl(var(--chart-7))
+    // so categories follow the active theme without per-user hex storage.
+    colorToken: text("color_token").notNull(),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => ({
+    userNameUnique: uniqueIndex("expense_categories_user_name_uniq").on(
+      table.userId,
+      table.name,
+    ),
+  }),
+);
+
+// ============================================================================
+// recurring_expenses — periodic spending rules expanded by computeOccurrences
+// 002-recurring-expense-calendar.md § Data Model
+// ============================================================================
+
+export const recurringExpenses = sqliteTable("recurring_expenses", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  categoryId: text("category_id").references(() => expenseCategories.id, {
+    onDelete: "set null",
+  }),
+  amountCents: integer("amount_cents").notNull(),
+  currency: text("currency").default("CNY").notNull(),
+  account: text("account"),
+  // Recurrence rule embedded inline (one row per rule, no join needed).
+  // frequency ∈ {'daily','weekly','monthly','yearly'}; interval ≥ 1;
+  // dayOfMonth 1..31 (monthly/yearly); monthOfYear 1..12 (yearly);
+  // weekday 0..6, Sunday=0 (weekly).
+  frequency: text("frequency").notNull(),
+  interval: integer("interval").notNull().default(1),
+  dayOfMonth: integer("day_of_month"),
+  monthOfYear: integer("month_of_year"),
+  weekday: integer("weekday"),
+  startDate: text("start_date").notNull(), // ISO "YYYY-MM-DD"
+  endDate: text("end_date"), // ISO; null = open-ended
+  // Lifecycle state machine.
+  //   active  — render on calendar, count in summary
+  //   paused  — hidden everywhere, retained for resume
+  //   ended   — historic occurrences (≤ endedAt) keep rendering; future hidden
+  status: text("status").notNull().default("active"),
+  // Manual end-date (inclusive). Non-null only when status='ended';
+  // written by the endRecurringExpense Server Action via the
+  // X-Internal-Action header guard. UI never edits directly.
+  endedAt: text("ended_at"),
+  note: text("note"),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
 });
