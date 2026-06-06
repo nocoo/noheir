@@ -18,7 +18,7 @@
 4. 用户手动按"结束"后：
    - 服务端写入 `status='ended'` + `endedAt=today`（同一 Server Action 内原子完成）。
    - 列表显示"已结束 · YYYY-MM-DD"。
-   - 切到**历史**月份，规则在 `[startDate, endedAt]` 窗口内的 occurrence 仍然渲染（保留历史）。
+   - 切到**历史**月份，规则在 `[startDate, min(endedAt, endDate ?? +∞)]` 窗口内的 occurrence 仍然渲染（保留历史；与下文 Occurrence 算法的统一公式一致）。
    - 切到 `> endedAt` 的月份，不渲染。
    - `endDate`（用户设定的规则窗口，与 `endedAt` 不同）：`> endDate` 的日期始终不展开；若 `endDate < today` 且 `status='active'`，列表派生显示"已到期"提示，**`status` 不被自动改写**（所有状态变更必须经 Server Action）。
 5. 汇总卡：
