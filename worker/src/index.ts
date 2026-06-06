@@ -13,6 +13,8 @@ import {
   createContributionLogSchema,
   updateContributionLogSchema,
   searchContributionLogsSchema,
+  createExpenseCategorySchema,
+  updateExpenseCategorySchema,
 } from "../db/validation";
 
 /** Strip undefined values from an object at runtime.
@@ -1105,6 +1107,68 @@ app.get("/api/reports/monthly-summary", async (c) => {
     currency || undefined,
   );
   return c.json(result);
+});
+
+// ── Expense Categories (002 spec) ──
+
+app.get("/api/expense-categories", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const categories = await repos.expenseCategories.findAll(userId);
+  return c.json({ categories });
+});
+
+app.post("/api/expense-categories", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const body = await c.req.json();
+  const parsed = createExpenseCategorySchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json(
+      { error: parsed.error.issues.map((i) => i.message).join("; ") },
+      400,
+    );
+  }
+  const result = await repos.expenseCategories.create(userId, parsed.data);
+  if (!result.ok) {
+    return c.json({ error: "Category name already exists" }, 409);
+  }
+  return c.json({ category: result.category }, 201);
+});
+
+app.put("/api/expense-categories/:id", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const body = await c.req.json();
+  const parsed = updateExpenseCategorySchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json(
+      { error: parsed.error.issues.map((i) => i.message).join("; ") },
+      400,
+    );
+  }
+  const result = await repos.expenseCategories.update(
+    userId,
+    c.req.param("id"),
+    stripUndefined(parsed.data),
+  );
+  if (result.ok) {
+    return c.json({ category: result.category });
+  }
+  if (result.reason === "not_found") {
+    return c.json({ error: "Not found" }, 404);
+  }
+  return c.json({ error: "Category name already exists" }, 409);
+});
+
+app.delete("/api/expense-categories/:id", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const deleted = await repos.expenseCategories.delete(
+    userId,
+    c.req.param("id"),
+  );
+  return deleted ? c.body(null, 204) : c.json({ error: "Not found" }, 404);
 });
 
 // ── Data Export / Import ──

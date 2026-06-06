@@ -174,3 +174,58 @@ export type UpdateUnitInput = z.infer<typeof updateUnitSchema>;
 export type CreateContributionLogInput = z.infer<typeof createContributionLogSchema>;
 export type UpdateContributionLogInput = z.infer<typeof updateContributionLogSchema>;
 export type SearchContributionLogsInput = z.infer<typeof searchContributionLogsSchema>;
+
+// ── Expense categories (002 spec) ──
+// The colorToken / chart palette is defined in the web app; we keep a
+// loose regex here so worker tests don't have to import the palette.
+// Strict CHART_TOKENS enum validation lives in the Server Action layer.
+const COLOR_TOKEN_RE = /^chart-(?:[1-9]|1\d|2[0-4])$/;
+
+export const createExpenseCategorySchema = z.object({
+  name: z.string().min(1, "name is required").max(50),
+  colorToken: z
+    .string()
+    .regex(COLOR_TOKEN_RE, "colorToken must match chart-1 .. chart-24"),
+  sortOrder: z.number().int().optional(),
+});
+
+export const updateExpenseCategorySchema = createExpenseCategorySchema.partial();
+
+// ── Recurring expenses (002 spec) ──
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const FREQUENCIES = ["daily", "weekly", "monthly", "yearly"] as const;
+
+const recurringExpenseShape = {
+  name: z.string().min(1).max(200),
+  categoryId: z.string().uuid().optional().nullable(),
+  amountCents: z.number().int().positive(),
+  currency: z.string().min(1).max(8).default("CNY"),
+  account: z.string().max(100).optional().nullable(),
+  frequency: z.enum(FREQUENCIES),
+  interval: z.number().int().min(1).default(1),
+  dayOfMonth: z.number().int().min(1).max(31).optional().nullable(),
+  monthOfYear: z.number().int().min(1).max(12).optional().nullable(),
+  weekday: z.number().int().min(0).max(6).optional().nullable(),
+  startDate: z.string().regex(ISO_DATE_RE, "startDate must be YYYY-MM-DD"),
+  endDate: z.string().regex(ISO_DATE_RE).optional().nullable(),
+  note: z.string().max(1000).optional().nullable(),
+} as const;
+
+export const createRecurringExpenseSchema = z.object(recurringExpenseShape);
+
+// `status` + `endedAt` are accepted on update for the state-machine
+// actions; the endpoint layer (P1-C6) gates them with the
+// X-Internal-Action header. The Server Action layer (P2-C8) strips
+// them from public CRUD.
+export const updateRecurringExpenseSchema = z
+  .object({
+    ...recurringExpenseShape,
+    status: z.enum(["active", "paused", "ended"]).optional(),
+    endedAt: z.string().regex(ISO_DATE_RE).optional().nullable(),
+  })
+  .partial();
+
+export type CreateExpenseCategoryInput = z.infer<typeof createExpenseCategorySchema>;
+export type UpdateExpenseCategoryInput = z.infer<typeof updateExpenseCategorySchema>;
+export type CreateRecurringExpenseInput = z.infer<typeof createRecurringExpenseSchema>;
+export type UpdateRecurringExpenseInput = z.infer<typeof updateRecurringExpenseSchema>;

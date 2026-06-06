@@ -32,12 +32,27 @@ export type UpdateExpenseCategoryResult =
   | { ok: false; reason: "duplicate_name" };
 
 function isUniqueConstraintError(err: unknown): boolean {
-  if (!(err instanceof Error)) return false;
-  const msg = err.message;
-  return (
-    msg.includes("UNIQUE constraint failed: expense_categories.user_id") ||
-    msg.includes("expense_categories_user_name_uniq")
-  );
+  // D1 wraps the original sqlite error twice: top-level message is
+  // "D1_ERROR: UNIQUE constraint failed: ..." with a `cause` Error
+  // carrying just "UNIQUE constraint failed: ...". better-sqlite3 (test
+  // path) raises a single Error with the inner message. Walk the chain
+  // so either runtime is handled.
+  let current: unknown = err;
+  for (let depth = 0; depth < 4 && current; depth++) {
+    if (current instanceof Error) {
+      const msg = current.message;
+      if (
+        msg.includes("UNIQUE constraint failed: expense_categories.user_id") ||
+        msg.includes("expense_categories_user_name_uniq")
+      ) {
+        return true;
+      }
+      current = (current as { cause?: unknown }).cause;
+    } else {
+      break;
+    }
+  }
+  return false;
 }
 
 export function createExpenseCategoriesRepo(db: DrizzleD1Database) {
