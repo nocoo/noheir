@@ -129,9 +129,46 @@ CREATE TABLE IF NOT EXISTS settings (
   settings TEXT DEFAULT '{}',
   created_at INTEGER NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS expense_categories (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  color_token TEXT NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS expense_categories_user_name_uniq
+  ON expense_categories (user_id, name);
+
+CREATE TABLE IF NOT EXISTS recurring_expenses (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  category_id TEXT REFERENCES expense_categories(id) ON DELETE SET NULL,
+  amount_cents INTEGER NOT NULL,
+  currency TEXT NOT NULL DEFAULT 'CNY',
+  account TEXT,
+  frequency TEXT NOT NULL,
+  interval INTEGER NOT NULL DEFAULT 1,
+  day_of_month INTEGER,
+  month_of_year INTEGER,
+  weekday INTEGER,
+  start_date TEXT NOT NULL,
+  end_date TEXT,
+  status TEXT NOT NULL DEFAULT 'active',
+  ended_at TEXT,
+  note TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
 `;
 
 const TABLES = [
+  "recurring_expenses",
+  "expense_categories",
   "contribution_logs",
   "settings",
   "capital_units",

@@ -13,6 +13,8 @@ import type {
   mcpAuthSessions,
   mcpTokens,
   mcpRefreshTokens,
+  expenseCategories,
+  recurringExpenses,
 } from "./schema";
 
 // ── Select types (rows read from DB) ──
@@ -167,3 +169,18 @@ export type McpToken = typeof mcpTokens.$inferSelect;
 export type NewMcpToken = typeof mcpTokens.$inferInsert;
 export type McpRefreshToken = typeof mcpRefreshTokens.$inferSelect;
 export type NewMcpRefreshToken = typeof mcpRefreshTokens.$inferInsert;
+
+// ── Recurring expense calendar (002-recurring-expense-calendar.md) ──
+
+export type ExpenseCategory = typeof expenseCategories.$inferSelect;
+export type NewExpenseCategory = typeof expenseCategories.$inferInsert;
+export type RecurringExpense = typeof recurringExpenses.$inferSelect;
+export type NewRecurringExpense = typeof recurringExpenses.$inferInsert;
+
+/** List-level row for /api/recurring-expenses GET: rule columns joined
+ *  with the rule's category (null when categoryId is null or category
+ *  was deleted, leaving the FK as SET NULL). */
+export interface RecurringExpenseWithCategory extends RecurringExpense {
+  categoryName: string | null;
+  colorToken: string | null;
+}
