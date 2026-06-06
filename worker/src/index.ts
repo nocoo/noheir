@@ -15,6 +15,8 @@ import {
   searchContributionLogsSchema,
   createExpenseCategorySchema,
   updateExpenseCategorySchema,
+  createRecurringExpenseSchema,
+  updateRecurringExpenseSchema,
 } from "../db/validation";
 
 /** Strip undefined values from an object at runtime.
@@ -84,6 +86,7 @@ app.use(
       "Authorization",
       "X-User-Id",
       "X-Target-DB",
+      "X-Internal-Action",
     ],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   }),
@@ -1165,6 +1168,90 @@ app.delete("/api/expense-categories/:id", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
   const deleted = await repos.expenseCategories.delete(
+    userId,
+    c.req.param("id"),
+  );
+  return deleted ? c.body(null, 204) : c.json({ error: "Not found" }, 404);
+});
+
+// ── Recurring Expenses (002 spec) ──
+//
+// `status` and `endedAt` are state-machine fields. To prevent the web
+// client from accidentally flipping them through the generic PUT, the
+// endpoint silently drops both unless the caller asserts intent via
+// `X-Internal-Action: 1`. The Server Action layer is the only caller
+// that sets that header (pause / resume / end actions). This is a
+// contract guard, not a security boundary — `WORKER_TOKEN` is the
+// security boundary.
+
+const INTERNAL_ACTION_HEADER = "X-Internal-Action";
+
+function isInternalActionRequest(c: { req: { header: (k: string) => string | undefined } }): boolean {
+  return c.req.header(INTERNAL_ACTION_HEADER) === "1";
+}
+
+app.get("/api/recurring-expenses", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const rules = await repos.recurringExpenses.findAll(userId);
+  return c.json({ rules });
+});
+
+app.post("/api/recurring-expenses", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const body = await c.req.json();
+  const parsed = createRecurringExpenseSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json(
+      { error: parsed.error.issues.map((i) => i.message).join("; ") },
+      400,
+    );
+  }
+  const result = await repos.recurringExpenses.create(userId, parsed.data);
+  if (!result.ok) {
+    return c.json({ error: "Category not found" }, 400);
+  }
+  return c.json({ rule: result.rule }, 201);
+});
+
+app.put("/api/recurring-expenses/:id", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const body = await c.req.json();
+  const parsed = updateRecurringExpenseSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json(
+      { error: parsed.error.issues.map((i) => i.message).join("; ") },
+      400,
+    );
+  }
+  // Drop status + endedAt unless the caller proves intent via the
+  // X-Internal-Action header. Note: the keys must be deleted, not just
+  // set to undefined, so they don't reach the DB layer at all.
+  const data = stripUndefined(parsed.data) as Record<string, unknown>;
+  if (!isInternalActionRequest(c)) {
+    delete data.status;
+    delete data.endedAt;
+  }
+  const result = await repos.recurringExpenses.update(
+    userId,
+    c.req.param("id"),
+    data,
+  );
+  if (result.ok) {
+    return c.json({ rule: result.rule });
+  }
+  if (result.reason === "not_found") {
+    return c.json({ error: "Not found" }, 404);
+  }
+  return c.json({ error: "Category not found" }, 400);
+});
+
+app.delete("/api/recurring-expenses/:id", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const deleted = await repos.recurringExpenses.delete(
     userId,
     c.req.param("id"),
   );
