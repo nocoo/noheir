@@ -233,11 +233,9 @@ function deriveDisplayStatus(rule, today): 'active' | 'paused' | 'ended' | 'expi
 
 **关键不变量**：DB 中的 `status` 字段**永远不会**因 `endDate` 过期而被后台自动改写。所有 `status` 变更必须经过 Server Action。`expired` 是纯前端派生状态，列表 chip 显示"已到期 · YYYY-MM-DD"，与"已结束"视觉区分。
 
-Occurrence 展开过滤规则:
-- `status === 'paused'` → 不展开任何 occurrence（活跃 / 历史均不渲染）。
-- `status === 'ended'` → 展开窗口被 `endedAt` 截顶：实际窗口 = `[startDate, min(toDate, endedAt)]`；历史保留，未来不渲染。
-- `status === 'active'` 且有 `endDate` → 展开窗口被 `endDate` 截顶：`[startDate, min(toDate, endDate)]`。
-- `status === 'active'` 且无 `endDate` → 展开窗口 = `[max(fromDate, startDate), toDate]`。
+Occurrence 展开过滤规则（详见下文 Occurrence 算法的统一公式）:
+- `status === 'paused'` → 返回 `[]`。
+- `status === 'active' | 'ended'` → 同一公式：实际上限 = `min(toDate, endDate ?? +∞, endedAt ?? +∞)`，三个上限取最小。`endedAt` 仅在 `ended` 时非 null，`endDate` 由用户在表单设置。
 
 ### Occurrence 算法（纯函数，可测）
 
@@ -252,9 +250,19 @@ export function computeOccurrences(
 
 行为（**所有规则均以 `startDate` 为 0 号锚点**，避免歧义）：
 - `status === 'paused'` 直接返回 `[]`。
-- `status === 'ended'` → 实际展开窗口 = `[max(fromDate, startDate), min(toDate, endedAt)]`。如果 `fromDate > endedAt`，返回 `[]`（未来不渲染，但历史保留）。
-- `status === 'active'` 且 `endDate` 非 null → 实际展开窗口 = `[max(fromDate, startDate), min(toDate, endDate)]`。
-- `status === 'active'` 且 `endDate` 为 null → 实际展开窗口 = `[max(fromDate, startDate), toDate]`。
+- 通用展开窗口公式（`active` / `ended` 共用，三上限取最小）：
+  ```
+  effectiveTo = min(
+    toDate,
+    endDate  ?? +∞,   // 用户设定的有效期
+    endedAt  ?? +∞,   // 手动结束日（仅 status='ended' 非 null）
+  )
+  effectiveFrom = max(fromDate, startDate)
+  if effectiveFrom > effectiveTo: return []
+  ```
+- 派生：
+  - `status === 'active'`：`endedAt` 必为 null，公式退化为 `[max(fromDate, startDate), min(toDate, endDate ?? toDate)]`。
+  - `status === 'ended'`：`endedAt` 非 null，公式退化为 `[max(fromDate, startDate), min(toDate, endedAt, endDate ?? toDate)]`，历史保留、未来不渲染。
 - 永远不返回 `< startDate` 的日期。
 - **interval 锚点定义**：第 0 个周期 = `startDate` 所在的 frequency 周期，后续命中"距离 startDate 整 N 个 interval"的周期；不对齐自然周/月/季：
   - `daily, interval=N`：日期 d 命中 ⇔ `(d - startDate).days % N === 0`。
@@ -465,7 +473,7 @@ export async function createRecurringExpense(
 
 | 层 | 位置 | 必测点 |
 |----|------|--------|
-| 纯函数：occurrences | `src/__tests__/recurring-expense/occurrences.test.ts` | 月度 31 日跨 2 月、年度 2-29 闰年、interval=N、startDate/endDate 边界、status='paused' 返空、status='ended' + endedAt 历史保留 / 未来截断、historic 回溯（fromDate < today 且 startDate 更早）、interval 锚点（daily/weekly/monthly/yearly 各一例） |
+| 纯函数：occurrences | `src/__tests__/recurring-expense/occurrences.test.ts` | 月度 31 日跨 2 月、年度 2-29 闰年、interval=N、startDate 边界、status='paused' 返空、status='ended' + endedAt 历史保留 / 未来截断、**status='ended' 同时有 endDate（取 min(endedAt, endDate)）**、active + endDate 截顶、historic 回溯（fromDate < today 且 startDate 更早）、interval 锚点（daily/weekly/monthly/yearly 各一例） |
 | 纯函数：aggregate | `src/__tests__/recurring-expense/occurrences-aggregate.test.ts` | 跨月窗口、空规则集、暂停规则不计入 |
 | 纯函数：颜色 | — | 不需要：直接用 `CHART_TOKENS` 枚举校验，无对比度计算 |
 | Worker repository | `worker/tests/expense-categories.test.ts` + `recurring-expenses.test.ts` | CRUD 隔离、`userId` 过滤、外键 SET NULL、unique(userId,name) |
