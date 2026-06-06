@@ -535,18 +535,20 @@ export async function createRecurringExpense(
 | Commit | 改动 | 测试文件 / Gate | Migration / Deploy |
 |---|---|---|---|
 | **P1-C1** `feat(schema): add expense_categories + recurring_expenses tables` | `worker/db/schema.ts` 加两个 `sqliteTable` 定义 + `uniqueIndex("expense_categories_user_name_uniq")`；不改 SQL 文件 | `worker/tests/expense-categories.test.ts` + `worker/tests/recurring-expenses.test.ts` 新建占位（仅 import schema 类型，确保编译通过）；`bun run typecheck` | 无 migration / 无 deploy（纯类型层） |
-| **P1-C2** `feat(db): add 0007_recurring_expenses migration` | `worker/db/migrations/0007_recurring_expenses.sql`：建两表 + 显式 `CREATE UNIQUE INDEX` + `PRAGMA foreign_keys` 注释。SQL 与 P1-C1 schema 保持一致 | 本 commit 不跑测试（migration 仅在 deploy 时执行）；CI gate：`drizzle-kit check`（如有）；本地 `wrangler d1 migrations apply noheir-db --local` 验证可应用 | **deploy gate**：本 commit merge 后**先**手动 `wrangler d1 migrations apply noheir-db --remote` 应用到 production，再 merge 后续 commit |
-| **P1-C3** `feat(worker): expense_categories repository` | `worker/db/repositories/expense-categories.ts`：list/getById/create/update/delete，全部按 `userId` 过滤；`(userId, name)` 唯一冲突返 `409` 友好错误 | `worker/tests/expense-categories.test.ts`：CRUD、`userId` 隔离、unique 冲突、空字段拒绝 | 无 deploy（worker 还没暴露端点） |
-| **P1-C4** `feat(worker): recurring_expenses repository` | `worker/db/repositories/recurring-expenses.ts`：list（join expense_categories 一并返回 `categoryName`/`colorToken`）/getById/create/update/delete；`status` 字段在 update payload 里允许写但暴露给上层 endpoint 时再做过滤（见 P1-C6） | `worker/tests/recurring-expenses.test.ts`：CRUD、`userId` 隔离、join 后字段映射、`endedAt` 默认 null、删除 category 后 `categoryId` 自动 SET NULL（**关键：明确测此外键行为**） | 无 deploy |
-| **P1-C5** `feat(worker): expense-categories SQL endpoints` | `worker/src/index.ts` 加 4 个端点（GET 列表 / POST 创建 / PUT update / DELETE）；沿用 `X-User-Id` header + `Authorization: Bearer ${WORKER_TOKEN}` + `X-Target-DB` 约定；error 走现有 `errorResponse(...)` helper | 整合测试：用 `worker/tests/expense-categories.test.ts` 加端点级 fetch 测试（status code、payload shape、CORS） | **deploy gate**：merge 后 deploy worker，验证 `curl -H "Authorization: Bearer ..." -H "X-User-Id: u1"  /api/expense-categories` 200 OK |
-| **P1-C6** `feat(worker): recurring-expenses SQL endpoints` | `worker/src/index.ts` 加 4 个端点；**`PUT /api/recurring-expenses/:id` 在 body 里收到 `status` 字段时直接 400 `status_field_protected`** —— 状态变更只能经 Action 层（Action 内部直接调 worker 的同一个 PUT 但走专用字段如 `_statusUpdate: 'pause'/'resume'/'end'` ？❌ 不优雅）。改为：worker 层暴露 PUT 时 **silently 丢弃 body 中的 `status`/`endedAt` 字段**，Action 层在自己内部用同一 PUT 端点但传 `_internal: true` 头来 opt-in 写 status。具体见**[Decision A]** | 端点级测试：PUT body 含 `status` 不带 `_internal` 头 → status 字段未被改；带 `_internal` 头 → 改 | deploy worker（与 P1-C5 同一次 deploy 也可） |
-| **P1-C7** `chore(worker): pin recurring-expenses status guard with regression test` | 加测试：模拟 client 用普通 PUT 想改 `status`，验证 DB 中 status 不变 | 仅测试，无生产代码改动 | 无 deploy |
+| **P1-C2** `feat(db): add 0007_recurring_expenses migration` | `worker/db/migrations/0007_recurring_expenses.sql`：建两表 + 显式 `CREATE UNIQUE INDEX` + `PRAGMA foreign_keys` 注释。SQL 与 P1-C1 schema 保持一致 | **gate**：本 commit 测试 = drizzle migration check + 本地 `wrangler d1 migrations apply noheir-db --local` 应用成功；不要求新增 .test.ts。`bun run test && bun run typecheck && bun run lint` 仍跑全。 | **deploy gate**：本 commit merge 后**先**手动 `wrangler d1 migrations apply noheir-db --remote` 应用到 production，再 merge 后续 commit |
+| **P1-C3** `feat(worker): expense_categories repository` | `worker/db/repositories/expense-categories.ts`：list/getById/create/update/delete，全部按 `userId` 过滤；`(userId, name)` 唯一冲突返 `409` 友好错误 | **repo 单测**：`worker/tests/expense-categories.test.ts`：CRUD、`userId` 隔离、unique 冲突、空字段拒绝 | 无 deploy（worker 还没暴露端点） |
+| **P1-C4** `feat(worker): recurring_expenses repository` | `worker/db/repositories/recurring-expenses.ts`：list（join expense_categories 一并返回 `categoryName`/`colorToken`）/getById/create/update/delete；repo 接受 `status`/`endedAt` 任意写入，端点层（P1-C6）才做契约过滤 | **repo 单测**：`worker/tests/recurring-expenses.test.ts`：CRUD、`userId` 隔离、join 后字段映射、`endedAt` 默认 null、删除 category 后 `categoryId` 自动 SET NULL（**关键：明确测此外键行为**） | 无 deploy |
+| **P1-C5** `feat(worker): expense-categories SQL endpoints` | `worker/src/index.ts` 加 4 个端点（GET 列表 / POST 创建 / PUT update / DELETE）；沿用 `X-User-Id` header + `Authorization: Bearer ${WORKER_TOKEN}` + `X-Target-DB` 约定。**项目当前没有 `errorResponse` helper**，按 `worker/src/index.ts` 现有 `c.json({ error: "..." }, 4xx)` 写法照抄即可，不抢着抽公共 helper（spec 之外的 refactor） | **e2e 端点测试**：放在 `worker/tests/e2e/expense-categories.e2e.test.ts`（与 `auth.e2e.test.ts` 同目录约定）：fetch URL、status code、payload shape、CORS preflight | **deploy gate**：merge 后 deploy worker，验证 `curl -H "Authorization: Bearer ..." -H "X-User-Id: u1" /api/expense-categories` 200 OK |
+| **P1-C6** `feat(worker): recurring-expenses SQL endpoints` | `worker/src/index.ts` 加 4 个端点。**`PUT /api/recurring-expenses/:id` 在 body 里收到 `status` / `endedAt` 字段时 silently drop**（不返 4xx，让 client 不察觉；安全边界靠 `WORKER_TOKEN` + Server Action 链路），**除非 request 带 `X-Internal-Action: 1` header**。同步在 `worker/src/index.ts` 第 80~85 行 `allowHeaders` 数组加入 `"X-Internal-Action"`。具体见 [Decision A] | **e2e 端点测试**：`worker/tests/e2e/recurring-expenses.e2e.test.ts`：① 无 header + body 含 status → DB status 不变；② 有 `X-Internal-Action: 1` + body status='paused' → DB status 改；③ 有 header 但 body 含非状态机字段（如 amountCents）也照常更新；④ CORS preflight 接受 `X-Internal-Action` header | deploy worker（与 P1-C5 同一次 deploy 也可） |
+| **P1-C7** `chore(worker): pin recurring-expenses status guard with regression test` | 加额外回归测试：模拟 web client（不带 internal header）通过整个 PUT 路径试图改 `status` 和 `endedAt` 各一次，验证两个字段都没变 | 仅测试，无生产代码改动 | 无 deploy |
 
-**[Decision A] worker 层如何阻止 client 直接改 `status`**：选择 "PUT 端点 silently drop status/endedAt unless `X-Internal-Action: 1` header present"。
-- 优点：endpoint shape 不变；client（web actions）可控；review 可见
-- 缺点：多一个魔法 header，需在 spec 文档显式声明
-- 备选：单独加 `POST /api/recurring-expenses/:id/status` 端点 → 引入新约定违反"沿用现有"原则
-- 决定：用 header，spec 已记录
+**[Decision A] worker 层如何阻止 client 直接改 `status`/`endedAt`**：
+- **方案**：`PUT /api/recurring-expenses/:id` body 中的 `status` 和 `endedAt` 字段在 endpoint 层 silently drop，除非 request 带 `X-Internal-Action: 1` header。
+- **同步改动**：`worker/src/index.ts` `allowHeaders` 数组加 `"X-Internal-Action"`（CORS 必须放行，否则 browser 触发 PATCH-类受限请求会被 preflight 拦掉；web Server Actions 不走 browser CORS 但保持一致）。
+- **这不是安全边界**：worker 端点已经有 `Authorization: Bearer ${WORKER_TOKEN}` + Server Action 链路在前，`X-Internal-Action` 只是**契约级 guard**：防止应用层错误地用普通 PUT 改 status 字段。攻击者已经持有 WORKER_TOKEN 时此 header 不构成额外屏障。
+- **why silently drop（不 400）**：保持 endpoint shape 不变；client 端的 `updateRecurringExpense` 把 status/endedAt 不小心传过来时不应让请求整体失败 —— 把这种 client 错误降级为"未生效字段"，符合 D1/REST 端点的健壮性原则。
+- **备选与拒绝**：单独加 `POST /api/recurring-expenses/:id/status` 端点 → 引入新约定违反"沿用现有"原则；返 400 → client 端面临的是 partial-input 错误，UX 难处理；放弃 guard 完全信任 Action 层 → 后续 client 工程师可能误用同一 PUT 接口。
+- **回退**：若实际跑下来这种 silently drop 让 web 工程师困惑，可以在 P3 之后补一个 `worker/scripts/audit-status-mutations.ts` 周期性比对 `recurring_expenses.status` 历史值，发现非 Action 路径的 status 变化时报警。
 
 **Phase 1 验收**：
 - worker 单测全绿，覆盖率不下降
@@ -594,9 +596,9 @@ export async function createRecurringExpense(
 | **P3-C6** `feat(ui): summary-cards (3 KPIs)` | 当月 / 30 天 / 12 月 三卡；前者用视图月、后两者用真实 today；副标题"自今日起" | 组件测试：调用 `sumWindow` 时传入正确 window |
 | **P3-C7** `feat(ui): occurrence-detail-popover` | 日格点击弹层，列出当日所有项 + 分类徽章 | 组件测试 |
 | **P3-C8** `feat(ui): recurring-expense-list with status chips` | 旁侧列表，三态 chip + `expired` 派生态；右键/三点菜单（pause/resume/end/delete） | 组件测试：派生态显示、菜单项条件可见 |
-| **P3-C9** `feat(page): /plan/categories page + client component` | Server Component 拉数据；Client 用 P3-C3 的 form | 页面集成测试（playwright 或 RTL）：增 / 改 / 删 走通 |
-| **P3-C10** `feat(page): /plan/calendar page + client orchestration` | Server Component 拉 rules + categories；Client 拼装 calendar + list + summary cards + form dialog | 页面集成测试：创建规则后日历出现徽章；切月不闪烁；点击日格弹 popover |
-| **P3-C11** `feat(navigation): enable plan calendar feature flag` | 把 P2-C10 的 `FEATURE_PLAN_CALENDAR` 改为 `true`，sidebar 显示新分区 | 无新代码；`bun run dev` 视觉冒烟（手动） |
+| **P3-C9** `feat(page): /plan/categories page + client component` | Server Component 拉数据；Client 用 P3-C3 的 form。**Server Component 顶部检查 `FEATURE_PLAN_CALENDAR` flag（与 P2-C10 同一常量）：flag=false 时调用 Next.js `notFound()` 返回 404**，确保用户即使知道 URL 也无法访问 | 页面集成测试（playwright 或 RTL）：增 / 改 / 删 走通；**额外 1 个 test：flag=false 时 GET `/plan/categories` 返回 404** | 无 deploy（仍未启用） |
+| **P3-C10** `feat(page): /plan/calendar page + client orchestration` | Server Component 拉 rules + categories；Client 拼装 calendar + list + summary cards + form dialog。**同样 flag gate `notFound()`**；redirect from `/plan` to `/plan/calendar` 也用同一 flag | 页面集成测试：创建规则后日历出现徽章；切月不闪烁；点击日格弹 popover；**额外 1 个 test：flag=false 时 GET `/plan/calendar` 返回 404** | 无 deploy（仍未启用） |
+| **P3-C11** `feat(navigation): enable plan calendar feature flag` | 把 P2-C10 的 `FEATURE_PLAN_CALENDAR` 改为 `true`，**同时打开 sidebar 显示 + 页面 route 访问**（同一 flag 控制两处）；P3-C9/C10 的 404 测试改为期望 200 | 无新代码；`bun run dev` 视觉冒烟（手动）；P3-C9/C10 测试 update | deploy（用户可见的唯一一刀）|
 | **P3-C12** `chore(release): version bump + smoke test` | 按现有 release 流程，跑 `bun run test && bun run test:worker && bun run typecheck && bun run lint && bun run build` | release tag |
 
 **Phase 3 验收**：
@@ -611,11 +613,12 @@ export async function createRecurringExpense(
 - **不允许在一个 commit 里跨 worker / web 改写**（Phase 1 全 worker、Phase 2/3 全 web）。
 - **不允许在 docs commit 里改代码**，反之亦然。
 - **migration 只能在 P1-C2 落地**，后续要改 schema 必须新开 0008 migration 走单独 spec/PR。
-- **feature flag 模式**：sidebar 链接和页面路由在 P2-C10 加好但 flag=false，P3-C11 才打开 —— 让前 11 个 Phase 3 commit 可以独立 merge 不影响线上 UI。
+- **feature flag 模式**：`FEATURE_PLAN_CALENDAR` 同一常量同时 gate **三处**——sidebar 链接（P2-C10）、`/plan/categories` Server Component（P3-C9）、`/plan/calendar` Server Component（P3-C10）。flag=false 时 sidebar 不显示链接 **+** 页面 `notFound()` 返回 404（用户即使猜出 URL 也访问不到）。P3-C11 一次翻为 true，三处同步打开。
 - **回滚单元**：每个 commit 都能 `git revert` 单独回滚，因为：
   - Phase 1 commits 之间靠 worker test 隔离
-  - Phase 2 commits 在 feature flag 后面
-  - Phase 3 commits 在 feature flag 后面，未启用时是 dead code
+  - Phase 2 commits 在 feature flag 后面（且 sidebar+page 都没启用）
+  - Phase 3 P3-C1~C10 commits 在 feature flag 后面（route 也 404 in dead code）
+  - P3-C11 是唯一对用户可见的 commit；revert 它 = 立即回到"用户感知 = 没上线"
 
 每个 Phase 收尾跑：`bun run test && bun run test:worker && bun run typecheck && bun run lint`。
 
