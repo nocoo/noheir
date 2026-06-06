@@ -20,11 +20,12 @@ import type {
   RecurringExpenseWithCategory,
 } from "../types";
 
-/** Fields the spec allows on create. `endedAt` is excluded — it's only
- *  set by the end-state-machine action via the internal header path. */
+/** Fields the spec allows on create. `endedAt` and `status` are excluded
+ *  — they are only ever set by the end-state-machine action via the
+ *  internal X-Internal-Action header path. */
 export type RecurringExpenseCreateInput = Omit<
   NewRecurringExpense,
-  "id" | "userId" | "createdAt" | "updatedAt" | "endedAt"
+  "id" | "userId" | "createdAt" | "updatedAt" | "endedAt" | "status"
 >;
 
 /** Update payload: include `status` and `endedAt` so the state-machine
@@ -73,7 +74,14 @@ export function createRecurringExpensesRepo(db: DrizzleD1Database) {
         .from(recurringExpenses)
         .leftJoin(
           expenseCategories,
-          eq(recurringExpenses.categoryId, expenseCategories.id),
+          // Defensive: only join categories owned by the same user. Normal
+          // write paths reject cross-user categoryId, but a stale FK or
+          // direct SQL could leak another user's category metadata
+          // through the joined name/colorToken. Constrain the join.
+          and(
+            eq(recurringExpenses.categoryId, expenseCategories.id),
+            eq(expenseCategories.userId, userId),
+          ),
         )
         .where(eq(recurringExpenses.userId, userId))
         .orderBy(asc(recurringExpenses.name), desc(recurringExpenses.createdAt))
