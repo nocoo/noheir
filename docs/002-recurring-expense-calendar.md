@@ -12,13 +12,15 @@
 - 作为生活变化的人，我要能**暂停**某条规则（数据保留、不再渲染）；某条规则到期后可以**结束**（保留历史、不再渲染未来）。
 
 ### 成功标准（可测条件）
-1. 用户在 `/plan` 创建分类「保险」配色 `#E11D48`，再创建一条"每年 1 月 5 日 8000 元、分类=保险"的规则，1 月 5 日的格子上出现红色徽章 `¥8000`。
+1. 用户在 `/plan/categories` 创建分类「保险」配色 `chart-9`（红色 token），再在 `/plan/calendar` 创建一条"每年 1 月 5 日 8000 元、分类=保险"的规则，1 月 5 日的格子上出现红色徽章 `¥8000`，色值取 `hsl(var(--chart-9))`。
 2. 切换到 2024 年 1 月，规则正常显示（历史回溯）。
 3. 暂停规则后，日历不再渲染、列表灰显且标"已暂停"；恢复后重新渲染。
-4. 设置 `endDate` 后，> endDate 的月份不再渲染、列表标"已结束"。
-5. 汇总卡同时显示三个数：当月合计、未来 30 天合计、未来 12 个月合计；三者随月份切换更新。
+4. 用户手动按"结束"后，列表显示"已结束"，未来日历不再渲染。`endDate` 单独是规则窗口字段：`> endDate` 的日期不展开为 occurrence；若 `endDate < today` 且 `status='active'`，列表派生显示"已到期"提示，**但 `status` 不被自动改写**（所有状态变更必须经 Server Action）。
+5. 汇总卡：
+   - **当月合计**：随视图月切换变化（用视图月的 `monthStart..monthEnd`）。
+   - **未来 30 天 / 未来 12 个月**：始终基于**真实今天**，不随视图月变化（卡上注明"自今日起"）。
 6. 每个写操作通过 Server Actions 完成，返回 `ActionResult`。
-7. 删除分类时，引用它的规则 `categoryId` 自动置 `null`，规则保留可继续渲染（无分类色显示中性灰）。
+7. 删除分类时，引用它的规则 `categoryId` 自动置 `null`（`ON DELETE SET NULL`），规则保留可继续渲染（无分类色显示中性灰）。worker repository 在测试中验证此外键行为（环境兼容性见"风险"段）。
 8. Sidebar 显示 `资金计划` 分区，包含 `日历` + `分类` 两个子项，与现有 `存量资金管理` 等分区视觉一致。
 9. 日历视图首次渲染（已认证用户）≤ 2 秒（标准网络）；切月不出现 layout shift。
 
@@ -36,7 +38,7 @@
 | UI 基础 | `@/components/ui/*`（card / button / dialog / input / table / badge / popover） | 复用现有组件库 |
 | 表单校验 | Zod（`zod ^4.3.6`） | 与 `unit-editor.tsx` 等一致 |
 | 日历视图 | 自实现（CSS Grid 7×N），不引第三方日历 | 包体可控、定制空间足 |
-| 颜色选择器 | 自实现（小调色板 + hex 输入），不引第三方 | 复用 `popover` |
+| 颜色选择器 | 自实现（24 个 chart token 色块），不引第三方 | 复用 `popover`，不接受任意 hex |
 | 日期工具 | `date-fns@4.4.0` | 已在依赖中 |
 | 测试 | Vitest（`bun run test` + `bun run test:worker`） | 与现有单测一致 |
 
@@ -122,26 +124,42 @@ src/lib/navigation.ts                       # 加 "资金计划" NavGroup
 ### 新表 1：`expense_categories`
 
 ```ts
-export const expenseCategories = sqliteTable("expense_categories", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+import { uniqueIndex } from "drizzle-orm/sqlite-core";
 
-  name: text("name").notNull(),
-  // 存 chart token 名（如 "chart-7"），不存 hex
-  // 渲染时 hsl(var(--chart-7))，自动跟随项目主题
-  colorToken: text("color_token").notNull(),
-  sortOrder: integer("sort_order").notNull().default(0),
+export const expenseCategories = sqliteTable(
+  "expense_categories",
+  {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
 
-  createdAt: integer("created_at", { mode: "timestamp" })
-    .notNull().$defaultFn(() => new Date()),
-  updatedAt: integer("updated_at", { mode: "timestamp" })
-    .notNull().$defaultFn(() => new Date()),
-});
+    name: text("name").notNull(),
+    // 存 chart token 名（如 "chart-7"），不存 hex
+    // 渲染时 hsl(var(--chart-7))，自动跟随项目主题
+    colorToken: text("color_token").notNull(),
+    sortOrder: integer("sort_order").notNull().default(0),
+
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull().$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull().$defaultFn(() => new Date()),
+  },
+  (table) => ({
+    userNameUnique: uniqueIndex("expense_categories_user_name_uniq")
+      .on(table.userId, table.name),
+  }),
+);
+```
+
+迁移 SQL 必须显式建索引：
+
+```sql
+CREATE UNIQUE INDEX expense_categories_user_name_uniq
+  ON expense_categories (user_id, name);
 ```
 
 约束：
-- `(userId, name)` 唯一（DB 层 unique index）。
-- `colorToken` 必须匹配 `^chart-(1|2|...|24)$`（Zod 层校验，与 `src/lib/palette.ts` 的 `CHART_TOKENS` 一致）。
+- `(userId, name)` 唯一 —— Drizzle `uniqueIndex` + 迁移 SQL 双重落实。
+- `colorToken` 必须是 `CHART_TOKENS` 之一（24 个 token 的闭集，Zod 在 Action 层校验）。
 - 颜色调色板复用 `src/lib/palette.ts` 的 24 色（与"资金仓库"等页面同一套），自动支持主题切换。
 
 ### 新表 2：`recurring_expenses`
@@ -184,9 +202,31 @@ export const recurringExpenses = sqliteTable("recurring_expenses", {
 });
 ```
 
-**为什么用 `status` 三态而非 `isActive` boolean + endDate 双字段？** 业务上"暂停"和"结束"是不同生命周期事件，单一 `status` 字段语义清晰、状态转移更可控。`endDate` 仍保留作为**规则窗口**字段（"我只想交三年保险"这种），与 `status='ended'` 正交：
-- `endDate < today` 且 `status='active'` → 自动视作 `ended`（前端展开时过滤）。
-- 用户手动按"结束"按钮 → `status='ended'` 立刻生效（无论 `endDate`）。
+**为什么用 `status` 三态而非 `isActive` boolean + endDate 双字段？** 业务上"暂停"和"结束"是不同生命周期事件，单一 `status` 字段语义清晰、状态转移更可控。
+
+`endDate` 与 `status` 正交，两者各管一件事：
+
+| 字段 | 语义 | 谁来改 |
+|------|------|--------|
+| `status` | 生命周期状态 | **仅** Server Action（`pause/resume/end`） |
+| `endDate` | 规则有效期窗口 | `create/update` 时由用户直接设置 |
+
+派生显示状态（前端纯函数，不写库）：
+
+```ts
+function deriveDisplayStatus(rule, today): 'active' | 'paused' | 'ended' | 'expired' {
+  if (rule.status === 'paused') return 'paused';
+  if (rule.status === 'ended')  return 'ended';
+  if (rule.endDate && rule.endDate < today) return 'expired'; // 派生态：UI 标"已到期"
+  return 'active';
+}
+```
+
+**关键不变量**：DB 中的 `status` 字段**永远不会**因 `endDate` 过期而被后台自动改写。所有 `status` 变更必须经过 Server Action。`expired` 是纯前端派生状态，列表 chip 显示"已到期 · YYYY-MM-DD"，与"已结束"视觉区分。
+
+Occurrence 展开过滤规则:
+- `status === 'paused' | 'ended'` → 不展开任何 occurrence。
+- `status === 'active'` 但 `endDate < toDate` → 只展开到 `endDate` 为止。
 
 ### Occurrence 算法（纯函数，可测）
 
@@ -199,13 +239,17 @@ export function computeOccurrences(
 ): string[]                // 升序 ISO 日期数组
 ```
 
-行为：
+行为（**所有规则均以 `startDate` 为 0 号锚点**，避免歧义）：
 - `status !== 'active'` 直接返回 `[]`（汇总和日历同口径）。
 - 永远不返回 `< rule.startDate` 或 `> rule.endDate`（如有）的日期。
-- `monthly, dayOfMonth=31` 在 2 月按"该月最后一天"夹（不跳月）。
-- `yearly, monthOfYear=2, dayOfMonth=29` 非闰年取 2 月 28 日。
+- **interval 锚点定义**：第 0 个周期 = `startDate` 所在的 frequency 周期，后续命中"距离 startDate 整 N 个 interval"的周期；不对齐自然周/月/季：
+  - `daily, interval=N`：日期 d 命中 ⇔ `(d - startDate).days % N === 0`。
+  - `weekly, interval=N, weekday=W`：第 0 周 = `startDate` 所在 ISO 周（周一为首），命中"距 startDate 所在周整 N 周"的周内该 `weekday`。
+  - `monthly, interval=N, dayOfMonth=D`：命中"距 startDate 所在月整 N 个月"的月，取该月第 D 天（不存在则取该月最后一天）。
+  - `yearly, interval=N, monthOfYear=M, dayOfMonth=D`：命中"距 startDate 所在年整 N 年"的年，取 (M, D)；2 月 29 在非闰年取 2 月 28。
+- `dayOfMonth=31` 在 2 月按"该月最后一天"夹（不跳月）。
 - `interval ≥ 1`；非法输入抛 `Error`，由 Server Action 捕获返回 `ActionResult.error`。
-- 返回区间不限（**支持历史回溯**）：用户传 `fromDate=2020-01-01` 也能正确展开。
+- 返回区间不限（**支持历史回溯**）：用户传 `fromDate=2020-01-01` 也能正确展开（但仍不早于 `startDate`）。
 
 ### 汇总（纯函数）
 
@@ -219,10 +263,11 @@ export function sumWindow(
 ): number  // 单位 cents
 ```
 
-UI 调用：
-- 当月合计：`sumWindow(rules, { from: monthStart, to: monthEnd })`
-- 未来 30 天：`sumWindow(rules, { from: today, to: today+30 })`
-- 未来 12 个月：`sumWindow(rules, { from: today, to: today+365 })`
+UI 调用（视图月 = `viewMonth`，真实今天 = `today`）：
+- **当月合计**：`sumWindow(rules, { fromDate: monthStart(viewMonth), toDate: monthEnd(viewMonth) })` —— 随视图月切换。
+- **未来 30 天**：`sumWindow(rules, { fromDate: today, toDate: today + 30d })` —— **始终基于真实今天**，不随视图月。
+- **未来 12 个月**：`sumWindow(rules, { fromDate: today, toDate: today + 365d })` —— 同上。
+- 未来两卡 UI 加副标题"自今日起"消除歧义。
 
 ## API Surface
 
@@ -254,30 +299,37 @@ export async function endRecurringExpense(id: string): Promise<ActionResult>;
 "use server"
 
 export async function createCategory(
-  data: { name: string; color: string },
+  data: { name: string; colorToken: string },
 ): Promise<ActionResult<{ id: string }>>;
 
 export async function updateCategory(
   id: string,
-  data: { name?: string; color?: string; sortOrder?: number },
+  data: { name?: string; colorToken?: string; sortOrder?: number },
 ): Promise<ActionResult>;
 
 export async function deleteCategory(id: string): Promise<ActionResult>;
 // 删除时 DB 层 ON DELETE SET NULL，引用它的 recurring_expenses.categoryId 自动置空
 ```
 
-### Worker SQL 端点（新增 8 个，沿用现有路由约定）
+### Worker SQL 端点（新增 8 个，**严格沿用现有 Worker 约定**）
+
+约定（与 `worker/src/index.ts` 内 `products` / `units` 等现有资源一致）：
+- 路径前缀：`/api/<resource>`、`/api/<resource>/:id`
+- 用户上下文：**通过 `X-User-Id` header 传递，不用 query string**
+- 鉴权：`Authorization: Bearer ${WORKER_TOKEN}`
+- 目标库：`X-Target-DB` header（`production` / `test`）
+- 更新动词：**`PUT`**（不引入 `PATCH`，因为 CORS `allowMethods` 不含 PATCH，引入需同步改 `worker/src/index.ts` 的 CORS、所有 client、所有测试 —— 本期不做）
 
 | Method | Path | 说明 |
 |--------|------|------|
-| GET    | `/expense-categories?userId=...` | 列表 |
-| POST   | `/expense-categories?userId=...` | 创建 |
-| PATCH  | `/expense-categories/:id?userId=...` | 部分更新 |
-| DELETE | `/expense-categories/:id?userId=...` | 删除（级联置空 categoryId） |
-| GET    | `/recurring-expenses?userId=...` | 列表（join 分类信息一并返回） |
-| POST   | `/recurring-expenses?userId=...` | 创建 |
-| PATCH  | `/recurring-expenses/:id?userId=...` | 部分更新（含 status 转移） |
-| DELETE | `/recurring-expenses/:id?userId=...` | 删除 |
+| GET    | `/api/expense-categories`       | 列表 |
+| POST   | `/api/expense-categories`       | 创建 |
+| PUT    | `/api/expense-categories/:id`   | 全量/部分更新（payload 仅含要变更的字段） |
+| DELETE | `/api/expense-categories/:id`   | 删除（DB 层 `ON DELETE SET NULL` 自动置空 `categoryId`） |
+| GET    | `/api/recurring-expenses`       | 列表（join 分类信息一并返回） |
+| POST   | `/api/recurring-expenses`       | 创建 |
+| PUT    | `/api/recurring-expenses/:id`   | 更新；**`status` 字段仅 `pause/resume/end` Action 写入** |
+| DELETE | `/api/recurring-expenses/:id`   | 删除（硬删）|
 
 ### `WorkerDbClient` 新增方法
 
@@ -326,7 +378,7 @@ deleteRecurringExpense(userId, id): Promise<void>;
 │         │  │ └─────┘└─────┘└─────┘         │ │ ● 房租 ¥3k/月│   │
 │         │  ├───────────────────────────────┤ │ ● 车险 ¥8k/年│   │
 │         │  │ 月视图日历                     │ │ ◯ 物业 (暂停)│   │
-│         │  │ ◀ 2026-06 ▶ [今天] [年视图]    │ │ ⊝ 旧保险(结束)│   │
+│         │  │ ◀ 2026-06 ▶ [今天]              │ │ ⊝ 旧保险(结束)│   │
 │         │  │  日 一 二 三 四 五 六           │ │              │   │
 │         │  │  [● ¥8k]                       │ │              │   │
 │         │  └───────────────────────────────┘ └──────────────┘   │
@@ -334,7 +386,7 @@ deleteRecurringExpense(userId, id): Promise<void>;
 ```
 
 行为：
-- 顶部 `◀ ▶` 任意月份导航；`今天` 跳回；`年视图` 进入 12 宫格紧凑视图（次优先级）。
+- 顶部 `◀ ▶` 任意月份导航；`今天` 跳回当月。（年视图本期不做，详见 Out of Scope。）
 - 日格里多笔时叠加多个圆点（限 3 个，第 4+ 显示 `+N`），颜色取分类色。
 - 日格点击 → `popover` 列出当日所有项（名字 + 金额 + 分类徽章）。
 - 列表项点击 → 编辑 dialog；右键/三点菜单 → 暂停 / 恢复 / 结束 / 删除。
@@ -438,7 +490,7 @@ export async function createRecurringExpense(
 4. **节假日顺延**：周末/节日规则。
 5. **模板与导入**：保险大类模板、CSV 批量导入。
 6. **货币换算**：保留 `currency` 字段但不做汇率。
-7. **年视图细化**：年视图本期出最简紧凑版（12 宫格，每月有金额徽章），交互细节待后续。
+7. **年视图**：12 宫格紧凑视图本期完全不做，避免 scope 漂移。本期日历只出月视图。
 
 ## Implementation Phases（送入 plan 阶段时再细化）
 
@@ -478,6 +530,15 @@ Phase 3 (UI)
 1. **分类色板**：复用 `src/lib/palette.ts` 的 24 色（`chart-1` ~ `chart-24`），与"资金仓库"等页面同源；DB 存 token 名而非 hex，自动支持主题切换。
 2. **删除规则副作用**：硬删（无历史依赖；本期不做实付追踪，后续若加，再用迁移转软删）。
 3. **月视图密度**：单格最多 3 个圆点，超出显示 `+N`，点击 popover 看全部。
+
+## Risks & Mitigations
+
+1. **D1 外键 `ON DELETE SET NULL` 行为**：D1 SQLite 默认开启 PRAGMA `foreign_keys = ON`，但 vitest workers 环境（`@cloudflare/vitest-pool-workers`）有时差异。
+   - **缓解**：worker 测试用例显式验证"删除 category 后引用它的 recurring_expense.categoryId 为 null"，CI 必须通过。
+   - **回退**：若外键在某些环境不生效，`deleteCategory` repository 改为事务版 —— 先 `UPDATE recurring_expenses SET category_id = NULL WHERE user_id = ? AND category_id = ?`，再 `DELETE FROM expense_categories WHERE id = ? AND user_id = ?`，保证一致性。
+2. **历史回溯性能**：用户切到 2010 年理论上能展开极多 occurrence。
+   - **缓解**：日历视图永远按"当前视图月窗口"调用 `computeOccurrences(rule, monthStart, monthEnd)`，单次最多 31 天 × 规则数，可控。
+3. **interval 锚点歧义**：详见 Occurrence 算法段，已显式定义"所有 interval 以 startDate 所在周期为第 0 号"，测试覆盖每种 frequency。
 
 ## References
 
