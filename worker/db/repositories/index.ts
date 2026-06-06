@@ -9,6 +9,7 @@ import { createMetadataRepo } from "./metadata";
 import { createReportsRepo } from "./reports";
 import { createContributionLogsRepo } from "./contribution-logs";
 import { createExpenseCategoriesRepo } from "./expense-categories";
+import { createRecurringExpensesRepo } from "./recurring-expenses";
 
 export function createAllRepos(db: DrizzleD1Database) {
   return {
@@ -22,6 +23,7 @@ export function createAllRepos(db: DrizzleD1Database) {
     reports: createReportsRepo(db),
     contributionLogs: createContributionLogsRepo(db),
     expenseCategories: createExpenseCategoriesRepo(db),
+    recurringExpenses: createRecurringExpensesRepo(db),
   };
 }
 
@@ -45,6 +47,14 @@ export {
   type CreateExpenseCategoryResult,
   type UpdateExpenseCategoryResult,
 } from "./expense-categories";
+export {
+  createRecurringExpensesRepo,
+  type RecurringExpensesRepo,
+  type RecurringExpenseCreateInput,
+  type RecurringExpenseUpdateInput,
+  type CreateRecurringExpenseResult,
+  type UpdateRecurringExpenseResult,
+} from "./recurring-expenses";
 
 // Re-export search param and result types
 export type { TransactionSearchParams, TransactionWithMatch, TransactionSearchResult } from "./transactions";
