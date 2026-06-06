@@ -13,9 +13,14 @@
 
 ### 成功标准（可测条件）
 1. 用户在 `/plan/categories` 创建分类「保险」配色 `chart-9`（红色 token），再在 `/plan/calendar` 创建一条"每年 1 月 5 日 8000 元、分类=保险"的规则，1 月 5 日的格子上出现红色徽章 `¥8000`，色值取 `hsl(var(--chart-9))`。
-2. 切换到 2024 年 1 月，规则正常显示（历史回溯）。
+2. 切换到 2024 年 1 月，**前提 `startDate <= 2024-01-05`**（用户在表单里把起始日设到 2024 或更早），规则在该月正常显示（历史回溯）。表单允许 `startDate` 任意 ISO 日期（包括过去），默认值为今天但用户可改。
 3. 暂停规则后，日历不再渲染、列表灰显且标"已暂停"；恢复后重新渲染。
-4. 用户手动按"结束"后，列表显示"已结束"，未来日历不再渲染。`endDate` 单独是规则窗口字段：`> endDate` 的日期不展开为 occurrence；若 `endDate < today` 且 `status='active'`，列表派生显示"已到期"提示，**但 `status` 不被自动改写**（所有状态变更必须经 Server Action）。
+4. 用户手动按"结束"后：
+   - 服务端写入 `status='ended'` + `endedAt=today`（同一 Server Action 内原子完成）。
+   - 列表显示"已结束 · YYYY-MM-DD"。
+   - 切到**历史**月份，规则在 `[startDate, endedAt]` 窗口内的 occurrence 仍然渲染（保留历史）。
+   - 切到 `> endedAt` 的月份，不渲染。
+   - `endDate`（用户设定的规则窗口，与 `endedAt` 不同）：`> endDate` 的日期始终不展开；若 `endDate < today` 且 `status='active'`，列表派生显示"已到期"提示，**`status` 不被自动改写**（所有状态变更必须经 Server Action）。
 5. 汇总卡：
    - **当月合计**：随视图月切换变化（用视图月的 `monthStart..monthEnd`）。
    - **未来 30 天 / 未来 12 个月**：始终基于**真实今天**，不随视图月变化（卡上注明"自今日起"）。
@@ -190,8 +195,11 @@ export const recurringExpenses = sqliteTable("recurring_expenses", {
   // 状态机：active / paused / ended
   // - active: 渲染日历、参与汇总
   // - paused: 不渲染日历、列表灰显、汇总不计入；用户可恢复
-  // - ended:  到期/手动结束；不渲染未来；列表标"已结束"
+  // - ended:  手动结束；historic occurrences (<= endedAt) 仍渲染；未来不再渲染
   status: text("status").notNull().default("active"),  // 'active' | 'paused' | 'ended'
+
+  // 仅 status='ended' 时非 null，记录"结束日"（包含），由 endRecurringExpense 写入
+  endedAt: text("ended_at"),                           // ISO "YYYY-MM-DD" | null
 
   note: text("note"),
 
@@ -204,12 +212,13 @@ export const recurringExpenses = sqliteTable("recurring_expenses", {
 
 **为什么用 `status` 三态而非 `isActive` boolean + endDate 双字段？** 业务上"暂停"和"结束"是不同生命周期事件，单一 `status` 字段语义清晰、状态转移更可控。
 
-`endDate` 与 `status` 正交，两者各管一件事：
+`endDate`、`endedAt`、`status` 三者职责清晰、互不重叠：
 
 | 字段 | 语义 | 谁来改 |
 |------|------|--------|
-| `status` | 生命周期状态 | **仅** Server Action（`pause/resume/end`） |
-| `endDate` | 规则有效期窗口 | `create/update` 时由用户直接设置 |
+| `status` | 生命周期状态（active / paused / ended） | **仅** Server Action（`pause/resume/end`） |
+| `endDate` | 规则有效期窗口（用户表达"我只想交三年"） | `create/update` 时由用户直接设置 |
+| `endedAt` | 手动结束的截止日（包含），仅 `ended` 时非 null | `endRecurringExpense` 内部写入，UI 不直接编辑 |
 
 派生显示状态（前端纯函数，不写库）：
 
@@ -225,8 +234,10 @@ function deriveDisplayStatus(rule, today): 'active' | 'paused' | 'ended' | 'expi
 **关键不变量**：DB 中的 `status` 字段**永远不会**因 `endDate` 过期而被后台自动改写。所有 `status` 变更必须经过 Server Action。`expired` 是纯前端派生状态，列表 chip 显示"已到期 · YYYY-MM-DD"，与"已结束"视觉区分。
 
 Occurrence 展开过滤规则:
-- `status === 'paused' | 'ended'` → 不展开任何 occurrence。
-- `status === 'active'` 但 `endDate < toDate` → 只展开到 `endDate` 为止。
+- `status === 'paused'` → 不展开任何 occurrence（活跃 / 历史均不渲染）。
+- `status === 'ended'` → 展开窗口被 `endedAt` 截顶：实际窗口 = `[startDate, min(toDate, endedAt)]`；历史保留，未来不渲染。
+- `status === 'active'` 且有 `endDate` → 展开窗口被 `endDate` 截顶：`[startDate, min(toDate, endDate)]`。
+- `status === 'active'` 且无 `endDate` → 展开窗口 = `[max(fromDate, startDate), toDate]`。
 
 ### Occurrence 算法（纯函数，可测）
 
@@ -240,8 +251,11 @@ export function computeOccurrences(
 ```
 
 行为（**所有规则均以 `startDate` 为 0 号锚点**，避免歧义）：
-- `status !== 'active'` 直接返回 `[]`（汇总和日历同口径）。
-- 永远不返回 `< rule.startDate` 或 `> rule.endDate`（如有）的日期。
+- `status === 'paused'` 直接返回 `[]`。
+- `status === 'ended'` → 实际展开窗口 = `[max(fromDate, startDate), min(toDate, endedAt)]`。如果 `fromDate > endedAt`，返回 `[]`（未来不渲染，但历史保留）。
+- `status === 'active'` 且 `endDate` 非 null → 实际展开窗口 = `[max(fromDate, startDate), min(toDate, endDate)]`。
+- `status === 'active'` 且 `endDate` 为 null → 实际展开窗口 = `[max(fromDate, startDate), toDate]`。
+- 永远不返回 `< startDate` 的日期。
 - **interval 锚点定义**：第 0 个周期 = `startDate` 所在的 frequency 周期，后续命中"距离 startDate 整 N 个 interval"的周期；不对齐自然周/月/季：
   - `daily, interval=N`：日期 d 命中 ⇔ `(d - startDate).days % N === 0`。
   - `weekly, interval=N, weekday=W`：第 0 周 = `startDate` 所在 ISO 周（周一为首），命中"距 startDate 所在周整 N 周"的周内该 `weekday`。
@@ -291,6 +305,10 @@ export async function deleteRecurringExpense(
 ): Promise<ActionResult>;
 
 // 状态机捷径（避免 client 误传非法值）
+// 实现要点（Server Action 内一次 client.updateRecurringExpense 调用完成）：
+//   pause:  status='paused', endedAt=null
+//   resume: status='active', endedAt=null
+//   end:    status='ended',  endedAt=todayISO()
 export async function pauseRecurringExpense(id: string): Promise<ActionResult>;
 export async function resumeRecurringExpense(id: string): Promise<ActionResult>;
 export async function endRecurringExpense(id: string): Promise<ActionResult>;
@@ -420,9 +438,10 @@ export async function createRecurringExpense(
   }
   try {
     const { userId, client } = await getAuthedClient()
+    const { amount, ...rest } = parsed.data
     const payload = {
-      ...parsed.data,
-      amountCents: Math.round(parsed.data.amount * 100),
+      ...rest,
+      amountCents: Math.round(amount * 100),
     }
     const result = await client.createRecurringExpense(userId, payload)
     return { success: true, data: { id: String(result.item.id) } }
@@ -446,7 +465,7 @@ export async function createRecurringExpense(
 
 | 层 | 位置 | 必测点 |
 |----|------|--------|
-| 纯函数：occurrences | `src/__tests__/recurring-expense/occurrences.test.ts` | 月度 31 日跨 2 月、年度 2-29 闰年、interval=N、startDate/endDate 边界、status 非 active 返回空、历史回溯（fromDate < today） |
+| 纯函数：occurrences | `src/__tests__/recurring-expense/occurrences.test.ts` | 月度 31 日跨 2 月、年度 2-29 闰年、interval=N、startDate/endDate 边界、status='paused' 返空、status='ended' + endedAt 历史保留 / 未来截断、historic 回溯（fromDate < today 且 startDate 更早）、interval 锚点（daily/weekly/monthly/yearly 各一例） |
 | 纯函数：aggregate | `src/__tests__/recurring-expense/occurrences-aggregate.test.ts` | 跨月窗口、空规则集、暂停规则不计入 |
 | 纯函数：颜色 | — | 不需要：直接用 `CHART_TOKENS` 枚举校验，无对比度计算 |
 | Worker repository | `worker/tests/expense-categories.test.ts` + `recurring-expenses.test.ts` | CRUD 隔离、`userId` 过滤、外键 SET NULL、unique(userId,name) |
