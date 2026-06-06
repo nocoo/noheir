@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import { api, rawFetch, TEST_USER_A } from "./helpers/client";
+import { api, rawFetch, TEST_USER_B } from "./helpers/client";
 import { ensureTestUser } from "./helpers/cleanup";
 
-const userId = TEST_USER_A;
+const userId = TEST_USER_B;
 
 interface Rule {
   id: string;
