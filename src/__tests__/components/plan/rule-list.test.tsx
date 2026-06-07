@@ -130,7 +130,7 @@ describe("RuleList render (P3-C8)", () => {
     ).toContain("muted-foreground");
   });
 
-  test("status chip: paused", () => {
+  test("status chip: paused (no date suffix)", () => {
     render(
       <RuleList
         rules={[rule({ id: "r1", status: "paused" })]}
@@ -138,10 +138,12 @@ describe("RuleList render (P3-C8)", () => {
         todayIso={TODAY}
       />,
     );
-    expect(screen.getByTestId("status-r1")).toHaveTextContent("已暂停");
+    const chip = screen.getByTestId("status-r1");
+    expect(chip).toHaveTextContent("已暂停");
+    expect(chip.textContent).not.toMatch(/·/);
   });
 
-  test("status chip: ended", () => {
+  test("status chip: ended shows '已结束 · {endedAt}'", () => {
     render(
       <RuleList
         rules={[rule({ id: "r1", status: "ended", endedAt: "2026-05-01" })]}
@@ -149,10 +151,23 @@ describe("RuleList render (P3-C8)", () => {
         todayIso={TODAY}
       />,
     );
-    expect(screen.getByTestId("status-r1")).toHaveTextContent("已结束");
+    expect(screen.getByTestId("status-r1")).toHaveTextContent("已结束 · 2026-05-01");
   });
 
-  test("status chip: active rule with endDate < today → 已过期", () => {
+  test("status chip: ended without endedAt falls back to '已结束' (no trailing separator)", () => {
+    render(
+      <RuleList
+        rules={[rule({ id: "r1", status: "ended", endedAt: null })]}
+        categoryMap={catMap([])}
+        todayIso={TODAY}
+      />,
+    );
+    const chip = screen.getByTestId("status-r1");
+    expect(chip).toHaveTextContent("已结束");
+    expect(chip.textContent).not.toMatch(/·/);
+  });
+
+  test("status chip: active rule with endDate < today → '已到期 · {endDate}'", () => {
     render(
       <RuleList
         rules={[rule({ id: "r1", endDate: "2026-05-01" })]}
@@ -160,7 +175,20 @@ describe("RuleList render (P3-C8)", () => {
         todayIso={TODAY}
       />,
     );
-    expect(screen.getByTestId("status-r1")).toHaveTextContent("已过期");
+    expect(screen.getByTestId("status-r1")).toHaveTextContent("已到期 · 2026-05-01");
+  });
+
+  test("status chip: active (no date suffix)", () => {
+    render(
+      <RuleList
+        rules={[rule({ id: "r1" })]}
+        categoryMap={catMap([])}
+        todayIso={TODAY}
+      />,
+    );
+    const chip = screen.getByTestId("status-r1");
+    expect(chip).toHaveTextContent("进行中");
+    expect(chip.textContent).not.toMatch(/·/);
   });
 });
 

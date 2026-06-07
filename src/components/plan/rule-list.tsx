@@ -86,8 +86,25 @@ const STATUS_LABEL: Record<RecurringExpenseDisplayStatus, string> = {
   active: "进行中",
   paused: "已暂停",
   ended: "已结束",
-  expired: "已过期",
+  expired: "已到期",
 };
+
+/** Build the status chip text. For ended / expired rules we append the
+ *  relevant date (endedAt vs endDate) so the user can tell apart a
+ *  manually-ended rule from one whose natural validity window expired,
+ *  and which day either event happened. Spec § Rule list. */
+function statusChipText(
+  status: RecurringExpenseDisplayStatus,
+  rule: Pick<RecurrenceRule, "endedAt" | "endDate">,
+): string {
+  if (status === "ended") {
+    return rule.endedAt ? `${STATUS_LABEL.ended} · ${rule.endedAt}` : STATUS_LABEL.ended;
+  }
+  if (status === "expired") {
+    return rule.endDate ? `${STATUS_LABEL.expired} · ${rule.endDate}` : STATUS_LABEL.expired;
+  }
+  return STATUS_LABEL[status];
+}
 
 const STATUS_VARIANT: Record<
   RecurringExpenseDisplayStatus,
@@ -220,7 +237,7 @@ export function RuleList({
                   variant={STATUS_VARIANT[status]}
                   data-testid={`status-${rule.id}`}
                 >
-                  {STATUS_LABEL[status]}
+                  {statusChipText(status, rule)}
                 </Badge>
               </div>
               <p className="truncate text-xs text-muted-foreground">
