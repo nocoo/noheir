@@ -72,6 +72,10 @@ export interface RuleListProps {
   /** Optional callback when the user picks "编辑" in the row menu —
    *  lets the parent open the edit form / navigate. */
   onEditRule?: (ruleId: string) => void;
+  /** Fires after a state/delete Server Action succeeds. The parent
+   *  page typically calls `router.refresh()` here so the visible list
+   *  re-hydrates from the server. Failures do NOT fire this. */
+  onActionSuccess?: () => void;
   className?: string;
 }
 
@@ -144,10 +148,12 @@ interface ActionResult {
 async function callAction(
   fn: () => Promise<ActionResult | { success: boolean; error?: string }>,
   successMsg: string,
+  onSuccess?: () => void,
 ): Promise<void> {
   const result = await fn();
   if (result.success) {
     toast.success(successMsg);
+    onSuccess?.();
   } else {
     toast.error(result.error ?? "操作失败");
   }
@@ -158,6 +164,7 @@ export function RuleList({
   categoryMap,
   todayIso,
   onEditRule,
+  onActionSuccess,
   className,
 }: RuleListProps): React.ReactElement {
   const [pendingId, setPendingId] = React.useState<string | null>(null);
@@ -196,16 +203,32 @@ export function RuleList({
           try {
             switch (kind) {
               case "pause":
-                await callAction(() => pauseRecurringExpense(rule.id), "已暂停");
+                await callAction(
+                  () => pauseRecurringExpense(rule.id),
+                  "已暂停",
+                  onActionSuccess,
+                );
                 break;
               case "resume":
-                await callAction(() => resumeRecurringExpense(rule.id), "已恢复");
+                await callAction(
+                  () => resumeRecurringExpense(rule.id),
+                  "已恢复",
+                  onActionSuccess,
+                );
                 break;
               case "end":
-                await callAction(() => endRecurringExpense(rule.id), "已结束");
+                await callAction(
+                  () => endRecurringExpense(rule.id),
+                  "已结束",
+                  onActionSuccess,
+                );
                 break;
               case "delete":
-                await callAction(() => deleteRecurringExpense(rule.id), "已删除");
+                await callAction(
+                  () => deleteRecurringExpense(rule.id),
+                  "已删除",
+                  onActionSuccess,
+                );
                 break;
             }
           } finally {

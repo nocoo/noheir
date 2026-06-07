@@ -21,6 +21,7 @@
 //     re-hydrates the props (no stale local state).
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -100,6 +101,7 @@ export function CalendarClient({
   categories,
   todayIso,
 }: CalendarClientProps): React.ReactElement {
+  const router = useRouter();
   // Default the visible month to whichever month "today" lives in.
   const [viewMonth, setViewMonth] = React.useState<string>(() =>
     monthStartFromIso(todayIso),
@@ -232,6 +234,7 @@ export function CalendarClient({
           categoryMap={ruleListCategoryMap}
           todayIso={todayIso}
           onEditRule={(id) => setEditingId(id)}
+          onActionSuccess={() => router.refresh()}
         />
       </div>
 
@@ -255,7 +258,10 @@ export function CalendarClient({
           </DialogHeader>
           <RecurringExpenseForm
             categories={categories.map((c) => ({ id: c.id, name: c.name }))}
-            onSuccess={() => setCreateOpen(false)}
+            onSuccess={() => {
+              setCreateOpen(false);
+              router.refresh();
+            }}
             onCancel={() => setCreateOpen(false)}
           />
         </DialogContent>
@@ -276,7 +282,10 @@ export function CalendarClient({
             <RecurringExpenseForm
               initial={ruleToFormInitial(editingRule)}
               categories={categories.map((c) => ({ id: c.id, name: c.name }))}
-              onSuccess={() => setEditingId(null)}
+              onSuccess={() => {
+                setEditingId(null);
+                router.refresh();
+              }}
               onCancel={() => setEditingId(null)}
             />
           ) : null}

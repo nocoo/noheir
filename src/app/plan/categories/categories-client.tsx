@@ -11,6 +11,7 @@
 //   delete-confirm dialog can warn that N rules will lose their color.
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,7 @@ export function CategoriesClient({
   categories,
   usage,
 }: CategoriesClientProps): React.ReactElement {
+  const router = useRouter();
   const [createOpen, setCreateOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<CategoryRow | null>(null);
   const [deleting, setDeleting] = React.useState<CategoryRow | null>(null);
@@ -62,6 +64,10 @@ export function CategoriesClient({
       if (result.success) {
         toast.success("分类已删除");
         setDeleting(null);
+        // revalidatePath() in the action only marks the cache stale;
+        // mounted Client Components need router.refresh() to pull fresh
+        // server-rendered props so the row disappears immediately.
+        router.refresh();
       } else {
         toast.error(result.error);
       }
@@ -161,7 +167,10 @@ export function CategoriesClient({
             </DialogDescription>
           </DialogHeader>
           <CategoryForm
-            onSuccess={() => setCreateOpen(false)}
+            onSuccess={() => {
+              setCreateOpen(false);
+              router.refresh();
+            }}
             onCancel={() => setCreateOpen(false)}
           />
         </DialogContent>
@@ -182,7 +191,10 @@ export function CategoriesClient({
           {editing ? (
             <CategoryForm
               initial={editing}
-              onSuccess={() => setEditing(null)}
+              onSuccess={() => {
+                setEditing(null);
+                router.refresh();
+              }}
               onCancel={() => setEditing(null)}
             />
           ) : null}

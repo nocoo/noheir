@@ -2,16 +2,44 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-// Stub all Server Actions invoked transitively (forms + state actions).
+const { refreshMock } = vi.hoisted(() => ({ refreshMock: vi.fn() }));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    refresh: refreshMock,
+    push: vi.fn(),
+    replace: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    prefetch: vi.fn(),
+  }),
+}));
+
+const {
+  createMock,
+  updateMock,
+  deleteMock,
+  pauseMock,
+  resumeMock,
+  endMock,
+} = vi.hoisted(() => ({
+  createMock: vi.fn(),
+  updateMock: vi.fn(),
+  deleteMock: vi.fn(),
+  pauseMock: vi.fn(),
+  resumeMock: vi.fn(),
+  endMock: vi.fn(),
+}));
+
 vi.mock("@/app/actions/recurring-expense-actions", () => ({
-  createRecurringExpense: vi.fn(),
-  updateRecurringExpense: vi.fn(),
-  deleteRecurringExpense: vi.fn(),
+  createRecurringExpense: createMock,
+  updateRecurringExpense: updateMock,
+  deleteRecurringExpense: deleteMock,
 }));
 vi.mock("@/app/actions/recurring-expense-state-actions", () => ({
-  pauseRecurringExpense: vi.fn(),
-  resumeRecurringExpense: vi.fn(),
-  endRecurringExpense: vi.fn(),
+  pauseRecurringExpense: pauseMock,
+  resumeRecurringExpense: resumeMock,
+  endRecurringExpense: endMock,
 }));
 vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
@@ -263,5 +291,79 @@ describe("CalendarClient rule list ordering (P3-C10)", () => {
     });
     // localeCompare zh sort.
     expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b, "zh")));
+  });
+});
+
+describe("CalendarClient router.refresh on mutation success (P3-C10 fix)", () => {
+  test("create rule success → refresh()", async () => {
+    const user = userEvent.setup();
+    createMock.mockResolvedValueOnce({ success: true, data: { id: "new" } });
+    render(<CalendarClient rules={[]} categories={CATS} todayIso={TODAY} />);
+    await user.click(screen.getByTestId("open-create-rule"));
+    const dialog = await screen.findByRole("dialog", { name: "新建周期支出" });
+    await user.type(within(dialog).getByLabelText("名称"), "新");
+    await user.type(within(dialog).getByLabelText("金额 (元)"), "100");
+    await user.type(within(dialog).getByLabelText("开始日期"), "2026-01-01");
+    await user.type(within(dialog).getByLabelText("日"), "1");
+    await user.click(within(dialog).getByRole("button", { name: "创建" }));
+    expect(createMock).toHaveBeenCalled();
+    expect(refreshMock).toHaveBeenCalled();
+  });
+
+  test("edit rule success → refresh()", async () => {
+    const user = userEvent.setup();
+    updateMock.mockResolvedValueOnce({ success: true, data: undefined });
+    render(
+      <CalendarClient
+        rules={[rule({ id: "r1", name: "old" })]}
+        categories={CATS}
+        todayIso={TODAY}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: "old 操作菜单" }));
+    await user.click(await screen.findByRole("menuitem", { name: "编辑" }));
+    const dialog = await screen.findByRole("dialog", { name: "编辑周期支出" });
+    await user.click(within(dialog).getByRole("button", { name: "保存" }));
+    expect(updateMock).toHaveBeenCalled();
+    expect(refreshMock).toHaveBeenCalled();
+  });
+
+  test("RuleList pause success → refresh(); failure does NOT refresh", async () => {
+    const user = userEvent.setup();
+    pauseMock.mockResolvedValueOnce({ success: true, data: undefined });
+    render(
+      <CalendarClient
+        rules={[rule({ id: "r1", name: "A" })]}
+        categories={CATS}
+        todayIso={TODAY}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: "A 操作菜单" }));
+    await user.click(await screen.findByRole("menuitem", { name: "暂停" }));
+    expect(pauseMock).toHaveBeenCalled();
+    expect(refreshMock).toHaveBeenCalledTimes(1);
+
+    // Failure path: action returns success: false → no refresh
+    refreshMock.mockClear();
+    pauseMock.mockResolvedValueOnce({ success: false, error: "no" });
+    await user.click(screen.getByRole("button", { name: "A 操作菜单" }));
+    await user.click(await screen.findByRole("menuitem", { name: "暂停" }));
+    expect(refreshMock).not.toHaveBeenCalled();
+  });
+
+  test("RuleList delete success → refresh()", async () => {
+    const user = userEvent.setup();
+    deleteMock.mockResolvedValueOnce({ success: true, data: undefined });
+    render(
+      <CalendarClient
+        rules={[rule({ id: "r1", name: "A" })]}
+        categories={CATS}
+        todayIso={TODAY}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: "A 操作菜单" }));
+    await user.click(await screen.findByRole("menuitem", { name: "删除" }));
+    expect(deleteMock).toHaveBeenCalled();
+    expect(refreshMock).toHaveBeenCalled();
   });
 });
