@@ -411,3 +411,246 @@ describe("FrequencyPicker disabled (P3-C2)", () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 });
+
+// ── P3-C2 fix: clamp out-of-range numeric input ──────────────────────
+
+describe("FrequencyPicker input clamping (P3-C2 fix)", () => {
+  test("interval typed as '0' emits 1 (domain min)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<Wrapper onChange={onChange} />);
+    await user.clear(INTERVAL());
+    await user.type(INTERVAL(), "0");
+    const last = onChange.mock.calls.at(-1)?.[0] as FrequencyValue | undefined;
+    if (!last) throw new Error("no call");
+    expect(last.interval).toBe(1);
+  });
+
+  test("interval typed as '-2' emits 1 (negative clamped)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<Wrapper onChange={onChange} />);
+    await user.clear(INTERVAL());
+    // userEvent.type sends each char; emit after "-" alone parses to 1,
+    // then after "-2" still parses to 1 (truncated then clamped to ≥1).
+    await user.type(INTERVAL(), "-2");
+    const last = onChange.mock.calls.at(-1)?.[0] as FrequencyValue | undefined;
+    if (!last) throw new Error("no call");
+    expect(last.interval).toBe(1);
+  });
+
+  test("interval typed as decimal '1.5' truncates to 1", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<Wrapper onChange={onChange} />);
+    await user.clear(INTERVAL());
+    await user.type(INTERVAL(), "1.5");
+    const last = onChange.mock.calls.at(-1)?.[0] as FrequencyValue | undefined;
+    if (!last) throw new Error("no call");
+    // 1.5 truncates to 1 (still ≥ 1, valid).
+    expect(last.interval).toBe(1);
+  });
+
+  test("month typed as '13' emits null (out of 1..12 range)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <Wrapper
+        initial={{ frequency: "yearly", monthOfYear: null, dayOfMonth: 1 }}
+        onChange={onChange}
+      />,
+    );
+    const month = MONTH();
+    if (!month) throw new Error("month input missing");
+    await user.type(month, "13");
+    const last = onChange.mock.calls.at(-1)?.[0] as FrequencyValue | undefined;
+    if (!last) throw new Error("no call");
+    expect(last.monthOfYear).toBeNull();
+  });
+
+  test("month typed as '0' emits null (below 1)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <Wrapper
+        initial={{ frequency: "yearly", monthOfYear: null, dayOfMonth: 1 }}
+        onChange={onChange}
+      />,
+    );
+    const month = MONTH();
+    if (!month) throw new Error("month input missing");
+    await user.type(month, "0");
+    const last = onChange.mock.calls.at(-1)?.[0] as FrequencyValue | undefined;
+    if (!last) throw new Error("no call");
+    expect(last.monthOfYear).toBeNull();
+  });
+
+  test("month typed valid '6' emits 6", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <Wrapper
+        initial={{ frequency: "yearly", monthOfYear: null, dayOfMonth: 1 }}
+        onChange={onChange}
+      />,
+    );
+    const month = MONTH();
+    if (!month) throw new Error("month input missing");
+    await user.type(month, "6");
+    const last = onChange.mock.calls.at(-1)?.[0] as FrequencyValue | undefined;
+    if (!last) throw new Error("no call");
+    expect(last.monthOfYear).toBe(6);
+  });
+
+  test("month cleared emits null", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <Wrapper
+        initial={{ frequency: "yearly", monthOfYear: 6, dayOfMonth: 1 }}
+        onChange={onChange}
+      />,
+    );
+    const month = MONTH();
+    if (!month) throw new Error("month input missing");
+    await user.clear(month);
+    const last = onChange.mock.calls.at(-1)?.[0] as FrequencyValue | undefined;
+    if (!last) throw new Error("no call");
+    expect(last.monthOfYear).toBeNull();
+  });
+
+  test("dayOfMonth typed as '32' emits null (above 31)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <Wrapper
+        initial={{ frequency: "monthly", dayOfMonth: null }}
+        onChange={onChange}
+      />,
+    );
+    const day = DAY();
+    if (!day) throw new Error("day input missing");
+    await user.type(day, "32");
+    const last = onChange.mock.calls.at(-1)?.[0] as FrequencyValue | undefined;
+    if (!last) throw new Error("no call");
+    expect(last.dayOfMonth).toBeNull();
+  });
+
+  test("dayOfMonth typed as '0' emits null", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <Wrapper
+        initial={{ frequency: "monthly", dayOfMonth: null }}
+        onChange={onChange}
+      />,
+    );
+    const day = DAY();
+    if (!day) throw new Error("day input missing");
+    await user.type(day, "0");
+    const last = onChange.mock.calls.at(-1)?.[0] as FrequencyValue | undefined;
+    if (!last) throw new Error("no call");
+    expect(last.dayOfMonth).toBeNull();
+  });
+
+  test("dayOfMonth cleared emits null", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <Wrapper
+        initial={{ frequency: "monthly", dayOfMonth: 15 }}
+        onChange={onChange}
+      />,
+    );
+    const day = DAY();
+    if (!day) throw new Error("day input missing");
+    await user.clear(day);
+    const last = onChange.mock.calls.at(-1)?.[0] as FrequencyValue | undefined;
+    if (!last) throw new Error("no call");
+    expect(last.dayOfMonth).toBeNull();
+  });
+});
+
+// ── P3-C2 fix: weekday radiogroup keyboard semantics ────────────────
+
+describe("FrequencyPicker weekday keyboard (P3-C2 fix)", () => {
+  function weekdayRadios(): HTMLElement[] {
+    const wg = WEEKDAY_GROUP();
+    if (!wg) throw new Error("weekday group missing");
+    return within(wg).getAllByRole("radio");
+  }
+
+  test("exactly one weekday radio is in the tab order (selected one)", () => {
+    render(<Wrapper initial={{ frequency: "weekly", weekday: 3 }} />);
+    const tabbable = weekdayRadios().filter(
+      (r) => r.getAttribute("tabIndex") === "0",
+    );
+    expect(tabbable).toHaveLength(1);
+    expect(tabbable[0]).toHaveAccessibleName("周三");
+  });
+
+  test("when weekday is null, Sunday (index 0) holds the tab stop", () => {
+    render(<Wrapper initial={{ frequency: "weekly" }} />);
+    const tabbable = weekdayRadios().filter(
+      (r) => r.getAttribute("tabIndex") === "0",
+    );
+    expect(tabbable).toHaveLength(1);
+    expect(tabbable[0]).toHaveAccessibleName("周日");
+  });
+
+  test("ArrowRight moves focus AND selection to the next weekday", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<Wrapper initial={{ frequency: "weekly", weekday: 1 }} onChange={onChange} />);
+    const monday = screen.getByRole("radio", { name: "周一" });
+    monday.focus();
+    await user.keyboard("{ArrowRight}");
+    const tuesday = screen.getByRole("radio", { name: "周二" });
+    expect(tuesday).toHaveFocus();
+    const last = onChange.mock.calls.at(-1)?.[0] as FrequencyValue | undefined;
+    if (!last) throw new Error("no call");
+    expect(last.weekday).toBe(2);
+  });
+
+  test("ArrowLeft wraps from Sunday (0) to Saturday (6)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<Wrapper initial={{ frequency: "weekly", weekday: 0 }} onChange={onChange} />);
+    screen.getByRole("radio", { name: "周日" }).focus();
+    await user.keyboard("{ArrowLeft}");
+    const sat = screen.getByRole("radio", { name: "周六" });
+    expect(sat).toHaveFocus();
+    const last = onChange.mock.calls.at(-1)?.[0] as FrequencyValue | undefined;
+    if (!last) throw new Error("no call");
+    expect(last.weekday).toBe(6);
+  });
+
+  test("Home/End jump to Sunday/Saturday", async () => {
+    const user = userEvent.setup();
+    render(<Wrapper initial={{ frequency: "weekly", weekday: 3 }} />);
+    screen.getByRole("radio", { name: "周三" }).focus();
+    await user.keyboard("{End}");
+    expect(screen.getByRole("radio", { name: "周六" })).toHaveFocus();
+    await user.keyboard("{Home}");
+    expect(screen.getByRole("radio", { name: "周日" })).toHaveFocus();
+  });
+
+  test("disabled: every weekday radio has tabIndex=-1 and arrow keys are no-op", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <Wrapper
+        initial={{ frequency: "weekly", weekday: 2 }}
+        disabled
+        onChange={onChange}
+      />,
+    );
+    const tabbable = weekdayRadios().filter(
+      (r) => r.getAttribute("tabIndex") !== "-1",
+    );
+    expect(tabbable).toHaveLength(0);
+    screen.getByRole("radio", { name: "周二" }).focus();
+    await user.keyboard("{ArrowRight}");
+    expect(onChange).not.toHaveBeenCalled();
+  });
+});

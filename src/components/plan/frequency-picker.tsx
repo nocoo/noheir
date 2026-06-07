@@ -125,11 +125,34 @@ function arrowToIndex(
   }
 }
 
-/** Parse a number input value into an integer or null (empty string). */
-function parseIntOrNull(raw: string): number | null {
+/** Parse a number input value into an integer in a domain range,
+ *  or null if the field is empty / unparseable / out of range.
+ *  Returning null (instead of clamping) lets the caller distinguish
+ *  "user hasn't filled this" from "user typed a valid value" — the
+ *  form layer treats null as missing and surfaces a required-field
+ *  error rather than silently storing 1. */
+function parseIntInRange(
+  raw: string,
+  min: number,
+  max: number,
+): number | null {
   if (raw.trim() === "") return null;
   const n = Number(raw);
-  return Number.isFinite(n) ? Math.trunc(n) : null;
+  if (!Number.isFinite(n)) return null;
+  const trunc = Math.trunc(n);
+  if (trunc < min || trunc > max) return null;
+  return trunc;
+}
+
+/** Same as parseIntInRange but for interval, which has no upper bound
+ *  in the domain and must coerce to ≥ 1 (never null) because the
+ *  base shape's Zod default is 1 and there is no "no interval" state. */
+function parseIntervalOrOne(raw: string): number {
+  if (raw.trim() === "") return 1;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return 1;
+  const trunc = Math.trunc(n);
+  return trunc >= 1 ? trunc : 1;
 }
 
 export function FrequencyPicker({
@@ -181,6 +204,30 @@ export function FrequencyPicker({
   React.useEffect(() => {
     setIntervalText(value.interval.toString());
   }, [value.interval]);
+
+  // Weekday radiogroup roving tab stop. Defaults to the selected weekday
+  // (or 0 = Sunday) and follows the user's arrow-key navigation. Same
+  // contract as the frequency selector and ColorTokenPicker.
+  const weekdayRefs = React.useRef<(HTMLButtonElement | null)[]>([]);
+  const [weekdayTabIdx, setWeekdayTabIdx] = React.useState<number>(
+    value.weekday ?? 0,
+  );
+  React.useEffect(() => {
+    if (value.weekday != null) setWeekdayTabIdx(value.weekday);
+  }, [value.weekday]);
+
+  const handleWeekdayKey = (
+    e: React.KeyboardEvent<HTMLButtonElement>,
+    idx: number,
+  ) => {
+    if (disabled) return;
+    const target = arrowToIndex(idx, e.key, WEEKDAY_LABELS.length);
+    if (target === null) return;
+    e.preventDefault();
+    setWeekdayTabIdx(target);
+    weekdayRefs.current[target]?.focus();
+    onChange({ ...value, weekday: target });
+  };
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -251,8 +298,7 @@ export function FrequencyPicker({
             onChange={(e) => {
               const raw = e.target.value;
               setIntervalText(raw);
-              const n = parseIntOrNull(raw);
-              onChange({ ...value, interval: n ?? 1 });
+              onChange({ ...value, interval: parseIntervalOrOne(raw) });
             }}
             className="w-24"
           />
@@ -280,16 +326,26 @@ export function FrequencyPicker({
           >
             {WEEKDAY_LABELS.map((label, w) => {
               const selected = value.weekday === w;
+              const isTabStop = w === weekdayTabIdx;
               return (
                 <button
                   key={w}
+                  ref={(el) => {
+                    weekdayRefs.current[w] = el;
+                  }}
                   type="button"
                   role="radio"
                   aria-checked={selected}
                   aria-label={label}
                   disabled={disabled}
+                  tabIndex={disabled ? -1 : isTabStop ? 0 : -1}
                   data-weekday={w}
-                  onClick={() => onChange({ ...value, weekday: w })}
+                  onClick={() => {
+                    if (disabled) return;
+                    setWeekdayTabIdx(w);
+                    onChange({ ...value, weekday: w });
+                  }}
+                  onKeyDown={(e) => handleWeekdayKey(e, w)}
                   className={cn(
                     "rounded-md border px-3 py-1.5 text-sm transition-colors outline-none",
                     "focus-visible:ring-2 focus-visible:ring-ring",
@@ -327,8 +383,7 @@ export function FrequencyPicker({
             aria-describedby={errors?.monthOfYear ? `${monthId}-error` : undefined}
             placeholder="1-12"
             onChange={(e) => {
-              const n = parseIntOrNull(e.target.value);
-              onChange({ ...value, monthOfYear: n });
+              onChange({ ...value, monthOfYear: parseIntInRange(e.target.value, 1, 12) });
             }}
             className="w-24"
           />
@@ -356,8 +411,7 @@ export function FrequencyPicker({
             aria-describedby={errors?.dayOfMonth ? `${dayId}-error` : undefined}
             placeholder="1-31"
             onChange={(e) => {
-              const n = parseIntOrNull(e.target.value);
-              onChange({ ...value, dayOfMonth: n });
+              onChange({ ...value, dayOfMonth: parseIntInRange(e.target.value, 1, 31) });
             }}
             className="w-24"
           />
