@@ -540,7 +540,7 @@ export class WorkerDbClient {
 
   async createExpenseCategory(
     userId: string,
-    payload: { name: string; colorToken: string; sortOrder?: number },
+    payload: { name: string; colorToken: string; sortOrder?: number | undefined },
   ) {
     return this.request<{ category: RawExpenseCategory }>(
       "POST",
@@ -553,7 +553,11 @@ export class WorkerDbClient {
   async updateExpenseCategory(
     userId: string,
     id: string,
-    payload: { name?: string; colorToken?: string; sortOrder?: number },
+    payload: {
+      name?: string | undefined;
+      colorToken?: string | undefined;
+      sortOrder?: number | undefined;
+    },
   ) {
     return this.request<{ category: RawExpenseCategory }>(
       "PUT",
