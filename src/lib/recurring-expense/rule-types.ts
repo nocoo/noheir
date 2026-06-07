@@ -132,20 +132,22 @@ export const recurringExpenseInputSchema = z
 export type RecurringExpenseInput = z.infer<typeof recurringExpenseInputSchema>;
 
 /** Update input — same shape, all fields optional. Status / endedAt
- *  stay omitted so a CRUD update cannot mutate the state machine. */
+ *  stay omitted so a CRUD update cannot mutate the state machine.
+ *  Defaults from the create shape are dropped — partial updates only
+ *  forward fields the caller actually provided. */
 export const recurringExpenseUpdateSchema = z.object({
-  name: recurringExpenseBaseShape.name.optional(),
-  categoryId: recurringExpenseBaseShape.categoryId,
-  amount: recurringExpenseBaseShape.amount.optional(),
-  currency: recurringExpenseBaseShape.currency.optional(),
-  account: recurringExpenseBaseShape.account,
-  frequency: recurringExpenseBaseShape.frequency.optional(),
-  interval: recurringExpenseBaseShape.interval.optional(),
-  dayOfMonth: recurringExpenseBaseShape.dayOfMonth,
-  monthOfYear: recurringExpenseBaseShape.monthOfYear,
-  weekday: recurringExpenseBaseShape.weekday,
-  startDate: recurringExpenseBaseShape.startDate.optional(),
-  endDate: recurringExpenseBaseShape.endDate,
-  note: recurringExpenseBaseShape.note,
+  name: z.string().trim().min(1).max(200).optional(),
+  categoryId: z.string().uuid().nullable().optional(),
+  amount: z.number().positive().optional(),
+  currency: z.string().min(1).max(8).optional(),
+  account: z.string().trim().max(100).nullable().optional(),
+  frequency: z.enum(RECURRENCE_FREQUENCIES).optional(),
+  interval: z.number().int().min(1).optional(),
+  dayOfMonth: z.number().int().min(1).max(31).nullable().optional(),
+  monthOfYear: z.number().int().min(1).max(12).nullable().optional(),
+  weekday: z.number().int().min(0).max(6).nullable().optional(),
+  startDate: z.string().regex(ISO_DATE_RE).optional(),
+  endDate: z.string().regex(ISO_DATE_RE).nullable().optional(),
+  note: z.string().max(1000).nullable().optional(),
 });
 export type RecurringExpenseUpdateInput = z.infer<typeof recurringExpenseUpdateSchema>;

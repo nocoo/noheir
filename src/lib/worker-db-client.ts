@@ -668,25 +668,41 @@ export interface RawRecurringExpense {
  *  excluded — only the state-machine internal channel writes them. */
 export interface RecurringExpenseCreatePayload {
   name: string;
-  categoryId?: string | null;
+  categoryId?: string | null | undefined;
   amountCents: number;
-  currency?: string;
-  account?: string | null;
+  currency?: string | undefined;
+  account?: string | null | undefined;
   frequency: string;
-  interval?: number;
-  dayOfMonth?: number | null;
-  monthOfYear?: number | null;
-  weekday?: number | null;
+  interval?: number | undefined;
+  dayOfMonth?: number | null | undefined;
+  monthOfYear?: number | null | undefined;
+  weekday?: number | null | undefined;
   startDate: string;
-  endDate?: string | null;
-  note?: string | null;
+  endDate?: string | null | undefined;
+  note?: string | null | undefined;
 }
 
-/** PUT body for recurring-expenses. `status` / `endedAt` are NOT in
- *  the type; the state-machine path uses the separate
- *  RecurringExpenseStateUpdatePayload below. */
+/** PUT body for recurring-expenses. Every CRUD field is optional and
+ *  may be explicitly undefined; status/endedAt go through the
+ *  separate state-update payload below. */
+export interface RecurringExpenseUpdateBodyPayload {
+  name?: string | undefined;
+  categoryId?: string | null | undefined;
+  amountCents?: number | undefined;
+  currency?: string | undefined;
+  account?: string | null | undefined;
+  frequency?: string | undefined;
+  interval?: number | undefined;
+  dayOfMonth?: number | null | undefined;
+  monthOfYear?: number | null | undefined;
+  weekday?: number | null | undefined;
+  startDate?: string | undefined;
+  endDate?: string | null | undefined;
+  note?: string | null | undefined;
+}
+
 export type RecurringExpenseUpdatePayload =
-  | Partial<RecurringExpenseCreatePayload>
+  | RecurringExpenseUpdateBodyPayload
   | RecurringExpenseStateUpdatePayload;
 
 /** State-machine PUT body — only used with `internal: true` so the
