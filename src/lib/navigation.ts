@@ -36,7 +36,7 @@ import {
  *
  * Lives in code (not env var) so prod and dev share the same value
  * and reviewer can audit it via PR. */
-export const FEATURE_PLAN_CALENDAR = false;
+export const FEATURE_PLAN_CALENDAR = true;
 
 export interface NavItem {
   href: string;
