@@ -49,11 +49,16 @@ export class WorkerDbClient {
     path: string,
     userId: string,
     body?: unknown,
+    extraHeaders?: Record<string, string>,
   ): Promise<T> {
     const url = `${this.baseUrl}${path}`;
+    const headers: Record<string, string> = {
+      ...(this.headers(userId) as Record<string, string>),
+      ...(extraHeaders ?? {}),
+    };
     const init: RequestInit = {
       method,
-      headers: this.headers(userId),
+      headers,
     };
     if (body !== undefined) {
       init.body = JSON.stringify(body);
@@ -63,6 +68,11 @@ export class WorkerDbClient {
     if (!res.ok) {
       const text = await res.text().catch(() => "Unknown error");
       throw new WorkerDbError(text, res.status, `${method} ${path}`);
+    }
+
+    // Some endpoints (DELETE) return 204 with no body. Tolerate that.
+    if (res.status === 204) {
+      return undefined as T;
     }
 
     return (await res.json()) as T;
@@ -517,4 +527,167 @@ export class WorkerDbClient {
       transfers_imported: number;
     }>("POST", "/api/data/import", userId, data);
   }
+
+  // ── Expense Categories (002 spec) ──
+
+  async listExpenseCategories(userId: string) {
+    return this.request<{ categories: RawExpenseCategory[] }>(
+      "GET",
+      "/api/expense-categories",
+      userId,
+    );
+  }
+
+  async createExpenseCategory(
+    userId: string,
+    payload: { name: string; colorToken: string; sortOrder?: number },
+  ) {
+    return this.request<{ category: RawExpenseCategory }>(
+      "POST",
+      "/api/expense-categories",
+      userId,
+      payload,
+    );
+  }
+
+  async updateExpenseCategory(
+    userId: string,
+    id: string,
+    payload: { name?: string; colorToken?: string; sortOrder?: number },
+  ) {
+    return this.request<{ category: RawExpenseCategory }>(
+      "PUT",
+      `/api/expense-categories/${id}`,
+      userId,
+      payload,
+    );
+  }
+
+  async deleteExpenseCategory(userId: string, id: string): Promise<void> {
+    await this.request<unknown>(
+      "DELETE",
+      `/api/expense-categories/${id}`,
+      userId,
+    );
+  }
+
+  // ── Recurring Expenses (002 spec) ──
+
+  async listRecurringExpenses(userId: string) {
+    return this.request<{ rules: RawRecurringExpense[] }>(
+      "GET",
+      "/api/recurring-expenses",
+      userId,
+    );
+  }
+
+  async createRecurringExpense(
+    userId: string,
+    payload: RecurringExpenseCreatePayload,
+  ) {
+    return this.request<{ rule: RawRecurringExpense }>(
+      "POST",
+      "/api/recurring-expenses",
+      userId,
+      payload,
+    );
+  }
+
+  /** PUT /api/recurring-expenses/:id.
+   *
+   *  By default the request omits the `X-Internal-Action: 1` header so
+   *  the Worker silently drops `status` and `endedAt` from the body
+   *  (P1-C6 contract). The state-machine actions pass `internal: true`
+   *  to unlock those fields; CRUD actions never set this flag. */
+  async updateRecurringExpense(
+    userId: string,
+    id: string,
+    payload: RecurringExpenseUpdatePayload,
+    opts?: { internal?: boolean },
+  ) {
+    const headers = opts?.internal ? { "X-Internal-Action": "1" } : undefined;
+    return this.request<{ rule: RawRecurringExpense }>(
+      "PUT",
+      `/api/recurring-expenses/${id}`,
+      userId,
+      payload,
+      headers,
+    );
+  }
+
+  async deleteRecurringExpense(userId: string, id: string): Promise<void> {
+    await this.request<unknown>(
+      "DELETE",
+      `/api/recurring-expenses/${id}`,
+      userId,
+    );
+  }
+}
+
+// ── 002-spec wire shapes (exported for action / mapper consumption) ──
+
+export interface RawExpenseCategory {
+  id: string;
+  userId: string;
+  name: string;
+  colorToken: string;
+  sortOrder: number;
+  createdAt?: string | number | Date;
+  updatedAt?: string | number | Date;
+}
+
+export interface RawRecurringExpense {
+  id: string;
+  userId: string;
+  name: string;
+  categoryId: string | null;
+  categoryName?: string | null;
+  colorToken?: string | null;
+  amountCents: number;
+  currency: string;
+  account: string | null;
+  frequency: string;
+  interval: number;
+  dayOfMonth: number | null;
+  monthOfYear: number | null;
+  weekday: number | null;
+  startDate: string;
+  endDate: string | null;
+  status: string;
+  endedAt: string | null;
+  note: string | null;
+  createdAt?: string | number | Date;
+  updatedAt?: string | number | Date;
+}
+
+/** POST body for recurring-expenses. `status` / `endedAt` deliberately
+ *  excluded — only the state-machine internal channel writes them. */
+export interface RecurringExpenseCreatePayload {
+  name: string;
+  categoryId?: string | null;
+  amountCents: number;
+  currency?: string;
+  account?: string | null;
+  frequency: string;
+  interval?: number;
+  dayOfMonth?: number | null;
+  monthOfYear?: number | null;
+  weekday?: number | null;
+  startDate: string;
+  endDate?: string | null;
+  note?: string | null;
+}
+
+/** PUT body for recurring-expenses. `status` / `endedAt` are NOT in
+ *  the type; the state-machine path uses the separate
+ *  RecurringExpenseStateUpdatePayload below. */
+export type RecurringExpenseUpdatePayload =
+  | Partial<RecurringExpenseCreatePayload>
+  | RecurringExpenseStateUpdatePayload;
+
+/** State-machine PUT body — only used with `internal: true` so the
+ *  Worker accepts these fields. */
+export interface RecurringExpenseStateUpdatePayload {
+  status?: "active" | "paused" | "ended";
+  endedAt?: string | null;
 }
