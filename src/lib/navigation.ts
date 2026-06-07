@@ -20,11 +20,23 @@ import {
   Settings,
   Cpu,
   Tags,
+  CalendarClock,
   FileUp,
   Database,
   KeyRound,
   type LucideIcon,
 } from "lucide-react";
+
+/** Feature flag for the 002-spec "资金计划" calendar.
+ *
+ * While false: the sidebar group is hidden AND /plan/calendar +
+ * /plan/categories pages return 404 (P3-C9/C10 wire the page-level
+ * gate). P3-C11 flips this to true as the single user-visible commit
+ * for Phase 3.
+ *
+ * Lives in code (not env var) so prod and dev share the same value
+ * and reviewer can audit it via PR. */
+export const FEATURE_PLAN_CALENDAR = false;
 
 export interface NavItem {
   href: string;
@@ -37,6 +49,16 @@ export interface NavGroup {
   items: NavItem[];
   defaultOpen?: boolean;
 }
+
+/** 002-spec sidebar group — hidden behind FEATURE_PLAN_CALENDAR. */
+const PLAN_NAV_GROUP: NavGroup = {
+  label: "资金计划",
+  defaultOpen: true,
+  items: [
+    { href: "/plan/calendar", label: "日历", icon: CalendarClock },
+    { href: "/plan/categories", label: "分类", icon: Tags },
+  ],
+};
 
 export const NAV_GROUPS: NavGroup[] = [
   {
@@ -94,5 +116,18 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
 ];
+
+// Insert the recurring-expense calendar group between "存量资金管理"
+// and "系统" when the feature flag is on. Splicing here instead of
+// inline in NAV_GROUPS lets the flag flip be a single-line change in
+// P3-C11 without churning the surrounding group order.
+if (FEATURE_PLAN_CALENDAR) {
+  const systemIdx = NAV_GROUPS.findIndex((g) => g.label === "系统");
+  if (systemIdx >= 0) {
+    NAV_GROUPS.splice(systemIdx, 0, PLAN_NAV_GROUP);
+  } else {
+    NAV_GROUPS.push(PLAN_NAV_GROUP);
+  }
+}
 
 export const ALL_NAV_ITEMS = NAV_GROUPS.flatMap((g) => g.items);
