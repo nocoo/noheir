@@ -646,3 +646,41 @@ export async function createRecurringExpense(
 - `src/lib/worker-db-client.ts` — Worker 调用约定
 - `src/lib/navigation.ts` — Sidebar 分区先例（`存量资金管理`）
 - `src/components/ui/colored-badge.tsx` — 颜色徽章规范
+
+## Release Smoke (P3-C12)
+
+Run on 2026-06-07 against `53883e4` (P3-C11 flag flip) on local dev.
+
+### Automated gates
+- `bun run typecheck` — pass
+- `bun run lint` — pass (--max-warnings=0)
+- `bun run test` — 71 files / 945 tests pass
+- `bun run test:worker` — 16 files / 247 tests pass (rebuild better-sqlite3 first if ABI mismatch)
+- `bun run test:coverage` — 98.95% stmts / 96.93% branches / 100% funcs / 99.61% lines (≥ 95% threshold)
+- `bun run build` — succeeds; `/plan/calendar` and `/plan/categories` present as dynamic routes
+
+### Route smoke (curl, no auth)
+- `GET /plan/categories` → 307 Temporary Redirect → `/login?callbackUrl=%2Fplan%2Fcategories`
+- `GET /plan/calendar` → 307 Temporary Redirect → `/login?callbackUrl=%2Fplan%2Fcalendar`
+- `GET /` → 307 (same auth redirect)
+
+The 307 (auth redirect) instead of 404 confirms FEATURE_PLAN_CALENDAR is on; otherwise notFound() would intercept before the auth layer.
+
+### Manual smoke checklist (post-deploy)
+Run through these in an authenticated browser session:
+
+- [ ] Sidebar shows 资金计划 group between 存量资金管理 and 系统, with 日历 and 分类 items
+- [ ] `/plan/categories` empty state shows "还没有任何分类" + create CTA
+- [ ] Create a category — appears in list immediately (router.refresh works)
+- [ ] Edit category — name + color update reflected without manual reload
+- [ ] Delete category with rules — warning copy shows N rules will become 未分类, rules survive
+- [ ] `/plan/calendar` opens with current month, three summary cards (¥0 / ¥0 / ¥0 initially)
+- [ ] Create recurring expense — appears in calendar dots + rule list + summary
+- [ ] Click a day with occurrences — popover lists every item for that day
+- [ ] Day popover "查看" — closes popover, opens edit dialog prefilled
+- [ ] Rule list 编辑 menu — opens edit dialog
+- [ ] Pause active rule — chip flips to 已暂停, calendar dots disappear; resume restores
+- [ ] End rule — chip flips to 已结束 · {today}, no further dots
+- [ ] Active rule with endDate in the past — chip shows 已到期 · {endDate}
+- [ ] Delete rule — disappears from list and calendar
+- [ ] Mobile (≤640px) — calendar stays 7 cols without horizontal scroll; rule list rows wrap cleanly; dialogs scroll vertically
