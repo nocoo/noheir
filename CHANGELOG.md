@@ -2,6 +2,71 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.3] - 2026-06-08
+
+### Features
+
+- **plan** — flip FEATURE_PLAN_CALENDAR to true (P3-C11)
+- **plan** — /plan/calendar page + composition shell (P3-C10)
+- **plan** — /plan/categories page + client shell (P3-C9)
+- **plan** — RuleList — interactive rule list with status menus (P3-C8)
+- **plan** — DayDetailPopover — modal listing a day's occurrences (P3-C7)
+- **plan** — PlanSummaryCards — three-window KPI cards (P3-C6)
+- **plan** — PlanCalendar — month view with occurrence dots (P3-C5)
+- **plan** — RecurringExpenseForm — create/edit recurring rules (P3-C4)
+- **plan** — CategoryForm — create/edit expense category (P3-C3)
+- **plan** — FrequencyPicker — coupled recurrence-shape picker (P3-C2)
+- **plan** — ColorTokenPicker — 24-token closed-set color picker (P3-C1)
+- **actions** — pause/resume/end state-machine actions (P2-C9)
+- **actions** — recurring-expense CRUD Server Actions (P2-C8)
+- **actions** — expense-category Server Actions (P2-C7)
+- **client** — WorkerDbClient methods for category + recurring (P2-C5+C6)
+- **domain** — mappers + format helpers + reviewer housekeeping (P2-C4)
+- **domain** — sumWindow + sumMonth + sumNextDays (P2-C3)
+- **domain** — computeOccurrences pure function (P2-C2)
+- **types** — RecurrenceRule + Zod input/update schemas (P2-C1)
+- **worker** — recurring-expenses SQL endpoints + status guard (P1-C6)
+- **worker** — expense-categories SQL endpoints (P1-C5)
+- **worker** — recurring_expenses repository (P1-C4)
+- **worker** — expense_categories repository (P1-C3)
+- **db** — add 0007_recurring_expenses migration (P1-C2)
+- **schema** — add expense_categories + recurring_expenses tables (P1-C1)
+
+### Fixes
+
+- **plan** — router.refresh after mutations (P3-C9/C10 fix)
+- **plan** — status chip shows date + 已到期 not 已过期 (P3-C8 fix)
+- **plan** — switch DayDetailPopover to Radix Dialog (P3-C7 fix)
+- **plan** — clamp number inputs + weekday keyboard nav (P3-C2 fix)
+- **actions** — legal state-transition guard for pause/resume/end (P2-C9 fix)
+
+### Documentation
+
+- **plan** — release smoke checklist + automated gate results (P3-C12)
+- **plan** — tighten Phase 1/3 atomic plan after review v2
+- **plan** — expand Implementation Phases to atomic commit plan
+- **plan** — align success criterion #4 with unified occurrence ceiling
+- **plan** — unify occurrence ceiling so endDate also caps ended rules
+- **plan** — preserve historic occurrences after end, fix two corner cases
+- **plan** — align 002 spec with worker convention and tighten semantics
+- **plan** — add 002 spec for recurring expense calendar
+
+### Tests
+
+- **ui** — add RTL + jsdom infra for Phase 3 component tests (P3-C0)
+- **worker** — status/endedAt guard regression suite (P1-C7)
+
+### Chores
+
+- **deps** — lucide-react ^0.577.0 → ^1.17.0; inline GithubIcon
+- **deps** — lint-staged ^16.4.0 → ^17.0.7
+- **deps** — typescript ^5.9.3 → ^6.0.3
+- **deps** — @types/node ^20.19.37 → ^25.9.2
+- **worker/deps** — compat bumps across @nocoo/base-mcp, hono, zod, dev tools
+- **deps** — esbuild ^0.27.4 → ^0.28.0
+- **deps** — radix-ui ^1.4.3 → ^1.5.0; pin zod to 4.3.6
+- **navigation** — add 资金计划 NavGroup behind FEATURE_PLAN_CALENDAR=false (P2-C10)
+
 ## [2.3.2] - 2026-06-06
 
 ### Features
