@@ -2,7 +2,8 @@
 
 import { Suspense, useEffect, useMemo } from "react";
 import { usePathname } from "next/navigation";
-import { Menu, Github } from "lucide-react";
+import { Menu } from "lucide-react";
+import { GithubIcon } from "@/components/icons/github-icon";
 import { Sidebar } from "./sidebar";
 import { SidebarProvider, useSidebar } from "./sidebar-context";
 import { YearProvider } from "./year-context";
@@ -122,7 +123,7 @@ function AppShellInner({ children, breadcrumbs }: { children: React.ReactNode; b
               aria-label="GitHub repository"
               className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
             >
-              <Github className="h-[18px] w-[18px]" aria-hidden="true" strokeWidth={1.5} />
+              <GithubIcon className="h-[18px] w-[18px]" aria-hidden="true" strokeWidth={1.5} />
             </a>
             <ThemeToggle />
           </div>
