@@ -15,18 +15,18 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@nocoo/base-mcp": "^0.1.1",
     "drizzle-orm": "^0.45.2",
-    "hono": "^4.12.24",
+    "hono": "^4.12.25",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260608.1",
+    "@cloudflare/workers-types": "^4.20260610.1",
     "@types/better-sqlite3": "^7.6.13",
     "@vitest/coverage-v8": "^4.1.8",
     "better-sqlite3": "^12.10.0",
     "vitest": "^4.1.8",
-    "wrangler": "^4.98.0"
+    "wrangler": "^4.99.0"
   },
   "overrides": {
-    "hono": "4.12.24"
+    "hono": "4.12.25"
   }
 }
