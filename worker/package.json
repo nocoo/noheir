@@ -15,7 +15,7 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@nocoo/base-mcp": "^0.1.1",
     "drizzle-orm": "^0.45.2",
-    "hono": "^4.12.24",
+    "hono": "^4.12.25",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -27,6 +27,6 @@
     "wrangler": "^4.98.0"
   },
   "overrides": {
-    "hono": "4.12.24"
+    "hono": "4.12.25"
   }
 }
