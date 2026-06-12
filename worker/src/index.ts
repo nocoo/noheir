@@ -50,7 +50,6 @@ function getLocalDateString(): string {
 
 export interface Env {
   DB: D1Database;
-  DB_TEST: D1Database;
   WORKER_TOKEN: string;
   SITE_URL?: string;
 }
@@ -85,7 +84,6 @@ app.use(
       "Content-Type",
       "Authorization",
       "X-User-Id",
-      "X-Target-DB",
       "X-Internal-Action",
     ],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -128,12 +126,6 @@ app.get("/api/live", async (c) => {
 // Legacy alias — kept for backward compatibility
 app.get("/api/health", async (c) => c.redirect("/api/live", 301));
 
-// Helper to get D1 binding based on X-Target-DB header
-function getD1Binding(c: { req: { header: (name: string) => string | undefined }; env: Env }): D1Database {
-  const targetDb = c.req.header("X-Target-DB") ?? "production";
-  return (targetDb === "test" && c.env.DB_TEST) ? c.env.DB_TEST : c.env.DB;
-}
-
 // ── SQL API Endpoints (for Next.js MCP server) ──
 // All authed routes verify a single shared secret: WORKER_TOKEN.
 
@@ -159,7 +151,7 @@ app.post("/api/v1/query", async (c) => {
       return c.json({ error: "sql is required" }, 400);
     }
 
-    const d1 = getD1Binding(c);
+    const d1 = c.env.DB;
     const start = Date.now();
     const stmt = d1.prepare(body.sql).bind(...(body.params ?? []));
     const result = await stmt.all();
@@ -200,7 +192,7 @@ app.post("/api/v1/execute", async (c) => {
       statements?: { sql: string; params?: unknown[] }[];
     }>();
 
-    const d1 = getD1Binding(c);
+    const d1 = c.env.DB;
     const start = Date.now();
 
     // Batch mode
@@ -266,9 +258,8 @@ app.use("*", async (c, next) => {
     return c.json({ error: "Missing X-User-Id header" }, 400);
   }
 
-  // 3. Resolve target DB
-  const targetDb = c.req.header("X-Target-DB") ?? "production";
-  const d1Binding = targetDb === "test" ? c.env.DB_TEST : c.env.DB;
+  // 3. Resolve DB
+  const d1Binding = c.env.DB;
   const db = drizzle(d1Binding);
   const repos = createAllRepos(db);
 
