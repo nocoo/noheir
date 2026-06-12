@@ -1,5 +1,13 @@
 # 14 — Gen 2 Architecture Rewrite Plan
 
+> **2026-06-12 update — D1 test isolation has been retired.** The
+> `X-Target-DB` header, the `DB_TEST` Worker binding, and the
+> `noheir-db-test` remote database referenced below are gone. E2E now
+> runs entirely against a local D1 emulator booted by
+> `scripts/run-e2e.ts` (`wrangler dev --local`). Treat the relevant
+> sections (Phase 5 / 6 isolation tasks) as historical context, not
+> current architecture.
+
 > Rewrite noheir from Vite SPA + Supabase (Gen 1) to Next.js 16 + D1/Drizzle (Gen 2).
 > Target: basalt Gen 2 standard form, React 19, 6-dim quality S-tier.
 

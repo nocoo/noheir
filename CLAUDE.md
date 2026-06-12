@@ -38,7 +38,9 @@ cd worker && bun run dev
 |-------|-------|--------|
 | Unit | `src/__tests__/` | `bun run test` |
 | Worker Unit | `worker/tests/` (excl. e2e/) | `bun run test:worker` |
-| Worker E2E | `worker/tests/e2e/` | `bun run test:worker:e2e` |
+| Worker E2E | `worker/tests/e2e/` | `bun run test:e2e` (boots `wrangler dev --local`) |
+
+> E2E runs entirely against a local D1 emulator (`worker/.wrangler/state-e2e/`) — no remote test database. Migrations are applied to that local D1 before each run. The previous `noheir-db-test` database has been retired.
 
 ### Git Hooks
 
@@ -79,3 +81,4 @@ All domain labels (unitCode, strategy, tactics, status, currency, product) MUST 
 - MCP server moved from Worker to Next.js API routes (`src/app/api/mcp/`). Worker now only provides SQL API.
 - **Local npm links don't work in Docker builds**: `"@nocoo/base-mcp": "link:../base-mcp"` causes `FileNotFound` during Docker builds because the linked package doesn't exist in the build container. Solution: inline needed functions directly into the project (e.g., `src/lib/mcp/pkce.ts`) or publish to npm registry.
 - **Middleware whitelist must include `/api/auth/`**: `src/proxy.ts` redirects unauthenticated requests to `/login`. NextAuth's own endpoints (`/api/auth/session`, `/providers`, `/csrf`, `/callback/*`, …) must be in `PUBLIC_PREFIXES`, otherwise the client receives an HTML login page instead of JSON and breaks with `Unexpected token '<'`. Marking them only as "not protected" inside `isProtectedApiRoute` is **not** enough — they fall through to the protected-page branch.
+- **E2E uses `wrangler dev --local`, not a remote D1**: the previous `X-Target-DB` header + `DB_TEST` binding + `noheir-db-test` remote database is gone. `scripts/run-e2e.ts` boots wrangler locally, applies migrations into `worker/.wrangler/state-e2e/`, and runs the suite over loopback. CI does the same — no remote D1 is required.
