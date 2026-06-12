@@ -58,6 +58,29 @@ export function formatAmountYuan(cents: number): string {
   return `¥${formatter.format(yuan)}`;
 }
 
+/** Compact yuan formatting for the calendar banner — keeps each cell
+ *  legible even when several rules pile up on one day. Uses Chinese
+ *  "万" past 10,000, falls back to full numbers below 1,000.
+ *
+ *  Examples:
+ *    9900     → "¥99"
+ *    250000   → "¥2,500"
+ *    1000000  → "¥1万"
+ *    1234500  → "¥1.2万"
+ *    100000000 → "¥1000万"
+ */
+export function formatAmountCompact(cents: number): string {
+  const yuan = Math.abs(cents) / 100;
+  const sign = cents < 0 ? "-" : "";
+  if (yuan >= 10000) {
+    const wan = yuan / 10000;
+    const text = wan >= 100 ? wan.toFixed(0) : wan.toFixed(1).replace(/\.0$/, "");
+    return `${sign}¥${text}万`;
+  }
+  const rounded = Math.round(yuan);
+  return `${sign}¥${new Intl.NumberFormat("zh-CN").format(rounded)}`;
+}
+
 /** Pure: derive the UI display status. `expired` is computed from
  *  endDate < today for active rules and never persisted. */
 export function deriveDisplayStatus(

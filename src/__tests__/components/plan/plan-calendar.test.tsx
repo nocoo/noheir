@@ -200,7 +200,11 @@ describe("PlanCalendar occurrence dots (P3-C5)", () => {
     const feb5 = cells.find((c) => c.getAttribute("data-iso") === "2026-02-05");
     const dot = feb5?.querySelector("[data-rule-id='r1']") as HTMLElement | null;
     expect(dot).not.toBeNull();
-    expect(dot?.style.backgroundColor.length).toBeGreaterThan(0);
+    // Banner uses the category color as a left accent stripe; the
+    // fallback path must still apply a color so the banner doesn't
+    // render with a transparent edge.
+    expect(dot?.style.borderLeftColor.length).toBeGreaterThan(0);
+    expect(dot?.getAttribute("data-color")).toBe("fallback");
   });
 
   test("day with > 3 occurrences shows only 3 dots + '+N' overflow", () => {
@@ -309,6 +313,151 @@ describe("PlanCalendar interaction (P3-C5)", () => {
     const feb14 = cells.find((c) => c.getAttribute("data-iso") === "2026-02-14");
     if (!feb14) throw new Error("missing feb 14");
     await user.click(feb14);
+  });
+});
+
+describe("PlanCalendar banner display (improvement)", () => {
+  test("banner shows rule name and compact amount", () => {
+    const r = rule({
+      id: "r1",
+      name: "房贷",
+      categoryId: "c1",
+      amountCents: 250000, // ¥2,500
+      dayOfMonth: 10,
+    });
+    render(
+      <PlanCalendar
+        viewMonth="2026-02-01"
+        rules={[r]}
+        categoryMap={catMap([{ id: "c1", name: "房贷", colorToken: "chart-9" }])}
+      />,
+    );
+    const banner = screen.getByTestId("banner-2026-02-10-r1");
+    expect(within(banner).getByText("房贷")).toBeInTheDocument();
+    expect(within(banner).getByText("¥2,500")).toBeInTheDocument();
+  });
+
+  test("banner shows '万' suffix for amounts ≥ 10000 yuan", () => {
+    const r = rule({
+      id: "r1",
+      name: "保险",
+      amountCents: 1234500, // 12,345 yuan → ¥1.2万
+      dayOfMonth: 5,
+    });
+    render(
+      <PlanCalendar
+        viewMonth="2026-02-01"
+        rules={[r]}
+        categoryMap={catMap([])}
+      />,
+    );
+    const banner = screen.getByTestId("banner-2026-02-05-r1");
+    expect(within(banner).getByText("¥1.2万")).toBeInTheDocument();
+  });
+
+  test("clicking a banner calls onOpenRule and does NOT call onSelectDay", async () => {
+    const user = userEvent.setup();
+    const onOpenRule = vi.fn();
+    const onSelectDay = vi.fn();
+    const r = rule({ id: "r1", name: "Netflix", amountCents: 9900, dayOfMonth: 12 });
+    render(
+      <PlanCalendar
+        viewMonth="2026-02-01"
+        rules={[r]}
+        categoryMap={catMap([])}
+        onOpenRule={onOpenRule}
+        onSelectDay={onSelectDay}
+      />,
+    );
+    await user.click(screen.getByTestId("banner-2026-02-12-r1"));
+    expect(onOpenRule).toHaveBeenCalledWith("r1");
+    expect(onSelectDay).not.toHaveBeenCalled();
+  });
+
+  test("clicking the +N overflow opens the day detail (onSelectDay)", async () => {
+    const user = userEvent.setup();
+    const onOpenRule = vi.fn();
+    const onSelectDay = vi.fn();
+    const rules = Array.from({ length: 5 }, (_, i) =>
+      rule({ id: `r${i}`, dayOfMonth: 8 }),
+    );
+    render(
+      <PlanCalendar
+        viewMonth="2026-02-01"
+        rules={rules}
+        categoryMap={catMap([])}
+        onOpenRule={onOpenRule}
+        onSelectDay={onSelectDay}
+      />,
+    );
+    await user.click(screen.getByTestId("overflow-2026-02-08"));
+    expect(onSelectDay).toHaveBeenCalledWith("2026-02-08");
+    expect(onOpenRule).not.toHaveBeenCalled();
+  });
+
+  test("keyboard-activating a banner calls onOpenRule and NOT onSelectDay", async () => {
+    const user = userEvent.setup();
+    const onOpenRule = vi.fn();
+    const onSelectDay = vi.fn();
+    const r = rule({ id: "r1", name: "Netflix", amountCents: 9900, dayOfMonth: 12 });
+    render(
+      <PlanCalendar
+        viewMonth="2026-02-01"
+        rules={[r]}
+        categoryMap={catMap([])}
+        onOpenRule={onOpenRule}
+        onSelectDay={onSelectDay}
+      />,
+    );
+    const banner = screen.getByTestId("banner-2026-02-12-r1");
+    banner.focus();
+    expect(banner).toHaveFocus();
+    await user.keyboard("{Enter}");
+    expect(onOpenRule).toHaveBeenCalledWith("r1");
+    expect(onSelectDay).not.toHaveBeenCalled();
+
+    onOpenRule.mockClear();
+    banner.focus();
+    await user.keyboard(" ");
+    expect(onOpenRule).toHaveBeenCalledWith("r1");
+    expect(onSelectDay).not.toHaveBeenCalled();
+  });
+
+  test("keyboard Enter on the cell itself calls onSelectDay", async () => {
+    const user = userEvent.setup();
+    const onSelectDay = vi.fn();
+    render(
+      <PlanCalendar
+        viewMonth="2026-02-01"
+        rules={[]}
+        categoryMap={catMap([])}
+        onSelectDay={onSelectDay}
+      />,
+    );
+    const cells = screen.getAllByRole("gridcell");
+    const feb14 = cells.find((c) => c.getAttribute("data-iso") === "2026-02-14");
+    if (!feb14) throw new Error("missing feb 14");
+    (feb14 as HTMLElement).focus();
+    await user.keyboard("{Enter}");
+    expect(onSelectDay).toHaveBeenCalledWith("2026-02-14");
+  });
+
+  test("clicking empty area of a day still opens day detail (onSelectDay)", async () => {
+    const user = userEvent.setup();
+    const onSelectDay = vi.fn();
+    render(
+      <PlanCalendar
+        viewMonth="2026-02-01"
+        rules={[]}
+        categoryMap={catMap([])}
+        onSelectDay={onSelectDay}
+      />,
+    );
+    const cells = screen.getAllByRole("gridcell");
+    const feb14 = cells.find((c) => c.getAttribute("data-iso") === "2026-02-14");
+    if (!feb14) throw new Error("missing feb 14");
+    await user.click(feb14);
+    expect(onSelectDay).toHaveBeenCalledWith("2026-02-14");
   });
 });
 

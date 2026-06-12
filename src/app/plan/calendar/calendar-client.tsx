@@ -224,6 +224,7 @@ export function CalendarClient({
           todayIso={todayIso}
           selectedDay={selectedDay}
           onSelectDay={(iso) => setSelectedDay(iso)}
+          onOpenRule={(id) => setEditingId(id)}
         />
       </div>
 
