@@ -41,6 +41,7 @@ import Link from "next/link"
 import { createUnit, updateUnit } from "@/app/actions/unit-actions"
 import { createProduct } from "@/app/actions/product-actions"
 import type { DomainProduct } from "@/domain/types"
+import { buildUnitUpdateDiff, type UnitFormSnapshot } from "@/lib/unit-update-diff"
 import { InvestmentTimeline } from "./investment-timeline"
 
 // ── Constants ──
@@ -228,7 +229,18 @@ function UnitEditorForm({
 
     startTransition(async () => {
       if (isEditing && unit) {
-        const result = await updateUnit(unit.id, {
+        const initial: UnitFormSnapshot = {
+          unitCode: unit.unitCode,
+          amount: unit.amount,
+          currency: unit.currency,
+          status: unit.status,
+          strategy: unit.strategy,
+          tactics: unit.tactics,
+          productId: unit.productId,
+          startDate: unit.startDate,
+          note: unit.note,
+        }
+        const current: UnitFormSnapshot = {
           unitCode: unitCode.trim(),
           amount: Number(amount),
           currency,
@@ -237,16 +249,34 @@ function UnitEditorForm({
           tactics,
           productId: productId,
           startDate: startDate || null,
-          // endDate is managed automatically by backend based on status
           note: note.trim() || null,
-        })
-        if (result.success) {
+        }
+        const { productIdPayload, otherPayload } = buildUnitUpdateDiff(initial, current)
+
+        if (!productIdPayload && !otherPayload) {
           toast.success("单位已更新")
           onSuccess()
           onOpenChange(false)
-        } else {
-          toast.error(result.error)
+          return
         }
+
+        if (productIdPayload) {
+          const r = await updateUnit(unit.id, productIdPayload)
+          if (!r.success) {
+            toast.error(r.error)
+            return
+          }
+        }
+        if (otherPayload) {
+          const r = await updateUnit(unit.id, otherPayload)
+          if (!r.success) {
+            toast.error(r.error)
+            return
+          }
+        }
+        toast.success("单位已更新")
+        onSuccess()
+        onOpenChange(false)
       } else {
         const payload: Parameters<typeof createUnit>[0] = {
           unitCode: unitCode.trim(),
