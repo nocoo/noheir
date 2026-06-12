@@ -35,11 +35,9 @@ if [ "${SKIP_SECURITY:-0}" != "1" ]; then
 fi
 
 if [ "${SKIP_E2E:-0}" != "1" ]; then
-  if curl -sf http://localhost:8787/api/live >/dev/null 2>&1; then
-    run_bg e2e bun run test:e2e
-  else
-    echo "\033[1;33m⚠  Worker not running — E2E tests SKIPPED (run 'bun run worker:dev' to enable)\033[0m"
-  fi
+  # The runner spawns its own `wrangler dev --local` and tears it down
+  # on exit, so pre-push just delegates and lets it own the lifecycle.
+  run_bg e2e bun run test:e2e
 fi
 
 # Wait for all

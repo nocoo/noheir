@@ -15,8 +15,9 @@
 
 import { spawn, type Subprocess } from "bun";
 import { rmSync } from "node:fs";
+import { createServer } from "node:net";
 
-const PORT = 8787;
+const PORT = Number(process.env.E2E_PORT ?? 8788);
 const BASE = `http://127.0.0.1:${PORT}`;
 const ROOT = `${import.meta.dir}/..`;
 const WORKER_DIR = `${ROOT}/worker`;
@@ -29,6 +30,32 @@ let wrangler: Subprocess | null = null;
 
 function log(msg: string): void {
   console.log(`[e2e] ${msg}`);
+}
+
+async function ensurePortFree(): Promise<void> {
+  // Bind-and-release probe: if anything else owns the port (e.g. a
+  // long-running `wrangler dev`), the runner should fail loudly with
+  // an actionable message rather than silently spawning a wrangler
+  // that crashes a few seconds later.
+  await new Promise<void>((resolve, reject) => {
+    const probe = createServer();
+    probe.once("error", (err: NodeJS.ErrnoException) => {
+      if (err.code === "EADDRINUSE") {
+        reject(
+          new Error(
+            `port ${PORT} is in use — kill the process holding it (lsof -i :${PORT}) ` +
+              `or set E2E_PORT to a free port`,
+          ),
+        );
+      } else {
+        reject(err);
+      }
+    });
+    probe.once("listening", () => {
+      probe.close(() => resolve());
+    });
+    probe.listen(PORT, "127.0.0.1");
+  });
 }
 
 async function waitForHealth(): Promise<void> {
@@ -139,7 +166,12 @@ async function stopWrangler(): Promise<void> {
 }
 
 async function runTests(): Promise<number> {
-  const proc = spawn(["bun", "run", "test:worker:e2e"], {
+  // E2E suites use Bun's built-in test runner — Vitest can't be a
+  // drop-in replacement because the suites lean on Bun-specific
+  // matchers like `.toBeString()`. We invoke `bun test` directly,
+  // pinned to `worker/tests/e2e`, so unrelated test directories
+  // don't get pulled in.
+  const proc = spawn(["bun", "test", "worker/tests/e2e"], {
     cwd: ROOT,
     stdout: "inherit",
     stderr: "inherit",
@@ -153,6 +185,7 @@ async function runTests(): Promise<number> {
 }
 
 async function main(): Promise<void> {
+  await ensurePortFree();
   applyMigrations();
   await startWrangler();
   try {

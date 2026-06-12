@@ -10,7 +10,6 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:worker": "cd worker && vitest run",
-    "test:worker:e2e": "cd worker && vitest run --config vitest.e2e.config.ts",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "bun run scripts/run-e2e.ts",
     "db:generate": "drizzle-kit generate",

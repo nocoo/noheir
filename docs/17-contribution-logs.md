@@ -486,7 +486,7 @@ npx wrangler d1 migrations apply noheir-db --remote
 bun run test:worker
 
 # 3. Run worker E2E tests
-bun run test:worker:e2e
+bun run test:e2e
 
 # 4. Manual API test (local dev)
 # Start worker: bun run worker:dev
