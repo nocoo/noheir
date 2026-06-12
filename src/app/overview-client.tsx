@@ -31,14 +31,9 @@ export function OverviewClient({
   savingsRate,
   targetSavingsRate,
 }: OverviewClientProps) {
-  // Filter to last month's transactions
-  const oneMonthAgo = new Date()
-  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1)
-  const oneMonthAgoStr = oneMonthAgo.toISOString().slice(0, 10)
-
-  const recentTransactions = [...transactions]
-    .filter((t) => t.date >= oneMonthAgoStr)
-    .sort((a, b) => b.date.localeCompare(a.date))
+  const recentTransactions = [...transactions].sort((a, b) =>
+    b.date.localeCompare(a.date)
+  )
 
   return (
     <div className="space-y-6">
