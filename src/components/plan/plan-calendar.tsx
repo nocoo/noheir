@@ -212,6 +212,15 @@ export function PlanCalendar({
               aria-selected={isSelected || undefined}
               onClick={() => onSelectDay?.(cell.iso)}
               onKeyDown={(e) => {
+                // Only treat key events that originated on the cell
+                // itself as the "open day detail" affordance. Enter /
+                // Space on a focused banner (or +N button) must NOT
+                // also fire this handler — otherwise the popover
+                // would open every time a keyboard user activates a
+                // banner. The child buttons' own onClick handlers
+                // already stopPropagation for mouse clicks, but for
+                // keydown the synthetic event still bubbles here.
+                if (e.target !== e.currentTarget) return;
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
                   onSelectDay?.(cell.iso);
@@ -266,25 +275,31 @@ export function PlanCalendar({
                         title={`${rule.name} · ${formatAmountCompact(rule.amountCents)}`}
                         aria-label={`${rule.name} ${formatAmountCompact(rule.amountCents)}`}
                         style={{
-                          backgroundColor: color,
-                          // Keep the dot data-color contract for tests
-                          // even though we render a full banner now.
+                          // Render the category color as a left accent
+                          // stripe instead of the banner background.
+                          // White-on-chart-N was failing WCAG AA at
+                          // 10px (chart-6 ~ 1.98, chart-20 ~ 2.01 in
+                          // light theme; even worse in dark). The
+                          // neutral muted background + foreground text
+                          // both come from theme tokens and inherit
+                          // the project's verified contrast.
                           borderLeftColor: color,
                         }}
                         className={cn(
-                          "flex w-full items-center justify-between gap-1 rounded-sm px-1.5 py-0.5",
-                          "text-[10px] font-medium text-white leading-tight",
-                          "outline-none ring-offset-background transition-opacity",
-                          "hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring",
-                          // Drop the bright tint for adjacent-month cells
-                          // so the in-month banners stay the focal point.
+                          "flex w-full items-center justify-between gap-1 rounded-sm py-0.5 pl-1.5 pr-1.5",
+                          "border-l-[3px] bg-muted/70 text-foreground",
+                          "text-[10px] font-medium leading-tight",
+                          "outline-none ring-offset-background transition-colors",
+                          "hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring",
+                          // Dim the entire banner on out-of-month cells
+                          // so the in-month entries stay the focal point.
                           !cell.inMonth && "opacity-60",
                         )}
                       >
                         <span className="min-w-0 flex-1 truncate text-left">
                           {rule.name}
                         </span>
-                        <span className="shrink-0 tabular-nums">
+                        <span className="shrink-0 tabular-nums text-muted-foreground">
                           {formatAmountCompact(rule.amountCents)}
                         </span>
                       </button>

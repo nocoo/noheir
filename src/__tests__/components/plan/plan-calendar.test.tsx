@@ -200,7 +200,11 @@ describe("PlanCalendar occurrence dots (P3-C5)", () => {
     const feb5 = cells.find((c) => c.getAttribute("data-iso") === "2026-02-05");
     const dot = feb5?.querySelector("[data-rule-id='r1']") as HTMLElement | null;
     expect(dot).not.toBeNull();
-    expect(dot?.style.backgroundColor.length).toBeGreaterThan(0);
+    // Banner uses the category color as a left accent stripe; the
+    // fallback path must still apply a color so the banner doesn't
+    // render with a transparent edge.
+    expect(dot?.style.borderLeftColor.length).toBeGreaterThan(0);
+    expect(dot?.getAttribute("data-color")).toBe("fallback");
   });
 
   test("day with > 3 occurrences shows only 3 dots + '+N' overflow", () => {
@@ -389,6 +393,53 @@ describe("PlanCalendar banner display (improvement)", () => {
     await user.click(screen.getByTestId("overflow-2026-02-08"));
     expect(onSelectDay).toHaveBeenCalledWith("2026-02-08");
     expect(onOpenRule).not.toHaveBeenCalled();
+  });
+
+  test("keyboard-activating a banner calls onOpenRule and NOT onSelectDay", async () => {
+    const user = userEvent.setup();
+    const onOpenRule = vi.fn();
+    const onSelectDay = vi.fn();
+    const r = rule({ id: "r1", name: "Netflix", amountCents: 9900, dayOfMonth: 12 });
+    render(
+      <PlanCalendar
+        viewMonth="2026-02-01"
+        rules={[r]}
+        categoryMap={catMap([])}
+        onOpenRule={onOpenRule}
+        onSelectDay={onSelectDay}
+      />,
+    );
+    const banner = screen.getByTestId("banner-2026-02-12-r1");
+    banner.focus();
+    expect(banner).toHaveFocus();
+    await user.keyboard("{Enter}");
+    expect(onOpenRule).toHaveBeenCalledWith("r1");
+    expect(onSelectDay).not.toHaveBeenCalled();
+
+    onOpenRule.mockClear();
+    banner.focus();
+    await user.keyboard(" ");
+    expect(onOpenRule).toHaveBeenCalledWith("r1");
+    expect(onSelectDay).not.toHaveBeenCalled();
+  });
+
+  test("keyboard Enter on the cell itself calls onSelectDay", async () => {
+    const user = userEvent.setup();
+    const onSelectDay = vi.fn();
+    render(
+      <PlanCalendar
+        viewMonth="2026-02-01"
+        rules={[]}
+        categoryMap={catMap([])}
+        onSelectDay={onSelectDay}
+      />,
+    );
+    const cells = screen.getAllByRole("gridcell");
+    const feb14 = cells.find((c) => c.getAttribute("data-iso") === "2026-02-14");
+    if (!feb14) throw new Error("missing feb 14");
+    (feb14 as HTMLElement).focus();
+    await user.keyboard("{Enter}");
+    expect(onSelectDay).toHaveBeenCalledWith("2026-02-14");
   });
 
   test("clicking empty area of a day still opens day detail (onSelectDay)", async () => {
