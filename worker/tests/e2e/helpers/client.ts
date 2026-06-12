@@ -8,7 +8,7 @@
  * `WORKER_URL` and `WORKER_TOKEN` are populated by the runner.
  */
 
-const WORKER_BASE_URL = process.env.WORKER_URL ?? "http://127.0.0.1:8787";
+const WORKER_BASE_URL = process.env.WORKER_URL ?? "http://127.0.0.1:8788";
 const WORKER_TOKEN = process.env.WORKER_TOKEN ?? "";
 
 // ── Lightweight HTTP helper (no WorkerDbClient dependency) ──

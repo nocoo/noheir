@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import { api, rawFetch, TEST_USER_A } from "./helpers/client";
+import { api, rawFetch, BASE_URL, TEST_USER_A } from "./helpers/client";
 import { ensureTestUser } from "./helpers/cleanup";
 
 const userId = TEST_USER_A;
@@ -147,7 +147,7 @@ describe("E2E: /api/expense-categories (P1-C5)", () => {
   test("CORS preflight allows the standard headers", async () => {
     // OPTIONS preflight from a browser-style request
     const res = await fetch(
-      "http://127.0.0.1:8787/api/expense-categories",
+      `${BASE_URL}/api/expense-categories`,
       {
         method: "OPTIONS",
         headers: {

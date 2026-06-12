@@ -4,7 +4,7 @@
 // fields.
 
 import { beforeEach, describe, expect, test } from "vitest";
-import { api, rawFetch, TEST_USER_C } from "./helpers/client";
+import { api, rawFetch, BASE_URL, TEST_USER_C } from "./helpers/client";
 import { ensureTestUser } from "./helpers/cleanup";
 
 const userId = TEST_USER_C;
@@ -80,7 +80,7 @@ describe("E2E: recurring-expenses status/endedAt guard regression (P1-C7)", () =
 
     // Seed endedAt = '2026-03-15' via the internal channel.
     const seedRes = await fetch(
-      `http://127.0.0.1:8787/api/recurring-expenses/${rule.id}`,
+      `${BASE_URL}/api/recurring-expenses/${rule.id}`,
       {
         method: "PUT",
         headers: {
@@ -134,7 +134,7 @@ describe("E2E: recurring-expenses status/endedAt guard regression (P1-C7)", () =
 
     async function internalPut(payload: Record<string, unknown>): Promise<Rule> {
       const res = await fetch(
-        `http://127.0.0.1:8787/api/recurring-expenses/${rule.id}`,
+        `${BASE_URL}/api/recurring-expenses/${rule.id}`,
         {
           method: "PUT",
           headers: {
@@ -175,7 +175,7 @@ describe("E2E: recurring-expenses status/endedAt guard regression (P1-C7)", () =
     // sentinel "1". Only the exact string "1" enables the bypass.
     for (const headerVal of ["0", "true", "", "yes"]) {
       const res = await fetch(
-        `http://127.0.0.1:8787/api/recurring-expenses/${rule.id}`,
+        `${BASE_URL}/api/recurring-expenses/${rule.id}`,
         {
           method: "PUT",
           headers: {

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import { api, rawFetch, TEST_USER_B } from "./helpers/client";
+import { api, rawFetch, BASE_URL, TEST_USER_B } from "./helpers/client";
 import { ensureTestUser } from "./helpers/cleanup";
 
 const userId = TEST_USER_B;
@@ -154,7 +154,7 @@ describe("E2E: /api/recurring-expenses (P1-C6)", () => {
     });
 
     const res = await fetch(
-      `http://127.0.0.1:8787/api/recurring-expenses/${rule.id}`,
+      `${BASE_URL}/api/recurring-expenses/${rule.id}`,
       {
         method: "PUT",
         headers: {
@@ -185,7 +185,7 @@ describe("E2E: /api/recurring-expenses (P1-C6)", () => {
     });
 
     const res = await fetch(
-      `http://127.0.0.1:8787/api/recurring-expenses/${rule.id}`,
+      `${BASE_URL}/api/recurring-expenses/${rule.id}`,
       {
         method: "PUT",
         headers: {
@@ -214,7 +214,7 @@ describe("E2E: /api/recurring-expenses (P1-C6)", () => {
     });
 
     await fetch(
-      `http://127.0.0.1:8787/api/recurring-expenses/${rule.id}`,
+      `${BASE_URL}/api/recurring-expenses/${rule.id}`,
       {
         method: "PUT",
         headers: {
@@ -265,7 +265,7 @@ describe("E2E: /api/recurring-expenses (P1-C6)", () => {
 
   test("CORS preflight reflects X-Internal-Action header", async () => {
     const res = await fetch(
-      "http://127.0.0.1:8787/api/recurring-expenses/anything",
+      `${BASE_URL}/api/recurring-expenses/anything`,
       {
         method: "OPTIONS",
         headers: {
