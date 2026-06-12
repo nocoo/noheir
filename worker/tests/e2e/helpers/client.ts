@@ -1,14 +1,14 @@
 /**
  * E2E test client factory.
  *
- * Defaults to a local `wrangler dev` server with `targetDb: "test"` so all
- * queries go to the local test D1 binding. In CI (or any environment that
- * targets an already-deployed Worker), set `WORKER_URL` and `WORKER_TOKEN`
- * to override.
+ * Talks to a local `wrangler dev --local` server (booted by
+ * `scripts/run-e2e.ts`). All tests share one local D1 emulator —
+ * there is no remote test database anymore.
+ *
+ * `WORKER_URL` and `WORKER_TOKEN` are populated by the runner.
  */
 
-const WORKER_BASE_URL =
-  process.env.WORKER_URL ?? "http://127.0.0.1:8787";
+const WORKER_BASE_URL = process.env.WORKER_URL ?? "http://127.0.0.1:8787";
 const WORKER_TOKEN = process.env.WORKER_TOKEN ?? "";
 
 // ── Lightweight HTTP helper (no WorkerDbClient dependency) ──
@@ -17,7 +17,6 @@ export interface FetchOptions {
   method?: string;
   path: string;
   userId?: string;
-  targetDb?: "test" | "production";
   body?: unknown;
   token?: string;
   omitAuth?: boolean;
@@ -43,7 +42,6 @@ export async function rawFetch(opts: FetchOptions): Promise<Response> {
   if (opts.userId) {
     headers["X-User-Id"] = opts.userId;
   }
-  headers["X-Target-DB"] = opts.targetDb ?? "test";
 
   const init: RequestInit = {
     method: opts.method ?? "GET",

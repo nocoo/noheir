@@ -161,7 +161,6 @@ describe("E2E: /api/recurring-expenses (P1-C6)", () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${process.env.WORKER_TOKEN ?? ""}`,
           "X-User-Id": userId,
-          "X-Target-DB": "test",
           "X-Internal-Action": "1",
         },
         body: JSON.stringify({
@@ -193,7 +192,6 @@ describe("E2E: /api/recurring-expenses (P1-C6)", () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${process.env.WORKER_TOKEN ?? ""}`,
           "X-User-Id": userId,
-          "X-Target-DB": "test",
           "X-Internal-Action": "1",
         },
         body: JSON.stringify({ endedAt: "2026-03-15" }),
@@ -223,7 +221,6 @@ describe("E2E: /api/recurring-expenses (P1-C6)", () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${process.env.WORKER_TOKEN ?? ""}`,
           "X-User-Id": userId,
-          "X-Target-DB": "test",
           "X-Internal-Action": "1",
         },
         body: JSON.stringify({ endedAt: "2026-03-15" }),
@@ -275,7 +272,7 @@ describe("E2E: /api/recurring-expenses (P1-C6)", () => {
           Origin: "https://noheir.app",
           "Access-Control-Request-Method": "PUT",
           "Access-Control-Request-Headers":
-            "Content-Type, Authorization, X-User-Id, X-Target-DB, X-Internal-Action",
+            "Content-Type, Authorization, X-User-Id, X-Internal-Action",
         },
       },
     );

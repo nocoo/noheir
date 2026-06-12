@@ -154,13 +154,12 @@ describe("E2E: /api/expense-categories (P1-C5)", () => {
           Origin: "https://noheir.app",
           "Access-Control-Request-Method": "POST",
           "Access-Control-Request-Headers":
-            "Content-Type, Authorization, X-User-Id, X-Target-DB",
+            "Content-Type, Authorization, X-User-Id",
         },
       },
     );
     expect(res.status).toBeLessThan(400);
     const allowHeaders = (res.headers.get("access-control-allow-headers") ?? "").toLowerCase();
     expect(allowHeaders).toContain("x-user-id");
-    expect(allowHeaders).toContain("x-target-db");
   });
 });
