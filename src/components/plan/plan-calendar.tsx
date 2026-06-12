@@ -299,7 +299,7 @@ export function PlanCalendar({
                         <span className="min-w-0 flex-1 truncate text-left">
                           {rule.name}
                         </span>
-                        <span className="shrink-0 tabular-nums text-muted-foreground">
+                        <span className="shrink-0 tabular-nums text-foreground">
                           {formatAmountCompact(rule.amountCents)}
                         </span>
                       </button>
