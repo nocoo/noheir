@@ -7,7 +7,7 @@
  * IMPORTANT: This module must NEVER be imported in client-side code.
  */
 import { auth } from "@/auth";
-import { WorkerDbClient, type TargetDb } from "./worker-db-client";
+import { WorkerDbClient } from "./worker-db-client";
 
 function getWorkerUrl(): string {
   const url = process.env.WORKER_URL;
@@ -21,20 +21,12 @@ function getWorkerSecret(): string {
   return secret;
 }
 
-function resolveTargetDb(): TargetDb {
-  return (process.env.WORKER_TARGET_DB === "test") ? "test" : "production";
-}
-
 /**
  * Create a WorkerDbClient configured from environment variables.
  * Does NOT include user context — pass userId to each method.
  */
-export function createWorkerClient(targetDb?: TargetDb): WorkerDbClient {
-  return new WorkerDbClient(
-    getWorkerUrl(),
-    getWorkerSecret(),
-    targetDb ?? resolveTargetDb(),
-  );
+export function createWorkerClient(): WorkerDbClient {
+  return new WorkerDbClient(getWorkerUrl(), getWorkerSecret());
 }
 
 /**
@@ -58,8 +50,8 @@ export async function requireUserId(): Promise<string> {
  * const data = await client.searchTransactions(userId, { year: 2026 });
  * ```
  */
-export async function getAuthedClient(targetDb?: TargetDb) {
+export async function getAuthedClient() {
   const userId = await requireUserId();
-  const client = createWorkerClient(targetDb);
+  const client = createWorkerClient();
   return { userId, client };
 }

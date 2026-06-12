@@ -50,10 +50,10 @@ describe("WorkerDbClient — expense category methods (P2-C5)", () => {
 
   beforeEach(() => {
     vi.restoreAllMocks();
-    client = new WorkerDbClient(BASE, TOKEN, "test");
+    client = new WorkerDbClient(BASE, TOKEN);
   });
 
-  test("listExpenseCategories sends GET with auth + user + target headers", async () => {
+  test("listExpenseCategories sends GET with auth + user headers", async () => {
     const { calls, call } = setupFetch([
       { status: 200, body: { categories: [] } },
     ]);
@@ -64,7 +64,7 @@ describe("WorkerDbClient — expense category methods (P2-C5)", () => {
     expect(req.url).toBe(`${BASE}/api/expense-categories`);
     expect(req.headers.authorization).toBe(`Bearer ${TOKEN}`);
     expect(req.headers["x-user-id"]).toBe("u1");
-    expect(req.headers["x-target-db"]).toBe("test");
+    expect(req.headers["x-target-db"]).toBeUndefined();
     expect(req.body).toBeNull();
   });
 
@@ -118,7 +118,7 @@ describe("WorkerDbClient — recurring expense methods (P2-C6)", () => {
 
   beforeEach(() => {
     vi.restoreAllMocks();
-    client = new WorkerDbClient(BASE, TOKEN, "test");
+    client = new WorkerDbClient(BASE, TOKEN);
   });
 
   test("listRecurringExpenses GET", async () => {

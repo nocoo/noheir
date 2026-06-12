@@ -11,8 +11,6 @@
  * WORKER_URL and WORKER_TOKEN are server-only env vars.
  */
 
-export type TargetDb = "production" | "test";
-
 export class WorkerDbError extends Error {
   constructor(
     message: string,
@@ -27,12 +25,10 @@ export class WorkerDbError extends Error {
 export class WorkerDbClient {
   private readonly baseUrl: string;
   private readonly secret: string;
-  private readonly targetDb: TargetDb;
 
-  constructor(baseUrl: string, secret: string, targetDb: TargetDb = "production") {
+  constructor(baseUrl: string, secret: string) {
     this.baseUrl = baseUrl.replace(/\/$/, "");
     this.secret = secret;
-    this.targetDb = targetDb;
   }
 
   private headers(userId: string): HeadersInit {
@@ -40,7 +36,6 @@ export class WorkerDbClient {
       "Content-Type": "application/json",
       Authorization: `Bearer ${this.secret}`,
       "X-User-Id": userId,
-      "X-Target-DB": this.targetDb,
     };
   }
 
