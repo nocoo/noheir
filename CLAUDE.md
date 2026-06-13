@@ -42,6 +42,19 @@ cd worker && bun run dev
 
 > E2E runs entirely against a local D1 emulator (`worker/.wrangler/state-e2e/`) — no remote test database. Migrations are applied to that local D1 before each run. The previous `noheir-db-test` database has been retired.
 
+### Port allocation
+
+Per the personal port plan (`dev → dev + 10000 → dev + 20000` for dev/L2/BDD):
+
+| Purpose | Port | Notes |
+|---------|------|-------|
+| Next.js dev server | `7004` | `bun run dev` |
+| Worker dev (manual) | `8787` | Cloudflare default; only when running `cd worker && bun run dev` for ad-hoc poking |
+| L2 / E2E wrangler | `17004` | Owned by `scripts/run-e2e.ts`; override with `E2E_PORT` |
+| BDD | `27004` | (not in use) |
+
+The runner refuses to start if `17004` is busy and tells you to free it or set `E2E_PORT`.
+
 ### Git Hooks
 
 | Hook | Runs | Config |

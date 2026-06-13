@@ -17,7 +17,9 @@ import { spawn, type Subprocess } from "bun";
 import { rmSync } from "node:fs";
 import { createServer } from "node:net";
 
-const PORT = Number(process.env.E2E_PORT ?? 8788);
+// noheir's port band per the personal port plan: dev 7004, L2 (E2E)
+// dev + 10000 = 17004, BDD dev + 20000 (unused). E2E_PORT can override.
+const PORT = Number(process.env.E2E_PORT ?? 17004);
 const BASE = `http://127.0.0.1:${PORT}`;
 const ROOT = `${import.meta.dir}/..`;
 const WORKER_DIR = `${ROOT}/worker`;
