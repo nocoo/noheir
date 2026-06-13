@@ -1,15 +1,16 @@
 import { defineConfig, devices } from "@playwright/test"
 
 export default defineConfig({
-  testDir: "./e2e",
+  testDir: "./e2e/bdd",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : 2,
   reporter: "html",
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:7004",
+    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:27004",
     trace: "on-first-retry",
+    headless: true,
   },
   projects: [
     {
@@ -18,9 +19,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "bun run dev",
-    url: "http://localhost:7004",
+    command: "bun run dev -- --port 27004",
+    url: "http://localhost:27004",
     reuseExistingServer: !process.env.CI,
-    timeout: 30000,
+    timeout: 60_000,
   },
 })
