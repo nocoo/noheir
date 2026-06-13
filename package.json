@@ -12,6 +12,7 @@
     "test:worker": "cd worker && vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "bun run scripts/run-e2e.ts",
+    "test:e2e:bdd": "bunx playwright test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
