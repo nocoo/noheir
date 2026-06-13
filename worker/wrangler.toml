@@ -3,6 +3,11 @@ main = "src/index.ts"
 compatibility_date = "2025-06-01"
 compatibility_flags = ["nodejs_compat"]
 
+# Manual `bun run dev` port (per personal port plan: dev+30000 = 37004).
+# E2E runner uses 17004 via `--port`, so this is only for ad-hoc poking.
+[dev]
+port = 37004
+
 [vars]
 # WORKER_TOKEN is set via `wrangler secret put WORKER_TOKEN`
 
