@@ -2,6 +2,52 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.4] - 2026-06-13
+
+### Features
+
+- **plan-calendar** — replace day dots with informative colored banners
+
+### Fixes
+
+- **capital** — split unit edits into diff payloads to honor productId-alone rule
+- **plan-calendar** — banner amount uses text-foreground for WCAG AA
+- **plan-calendar** — keyboard bubbling + banner contrast
+- **overview** — show recent transactions for selected year
+- **deps** — override esbuild ^0.28.1 to clear OSV advisories
+
+### Refactoring
+
+- **client** — drop targetDb param + X-Target-DB header
+- **worker** — drop DB_TEST binding and X-Target-DB routing
+
+### Documentation
+
+- record retirement of noheir-db-test + X-Target-DB
+
+### Tests
+
+- **e2e** — pin L2 port to 17004 per the personal port plan
+- **e2e** — runner owns wrangler lifecycle, switch to bun test
+- **e2e** — use BASE_URL helper instead of hardcoded 127.0.0.1:8787
+- **e2e** — boot wrangler dev --local in runner, drop X-Target-DB
+
+### Chores
+
+- **worker** — pin manual dev port to 37004
+- **deps** — worker wrangler ^4.99.0 → ^4.100.0
+- **deps** — worker @cloudflare/workers-types ^4.20260610.1 → ^4.20260611.1
+- **deps** — esbuild ^0.28.0 → ^0.28.1
+- **deps** — worker @cloudflare/workers-types ^4.20260608.1 → ^4.20260610.1
+- **deps** — worker wrangler ^4.98.0 → ^4.99.0
+- **deps** — hono ^4.12.24 → ^4.12.25 (root + worker)
+- **deps** — @types/node ^25.9.2 → ^25.9.3
+- **deps** — next 16.2.8 → 16.2.9
+- **deps** — eslint-config-next ^16.2.7 → ^16.2.9
+- **deps** — upgrade next to 16.2.8
+- **deps** — worker hono override 4.12.24 (security)
+- **deps** — hono ^4.12.23 → ^4.12.24 (security)
+
 ## [2.3.3] - 2026-06-08
 
 ### Features
