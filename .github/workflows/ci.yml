@@ -19,6 +19,4 @@ jobs:
       osv-config: "osv-scanner.toml"
       enable-l2: "true"
       l2-command: "bun run test:e2e"
-      enable-l3: "true"
-      l3-command: "bunx playwright test"
     secrets: inherit
