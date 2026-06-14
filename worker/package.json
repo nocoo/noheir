@@ -21,7 +21,7 @@
     "@cloudflare/workers-types": "^4.20260612.1",
     "@types/better-sqlite3": "^7.6.13",
     "@vitest/coverage-v8": "^4.1.8",
-    "better-sqlite3": "^12.10.0",
+    "better-sqlite3": "^12.10.1",
     "vitest": "^4.1.8",
     "wrangler": "^4.100.0"
   },
