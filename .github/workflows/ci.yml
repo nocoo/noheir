@@ -23,3 +23,37 @@ jobs:
       l3-command: "bun run test:e2e:bdd"
       l3-browser: "chromium"
     secrets: inherit
+
+  release-smoke:
+    name: Release Workflow Smoke
+    runs-on: ubuntu-latest
+    env:
+      ACTIONLINT_VERSION: "1.7.12"
+      ACTIONLINT_SHA256: "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
+      YAMLLINT_VERSION: "1.38.0"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install actionlint (pinned tarball + sha256)
+        run: |
+          set -euo pipefail
+          tarball="actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          url="https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/${tarball}"
+          curl -fsSL --proto '=https' --tlsv1.2 -o "${tarball}" "${url}"
+          echo "${ACTIONLINT_SHA256}  ${tarball}" | sha256sum -c -
+          tar -xzf "${tarball}" actionlint
+          sudo install -m 0755 actionlint /usr/local/bin/actionlint
+          rm -f "${tarball}" actionlint
+
+      - name: Lint release workflow
+        run: actionlint .github/workflows/release.yml
+
+      - name: Assert supply-chain pins
+        run: bash .github/scripts/check-supply-chain.sh
+
+      - name: Install yamllint (version-pinned)
+        run: pip install --quiet "yamllint==${YAMLLINT_VERSION}"
+
+      - name: yamllint release workflow
+        run: |
+          yamllint -d "{extends: default, rules: {line-length: disable, document-start: disable, truthy: disable}}" .github/workflows/release.yml
