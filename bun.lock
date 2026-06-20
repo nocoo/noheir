@@ -15,7 +15,7 @@
         "echarts": "^6.1.0",
         "echarts-for-react": "^3.0.6",
         "esbuild": "^0.28.1",
-        "hono": "^4.12.25",
+        "hono": "^4.12.26",
         "lucide-react": "^1.20.0",
         "next": "16.2.9",
         "next-auth": "^5.0.0-beta.30",
@@ -67,7 +67,7 @@
     "@hono/node-server": "1.19.13",
     "esbuild": "^0.28.1",
     "fast-uri": "3.1.2",
-    "hono": "4.12.25",
+    "hono": "4.12.26",
     "ip-address": "10.2.0",
     "postcss": "8.5.15",
     "qs": "6.15.2",
@@ -1063,7 +1063,7 @@
 
     "hermes-parser": ["hermes-parser@0.25.1", "", { "dependencies": { "hermes-estree": "0.25.1" } }, "sha512-6pEjquH3rqaI6cYAXYPcz9MS4rY6R4ngRgrgfDshRptUZIc3lw0MCIJIGDj9++mfySOuPTHB4nrSW99BCvOPIA=="],
 
-    "hono": ["hono@4.12.25", "", {}, "sha512-2NFaIyNVgJmBs/ecmtGzlmluTFs5cHEWGTdu0t1HBwYzoGXOL5nUQBRMXsXWla5i4KkG//QMzVP88m1+I3fdAQ=="],
+    "hono": ["hono@4.12.26", "", {}, "sha512-uyZtpnYxM9CmQ7QsQknM4zN8EftNqhON1qYeIKM0Se67CCEe2c44xyGURwB0axX2fBDu1dqHrHAc1hmNT8ITkw=="],
 
     "html-encoding-sniffer": ["html-encoding-sniffer@6.0.0", "", { "dependencies": { "@exodus/bytes": "^1.6.0" } }, "sha512-CV9TW3Y3f8/wT0BRFc1/KAVQ3TUHiXmaAb6VW9vtiMFf7SLoMd1PdAc4W3KFOFETBJUb90KatHqlsZMWV+R9Gg=="],
 
