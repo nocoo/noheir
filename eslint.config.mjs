@@ -80,12 +80,8 @@ const eslintConfig = [
       // Duplicates of eslint-plugin-react-hooks rules we already run.
       // eslint-plugin-react-hooks is the authoritative source — silence the
       // duplicate to avoid double-reporting.
-      "@eslint-react/hooks-extra/no-direct-set-state-in-use-effect": "off",
       "@eslint-react/set-state-in-effect": "off",
       "@eslint-react/exhaustive-deps": "off",
-      "@eslint-react/web-api/no-leaked-event-listener": "off",
-      "@eslint-react/web-api/no-leaked-interval": "off",
-      "@eslint-react/web-api/no-leaked-timeout": "off",
 
       // React 19 migration hints — shadcn/ui surface is built on forwardRef +
       // Context.Provider. Refactoring is a separate effort.
