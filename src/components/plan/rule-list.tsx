@@ -185,7 +185,6 @@ export function RuleList({
 
   return (
     <ul
-      role="list"
       aria-label="周期支出"
       className={cn("divide-y divide-border rounded-md border border-border", className)}
     >
@@ -239,7 +238,6 @@ export function RuleList({
         return (
           <li
             key={rule.id}
-            role="listitem"
             data-rule-id={rule.id}
             data-status={status}
             className={cn(

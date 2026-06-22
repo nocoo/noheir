@@ -5,9 +5,8 @@
 // that falls within an inclusive [fromDate, toDate] window. Used by the
 // UI summary cards.
 
-import { computeOccurrences } from "./occurrences";
+import { computeOccurrences, daysInMonth, formatIso, parseIso  } from "./occurrences";
 import type { RecurrenceRule } from "./rule-types";
-import { daysInMonth, formatIso, parseIso } from "./occurrences";
 
 export interface Window {
   fromDate: string;

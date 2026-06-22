@@ -164,9 +164,9 @@ export function McpTokensClient() {
         <CardContent className="space-y-4">
           {/* MCP Endpoint */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
+            <div className="text-xs font-medium text-muted-foreground">
               MCP 端点
-            </label>
+            </div>
             <div className="flex items-center gap-2 rounded-lg border border-border bg-secondary px-3 py-2">
               <code className="flex-1 text-xs font-mono text-foreground break-all">
                 {mcpUrl}

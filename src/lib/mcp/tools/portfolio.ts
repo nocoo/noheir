@@ -11,8 +11,12 @@ import type { ToolContext } from "./types";
 import { okWithCompleteness, error } from "./types";
 import { resolveProduct } from "./resolver";
 import { compact, round2, currencyCode } from "./compact";
-import type { UnitWithProduct, UnitEnriched } from "./unit";
-import { enrichWithAvailability, type ContributionLog } from "./unit";
+import {
+  enrichWithAvailability,
+  type UnitWithProduct,
+  type UnitEnriched,
+  type ContributionLog,
+} from "./unit";
 
 // ---------------------------------------------------------------------------
 // Constants

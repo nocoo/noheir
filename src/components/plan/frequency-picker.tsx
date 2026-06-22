@@ -163,7 +163,7 @@ export function FrequencyPicker({
   idPrefix = "freq",
   className,
 }: FrequencyPickerProps): React.ReactElement {
-  const refs = React.useRef<(HTMLButtonElement | null)[]>([]);
+  const buttonRef = React.useRef<(HTMLButtonElement | null)[]>([]);
   const selectedIdx = FREQUENCIES.indexOf(value.frequency);
   const [tabIdx, setTabIdx] = React.useState<number>(
     selectedIdx >= 0 ? selectedIdx : 0,
@@ -182,7 +182,7 @@ export function FrequencyPicker({
     if (target === null) return;
     e.preventDefault();
     setTabIdx(target);
-    refs.current[target]?.focus();
+    buttonRef.current[target]?.focus();
     const f = FREQUENCIES[target];
     if (f) setFrequency(f);
   };
@@ -208,7 +208,7 @@ export function FrequencyPicker({
   // Weekday radiogroup roving tab stop. Defaults to the selected weekday
   // (or 0 = Sunday) and follows the user's arrow-key navigation. Same
   // contract as the frequency selector and ColorTokenPicker.
-  const weekdayRefs = React.useRef<(HTMLButtonElement | null)[]>([]);
+  const weekdayRef = React.useRef<(HTMLButtonElement | null)[]>([]);
   const [weekdayTabIdx, setWeekdayTabIdx] = React.useState<number>(
     value.weekday ?? 0,
   );
@@ -225,7 +225,7 @@ export function FrequencyPicker({
     if (target === null) return;
     e.preventDefault();
     setWeekdayTabIdx(target);
-    weekdayRefs.current[target]?.focus();
+    weekdayRef.current[target]?.focus();
     onChange({ ...value, weekday: target });
   };
 
@@ -251,7 +251,7 @@ export function FrequencyPicker({
               <button
                 key={f}
                 ref={(el) => {
-                  refs.current[idx] = el;
+                  buttonRef.current[idx] = el;
                 }}
                 type="button"
                 role="radio"
@@ -331,7 +331,7 @@ export function FrequencyPicker({
                 <button
                   key={w}
                   ref={(el) => {
-                    weekdayRefs.current[w] = el;
+                    weekdayRef.current[w] = el;
                   }}
                   type="button"
                   role="radio"

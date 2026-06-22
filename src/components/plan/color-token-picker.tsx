@@ -136,7 +136,7 @@ export function ColorTokenPicker({
     if (selectedIndex >= 0) setTabIndex(selectedIndex);
   }, [selectedIndex]);
 
-  const refs = React.useRef<(HTMLButtonElement | null)[]>([]);
+  const buttonRef = React.useRef<(HTMLButtonElement | null)[]>([]);
 
   const COLUMNS = 6;
 
@@ -146,7 +146,7 @@ export function ColorTokenPicker({
     if (next === null) return;
     event.preventDefault();
     setTabIndex(next);
-    refs.current[next]?.focus();
+    buttonRef.current[next]?.focus();
     const target = items[next];
     if (target) onChange(target);
   };
@@ -171,7 +171,7 @@ export function ColorTokenPicker({
           <button
             key={token}
             ref={(el) => {
-              refs.current[idx] = el;
+              buttonRef.current[idx] = el;
             }}
             type="button"
             role="radio"

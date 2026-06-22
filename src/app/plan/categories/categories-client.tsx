@@ -108,7 +108,6 @@ export function CategoriesClient({
         </div>
       ) : (
         <ul
-          role="list"
           aria-label="分类列表"
           className="divide-y divide-border rounded-md border border-border"
         >

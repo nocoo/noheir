@@ -2,6 +2,10 @@
 // MCP Server — entity-driven tool registration for noheir
 // ---------------------------------------------------------------------------
 
+// @modelcontextprotocol/sdk exposes McpServer only via the `./server/mcp.js`
+// subpath, not the `./server` barrel. import-x can't see it through the
+// package's exports map; TypeScript resolves it fine at compile time.
+// eslint-disable-next-line import-x/no-unresolved
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { APP_VERSION } from "@/lib/version";
 import type { Db } from "@/lib/db";

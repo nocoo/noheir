@@ -220,6 +220,9 @@ export function RecurringExpenseForm({
             aria-describedby={errors.name ? "rx-name-error" : undefined}
             onChange={(e) => setName(e.target.value)}
             placeholder="例如：Netflix"
+            // Form opens in a dialog; auto-focusing the first input is the
+            // expected UX so the user can type immediately.
+            // eslint-disable-next-line jsx-a11y/no-autofocus
             autoFocus
           />
           {errors.name ? (

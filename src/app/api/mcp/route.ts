@@ -9,6 +9,10 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { validateMcpToken, validateOrigin } from "@/lib/mcp/auth";
 import { createMcpServer } from "@/lib/mcp/server";
+// @modelcontextprotocol/sdk exposes the transport class only via the
+// `./server/webStandardStreamableHttp.js` subpath, not a top-level barrel.
+// import-x can't see it through the package's exports map; TS resolves fine.
+// eslint-disable-next-line import-x/no-unresolved
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 
 function errorResponse(message: string, status = 400): NextResponse {

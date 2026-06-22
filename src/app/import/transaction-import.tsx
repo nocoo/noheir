@@ -204,6 +204,16 @@ export function TransactionImport() {
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           onClick={() => step === "idle" && fileInputRef.current?.click()}
+          onKeyDown={(e) => {
+            if (e.currentTarget !== e.target) return;
+            if (step === "idle" && (e.key === "Enter" || e.key === " ")) {
+              e.preventDefault();
+              fileInputRef.current?.click();
+            }
+          }}
+          role="button"
+          tabIndex={step === "idle" ? 0 : -1}
+          aria-label="选择 CSV 文件上传"
         >
           <input
             ref={fileInputRef}

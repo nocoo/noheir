@@ -80,6 +80,9 @@ function ChartStyle({ id, config }: { id: string; config: ChartConfig }) {
 
   return (
     <style
+      // CSS custom-property block built from a fixed THEMES table and the
+      // caller's typed config — required to scope chart colors per id at runtime.
+      // eslint-disable-next-line @eslint-react/dom-no-dangerously-set-innerhtml
       dangerouslySetInnerHTML={{
         __html: Object.entries(THEMES)
           .map(
