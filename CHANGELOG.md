@@ -2,6 +2,53 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.5] - 2026-06-22
+
+### Features
+
+- **deploy** — migrate from appleboy/ssh-action to in-house ssh-deploy@v2026.5
+
+### Fixes
+
+- **security** — also pin undici in worker overrides to 7.28.0
+- **security** — pin undici to 7.28.0 to clear GHSA-pr7r-676h-xcf6 / GHSA-vmh5-mc38-953g
+- **deps** — add esbuild override to worker subpackage for CVE fix
+
+### Tests
+
+- **ci** — add release.yml smoke test job (actionlint + SHA-pin assertions)
+- **l3** — restructure e2e to e2e/bdd, rewrite to BDD smoke test
+
+### Chores
+
+- **lint** — fix findings from the @eslint-react + jsx-a11y + import-x adoption
+- **deps** — upgrade eslint 9 → 10, replace eslint-config-next
+- **deps** — bump @cloudflare/workers-types 4.20260620.1 → 4.20260621.1 in worker
+- **deps** — bump @cloudflare/workers-types 4.20260619.1 → 4.20260620.1 in worker
+- **deps** — bump lint-staged 17.0.7 → 17.0.8
+- **deps** — bump @types/node 25.9.3 → 26.0.0 (major)
+- **deps** — bump wrangler 4.101.0 → 4.103.0 in worker
+- **deps** — bump @cloudflare/workers-types 4.20260617.1 → 4.20260619.1 in worker
+- **deps** — bump lucide-react 1.20.0 → 1.21.0
+- **deps** — bump hono 4.12.25 → 4.12.26
+- **ci** — pin base-ci reusable workflow to v2026.5 SHA
+- **deps** — bump @cloudflare/workers-types 4.20260616.1 → 4.20260617.1 (#104)
+- **deps** — bump wrangler 4.100.0 → 4.101.0
+- **deps** — bump lucide-react 1.18.0 → 1.20.0
+- **deps** — sync security overrides into worker package
+- **deps** — bump worker devDependencies
+- **deps** — bump root devDependencies
+- **deps** — fix transitive security advisories (ws, vite, @babel/core)
+- **worker** — bump better-sqlite3 12.10.0 → 12.10.1
+- **deps** — bump @cloudflare/workers-types in worker 4.20260611.1 → 4.20260613.1
+- **deps** — bump lucide-react 1.17.0 → 1.18.0
+- **deps** — bump tailwindcss and @tailwindcss/postcss 4.3.0 → 4.3.1
+
+### CI
+
+- enable L3 BDD in CI via base-ci
+- enable L3 Playwright E2E tests in CI
+
 ## [2.3.4] - 2026-06-13
 
 ### Features
