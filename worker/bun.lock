@@ -21,6 +21,11 @@
       },
     },
   },
+  "trustedDependencies": [
+    "better-sqlite3",
+    "esbuild",
+    "workerd",
+  ],
   "overrides": {
     "@hono/node-server": "1.19.13",
     "esbuild": "^0.28.1",

@@ -35,5 +35,10 @@
     "undici": "7.28.0",
     "vite": "8.0.16",
     "ws": "8.21.0"
-  }
+  },
+  "trustedDependencies": [
+    "better-sqlite3",
+    "esbuild",
+    "workerd"
+  ]
 }

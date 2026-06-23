@@ -9,18 +9,48 @@
 ## 安装依赖
 
 ```bash
-bun install
+bun install                  # 根目录
+cd worker && bun install     # worker 子包独立安装
 ```
 
-> 仓库根 `bunfig.toml` 设置 `[install] ignoreScripts = true`，禁用所有依赖的 `preinstall`/`install`/`postinstall`/`prepare` 生命周期脚本（含 `trustedDependencies` 列表中的包），用于防御 node-gyp 风格供应链投毒。当前依赖（`better-sqlite3`、`sharp`、`@tailwindcss/oxide`、`next` 等）均通过 prebuilt binary 安装，不依赖 install 脚本。
+> 仓库使用 **两层供应链硬约束**，防御 node-gyp 风格的 install-hook 投毒（Snyk 2026-06）：
 >
-> 若将来某个 native binding 的 prebuilt 不可用、必须本地编译，临时跑：
+> | 层 | 位置 | 机制 | 当前白名单 |
+> |----|------|------|-----------|
+> | 根 | `bunfig.toml` | `[install] ignoreScripts = true` —— 阻断**全部**依赖的 install/postinstall/prepare 等脚本（含 trustedDependencies 中列出的包）。这是 deny-all 防御。 | （无脚本可跑） |
+> | worker | `worker/package.json#trustedDependencies` | 显式 allowlist。Bun 默认会信任内置 367 包白名单；定义该字段后**替换**默认列表，只放行其中包的脚本。 | `better-sqlite3`、`esbuild`、`workerd` |
+>
+> **为什么 worker 不能用 `ignoreScripts`？** `worker/` 用 `better-sqlite3` 跑单元测试，它的 `install` 钩子（`prebuild-install`）必须运行才能下载 `.node` prebuilt binary，否则测试无法 require。所以 worker 不能简单 deny-all，需要走显式 allowlist。
+>
+> **bunfig 不跨目录继承**：`cd worker && bun install` 不会读取根 `bunfig.toml`。这是 Bun 1.3.x 的行为，**不要**靠根 bunfig 间接约束 worker。
+>
+> ### 校验配置生效
 >
 > ```bash
-> bun install --trusted=better-sqlite3   # 例：仅放行该包
+> # 在根 / worker 各自跑一次：
+> bun pm untrusted          # 看被阻断的包；root 应当为空（无 trusted 脚本本来就少），worker 应列出 sharp 等非白名单 native dep
+> bun install --verbose 2>&1 | rg -i "lifecycle scripts|starting scripts"
+> #   root：应看到 [Lifecycle Scripts] ignoring … 但**没有** [Scripts] Starting scripts
+> #   worker：应只看到 [Scripts] Starting scripts for "better-sqlite3" / "workerd"
 > ```
 >
-> 不要直接修改 `bunfig.toml` 关掉硬约束。
+> ### 临时放行脚本（不建议长期使用）
+>
+> 若某个被阻断的包确实需要本地编译/下载产物，**先 `cd` 到该包所在 package（根或 worker），然后**：
+>
+> ```bash
+> bun pm untrusted          # 确认是哪个包
+> bun pm trust <pkg>        # 执行该包的脚本，并把它写入当前 package.json#trustedDependencies
+> ```
+>
+> ⚠️ `bun pm trust <pkg>` 有持久副作用：
+>
+> 1. 直接修改 `package.json` 的 `trustedDependencies` 字段（worker 会真的扩允许列表）；
+> 2. 同步执行该包的 install/postinstall。
+>
+> 对 root 而言，因为 `bunfig.toml ignoreScripts=true` 会**覆盖** trustedDependencies，加进 root 的 `package.json#trustedDependencies` 也不会让脚本跑——只能临时把 `ignoreScripts` 注释掉或挪到 worker 模式。请在 PR 描述里写明动机。
+>
+> （历史误区：早期文档曾写 `bun install --trusted=<pkg>`，Bun 1.3.14 没有这个 flag，会被默默忽略。正确命令是 `bun pm trust`。）
 
 ## 环境变量
 
