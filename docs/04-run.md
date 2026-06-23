@@ -40,15 +40,18 @@ cd worker && bun install     # worker 子包独立安装
 >
 > ```bash
 > bun pm untrusted          # 确认是哪个包
-> bun pm trust <pkg>        # 执行该包的脚本，并把它写入当前 package.json#trustedDependencies
+> bun pm trust <pkg>        # 一次性执行该包的脚本，并把它写入当前 package.json#trustedDependencies
 > ```
 >
-> ⚠️ `bun pm trust <pkg>` 有持久副作用：
+> `bun pm trust` 在两层硬约束下的精确语义（已实测 Bun 1.3.14）：
 >
-> 1. 直接修改 `package.json` 的 `trustedDependencies` 字段（worker 会真的扩允许列表）；
-> 2. 同步执行该包的 install/postinstall。
+> | 行为 | root（受 `bunfig ignoreScripts=true` 约束） | worker（仅靠 trustedDependencies allowlist） |
+> |------|---------------------------------------------|----------------------------------------------|
+> | 立即执行该包脚本 | ✅ 会跑一次 | ✅ 会跑一次 |
+> | 写入 `package.json#trustedDependencies` | ✅ 会写入 | ✅ 会写入 |
+> | 下一次普通 `bun install` 再次跑该脚本 | ❌ **不会**——bunfig 仍 deny-all | ✅ 会跑（trustedDeps 接管） |
 >
-> 对 root 而言，因为 `bunfig.toml ignoreScripts=true` 会**覆盖** trustedDependencies，加进 root 的 `package.json#trustedDependencies` 也不会让脚本跑——只能临时把 `ignoreScripts` 注释掉或挪到 worker 模式。请在 PR 描述里写明动机。
+> 因此 root 的语义是：**`bun pm trust <pkg>` 一次性救火可用**（直接产出 `.node` binary / 解压产物等），但下次 reinstall 后产物消失。如果某个 root 依赖每次 install 都必须跑脚本才能工作，最终只有两条路：(a) 把它迁出根，落到一个独立 sub-package（如 `worker/`），用 trustedDependencies allowlist 长期放行；或 (b) 在该次维护窗口里临时把根 `bunfig.toml` 的 `ignoreScripts` 注释掉，跑完 install 后立刻还原。两种动作都需要在 PR 描述里说清动机。
 >
 > （历史误区：早期文档曾写 `bun install --trusted=<pkg>`，Bun 1.3.14 没有这个 flag，会被默默忽略。正确命令是 `bun pm trust`。）
 
