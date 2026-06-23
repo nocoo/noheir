@@ -1,0 +1,8 @@
+[install]
+# Skip lifecycle scripts (preinstall/install/postinstall/prepare) for all dependencies,
+# including packages in `trustedDependencies`. Hardens the install against
+# supply-chain attacks that piggy-back on node-gyp / postinstall hooks
+# (e.g. Snyk 2026-06 native-binding model). Native packages we use ship
+# prebuilt binaries; if a prebuilt is unavailable, run a one-off
+# `bun install --trusted=<pkg>` (see README).
+ignoreScripts = true

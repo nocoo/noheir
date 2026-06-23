@@ -12,6 +12,16 @@
 bun install
 ```
 
+> 仓库根 `bunfig.toml` 设置 `[install] ignoreScripts = true`，禁用所有依赖的 `preinstall`/`install`/`postinstall`/`prepare` 生命周期脚本（含 `trustedDependencies` 列表中的包），用于防御 node-gyp 风格供应链投毒。当前依赖（`better-sqlite3`、`sharp`、`@tailwindcss/oxide`、`next` 等）均通过 prebuilt binary 安装，不依赖 install 脚本。
+>
+> 若将来某个 native binding 的 prebuilt 不可用、必须本地编译，临时跑：
+>
+> ```bash
+> bun install --trusted=better-sqlite3   # 例：仅放行该包
+> ```
+>
+> 不要直接修改 `bunfig.toml` 关掉硬约束。
+
 ## 环境变量
 
 ```bash
