@@ -9,8 +9,51 @@
 ## 安装依赖
 
 ```bash
-bun install
+bun install                  # 根目录
+cd worker && bun install     # worker 子包独立安装
 ```
+
+> 仓库使用 **两层供应链硬约束**，防御 node-gyp 风格的 install-hook 投毒（Snyk 2026-06）：
+>
+> | 层 | 位置 | 机制 | 当前白名单 |
+> |----|------|------|-----------|
+> | 根 | `bunfig.toml` | `[install] ignoreScripts = true` —— 阻断**全部**依赖的 install/postinstall/prepare 等脚本（含 trustedDependencies 中列出的包）。这是 deny-all 防御。 | （无脚本可跑） |
+> | worker | `worker/package.json#trustedDependencies` | 显式 allowlist。Bun 默认会信任内置 367 包白名单；定义该字段后**替换**默认列表，只放行其中包的脚本。 | `better-sqlite3`、`esbuild`、`workerd` |
+>
+> **为什么 worker 不能用 `ignoreScripts`？** `worker/` 用 `better-sqlite3` 跑单元测试，它的 `install` 钩子（`prebuild-install`）必须运行才能下载 `.node` prebuilt binary，否则测试无法 require。所以 worker 不能简单 deny-all，需要走显式 allowlist。
+>
+> **bunfig 不跨目录继承**：`cd worker && bun install` 不会读取根 `bunfig.toml`。这是 Bun 1.3.x 的行为，**不要**靠根 bunfig 间接约束 worker。
+>
+> ### 校验配置生效
+>
+> ```bash
+> # 在根 / worker 各自跑一次：
+> bun pm untrusted          # 看被阻断的包；root 应当为空（无 trusted 脚本本来就少），worker 应列出 sharp 等非白名单 native dep
+> bun install --verbose 2>&1 | rg -i "lifecycle scripts|starting scripts"
+> #   root：应看到 [Lifecycle Scripts] ignoring … 但**没有** [Scripts] Starting scripts
+> #   worker：应只看到 [Scripts] Starting scripts for "better-sqlite3" / "workerd"
+> ```
+>
+> ### 临时放行脚本（不建议长期使用）
+>
+> 若某个被阻断的包确实需要本地编译/下载产物，**先 `cd` 到该包所在 package（根或 worker），然后**：
+>
+> ```bash
+> bun pm untrusted          # 确认是哪个包
+> bun pm trust <pkg>        # 一次性执行该包的脚本，并把它写入当前 package.json#trustedDependencies
+> ```
+>
+> `bun pm trust` 在两层硬约束下的精确语义（已实测 Bun 1.3.14）：
+>
+> | 行为 | root（受 `bunfig ignoreScripts=true` 约束） | worker（仅靠 trustedDependencies allowlist） |
+> |------|---------------------------------------------|----------------------------------------------|
+> | 立即执行该包脚本 | ✅ 会跑一次 | ✅ 会跑一次 |
+> | 写入 `package.json#trustedDependencies` | ✅ 会写入 | ✅ 会写入 |
+> | 下一次普通 `bun install` 再次跑该脚本 | ❌ **不会**——bunfig 仍 deny-all | ✅ 会跑（trustedDeps 接管） |
+>
+> 因此 root 的语义是：**`bun pm trust <pkg>` 一次性救火可用**（直接产出 `.node` binary / 解压产物等），但下次 reinstall 后产物消失。如果某个 root 依赖每次 install 都必须跑脚本才能工作，最终只有两条路：(a) 把它迁出根，落到一个独立 sub-package（如 `worker/`），用 trustedDependencies allowlist 长期放行；或 (b) 在该次维护窗口里临时把根 `bunfig.toml` 的 `ignoreScripts` 注释掉，跑完 install 后立刻还原。两种动作都需要在 PR 描述里说清动机。
+>
+> （历史误区：早期文档曾写 `bun install --trusted=<pkg>`，Bun 1.3.14 没有这个 flag，会被默默忽略。正确命令是 `bun pm trust`。）
 
 ## 环境变量
 

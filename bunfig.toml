@@ -1,0 +1,26 @@
+[install]
+# Defense-in-depth supply-chain hardening (Snyk 2026-06 node-gyp model):
+# block ALL dependency lifecycle scripts (preinstall/install/postinstall/prepare),
+# including for packages in package.json#trustedDependencies.
+#
+# Why this is safe for the root project:
+#   None of the current root native deps (esbuild, sharp, @tailwindcss/oxide,
+#   next, unrs-resolver) need install scripts to function — they ship
+#   per-platform `optionalDependencies` packages or no-op install scripts.
+#
+# If a future native dep DOES require its install script (e.g. node-gyp
+# rebuild, prebuild-install download), do NOT just delete this file.
+# Either:
+#   1. Move that dep's install logic to a per-platform optional package, or
+#   2. Promote the workdir to a sub-package with its own package.json +
+#      explicit `trustedDependencies` allowlist, matching `worker/`.
+#
+# Recovery (only if you must temporarily run a blocked script): `cd` into
+# the package dir, then `bun pm trust <pkg>` — note this WRITES to
+# package.json#trustedDependencies and executes the package's scripts.
+# See docs/04-run.md for the canonical procedure.
+#
+# This config does NOT propagate into subdirectories. `worker/` runs
+# `bun install` with cwd inside worker/, which never reads this file;
+# worker hardens via package.json#trustedDependencies allowlist instead.
+ignoreScripts = true
