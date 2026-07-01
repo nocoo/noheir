@@ -18,12 +18,12 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "4.20260629.1",
+    "@cloudflare/workers-types": "4.20260630.1",
     "@types/better-sqlite3": "^7.6.13",
     "@vitest/coverage-v8": "^4.1.9",
     "better-sqlite3": "^12.11.1",
     "vitest": "^4.1.9",
-    "wrangler": "4.105.0"
+    "wrangler": "4.106.0"
   },
   "overrides": {
     "@hono/node-server": "1.19.13",
