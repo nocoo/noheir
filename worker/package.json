@@ -23,7 +23,7 @@
     "@vitest/coverage-v8": "^4.1.9",
     "better-sqlite3": "^12.11.1",
     "vitest": "^4.1.9",
-    "wrangler": "4.106.0"
+    "wrangler": "4.107.0"
   },
   "overrides": {
     "@hono/node-server": "1.19.13",
