@@ -14,8 +14,12 @@
 import { readFileSync } from "fs";
 
 // ── Configuration ──
-const WORKER_URL = process.env.WORKER_URL || "https://noheir.worker.hexly.ai";
-const WORKER_TOKEN = process.env.WORKER_TOKEN || "b5edfb5b65dd841904149c2b6e59e7d5977ad8ade330c2768893f81e32bb7605";
+const WORKER_URL = process.env.WORKER_URL;
+const WORKER_TOKEN = process.env.WORKER_TOKEN;
+if (!WORKER_URL || !WORKER_TOKEN) {
+  console.error("WORKER_URL and WORKER_TOKEN must be set in the environment.");
+  process.exit(1);
+}
 const NEW_USER_ID = "103048496470438908451"; // Google sub from D1 users table
 
 // Old Supabase user_id (for verification)
