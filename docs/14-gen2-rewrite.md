@@ -477,7 +477,7 @@ git mv .env.test _archive/
 | `docs/` | Documentation (including this rewrite plan) |
 | `public/` | Static assets (logos, favicons, manifest) — reused as-is |
 | `logo.png` | Source logo for `scripts/resize-logos.py` |
-| `scripts/` | Utility scripts (resize-logos, hex_to_hsl) — reused |
+| `scripts/` | Utility scripts (resize-logos) — reused |
 | `.husky/` | Skeleton stays, hook content rewritten in Phase 0.8 |
 | `.env.example` | Updated with new env vars |
 | `.env.local` | Local dev config (not in git) |
