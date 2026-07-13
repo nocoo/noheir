@@ -49,6 +49,19 @@
   },
   "overrides": [
     {
+      "includes": ["src/**"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": {
+              "level": "error",
+              "options": { "allow": ["warn", "error"] }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["src/components/plan/plan-calendar.tsx"],
       "linter": {
         "rules": {
