@@ -436,6 +436,7 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
               <TableRow>
                 <TableHead aria-sort={getAriaSort("name")}>
                   <button
+                    type="button"
                     onClick={() => handleSort("name")}
                     className="hover:text-foreground flex items-center text-sm transition-colors"
                   >
@@ -446,6 +447,7 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
                 <TableHead>代码</TableHead>
                 <TableHead aria-sort={getAriaSort("channel")}>
                   <button
+                    type="button"
                     onClick={() => handleSort("channel")}
                     className="hover:text-foreground flex items-center text-sm transition-colors"
                   >
@@ -455,6 +457,7 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
                 </TableHead>
                 <TableHead aria-sort={getAriaSort("category")}>
                   <button
+                    type="button"
                     onClick={() => handleSort("category")}
                     className="hover:text-foreground flex items-center text-sm transition-colors"
                   >
@@ -465,6 +468,7 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
                 <TableHead>币种</TableHead>
                 <TableHead aria-sort={getAriaSort("lockPeriodDays")}>
                   <button
+                    type="button"
                     onClick={() => handleSort("lockPeriodDays")}
                     className="hover:text-foreground flex items-center text-sm transition-colors"
                   >
@@ -474,6 +478,7 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
                 </TableHead>
                 <TableHead aria-sort={getAriaSort("annualReturnRate")}>
                   <button
+                    type="button"
                     onClick={() => handleSort("annualReturnRate")}
                     className="hover:text-foreground flex items-center text-sm transition-colors"
                   >

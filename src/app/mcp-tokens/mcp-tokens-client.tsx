@@ -43,6 +43,7 @@ function CopyButton({ text, className }: { text: string; className?: string }) {
 
   return (
     <button
+      type="button"
       onClick={handleCopy}
       className={cn(
         "shrink-0 rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors",
@@ -176,6 +177,7 @@ export function McpTokensClient() {
             <div className="flex gap-1 rounded-lg bg-secondary/50 p-0.5 w-fit">
               {tabs.map(({ key, label }) => (
                 <button
+                  type="button"
                   key={key}
                   onClick={() => setActiveTab(key)}
                   className={cn(

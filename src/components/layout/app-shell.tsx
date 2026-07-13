@@ -70,6 +70,7 @@ function AppShellInner({
   const finalBreadcrumbs = breadcrumbs ?? autoBreadcrumbs;
 
   // Close mobile sidebar on route change
+  // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is the trigger; body doesn't read its value
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname, setMobileOpen]);
@@ -113,6 +114,7 @@ function AppShellInner({
           <div className="flex items-center gap-3">
             {isMobile && (
               <button
+                type="button"
                 onClick={() => setMobileOpen(true)}
                 aria-label="打开导航"
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"

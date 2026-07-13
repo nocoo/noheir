@@ -221,6 +221,7 @@ export function CapitalDecisionsClient({
                   aria-sort={getAriaSort("urgency")}
                 >
                   <button
+                    type="button"
                     onClick={() => handleSort("urgency")}
                     className="hover:text-foreground flex items-center text-sm transition-colors"
                   >
@@ -233,6 +234,7 @@ export function CapitalDecisionsClient({
                   aria-sort={getAriaSort("unitCode")}
                 >
                   <button
+                    type="button"
                     onClick={() => handleSort("unitCode")}
                     className="hover:text-foreground flex items-center text-sm transition-colors"
                   >
@@ -245,6 +247,7 @@ export function CapitalDecisionsClient({
                   aria-sort={getAriaSort("strategy")}
                 >
                   <button
+                    type="button"
                     onClick={() => handleSort("strategy")}
                     className="hover:text-foreground flex items-center text-sm transition-colors"
                   >
@@ -257,6 +260,7 @@ export function CapitalDecisionsClient({
                   aria-sort={getAriaSort("amount")}
                 >
                   <button
+                    type="button"
                     onClick={() => handleSort("amount")}
                     className="hover:text-foreground flex items-center text-sm transition-colors"
                   >

@@ -257,6 +257,7 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
   }, []);
 
   // Sync URL when search changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally sync only on search change; searchParams/router are stable Next.js hooks
   useEffect(() => {
     const currentQ = searchParams.get("q") ?? "";
     // Only update URL if the search value actually differs from URL
@@ -270,7 +271,7 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
     }
     const newUrl = params.toString() ? `?${params.toString()}` : window.location.pathname;
     router.replace(newUrl, { scroll: false });
-  }, [search]); // eslint-disable-line react-hooks/exhaustive-deps -- intentionally sync only on search change
+  }, [search]);
 
   const activeFilterCount = [
     filterStatus,
@@ -399,6 +400,7 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
           />
           {search && (
             <button
+              type="button"
               onClick={() => {
                 setSearch("");
                 searchInputRef.current?.focus();
@@ -431,6 +433,7 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
           {/* Reset All Button - always visible */}
           {hasActiveFilters && (
             <button
+              type="button"
               onClick={resetAllFilters}
               className="text-muted-foreground hover:text-foreground ml-auto flex items-center gap-1 text-[10px] sm:text-xs"
               title="重置所有筛选"
@@ -450,6 +453,7 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
             </div>
             {GROUP_BY_OPTIONS.map((opt) => (
               <button
+                type="button"
                 key={opt.value}
                 onClick={() => setGroupBy(opt.value)}
                 className={cn(
@@ -472,6 +476,7 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
             </div>
             {AVAILABILITY_OPTIONS.map((opt) => (
               <button
+                type="button"
                 key={opt.value}
                 onClick={() =>
                   setFilterAvailability(filterAvailability === opt.value ? "all" : opt.value)
@@ -488,6 +493,7 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
             ))}
             {filterAvailability !== "all" && (
               <button
+                type="button"
                 onClick={() => setFilterAvailability("all")}
                 className="text-muted-foreground hover:text-foreground ml-1"
               >
@@ -504,6 +510,7 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
             </div>
             {STATUSES.map((s) => (
               <button
+                type="button"
                 key={s}
                 onClick={() => toggleFilter(filterStatus, s, setFilterStatus)}
                 className={cn(
@@ -525,6 +532,7 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
             ))}
             {filterStatus !== "all" && (
               <button
+                type="button"
                 onClick={() => setFilterStatus("all")}
                 className="text-muted-foreground hover:text-foreground ml-1"
               >
@@ -542,6 +550,7 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
             <div className="flex flex-wrap gap-1 sm:gap-1.5">
               {STRATEGIES.map((s) => (
                 <button
+                  type="button"
                   key={s}
                   onClick={() => toggleFilter(filterStrategy, s, setFilterStrategy)}
                   className={cn(
@@ -563,6 +572,7 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
               ))}
               {filterStrategy !== "all" && (
                 <button
+                  type="button"
                   onClick={() => setFilterStrategy("all")}
                   className="text-muted-foreground hover:text-foreground ml-1"
                 >
@@ -581,6 +591,7 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
             <div className="flex flex-wrap gap-1 sm:gap-1.5">
               {TACTICS.map((t) => (
                 <button
+                  type="button"
                   key={t}
                   onClick={() => toggleFilter(filterTactics, t, setFilterTactics)}
                   className={cn(
@@ -602,6 +613,7 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
               ))}
               {filterTactics !== "all" && (
                 <button
+                  type="button"
                   onClick={() => setFilterTactics("all")}
                   className="text-muted-foreground hover:text-foreground ml-1"
                 >
@@ -621,6 +633,7 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
               <div className="flex flex-wrap gap-1 sm:gap-1.5">
                 {channels.map((c) => (
                   <button
+                    type="button"
                     key={c}
                     onClick={() => toggleFilter(filterChannel, c, setFilterChannel)}
                     className={cn(
@@ -635,6 +648,7 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
                 ))}
                 {filterChannel !== "all" && (
                   <button
+                    type="button"
                     onClick={() => setFilterChannel("all")}
                     className="text-muted-foreground hover:text-foreground ml-1"
                   >
@@ -655,6 +669,7 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
               <div className="flex flex-wrap gap-1 sm:gap-1.5">
                 {productNames.map((p) => (
                   <button
+                    type="button"
                     key={p}
                     onClick={() => toggleFilter(filterProduct, p, setFilterProduct)}
                     className={cn(
@@ -669,6 +684,7 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
                 ))}
                 {filterProduct !== "all" && (
                   <button
+                    type="button"
                     onClick={() => setFilterProduct("all")}
                     className="text-muted-foreground hover:text-foreground ml-1"
                   >

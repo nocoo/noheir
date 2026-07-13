@@ -139,6 +139,7 @@ export function Sidebar({ mobile = false }: SidebarProps) {
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
+                  type="button"
                   onClick={toggle}
                   aria-label="展开侧边栏"
                   className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors mb-2"
@@ -185,7 +186,12 @@ export function Sidebar({ mobile = false }: SidebarProps) {
             <div className="py-3 flex justify-center w-full">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button onClick={handleSignOut} aria-label="退出登录" className="cursor-pointer">
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    aria-label="退出登录"
+                    className="cursor-pointer"
+                  >
                     <Avatar className="h-9 w-9">
                       {userImage && <AvatarImage src={userImage} alt={userName} />}
                       <AvatarFallback className="text-xs">{userInitial}</AvatarFallback>
@@ -220,6 +226,7 @@ export function Sidebar({ mobile = false }: SidebarProps) {
                 </div>
                 {!mobile && (
                   <button
+                    type="button"
                     onClick={toggle}
                     aria-label="收起侧边栏"
                     className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground transition-colors"
@@ -259,6 +266,7 @@ export function Sidebar({ mobile = false }: SidebarProps) {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
+                      type="button"
                       onClick={handleSignOut}
                       aria-label="退出登录"
                       className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors shrink-0"

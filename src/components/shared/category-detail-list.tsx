@@ -134,6 +134,7 @@ export function CategoryDetailList({
                       return (
                         <div key={sub.name} className="overflow-hidden rounded-lg">
                           <button
+                            type="button"
                             onClick={() => toggleCollapse(secondaryKey)}
                             className="hover:bg-muted/30 flex w-full items-center gap-3 px-3 py-2 text-left transition-colors"
                           >
@@ -179,6 +180,7 @@ export function CategoryDetailList({
                                 return (
                                   <div key={tertiary.name} className="overflow-hidden rounded-lg">
                                     <button
+                                      type="button"
                                       onClick={() => toggleCollapse(tertiaryKey)}
                                       className="hover:bg-muted/20 flex w-full items-center gap-3 px-3 py-2 text-left transition-colors"
                                     >

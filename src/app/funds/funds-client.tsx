@@ -342,6 +342,7 @@ export function FundsClient({ units, products }: FundsClientProps) {
                   aria-sort={getAriaSort("unitCode")}
                 >
                   <button
+                    type="button"
                     onClick={() => toggleSort("unitCode")}
                     className="hover:text-foreground flex items-center text-sm transition-colors"
                   >
@@ -354,6 +355,7 @@ export function FundsClient({ units, products }: FundsClientProps) {
                   aria-sort={getAriaSort("amount")}
                 >
                   <button
+                    type="button"
                     onClick={() => toggleSort("amount")}
                     className="hover:text-foreground flex items-center text-sm transition-colors"
                   >
@@ -366,6 +368,7 @@ export function FundsClient({ units, products }: FundsClientProps) {
                   aria-sort={getAriaSort("strategy")}
                 >
                   <button
+                    type="button"
                     onClick={() => toggleSort("strategy")}
                     className="hover:text-foreground flex items-center text-sm transition-colors"
                   >
@@ -380,6 +383,7 @@ export function FundsClient({ units, products }: FundsClientProps) {
                   aria-sort={getAriaSort("status")}
                 >
                   <button
+                    type="button"
                     onClick={() => toggleSort("status")}
                     className="hover:text-foreground flex items-center text-sm transition-colors"
                   >
@@ -392,6 +396,7 @@ export function FundsClient({ units, products }: FundsClientProps) {
                   aria-sort={getAriaSort("availableDate")}
                 >
                   <button
+                    type="button"
                     onClick={() => toggleSort("availableDate")}
                     className="hover:text-foreground flex items-center text-sm transition-colors"
                   >
