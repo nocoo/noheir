@@ -33,7 +33,7 @@ export function createContributionLogsRepo(db: DrizzleD1Database) {
      */
     async getLatestInvestLogs(
       userId: string,
-      unitIds: string[]
+      unitIds: string[],
     ): Promise<Map<string, ContributionLog>> {
       if (unitIds.length === 0) {
         return new Map();
@@ -54,8 +54,8 @@ export function createContributionLogsRepo(db: DrizzleD1Database) {
               eq(contributionLogs.userId, userId),
               inArray(contributionLogs.unitId, batch),
               eq(contributionLogs.operationType, "invest"),
-              isNull(contributionLogs.deletedAt)
-            )
+              isNull(contributionLogs.deletedAt),
+            ),
           )
           .orderBy(desc(contributionLogs.operationDate), desc(contributionLogs.createdAt))
           .all();
@@ -75,15 +75,15 @@ export function createContributionLogsRepo(db: DrizzleD1Database) {
       const row = await db
         .select()
         .from(contributionLogs)
-        .where(and(
-          eq(contributionLogs.id, id),
-          eq(contributionLogs.userId, userId),
-        ))
+        .where(and(eq(contributionLogs.id, id), eq(contributionLogs.userId, userId)))
         .get();
       return row ?? null;
     },
 
-    async search(userId: string, params: ContributionLogsSearchParams = {}): Promise<ContributionLogsSearchResult> {
+    async search(
+      userId: string,
+      params: ContributionLogsSearchParams = {},
+    ): Promise<ContributionLogsSearchResult> {
       const conditions = [eq(contributionLogs.userId, userId)];
 
       if (!params.includeDeleted) {
@@ -143,11 +143,13 @@ export function createContributionLogsRepo(db: DrizzleD1Database) {
       const rows = await db
         .select()
         .from(contributionLogs)
-        .where(and(
-          eq(contributionLogs.userId, userId),
-          eq(contributionLogs.unitId, unitId),
-          isNull(contributionLogs.deletedAt),
-        ))
+        .where(
+          and(
+            eq(contributionLogs.userId, userId),
+            eq(contributionLogs.unitId, unitId),
+            isNull(contributionLogs.deletedAt),
+          ),
+        )
         .all();
 
       let totalInvested = 0;
@@ -173,11 +175,13 @@ export function createContributionLogsRepo(db: DrizzleD1Database) {
       const rows = await db
         .select()
         .from(contributionLogs)
-        .where(and(
-          eq(contributionLogs.userId, userId),
-          eq(contributionLogs.productId, productId),
-          isNull(contributionLogs.deletedAt),
-        ))
+        .where(
+          and(
+            eq(contributionLogs.userId, userId),
+            eq(contributionLogs.productId, productId),
+            isNull(contributionLogs.deletedAt),
+          ),
+        )
         .all();
 
       let totalInvested = 0;
@@ -217,16 +221,23 @@ export function createContributionLogsRepo(db: DrizzleD1Database) {
     async update(
       userId: string,
       id: string,
-      data: Partial<Pick<ContributionLog, "operationType" | "amountCents" | "balanceAfterCents" | "operationDate" | "note">>,
+      data: Partial<
+        Pick<
+          ContributionLog,
+          "operationType" | "amountCents" | "balanceAfterCents" | "operationDate" | "note"
+        >
+      >,
     ): Promise<ContributionLog | null> {
       const rows = await db
         .update(contributionLogs)
         .set({ ...data, updatedAt: new Date() })
-        .where(and(
-          eq(contributionLogs.id, id),
-          eq(contributionLogs.userId, userId),
-          isNull(contributionLogs.deletedAt),
-        ))
+        .where(
+          and(
+            eq(contributionLogs.id, id),
+            eq(contributionLogs.userId, userId),
+            isNull(contributionLogs.deletedAt),
+          ),
+        )
         .returning()
         .all();
       return rows[0] ?? null;
@@ -236,11 +247,13 @@ export function createContributionLogsRepo(db: DrizzleD1Database) {
       const rows = await db
         .update(contributionLogs)
         .set({ deletedAt: new Date(), updatedAt: new Date() })
-        .where(and(
-          eq(contributionLogs.id, id),
-          eq(contributionLogs.userId, userId),
-          isNull(contributionLogs.deletedAt),
-        ))
+        .where(
+          and(
+            eq(contributionLogs.id, id),
+            eq(contributionLogs.userId, userId),
+            isNull(contributionLogs.deletedAt),
+          ),
+        )
         .returning()
         .all();
       return rows.length > 0;
@@ -250,11 +263,13 @@ export function createContributionLogsRepo(db: DrizzleD1Database) {
       const rows = await db
         .update(contributionLogs)
         .set({ deletedAt: null, updatedAt: new Date() })
-        .where(and(
-          eq(contributionLogs.id, id),
-          eq(contributionLogs.userId, userId),
-          isNotNull(contributionLogs.deletedAt),
-        ))
+        .where(
+          and(
+            eq(contributionLogs.id, id),
+            eq(contributionLogs.userId, userId),
+            isNotNull(contributionLogs.deletedAt),
+          ),
+        )
         .returning()
         .all();
       return rows[0] ?? null;

@@ -28,7 +28,7 @@ export interface ProductsSummary {
  */
 export function buildProductsSummary(
   activeProducts: FinancialProduct[],
-  archivedCount: number
+  archivedCount: number,
 ): ProductsSummary {
   const summary: ProductsSummary = {
     total_count: activeProducts.length,

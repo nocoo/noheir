@@ -1,20 +1,14 @@
-import type { ReactNode } from "react"
+import type { ReactNode } from "react";
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 export interface ChartCardProps {
-  title: string
-  description?: string
-  icon?: React.ElementType
-  children: ReactNode
-  actions?: ReactNode
-  className?: string
+  title: string;
+  description?: string;
+  icon?: React.ElementType;
+  children: ReactNode;
+  actions?: ReactNode;
+  className?: string;
 }
 
 export function ChartCard({
@@ -38,14 +32,12 @@ export function ChartCard({
             ) : (
               <CardTitle>{title}</CardTitle>
             )}
-            {description && (
-              <CardDescription>{description}</CardDescription>
-            )}
+            {description && <CardDescription>{description}</CardDescription>}
           </div>
           {actions}
         </div>
       </CardHeader>
       <CardContent>{children}</CardContent>
     </Card>
-  )
+  );
 }

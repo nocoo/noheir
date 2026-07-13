@@ -47,9 +47,7 @@ function toCreatePayload(
   };
 }
 
-export async function createRecurringExpense(
-  data: unknown,
-): Promise<ActionResult<{ id: string }>> {
+export async function createRecurringExpense(data: unknown): Promise<ActionResult<{ id: string }>> {
   const parsed = recurringExpenseInputSchema.safeParse(data);
   if (!parsed.success) {
     return {
@@ -68,10 +66,7 @@ export async function createRecurringExpense(
   }
 }
 
-export async function updateRecurringExpense(
-  id: string,
-  data: unknown,
-): Promise<ActionResult> {
+export async function updateRecurringExpense(id: string, data: unknown): Promise<ActionResult> {
   const parsed = recurringExpenseUpdateSchema.safeParse(data);
   if (!parsed.success) {
     return {
@@ -96,9 +91,7 @@ export async function updateRecurringExpense(
   }
 }
 
-export async function deleteRecurringExpense(
-  id: string,
-): Promise<ActionResult> {
+export async function deleteRecurringExpense(id: string): Promise<ActionResult> {
   try {
     const { userId, client } = await getAuthedClient();
     await client.deleteRecurringExpense(userId, id);

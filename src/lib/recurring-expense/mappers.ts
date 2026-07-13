@@ -6,11 +6,7 @@
 // exist so the rest of the web app consumes typed RecurrenceRule etc.
 // instead of `Record<string, unknown>` from `client.list*`.
 
-import type {
-  RecurrenceFrequency,
-  RecurrenceRule,
-  RecurringExpenseStatus,
-} from "./rule-types";
+import type { RecurrenceFrequency, RecurrenceRule, RecurringExpenseStatus } from "./rule-types";
 
 /** Wire shape sent by the Worker for a recurring expense rule
  *  (joined with category metadata on /api/recurring-expenses GET). */
@@ -38,12 +34,7 @@ export interface RecurringExpenseRow {
   updatedAt?: string | number | Date;
 }
 
-const FREQUENCIES = new Set<RecurrenceFrequency>([
-  "daily",
-  "weekly",
-  "monthly",
-  "yearly",
-]);
+const FREQUENCIES = new Set<RecurrenceFrequency>(["daily", "weekly", "monthly", "yearly"]);
 const STATUSES = new Set<RecurringExpenseStatus>(["active", "paused", "ended"]);
 
 function asFrequency(value: string): RecurrenceFrequency {

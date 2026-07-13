@@ -60,15 +60,11 @@ describe("toRecurrenceRule", () => {
   });
 
   test("throws on unknown frequency", () => {
-    expect(() => toRecurrenceRule({ ...baseRow, frequency: "bogus" })).toThrow(
-      /unknown frequency/,
-    );
+    expect(() => toRecurrenceRule({ ...baseRow, frequency: "bogus" })).toThrow(/unknown frequency/);
   });
 
   test("throws on unknown status", () => {
-    expect(() => toRecurrenceRule({ ...baseRow, status: "draft" })).toThrow(
-      /unknown status/,
-    );
+    expect(() => toRecurrenceRule({ ...baseRow, status: "draft" })).toThrow(/unknown status/);
   });
 });
 

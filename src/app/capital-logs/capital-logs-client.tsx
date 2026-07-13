@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { useState, useTransition, useMemo } from "react"
-import { toast } from "sonner"
+import { useState, useTransition, useMemo } from "react";
+import { toast } from "sonner";
 import {
   History,
   Plus,
@@ -12,21 +12,15 @@ import {
   Pencil,
   Trash2,
   RotateCcw,
-} from "lucide-react"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+} from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -34,104 +28,97 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { UnitCodeBadge, ProductBadge } from "@/components/ui/colored-badge";
+import { StatCard } from "@/components/shared/stat-card";
+import { formatCurrencyFull } from "@/lib/chart-config";
+import { CAPITAL_TABLE_COLUMNS } from "@/lib/table-columns";
+import { ContributionLogForm } from "@/components/capital/contribution-log-form";
 import {
-  UnitCodeBadge,
-  ProductBadge,
-} from "@/components/ui/colored-badge"
-import { StatCard } from "@/components/shared/stat-card"
-import { formatCurrencyFull } from "@/lib/chart-config"
-import { CAPITAL_TABLE_COLUMNS } from "@/lib/table-columns"
-import { ContributionLogForm } from "@/components/capital/contribution-log-form"
-import { deleteContributionLog, restoreContributionLog } from "@/app/actions/contribution-log-actions"
+  deleteContributionLog,
+  restoreContributionLog,
+} from "@/app/actions/contribution-log-actions";
 import type {
   DomainContributionLog,
   DomainUnit,
   DomainProduct,
   ContributionOperationType,
-} from "@/domain/types"
+} from "@/domain/types";
 
 interface CapitalLogsClientProps {
-  logs: DomainContributionLog[]
-  units: DomainUnit[]
-  products: DomainProduct[]
+  logs: DomainContributionLog[];
+  units: DomainUnit[];
+  products: DomainProduct[];
 }
 
 const OPERATION_TYPES = [
   { value: "invest", label: "投入", icon: ArrowDownLeft, color: "text-green-600" },
   { value: "withdraw", label: "取出", icon: ArrowUpRight, color: "text-red-600" },
   { value: "adjust", label: "调整", icon: Settings2, color: "text-blue-600" },
-] as const
+] as const;
 
 const SOURCES = [
   { value: "manual", label: "手动录入" },
   { value: "auto", label: "自动记录" },
   { value: "import", label: "数据迁移" },
-] as const
+] as const;
 
 function getOperationDisplay(type: ContributionOperationType) {
-  return OPERATION_TYPES.find((t) => t.value === type) ?? OPERATION_TYPES[0]
+  return OPERATION_TYPES.find((t) => t.value === type) ?? OPERATION_TYPES[0];
 }
 
 function getSourceLabel(source: string) {
-  return SOURCES.find((s) => s.value === source)?.label ?? source
+  return SOURCES.find((s) => s.value === source)?.label ?? source;
 }
 
-export function CapitalLogsClient({
-  logs: initialLogs,
-  units,
-  products,
-}: CapitalLogsClientProps) {
-  const [logs, setLogs] = useState(initialLogs)
-  const [isPending, startTransition] = useTransition()
+export function CapitalLogsClient({ logs: initialLogs, units, products }: CapitalLogsClientProps) {
+  const [logs, setLogs] = useState(initialLogs);
+  const [isPending, startTransition] = useTransition();
 
   // Filter state
-  const [filterUnit, setFilterUnit] = useState("all")
-  const [filterProduct, setFilterProduct] = useState("all")
-  const [filterType, setFilterType] = useState("all")
-  const [filterSource, setFilterSource] = useState("all")
-  const [showDeleted, setShowDeleted] = useState(false)
+  const [filterUnit, setFilterUnit] = useState("all");
+  const [filterProduct, setFilterProduct] = useState("all");
+  const [filterType, setFilterType] = useState("all");
+  const [filterSource, setFilterSource] = useState("all");
+  const [showDeleted, setShowDeleted] = useState(false);
 
   // Form dialog state
-  const [formOpen, setFormOpen] = useState(false)
-  const [editingLog, setEditingLog] = useState<DomainContributionLog | null>(null)
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingLog, setEditingLog] = useState<DomainContributionLog | null>(null);
 
-  const activeFilterCount = [
-    filterUnit,
-    filterProduct,
-    filterType,
-    filterSource,
-  ].filter((f) => f !== "all").length + (showDeleted ? 1 : 0)
+  const activeFilterCount =
+    [filterUnit, filterProduct, filterType, filterSource].filter((f) => f !== "all").length +
+    (showDeleted ? 1 : 0);
 
   const resetFilters = () => {
-    setFilterUnit("all")
-    setFilterProduct("all")
-    setFilterType("all")
-    setFilterSource("all")
-    setShowDeleted(false)
-  }
+    setFilterUnit("all");
+    setFilterProduct("all");
+    setFilterType("all");
+    setFilterSource("all");
+    setShowDeleted(false);
+  };
 
   // Filter and compute stats
   const { filteredLogs, stats } = useMemo(() => {
     const filtered = logs.filter((log) => {
-      if (!showDeleted && log.isDeleted) return false
-      if (filterUnit !== "all" && log.unitId !== filterUnit) return false
-      if (filterProduct !== "all" && log.productId !== filterProduct) return false
-      if (filterType !== "all" && log.operationType !== filterType) return false
-      if (filterSource !== "all" && log.source !== filterSource) return false
-      return true
-    })
+      if (!showDeleted && log.isDeleted) return false;
+      if (filterUnit !== "all" && log.unitId !== filterUnit) return false;
+      if (filterProduct !== "all" && log.productId !== filterProduct) return false;
+      if (filterType !== "all" && log.operationType !== filterType) return false;
+      if (filterSource !== "all" && log.source !== filterSource) return false;
+      return true;
+    });
 
     // Compute stats from non-deleted logs only
-    const activeLogs = filtered.filter((l) => !l.isDeleted)
+    const activeLogs = filtered.filter((l) => !l.isDeleted);
     const totalInvested = activeLogs
       .filter((l) => l.amount > 0)
-      .reduce((sum, l) => sum + l.amount, 0)
+      .reduce((sum, l) => sum + l.amount, 0);
     const totalWithdrawn = activeLogs
       .filter((l) => l.amount < 0)
-      .reduce((sum, l) => sum + Math.abs(l.amount), 0)
+      .reduce((sum, l) => sum + Math.abs(l.amount), 0);
 
     return {
       filteredLogs: filtered,
@@ -141,55 +128,51 @@ export function CapitalLogsClient({
         netAmount: totalInvested - totalWithdrawn,
         logCount: activeLogs.length,
       },
-    }
-  }, [logs, filterUnit, filterProduct, filterType, filterSource, showDeleted])
+    };
+  }, [logs, filterUnit, filterProduct, filterType, filterSource, showDeleted]);
 
   const handleRefresh = () => {
-    window.location.reload()
-  }
+    window.location.reload();
+  };
 
   const handleEdit = (log: DomainContributionLog) => {
-    setEditingLog(log)
-    setFormOpen(true)
-  }
+    setEditingLog(log);
+    setFormOpen(true);
+  };
 
   const handleCreate = () => {
-    setEditingLog(null)
-    setFormOpen(true)
-  }
+    setEditingLog(null);
+    setFormOpen(true);
+  };
 
   const handleDelete = (id: string) => {
     startTransition(async () => {
-      const result = await deleteContributionLog(id)
+      const result = await deleteContributionLog(id);
       if (result.success) {
-        setLogs((prev) =>
-          prev.map((l) => (l.id === id ? { ...l, isDeleted: true } : l))
-        )
-        toast.success("已删除")
+        setLogs((prev) => prev.map((l) => (l.id === id ? { ...l, isDeleted: true } : l)));
+        toast.success("已删除");
       } else {
-        toast.error(result.error)
+        toast.error(result.error);
       }
-    })
-  }
+    });
+  };
 
   const handleRestore = (id: string) => {
     startTransition(async () => {
-      const result = await restoreContributionLog(id)
+      const result = await restoreContributionLog(id);
       if (result.success) {
-        setLogs((prev) =>
-          prev.map((l) => (l.id === id ? { ...l, isDeleted: false } : l))
-        )
-        toast.success("已恢复")
+        setLogs((prev) => prev.map((l) => (l.id === id ? { ...l, isDeleted: false } : l)));
+        toast.success("已恢复");
       } else {
-        toast.error(result.error)
+        toast.error(result.error);
       }
-    })
-  }
+    });
+  };
 
   const handleFormSuccess = () => {
-    setFormOpen(false)
-    handleRefresh()
-  }
+    setFormOpen(false);
+    handleRefresh();
+  };
 
   return (
     <div className="space-y-4">
@@ -202,11 +185,7 @@ export function CapitalLogsClient({
           </h1>
           <p className="text-muted-foreground text-sm">
             资金投入/取出历史记录
-            {activeFilterCount > 0 && (
-              <span className="ml-2">
-                ({filteredLogs.length} 条记录)
-              </span>
-            )}
+            {activeFilterCount > 0 && <span className="ml-2">({filteredLogs.length} 条记录)</span>}
           </p>
         </div>
         <Button onClick={handleCreate} size="sm">
@@ -283,12 +262,7 @@ export function CapitalLogsClient({
         </Button>
 
         {activeFilterCount > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={resetFilters}
-            className="h-8 text-xs"
-          >
+          <Button variant="ghost" size="sm" onClick={resetFilters} className="h-8 text-xs">
             <X className="mr-1 size-3" />
             清除 ({activeFilterCount})
           </Button>
@@ -315,21 +289,14 @@ export function CapitalLogsClient({
           icon={History}
           variant="primary"
         />
-        <StatCard
-          title="记录数"
-          value={`${stats.logCount}条`}
-          icon={History}
-          variant="primary"
-        />
+        <StatCard title="记录数" value={`${stats.logCount}条`} icon={History} variant="primary" />
       </div>
 
       {/* Logs Table */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm">投入记录</CardTitle>
-          <CardDescription className="text-xs">
-            按操作日期倒序排列
-          </CardDescription>
+          <CardDescription className="text-xs">按操作日期倒序排列</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
@@ -354,16 +321,11 @@ export function CapitalLogsClient({
                 </TableRow>
               ) : (
                 filteredLogs.map((log) => {
-                  const op = getOperationDisplay(log.operationType)
-                  const OpIcon = op.icon
+                  const op = getOperationDisplay(log.operationType);
+                  const OpIcon = op.icon;
                   return (
-                    <TableRow
-                      key={log.id}
-                      className={log.isDeleted ? "opacity-50" : ""}
-                    >
-                      <TableCell className="text-xs">
-                        {log.operationDate}
-                      </TableCell>
+                    <TableRow key={log.id} className={log.isDeleted ? "opacity-50" : ""}>
+                      <TableCell className="text-xs">{log.operationDate}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <OpIcon className={`size-3 ${op.color}`} />
@@ -437,7 +399,7 @@ export function CapitalLogsClient({
                         </div>
                       </TableCell>
                     </TableRow>
-                  )
+                  );
                 })
               )}
             </TableBody>
@@ -455,5 +417,5 @@ export function CapitalLogsClient({
         onSuccess={handleFormSuccess}
       />
     </div>
-  )
+  );
 }

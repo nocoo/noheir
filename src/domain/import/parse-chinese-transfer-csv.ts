@@ -116,9 +116,7 @@ function parseTags(tagsStr: string): string {
  * Filters out "转账 / 优惠抵扣" rows automatically (they are already
  * recorded as income in the transaction CSV).
  */
-export function parseChineseTransferCSV(
-  content: string,
-): ChineseTransferCSVParseResult {
+export function parseChineseTransferCSV(content: string): ChineseTransferCSVParseResult {
   const lines = content.trim().split(/\r?\n/);
   const transfers: ParsedTransferRow[] = [];
   const errors: TransferParseError[] = [];

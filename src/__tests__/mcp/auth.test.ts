@@ -15,7 +15,8 @@ const { mockGetValidTokenByHash, mockUpdateLastUsed, mockSha256 } = vi.hoisted((
 }));
 
 vi.mock("@/services/mcp-tokens", async () => {
-  const actual = await vi.importActual<typeof import("@/services/mcp-tokens")>("@/services/mcp-tokens");
+  const actual =
+    await vi.importActual<typeof import("@/services/mcp-tokens")>("@/services/mcp-tokens");
   return {
     ...actual,
     getValidTokenByHash: mockGetValidTokenByHash,

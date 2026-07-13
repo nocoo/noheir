@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   ComposedChart,
@@ -11,31 +11,22 @@ import {
   ResponsiveContainer,
   ReferenceLine,
   Cell,
-} from "recharts"
-import { TrendingUp, TrendingDown, PiggyBank, Target, Wallet } from "lucide-react"
-import type {
-  SavingsRateChartPoint,
-  SavingsRateSummary,
-} from "@/domain/dashboard/savings-rate"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { cn } from "@/lib/utils"
-import { formatCurrencyFull, formatCurrencyK } from "@/lib/chart-config"
+} from "recharts";
+import { TrendingUp, TrendingDown, PiggyBank, Target, Wallet } from "lucide-react";
+import type { SavingsRateChartPoint, SavingsRateSummary } from "@/domain/dashboard/savings-rate";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { formatCurrencyFull, formatCurrencyK } from "@/lib/chart-config";
 
 interface SavingsRateClientProps {
-  chartData: SavingsRateChartPoint[]
-  summary: SavingsRateSummary
-  targetSavingsRate: number
+  chartData: SavingsRateChartPoint[];
+  summary: SavingsRateSummary;
+  targetSavingsRate: number;
 }
 
-const INCOME_HEX = "var(--color-income)"
-const EXPENSE_HEX = "var(--color-expense)"
+const INCOME_HEX = "var(--color-income)";
+const EXPENSE_HEX = "var(--color-expense)";
 
 export function SavingsRateClient({
   chartData,
@@ -47,14 +38,14 @@ export function SavingsRateClient({
       ? "exceeded"
       : summary.annualSavingsRate >= targetSavingsRate
         ? "met"
-        : "below"
+        : "below";
 
   const savingsRateColorClass =
     savingsRateStatus === "below"
       ? "text-destructive"
       : savingsRateStatus === "met"
         ? "text-primary"
-        : "text-success"
+        : "text-success";
 
   return (
     <div className="space-y-6">
@@ -65,9 +56,7 @@ export function SavingsRateClient({
             <PiggyBank className="text-primary size-6" />
             储蓄率分析
           </h1>
-          <p className="text-muted-foreground text-sm">
-            月度储蓄率趋势和累计储蓄
-          </p>
+          <p className="text-muted-foreground text-sm">月度储蓄率趋势和累计储蓄</p>
         </div>
       </div>
 
@@ -89,18 +78,14 @@ export function SavingsRateClient({
                   {summary.annualSavingsRate.toFixed(1)}%
                 </p>
                 <Badge
-                  variant={
-                    summary.savingsRateDiff >= 0 ? "default" : "destructive"
-                  }
+                  variant={summary.savingsRateDiff >= 0 ? "default" : "destructive"}
                   className="text-xs"
                 >
                   {summary.savingsRateDiff >= 0 ? "+" : ""}
                   {summary.savingsRateDiff.toFixed(1)}%
                 </Badge>
               </div>
-              <p className="text-muted-foreground mt-1 text-xs">
-                目标: {targetSavingsRate}%
-              </p>
+              <p className="text-muted-foreground mt-1 text-xs">目标: {targetSavingsRate}%</p>
             </div>
             <Target
               className={cn(
@@ -139,9 +124,7 @@ export function SavingsRateClient({
           <CardContent className="flex items-center justify-between p-4">
             <div className="min-w-0 flex-1">
               <p className="text-muted-foreground text-xs">最佳月份</p>
-              <p className="text-lg font-semibold">
-                {summary.bestMonth?.month ?? "—"}
-              </p>
+              <p className="text-lg font-semibold">{summary.bestMonth?.month ?? "—"}</p>
               <p className="text-success text-sm">
                 {summary.bestMonth?.savingsRate.toFixed(1) ?? "0"}%
               </p>
@@ -153,9 +136,7 @@ export function SavingsRateClient({
           <CardContent className="flex items-center justify-between p-4">
             <div className="min-w-0 flex-1">
               <p className="text-muted-foreground text-xs">待改善月份</p>
-              <p className="text-lg font-semibold">
-                {summary.worstMonth?.month ?? "—"}
-              </p>
+              <p className="text-lg font-semibold">{summary.worstMonth?.month ?? "—"}</p>
               <p className="text-destructive text-sm">
                 {summary.worstMonth?.savingsRate.toFixed(1) ?? "0"}%
               </p>
@@ -169,26 +150,14 @@ export function SavingsRateClient({
       <Card>
         <CardHeader>
           <CardTitle>月度储蓄率趋势</CardTitle>
-          <CardDescription>
-            柱状图为储蓄额，折线为储蓄率
-          </CardDescription>
+          <CardDescription>柱状图为储蓄额，折线为储蓄率</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart
-                data={chartData}
-                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-              >
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  className="stroke-border/50"
-                />
-                <XAxis
-                  dataKey="month"
-                  tick={{ fontSize: 12 }}
-                  className="text-muted-foreground"
-                />
+              <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                <XAxis dataKey="month" tick={{ fontSize: 12 }} className="text-muted-foreground" />
                 <YAxis
                   yAxisId="left"
                   tick={{ fontSize: 12 }}
@@ -205,13 +174,13 @@ export function SavingsRateClient({
                 />
                 <Tooltip
                   content={({ active, payload, label }) => {
-                    if (!active || !payload?.length) return null
+                    if (!active || !payload?.length) return null;
                     return (
                       <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
                         <p className="mb-1 font-medium">{label}</p>
                         {payload.map((entry) => {
-                          const key = String(entry.dataKey ?? "")
-                          const val = Number(entry.value ?? 0)
+                          const key = String(entry.dataKey ?? "");
+                          const val = Number(entry.value ?? 0);
                           if (key === "savingsRate") {
                             return (
                               <p
@@ -222,19 +191,19 @@ export function SavingsRateClient({
                               >
                                 储蓄率: {val.toFixed(1)}%
                               </p>
-                            )
+                            );
                           }
                           if (key === "savings") {
                             return (
                               <p key={key} className="text-muted-foreground">
                                 储蓄额: {formatCurrencyFull(val)}
                               </p>
-                            )
+                            );
                           }
-                          return null
+                          return null;
                         })}
                       </div>
-                    )
+                    );
                   }}
                 />
                 <ReferenceLine
@@ -267,12 +236,7 @@ export function SavingsRateClient({
                     position: "insideTopRight",
                   }}
                 />
-                <Bar
-                  yAxisId="right"
-                  dataKey="savings"
-                  opacity={0.6}
-                  radius={[4, 4, 0, 0]}
-                >
+                <Bar yAxisId="right" dataKey="savings" opacity={0.6} radius={[4, 4, 0, 0]}>
                   {chartData.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
@@ -299,5 +263,5 @@ export function SavingsRateClient({
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

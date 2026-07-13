@@ -1,28 +1,22 @@
-"use client"
+"use client";
 
-import { useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
-import { toast } from "sonner"
-import { CreditCard, Save } from "lucide-react"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { CreditCard, Save } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import type { AccountType, AccountTypeConfig } from "@/domain/types"
-import { buildAccountTypesUpdate } from "@/domain/settings/account-types"
-import { saveAccountTypes } from "@/app/actions/settings-actions"
+} from "@/components/ui/select";
+import type { AccountType, AccountTypeConfig } from "@/domain/types";
+import { buildAccountTypesUpdate } from "@/domain/settings/account-types";
+import { saveAccountTypes } from "@/app/actions/settings-actions";
 
 const TYPE_LABELS: Record<AccountType, { label: string; color: string }> = {
   debit: { label: "储蓄卡", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" },
@@ -30,43 +24,39 @@ const TYPE_LABELS: Record<AccountType, { label: string; color: string }> = {
   prepaid: { label: "预付卡", color: "bg-amber-500/15 text-amber-700 dark:text-amber-400" },
   financial: { label: "理财账户", color: "bg-purple-500/15 text-purple-700 dark:text-purple-400" },
   unclassified: { label: "未分类", color: "bg-gray-500/15 text-gray-600 dark:text-gray-400" },
-}
+};
 
 interface AccountTypesClientProps {
-  accounts: string[]
-  accountTypes: AccountTypeConfig[]
-  grouped: Record<AccountType, string[]>
+  accounts: string[];
+  accountTypes: AccountTypeConfig[];
+  grouped: Record<AccountType, string[]>;
 }
 
-export function AccountTypesClient({
-  accounts,
-  accountTypes,
-  grouped,
-}: AccountTypesClientProps) {
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
-  const [types, setTypes] = useState<AccountTypeConfig[]>(accountTypes)
+export function AccountTypesClient({ accounts, accountTypes, grouped }: AccountTypesClientProps) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [types, setTypes] = useState<AccountTypeConfig[]>(accountTypes);
 
   const getType = (accountName: string): AccountType => {
-    const entry = types.find((t) => t.accountName === accountName)
-    return entry?.type ?? "unclassified"
-  }
+    const entry = types.find((t) => t.accountName === accountName);
+    return entry?.type ?? "unclassified";
+  };
 
   const handleChange = (accountName: string, type: AccountType) => {
-    setTypes((prev) => buildAccountTypesUpdate(prev, accountName, type))
-  }
+    setTypes((prev) => buildAccountTypesUpdate(prev, accountName, type));
+  };
 
   const handleSave = () => {
     startTransition(async () => {
-      const result = await saveAccountTypes(types)
+      const result = await saveAccountTypes(types);
       if (result.success) {
-        toast.success("账户类型已保存")
-        router.refresh()
+        toast.success("账户类型已保存");
+        router.refresh();
       } else {
-        toast.error(result.error)
+        toast.error(result.error);
       }
-    })
-  }
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -76,16 +66,14 @@ export function AccountTypesClient({
           <CreditCard className="text-primary size-6" />
           账户类型管理
         </h1>
-        <p className="text-muted-foreground text-sm">
-          配置各账户的归类（储蓄卡、信用卡、理财等）
-        </p>
+        <p className="text-muted-foreground text-sm">配置各账户的归类（储蓄卡、信用卡、理财等）</p>
       </div>
 
       {/* Grouped View */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {(Object.entries(TYPE_LABELS) as [AccountType, typeof TYPE_LABELS[AccountType]][]).map(
+        {(Object.entries(TYPE_LABELS) as [AccountType, (typeof TYPE_LABELS)[AccountType]][]).map(
           ([typeKey, config]) => {
-            const items = grouped[typeKey] ?? []
+            const items = grouped[typeKey] ?? [];
             return (
               <Card key={typeKey}>
                 <CardHeader className="pb-2">
@@ -110,7 +98,7 @@ export function AccountTypesClient({
                   )}
                 </CardContent>
               </Card>
-            )
+            );
           },
         )}
       </div>
@@ -131,9 +119,7 @@ export function AccountTypesClient({
                 <span className="font-medium">{account}</span>
                 <Select
                   value={getType(account)}
-                  onValueChange={(v) =>
-                    handleChange(account, v as AccountType)
-                  }
+                  onValueChange={(v) => handleChange(account, v as AccountType)}
                 >
                   <SelectTrigger className="w-[140px]">
                     <SelectValue />
@@ -151,9 +137,7 @@ export function AccountTypesClient({
               </div>
             ))}
             {accounts.length === 0 && (
-              <p className="text-muted-foreground py-4 text-center text-sm">
-                暂无账户数据
-              </p>
+              <p className="text-muted-foreground py-4 text-center text-sm">暂无账户数据</p>
             )}
           </div>
         </CardContent>
@@ -167,5 +151,5 @@ export function AccountTypesClient({
         </Button>
       </div>
     </div>
-  )
+  );
 }

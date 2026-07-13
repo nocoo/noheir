@@ -1,38 +1,28 @@
-"use client"
+"use client";
 
-import { useMemo } from "react"
-import { Layers } from "lucide-react"
-import ReactECharts from "echarts-for-react"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card"
-import { formatCurrencyFull } from "@/lib/chart-config"
-import type { SunburstData } from "@/domain/assets/strategy-sunburst"
+import { useMemo } from "react";
+import { Layers } from "lucide-react";
+import ReactECharts from "echarts-for-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { formatCurrencyFull } from "@/lib/chart-config";
+import type { SunburstData } from "@/domain/assets/strategy-sunburst";
 
 interface StrategyClientProps {
-  hierarchy: SunburstData
-  totalAmount: number
+  hierarchy: SunburstData;
+  totalAmount: number;
 }
 
-export function StrategyClient({
-  hierarchy,
-  totalAmount,
-}: StrategyClientProps) {
+export function StrategyClient({ hierarchy, totalAmount }: StrategyClientProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const option = useMemo<any>(() => ({
-    tooltip: {
-      trigger: "item",
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      formatter: (params: any) => {
-        const value = params.value ?? 0
-        const percentage = totalAmount > 0
-          ? ((value / totalAmount) * 100).toFixed(2)
-          : "0.00"
-        return `
+  const option = useMemo<any>(
+    () => ({
+      tooltip: {
+        trigger: "item",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        formatter: (params: any) => {
+          const value = params.value ?? 0;
+          const percentage = totalAmount > 0 ? ((value / totalAmount) * 100).toFixed(2) : "0.00";
+          return `
           <div style="padding: 8px;">
             <div style="font-weight: 600; margin-bottom: 4px;">${params.name ?? ""}</div>
             <div style="font-size: 12px; color: #666;">
@@ -40,70 +30,72 @@ export function StrategyClient({
               占比: ${percentage}%
             </div>
           </div>
-        `
-      },
-    },
-    series: [
-      {
-        type: "sunburst",
-        data: hierarchy.children ?? [],
-        radius: [0, "90%"],
-        emphasis: {
-          focus: "ancestor",
+        `;
         },
-        levels: [
-          {}, // Level 0: root (hidden)
-          {
-            // Level 1: Currency
-            r0: "0%",
-            r: "30%",
-            itemStyle: {
-              borderWidth: 2,
-              borderColor: "#fff",
-            },
-            label: {
-              rotate: "tangential",
-              align: "center",
-              fontSize: 14,
-              fontWeight: 600,
-            },
-          },
-          {
-            // Level 2: Strategy
-            r0: "30%",
-            r: "60%",
-            itemStyle: {
-              borderWidth: 2,
-              borderColor: "#fff",
-            },
-            label: {
-              rotate: "tangential",
-              align: "center",
-              fontSize: 12,
-            },
-          },
-          {
-            // Level 3: Product
-            r0: "60%",
-            r: "90%",
-            label: {
-              align: "center",
-              fontSize: 11,
-              position: "outside",
-              padding: 3,
-              silent: false,
-            },
-            itemStyle: {
-              borderWidth: 1,
-              borderColor: "#fff",
-            },
-          },
-        ],
       },
-    ],
-  }), [hierarchy, totalAmount])
+      series: [
+        {
+          type: "sunburst",
+          data: hierarchy.children ?? [],
+          radius: [0, "90%"],
+          emphasis: {
+            focus: "ancestor",
+          },
+          levels: [
+            {}, // Level 0: root (hidden)
+            {
+              // Level 1: Currency
+              r0: "0%",
+              r: "30%",
+              itemStyle: {
+                borderWidth: 2,
+                borderColor: "#fff",
+              },
+              label: {
+                rotate: "tangential",
+                align: "center",
+                fontSize: 14,
+                fontWeight: 600,
+              },
+            },
+            {
+              // Level 2: Strategy
+              r0: "30%",
+              r: "60%",
+              itemStyle: {
+                borderWidth: 2,
+                borderColor: "#fff",
+              },
+              label: {
+                rotate: "tangential",
+                align: "center",
+                fontSize: 12,
+              },
+            },
+            {
+              // Level 3: Product
+              r0: "60%",
+              r: "90%",
+              label: {
+                align: "center",
+                fontSize: 11,
+                position: "outside",
+                padding: 3,
+                silent: false,
+              },
+              itemStyle: {
+                borderWidth: 1,
+                borderColor: "#fff",
+              },
+            },
+          ],
+        },
+      ],
+    }),
+    [hierarchy, totalAmount],
+  );
 
-  const hasData = (hierarchy.children?.length ?? 0) > 0
+  const hasData = (hierarchy.children?.length ?? 0) > 0;
 
   return (
     <div className="space-y-6">
@@ -123,9 +115,7 @@ export function StrategyClient({
       <Card>
         <CardHeader>
           <CardTitle>资产配置结构</CardTitle>
-          <CardDescription>
-            内圈币种 → 中圈策略 → 外圈产品
-          </CardDescription>
+          <CardDescription>内圈币种 → 中圈策略 → 外圈产品</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-[600px]">
@@ -162,15 +152,23 @@ export function StrategyClient({
           <CardContent className="p-4">
             <h3 className="mb-2 font-semibold">📊 使用指南</h3>
             <ul className="text-muted-foreground space-y-1 text-sm">
-              <li>• <strong>内圈</strong>: 币种分类 (人民币/美元/港币)</li>
-              <li>• <strong>中圈</strong>: 投资策略</li>
-              <li>• <strong>外圈</strong>: 具体产品</li>
-              <li>• <strong>面积</strong>: 代表资金量大小</li>
+              <li>
+                • <strong>内圈</strong>: 币种分类 (人民币/美元/港币)
+              </li>
+              <li>
+                • <strong>中圈</strong>: 投资策略
+              </li>
+              <li>
+                • <strong>外圈</strong>: 具体产品
+              </li>
+              <li>
+                • <strong>面积</strong>: 代表资金量大小
+              </li>
               <li>• 悬停查看详细金额和占比</li>
             </ul>
           </CardContent>
         </Card>
       </div>
     </div>
-  )
+  );
 }

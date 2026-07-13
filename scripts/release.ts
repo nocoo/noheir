@@ -77,10 +77,7 @@ function writeJson(path: string, data: Record<string, unknown>): void {
   writeFileSync(path, JSON.stringify(data, null, 2) + "\n");
 }
 
-function bumpVersion(
-  current: string,
-  arg: string,
-): string {
+function bumpVersion(current: string, arg: string): string {
   const parts = current.split(".").map(Number);
   const major = parts[0] ?? 0;
   const minor = parts[1] ?? 0;
@@ -115,11 +112,7 @@ interface CommitInfo {
 
 async function getCommitsSinceTag(tag: string | null): Promise<CommitInfo[]> {
   const range = tag ? `${tag}..HEAD` : "HEAD";
-  const raw = await run(
-    "git",
-    ["log", range, "--pretty=format:%H %s"],
-    { capture: true },
-  );
+  const raw = await run("git", ["log", range, "--pretty=format:%H %s"], { capture: true });
 
   if (!raw) return [];
 
@@ -164,15 +157,11 @@ function buildChangelogEntry(version: string, commits: CommitInfo[]): string {
 
   for (const c of commits) {
     if (c.breaking) {
-      breaking.push(
-        `- ${c.scope ? `**${c.scope}** — ` : ""}${c.subject} (${c.hash.slice(0, 7)})`,
-      );
+      breaking.push(`- ${c.scope ? `**${c.scope}** — ` : ""}${c.subject} (${c.hash.slice(0, 7)})`);
     }
     const section = sectionMap[c.type];
     if (section) {
-      section.items.push(
-        `- ${c.scope ? `**${c.scope}** — ` : ""}${c.subject}`,
-      );
+      section.items.push(`- ${c.scope ? `**${c.scope}** — ` : ""}${c.subject}`);
     }
   }
 
@@ -289,11 +278,7 @@ async function main(): Promise<void> {
 
   // 7. GitHub release
   console.log("\n🎉 Creating GitHub release...");
-  await run(
-    "gh",
-    ["release", "create", tag, "--title", tag, "--notes", entry],
-    { dryRun },
-  );
+  await run("gh", ["release", "create", tag, "--title", tag, "--notes", entry], { dryRun });
 
   console.log(`\n✅ Released ${tag}`);
 }

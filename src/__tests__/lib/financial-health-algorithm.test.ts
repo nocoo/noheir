@@ -1,13 +1,8 @@
 import { describe, expect, it } from "vitest";
-import {
-  calculateFinancialHealth,
-  healthAlgorithm,
-} from "@/lib/financial-health-algorithm";
+import { calculateFinancialHealth, healthAlgorithm } from "@/lib/financial-health-algorithm";
 import type { DomainTransaction } from "@/domain/types";
 
-const makeTx = (
-  overrides: Partial<DomainTransaction> = {},
-): DomainTransaction => ({
+const makeTx = (overrides: Partial<DomainTransaction> = {}): DomainTransaction => ({
   id: "1",
   date: "2024-01-01",
   year: 2024,
@@ -50,9 +45,7 @@ describe("financial-health-algorithm", () => {
 
     it("coefficientOfVariation calculates correctly", () => {
       // [10, 10, 10] should have CV = 0
-      expect(healthAlgorithm.coefficientOfVariation([10, 10, 10])).toBeCloseTo(
-        0,
-      );
+      expect(healthAlgorithm.coefficientOfVariation([10, 10, 10])).toBeCloseTo(0);
     });
 
     it("calculateHHI returns 1 for zero total income", () => {
@@ -75,9 +68,7 @@ describe("financial-health-algorithm", () => {
 
   describe("growth score", () => {
     it("returns default for insufficient data", () => {
-      const result = healthAlgorithm.calculateGrowthScore([
-        { income: 1000, expense: 500 },
-      ]);
+      const result = healthAlgorithm.calculateGrowthScore([{ income: 1000, expense: 500 }]);
       expect(result.score).toBe(10);
       expect(result.maxScore).toBe(20);
     });

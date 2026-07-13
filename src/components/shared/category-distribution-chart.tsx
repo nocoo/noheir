@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useState } from "react"
+import { useState } from "react";
 import {
   BarChart,
   Bar,
@@ -10,35 +10,35 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
-} from "recharts"
-import { Layers } from "lucide-react"
+} from "recharts";
+import { Layers } from "lucide-react";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { formatCurrencyK, formatCurrencyFull } from "@/lib/chart-config"
-import { ChartCard } from "@/components/shared/chart-card"
+} from "@/components/ui/select";
+import { formatCurrencyK, formatCurrencyFull } from "@/lib/chart-config";
+import { ChartCard } from "@/components/shared/chart-card";
 
 /** Category drill-down structure for the distribution chart */
 export interface CategoryGroup {
-  primary: string
-  total: number
-  percentage: number
+  primary: string;
+  total: number;
+  percentage: number;
   secondaryCategories: Array<{
-    name: string
-    total: number
-  }>
+    name: string;
+    total: number;
+  }>;
 }
 
 export interface CategoryDistributionChartProps {
-  title: string
-  description: string
-  detailList: CategoryGroup[]
-  colors: string[]
-  tooltipColor: string
+  title: string;
+  description: string;
+  detailList: CategoryGroup[];
+  colors: string[];
+  tooltipColor: string;
 }
 
 export function CategoryDistributionChart({
@@ -48,19 +48,19 @@ export function CategoryDistributionChart({
   colors,
   tooltipColor,
 }: CategoryDistributionChartProps) {
-  const [selectedPrimary, setSelectedPrimary] = useState<string>("all")
+  const [selectedPrimary, setSelectedPrimary] = useState<string>("all");
 
   const categoryBarData =
     selectedPrimary === "all"
       ? detailList.map((c) => ({ name: c.primary, value: c.total }))
-      : detailList
-            .find((p) => p.primary === selectedPrimary)
-            ?.secondaryCategories.map((s) => ({
-              name: s.name,
-              value: s.total,
-            })) ?? []
+      : (detailList
+          .find((p) => p.primary === selectedPrimary)
+          ?.secondaryCategories.map((s) => ({
+            name: s.name,
+            value: s.total,
+          })) ?? []);
 
-  const safeColors = colors.length > 0 ? colors : ["#64748b"]
+  const safeColors = colors.length > 0 ? colors : ["#64748b"];
 
   return (
     <ChartCard
@@ -106,8 +106,8 @@ export function CategoryDistributionChart({
             />
             <Tooltip
               content={({ active, payload }) => {
-                if (!active || !payload?.length) return null
-                const entry = payload[0]
+                if (!active || !payload?.length) return null;
+                const entry = payload[0];
                 return (
                   <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
                     <p className="font-medium">{entry?.payload?.name}</p>
@@ -115,23 +115,18 @@ export function CategoryDistributionChart({
                       金额: {formatCurrencyFull(Number(entry?.value ?? 0))}
                     </p>
                   </div>
-                )
+                );
               }}
             />
             <Bar dataKey="value" radius={[0, 4, 4, 0]}>
               {categoryBarData.map((entry, index) => {
-                const color = safeColors[index % safeColors.length] ?? safeColors[0] ?? "#64748b"
-                return (
-                  <Cell
-                    key={`bar-${entry.name}`}
-                    fill={color}
-                  />
-                )
+                const color = safeColors[index % safeColors.length] ?? safeColors[0] ?? "#64748b";
+                return <Cell key={`bar-${entry.name}`} fill={color} />;
               })}
             </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>
     </ChartCard>
-  )
+  );
 }

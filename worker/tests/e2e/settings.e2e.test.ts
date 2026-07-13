@@ -34,7 +34,7 @@ describe("E2E: Settings", () => {
       method: "PUT",
       path: "/api/settings",
       userId,
-      body: { siteName: "V1", settings: '{}' },
+      body: { siteName: "V1", settings: "{}" },
     });
 
     const res = await api<{ settings: Record<string, unknown> }>({

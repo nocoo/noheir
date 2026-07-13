@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   LineChart,
   Line,
@@ -9,24 +9,18 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-} from "recharts"
-import { CreditCard } from "lucide-react"
-import type { DailyBalance, DisplayEntry } from "@/domain/dashboard/account-detail"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+} from "recharts";
+import { CreditCard } from "lucide-react";
+import type { DailyBalance, DisplayEntry } from "@/domain/dashboard/account-detail";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -34,26 +28,26 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { cn } from "@/lib/utils"
-import { formatCurrencyFull, formatCurrencyK } from "@/lib/chart-config"
-import { StatCard } from "@/components/shared/stat-card"
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import { formatCurrencyFull, formatCurrencyK } from "@/lib/chart-config";
+import { StatCard } from "@/components/shared/stat-card";
 
 interface AccountDetailSummary {
-  totalIncome: number
-  totalExpense: number
-  initialBalance: number
-  finalBalance: number
-  hasAnchor: boolean
-  transactionCount: number
+  totalIncome: number;
+  totalExpense: number;
+  initialBalance: number;
+  finalBalance: number;
+  hasAnchor: boolean;
+  transactionCount: number;
 }
 
 interface AccountDetailClientProps {
-  uniqueAccounts: string[]
-  selectedAccount: string
-  dailyBalances: DailyBalance[]
-  displayEntries: DisplayEntry[]
-  summary: AccountDetailSummary
+  uniqueAccounts: string[];
+  selectedAccount: string;
+  dailyBalances: DailyBalance[];
+  displayEntries: DisplayEntry[];
+  summary: AccountDetailSummary;
 }
 
 const TYPE_LABELS: Record<string, { label: string; color: string }> = {
@@ -61,7 +55,7 @@ const TYPE_LABELS: Record<string, { label: string; color: string }> = {
   expense: { label: "支出", color: "text-expense" },
   transfer: { label: "转账", color: "text-blue-600" },
   anchor: { label: "锚点", color: "text-muted-foreground" },
-}
+};
 
 export function AccountDetailClient({
   uniqueAccounts,
@@ -70,14 +64,14 @@ export function AccountDetailClient({
   displayEntries,
   summary,
 }: AccountDetailClientProps) {
-  const router = useRouter()
-  const searchParams = useSearchParams()
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const handleAccountChange = (account: string) => {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set("account", account)
-    router.push(`/account-detail?${params.toString()}`)
-  }
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("account", account);
+    router.push(`/account-detail?${params.toString()}`);
+  };
 
   return (
     <div className="space-y-6">
@@ -88,15 +82,10 @@ export function AccountDetailClient({
             <CreditCard className="text-primary size-6" />
             账户明细
           </h1>
-          <p className="text-muted-foreground text-sm">
-            查看单个账户的余额变化和交易明细
-          </p>
+          <p className="text-muted-foreground text-sm">查看单个账户的余额变化和交易明细</p>
         </div>
         <div className="flex items-center gap-2">
-          <Select
-            value={selectedAccount}
-            onValueChange={handleAccountChange}
-          >
+          <Select value={selectedAccount} onValueChange={handleAccountChange}>
             <SelectTrigger className="w-[200px]">
               <SelectValue placeholder="选择账户" />
             </SelectTrigger>
@@ -143,9 +132,7 @@ export function AccountDetailClient({
       <Card>
         <CardHeader>
           <CardTitle>余额变化</CardTitle>
-          <CardDescription>
-            {selectedAccount} 的日均余额趋势
-          </CardDescription>
+          <CardDescription>{selectedAccount} 的日均余额趋势</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-[350px]">
@@ -155,15 +142,8 @@ export function AccountDetailClient({
                   data={dailyBalances}
                   margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                 >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    className="stroke-border/50"
-                  />
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fontSize: 11 }}
-                    className="text-muted-foreground"
-                  />
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-muted-foreground" />
                   <YAxis
                     tick={{ fontSize: 12 }}
                     className="text-muted-foreground"
@@ -171,23 +151,17 @@ export function AccountDetailClient({
                   />
                   <Tooltip
                     content={({ active, payload, label }) => {
-                      if (!active || !payload?.length) return null
+                      if (!active || !payload?.length) return null;
                       return (
                         <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
                           <p className="mb-1 font-medium">{label}</p>
                           {payload.map((entry) => (
-                            <p
-                              key={String(entry.dataKey)}
-                              className="text-muted-foreground"
-                            >
-                              {entry.name}:{" "}
-                              {formatCurrencyFull(
-                                Number(entry.value ?? 0),
-                              )}
+                            <p key={String(entry.dataKey)} className="text-muted-foreground">
+                              {entry.name}: {formatCurrencyFull(Number(entry.value ?? 0))}
                             </p>
                           ))}
                         </div>
-                      )
+                      );
                     }}
                   />
                   <Line
@@ -214,9 +188,7 @@ export function AccountDetailClient({
       <Card>
         <CardHeader>
           <CardTitle>交易明细</CardTitle>
-          <CardDescription>
-            {displayEntries.length} 条记录
-          </CardDescription>
+          <CardDescription>{displayEntries.length} 条记录</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -231,14 +203,14 @@ export function AccountDetailClient({
             </TableHeader>
             <TableBody>
               {displayEntries.map((entry) => {
-                const typeInfo = TYPE_LABELS[entry.type] ?? { label: "支出", color: "text-expense" }
-                const isAnchor = entry.isAnchor === true
+                const typeInfo = TYPE_LABELS[entry.type] ?? {
+                  label: "支出",
+                  color: "text-expense",
+                };
+                const isAnchor = entry.isAnchor === true;
 
                 return (
-                  <TableRow
-                    key={entry.id}
-                    className={cn(isAnchor && "bg-muted/50")}
-                  >
+                  <TableRow key={entry.id} className={cn(isAnchor && "bg-muted/50")}>
                     <TableCell>{entry.date}</TableCell>
                     <TableCell>
                       {isAnchor ? (
@@ -246,9 +218,7 @@ export function AccountDetailClient({
                       ) : (
                         <span className="text-sm">
                           {entry.primaryCategory ?? "—"}
-                          {entry.tertiaryCategory
-                            ? ` / ${entry.tertiaryCategory}`
-                            : ""}
+                          {entry.tertiaryCategory ? ` / ${entry.tertiaryCategory}` : ""}
                         </span>
                       )}
                     </TableCell>
@@ -265,26 +235,19 @@ export function AccountDetailClient({
                         {typeInfo.label}
                       </Badge>
                     </TableCell>
-                    <TableCell
-                      className={cn(
-                        "text-right font-medium",
-                        typeInfo.color,
-                      )}
-                    >
-                      {isAnchor
-                        ? "—"
-                        : formatCurrencyFull(entry.amount)}
+                    <TableCell className={cn("text-right font-medium", typeInfo.color)}>
+                      {isAnchor ? "—" : formatCurrencyFull(entry.amount)}
                     </TableCell>
                     <TableCell className="text-right">
                       {formatCurrencyFull(entry.balanceAfter)}
                     </TableCell>
                   </TableRow>
-                )
+                );
               })}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

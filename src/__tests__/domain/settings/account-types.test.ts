@@ -8,11 +8,7 @@ import {
 
 describe("account-types domain", () => {
   it("dedupes and sorts accounts", () => {
-    const result = getUniqueAccounts([
-      { account: "B" },
-      { account: "A" },
-      { account: "A" },
-    ]);
+    const result = getUniqueAccounts([{ account: "B" }, { account: "A" }, { account: "A" }]);
     expect(result).toEqual(["A", "B"]);
   });
 
@@ -30,9 +26,7 @@ describe("account-types domain", () => {
   });
 
   it("groups accounts by type", () => {
-    const grouped = groupAccountsByType(["A", "B"], [
-      { accountName: "A", type: "debit" },
-    ]);
+    const grouped = groupAccountsByType(["A", "B"], [{ accountName: "A", type: "debit" }]);
     expect(grouped.debit).toEqual(["A"]);
     expect(grouped.unclassified).toEqual(["B"]);
   });

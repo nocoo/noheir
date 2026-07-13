@@ -31,32 +31,38 @@ export function createMetadataRepo(db: DrizzleD1Database) {
         trCount,
       ] = await Promise.all([
         // years: DISTINCT year from transactions
-        db.selectDistinct({ value: transactions.year })
+        db
+          .selectDistinct({ value: transactions.year })
           .from(transactions)
           .where(eq(transactions.userId, userId))
           .all(),
         // years: DISTINCT year from transfers
-        db.selectDistinct({ value: transfers.year })
+        db
+          .selectDistinct({ value: transfers.year })
           .from(transfers)
           .where(eq(transfers.userId, userId))
           .all(),
         // accounts: DISTINCT account from transactions
-        db.selectDistinct({ value: transactions.account })
+        db
+          .selectDistinct({ value: transactions.account })
           .from(transactions)
           .where(eq(transactions.userId, userId))
           .all(),
         // accounts: DISTINCT account from transfers
-        db.selectDistinct({ value: transfers.account })
+        db
+          .selectDistinct({ value: transfers.account })
           .from(transfers)
           .where(eq(transfers.userId, userId))
           .all(),
         // categories: DISTINCT primary_category from transactions
-        db.selectDistinct({ value: transactions.primaryCategory })
+        db
+          .selectDistinct({ value: transactions.primaryCategory })
           .from(transactions)
           .where(eq(transactions.userId, userId))
           .all(),
         // secondary_categories: DISTINCT, excluding null and ''
-        db.selectDistinct({ value: transactions.secondaryCategory })
+        db
+          .selectDistinct({ value: transactions.secondaryCategory })
           .from(transactions)
           .where(
             and(
@@ -67,27 +73,26 @@ export function createMetadataRepo(db: DrizzleD1Database) {
           )
           .all(),
         // tertiary_categories: DISTINCT, excluding null and ''
-        db.selectDistinct({ value: transactions.tertiaryCategory })
+        db
+          .selectDistinct({ value: transactions.tertiaryCategory })
           .from(transactions)
-          .where(
-            and(
-              eq(transactions.userId, userId),
-              ne(transactions.tertiaryCategory, ""),
-            ),
-          )
+          .where(and(eq(transactions.userId, userId), ne(transactions.tertiaryCategory, "")))
           .all(),
         // currencies: DISTINCT from transactions
-        db.selectDistinct({ value: transactions.currency })
+        db
+          .selectDistinct({ value: transactions.currency })
           .from(transactions)
           .where(eq(transactions.userId, userId))
           .all(),
         // currencies: DISTINCT from transfers
-        db.selectDistinct({ value: transfers.currency })
+        db
+          .selectDistinct({ value: transfers.currency })
           .from(transfers)
           .where(eq(transfers.userId, userId))
           .all(),
         // tags: all from transactions (will parse + dedupe in JS)
-        db.select({ value: transactions.tags })
+        db
+          .select({ value: transactions.tags })
           .from(transactions)
           .where(
             and(
@@ -98,43 +103,39 @@ export function createMetadataRepo(db: DrizzleD1Database) {
           )
           .all(),
         // tags: all from transfers
-        db.select({ value: transfers.tags })
+        db
+          .select({ value: transfers.tags })
           .from(transfers)
           .where(
-            and(
-              eq(transfers.userId, userId),
-              isNotNull(transfers.tags),
-              ne(transfers.tags, "[]"),
-            ),
+            and(eq(transfers.userId, userId), isNotNull(transfers.tags), ne(transfers.tags, "[]")),
           )
           .all(),
         // transaction_count
-        db.select({ count: sql<number>`count(*)` })
+        db
+          .select({ count: sql<number>`count(*)` })
           .from(transactions)
           .where(eq(transactions.userId, userId))
           .get(),
         // transfer_count
-        db.select({ count: sql<number>`count(*)` })
+        db
+          .select({ count: sql<number>`count(*)` })
           .from(transfers)
           .where(eq(transfers.userId, userId))
           .get(),
       ]);
 
       // UNION logic: merge + dedupe arrays in JS
-      const years = [...new Set([
-        ...txYears.map((r) => r.value),
-        ...trYears.map((r) => r.value),
-      ])].sort((a, b) => b - a); // DESC
+      const years = [
+        ...new Set([...txYears.map((r) => r.value), ...trYears.map((r) => r.value)]),
+      ].sort((a, b) => b - a); // DESC
 
-      const accounts = [...new Set([
-        ...txAccounts.map((r) => r.value),
-        ...trAccounts.map((r) => r.value),
-      ])].sort();
+      const accounts = [
+        ...new Set([...txAccounts.map((r) => r.value), ...trAccounts.map((r) => r.value)]),
+      ].sort();
 
-      const currencies = [...new Set([
-        ...txCurrencies.map((r) => r.value),
-        ...trCurrencies.map((r) => r.value),
-      ])].sort();
+      const currencies = [
+        ...new Set([...txCurrencies.map((r) => r.value), ...trCurrencies.map((r) => r.value)]),
+      ].sort();
 
       // Parse JSON tags, collect unique, sort
       const tagSet = new Set<string>();
@@ -162,9 +163,7 @@ export function createMetadataRepo(db: DrizzleD1Database) {
           .map((r) => r.value)
           .filter((v): v is string => v !== null)
           .sort(),
-        tertiary_categories: tertiaryCategories
-          .map((r) => r.value)
-          .sort(),
+        tertiary_categories: tertiaryCategories.map((r) => r.value).sort(),
         currencies,
         tags: [...tagSet].sort(),
         transaction_count: txCount?.count ?? 0,

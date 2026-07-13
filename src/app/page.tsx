@@ -1,39 +1,42 @@
-import { AppShell } from "@/components/layout"
-import { getAuthedClient } from "@/lib/api-helpers"
-import { buildSavingsRate } from "@/domain/dashboard/overview"
-import type { DomainTransaction, MonthlyData } from "@/domain/types"
-import { toDomainTransaction } from "@/lib/transaction-mappers"
-import { OverviewClient } from "./overview-client"
-import { MONTH_NAMES } from "@/lib/constants"
+import { AppShell } from "@/components/layout";
+import { getAuthedClient } from "@/lib/api-helpers";
+import { buildSavingsRate } from "@/domain/dashboard/overview";
+import type { DomainTransaction, MonthlyData } from "@/domain/types";
+import { toDomainTransaction } from "@/lib/transaction-mappers";
+import { OverviewClient } from "./overview-client";
+import { MONTH_NAMES } from "@/lib/constants";
 
 export default async function OverviewPage({
   searchParams,
 }: {
-  searchParams: Promise<{ year?: string }>
+  searchParams: Promise<{ year?: string }>;
 }) {
-  const params = await searchParams
-  let transactions: DomainTransaction[] = []
+  const params = await searchParams;
+  let transactions: DomainTransaction[] = [];
   let monthlyData: MonthlyData[] = MONTH_NAMES.map((name) => ({
-    month: name, income: 0, expense: 0, balance: 0,
-  }))
-  let totalIncome = 0
-  let totalExpense = 0
-  let balance = 0
-  let savingsRate = 0
-  let targetSavingsRate = 30
+    month: name,
+    income: 0,
+    expense: 0,
+    balance: 0,
+  }));
+  let totalIncome = 0;
+  let totalExpense = 0;
+  let balance = 0;
+  let savingsRate = 0;
+  let targetSavingsRate = 30;
 
   try {
-    const { userId, client } = await getAuthedClient()
-    const metadata = await client.getMetadata(userId)
+    const { userId, client } = await getAuthedClient();
+    const metadata = await client.getMetadata(userId);
 
-    const availableYears = metadata.years.sort((a, b) => b - a)
+    const availableYears = metadata.years.sort((a, b) => b - a);
 
-    const yearParam = params.year ? Number(params.year) : null
-    let selectedYear: number
+    const yearParam = params.year ? Number(params.year) : null;
+    let selectedYear: number;
     if (yearParam && availableYears.includes(yearParam)) {
-      selectedYear = yearParam
+      selectedYear = yearParam;
     } else {
-      selectedYear = availableYears[0] ?? new Date().getFullYear()
+      selectedYear = availableYears[0] ?? new Date().getFullYear();
     }
 
     // Fetch aggregated summary + recent 10 transactions + settings in parallel
@@ -41,14 +44,14 @@ export default async function OverviewPage({
       client.getYearlySummary(userId, selectedYear),
       client.searchTransactions(userId, { year: selectedYear, limit: 10 }),
       client.getSettings(userId),
-    ])
+    ]);
 
     // Parse settings for targetSavingsRate
-    const settingsRow = (settingsResult.settings as Record<string, unknown>) ?? {}
-    const rawJson = typeof settingsRow.settings === "string" ? settingsRow.settings : "{}"
-    const settingsJson = JSON.parse(rawJson) as Record<string, unknown>
+    const settingsRow = (settingsResult.settings as Record<string, unknown>) ?? {};
+    const rawJson = typeof settingsRow.settings === "string" ? settingsRow.settings : "{}";
+    const settingsJson = JSON.parse(rawJson) as Record<string, unknown>;
     if (typeof settingsJson.savings_rate_target === "number") {
-      targetSavingsRate = settingsJson.savings_rate_target
+      targetSavingsRate = settingsJson.savings_rate_target;
     }
 
     // Build monthly data from server-side aggregation (amounts in cents → display)
@@ -57,16 +60,16 @@ export default async function OverviewPage({
       income: m.income / 100,
       expense: m.expense / 100,
       balance: (m.income - m.expense) / 100,
-    }))
+    }));
 
-    totalIncome = summary.totals.income / 100
-    totalExpense = summary.totals.expense / 100
-    balance = totalIncome - totalExpense
-    savingsRate = buildSavingsRate(totalIncome, totalExpense)
+    totalIncome = summary.totals.income / 100;
+    totalExpense = summary.totals.expense / 100;
+    balance = totalIncome - totalExpense;
+    savingsRate = buildSavingsRate(totalIncome, totalExpense);
 
     transactions = recentResult.transactions.map((raw) =>
-      toDomainTransaction(raw as Record<string, unknown>)
-    )
+      toDomainTransaction(raw as Record<string, unknown>),
+    );
   } catch {
     // Not authenticated or Worker unavailable — render empty state
   }
@@ -83,5 +86,5 @@ export default async function OverviewPage({
         targetSavingsRate={targetSavingsRate}
       />
     </AppShell>
-  )
+  );
 }

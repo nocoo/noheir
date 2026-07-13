@@ -62,9 +62,7 @@ export async function deleteAndImportTransactions(
 
 // ── Transfer import ──
 
-export async function countTransfersByYear(
-  year: number,
-): Promise<ActionResult<{ count: number }>> {
+export async function countTransfersByYear(year: number): Promise<ActionResult<{ count: number }>> {
   try {
     const { userId, client } = await getAuthedClient();
     const result = await client.countTransfersByYear(userId, year);

@@ -37,8 +37,7 @@ const AMOUNT = () => screen.getByLabelText("金额 (元)") as HTMLInputElement;
 const START = () => screen.getByLabelText("开始日期") as HTMLInputElement;
 const END = () => screen.getByLabelText("结束日期") as HTMLInputElement;
 const NOTE = () => screen.getByLabelText("备注") as HTMLTextAreaElement;
-const CATEGORY_SELECT = () =>
-  screen.getByLabelText("分类") as HTMLSelectElement;
+const CATEGORY_SELECT = () => screen.getByLabelText("分类") as HTMLSelectElement;
 const DAY = () => screen.getByLabelText("日") as HTMLInputElement;
 const SUBMIT = (label: string) => screen.getByRole("button", { name: label });
 
@@ -51,10 +50,7 @@ describe("RecurringExpenseForm rendering (P3-C4)", () => {
     expect(START()).toHaveValue("");
     expect(END()).toHaveValue("");
     expect(CATEGORY_SELECT()).toHaveValue("");
-    expect(screen.getByRole("radio", { name: "每月" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
+    expect(screen.getByRole("radio", { name: "每月" })).toHaveAttribute("aria-checked", "true");
     expect(SUBMIT("创建")).toBeInTheDocument();
   });
 
@@ -180,9 +176,7 @@ describe("RecurringExpenseForm submit — create (P3-C4)", () => {
     const user = userEvent.setup();
     const onSuccess = vi.fn();
     createMock.mockResolvedValueOnce({ success: true, data: { id: "rule-new" } });
-    render(
-      <RecurringExpenseForm categories={CATEGORIES} onSuccess={onSuccess} />,
-    );
+    render(<RecurringExpenseForm categories={CATEGORIES} onSuccess={onSuccess} />);
     await user.type(NAME(), "房租");
     await user.type(AMOUNT(), "1500.5");
     await user.type(START(), "2026-01-15");

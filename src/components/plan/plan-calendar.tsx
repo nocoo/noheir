@@ -98,9 +98,7 @@ export function buildMonthGrid(viewMonth: string): CalendarCell[] {
   }
   const startDayNum = toDayNumber(monthStart);
   // JS weekday: 0..6 with Sunday=0 — same convention as the rest of the spec.
-  const startWeekday = new Date(
-    Date.UTC(monthStart.year, monthStart.month - 1, 1),
-  ).getUTCDay();
+  const startWeekday = new Date(Date.UTC(monthStart.year, monthStart.month - 1, 1)).getUTCDay();
   // First grid cell = (startDayNum - startWeekday). Always 42 cells
   // (6 weeks) so the calendar height never reflows month to month.
   const cells: CalendarCell[] = [];
@@ -170,10 +168,7 @@ export function PlanCalendar({
   }, [viewMonth]);
 
   return (
-    <div
-      className={cn("w-full select-none", className)}
-      data-view-month={viewMonth}
-    >
+    <div className={cn("w-full select-none", className)} data-view-month={viewMonth}>
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-lg font-semibold">{monthHeading}</h2>
       </div>
@@ -252,13 +247,10 @@ export function PlanCalendar({
               {visibleBanners.length > 0 ? (
                 <div className="flex flex-col gap-0.5">
                   {visibleBanners.map((rule, idx) => {
-                    const cat = rule.categoryId
-                      ? categoryMap.get(rule.categoryId)
-                      : undefined;
+                    const cat = rule.categoryId ? categoryMap.get(rule.categoryId) : undefined;
                     const colorToken = cat?.colorToken;
                     const isPaletteToken =
-                      typeof colorToken === "string" &&
-                      CHART_TOKENS.includes(colorToken);
+                      typeof colorToken === "string" && CHART_TOKENS.includes(colorToken);
                     const color = tokenColor(colorToken);
                     return (
                       <button
@@ -296,9 +288,7 @@ export function PlanCalendar({
                           !cell.inMonth && "opacity-60",
                         )}
                       >
-                        <span className="min-w-0 flex-1 truncate text-left">
-                          {rule.name}
-                        </span>
+                        <span className="min-w-0 flex-1 truncate text-left">{rule.name}</span>
                         <span className="shrink-0 tabular-nums text-foreground">
                           {formatAmountCompact(rule.amountCents)}
                         </span>

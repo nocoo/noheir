@@ -31,8 +31,5 @@ export function buildMcpConfigJson(params: Partial<McpConfigParams>): string {
  * Check if MCP config has all required parameters filled.
  */
 export function isMcpConfigComplete(params: Partial<McpConfigParams>): boolean {
-  return Boolean(
-    params.workerUrl &&
-    !params.workerUrl.includes("YOUR_")
-  );
+  return Boolean(params.workerUrl && !params.workerUrl.includes("YOUR_"));
 }

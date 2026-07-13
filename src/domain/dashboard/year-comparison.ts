@@ -16,9 +16,7 @@ export const buildYearComparisonChartData = (
 ): YearComparisonChartPoint[] => {
   return data.map((item) => {
     const savingsRate =
-      item.totalIncome > 0
-        ? ((item.totalIncome - item.totalExpense) / item.totalIncome) * 100
-        : 0;
+      item.totalIncome > 0 ? ((item.totalIncome - item.totalExpense) / item.totalIncome) * 100 : 0;
     return {
       year: item.year.toString(),
       income: item.totalIncome,
@@ -62,12 +60,10 @@ export const buildYearVsYearData = (
       month: name,
       incomeA: a.income,
       expenseA: a.expense,
-      savingsRateA:
-        a.income > 0 ? ((a.income - a.expense) / a.income) * 100 : 0,
+      savingsRateA: a.income > 0 ? ((a.income - a.expense) / a.income) * 100 : 0,
       incomeB: b.income,
       expenseB: b.expense,
-      savingsRateB:
-        b.income > 0 ? ((b.income - b.expense) / b.income) * 100 : 0,
+      savingsRateB: b.income > 0 ? ((b.income - b.expense) / b.income) * 100 : 0,
     };
   });
 };
@@ -97,15 +93,13 @@ export const buildMonthVsMonthData = (
       label: labelA,
       income: a.income,
       expense: a.expense,
-      savingsRate:
-        a.income > 0 ? ((a.income - a.expense) / a.income) * 100 : 0,
+      savingsRate: a.income > 0 ? ((a.income - a.expense) / a.income) * 100 : 0,
     },
     {
       label: labelB,
       income: b.income,
       expense: b.expense,
-      savingsRate:
-        b.income > 0 ? ((b.income - b.expense) / b.income) * 100 : 0,
+      savingsRate: b.income > 0 ? ((b.income - b.expense) / b.income) * 100 : 0,
     },
   ];
 };

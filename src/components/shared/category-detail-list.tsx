@@ -1,51 +1,45 @@
-"use client"
+"use client";
 
-import { useState, useMemo } from "react"
-import { ChevronDown, ChevronRight, FileText } from "lucide-react"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card"
+import { useState, useMemo } from "react";
+import { ChevronDown, ChevronRight, FileText } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 /** Transaction entry within a tertiary category */
 export interface CategoryTransaction {
-  date: string
-  amount: number
+  date: string;
+  amount: number;
 }
 
 /** Tertiary (3rd-level) category */
 export interface TertiaryCategory {
-  name: string
-  total: number
-  transactions?: CategoryTransaction[] | undefined
+  name: string;
+  total: number;
+  transactions?: CategoryTransaction[] | undefined;
 }
 
 /** Secondary (2nd-level) category */
 export interface SecondaryCategory {
-  name: string
-  total: number
-  tertiaryList: TertiaryCategory[]
+  name: string;
+  total: number;
+  tertiaryList: TertiaryCategory[];
 }
 
 /** Primary (1st-level) category group */
 export interface PrimaryCategoryGroup {
-  primary: string
-  total: number
-  percentage: number
-  secondaryCategories: SecondaryCategory[]
+  primary: string;
+  total: number;
+  percentage: number;
+  secondaryCategories: SecondaryCategory[];
 }
 
 export interface CategoryDetailListProps {
-  title: string
-  description: string
-  detailList: PrimaryCategoryGroup[]
-  colorHex: string
-  colorClass: string
-  totalAmount: number
-  colors: string[]
+  title: string;
+  description: string;
+  detailList: PrimaryCategoryGroup[];
+  colorHex: string;
+  colorClass: string;
+  totalAmount: number;
+  colors: string[];
 }
 
 export function CategoryDetailList({
@@ -57,35 +51,35 @@ export function CategoryDetailList({
   colors,
 }: CategoryDetailListProps) {
   const initialCollapsed = useMemo(() => {
-    const allKeys = new Set<string>()
+    const allKeys = new Set<string>();
 
     for (const cat of detailList) {
       for (const sub of cat.secondaryCategories) {
-        allKeys.add(`${cat.primary}-${sub.name}`)
+        allKeys.add(`${cat.primary}-${sub.name}`);
         for (const tertiary of sub.tertiaryList) {
-          allKeys.add(`${cat.primary}-${sub.name}-${tertiary.name}`)
+          allKeys.add(`${cat.primary}-${sub.name}-${tertiary.name}`);
         }
       }
     }
 
-    return allKeys
-  }, [detailList])
+    return allKeys;
+  }, [detailList]);
 
-  const [collapsed, setCollapsed] = useState<Set<string>>(initialCollapsed)
+  const [collapsed, setCollapsed] = useState<Set<string>>(initialCollapsed);
 
   const toggleCollapse = (key: string) => {
     setCollapsed((prev) => {
-      const next = new Set(prev)
+      const next = new Set(prev);
       if (next.has(key)) {
-        next.delete(key)
+        next.delete(key);
       } else {
-        next.add(key)
+        next.add(key);
       }
-      return next
-    })
-  }
+      return next;
+    });
+  };
 
-  const safeColors = colors.length > 0 ? colors : ["#64748b"]
+  const safeColors = colors.length > 0 ? colors : ["#64748b"];
 
   return (
     <Card>
@@ -99,8 +93,7 @@ export function CategoryDetailList({
       <CardContent>
         <div className="space-y-4">
           {detailList.map((cat, i) => {
-            const primaryColor =
-              safeColors[i % safeColors.length] ?? safeColors[0] ?? "#64748b"
+            const primaryColor = safeColors[i % safeColors.length] ?? safeColors[0] ?? "#64748b";
             return (
               <div key={cat.primary} className="overflow-hidden rounded-lg">
                 {/* Primary Category Row */}
@@ -121,9 +114,7 @@ export function CategoryDetailList({
                       />
                     </div>
                   </div>
-                  <span
-                    className={`w-28 shrink-0 text-right font-semibold ${colorClass}`}
-                  >
+                  <span className={`w-28 shrink-0 text-right font-semibold ${colorClass}`}>
                     ¥
                     {cat.total.toLocaleString("zh-CN", {
                       minimumFractionDigits: 2,
@@ -136,16 +127,12 @@ export function CategoryDetailList({
                 {cat.secondaryCategories.length > 0 && (
                   <div className="ml-6 mt-2 space-y-1">
                     {cat.secondaryCategories.map((sub) => {
-                      const secondaryKey = `${cat.primary}-${sub.name}`
-                      const isSubCollapsed = collapsed.has(secondaryKey)
-                      const subPercentage =
-                        cat.total > 0 ? (sub.total / cat.total) * 100 : 0
+                      const secondaryKey = `${cat.primary}-${sub.name}`;
+                      const isSubCollapsed = collapsed.has(secondaryKey);
+                      const subPercentage = cat.total > 0 ? (sub.total / cat.total) * 100 : 0;
 
                       return (
-                        <div
-                          key={sub.name}
-                          className="overflow-hidden rounded-lg"
-                        >
+                        <div key={sub.name} className="overflow-hidden rounded-lg">
                           <button
                             onClick={() => toggleCollapse(secondaryKey)}
                             className="hover:bg-muted/30 flex w-full items-center gap-3 px-3 py-2 text-left transition-colors"
@@ -171,9 +158,7 @@ export function CategoryDetailList({
                                 />
                               </div>
                             </div>
-                            <span
-                              className={`w-28 shrink-0 text-right text-sm ${colorClass}`}
-                            >
+                            <span className={`w-28 shrink-0 text-right text-sm ${colorClass}`}>
                               ¥
                               {sub.total.toLocaleString("zh-CN", {
                                 minimumFractionDigits: 2,
@@ -186,23 +171,15 @@ export function CategoryDetailList({
                           {!isSubCollapsed && sub.tertiaryList.length > 0 && (
                             <div className="ml-8 space-y-1">
                               {sub.tertiaryList.map((tertiary) => {
-                                const tertiaryKey = `${cat.primary}-${sub.name}-${tertiary.name}`
-                                const isTertiaryCollapsed =
-                                  collapsed.has(tertiaryKey)
+                                const tertiaryKey = `${cat.primary}-${sub.name}-${tertiary.name}`;
+                                const isTertiaryCollapsed = collapsed.has(tertiaryKey);
                                 const tertiaryPercentage =
-                                  sub.total > 0
-                                    ? (tertiary.total / sub.total) * 100
-                                    : 0
+                                  sub.total > 0 ? (tertiary.total / sub.total) * 100 : 0;
 
                                 return (
-                                  <div
-                                    key={tertiary.name}
-                                    className="overflow-hidden rounded-lg"
-                                  >
+                                  <div key={tertiary.name} className="overflow-hidden rounded-lg">
                                     <button
-                                      onClick={() =>
-                                        toggleCollapse(tertiaryKey)
-                                      }
+                                      onClick={() => toggleCollapse(tertiaryKey)}
                                       className="hover:bg-muted/20 flex w-full items-center gap-3 px-3 py-2 text-left transition-colors"
                                     >
                                       <div className="shrink-0">
@@ -231,78 +208,68 @@ export function CategoryDetailList({
                                         className={`w-28 shrink-0 text-right text-sm ${colorClass}`}
                                       >
                                         ¥
-                                        {tertiary.total.toLocaleString(
-                                          "zh-CN",
-                                          {
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2,
-                                          }
-                                        )}
+                                        {tertiary.total.toLocaleString("zh-CN", {
+                                          minimumFractionDigits: 2,
+                                          maximumFractionDigits: 2,
+                                        })}
                                       </span>
                                     </button>
 
                                     {/* Transactions */}
                                     {!isTertiaryCollapsed &&
-                                      tertiary.transactions?.map(
-                                        (tx, idx) => {
-                                          const txPercentage =
-                                            tertiary.total > 0
-                                              ? (tx.amount / tertiary.total) *
-                                                100
-                                              : 0
-                                          return (
-                                            <div
-                                              key={`${tx.date}-${idx}`}
-                                              className="hover:bg-muted/10 flex items-center gap-3 rounded px-3 py-2 transition-colors"
-                                            >
-                                              <span className="text-muted-foreground w-20 shrink-0 text-sm">
-                                                {tx.date}
-                                              </span>
-                                              <div className="flex-1" />
-                                              <div className="w-32 shrink-0">
-                                                <div className="bg-muted h-2 overflow-hidden rounded-full">
-                                                  <div
-                                                    className="h-full rounded-full transition-all"
-                                                    style={{
-                                                      width: `${txPercentage}%`,
-                                                      backgroundColor:
-                                                        colorHex,
-                                                      opacity: 0.4,
-                                                    }}
-                                                  />
-                                                </div>
+                                      tertiary.transactions?.map((tx, idx) => {
+                                        const txPercentage =
+                                          tertiary.total > 0
+                                            ? (tx.amount / tertiary.total) * 100
+                                            : 0;
+                                        return (
+                                          <div
+                                            key={`${tx.date}-${idx}`}
+                                            className="hover:bg-muted/10 flex items-center gap-3 rounded px-3 py-2 transition-colors"
+                                          >
+                                            <span className="text-muted-foreground w-20 shrink-0 text-sm">
+                                              {tx.date}
+                                            </span>
+                                            <div className="flex-1" />
+                                            <div className="w-32 shrink-0">
+                                              <div className="bg-muted h-2 overflow-hidden rounded-full">
+                                                <div
+                                                  className="h-full rounded-full transition-all"
+                                                  style={{
+                                                    width: `${txPercentage}%`,
+                                                    backgroundColor: colorHex,
+                                                    opacity: 0.4,
+                                                  }}
+                                                />
                                               </div>
-                                              <span
-                                                className={`w-28 shrink-0 text-right text-sm ${colorClass}`}
-                                              >
-                                                ¥
-                                                {tx.amount.toLocaleString(
-                                                  "zh-CN",
-                                                  {
-                                                    minimumFractionDigits: 2,
-                                                    maximumFractionDigits: 2,
-                                                  }
-                                                )}
-                                              </span>
                                             </div>
-                                          )
-                                        }
-                                      )}
+                                            <span
+                                              className={`w-28 shrink-0 text-right text-sm ${colorClass}`}
+                                            >
+                                              ¥
+                                              {tx.amount.toLocaleString("zh-CN", {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2,
+                                              })}
+                                            </span>
+                                          </div>
+                                        );
+                                      })}
                                   </div>
-                                )
+                                );
                               })}
                             </div>
                           )}
                         </div>
-                      )
+                      );
                     })}
                   </div>
                 )}
               </div>
-            )
+            );
           })}
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

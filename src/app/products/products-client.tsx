@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { useState, useTransition, useMemo } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import Link from "next/link"
-import { toast } from "sonner"
+import { useState, useTransition, useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { toast } from "sonner";
 import {
   Package,
   Search,
@@ -18,16 +18,11 @@ import {
   Warehouse,
   Archive,
   ArchiveRestore,
-} from "lucide-react"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -35,7 +30,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -43,237 +38,242 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { Label } from "@/components/ui/label"
-import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import { ChannelBadge, CategoryBadge, CurrencyBadge } from "@/components/ui/colored-badge"
-import {
-  createProduct,
-  updateProduct,
-  deleteProduct,
-} from "@/app/actions/product-actions"
+} from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Label } from "@/components/ui/label";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ChannelBadge, CategoryBadge, CurrencyBadge } from "@/components/ui/colored-badge";
+import { createProduct, updateProduct, deleteProduct } from "@/app/actions/product-actions";
 import {
   getReturnRateStatus,
   getReturnRateTextClass,
   DEFAULT_MIN_RETURN_RATE,
   DEFAULT_MAX_RETURN_RATE,
-} from "@/domain/settings"
-import type { DomainProduct } from "@/domain/types"
+} from "@/domain/settings";
+import type { DomainProduct } from "@/domain/types";
 
 interface SerializedUnit {
-  id: string
-  unitCode: string
-  amount: number
-  currency: string
-  status: string
-  strategy: string
-  tactics: string
-  productId: string | null
-  productName: string | null
+  id: string;
+  unitCode: string;
+  amount: number;
+  currency: string;
+  status: string;
+  strategy: string;
+  tactics: string;
+  productId: string | null;
+  productName: string | null;
 }
 
 interface ProductsClientProps {
-  products: DomainProduct[]
-  units: SerializedUnit[]
+  products: DomainProduct[];
+  units: SerializedUnit[];
 }
 
-type SortColumn = "name" | "channel" | "category" | "lockPeriodDays" | "annualReturnRate"
-type SortDirection = "asc" | "desc"
+type SortColumn = "name" | "channel" | "category" | "lockPeriodDays" | "annualReturnRate";
+type SortDirection = "asc" | "desc";
 
-const CHANNELS = [
-  "招商银行", "平安银行", "微众银行", "支付宝",
-  "招银香港", "光大永明", "中信建投",
-]
+const CHANNELS = ["招商银行", "平安银行", "微众银行", "支付宝", "招银香港", "光大永明", "中信建投"];
 
 const CATEGORIES = [
-  "养老年金", "储蓄保险", "混债基金", "债券基金", "货币基金",
-  "股票基金", "指数基金", "宽基指数", "私募基金", "定期存款",
-  "理财产品", "现金+",
-]
+  "养老年金",
+  "储蓄保险",
+  "混债基金",
+  "债券基金",
+  "货币基金",
+  "股票基金",
+  "指数基金",
+  "宽基指数",
+  "私募基金",
+  "定期存款",
+  "理财产品",
+  "现金+",
+];
 
 export function ProductsClient({ products, units }: ProductsClientProps) {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const [search, setSearch] = useState("")
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [search, setSearch] = useState("");
 
   const editFromParam = useMemo(() => {
-    const editId = searchParams.get("edit")
-    if (!editId) return null
-    return products.find((p) => p.id === editId) ?? null
-  }, [searchParams, products])
+    const editId = searchParams.get("edit");
+    if (!editId) return null;
+    return products.find((p) => p.id === editId) ?? null;
+  }, [searchParams, products]);
 
-  const [dialogOpen, setDialogOpen] = useState(() => editFromParam !== null)
-  const [editingProduct, setEditingProduct] = useState<DomainProduct | null>(
-    editFromParam,
-  )
-  const [deleteTarget, setDeleteTarget] = useState<DomainProduct | null>(null)
-  const [isPending, startTransition] = useTransition()
+  const [dialogOpen, setDialogOpen] = useState(() => editFromParam !== null);
+  const [editingProduct, setEditingProduct] = useState<DomainProduct | null>(editFromParam);
+  const [deleteTarget, setDeleteTarget] = useState<DomainProduct | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   // Filter state
-  const [showFilters, setShowFilters] = useState(false)
-  const [filterChannel, setFilterChannel] = useState("all")
-  const [filterCategory, setFilterCategory] = useState("all")
-  const [filterCurrency, setFilterCurrency] = useState("all")
-  const [showArchived, setShowArchived] = useState(false)
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterChannel, setFilterChannel] = useState("all");
+  const [filterCategory, setFilterCategory] = useState("all");
+  const [filterCurrency, setFilterCurrency] = useState("all");
+  const [showArchived, setShowArchived] = useState(false);
 
   // Sort state
-  const [sortColumn, setSortColumn] = useState<SortColumn>("name")
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc")
+  const [sortColumn, setSortColumn] = useState<SortColumn>("name");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   // Calculate product associations with units
   const productUnitStats = useMemo(() => {
-    const stats = new Map<string, { count: number; totalAmount: number }>()
+    const stats = new Map<string, { count: number; totalAmount: number }>();
     for (const unit of units) {
-      if (!unit.productId) continue
-      const existing = stats.get(unit.productId)
+      if (!unit.productId) continue;
+      const existing = stats.get(unit.productId);
       if (existing) {
-        existing.count += 1
-        existing.totalAmount += unit.amount
+        existing.count += 1;
+        existing.totalAmount += unit.amount;
       } else {
-        stats.set(unit.productId, { count: 1, totalAmount: unit.amount })
+        stats.set(unit.productId, { count: 1, totalAmount: unit.amount });
       }
     }
-    return stats
-  }, [units])
+    return stats;
+  }, [units]);
 
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
-      setSortDirection((d) => (d === "asc" ? "desc" : "asc"))
+      setSortDirection((d) => (d === "asc" ? "desc" : "asc"));
     } else {
-      setSortColumn(column)
-      setSortDirection("asc")
+      setSortColumn(column);
+      setSortDirection("asc");
     }
-  }
+  };
 
   const getSortIcon = (column: SortColumn) => {
-    if (sortColumn !== column) return <ArrowUpDown className="ml-1 inline size-3" />
-    return sortDirection === "asc"
-      ? <ArrowUp className="ml-1 inline size-3" />
-      : <ArrowDown className="ml-1 inline size-3" />
-  }
+    if (sortColumn !== column) return <ArrowUpDown className="ml-1 inline size-3" />;
+    return sortDirection === "asc" ? (
+      <ArrowUp className="ml-1 inline size-3" />
+    ) : (
+      <ArrowDown className="ml-1 inline size-3" />
+    );
+  };
 
   const getAriaSort = (column: SortColumn): "ascending" | "descending" | "none" => {
-    if (sortColumn !== column) return "none"
-    return sortDirection === "asc" ? "ascending" : "descending"
-  }
+    if (sortColumn !== column) return "none";
+    return sortDirection === "asc" ? "ascending" : "descending";
+  };
 
-  const activeFilterCount = [filterChannel, filterCategory, filterCurrency].filter(
-    (f) => f !== "all",
-  ).length + (showArchived ? 1 : 0)
+  const activeFilterCount =
+    [filterChannel, filterCategory, filterCurrency].filter((f) => f !== "all").length +
+    (showArchived ? 1 : 0);
 
   const resetFilters = () => {
-    setFilterChannel("all")
-    setFilterCategory("all")
-    setFilterCurrency("all")
-    setShowArchived(false)
-  }
+    setFilterChannel("all");
+    setFilterCategory("all");
+    setFilterCurrency("all");
+    setShowArchived(false);
+  };
 
   const filteredAndSorted = useMemo(() => {
     // First filter
     const result = products.filter((p) => {
       // Archive filter - by default, hide archived products
-      if (!showArchived && p.isArchived) return false
+      if (!showArchived && p.isArchived) return false;
       // Text search
       if (search) {
-        const q = search.toLowerCase()
+        const q = search.toLowerCase();
         const matches =
           p.name.toLowerCase().includes(q) ||
           (p.code ?? "").toLowerCase().includes(q) ||
           (p.channel ?? "").includes(search) ||
-          (p.category ?? "").includes(search)
-        if (!matches) return false
+          (p.category ?? "").includes(search);
+        if (!matches) return false;
       }
       // Channel filter
-      if (filterChannel !== "all" && p.channel !== filterChannel) return false
+      if (filterChannel !== "all" && p.channel !== filterChannel) return false;
       // Category filter
-      if (filterCategory !== "all" && p.category !== filterCategory) return false
+      if (filterCategory !== "all" && p.category !== filterCategory) return false;
       // Currency filter
-      if (filterCurrency !== "all" && (p.currency ?? "CNY") !== filterCurrency)
-        return false
-      return true
-    })
+      if (filterCurrency !== "all" && (p.currency ?? "CNY") !== filterCurrency) return false;
+      return true;
+    });
 
     // Then sort
     result.sort((a, b) => {
-      let cmp = 0
+      let cmp = 0;
       switch (sortColumn) {
         case "name":
-          cmp = a.name.localeCompare(b.name, "zh-CN")
-          break
+          cmp = a.name.localeCompare(b.name, "zh-CN");
+          break;
         case "channel":
-          cmp = (a.channel ?? "").localeCompare(b.channel ?? "", "zh-CN")
-          break
+          cmp = (a.channel ?? "").localeCompare(b.channel ?? "", "zh-CN");
+          break;
         case "category":
-          cmp = (a.category ?? "").localeCompare(b.category ?? "", "zh-CN")
-          break
+          cmp = (a.category ?? "").localeCompare(b.category ?? "", "zh-CN");
+          break;
         case "lockPeriodDays":
-          cmp = (a.lockPeriodDays ?? 0) - (b.lockPeriodDays ?? 0)
-          break
+          cmp = (a.lockPeriodDays ?? 0) - (b.lockPeriodDays ?? 0);
+          break;
         case "annualReturnRate":
-          cmp = (a.annualReturnRate ?? 0) - (b.annualReturnRate ?? 0)
-          break
+          cmp = (a.annualReturnRate ?? 0) - (b.annualReturnRate ?? 0);
+          break;
       }
-      return sortDirection === "asc" ? cmp : -cmp
-    })
+      return sortDirection === "asc" ? cmp : -cmp;
+    });
 
-    return result
-  }, [products, search, filterChannel, filterCategory, filterCurrency, showArchived, sortColumn, sortDirection])
+    return result;
+  }, [
+    products,
+    search,
+    filterChannel,
+    filterCategory,
+    filterCurrency,
+    showArchived,
+    sortColumn,
+    sortDirection,
+  ]);
 
   const handleEdit = (product: DomainProduct) => {
-    setEditingProduct(product)
-    setDialogOpen(true)
-  }
+    setEditingProduct(product);
+    setDialogOpen(true);
+  };
 
   const handleCreate = () => {
-    setEditingProduct(null)
-    setDialogOpen(true)
-  }
+    setEditingProduct(null);
+    setDialogOpen(true);
+  };
 
   const handleDelete = (product: DomainProduct) => {
-    setDeleteTarget(product)
-  }
+    setDeleteTarget(product);
+  };
 
   const confirmDelete = () => {
-    if (!deleteTarget) return
+    if (!deleteTarget) return;
     startTransition(async () => {
-      const result = await deleteProduct(deleteTarget.id)
+      const result = await deleteProduct(deleteTarget.id);
       if (result.success) {
-        toast.success("产品已删除")
-        router.refresh()
+        toast.success("产品已删除");
+        router.refresh();
       } else {
-        toast.error(result.error)
+        toast.error(result.error);
       }
-      setDeleteTarget(null)
-    })
-  }
+      setDeleteTarget(null);
+    });
+  };
 
   const handleToggleArchive = (product: DomainProduct) => {
     startTransition(async () => {
-      const result = await updateProduct(product.id, { isArchived: !product.isArchived })
+      const result = await updateProduct(product.id, { isArchived: !product.isArchived });
       if (result.success) {
-        toast.success(product.isArchived ? "已取消存档" : "已存档")
-        router.refresh()
+        toast.success(product.isArchived ? "已取消存档" : "已存档");
+        router.refresh();
       } else {
-        toast.error(result.error)
+        toast.error(result.error);
       }
-    })
-  }
+    });
+  };
 
   // Count active (non-archived) products
-  const activeProductCount = products.filter((p) => !p.isArchived).length
+  const activeProductCount = products.filter((p) => !p.isArchived).length;
 
   return (
     <div className="space-y-6">
@@ -286,9 +286,7 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
           </h1>
           <p className="text-muted-foreground text-sm">
             金融产品目录 · ({filteredAndSorted.length} / {activeProductCount} 个产品)
-            {showArchived && (
-              <span className="ml-1 text-amber-600">(含已存档)</span>
-            )}
+            {showArchived && <span className="ml-1 text-amber-600">(含已存档)</span>}
           </p>
         </div>
         <div className="flex gap-2">
@@ -315,10 +313,13 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
               </Badge>
             )}
           </Button>
-          <Dialog open={dialogOpen} onOpenChange={(open) => {
-            setDialogOpen(open)
-            if (searchParams.has("edit")) router.replace("/products")
-          }}>
+          <Dialog
+            open={dialogOpen}
+            onOpenChange={(open) => {
+              setDialogOpen(open);
+              if (searchParams.has("edit")) router.replace("/products");
+            }}
+          >
             <DialogTrigger asChild>
               <Button onClick={handleCreate} size="sm">
                 <Plus className="mr-1 size-4" />
@@ -327,21 +328,17 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>
-                  {editingProduct ? "编辑产品" : "新增产品"}
-                </DialogTitle>
+                <DialogTitle>{editingProduct ? "编辑产品" : "新增产品"}</DialogTitle>
                 <DialogDescription>
-                  {editingProduct
-                    ? "修改理财产品信息"
-                    : "添加新的理财产品到产品库"}
+                  {editingProduct ? "修改理财产品信息" : "添加新的理财产品到产品库"}
                 </DialogDescription>
               </DialogHeader>
               <ProductForm
                 product={editingProduct}
                 onClose={() => setDialogOpen(false)}
                 onSuccess={() => {
-                  setDialogOpen(false)
-                  router.refresh()
+                  setDialogOpen(false);
+                  router.refresh();
                 }}
               />
             </DialogContent>
@@ -504,18 +501,10 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
                     {product.code ?? "—"}
                   </TableCell>
                   <TableCell>
-                    {product.channel ? (
-                      <ChannelBadge channel={product.channel} />
-                    ) : (
-                      "—"
-                    )}
+                    {product.channel ? <ChannelBadge channel={product.channel} /> : "—"}
                   </TableCell>
                   <TableCell>
-                    {product.category ? (
-                      <CategoryBadge category={product.category} />
-                    ) : (
-                      "—"
-                    )}
+                    {product.category ? <CategoryBadge category={product.category} /> : "—"}
                   </TableCell>
                   <TableCell>
                     <CurrencyBadge currency={product.currency ?? "CNY"} />
@@ -547,19 +536,16 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="size-7"
-                                asChild
-                              >
+                              <Button variant="ghost" size="icon" className="size-7" asChild>
                                 <Link href={`/warehouse?q=${encodeURIComponent(product.name)}`}>
                                   <Warehouse className="size-3.5" />
                                 </Link>
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>查看关联的 {productUnitStats.get(product.id)?.count ?? 0} 个资本单位</p>
+                              <p>
+                                查看关联的 {productUnitStats.get(product.id)?.count ?? 0} 个资本单位
+                              </p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
@@ -609,10 +595,7 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
               ))}
               {filteredAndSorted.length === 0 && (
                 <TableRow>
-                  <TableCell
-                    colSpan={8}
-                    className="text-muted-foreground py-8 text-center"
-                  >
+                  <TableCell colSpan={8} className="text-muted-foreground py-8 text-center">
                     {search ? "未找到匹配的产品" : "暂无产品数据"}
                   </TableCell>
                 </TableRow>
@@ -626,7 +609,7 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
       <ConfirmDialog
         open={deleteTarget !== null}
         onOpenChange={(open) => {
-          if (!open) setDeleteTarget(null)
+          if (!open) setDeleteTarget(null);
         }}
         title="删除产品"
         description={`确定要删除产品「${deleteTarget?.name ?? ""}」吗？此操作不可撤销。`}
@@ -634,7 +617,7 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
         loading={isPending}
       />
     </div>
-  )
+  );
 }
 
 // ── Product Form ──
@@ -644,75 +627,73 @@ function ProductForm({
   onClose,
   onSuccess,
 }: {
-  product: DomainProduct | null
-  onClose: () => void
-  onSuccess: () => void
+  product: DomainProduct | null;
+  onClose: () => void;
+  onSuccess: () => void;
 }) {
-  const [name, setName] = useState(product?.name ?? "")
-  const [code, setCode] = useState(product?.code ?? "")
-  const [channel, setChannel] = useState(product?.channel ?? "")
-  const [category, setCategory] = useState(product?.category ?? "")
-  const [currency, setCurrency] = useState(product?.currency ?? "CNY")
+  const [name, setName] = useState(product?.name ?? "");
+  const [code, setCode] = useState(product?.code ?? "");
+  const [channel, setChannel] = useState(product?.channel ?? "");
+  const [category, setCategory] = useState(product?.category ?? "");
+  const [currency, setCurrency] = useState(product?.currency ?? "CNY");
   const [lockDays, setLockDays] = useState(
     product?.lockPeriodDays != null ? String(product.lockPeriodDays) : "",
-  )
+  );
   const [openDays, setOpenDays] = useState(
     product?.openDays != null ? String(product.openDays) : "",
-  )
+  );
   const [cycleDays, setCycleDays] = useState(
     product?.cycleDays != null ? String(product.cycleDays) : "",
-  )
+  );
   const [rate, setRate] = useState(
-    product?.annualReturnRate != null
-      ? String(product.annualReturnRate * 100)
-      : "",
-  )
-  const [isPending, startTransition] = useTransition()
+    product?.annualReturnRate != null ? String(product.annualReturnRate * 100) : "",
+  );
+  const [isPending, startTransition] = useTransition();
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     startTransition(async () => {
       if (product) {
         // Update: explicitly send null to clear optional fields
-        const data: Parameters<typeof updateProduct>[1] = { name }
-        data.code = code || null
-        data.channel = channel || null
-        data.category = category || null
-        data.currency = currency || "CNY"
-        data.lockPeriodDays = lockDays ? Number(lockDays) : null
-        data.openDays = openDays ? Number(openDays) : null
-        data.cycleDays = cycleDays ? Number(cycleDays) : null
-        data.annualReturnRate = rate ? Number(rate) / 100 : null
+        const data: Parameters<typeof updateProduct>[1] = { name };
+        data.code = code || null;
+        data.channel = channel || null;
+        data.category = category || null;
+        data.currency = currency || "CNY";
+        data.lockPeriodDays = lockDays ? Number(lockDays) : null;
+        data.openDays = openDays ? Number(openDays) : null;
+        data.cycleDays = cycleDays ? Number(cycleDays) : null;
+        data.annualReturnRate = rate ? Number(rate) / 100 : null;
 
-        const result = await updateProduct(product.id, data)
+        const result = await updateProduct(product.id, data);
         if (result.success) {
-          toast.success("产品已更新")
-          onSuccess()
+          toast.success("产品已更新");
+          onSuccess();
         } else {
-          toast.error(result.error)
+          toast.error(result.error);
         }
       } else {
         // Create: only send fields that have values
-        const data: Parameters<typeof createProduct>[0] = { name }
-        if (code) data.code = code
-        if (channel) data.channel = channel
-        if (category) data.category = category
-        if (currency) data.currency = currency
-        if (lockDays) data.lockPeriodDays = Number(lockDays)
-        if (openDays) data.openDays = Number(openDays)
-        if (cycleDays) data.cycleDays = Number(cycleDays)
-        if (rate) data.annualReturnRate = Number(rate) / 100
+        const data: Parameters<typeof createProduct>[0] = { name };
+        if (code) data.code = code;
+        if (channel) data.channel = channel;
+        if (category) data.category = category;
+        if (currency) data.currency = currency;
+        if (lockDays) data.lockPeriodDays = Number(lockDays);
+        if (openDays) data.openDays = Number(openDays);
+        if (cycleDays) data.cycleDays = Number(cycleDays);
+        if (rate) data.annualReturnRate = Number(rate) / 100;
 
-        const result = await createProduct(data)
+        const result = await createProduct(data);
         if (result.success) {
-          toast.success("产品已创建")
-          onSuccess()
+          toast.success("产品已创建");
+          onSuccess();
         } else {
-          toast.error(result.error)
+          toast.error(result.error);
         }
       }
-    })
-  }
+    });
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -720,21 +701,12 @@ function ProductForm({
         <Label htmlFor="name">
           名称 <span className="text-destructive">*</span>
         </Label>
-        <Input
-          id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
+        <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="code">代码</Label>
-          <Input
-            id="code"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-          />
+          <Input id="code" value={code} onChange={(e) => setCode(e.target.value)} />
         </div>
         <div className="space-y-2">
           <Label>币种</Label>
@@ -835,12 +807,7 @@ function ProductForm({
         </div>
       )}
       <div className="flex justify-end gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onClose}
-          disabled={isPending}
-        >
+        <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
           取消
         </Button>
         <Button type="submit" disabled={isPending}>
@@ -848,32 +815,30 @@ function ProductForm({
         </Button>
       </div>
     </form>
-  )
+  );
 }
 
 // ── Return Rate Cell ──
 
 function ReturnRateCell({ rate }: { rate: number }) {
-  const ratePercent = rate * 100
-  const status = getReturnRateStatus(ratePercent, DEFAULT_MIN_RETURN_RATE, DEFAULT_MAX_RETURN_RATE)
-  const textClass = getReturnRateTextClass(status)
-  const dailyRate = (ratePercent / 365).toFixed(4)
+  const ratePercent = rate * 100;
+  const status = getReturnRateStatus(ratePercent, DEFAULT_MIN_RETURN_RATE, DEFAULT_MAX_RETURN_RATE);
+  const textClass = getReturnRateTextClass(status);
+  const dailyRate = (ratePercent / 365).toFixed(4);
 
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <span className={`cursor-help font-medium ${textClass}`}>
-            {ratePercent.toFixed(2)}%
-          </span>
+          <span className={`cursor-help font-medium ${textClass}`}>{ratePercent.toFixed(2)}%</span>
         </TooltipTrigger>
         <TooltipContent>
           <p>日收益率约 {dailyRate}%</p>
           <p className="text-muted-foreground text-xs">
-            即每万元日收益约 ¥{(10000 * rate / 365).toFixed(2)}
+            即每万元日收益约 ¥{((10000 * rate) / 365).toFixed(2)}
           </p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
-  )
+  );
 }

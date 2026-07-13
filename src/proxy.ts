@@ -2,18 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 
 // Public routes that don't require authentication
-const PUBLIC_ROUTES = [
-  "/login",
-  "/terms",
-  "/privacy",
-];
+const PUBLIC_ROUTES = ["/login", "/terms", "/privacy"];
 
 // Public route prefixes
 const PUBLIC_PREFIXES = [
-  "/.well-known/",  // OAuth metadata
-  "/api/mcp",       // MCP OAuth endpoints (has its own Bearer token auth)
-  "/api/auth/",     // NextAuth endpoints handle their own auth
-  "/api/live",      // Public health check
+  "/.well-known/", // OAuth metadata
+  "/api/mcp", // MCP OAuth endpoints (has its own Bearer token auth)
+  "/api/auth/", // NextAuth endpoints handle their own auth
+  "/api/live", // Public health check
 ];
 
 function isPublicRoute(pathname: string): boolean {

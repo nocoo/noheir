@@ -74,12 +74,7 @@ export interface ColorTokenPickerProps {
 
 const ALLOWED = new Set<string>(CHART_TOKENS);
 
-function nextIndex(
-  current: number,
-  key: string,
-  count: number,
-  columns: number,
-): number | null {
+function nextIndex(current: number, key: string, count: number, columns: number): number | null {
   // Arrow keys move BOTH focus and selection (radiogroup pattern).
   // Wrap at boundaries so users don't get stuck at the edge.
   switch (key) {
@@ -118,18 +113,13 @@ export function ColorTokenPicker({
   id,
 }: ColorTokenPickerProps): React.ReactElement {
   // Drop any caller-supplied token outside the closed set.
-  const items = React.useMemo(
-    () => tokens.filter((t) => ALLOWED.has(t)),
-    [tokens],
-  );
+  const items = React.useMemo(() => tokens.filter((t) => ALLOWED.has(t)), [tokens]);
 
   // The swatch that owns the tab stop. Defaults to the current value's
   // index, or 0 if nothing selected. Updated as the user navigates so
   // arrow-key selection feels native.
   const selectedIndex = value ? items.indexOf(value) : -1;
-  const [tabIndex, setTabIndex] = React.useState<number>(
-    selectedIndex >= 0 ? selectedIndex : 0,
-  );
+  const [tabIndex, setTabIndex] = React.useState<number>(selectedIndex >= 0 ? selectedIndex : 0);
 
   // Keep tabIndex in sync when the controlled value changes from outside.
   React.useEffect(() => {

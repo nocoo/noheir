@@ -1,28 +1,27 @@
-import { AppShell } from "@/components/layout"
-import { getAuthedClient } from "@/lib/api-helpers"
-import { toUnitDisplayInfo } from "@/lib/capital-mappers"
+import { AppShell } from "@/components/layout";
+import { getAuthedClient } from "@/lib/api-helpers";
+import { toUnitDisplayInfo } from "@/lib/capital-mappers";
 import {
   classifyDecisions,
   buildDecisionStats,
   buildFilterCounts,
-} from "@/domain/assets/capital-decisions"
-import { CapitalDecisionsClient } from "./capital-decisions-client"
+} from "@/domain/assets/capital-decisions";
+import { CapitalDecisionsClient } from "./capital-decisions-client";
 
 export default async function CapitalDecisionsPage() {
-  let units: ReturnType<typeof toUnitDisplayInfo>[] = []
+  let units: ReturnType<typeof toUnitDisplayInfo>[] = [];
 
   try {
-    const { userId, client } = await getAuthedClient()
-    const result = await client.listUnits(userId, { with_products: true })
-    units = result.units
-      .map((raw) => toUnitDisplayInfo(raw as Record<string, unknown>))
+    const { userId, client } = await getAuthedClient();
+    const result = await client.listUnits(userId, { with_products: true });
+    units = result.units.map((raw) => toUnitDisplayInfo(raw as Record<string, unknown>));
   } catch {
     // Not authenticated or Worker unavailable
   }
 
-  const decisions = classifyDecisions(units)
-  const stats = buildDecisionStats(decisions)
-  const filterCounts = buildFilterCounts(decisions)
+  const decisions = classifyDecisions(units);
+  const stats = buildDecisionStats(decisions);
+  const filterCounts = buildFilterCounts(decisions);
 
   // Serialize decisions for client
   const serializedDecisions = decisions.map((d) => ({
@@ -38,7 +37,7 @@ export default async function CapitalDecisionsPage() {
     urgency: d.urgency,
     reason: d.reason,
     action: d.details,
-  }))
+  }));
 
   return (
     <AppShell>
@@ -57,5 +56,5 @@ export default async function CapitalDecisionsPage() {
         filterCounts={filterCounts}
       />
     </AppShell>
-  )
+  );
 }

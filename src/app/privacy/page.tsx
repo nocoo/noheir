@@ -1,5 +1,5 @@
-import { AppShell } from "@/components/layout"
-import { ShieldCheck } from "lucide-react"
+import { AppShell } from "@/components/layout";
+import { ShieldCheck } from "lucide-react";
 
 export default async function PrivacyPage() {
   return (
@@ -10,9 +10,7 @@ export default async function PrivacyPage() {
             <ShieldCheck className="text-primary size-6" />
             隐私政策
           </h1>
-          <p className="text-muted-foreground text-sm">
-            我们重视并保护您的隐私
-          </p>
+          <p className="text-muted-foreground text-sm">我们重视并保护您的隐私</p>
         </div>
 
         <div className="prose prose-sm dark:prose-invert max-w-none space-y-4">
@@ -35,8 +33,8 @@ export default async function PrivacyPage() {
           <section>
             <h2 className="text-lg font-semibold">3. AI 分析</h2>
             <p className="text-muted-foreground">
-              AI 分析功能需要用户自行配置 API 密钥和服务地址。分析请求直接发送至用户
-              指定的 AI 服务，不经过我们的服务器。用户可以随时关闭 AI 功能。
+              AI 分析功能需要用户自行配置 API 密钥和服务地址。分析请求直接发送至用户 指定的 AI
+              服务，不经过我们的服务器。用户可以随时关闭 AI 功能。
             </p>
           </section>
 
@@ -57,10 +55,8 @@ export default async function PrivacyPage() {
           </section>
         </div>
 
-        <p className="text-muted-foreground text-xs">
-          最后更新：2026年1月
-        </p>
+        <p className="text-muted-foreground text-xs">最后更新：2026年1月</p>
       </div>
     </AppShell>
-  )
+  );
 }

@@ -75,9 +75,7 @@ describe("account-detail domain", () => {
     const accounts = buildUniqueAccounts(entries);
     expect(accounts).toContain("平安-主卡");
 
-    const grouped = buildAccountsByType(accounts, [
-      { accountName: "平安-主卡", type: "debit" },
-    ]);
+    const grouped = buildAccountsByType(accounts, [{ accountName: "平安-主卡", type: "debit" }]);
     expect(grouped.debit).toContain("平安-主卡");
   });
 
@@ -111,9 +109,7 @@ describe("account-detail domain", () => {
 
   it("handles balance anchors within year", () => {
     const entries = buildBalanceEntries(transactions, transfers);
-    const anchors = [
-      { accountName: "平安-主卡", date: "2024-03-01", balance: 5000 },
-    ];
+    const anchors = [{ accountName: "平安-主卡", date: "2024-03-01", balance: 5000 }];
     const detail = buildAccountDetailData(entries, "平安-主卡", 2024, anchors);
     expect(detail.displayAnchors).toHaveLength(1);
     // Anchor should appear in display entries
@@ -124,9 +120,7 @@ describe("account-detail domain", () => {
 
   it("uses starting anchor from before year", () => {
     const entries = buildBalanceEntries(transactions, transfers);
-    const anchors = [
-      { accountName: "平安-主卡", date: "2023-12-31", balance: 2000 },
-    ];
+    const anchors = [{ accountName: "平安-主卡", date: "2023-12-31", balance: 2000 }];
     const detail = buildAccountDetailData(entries, "平安-主卡", 2024, anchors);
     expect(detail.summary?.initialBalance).toBe(2000);
     expect(detail.summary?.hasAnchor).toBe(true);
@@ -134,9 +128,7 @@ describe("account-detail domain", () => {
 
   it("handles anchors on the same date as transactions", () => {
     const entries = buildBalanceEntries(transactions, transfers);
-    const anchors = [
-      { accountName: "平安-主卡", date: "2024-01-02", balance: 800 },
-    ];
+    const anchors = [{ accountName: "平安-主卡", date: "2024-01-02", balance: 800 }];
     const detail = buildAccountDetailData(entries, "平安-主卡", 2024, anchors);
     expect(detail.displayAnchors).toHaveLength(1);
   });
@@ -151,9 +143,9 @@ describe("account-detail domain", () => {
 
 describe("buildAccountType", () => {
   it("returns matched type", () => {
-    expect(
-      buildAccountType("平安-主卡", [{ accountName: "平安-主卡", type: "debit" }]),
-    ).toBe("debit");
+    expect(buildAccountType("平安-主卡", [{ accountName: "平安-主卡", type: "debit" }])).toBe(
+      "debit",
+    );
   });
 
   it("returns unclassified when no match", () => {

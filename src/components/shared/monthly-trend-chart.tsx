@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   AreaChart,
@@ -9,19 +9,19 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
-} from "recharts"
-import type { MonthlyData } from "@/domain/types"
-import { formatCurrencyK, formatCurrencyFull } from "@/lib/chart-config"
-import { ChartCard } from "@/components/shared/chart-card"
+} from "recharts";
+import type { MonthlyData } from "@/domain/types";
+import { formatCurrencyK, formatCurrencyFull } from "@/lib/chart-config";
+import { ChartCard } from "@/components/shared/chart-card";
 
 export interface MonthlyTrendChartProps {
-  title: string
-  description?: string
-  monthlyData: MonthlyData[]
-  averageValue: number
-  colorHex: string
-  dataKey: "income" | "expense"
-  icon: React.ElementType
+  title: string;
+  description?: string;
+  monthlyData: MonthlyData[];
+  averageValue: number;
+  colorHex: string;
+  dataKey: "income" | "expense";
+  icon: React.ElementType;
 }
 
 export function MonthlyTrendChart({
@@ -33,8 +33,8 @@ export function MonthlyTrendChart({
   dataKey,
   icon,
 }: MonthlyTrendChartProps) {
-  const gradientId = `${dataKey}Gradient`
-  const labelText = dataKey === "income" ? "收入" : "支出"
+  const gradientId = `${dataKey}Gradient`;
+  const labelText = dataKey === "income" ? "收入" : "支出";
 
   return (
     <ChartCard title={title} {...(description ? { description } : {})} icon={icon}>
@@ -48,11 +48,7 @@ export function MonthlyTrendChart({
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-            <XAxis
-              dataKey="month"
-              tick={{ fontSize: 12 }}
-              className="text-muted-foreground"
-            />
+            <XAxis dataKey="month" tick={{ fontSize: 12 }} className="text-muted-foreground" />
             <YAxis
               tick={{ fontSize: 12 }}
               className="text-muted-foreground"
@@ -60,8 +56,8 @@ export function MonthlyTrendChart({
             />
             <Tooltip
               content={({ active, payload, label: tooltipLabel }) => {
-                if (!active || !payload?.length) return null
-                const entry = payload[0]
+                if (!active || !payload?.length) return null;
+                const entry = payload[0];
                 return (
                   <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
                     <p className="font-medium">{tooltipLabel}</p>
@@ -69,7 +65,7 @@ export function MonthlyTrendChart({
                       {labelText}: {formatCurrencyFull(Number(entry?.value ?? 0))}
                     </p>
                   </div>
-                )
+                );
               }}
             />
             <ReferenceLine
@@ -95,5 +91,5 @@ export function MonthlyTrendChart({
         </ResponsiveContainer>
       </div>
     </ChartCard>
-  )
+  );
 }

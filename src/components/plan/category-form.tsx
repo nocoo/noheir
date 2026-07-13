@@ -64,9 +64,10 @@ export function CategoryForm({
   const isEdit = Boolean(initial?.id);
 
   const [name, setName] = React.useState<string>(initial?.name ?? "");
-  const initialColor = initial?.colorToken && CHART_TOKENS.includes(initial.colorToken)
-    ? initial.colorToken
-    : defaultColorToken;
+  const initialColor =
+    initial?.colorToken && CHART_TOKENS.includes(initial.colorToken)
+      ? initial.colorToken
+      : defaultColorToken;
   const [colorToken, setColorToken] = React.useState<string>(initialColor);
   const [sortOrder, setSortOrder] = React.useState<number>(initial?.sortOrder ?? 0);
 
@@ -97,9 +98,10 @@ export function CategoryForm({
         colorToken,
         sortOrder,
       };
-      const result = isEdit && initial?.id
-        ? await updateExpenseCategory(initial.id, payload)
-        : await createExpenseCategory(payload);
+      const result =
+        isEdit && initial?.id
+          ? await updateExpenseCategory(initial.id, payload)
+          : await createExpenseCategory(payload);
 
       if (result.success) {
         toast.success(isEdit ? "分类已更新" : "分类已创建");
@@ -200,12 +202,7 @@ export function CategoryForm({
           {isPending ? "保存中..." : isEdit ? "保存" : "创建"}
         </Button>
         {onCancel ? (
-          <Button
-            type="button"
-            variant="outline"
-            disabled={isPending}
-            onClick={onCancel}
-          >
+          <Button type="button" variant="outline" disabled={isPending} onClick={onCancel}>
             取消
           </Button>
         ) : null}

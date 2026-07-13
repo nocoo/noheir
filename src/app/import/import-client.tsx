@@ -14,9 +14,7 @@ export function ImportClient() {
           <FileUp className="text-primary size-6" />
           数据导入
         </h1>
-        <p className="text-muted-foreground text-sm">
-          从 CSV 文件导入收支流水和转账数据
-        </p>
+        <p className="text-muted-foreground text-sm">从 CSV 文件导入收支流水和转账数据</p>
       </div>
 
       {/* Tabs */}

@@ -2,13 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import { KeyRound, Copy, Check, Terminal, ExternalLink } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -52,15 +46,11 @@ function CopyButton({ text, className }: { text: string; className?: string }) {
       onClick={handleCopy}
       className={cn(
         "shrink-0 rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors",
-        className
+        className,
       )}
       title="复制"
     >
-      {copied ? (
-        <Check className="h-3.5 w-3.5 text-green-600" />
-      ) : (
-        <Copy className="h-3.5 w-3.5" />
-      )}
+      {copied ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
     </button>
   );
 }
@@ -90,7 +80,9 @@ function CodeBlock({ code, lang }: { code: string; lang?: string }) {
 // ---------------------------------------------------------------------------
 
 export function McpTokensClient() {
-  const [activeTab, setActiveTab] = useState<"claude-code" | "claude-desktop" | "cursor">("claude-code");
+  const [activeTab, setActiveTab] = useState<"claude-code" | "claude-desktop" | "cursor">(
+    "claude-code",
+  );
   const mcpUrl = useMemo(() => getMcpUrl(), []);
 
   // Config templates for different clients
@@ -164,13 +156,9 @@ export function McpTokensClient() {
         <CardContent className="space-y-4">
           {/* MCP Endpoint */}
           <div className="space-y-1.5">
-            <div className="text-xs font-medium text-muted-foreground">
-              MCP 端点
-            </div>
+            <div className="text-xs font-medium text-muted-foreground">MCP 端点</div>
             <div className="flex items-center gap-2 rounded-lg border border-border bg-secondary px-3 py-2">
-              <code className="flex-1 text-xs font-mono text-foreground break-all">
-                {mcpUrl}
-              </code>
+              <code className="flex-1 text-xs font-mono text-foreground break-all">{mcpUrl}</code>
               <CopyButton text={mcpUrl} />
             </div>
           </div>
@@ -194,7 +182,7 @@ export function McpTokensClient() {
                     "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
                     activeTab === key
                       ? "bg-background text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
+                      : "text-muted-foreground hover:text-foreground",
                   )}
                 >
                   {label}
@@ -204,13 +192,11 @@ export function McpTokensClient() {
 
             {/* Config path hint */}
             <p className="text-xs text-muted-foreground">
-              配置文件路径: <code className="bg-secondary px-1 py-0.5 rounded">{configPaths[activeTab]}</code>
+              配置文件路径:{" "}
+              <code className="bg-secondary px-1 py-0.5 rounded">{configPaths[activeTab]}</code>
             </p>
 
-            <CodeBlock
-              code={configs[activeTab]}
-              lang="json"
-            />
+            <CodeBlock code={configs[activeTab]} lang="json" />
           </div>
 
           {/* OAuth explanation */}

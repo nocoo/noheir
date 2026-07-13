@@ -5,7 +5,7 @@
 // that falls within an inclusive [fromDate, toDate] window. Used by the
 // UI summary cards.
 
-import { computeOccurrences, daysInMonth, formatIso, parseIso  } from "./occurrences";
+import { computeOccurrences, daysInMonth, formatIso, parseIso } from "./occurrences";
 import type { RecurrenceRule } from "./rule-types";
 
 export interface Window {
@@ -35,11 +35,7 @@ export function sumMonth(rules: RecurrenceRule[], viewMonth: string): number {
 }
 
 /** Convenience: sum for the next `days` starting from `today`. */
-export function sumNextDays(
-  rules: RecurrenceRule[],
-  today: string,
-  days: number,
-): number {
+export function sumNextDays(rules: RecurrenceRule[], today: string, days: number): number {
   return sumWindow(rules, {
     fromDate: today,
     toDate: addDaysIso(today, days),
@@ -61,7 +57,7 @@ export function addDaysIso(iso: string, days: number): string {
       d += remaining;
       remaining = 0;
     } else {
-      remaining -= (last - d + 1);
+      remaining -= last - d + 1;
       d = 1;
       m += 1;
       if (m > 12) {

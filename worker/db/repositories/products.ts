@@ -5,12 +5,15 @@ import type { FinancialProduct, NewFinancialProduct } from "../types";
 
 export function createProductsRepo(db: DrizzleD1Database) {
   return {
-    async findAll(userId: string, filters?: {
-      channel?: string | undefined;
-      category?: string | undefined;
-      currency?: string | undefined;
-      includeArchived?: boolean | undefined;
-    }): Promise<FinancialProduct[]> {
+    async findAll(
+      userId: string,
+      filters?: {
+        channel?: string | undefined;
+        category?: string | undefined;
+        currency?: string | undefined;
+        includeArchived?: boolean | undefined;
+      },
+    ): Promise<FinancialProduct[]> {
       // Build conditions array
       const conditions: SQL[] = [eq(financialProducts.userId, userId)];
 
@@ -45,7 +48,10 @@ export function createProductsRepo(db: DrizzleD1Database) {
       return row ?? null;
     },
 
-    async create(userId: string, data: Omit<NewFinancialProduct, "id" | "userId" | "createdAt">): Promise<FinancialProduct> {
+    async create(
+      userId: string,
+      data: Omit<NewFinancialProduct, "id" | "userId" | "createdAt">,
+    ): Promise<FinancialProduct> {
       return await db
         .insert(financialProducts)
         .values({ ...data, userId })
@@ -53,7 +59,11 @@ export function createProductsRepo(db: DrizzleD1Database) {
         .get();
     },
 
-    async update(userId: string, id: string, data: Partial<Omit<NewFinancialProduct, "id" | "userId" | "createdAt">>): Promise<FinancialProduct | null> {
+    async update(
+      userId: string,
+      id: string,
+      data: Partial<Omit<NewFinancialProduct, "id" | "userId" | "createdAt">>,
+    ): Promise<FinancialProduct | null> {
       const rows = await db
         .update(financialProducts)
         .set(data)

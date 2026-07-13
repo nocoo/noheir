@@ -40,41 +40,26 @@ describe("CategoryForm rendering (P3-C3)", () => {
     expect(screen.getByRole("form", { name: "新建分类" })).toBeInTheDocument();
     expect(screen.getByLabelText("分类名")).toHaveValue("");
     // First swatch (chart-1 = Sky) is selected by default.
-    expect(screen.getByRole("radio", { name: "Sky" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
+    expect(screen.getByRole("radio", { name: "Sky" })).toHaveAttribute("aria-checked", "true");
     expect(screen.getByLabelText("排序")).toHaveValue(0);
     expect(screen.getByRole("button", { name: "创建" })).toBeInTheDocument();
   });
 
   test("edit mode: prefilled from initial, button reads 保存", () => {
     render(
-      <CategoryForm
-        initial={{ id: "cat-1", name: "房贷", colorToken: "chart-9", sortOrder: 3 }}
-      />,
+      <CategoryForm initial={{ id: "cat-1", name: "房贷", colorToken: "chart-9", sortOrder: 3 }} />,
     );
     expect(screen.getByRole("form", { name: "编辑分类" })).toBeInTheDocument();
     expect(screen.getByLabelText("分类名")).toHaveValue("房贷");
-    expect(screen.getByRole("radio", { name: "Red" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
+    expect(screen.getByRole("radio", { name: "Red" })).toHaveAttribute("aria-checked", "true");
     expect(screen.getByLabelText("排序")).toHaveValue(3);
     expect(screen.getByRole("button", { name: "保存" })).toBeInTheDocument();
   });
 
   test("edit mode with illegal initial colorToken falls back to default", () => {
-    render(
-      <CategoryForm
-        initial={{ id: "cat-1", name: "x", colorToken: "rebeccapurple" }}
-      />,
-    );
+    render(<CategoryForm initial={{ id: "cat-1", name: "x", colorToken: "rebeccapurple" }} />);
     // Default = chart-1 = Sky.
-    expect(screen.getByRole("radio", { name: "Sky" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
+    expect(screen.getByRole("radio", { name: "Sky" })).toHaveAttribute("aria-checked", "true");
   });
 });
 
@@ -104,9 +89,7 @@ describe("CategoryForm submit — create (P3-C3)", () => {
     render(<CategoryForm />);
     await user.type(screen.getByLabelText("分类名"), "  房租  ");
     await user.click(screen.getByRole("button", { name: "创建" }));
-    expect(createMock).toHaveBeenCalledWith(
-      expect.objectContaining({ name: "房租" }),
-    );
+    expect(createMock).toHaveBeenCalledWith(expect.objectContaining({ name: "房租" }));
   });
 
   test("worker error surfaces in inline error and toast", async () => {
@@ -152,11 +135,7 @@ describe("CategoryForm submit — edit (P3-C3)", () => {
   test("createExpenseCategory is NOT called in edit mode", async () => {
     const user = userEvent.setup();
     updateMock.mockResolvedValueOnce({ success: true, data: undefined });
-    render(
-      <CategoryForm
-        initial={{ id: "cat-1", name: "x", colorToken: "chart-1" }}
-      />,
-    );
+    render(<CategoryForm initial={{ id: "cat-1", name: "x", colorToken: "chart-1" }} />);
     await user.click(screen.getByRole("button", { name: "保存" }));
     expect(updateMock).toHaveBeenCalled();
     expect(createMock).not.toHaveBeenCalled();
@@ -212,7 +191,11 @@ describe("CategoryForm pending state (P3-C3)", () => {
     expect(screen.getByRole("button", { name: "保存中..." })).toBeDisabled();
     expect(screen.getByLabelText("分类名")).toBeDisabled();
     // Resolve so React state settles before unmount.
-    if (resolve) (resolve as (v: { success: boolean; data: { id: string } }) => void)({ success: true, data: { id: "x" } });
+    if (resolve)
+      (resolve as (v: { success: boolean; data: { id: string } }) => void)({
+        success: true,
+        data: { id: "x" },
+      });
     await screen.findByRole("button", { name: "创建" });
   });
 });

@@ -24,12 +24,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   PlanCalendar,
   aggregateOccurrences,
@@ -42,10 +37,7 @@ import {
   RecurringExpenseForm,
   type RecurringExpenseFormInitial,
 } from "@/components/plan/recurring-expense-form";
-import {
-  formatIso,
-  parseIso,
-} from "@/lib/recurring-expense/occurrences";
+import { formatIso, parseIso } from "@/lib/recurring-expense/occurrences";
 import type { RecurrenceRule } from "@/lib/recurring-expense/rule-types";
 
 export interface CalendarClientCategory {
@@ -70,15 +62,13 @@ function addMonthsToIso(iso: string, delta: number): string {
   const { year, month } = parseIso(iso);
   const total = year * 12 + (month - 1) + delta;
   const ny = Math.floor(total / 12);
-  const nm = (total % 12 + 12) % 12;
+  const nm = ((total % 12) + 12) % 12;
   return formatIso({ year: ny, month: nm + 1, day: 1 });
 }
 
 /** Pure: build a RecurringExpenseFormInitial from a rule, converting
  *  cents → yuan for the form's amount input. Exported for tests. */
-export function ruleToFormInitial(
-  rule: RecurrenceRule,
-): RecurringExpenseFormInitial {
+export function ruleToFormInitial(rule: RecurrenceRule): RecurringExpenseFormInitial {
   return {
     id: rule.id,
     name: rule.name,
@@ -103,9 +93,7 @@ export function CalendarClient({
 }: CalendarClientProps): React.ReactElement {
   const router = useRouter();
   // Default the visible month to whichever month "today" lives in.
-  const [viewMonth, setViewMonth] = React.useState<string>(() =>
-    monthStartFromIso(todayIso),
-  );
+  const [viewMonth, setViewMonth] = React.useState<string>(() => monthStartFromIso(todayIso));
   const [selectedDay, setSelectedDay] = React.useState<string | null>(null);
   const [createOpen, setCreateOpen] = React.useState(false);
   const [editingId, setEditingId] = React.useState<string | null>(null);
@@ -114,22 +102,12 @@ export function CalendarClient({
   // are bounded by UI (per-user, typically <20).
   const calendarCategoryMap = React.useMemo<Map<string, PlanCalendarCategory>>(
     () =>
-      new Map(
-        categories.map((c) => [
-          c.id,
-          { id: c.id, name: c.name, colorToken: c.colorToken },
-        ]),
-      ),
+      new Map(categories.map((c) => [c.id, { id: c.id, name: c.name, colorToken: c.colorToken }])),
     [categories],
   );
   const ruleListCategoryMap = React.useMemo<Map<string, RuleListCategory>>(
     () =>
-      new Map(
-        categories.map((c) => [
-          c.id,
-          { id: c.id, name: c.name, colorToken: c.colorToken },
-        ]),
-      ),
+      new Map(categories.map((c) => [c.id, { id: c.id, name: c.name, colorToken: c.colorToken }])),
     [categories],
   );
 
@@ -140,23 +118,19 @@ export function CalendarClient({
   const occurrenceMap = React.useMemo(() => {
     const start = parseIso(viewMonth);
     const startCellNum = (() => {
-      const dow = new Date(
-        Date.UTC(start.year, start.month - 1, 1),
-      ).getUTCDay();
+      const dow = new Date(Date.UTC(start.year, start.month - 1, 1)).getUTCDay();
       const { day: _drop, ...rest } = start;
       void _drop;
       return { ...rest, dow };
     })();
     // 42-cell Sunday-start grid → fromIso = monthStart - startWeekday
-    const fromIso = formatIso(
-      adjustDay(start, -startCellNum.dow),
-    );
+    const fromIso = formatIso(adjustDay(start, -startCellNum.dow));
     const toIso = formatIso(adjustDay(start, 42 - startCellNum.dow - 1));
     return aggregateOccurrences(rules, fromIso, toIso);
   }, [rules, viewMonth]);
 
   const editingRule = React.useMemo(
-    () => (editingId ? rules.find((r) => r.id === editingId) ?? null : null),
+    () => (editingId ? (rules.find((r) => r.id === editingId) ?? null) : null),
     [editingId, rules],
   );
 
@@ -170,24 +144,15 @@ export function CalendarClient({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">资金计划日历</h1>
-          <p className="text-sm text-muted-foreground">
-            管理家庭周期支出，可视化未来现金流
-          </p>
+          <p className="text-sm text-muted-foreground">管理家庭周期支出，可视化未来现金流</p>
         </div>
-        <Button
-          onClick={() => setCreateOpen(true)}
-          data-testid="open-create-rule"
-        >
+        <Button onClick={() => setCreateOpen(true)} data-testid="open-create-rule">
           <Plus className="size-4" />
           新建周期支出
         </Button>
       </div>
 
-      <PlanSummaryCards
-        rules={rules}
-        viewMonth={viewMonth}
-        todayIso={todayIso}
-      />
+      <PlanSummaryCards rules={rules} viewMonth={viewMonth} todayIso={todayIso} />
 
       <div className="rounded-md border border-border p-4">
         <div className="mb-3 flex items-center gap-2">

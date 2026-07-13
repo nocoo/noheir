@@ -77,7 +77,10 @@ describe("reports repo", () => {
   test("monthly: transfer totals", async () => {
     const repos = getTestRepos();
     await repos.transfers.create(userId, makeTr({ inflowAmountCents: 50000 }));
-    await repos.transfers.create(userId, makeTr({ inflowAmountCents: 30000, outflowAmountCents: 10000 }));
+    await repos.transfers.create(
+      userId,
+      makeTr({ inflowAmountCents: 30000, outflowAmountCents: 10000 }),
+    );
 
     const report = await repos.reports.monthly(userId, 2026, 3);
     expect(report.total_transfer_in).toBe(80000);
@@ -88,7 +91,10 @@ describe("reports repo", () => {
     const repos = getTestRepos();
     await repos.transactions.create(userId, makeTx({ primaryCategory: "餐饮", amountCents: 5000 }));
     await repos.transactions.create(userId, makeTx({ primaryCategory: "餐饮", amountCents: 3000 }));
-    await repos.transactions.create(userId, makeTx({ primaryCategory: "交通", amountCents: 10000 }));
+    await repos.transactions.create(
+      userId,
+      makeTx({ primaryCategory: "交通", amountCents: 10000 }),
+    );
 
     const report = await repos.reports.monthly(userId, 2026, 3);
     expect(report.expense_by_category).toHaveLength(2);
@@ -103,8 +109,14 @@ describe("reports repo", () => {
 
   test("monthly: income_by_category", async () => {
     const repos = getTestRepos();
-    await repos.transactions.create(userId, makeTx({ type: "income", primaryCategory: "工资", amountCents: 200000 }));
-    await repos.transactions.create(userId, makeTx({ type: "income", primaryCategory: "投资", amountCents: 10000 }));
+    await repos.transactions.create(
+      userId,
+      makeTx({ type: "income", primaryCategory: "工资", amountCents: 200000 }),
+    );
+    await repos.transactions.create(
+      userId,
+      makeTx({ type: "income", primaryCategory: "投资", amountCents: 10000 }),
+    );
 
     const report = await repos.reports.monthly(userId, 2026, 3);
     expect(report.income_by_category).toHaveLength(2);

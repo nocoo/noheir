@@ -44,19 +44,13 @@ export default async function PlanCalendarPage() {
     sortOrder: c.sortOrder,
   }));
 
-  const rules = rulesRes.rules.map((r) =>
-    toRecurrenceRule(r as RecurringExpenseRow),
-  );
+  const rules = rulesRes.rules.map((r) => toRecurrenceRule(r as RecurringExpenseRow));
 
   const today = todayIsoUtc();
 
   return (
     <AppShell>
-      <CalendarClient
-        rules={rules}
-        categories={categories}
-        todayIso={today}
-      />
+      <CalendarClient rules={rules} categories={categories} todayIso={today} />
     </AppShell>
   );
 }

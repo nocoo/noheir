@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useMemo, useState } from "react"
+import { useMemo, useState } from "react";
 import {
   ComposedChart,
   Bar,
@@ -12,43 +12,34 @@ import {
   Legend,
   ResponsiveContainer,
   ReferenceLine,
-} from "recharts"
-import { GitCompare } from "lucide-react"
-import type { MonthlyData } from "@/domain/types"
-import {
-  buildYearVsYearData,
-  buildMonthVsMonthData,
-} from "@/domain/dashboard/year-comparison"
-import { MONTH_NAMES } from "@/lib/constants"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+} from "recharts";
+import { GitCompare } from "lucide-react";
+import type { MonthlyData } from "@/domain/types";
+import { buildYearVsYearData, buildMonthVsMonthData } from "@/domain/dashboard/year-comparison";
+import { MONTH_NAMES } from "@/lib/constants";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Select,
   SelectTrigger,
   SelectContent,
   SelectItem,
   SelectValue,
-} from "@/components/ui/select"
-import { formatCurrencyK, formatCurrencyFull } from "@/lib/chart-config"
+} from "@/components/ui/select";
+import { formatCurrencyK, formatCurrencyFull } from "@/lib/chart-config";
 
 // ── Color constants ──
 
-const SAVINGS_HEX = "#8b5cf6"
-const SAVINGS_B_HEX = "#8b5cf699" // 60% opacity
-const TARGET_HEX = "#f59e0b"
+const SAVINGS_HEX = "#8b5cf6";
+const SAVINGS_B_HEX = "#8b5cf699"; // 60% opacity
+const TARGET_HEX = "#f59e0b";
 
 // ── Props ──
 
 interface YearComparisonClientProps {
-  yearlyMonthlyData: Record<number, MonthlyData[]>
-  availableYears: number[]
-  targetSavingsRate: number
+  yearlyMonthlyData: Record<number, MonthlyData[]>;
+  availableYears: number[];
+  targetSavingsRate: number;
 }
 
 export function YearComparisonClient({
@@ -57,54 +48,43 @@ export function YearComparisonClient({
   targetSavingsRate,
 }: YearComparisonClientProps) {
   // Default to last 2 available years (descending), or same year if only 1
-  const descYears = useMemo(
-    () => [...availableYears].sort((a, b) => b - a),
-    [availableYears],
-  )
-  const [yearA, setYearA] = useState<number>(descYears[1] ?? descYears[0] ?? 2024)
-  const [yearB, setYearB] = useState<number>(descYears[0] ?? 2025)
+  const descYears = useMemo(() => [...availableYears].sort((a, b) => b - a), [availableYears]);
+  const [yearA, setYearA] = useState<number>(descYears[1] ?? descYears[0] ?? 2024);
+  const [yearB, setYearB] = useState<number>(descYears[0] ?? 2025);
 
   // Month comparison state
-  const [monthYearA, setMonthYearA] = useState<number>(descYears[1] ?? descYears[0] ?? 2024)
-  const [monthIdxA, setMonthIdxA] = useState<number>(0) // 0-indexed
-  const [monthYearB, setMonthYearB] = useState<number>(descYears[0] ?? 2025)
-  const [monthIdxB, setMonthIdxB] = useState<number>(0)
+  const [monthYearA, setMonthYearA] = useState<number>(descYears[1] ?? descYears[0] ?? 2024);
+  const [monthIdxA, setMonthIdxA] = useState<number>(0); // 0-indexed
+  const [monthYearB, setMonthYearB] = useState<number>(descYears[0] ?? 2025);
+  const [monthIdxB, setMonthIdxB] = useState<number>(0);
 
   // ── Year comparison data ──
   const yearCompData = useMemo(
-    () =>
-      buildYearVsYearData(
-        yearlyMonthlyData[yearA] ?? [],
-        yearlyMonthlyData[yearB] ?? [],
-      ),
+    () => buildYearVsYearData(yearlyMonthlyData[yearA] ?? [], yearlyMonthlyData[yearB] ?? []),
     [yearlyMonthlyData, yearA, yearB],
-  )
+  );
 
   // Averages for reference lines
   const avgIncomeA = useMemo(() => {
-    const months = yearlyMonthlyData[yearA] ?? []
-    if (months.length === 0) return 0
-    return months.reduce((s, m) => s + m.income, 0) / months.length
-  }, [yearlyMonthlyData, yearA])
+    const months = yearlyMonthlyData[yearA] ?? [];
+    if (months.length === 0) return 0;
+    return months.reduce((s, m) => s + m.income, 0) / months.length;
+  }, [yearlyMonthlyData, yearA]);
 
   const avgExpenseA = useMemo(() => {
-    const months = yearlyMonthlyData[yearA] ?? []
-    if (months.length === 0) return 0
-    return months.reduce((s, m) => s + m.expense, 0) / months.length
-  }, [yearlyMonthlyData, yearA])
+    const months = yearlyMonthlyData[yearA] ?? [];
+    if (months.length === 0) return 0;
+    return months.reduce((s, m) => s + m.expense, 0) / months.length;
+  }, [yearlyMonthlyData, yearA]);
 
   // ── Month comparison data ──
   const monthCompData = useMemo(() => {
-    const dataA = yearlyMonthlyData[monthYearA]?.find(
-      (m) => m.month === MONTH_NAMES[monthIdxA],
-    )
-    const dataB = yearlyMonthlyData[monthYearB]?.find(
-      (m) => m.month === MONTH_NAMES[monthIdxB],
-    )
-    const labelA = `${monthYearA}-${String(monthIdxA + 1).padStart(2, "0")}`
-    const labelB = `${monthYearB}-${String(monthIdxB + 1).padStart(2, "0")}`
-    return buildMonthVsMonthData(labelA, dataA, labelB, dataB)
-  }, [yearlyMonthlyData, monthYearA, monthIdxA, monthYearB, monthIdxB])
+    const dataA = yearlyMonthlyData[monthYearA]?.find((m) => m.month === MONTH_NAMES[monthIdxA]);
+    const dataB = yearlyMonthlyData[monthYearB]?.find((m) => m.month === MONTH_NAMES[monthIdxB]);
+    const labelA = `${monthYearA}-${String(monthIdxA + 1).padStart(2, "0")}`;
+    const labelB = `${monthYearB}-${String(monthIdxB + 1).padStart(2, "0")}`;
+    return buildMonthVsMonthData(labelA, dataA, labelB, dataB);
+  }, [yearlyMonthlyData, monthYearA, monthIdxA, monthYearB, monthIdxB]);
 
   if (availableYears.length === 0) {
     return (
@@ -116,7 +96,7 @@ export function YearComparisonClient({
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   return (
@@ -136,9 +116,7 @@ export function YearComparisonClient({
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <CardTitle>年度收支对比</CardTitle>
-                  <CardDescription>
-                    选择两个年份，按月对比收支与储蓄率
-                  </CardDescription>
+                  <CardDescription>选择两个年份，按月对比收支与储蓄率</CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
                   <YearSelect
@@ -187,32 +165,40 @@ export function YearComparisonClient({
                     />
                     <Tooltip
                       content={({ active, payload, label }) => {
-                        if (!active || !payload?.length) return null
+                        if (!active || !payload?.length) return null;
                         return (
                           <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
                             <p className="mb-1 font-medium">{label}</p>
                             {payload.map((entry) => {
-                              const key = String(entry.dataKey ?? "")
-                              const val = Number(entry.value ?? 0)
+                              const key = String(entry.dataKey ?? "");
+                              const val = Number(entry.value ?? 0);
                               if (key.startsWith("savingsRate")) {
-                                const yr = key === "savingsRateA" ? yearA : yearB
+                                const yr = key === "savingsRateA" ? yearA : yearB;
                                 return (
-                                  <p key={key} style={{ color: key === "savingsRateA" ? SAVINGS_HEX : SAVINGS_B_HEX }}>
+                                  <p
+                                    key={key}
+                                    style={{
+                                      color: key === "savingsRateA" ? SAVINGS_HEX : SAVINGS_B_HEX,
+                                    }}
+                                  >
                                     {yr} 储蓄率: {val.toFixed(1)}%
                                   </p>
-                                )
+                                );
                               }
                               return (
                                 <p key={key} style={{ color: String(entry.color ?? "") }}>
                                   {entry.name}: {formatCurrencyFull(val)}
                                 </p>
-                              )
+                              );
                             })}
-                            <p className="mt-1 border-t border-border/50 pt-1" style={{ color: TARGET_HEX }}>
+                            <p
+                              className="mt-1 border-t border-border/50 pt-1"
+                              style={{ color: TARGET_HEX }}
+                            >
                               目标储蓄率: {targetSavingsRate}%
                             </p>
                           </div>
-                        )
+                        );
                       }}
                     />
                     <Legend />
@@ -327,15 +313,23 @@ export function YearComparisonClient({
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <CardTitle>月度收支对比</CardTitle>
-                  <CardDescription>
-                    选择两个月份，对比收支与储蓄率
-                  </CardDescription>
+                  <CardDescription>选择两个月份，对比收支与储蓄率</CardDescription>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <YearSelect value={monthYearA} onChange={setMonthYearA} years={availableYears} label="年份" />
+                  <YearSelect
+                    value={monthYearA}
+                    onChange={setMonthYearA}
+                    years={availableYears}
+                    label="年份"
+                  />
                   <MonthSelect value={monthIdxA} onChange={setMonthIdxA} label="月份" />
                   <span className="text-muted-foreground text-sm font-medium">vs</span>
-                  <YearSelect value={monthYearB} onChange={setMonthYearB} years={availableYears} label="年份" />
+                  <YearSelect
+                    value={monthYearB}
+                    onChange={setMonthYearB}
+                    years={availableYears}
+                    label="年份"
+                  />
                   <MonthSelect value={monthIdxB} onChange={setMonthIdxB} label="月份" />
                 </div>
               </div>
@@ -371,31 +365,34 @@ export function YearComparisonClient({
                     />
                     <Tooltip
                       content={({ active, payload, label }) => {
-                        if (!active || !payload?.length) return null
+                        if (!active || !payload?.length) return null;
                         return (
                           <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
                             <p className="mb-1 font-medium">{label}</p>
                             {payload.map((entry) => {
-                              const key = String(entry.dataKey ?? "")
-                              const val = Number(entry.value ?? 0)
+                              const key = String(entry.dataKey ?? "");
+                              const val = Number(entry.value ?? 0);
                               if (key === "savingsRate") {
                                 return (
                                   <p key={key} style={{ color: SAVINGS_HEX }}>
                                     储蓄率: {val.toFixed(1)}%
                                   </p>
-                                )
+                                );
                               }
                               return (
                                 <p key={key} style={{ color: String(entry.color ?? "") }}>
                                   {entry.name}: {formatCurrencyFull(val)}
                                 </p>
-                              )
+                              );
                             })}
-                            <p className="mt-1 border-t border-border/50 pt-1" style={{ color: TARGET_HEX }}>
+                            <p
+                              className="mt-1 border-t border-border/50 pt-1"
+                              style={{ color: TARGET_HEX }}
+                            >
                               目标储蓄率: {targetSavingsRate}%
                             </p>
                           </div>
-                        )
+                        );
                       }}
                     />
                     <Legend />
@@ -444,7 +441,7 @@ export function YearComparisonClient({
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
 
 // ── Sub-components ──
@@ -456,11 +453,9 @@ function Header() {
         <GitCompare className="text-primary size-6" />
         年度对比分析
       </h1>
-      <p className="text-muted-foreground text-sm">
-        多维度收支趋势与储蓄率对比
-      </p>
+      <p className="text-muted-foreground text-sm">多维度收支趋势与储蓄率对比</p>
     </div>
-  )
+  );
 }
 
 function YearSelect({
@@ -469,10 +464,10 @@ function YearSelect({
   years,
   label,
 }: {
-  value: number
-  onChange: (v: number) => void
-  years: number[]
-  label: string
+  value: number;
+  onChange: (v: number) => void;
+  years: number[];
+  label: string;
 }) {
   return (
     <Select value={String(value)} onValueChange={(v) => onChange(Number(v))}>
@@ -487,7 +482,7 @@ function YearSelect({
         ))}
       </SelectContent>
     </Select>
-  )
+  );
 }
 
 function MonthSelect({
@@ -495,9 +490,9 @@ function MonthSelect({
   onChange,
   label,
 }: {
-  value: number
-  onChange: (v: number) => void
-  label: string
+  value: number;
+  onChange: (v: number) => void;
+  label: string;
 }) {
   return (
     <Select value={String(value)} onValueChange={(v) => onChange(Number(v))}>
@@ -512,5 +507,5 @@ function MonthSelect({
         ))}
       </SelectContent>
     </Select>
-  )
+  );
 }

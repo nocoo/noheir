@@ -30,7 +30,9 @@ function pickDefined(obj: Record<string, string | undefined>): Record<string, st
 }
 
 /** Strip undefined values from any object for exactOptionalPropertyTypes compatibility. */
-function stripUndefined<T extends Record<string, unknown>>(obj: T): { [K in keyof T]: Exclude<T[K], undefined> } {
+function stripUndefined<T extends Record<string, unknown>>(
+  obj: T,
+): { [K in keyof T]: Exclude<T[K], undefined> } {
   const result: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(obj)) {
     if (v !== undefined) result[k] = v;
@@ -60,7 +62,7 @@ type Variables = {
   userId: string;
   repos: AllRepos;
   db: DrizzleD1Database;
-  d1: D1Database;  // Raw D1 binding for batch operations
+  d1: D1Database; // Raw D1 binding for batch operations
 };
 
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -80,12 +82,7 @@ app.use(
       ];
       return allowedOrigins.includes(origin) ? origin : null;
     },
-    allowHeaders: [
-      "Content-Type",
-      "Authorization",
-      "X-User-Id",
-      "X-Internal-Action",
-    ],
+    allowHeaders: ["Content-Type", "Authorization", "X-User-Id", "X-Internal-Action"],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   }),
 );
@@ -110,10 +107,7 @@ app.get("/api/live", async (c) => {
 
   try {
     await db.run(sql`SELECT 1 AS probe`);
-    return c.json(
-      { status: "ok", ...base, database: { connected: true } },
-      200,
-    );
+    return c.json({ status: "ok", ...base, database: { connected: true } }, 200);
   } catch (err) {
     const message = err instanceof Error ? sanitizeError(err.message) : "unknown";
     return c.json(
@@ -162,10 +156,7 @@ app.post("/api/v1/query", async (c) => {
       meta: { changes: result.meta.changes ?? 0, duration },
     });
   } catch (err) {
-    return c.json(
-      { error: err instanceof Error ? err.message : "Query failed" },
-      500,
-    );
+    return c.json({ error: err instanceof Error ? err.message : "Query failed" }, 500);
   }
 });
 
@@ -197,9 +188,7 @@ app.post("/api/v1/execute", async (c) => {
 
     // Batch mode
     if (body.statements && Array.isArray(body.statements)) {
-      const stmts = body.statements.map((s) =>
-        d1.prepare(s.sql).bind(...(s.params ?? [])),
-      );
+      const stmts = body.statements.map((s) => d1.prepare(s.sql).bind(...(s.params ?? [])));
       const batchResults = await d1.batch(stmts);
       const duration = Date.now() - start;
 
@@ -225,10 +214,7 @@ app.post("/api/v1/execute", async (c) => {
       meta: { changes: result.meta.changes ?? 0, duration },
     });
   } catch (err) {
-    return c.json(
-      { error: err instanceof Error ? err.message : "Execute failed" },
-      500,
-    );
+    return c.json({ error: err instanceof Error ? err.message : "Execute failed" }, 500);
   }
 });
 
@@ -274,11 +260,13 @@ app.use("*", async (c, next) => {
 
 // ── Users ──
 
-async function handleUserSync(c: {
-  get: (key: "userId") => string;
-  req: { json: <T>() => Promise<T> };
-  json: (data: unknown, status?: number) => Response;
-} & { get(key: "repos"): AllRepos }) {
+async function handleUserSync(
+  c: {
+    get: (key: "userId") => string;
+    req: { json: <T>() => Promise<T> };
+    json: (data: unknown, status?: number) => Response;
+  } & { get(key: "repos"): AllRepos },
+) {
   const userId = c.get("userId");
   const repos = c.get("repos");
   const body = await c.req.json<{
@@ -313,7 +301,10 @@ app.post("/api/transactions/bulk", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
   const body = await c.req.json<{ rows: unknown[] }>();
-  const count = await repos.transactions.createMany(userId, body.rows as Parameters<AllRepos["transactions"]["createMany"]>[1]);
+  const count = await repos.transactions.createMany(
+    userId,
+    body.rows as Parameters<AllRepos["transactions"]["createMany"]>[1],
+  );
   return c.json({ inserted: count }, 201);
 });
 
@@ -385,7 +376,10 @@ app.post("/api/transfers/bulk", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
   const body = await c.req.json<{ rows: unknown[] }>();
-  const count = await repos.transfers.createMany(userId, body.rows as Parameters<AllRepos["transfers"]["createMany"]>[1]);
+  const count = await repos.transfers.createMany(
+    userId,
+    body.rows as Parameters<AllRepos["transfers"]["createMany"]>[1],
+  );
   return c.json({ inserted: count }, 201);
 });
 
@@ -477,7 +471,8 @@ app.get("/api/products", async (c) => {
   const { channel, category, currency, includeArchived, fields, limit, offset } = c.req.query();
 
   // Parse pagination params: limit is optional, no limit if not specified
-  const limitNum = limit !== undefined ? Math.min(Math.max(parseInt(limit, 10) || 50, 1), 200) : undefined;
+  const limitNum =
+    limit !== undefined ? Math.min(Math.max(parseInt(limit, 10) || 50, 1), 200) : undefined;
   const offsetNum = Math.max(parseInt(offset ?? "0", 10) || 0, 0);
 
   const allProducts = await repos.products.findAll(userId, {
@@ -486,9 +481,10 @@ app.get("/api/products", async (c) => {
   });
 
   // Paginate
-  const paginatedProducts = limitNum !== undefined
-    ? allProducts.slice(offsetNum, offsetNum + limitNum)
-    : allProducts.slice(offsetNum);
+  const paginatedProducts =
+    limitNum !== undefined
+      ? allProducts.slice(offsetNum, offsetNum + limitNum)
+      : allProducts.slice(offsetNum);
 
   // Determine field level: minimal or full (default: full for backward compatibility)
   const fieldLevel = fields === "minimal" ? "minimal" : "full";
@@ -502,11 +498,19 @@ app.get("/api/products", async (c) => {
       category: p.category,
       currency: p.currency,
     }));
-    return c.json({ products: minimalProducts, total_returned: minimalProducts.length, total_count: allProducts.length });
+    return c.json({
+      products: minimalProducts,
+      total_returned: minimalProducts.length,
+      total_count: allProducts.length,
+    });
   }
 
   // Full: return everything
-  return c.json({ products: paginatedProducts, total_returned: paginatedProducts.length, total_count: allProducts.length });
+  return c.json({
+    products: paginatedProducts,
+    total_returned: paginatedProducts.length,
+    total_count: allProducts.length,
+  });
 });
 
 app.get("/api/products/:id", async (c) => {
@@ -555,12 +559,18 @@ app.delete("/api/products/:id", async (c) => {
   } catch (err) {
     // SQLite RESTRICT foreign key constraint violation
     // Error can be wrapped in DrizzleQueryError with cause chain
-    const errMsg = err instanceof Error ? (err.message + (err.cause instanceof Error ? err.cause.message : "")) : "";
+    const errMsg =
+      err instanceof Error
+        ? err.message + (err.cause instanceof Error ? err.cause.message : "")
+        : "";
     if (errMsg.includes("FOREIGN KEY")) {
-      return c.json({
-        error: "Cannot delete product with contribution history. Archive it instead.",
-        hasContributionLogs: true,
-      }, 409);
+      return c.json(
+        {
+          error: "Cannot delete product with contribution history. Archive it instead.",
+          hasContributionLogs: true,
+        },
+        409,
+      );
     }
     throw err; // Re-throw other errors for global handler
   }
@@ -592,15 +602,27 @@ app.get("/api/units/summary", async (c) => {
 app.get("/api/units", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
-  const { status, strategy, tactics, currency, with_products, fields, limit, offset, available_within_days } = c.req.query();
+  const {
+    status,
+    strategy,
+    tactics,
+    currency,
+    with_products,
+    fields,
+    limit,
+    offset,
+    available_within_days,
+  } = c.req.query();
   const filters = pickDefined({ status, strategy, tactics, currency });
 
   // Parse pagination params: limit is optional, no limit if not specified
-  const limitNum = limit !== undefined ? Math.min(Math.max(parseInt(limit, 10) || 50, 1), 200) : undefined;
+  const limitNum =
+    limit !== undefined ? Math.min(Math.max(parseInt(limit, 10) || 50, 1), 200) : undefined;
   const offsetNum = Math.max(parseInt(offset ?? "0", 10) || 0, 0);
 
   // Parse available_within_days filter
-  const availableWithinDays = available_within_days !== undefined ? parseInt(available_within_days, 10) : undefined;
+  const availableWithinDays =
+    available_within_days !== undefined ? parseInt(available_within_days, 10) : undefined;
 
   // Determine field level: minimal (default), standard, full
   const fieldLevel = fields === "standard" || fields === "full" ? fields : "minimal";
@@ -610,14 +632,16 @@ app.get("/api/units", async (c) => {
 
   // available_within_days requires standard or full (forces upgrade if minimal)
   const needsAvailability = availableWithinDays !== undefined && !isNaN(availableWithinDays);
-  const computeLevel = needsAvailability && effectiveFieldLevel === "minimal" ? "standard" : effectiveFieldLevel;
+  const computeLevel =
+    needsAvailability && effectiveFieldLevel === "minimal" ? "standard" : effectiveFieldLevel;
 
   if (computeLevel === "minimal") {
     // Minimal: direct query, no joins, no availability
     const allUnits = await repos.units.findAll(userId, filters);
-    const paginatedUnits = limitNum !== undefined
-      ? allUnits.slice(offsetNum, offsetNum + limitNum)
-      : allUnits.slice(offsetNum);
+    const paginatedUnits =
+      limitNum !== undefined
+        ? allUnits.slice(offsetNum, offsetNum + limitNum)
+        : allUnits.slice(offsetNum);
     // Return minimal fields only
     const minimalUnits = paginatedUnits.map((u) => ({
       id: u.id,
@@ -629,7 +653,11 @@ app.get("/api/units", async (c) => {
       currency: u.currency,
       productId: u.productId,
     }));
-    return c.json({ units: minimalUnits, total_returned: minimalUnits.length, total_count: allUnits.length });
+    return c.json({
+      units: minimalUnits,
+      total_returned: minimalUnits.length,
+      total_count: allUnits.length,
+    });
   }
 
   // Standard or Full: need product join + availability calculation
@@ -648,11 +676,15 @@ app.get("/api/units", async (c) => {
   }
 
   // Paginate after filtering
-  const paginatedUnits = limitNum !== undefined
-    ? enrichedUnits.slice(offsetNum, offsetNum + limitNum)
-    : enrichedUnits.slice(offsetNum);
+  const paginatedUnits =
+    limitNum !== undefined
+      ? enrichedUnits.slice(offsetNum, offsetNum + limitNum)
+      : enrichedUnits.slice(offsetNum);
 
-  if (effectiveFieldLevel === "standard" || (effectiveFieldLevel === "minimal" && needsAvailability)) {
+  if (
+    effectiveFieldLevel === "standard" ||
+    (effectiveFieldLevel === "minimal" && needsAvailability)
+  ) {
     // Standard: include availability but not full product details
     const standardUnits = paginatedUnits.map((u) => ({
       id: u.id,
@@ -669,11 +701,19 @@ app.get("/api/units", async (c) => {
       daysUntilLocked: u.daysUntilLocked,
       latestInvestDate: u.latestInvestDate,
     }));
-    return c.json({ units: standardUnits, total_returned: standardUnits.length, total_count: enrichedUnits.length });
+    return c.json({
+      units: standardUnits,
+      total_returned: standardUnits.length,
+      total_count: enrichedUnits.length,
+    });
   }
 
   // Full: return everything
-  return c.json({ units: paginatedUnits, total_returned: paginatedUnits.length, total_count: enrichedUnits.length });
+  return c.json({
+    units: paginatedUnits,
+    total_returned: paginatedUnits.length,
+    total_count: enrichedUnits.length,
+  });
 });
 
 app.get("/api/units/:id", async (c) => {
@@ -742,8 +782,8 @@ app.put("/api/units/:id", async (c) => {
     return c.json({ error: "Not found" }, 404);
   }
 
-  const productIdChanging = parsed.data.productId !== undefined
-    && original.productId !== parsed.data.productId;
+  const productIdChanging =
+    parsed.data.productId !== undefined && original.productId !== parsed.data.productId;
 
   if (productIdChanging) {
     const newProductId = parsed.data.productId;
@@ -762,9 +802,12 @@ app.put("/api/units/:id", async (c) => {
 
     // CAS check
     if (!updateResult.meta.changes || updateResult.meta.changes === 0) {
-      return c.json({
-        error: "Conflict: unit was modified by another request. Please retry.",
-      }, 409);
+      return c.json(
+        {
+          error: "Conflict: unit was modified by another request. Please retry.",
+        },
+        409,
+      );
     }
 
     // Phase 2: Insert logs (UPDATE succeeded, we "own" this transition)
@@ -774,32 +817,52 @@ app.put("/api/units/:id", async (c) => {
     if (original.productId) {
       const oldProduct = await repos.products.findById(userId, original.productId);
       logStatements.push(
-        d1.prepare(
-          `INSERT INTO contribution_logs
+        d1
+          .prepare(
+            `INSERT INTO contribution_logs
            (id, user_id, unit_id, product_id, product_name, operation_type, amount_cents, operation_date, source, note, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        ).bind(
-          crypto.randomUUID(), userId, id, original.productId, oldProduct?.name ?? null,
-          "withdraw", -original.amountCents, today, "auto",
-          `Auto: moved out to ${newProductId ? "another product" : "unassigned"}`,
-          now, now
-        )
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          )
+          .bind(
+            crypto.randomUUID(),
+            userId,
+            id,
+            original.productId,
+            oldProduct?.name ?? null,
+            "withdraw",
+            -original.amountCents,
+            today,
+            "auto",
+            `Auto: moved out to ${newProductId ? "another product" : "unassigned"}`,
+            now,
+            now,
+          ),
       );
     }
 
     if (newProductId) {
       const newProduct = await repos.products.findById(userId, newProductId);
       logStatements.push(
-        d1.prepare(
-          `INSERT INTO contribution_logs
+        d1
+          .prepare(
+            `INSERT INTO contribution_logs
            (id, user_id, unit_id, product_id, product_name, operation_type, amount_cents, operation_date, source, note, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        ).bind(
-          crypto.randomUUID(), userId, id, newProductId, newProduct?.name ?? null,
-          "invest", original.amountCents, today, "auto",
-          `Auto: moved in from ${original.productId ? "another product" : "unassigned"}`,
-          now, now
-        )
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          )
+          .bind(
+            crypto.randomUUID(),
+            userId,
+            id,
+            newProductId,
+            newProduct?.name ?? null,
+            "invest",
+            original.amountCents,
+            today,
+            "auto",
+            `Auto: moved in from ${original.productId ? "another product" : "unassigned"}`,
+            now,
+            now,
+          ),
       );
     }
 
@@ -815,7 +878,10 @@ app.put("/api/units/:id", async (c) => {
 
       try {
         if (newProductId) {
-          await d1.prepare(rollbackSql).bind(original.productId, Date.now(), id, userId, newProductId).run();
+          await d1
+            .prepare(rollbackSql)
+            .bind(original.productId, Date.now(), id, userId, newProductId)
+            .run();
         } else {
           await d1.prepare(rollbackSql).bind(original.productId, Date.now(), id, userId).run();
         }
@@ -966,7 +1032,11 @@ app.put("/api/contribution-logs/:id", async (c) => {
     return c.json({ error: parsed.error.issues.map((i) => i.message).join("; ") }, 400);
   }
 
-  const row = await repos.contributionLogs.update(userId, c.req.param("id"), stripUndefined(parsed.data));
+  const row = await repos.contributionLogs.update(
+    userId,
+    c.req.param("id"),
+    stripUndefined(parsed.data),
+  );
   return row ? c.json({ log: row }) : c.json({ error: "Not found" }, 404);
 });
 
@@ -1028,10 +1098,7 @@ app.get("/api/reports/yearly-summary", async (c) => {
     return c.json({ error: "year is required" }, 400);
   }
 
-  const result = await repos.reports.yearlySummary(
-    userId,
-    parseInt(year, 10),
-  );
+  const result = await repos.reports.yearlySummary(userId, parseInt(year, 10));
   return c.json(result);
 });
 
@@ -1062,10 +1129,7 @@ app.get("/api/reports/account-summary", async (c) => {
     return c.json({ error: "year is required" }, 400);
   }
 
-  const result = await repos.reports.accountSummary(
-    userId,
-    parseInt(year, 10),
-  );
+  const result = await repos.reports.accountSummary(userId, parseInt(year, 10));
   return c.json(result);
 });
 
@@ -1078,10 +1142,7 @@ app.get("/api/reports/flow-summary", async (c) => {
     return c.json({ error: "year is required" }, 400);
   }
 
-  const result = await repos.reports.flowSummary(
-    userId,
-    parseInt(year, 10),
-  );
+  const result = await repos.reports.flowSummary(userId, parseInt(year, 10));
   return c.json(result);
 });
 
@@ -1118,10 +1179,7 @@ app.post("/api/expense-categories", async (c) => {
   const body = await c.req.json();
   const parsed = createExpenseCategorySchema.safeParse(body);
   if (!parsed.success) {
-    return c.json(
-      { error: parsed.error.issues.map((i) => i.message).join("; ") },
-      400,
-    );
+    return c.json({ error: parsed.error.issues.map((i) => i.message).join("; ") }, 400);
   }
   const result = await repos.expenseCategories.create(userId, parsed.data);
   if (!result.ok) {
@@ -1136,10 +1194,7 @@ app.put("/api/expense-categories/:id", async (c) => {
   const body = await c.req.json();
   const parsed = updateExpenseCategorySchema.safeParse(body);
   if (!parsed.success) {
-    return c.json(
-      { error: parsed.error.issues.map((i) => i.message).join("; ") },
-      400,
-    );
+    return c.json({ error: parsed.error.issues.map((i) => i.message).join("; ") }, 400);
   }
   const result = await repos.expenseCategories.update(
     userId,
@@ -1158,10 +1213,7 @@ app.put("/api/expense-categories/:id", async (c) => {
 app.delete("/api/expense-categories/:id", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
-  const deleted = await repos.expenseCategories.delete(
-    userId,
-    c.req.param("id"),
-  );
+  const deleted = await repos.expenseCategories.delete(userId, c.req.param("id"));
   return deleted ? c.body(null, 204) : c.json({ error: "Not found" }, 404);
 });
 
@@ -1177,7 +1229,9 @@ app.delete("/api/expense-categories/:id", async (c) => {
 
 const INTERNAL_ACTION_HEADER = "X-Internal-Action";
 
-function isInternalActionRequest(c: { req: { header: (k: string) => string | undefined } }): boolean {
+function isInternalActionRequest(c: {
+  req: { header: (k: string) => string | undefined };
+}): boolean {
   return c.req.header(INTERNAL_ACTION_HEADER) === "1";
 }
 
@@ -1194,10 +1248,7 @@ app.post("/api/recurring-expenses", async (c) => {
   const body = await c.req.json();
   const parsed = createRecurringExpenseSchema.safeParse(body);
   if (!parsed.success) {
-    return c.json(
-      { error: parsed.error.issues.map((i) => i.message).join("; ") },
-      400,
-    );
+    return c.json({ error: parsed.error.issues.map((i) => i.message).join("; ") }, 400);
   }
   const result = await repos.recurringExpenses.create(userId, parsed.data);
   if (!result.ok) {
@@ -1212,10 +1263,7 @@ app.put("/api/recurring-expenses/:id", async (c) => {
   const body = await c.req.json();
   const parsed = updateRecurringExpenseSchema.safeParse(body);
   if (!parsed.success) {
-    return c.json(
-      { error: parsed.error.issues.map((i) => i.message).join("; ") },
-      400,
-    );
+    return c.json({ error: parsed.error.issues.map((i) => i.message).join("; ") }, 400);
   }
   // Drop status + endedAt unless the caller proves intent via the
   // X-Internal-Action header. Note: the keys must be deleted, not just
@@ -1225,11 +1273,7 @@ app.put("/api/recurring-expenses/:id", async (c) => {
     delete data.status;
     delete data.endedAt;
   }
-  const result = await repos.recurringExpenses.update(
-    userId,
-    c.req.param("id"),
-    data,
-  );
+  const result = await repos.recurringExpenses.update(userId, c.req.param("id"), data);
   if (result.ok) {
     return c.json({ rule: result.rule });
   }
@@ -1242,10 +1286,7 @@ app.put("/api/recurring-expenses/:id", async (c) => {
 app.delete("/api/recurring-expenses/:id", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
-  const deleted = await repos.recurringExpenses.delete(
-    userId,
-    c.req.param("id"),
-  );
+  const deleted = await repos.recurringExpenses.delete(userId, c.req.param("id"));
   return deleted ? c.body(null, 204) : c.json({ error: "Not found" }, 404);
 });
 

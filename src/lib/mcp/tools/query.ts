@@ -16,9 +16,7 @@ import { compact, shortId, categoryPath, round2, currencyCode } from "./compact"
 
 /** Filter undefined values from object for SQL params */
 export function filterDefined<T extends object>(obj: T): Partial<T> {
-  return Object.fromEntries(
-    Object.entries(obj).filter(([, v]) => v !== undefined),
-  ) as Partial<T>;
+  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as Partial<T>;
 }
 
 /** Build WHERE conditions from search params */
@@ -49,7 +47,9 @@ export function buildWhereConditions(
         values.push(...value);
       }
     } else if (typeof value === "string" && key === "keyword") {
-      conditions.push(`(note LIKE ? OR primary_category LIKE ? OR secondary_category LIKE ? OR account LIKE ?)`);
+      conditions.push(
+        `(note LIKE ? OR primary_category LIKE ? OR secondary_category LIKE ? OR account LIKE ?)`,
+      );
       const like = `%${value}%`;
       values.push(like, like, like, like);
     } else if (typeof value === "number" || typeof value === "string") {
@@ -104,10 +104,16 @@ LIMITATIONS:
 - Call get_summary first to discover valid filter values (categories, accounts, etc.)
 - Keyword search matches note, categories, and account fields`,
     {
-      keyword: z.string().optional().describe("Fuzzy search keyword — matches note, categories, and account"),
+      keyword: z
+        .string()
+        .optional()
+        .describe("Fuzzy search keyword — matches note, categories, and account"),
       type: z.enum(["income", "expense"]).optional().describe("Filter by transaction type"),
       categories: z.array(z.string()).optional().describe("Filter by primary categories"),
-      secondary_categories: z.array(z.string()).optional().describe("Filter by secondary categories"),
+      secondary_categories: z
+        .array(z.string())
+        .optional()
+        .describe("Filter by secondary categories"),
       tertiary_categories: z.array(z.string()).optional().describe("Filter by tertiary categories"),
       accounts: z.array(z.string()).optional().describe("Filter by account names"),
       tags: z.array(z.string()).optional().describe("Filter by tags"),
@@ -118,7 +124,13 @@ LIMITATIONS:
       year: z.number().int().optional().describe("Filter by year"),
       month: z.number().int().min(1).max(12).optional().describe("Filter by month (1-12)"),
       currency: z.string().optional().describe("Filter by currency"),
-      limit: z.number().int().min(1).max(500).default(50).describe("Max results (default 50, max 500)"),
+      limit: z
+        .number()
+        .int()
+        .min(1)
+        .max(500)
+        .default(50)
+        .describe("Max results (default 50, max 500)"),
       offset: z.number().int().min(0).default(0).describe("Pagination offset"),
     },
     async (args) => {
@@ -134,8 +146,10 @@ LIMITATIONS:
         tags: args.tags,
         start_date: args.start_date,
         end_date: args.end_date,
-        min_amount_cents: args.min_amount !== undefined ? Math.round(args.min_amount * 100) : undefined,
-        max_amount_cents: args.max_amount !== undefined ? Math.round(args.max_amount * 100) : undefined,
+        min_amount_cents:
+          args.min_amount !== undefined ? Math.round(args.min_amount * 100) : undefined,
+        max_amount_cents:
+          args.max_amount !== undefined ? Math.round(args.max_amount * 100) : undefined,
         year: args.year,
         month: args.month,
         currency: args.currency,
@@ -199,17 +213,19 @@ LIMITATIONS:
       const total = countResult?.total ?? 0;
 
       // Transform to compact format (P0: short ID, P1: omit nulls, P3: category path)
-      const transactions = result.results.map((t) => compact({
-        id: shortId(t.id),
-        date: t.date,
-        type: t.type,
-        amount: round2(t.amount_cents / 100),
-        currency: currencyCode(t.currency),
-        account: t.account,
-        category: categoryPath(t.primary_category, t.secondary_category, t.tertiary_category),
-        note: t.note,
-        tags: t.tags ? JSON.parse(t.tags) : null,
-      }));
+      const transactions = result.results.map((t) =>
+        compact({
+          id: shortId(t.id),
+          date: t.date,
+          type: t.type,
+          amount: round2(t.amount_cents / 100),
+          currency: currencyCode(t.currency),
+          account: t.account,
+          category: categoryPath(t.primary_category, t.secondary_category, t.tertiary_category),
+          note: t.note,
+          tags: t.tags ? JSON.parse(t.tags) : null,
+        }),
+      );
 
       const hasMore = offset + transactions.length < total;
       const nextArgs: Record<string, unknown> = { offset: offset + limit, limit };
@@ -231,7 +247,9 @@ LIMITATIONS:
       return okWithPage(
         { transactions },
         { returned: transactions.length, total, limit, offset, has_more: hasMore },
-        hasMore ? { recommended: "paginate", tool: "query_transactions", args: nextArgs } : undefined,
+        hasMore
+          ? { recommended: "paginate", tool: "query_transactions", args: nextArgs }
+          : undefined,
       );
     },
   );
@@ -341,18 +359,20 @@ LIMITATIONS:
 
       const total = countResult?.total ?? 0;
 
-      const transfers = result.results.map((t) => compact({
-        id: shortId(t.id),
-        date: t.date,
-        inflow: t.inflow_amount_cents ? round2(t.inflow_amount_cents / 100) : null,
-        outflow: t.outflow_amount_cents ? round2(t.outflow_amount_cents / 100) : null,
-        currency: currencyCode(t.currency),
-        account: t.account,
-        category: categoryPath(t.primary_category, t.secondary_category),
-        type: t.transaction_type,
-        note: t.note,
-        tags: t.tags ? JSON.parse(t.tags) : null,
-      }));
+      const transfers = result.results.map((t) =>
+        compact({
+          id: shortId(t.id),
+          date: t.date,
+          inflow: t.inflow_amount_cents ? round2(t.inflow_amount_cents / 100) : null,
+          outflow: t.outflow_amount_cents ? round2(t.outflow_amount_cents / 100) : null,
+          currency: currencyCode(t.currency),
+          account: t.account,
+          category: categoryPath(t.primary_category, t.secondary_category),
+          type: t.transaction_type,
+          note: t.note,
+          tags: t.tags ? JSON.parse(t.tags) : null,
+        }),
+      );
 
       const hasMore = offset + transfers.length < total;
       const nextArgs: Record<string, unknown> = { offset: offset + limit, limit };
@@ -389,7 +409,8 @@ RETURNS:
 - Transaction and transfer counts
 - Optional: available years, accounts, categories, currencies (use 'include' parameter)`,
     {
-      include: z.array(z.enum(["years", "accounts", "categories", "currencies"]))
+      include: z
+        .array(z.enum(["years", "accounts", "categories", "currencies"]))
         .optional()
         .describe("Optional: which filter options to include (default: none, only counts)"),
     },
@@ -542,7 +563,8 @@ LIMITATIONS:
 - Max 3 group_by dimensions
 - Returns totals only, no individual records`,
     {
-      group_by: z.array(z.enum(["category", "account", "month", "type"]))
+      group_by: z
+        .array(z.enum(["category", "account", "month", "type"]))
         .min(1)
         .max(3)
         .describe("Dimensions to group by (1-3)"),

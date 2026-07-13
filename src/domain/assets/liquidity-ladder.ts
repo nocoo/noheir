@@ -9,10 +9,7 @@ export type MonthlyAvailability = {
   amount: number;
 };
 
-export const buildMonthlyAvailability = (
-  units: UnitDisplayInfo[],
-  monthsAhead = 24,
-) => {
+export const buildMonthlyAvailability = (units: UnitDisplayInfo[], monthsAhead = 24) => {
   if (!units || units.length === 0) {
     return {
       monthlyAvailability: [] as MonthlyAvailability[],
@@ -66,11 +63,7 @@ export const buildMonthlyAvailability = (
     const monthDate = new Date(month + "-01");
     const monthLabel = format(monthDate, "yyyy年M月", { locale: zhCN });
     strategySet.forEach((strategy) => {
-      if (
-        !monthlyAvailability.find(
-          (m) => m.month === month && m.strategy === strategy,
-        )
-      ) {
+      if (!monthlyAvailability.find((m) => m.month === month && m.strategy === strategy)) {
         monthlyAvailability.push({ month, monthLabel, strategy, amount: 0 });
       }
     });
@@ -148,10 +141,7 @@ export type UpcomingUnit = {
 /**
  * Build list of units becoming available in the next N months
  */
-export const buildUpcomingUnits = (
-  units: UnitDisplayInfo[],
-  monthsAhead = 24,
-): UpcomingUnit[] => {
+export const buildUpcomingUnits = (units: UnitDisplayInfo[], monthsAhead = 24): UpcomingUnit[] => {
   const today = new Date();
   const cutoffDate = addMonths(today, monthsAhead);
 

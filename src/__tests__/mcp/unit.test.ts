@@ -24,7 +24,13 @@ interface MockCall {
   params: unknown[];
 }
 
-function createSequentialMockDb(responses: Array<{ type: "query"; results: unknown[] } | { type: "firstOrNull"; result: unknown } | { type: "execute"; changes?: number }>) {
+function createSequentialMockDb(
+  responses: Array<
+    | { type: "query"; results: unknown[] }
+    | { type: "firstOrNull"; result: unknown }
+    | { type: "execute"; changes?: number }
+  >,
+) {
   const calls: MockCall[] = [];
   let idx = 0;
 
@@ -45,7 +51,9 @@ function createSequentialMockDb(responses: Array<{ type: "query"; results: unkno
       const resp = responses[idx++];
       return { changes: resp?.type === "execute" ? (resp.changes ?? 1) : 1, duration: 1 };
     },
-    async batch() { return []; },
+    async batch() {
+      return [];
+    },
   };
 
   return { db, calls };
@@ -55,7 +63,9 @@ function createSequentialMockDb(responses: Array<{ type: "query"; results: unkno
 // Mock McpServer
 // ---------------------------------------------------------------------------
 
-type ToolHandler = (args: Record<string, unknown>) => Promise<{ content: Array<{ type: string; text: string }>; isError?: boolean }>;
+type ToolHandler = (
+  args: Record<string, unknown>,
+) => Promise<{ content: Array<{ type: string; text: string }>; isError?: boolean }>;
 
 function createMockServer() {
   const tools = new Map<string, ToolHandler>();
@@ -64,7 +74,10 @@ function createMockServer() {
       tools.set(name, handler);
     },
   };
-  return { server: server as unknown as import("@modelcontextprotocol/sdk/server/mcp.js").McpServer, tools };
+  return {
+    server: server as unknown as import("@modelcontextprotocol/sdk/server/mcp.js").McpServer,
+    tools,
+  };
 }
 
 function getTool(tools: Map<string, ToolHandler>, name: string): ToolHandler {
@@ -122,7 +135,7 @@ describe("list_units", () => {
   it("should return empty list when no units", async () => {
     const { server, tools } = createMockServer();
     const { db } = createSequentialMockDb([
-      { type: "query", results: [] },  // units query
+      { type: "query", results: [] }, // units query
     ]);
     registerUnitTools(server, { db, userId });
 
@@ -135,8 +148,8 @@ describe("list_units", () => {
   it("should return enriched units with availability", async () => {
     const { server, tools } = createMockServer();
     const { db } = createSequentialMockDb([
-      { type: "query", results: [fakeUnit] },  // units query
-      { type: "query", results: [] },           // contribution logs query
+      { type: "query", results: [fakeUnit] }, // units query
+      { type: "query", results: [] }, // contribution logs query
     ]);
     registerUnitTools(server, { db, userId });
 
@@ -150,9 +163,7 @@ describe("list_units", () => {
 
   it("should apply status filter", async () => {
     const { server, tools } = createMockServer();
-    const { db, calls } = createSequentialMockDb([
-      { type: "query", results: [] },
-    ]);
+    const { db, calls } = createSequentialMockDb([{ type: "query", results: [] }]);
     registerUnitTools(server, { db, userId });
 
     await getTool(tools, "list_units")({ status: "已成立" });
@@ -162,9 +173,7 @@ describe("list_units", () => {
 
   it("should apply strategy filter", async () => {
     const { server, tools } = createMockServer();
-    const { db, calls } = createSequentialMockDb([
-      { type: "query", results: [] },
-    ]);
+    const { db, calls } = createSequentialMockDb([{ type: "query", results: [] }]);
     registerUnitTools(server, { db, userId });
 
     await getTool(tools, "list_units")({ strategy: "远期理财" });
@@ -173,9 +182,7 @@ describe("list_units", () => {
 
   it("should apply tactics filter", async () => {
     const { server, tools } = createMockServer();
-    const { db, calls } = createSequentialMockDb([
-      { type: "query", results: [] },
-    ]);
+    const { db, calls } = createSequentialMockDb([{ type: "query", results: [] }]);
     registerUnitTools(server, { db, userId });
 
     await getTool(tools, "list_units")({ tactics: "定期存款" });
@@ -184,9 +191,7 @@ describe("list_units", () => {
 
   it("should apply currency filter", async () => {
     const { server, tools } = createMockServer();
-    const { db, calls } = createSequentialMockDb([
-      { type: "query", results: [] },
-    ]);
+    const { db, calls } = createSequentialMockDb([{ type: "query", results: [] }]);
     registerUnitTools(server, { db, userId });
 
     await getTool(tools, "list_units")({ currency: "USD" });
@@ -195,9 +200,7 @@ describe("list_units", () => {
 
   it("should respect limit and offset", async () => {
     const { server, tools } = createMockServer();
-    const { db, calls } = createSequentialMockDb([
-      { type: "query", results: [] },
-    ]);
+    const { db, calls } = createSequentialMockDb([{ type: "query", results: [] }]);
     registerUnitTools(server, { db, userId });
 
     await getTool(tools, "list_units")({ limit: 10, offset: 20 });
@@ -208,9 +211,7 @@ describe("list_units", () => {
 
   it("should cap limit at 200", async () => {
     const { server, tools } = createMockServer();
-    const { db, calls } = createSequentialMockDb([
-      { type: "query", results: [] },
-    ]);
+    const { db, calls } = createSequentialMockDb([{ type: "query", results: [] }]);
     registerUnitTools(server, { db, userId });
 
     await getTool(tools, "list_units")({ limit: 999 });
@@ -223,8 +224,8 @@ describe("get_unit", () => {
   it("should find unit by full ID", async () => {
     const { server, tools } = createMockServer();
     const { db, calls } = createSequentialMockDb([
-      { type: "query", results: [fakeUnit] },      // unit query
-      { type: "firstOrNull", result: null },        // invest log
+      { type: "query", results: [fakeUnit] }, // unit query
+      { type: "firstOrNull", result: null }, // invest log
     ]);
     registerUnitTools(server, { db, userId });
 
@@ -262,9 +263,7 @@ describe("get_unit", () => {
 
   it("should return error when not found", async () => {
     const { server, tools } = createMockServer();
-    const { db } = createSequentialMockDb([
-      { type: "query", results: [] },
-    ]);
+    const { db } = createSequentialMockDb([{ type: "query", results: [] }]);
     registerUnitTools(server, { db, userId });
 
     const result = await getTool(tools, "get_unit")({ id: "NOTFOUND" });
@@ -291,11 +290,14 @@ describe("create_unit", () => {
   it("should create a unit with required fields", async () => {
     const { server, tools } = createMockServer();
     const { db, calls } = createSequentialMockDb([
-      { type: "execute", changes: 1 },  // INSERT
+      { type: "execute", changes: 1 }, // INSERT
     ]);
     registerUnitTools(server, { db, userId });
 
-    const result = await getTool(tools, "create_unit")({
+    const result = await getTool(
+      tools,
+      "create_unit",
+    )({
       unit_code: "C10",
       amount_cents: 500000,
     });
@@ -315,7 +317,10 @@ describe("create_unit", () => {
     ]);
     registerUnitTools(server, { db, userId });
 
-    const result = await getTool(tools, "create_unit")({
+    const result = await getTool(
+      tools,
+      "create_unit",
+    )({
       unit_code: "C10",
       amount_cents: 500000,
       product_id: "nonexistent",
@@ -330,7 +335,10 @@ describe("create_unit", () => {
     const { db } = createSequentialMockDb([]);
     registerUnitTools(server, { db, userId });
 
-    const result = await getTool(tools, "create_unit")({
+    const result = await getTool(
+      tools,
+      "create_unit",
+    )({
       unit_code: "C10",
       amount_cents: 500000,
       status: "已归档",
@@ -344,7 +352,10 @@ describe("create_unit", () => {
     const { db } = createSequentialMockDb([]);
     registerUnitTools(server, { db, userId });
 
-    const result = await getTool(tools, "create_unit")({
+    const result = await getTool(
+      tools,
+      "create_unit",
+    )({
       unit_code: "C10",
       amount_cents: 500000,
       status: "已成立",
@@ -356,12 +367,13 @@ describe("create_unit", () => {
 
   it("should allow 已归档 with end_date", async () => {
     const { server, tools } = createMockServer();
-    const { db } = createSequentialMockDb([
-      { type: "execute", changes: 1 },
-    ]);
+    const { db } = createSequentialMockDb([{ type: "execute", changes: 1 }]);
     registerUnitTools(server, { db, userId });
 
-    const result = await getTool(tools, "create_unit")({
+    const result = await getTool(
+      tools,
+      "create_unit",
+    )({
       unit_code: "C10",
       amount_cents: 500000,
       status: "已归档",
@@ -380,7 +392,10 @@ describe("create_unit", () => {
     ]);
     registerUnitTools(server, { db, userId });
 
-    const result = await getTool(tools, "create_unit")({
+    const result = await getTool(
+      tools,
+      "create_unit",
+    )({
       unit_code: "A01",
       amount_cents: 100000,
       currency: "USD",
@@ -415,7 +430,10 @@ describe("update_unit", () => {
   it("should return error when no fields to update", async () => {
     const { server, tools } = createMockServer();
     const { db } = createSequentialMockDb([
-      { type: "firstOrNull", result: { id: fakeUnit.id, status: "已成立", product_id: null, end_date: null } },
+      {
+        type: "firstOrNull",
+        result: { id: fakeUnit.id, status: "已成立", product_id: null, end_date: null },
+      },
     ]);
     registerUnitTools(server, { db, userId });
 
@@ -427,7 +445,10 @@ describe("update_unit", () => {
   it("should validate product_id when provided", async () => {
     const { server, tools } = createMockServer();
     const { db } = createSequentialMockDb([
-      { type: "firstOrNull", result: { id: fakeUnit.id, status: "已成立", product_id: null, end_date: null } },
+      {
+        type: "firstOrNull",
+        result: { id: fakeUnit.id, status: "已成立", product_id: null, end_date: null },
+      },
       { type: "firstOrNull", result: null }, // product not found
     ]);
     registerUnitTools(server, { db, userId });
@@ -440,7 +461,10 @@ describe("update_unit", () => {
   it("should enforce 已归档 requires end_date", async () => {
     const { server, tools } = createMockServer();
     const { db } = createSequentialMockDb([
-      { type: "firstOrNull", result: { id: fakeUnit.id, status: "已成立", product_id: null, end_date: null } },
+      {
+        type: "firstOrNull",
+        result: { id: fakeUnit.id, status: "已成立", product_id: null, end_date: null },
+      },
     ]);
     registerUnitTools(server, { db, userId });
 
@@ -452,7 +476,10 @@ describe("update_unit", () => {
   it("should reject end_date for non-已归档", async () => {
     const { server, tools } = createMockServer();
     const { db } = createSequentialMockDb([
-      { type: "firstOrNull", result: { id: fakeUnit.id, status: "已成立", product_id: null, end_date: null } },
+      {
+        type: "firstOrNull",
+        result: { id: fakeUnit.id, status: "已成立", product_id: null, end_date: null },
+      },
     ]);
     registerUnitTools(server, { db, userId });
 
@@ -465,10 +492,13 @@ describe("update_unit", () => {
     const updatedUnit = { ...fakeUnit, amount_cents: 2000000 };
     const { server, tools } = createMockServer();
     const { db, calls } = createSequentialMockDb([
-      { type: "firstOrNull", result: { id: fakeUnit.id, status: "已成立", product_id: null, end_date: null } },
-      { type: "execute", changes: 1 },                    // UPDATE
-      { type: "firstOrNull", result: updatedUnit },        // fetch updated unit
-      { type: "firstOrNull", result: null },               // invest log
+      {
+        type: "firstOrNull",
+        result: { id: fakeUnit.id, status: "已成立", product_id: null, end_date: null },
+      },
+      { type: "execute", changes: 1 }, // UPDATE
+      { type: "firstOrNull", result: updatedUnit }, // fetch updated unit
+      { type: "firstOrNull", result: null }, // invest log
     ]);
     registerUnitTools(server, { db, userId });
 
@@ -482,14 +512,20 @@ describe("update_unit", () => {
   it("should update multiple fields", async () => {
     const { server, tools } = createMockServer();
     const { db, calls } = createSequentialMockDb([
-      { type: "firstOrNull", result: { id: fakeUnit.id, status: "已成立", product_id: null, end_date: null } },
+      {
+        type: "firstOrNull",
+        result: { id: fakeUnit.id, status: "已成立", product_id: null, end_date: null },
+      },
       { type: "execute", changes: 1 },
       { type: "firstOrNull", result: fakeUnit },
       { type: "firstOrNull", result: null },
     ]);
     registerUnitTools(server, { db, userId });
 
-    await getTool(tools, "update_unit")({
+    await getTool(
+      tools,
+      "update_unit",
+    )({
       id: fakeUnit.id,
       unit_code: "C99",
       amount_cents: 999,
@@ -512,36 +548,42 @@ describe("update_unit", () => {
   it("should log contribution when product_id changes from old to new", async () => {
     const { server, tools } = createMockServer();
     const { db, calls } = createSequentialMockDb([
-      { type: "firstOrNull", result: { id: fakeUnit.id, status: "已成立", product_id: "old-prod", end_date: null } },
-      { type: "firstOrNull", result: { id: "new-prod" } },  // validate new product
-      { type: "execute", changes: 1 },                       // UPDATE
+      {
+        type: "firstOrNull",
+        result: { id: fakeUnit.id, status: "已成立", product_id: "old-prod", end_date: null },
+      },
+      { type: "firstOrNull", result: { id: "new-prod" } }, // validate new product
+      { type: "execute", changes: 1 }, // UPDATE
       // withdraw from old product
-      { type: "firstOrNull", result: { name: "Old Product" } },  // get old product name
-      { type: "execute", changes: 1 },                            // INSERT withdraw log
+      { type: "firstOrNull", result: { name: "Old Product" } }, // get old product name
+      { type: "execute", changes: 1 }, // INSERT withdraw log
       // invest to new product
-      { type: "firstOrNull", result: { name: "New Product" } },  // get new product name
-      { type: "execute", changes: 1 },                            // INSERT invest log
+      { type: "firstOrNull", result: { name: "New Product" } }, // get new product name
+      { type: "execute", changes: 1 }, // INSERT invest log
       // fetch updated unit
       { type: "firstOrNull", result: { ...fakeUnit, product_id: "new-prod" } },
-      { type: "firstOrNull", result: null },  // invest log
+      { type: "firstOrNull", result: null }, // invest log
     ]);
     registerUnitTools(server, { db, userId });
 
     await getTool(tools, "update_unit")({ id: fakeUnit.id, product_id: "new-prod" });
 
     // Should have withdraw log INSERT and invest log INSERT
-    const executeCalls = calls.filter(c => c.sql.includes("INSERT INTO contribution_logs"));
+    const executeCalls = calls.filter((c) => c.sql.includes("INSERT INTO contribution_logs"));
     expect(executeCalls).toHaveLength(2);
   });
 
   it("should handle product_id set to null (unlink)", async () => {
     const { server, tools } = createMockServer();
     const { db, calls } = createSequentialMockDb([
-      { type: "firstOrNull", result: { id: fakeUnit.id, status: "已成立", product_id: "old-prod", end_date: null } },
-      { type: "execute", changes: 1 },                       // UPDATE
+      {
+        type: "firstOrNull",
+        result: { id: fakeUnit.id, status: "已成立", product_id: "old-prod", end_date: null },
+      },
+      { type: "execute", changes: 1 }, // UPDATE
       // withdraw from old product
       { type: "firstOrNull", result: { name: "Old Product" } },
-      { type: "execute", changes: 1 },                       // INSERT withdraw log
+      { type: "execute", changes: 1 }, // INSERT withdraw log
       // No invest log (product_id is null)
       { type: "firstOrNull", result: { ...fakeUnit, product_id: null } },
       { type: "firstOrNull", result: null },
@@ -550,7 +592,7 @@ describe("update_unit", () => {
 
     await getTool(tools, "update_unit")({ id: fakeUnit.id, product_id: null });
 
-    const insertLogs = calls.filter(c => c.sql.includes("INSERT INTO contribution_logs"));
+    const insertLogs = calls.filter((c) => c.sql.includes("INSERT INTO contribution_logs"));
     expect(insertLogs).toHaveLength(1); // only withdraw, no invest
   });
 });

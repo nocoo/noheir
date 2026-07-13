@@ -37,11 +37,7 @@ describe("buildProductsSummary", () => {
   });
 
   test("counts total products correctly", () => {
-    const products = [
-      mockProduct(),
-      mockProduct({ id: "p2" }),
-      mockProduct({ id: "p3" }),
-    ];
+    const products = [mockProduct(), mockProduct({ id: "p2" }), mockProduct({ id: "p3" })];
 
     const summary = buildProductsSummary(products, 5);
 
@@ -89,9 +85,7 @@ describe("buildProductsSummary", () => {
   });
 
   test("handles null channel/category/currency", () => {
-    const products = [
-      mockProduct({ channel: null, category: null, currency: null }),
-    ];
+    const products = [mockProduct({ channel: null, category: null, currency: null })];
 
     const summary = buildProductsSummary(products, 0);
 

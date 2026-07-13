@@ -134,9 +134,7 @@ export const buildAccountsByType = (
   };
 
   accounts.forEach((account) => {
-    const type =
-      accountTypes?.find((c) => c.accountName === account)?.type ??
-      "unclassified";
+    const type = accountTypes?.find((c) => c.accountName === account)?.type ?? "unclassified";
     grouped[type].push(account);
   });
 
@@ -151,10 +149,7 @@ export const buildAccountType = (
   accountName: string,
   accountTypes?: AccountTypeConfig[],
 ): AccountType => {
-  return (
-    accountTypes?.find((c) => c.accountName === accountName)?.type ??
-    "unclassified"
-  );
+  return accountTypes?.find((c) => c.accountName === accountName)?.type ?? "unclassified";
 };
 
 export const buildAccountDetailData = (
@@ -196,9 +191,7 @@ export const buildAccountDetailData = (
     (a) => a.date >= yearStartDate && a.date <= yearEndDate,
   );
 
-  const startingAnchor = accountAnchors
-    .filter((a) => a.date <= yearStartDate)
-    .pop();
+  const startingAnchor = accountAnchors.filter((a) => a.date <= yearStartDate).pop();
   const startingBalance = startingAnchor?.balance ?? 0;
 
   let yearAnchors: AnchorWithMeta[] = [
@@ -238,9 +231,7 @@ export const buildAccountDetailData = (
 
     let segmentStartBalance = currentAnchor.balance;
     const segmentStartDate =
-      currentAnchor.isStarting || i === 0
-        ? yearStartDate
-        : currentAnchor.date;
+      currentAnchor.isStarting || i === 0 ? yearStartDate : currentAnchor.date;
     const segmentEndDate = nextAnchor ? nextAnchor.date : yearEndDate;
 
     for (const entry of accountEntries) {
@@ -288,9 +279,7 @@ export const buildAccountDetailData = (
 
     let segmentBalance = currentAnchor.balance;
     const segmentStartDate =
-      currentAnchor.isStarting || i === 0
-        ? yearStartDate
-        : currentAnchor.date;
+      currentAnchor.isStarting || i === 0 ? yearStartDate : currentAnchor.date;
     const segmentEndDate = nextAnchor ? nextAnchor.date : yearEndDate;
 
     if (
@@ -319,8 +308,7 @@ export const buildAccountDetailData = (
       }
 
       segmentBalance += entry.amount;
-      const displayAmount =
-        entry.type === "transfer" ? entry.amount : Math.abs(entry.amount);
+      const displayAmount = entry.type === "transfer" ? entry.amount : Math.abs(entry.amount);
 
       displayEntries.push({
         id: entry.id,

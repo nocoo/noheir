@@ -23,9 +23,7 @@ describe("mcp-config domain", () => {
       const parsed = JSON.parse(result);
       expect(parsed).toHaveProperty("mcpServers");
       expect(parsed.mcpServers).toHaveProperty("noheir");
-      expect(parsed.mcpServers.noheir.url).toBe(
-        "https://noheir.worker.hexly.ai/mcp",
-      );
+      expect(parsed.mcpServers.noheir.url).toBe("https://noheir.worker.hexly.ai/mcp");
       // Gen 3 uses OAuth - no command, args, or env needed
       expect(parsed.mcpServers.noheir.command).toBeUndefined();
       expect(parsed.mcpServers.noheir.env).toBeUndefined();

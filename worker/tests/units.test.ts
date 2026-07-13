@@ -148,8 +148,18 @@ describe("units repo", () => {
   test("findAllWithProducts combines multiple filters with AND logic", async () => {
     const repos = getTestRepos();
     await repos.units.create(userId, { ...baseUnit, status: "已归档", strategy: "短期理财" });
-    await repos.units.create(userId, { ...baseUnit, unitCode: "U-2026-002", status: "已归档", strategy: "长期理财" });
-    await repos.units.create(userId, { ...baseUnit, unitCode: "U-2026-003", status: "已成立", strategy: "短期理财" });
+    await repos.units.create(userId, {
+      ...baseUnit,
+      unitCode: "U-2026-002",
+      status: "已归档",
+      strategy: "长期理财",
+    });
+    await repos.units.create(userId, {
+      ...baseUnit,
+      unitCode: "U-2026-003",
+      status: "已成立",
+      strategy: "短期理财",
+    });
 
     const result = await repos.units.findAllWithProducts(userId, {
       status: "已归档",
@@ -163,8 +173,18 @@ describe("units repo", () => {
   test("findAll combines multiple filters with AND logic", async () => {
     const repos = getTestRepos();
     await repos.units.create(userId, { ...baseUnit, status: "已归档", strategy: "短期理财" });
-    await repos.units.create(userId, { ...baseUnit, unitCode: "U-2026-002", status: "已归档", strategy: "长期理财" });
-    await repos.units.create(userId, { ...baseUnit, unitCode: "U-2026-003", status: "已成立", strategy: "短期理财" });
+    await repos.units.create(userId, {
+      ...baseUnit,
+      unitCode: "U-2026-002",
+      status: "已归档",
+      strategy: "长期理财",
+    });
+    await repos.units.create(userId, {
+      ...baseUnit,
+      unitCode: "U-2026-003",
+      status: "已成立",
+      strategy: "短期理财",
+    });
 
     const result = await repos.units.findAll(userId, {
       status: "已归档",

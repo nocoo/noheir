@@ -31,7 +31,7 @@ interface AppShellProps {
 function buildBreadcrumbsFromPath(pathname: string): { label: string; href?: string }[] {
   // Find matching nav item
   const navItem = ALL_NAV_ITEMS.find((item) =>
-    item.href === "/" ? pathname === "/" : pathname.startsWith(item.href)
+    item.href === "/" ? pathname === "/" : pathname.startsWith(item.href),
   );
 
   if (!navItem || navItem.href === "/") {
@@ -54,7 +54,13 @@ function buildBreadcrumbsFromPath(pathname: string): { label: string; href?: str
   return crumbs;
 }
 
-function AppShellInner({ children, breadcrumbs }: { children: React.ReactNode; breadcrumbs: { label: string; href?: string }[] | undefined }) {
+function AppShellInner({
+  children,
+  breadcrumbs,
+}: {
+  children: React.ReactNode;
+  breadcrumbs: { label: string; href?: string }[] | undefined;
+}) {
   const isMobile = useIsMobile();
   const { mobileOpen, setMobileOpen } = useSidebar();
   const pathname = usePathname();
@@ -87,7 +93,11 @@ function AppShellInner({ children, breadcrumbs }: { children: React.ReactNode; b
 
       {isMobile && (
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetContent side="left" className="w-[260px] p-0 sm:max-w-[260px]" showCloseButton={false}>
+          <SheetContent
+            side="left"
+            className="w-[260px] p-0 sm:max-w-[260px]"
+            showCloseButton={false}
+          >
             <SheetHeader className="sr-only">
               <SheetTitle>导航菜单</SheetTitle>
               <SheetDescription>浏览 noheir 页面</SheetDescription>
@@ -145,9 +155,7 @@ export function AppShell({ children, breadcrumbs }: AppShellProps) {
     <SidebarProvider>
       <Suspense>
         <YearProvider>
-          <AppShellInner breadcrumbs={breadcrumbs ?? undefined}>
-            {children}
-          </AppShellInner>
+          <AppShellInner breadcrumbs={breadcrumbs ?? undefined}>{children}</AppShellInner>
         </YearProvider>
       </Suspense>
     </SidebarProvider>

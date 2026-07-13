@@ -1,8 +1,16 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { Droplets, Calendar, TrendingUp, BarChart3, ExternalLink, Warehouse, ChevronDown } from "lucide-react"
+import { useState } from "react";
+import Link from "next/link";
+import {
+  Droplets,
+  Calendar,
+  TrendingUp,
+  BarChart3,
+  ExternalLink,
+  Warehouse,
+  ChevronDown,
+} from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -12,19 +20,9 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-} from "recharts"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card"
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
+} from "recharts";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Table,
   TableBody,
@@ -32,31 +30,27 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 import {
   UnitCodeBadge,
   StrategyBadge,
   TacticsBadge,
   ProductBadge,
-} from "@/components/ui/colored-badge"
-import {
-  formatCurrencyFull,
-  formatCurrencyK,
-  yAxisWidth,
-} from "@/lib/chart-config"
-import { CAPITAL_TABLE_COLUMNS } from "@/lib/table-columns"
-import { StatCard } from "@/components/shared/stat-card"
-import { cn } from "@/lib/utils"
-import type { UpcomingUnit } from "@/domain/assets/liquidity-ladder"
+} from "@/components/ui/colored-badge";
+import { formatCurrencyFull, formatCurrencyK, yAxisWidth } from "@/lib/chart-config";
+import { CAPITAL_TABLE_COLUMNS } from "@/lib/table-columns";
+import { StatCard } from "@/components/shared/stat-card";
+import { cn } from "@/lib/utils";
+import type { UpcomingUnit } from "@/domain/assets/liquidity-ladder";
 
 interface LiquidityClientProps {
-  chartData: Record<string, string | number>[]
-  strategies: string[]
-  total12m: number
-  avgMonth: number
-  peakMonth: string
-  peakAmount: number
-  upcomingUnits: UpcomingUnit[]
+  chartData: Record<string, string | number>[];
+  strategies: string[];
+  total12m: number;
+  avgMonth: number;
+  peakMonth: string;
+  peakAmount: number;
+  upcomingUnits: UpcomingUnit[];
 }
 
 const COLORS = [
@@ -68,7 +62,7 @@ const COLORS = [
   "#ec4899",
   "#06b6d4",
   "#84cc16",
-]
+];
 
 export function LiquidityClient({
   chartData,
@@ -80,32 +74,35 @@ export function LiquidityClient({
   upcomingUnits,
 }: LiquidityClientProps) {
   // Track collapsed state for each month
-  const [collapsedMonths, setCollapsedMonths] = useState<Set<string>>(new Set())
+  const [collapsedMonths, setCollapsedMonths] = useState<Set<string>>(new Set());
 
   const toggleMonth = (monthKey: string) => {
     setCollapsedMonths((prev) => {
-      const next = new Set(prev)
+      const next = new Set(prev);
       if (next.has(monthKey)) {
-        next.delete(monthKey)
+        next.delete(monthKey);
       } else {
-        next.add(monthKey)
+        next.add(monthKey);
       }
-      return next
-    })
-  }
+      return next;
+    });
+  };
 
   // Group units by month
-  const unitsByMonth = upcomingUnits.reduce((acc, unit) => {
-    const key = unit.monthKey
-    if (!acc[key]) {
-      acc[key] = { monthLabel: unit.monthLabel, units: [] }
-    }
-    acc[key].units.push(unit)
-    return acc
-  }, {} as Record<string, { monthLabel: string; units: UpcomingUnit[] }>)
+  const unitsByMonth = upcomingUnits.reduce(
+    (acc, unit) => {
+      const key = unit.monthKey;
+      if (!acc[key]) {
+        acc[key] = { monthLabel: unit.monthLabel, units: [] };
+      }
+      acc[key].units.push(unit);
+      return acc;
+    },
+    {} as Record<string, { monthLabel: string; units: UpcomingUnit[] }>,
+  );
 
   // Sort months chronologically
-  const sortedMonths = Object.keys(unitsByMonth).sort()
+  const sortedMonths = Object.keys(unitsByMonth).sort();
 
   return (
     <div className="space-y-6">
@@ -115,9 +112,7 @@ export function LiquidityClient({
           <Droplets className="text-primary size-6" />
           流动性阶梯
         </h1>
-        <p className="text-muted-foreground text-sm">
-          未来24个月到期资金分布
-        </p>
+        <p className="text-muted-foreground text-sm">未来24个月到期资金分布</p>
       </div>
 
       {/* Summary Stats */}
@@ -134,12 +129,7 @@ export function LiquidityClient({
           icon={Calendar}
           variant="warning"
         />
-        <StatCard
-          title="峰值月份"
-          value={peakMonth || "—"}
-          icon={BarChart3}
-          variant="warning"
-        />
+        <StatCard title="峰值月份" value={peakMonth || "—"} icon={BarChart3} variant="warning" />
         <StatCard
           title="峰值金额"
           value={formatCurrencyFull(peakAmount)}
@@ -152,9 +142,7 @@ export function LiquidityClient({
       <Card>
         <CardHeader>
           <CardTitle>到期时间分布</CardTitle>
-          <CardDescription>
-            按策略分组的月度到期金额堆叠图
-          </CardDescription>
+          <CardDescription>按策略分组的月度到期金额堆叠图</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-[400px]">
@@ -162,21 +150,11 @@ export function LiquidityClient({
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                  <XAxis
-                    dataKey="month"
-                    fontSize={10}
-                    angle={-45}
-                    textAnchor="end"
-                    height={80}
-                  />
-                  <YAxis
-                    width={yAxisWidth}
-                    tickFormatter={formatCurrencyK}
-                    fontSize={11}
-                  />
+                  <XAxis dataKey="month" fontSize={10} angle={-45} textAnchor="end" height={80} />
+                  <YAxis width={yAxisWidth} tickFormatter={formatCurrencyK} fontSize={11} />
                   <Tooltip
                     content={({ active, payload, label }) => {
-                      if (!active || !payload?.length) return null
+                      if (!active || !payload?.length) return null;
                       return (
                         <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
                           <p className="mb-1 font-medium">{String(label ?? "")}</p>
@@ -186,11 +164,12 @@ export function LiquidityClient({
                                 className="mr-1 inline-block size-2 rounded-full"
                                 style={{ backgroundColor: String(entry.color ?? "#888") }}
                               />
-                              {String(entry.name ?? "")}: {formatCurrencyFull(Number(entry.value ?? 0))}
+                              {String(entry.name ?? "")}:{" "}
+                              {formatCurrencyFull(Number(entry.value ?? 0))}
                             </p>
                           ))}
                         </div>
-                      )
+                      );
                     }}
                   />
                   <Legend />
@@ -237,10 +216,10 @@ export function LiquidityClient({
           {sortedMonths.length > 0 ? (
             <div className="space-y-4">
               {sortedMonths.map((monthKey) => {
-                const monthData = unitsByMonth[monthKey]
-                if (!monthData) return null
-                const monthTotal = monthData.units.reduce((sum, u) => sum + u.amount, 0)
-                const isCollapsed = collapsedMonths.has(monthKey)
+                const monthData = unitsByMonth[monthKey];
+                if (!monthData) return null;
+                const monthTotal = monthData.units.reduce((sum, u) => sum + u.amount, 0);
+                const isCollapsed = collapsedMonths.has(monthKey);
 
                 return (
                   <Collapsible
@@ -252,10 +231,7 @@ export function LiquidityClient({
                     <CollapsibleTrigger className="flex w-full items-center justify-between border-b pb-2 hover:bg-muted/50 -mx-2 px-2 rounded transition-colors">
                       <div className="flex items-center gap-2">
                         <ChevronDown
-                          className={cn(
-                            "size-4 transition-transform",
-                            isCollapsed && "-rotate-90"
-                          )}
+                          className={cn("size-4 transition-transform", isCollapsed && "-rotate-90")}
                         />
                         <h3 className="font-semibold">{monthData.monthLabel}</h3>
                       </div>
@@ -275,7 +251,9 @@ export function LiquidityClient({
                             <TableHead className={CAPITAL_TABLE_COLUMNS.product}>产品</TableHead>
                             <TableHead className={CAPITAL_TABLE_COLUMNS.amount}>金额</TableHead>
                             <TableHead className={CAPITAL_TABLE_COLUMNS.date}>解禁日</TableHead>
-                            <TableHead className={CAPITAL_TABLE_COLUMNS.countdown}>倒计时</TableHead>
+                            <TableHead className={CAPITAL_TABLE_COLUMNS.countdown}>
+                              倒计时
+                            </TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -294,7 +272,9 @@ export function LiquidityClient({
                               </TableCell>
                               <TableCell>
                                 {unit.productName ? (
-                                  <Link href={`/products?q=${encodeURIComponent(unit.productName)}`}>
+                                  <Link
+                                    href={`/products?q=${encodeURIComponent(unit.productName)}`}
+                                  >
                                     <ProductBadge productName={unit.productName} />
                                   </Link>
                                 ) : (
@@ -315,7 +295,7 @@ export function LiquidityClient({
                                       ? "text-green-600 dark:text-green-400"
                                       : unit.daysUntilAvailable <= 30
                                         ? "text-amber-600 dark:text-amber-400"
-                                        : "text-muted-foreground"
+                                        : "text-muted-foreground",
                                   )}
                                 >
                                   {unit.daysUntilAvailable <= 0
@@ -329,16 +309,14 @@ export function LiquidityClient({
                       </Table>
                     </CollapsibleContent>
                   </Collapsible>
-                )
+                );
               })}
             </div>
           ) : (
-            <div className="text-muted-foreground py-8 text-center">
-              暂无即将解禁的资金单元
-            </div>
+            <div className="text-muted-foreground py-8 text-center">暂无即将解禁的资金单元</div>
           )}
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

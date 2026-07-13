@@ -1,36 +1,36 @@
-"use client"
+"use client";
 
-import { useTransition } from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { useYear } from "./year-context"
-import { cn } from "@/lib/utils"
+import { useTransition } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useYear } from "./year-context";
+import { cn } from "@/lib/utils";
 
 export function GlobalYearSelector() {
-  const { year, years, setYear, isYearEnabled } = useYear()
-  const [isPending, startTransition] = useTransition()
+  const { year, years, setYear, isYearEnabled } = useYear();
+  const [isPending, startTransition] = useTransition();
 
-  if (!isYearEnabled) return null
+  if (!isYearEnabled) return null;
 
-  const currentIndex = years.indexOf(year)
-  const canGoPrev = currentIndex < years.length - 1 // years are sorted desc
-  const canGoNext = currentIndex > 0
+  const currentIndex = years.indexOf(year);
+  const canGoPrev = currentIndex < years.length - 1; // years are sorted desc
+  const canGoNext = currentIndex > 0;
 
   const navigateToYear = (newYear: number) => {
     startTransition(() => {
-      setYear(newYear)
-    })
-  }
+      setYear(newYear);
+    });
+  };
 
   const goPrev = () => {
-    const prevYear = years[currentIndex + 1]
-    if (canGoPrev && prevYear !== undefined) navigateToYear(prevYear)
-  }
+    const prevYear = years[currentIndex + 1];
+    if (canGoPrev && prevYear !== undefined) navigateToYear(prevYear);
+  };
 
   const goNext = () => {
-    const nextYear = years[currentIndex - 1]
-    if (canGoNext && nextYear !== undefined) navigateToYear(nextYear)
-  }
+    const nextYear = years[currentIndex - 1];
+    if (canGoNext && nextYear !== undefined) navigateToYear(nextYear);
+  };
 
   return (
     <div className="flex items-center gap-1">
@@ -79,5 +79,5 @@ export function GlobalYearSelector() {
         <ChevronRight className="size-4" />
       </Button>
     </div>
-  )
+  );
 }

@@ -87,7 +87,8 @@ function LoginContent() {
                 <div
                   className="h-4 w-8 rounded-full bg-background/80"
                   style={{
-                    boxShadow: "inset 0 1.5px 3px rgba(0,0,0,0.35), inset 0 -0.5px 1px rgba(255,255,255,0.1)",
+                    boxShadow:
+                      "inset 0 1.5px 3px rgba(0,0,0,0.35), inset 0 -0.5px 1px rgba(255,255,255,0.1)",
                   }}
                 />
                 <div className="flex items-center gap-2">
@@ -178,11 +179,15 @@ function LoginContent() {
       <footer className="py-4 text-center">
         <p className="text-xs text-muted-foreground">
           由{" "}
-          <a href="https://github.com/nocoo/noheir" target="_blank" rel="noopener noreferrer"
-             className="text-primary hover:text-primary/80 transition-colors">
+          <a
+            href="https://github.com/nocoo/noheir"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:text-primary/80 transition-colors"
+          >
             noheir
-          </a>
-          {" "}驱动
+          </a>{" "}
+          驱动
         </p>
       </footer>
     </div>

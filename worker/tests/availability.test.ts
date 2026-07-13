@@ -10,11 +10,7 @@ describe("computeAvailability", () => {
 
   describe("data insufficient cases", () => {
     it("returns null availability when no product", () => {
-      const result = computeAvailability(
-        { operationDate: "2026-04-01" },
-        null,
-        today
-      );
+      const result = computeAvailability({ operationDate: "2026-04-01" }, null, today);
       expect(result.availableDate).toBeNull();
       expect(result.isAvailable).toBe(false);
       expect(result.daysUntilAvailable).toBeNull();
@@ -26,7 +22,7 @@ describe("computeAvailability", () => {
       const result = computeAvailability(
         null,
         { lockPeriodDays: 30, openDays: null, cycleDays: null },
-        today
+        today,
       );
       expect(result.availableDate).toBeNull();
       expect(result.isAvailable).toBe(false);
@@ -50,7 +46,7 @@ describe("computeAvailability", () => {
       const result = computeAvailability(
         { operationDate: "2026-04-01" },
         { lockPeriodDays: 30, openDays: null, cycleDays: null },
-        today
+        today,
       );
       expect(result.availableDate).toBe("2026-05-01");
       expect(result.isAvailable).toBe(false);
@@ -63,7 +59,7 @@ describe("computeAvailability", () => {
       const result = computeAvailability(
         { operationDate: "2026-04-05" },
         { lockPeriodDays: 1, openDays: null, cycleDays: null },
-        today
+        today,
       );
       expect(result.availableDate).toBe("2026-04-06");
       expect(result.isAvailable).toBe(false);
@@ -76,7 +72,7 @@ describe("computeAvailability", () => {
       const result = computeAvailability(
         { operationDate: "2026-04-01" },
         { lockPeriodDays: 0, openDays: null, cycleDays: null },
-        today
+        today,
       );
       expect(result.availableDate).toBe("2026-04-01");
       expect(result.isAvailable).toBe(true);
@@ -88,7 +84,7 @@ describe("computeAvailability", () => {
       const result = computeAvailability(
         { operationDate: "2026-04-01" },
         { lockPeriodDays: null, openDays: null, cycleDays: null },
-        today
+        today,
       );
       expect(result.availableDate).toBe("2026-04-01");
       expect(result.isAvailable).toBe(true);
@@ -100,7 +96,7 @@ describe("computeAvailability", () => {
       const result = computeAvailability(
         { operationDate: "2026-04-01" },
         { lockPeriodDays: 4, openDays: null, cycleDays: null },
-        today
+        today,
       );
       expect(result.availableDate).toBe("2026-04-05");
       expect(result.isAvailable).toBe(true);
@@ -111,7 +107,7 @@ describe("computeAvailability", () => {
       const result = computeAvailability(
         { operationDate: "2026-03-01" },
         { lockPeriodDays: 30, openDays: null, cycleDays: null },
-        today
+        today,
       );
       expect(result.availableDate).toBe("2026-03-31");
       expect(result.isAvailable).toBe(true);
@@ -125,7 +121,7 @@ describe("computeAvailability", () => {
       const result = computeAvailability(
         { operationDate: "2025-12-15" },
         { lockPeriodDays: 30, openDays: null, cycleDays: null },
-        decemberToday
+        decemberToday,
       );
       expect(result.availableDate).toBe("2026-01-14");
       expect(result.isAvailable).toBe(false);
@@ -137,7 +133,7 @@ describe("computeAvailability", () => {
       const result = computeAvailability(
         { operationDate: "2024-02-28" },
         { lockPeriodDays: 1, openDays: null, cycleDays: null },
-        leapToday
+        leapToday,
       );
       expect(result.availableDate).toBe("2024-02-29");
       expect(result.isAvailable).toBe(false);
@@ -148,7 +144,7 @@ describe("computeAvailability", () => {
       const result = computeAvailability(
         { operationDate: "2026-01-01" },
         { lockPeriodDays: 365, openDays: null, cycleDays: null },
-        today
+        today,
       );
       expect(result.availableDate).toBe("2027-01-01");
       expect(result.isAvailable).toBe(false);
@@ -165,7 +161,7 @@ describe("computeAvailability", () => {
       const result = computeAvailability(
         { operationDate: "2026-01-01" },
         { lockPeriodDays: 365, openDays: 3, cycleDays: 30 },
-        today
+        today,
       );
       expect(result.isAvailable).toBe(false);
       expect(result.daysUntilAvailable).toBe(271);
@@ -182,7 +178,7 @@ describe("computeAvailability", () => {
       const result = computeAvailability(
         { operationDate: "2026-03-20" },
         { lockPeriodDays: 10, openDays: 3, cycleDays: 30 },
-        new Date("2026-03-30")
+        new Date("2026-03-30"),
       );
       expect(result.availableDate).toBe("2026-03-30");
       expect(result.isAvailable).toBe(true);
@@ -196,7 +192,7 @@ describe("computeAvailability", () => {
       const result = computeAvailability(
         { operationDate: "2026-03-20" },
         { lockPeriodDays: 10, openDays: 3, cycleDays: 30 },
-        new Date("2026-03-31")
+        new Date("2026-03-31"),
       );
       expect(result.availableDate).toBe("2026-03-30");
       expect(result.isAvailable).toBe(true);
@@ -210,7 +206,7 @@ describe("computeAvailability", () => {
       const result = computeAvailability(
         { operationDate: "2026-03-20" },
         { lockPeriodDays: 10, openDays: 3, cycleDays: 30 },
-        new Date("2026-04-01")
+        new Date("2026-04-01"),
       );
       expect(result.availableDate).toBe("2026-03-30");
       expect(result.isAvailable).toBe(true);
@@ -224,7 +220,7 @@ describe("computeAvailability", () => {
       const result = computeAvailability(
         { operationDate: "2026-03-20" },
         { lockPeriodDays: 10, openDays: 3, cycleDays: 30 },
-        new Date("2026-04-29")
+        new Date("2026-04-29"),
       );
       expect(result.availableDate).toBe("2026-04-29");
       expect(result.isAvailable).toBe(true);
@@ -240,7 +236,7 @@ describe("computeAvailability", () => {
       const result = computeAvailability(
         { operationDate: "2026-03-20" },
         { lockPeriodDays: 10, openDays: 3, cycleDays: 30 },
-        new Date("2026-04-02")
+        new Date("2026-04-02"),
       );
       expect(result.availableDate).toBe("2026-04-29");
       expect(result.isAvailable).toBe(false);
@@ -254,7 +250,7 @@ describe("computeAvailability", () => {
       const result = computeAvailability(
         { operationDate: "2026-03-20" },
         { lockPeriodDays: 10, openDays: 3, cycleDays: 30 },
-        new Date("2026-04-15")
+        new Date("2026-04-15"),
       );
       expect(result.availableDate).toBe("2026-04-29");
       expect(result.isAvailable).toBe(false);
@@ -268,7 +264,7 @@ describe("computeAvailability", () => {
       const result = computeAvailability(
         { operationDate: "2026-03-20" },
         { lockPeriodDays: 10, openDays: 3, cycleDays: 30 },
-        new Date("2026-04-28")
+        new Date("2026-04-28"),
       );
       expect(result.availableDate).toBe("2026-04-29");
       expect(result.isAvailable).toBe(false);
@@ -282,7 +278,7 @@ describe("computeAvailability", () => {
       const result = computeAvailability(
         { operationDate: "2026-03-01" },
         { lockPeriodDays: 30, openDays: null, cycleDays: null },
-        today
+        today,
       );
       expect(result.isAvailable).toBe(true);
       expect(result.daysUntilAvailable).toBe(-5);
@@ -293,7 +289,7 @@ describe("computeAvailability", () => {
       const result = computeAvailability(
         { operationDate: "2026-03-01" },
         { lockPeriodDays: 30, openDays: null, cycleDays: null },
-        today
+        today,
       );
       expect(result.isAvailable).toBe(true);
       expect(result.daysUntilLocked).toBeNull();

@@ -20,19 +20,9 @@ import {
   parseChineseTransferCSV,
   type ChineseTransferCSVParseResult,
 } from "@/domain/import/parse-chinese-transfer-csv";
-import {
-  countTransfersByYear,
-  deleteAndImportTransfers,
-} from "@/app/actions/import-actions";
+import { countTransfersByYear, deleteAndImportTransfers } from "@/app/actions/import-actions";
 
-type ImportStep =
-  | "idle"
-  | "parsing"
-  | "validating"
-  | "confirming"
-  | "uploading"
-  | "done"
-  | "error";
+type ImportStep = "idle" | "parsing" | "validating" | "confirming" | "uploading" | "done" | "error";
 
 export function TransferImport() {
   const router = useRouter();
@@ -41,8 +31,7 @@ export function TransferImport() {
   const [step, setStep] = useState<ImportStep>("idle");
   const [fileName, setFileName] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [parseResult, setParseResult] =
-    useState<ChineseTransferCSVParseResult | null>(null);
+  const [parseResult, setParseResult] = useState<ChineseTransferCSVParseResult | null>(null);
   const [csvYear, setCsvYear] = useState<number | null>(null);
   const [existingCount, setExistingCount] = useState<number | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -84,9 +73,7 @@ export function TransferImport() {
         if (!error) {
           setErrorMessage("未知解析错误");
         } else if (error.row === 1 && error.message.includes("表头")) {
-          setErrorMessage(
-            '文件格式错误：您上传的可能是"收支流水"文件，请上传"转账数据"文件。',
-          );
+          setErrorMessage('文件格式错误：您上传的可能是"收支流水"文件，请上传"转账数据"文件。');
         } else {
           setErrorMessage(error.message);
         }
@@ -161,9 +148,7 @@ export function TransferImport() {
           setStep("error");
         }
       } catch (err) {
-        setErrorMessage(
-          err instanceof Error ? err.message : "上传失败",
-        );
+        setErrorMessage(err instanceof Error ? err.message : "上传失败");
         setStep("error");
       }
     });
@@ -225,24 +210,14 @@ export function TransferImport() {
 
           <div className="space-y-4">
             <div className="flex justify-center">
-              {step === "idle" && (
-                <Upload className="text-muted-foreground size-8" />
-              )}
+              {step === "idle" && <Upload className="text-muted-foreground size-8" />}
               {(step === "parsing" || step === "validating") && (
                 <Loader2 className="text-primary size-8 animate-spin" />
               )}
-              {step === "confirming" && (
-                <CheckCircle2 className="size-8 text-green-600" />
-              )}
-              {step === "uploading" && (
-                <Loader2 className="text-primary size-8 animate-spin" />
-              )}
-              {step === "done" && (
-                <CheckCircle2 className="size-8 text-green-600" />
-              )}
-              {step === "error" && (
-                <AlertTriangle className="text-destructive size-8" />
-              )}
+              {step === "confirming" && <CheckCircle2 className="size-8 text-green-600" />}
+              {step === "uploading" && <Loader2 className="text-primary size-8 animate-spin" />}
+              {step === "done" && <CheckCircle2 className="size-8 text-green-600" />}
+              {step === "error" && <AlertTriangle className="text-destructive size-8" />}
             </div>
             <div>
               <h3 className="text-lg font-semibold">
@@ -257,14 +232,11 @@ export function TransferImport() {
               <p className="text-muted-foreground mt-1 text-sm">
                 {step === "idle" && "支持 CSV 格式"}
                 {step === "parsing" && (fileName || "")}
-                {step === "validating" &&
-                  `${parseResult?.transfers.length ?? 0} 条记录`}
+                {step === "validating" && `${parseResult?.transfers.length ?? 0} 条记录`}
                 {step === "confirming" &&
                   `${parseResult?.transfers.length ?? 0} 条记录${parseResult && parseResult.filteredCount > 0 ? `（已过滤 ${parseResult.filteredCount} 条优惠抵扣）` : ""}`}
-                {step === "uploading" &&
-                  `${parseResult?.transfers.length ?? 0} 条记录`}
-                {step === "done" &&
-                  `已成功导入 ${importedCount} 条转账记录`}
+                {step === "uploading" && `${parseResult?.transfers.length ?? 0} 条记录`}
+                {step === "done" && `已成功导入 ${importedCount} 条转账记录`}
                 {step === "error" && (errorMessage || "未知错误")}
               </p>
             </div>
@@ -279,9 +251,7 @@ export function TransferImport() {
             {step === "uploading" && (
               <div className="space-y-2">
                 <Progress value={uploadProgress} />
-                <p className="text-muted-foreground text-xs">
-                  {uploadProgress}% 完成
-                </p>
+                <p className="text-muted-foreground text-xs">{uploadProgress}% 完成</p>
               </div>
             )}
           </div>
@@ -296,10 +266,7 @@ export function TransferImport() {
                 {csvYear}
               </Badge>
               <div className="text-sm">
-                <span className="font-medium">
-                  {parseResult?.transfers.length}
-                </span>{" "}
-                条转账记录
+                <span className="font-medium">{parseResult?.transfers.length}</span> 条转账记录
                 {parseResult && parseResult.filteredCount > 0 && (
                   <span className="text-muted-foreground ml-2">
                     (已过滤 {parseResult.filteredCount} 条优惠抵扣)
@@ -312,8 +279,7 @@ export function TransferImport() {
               <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30">
                 <p className="text-sm text-amber-800 dark:text-amber-300">
                   <AlertTriangle className="mr-1 inline size-4" />
-                  该年份已存在{" "}
-                  <span className="font-medium">{existingCount}</span>{" "}
+                  该年份已存在 <span className="font-medium">{existingCount}</span>{" "}
                   条转账数据，上传新数据将覆盖旧数据。
                 </p>
               </div>
@@ -327,37 +293,29 @@ export function TransferImport() {
             )}
 
             {/* Parse warnings */}
-            {parseResult &&
-              parseResult.warnings.length > 0 && (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30">
-                  <p className="mb-1 text-xs font-medium text-amber-800 dark:text-amber-300">
-                    解析警告 ({parseResult.warnings.length})
+            {parseResult && parseResult.warnings.length > 0 && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30">
+                <p className="mb-1 text-xs font-medium text-amber-800 dark:text-amber-300">
+                  解析警告 ({parseResult.warnings.length})
+                </p>
+                {parseResult.warnings.slice(0, 3).map((w, i) => (
+                  <p key={i} className="text-xs text-amber-700 dark:text-amber-400">
+                    行 {w.row}: {w.message}
                   </p>
-                  {parseResult.warnings.slice(0, 3).map((w, i) => (
-                    <p
-                      key={i}
-                      className="text-xs text-amber-700 dark:text-amber-400"
-                    >
-                      行 {w.row}: {w.message}
-                    </p>
-                  ))}
-                  {parseResult.warnings.length > 3 && (
-                    <p className="mt-1 text-xs text-amber-600">
-                      ...还有 {parseResult.warnings.length - 3} 条警告
-                    </p>
-                  )}
-                </div>
-              )}
+                ))}
+                {parseResult.warnings.length > 3 && (
+                  <p className="mt-1 text-xs text-amber-600">
+                    ...还有 {parseResult.warnings.length - 3} 条警告
+                  </p>
+                )}
+              </div>
+            )}
 
             <div className="flex gap-3">
               <Button variant="outline" onClick={resetState}>
                 取消
               </Button>
-              <Button
-                onClick={handleConfirmUpload}
-                disabled={isPending}
-                className="gap-2"
-              >
+              <Button onClick={handleConfirmUpload} disabled={isPending} className="gap-2">
                 确认上传
                 <ArrowRight className="size-4" />
               </Button>

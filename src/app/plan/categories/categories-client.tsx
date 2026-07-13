@@ -41,15 +41,10 @@ export interface CategoriesClientProps {
 }
 
 function colorCss(token: string): string {
-  return CHART_TOKENS.includes(token)
-    ? `hsl(var(--${token}))`
-    : "hsl(var(--muted-foreground))";
+  return CHART_TOKENS.includes(token) ? `hsl(var(--${token}))` : "hsl(var(--muted-foreground))";
 }
 
-export function CategoriesClient({
-  categories,
-  usage,
-}: CategoriesClientProps): React.ReactElement {
+export function CategoriesClient({ categories, usage }: CategoriesClientProps): React.ReactElement {
   const router = useRouter();
   const [createOpen, setCreateOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<CategoryRow | null>(null);
@@ -81,9 +76,7 @@ export function CategoriesClient({
       <div className="flex items-center justify-between gap-2">
         <div>
           <h1 className="text-2xl font-bold">分类</h1>
-          <p className="text-sm text-muted-foreground">
-            管理周期支出的分类与颜色标记
-          </p>
+          <p className="text-sm text-muted-foreground">管理周期支出的分类与颜色标记</p>
         </div>
         <Button onClick={() => setCreateOpen(true)} data-testid="open-create">
           <Plus className="size-4" />
@@ -97,11 +90,7 @@ export function CategoriesClient({
           className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-border p-12 text-sm text-muted-foreground"
         >
           <p>还没有任何分类</p>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCreateOpen(true)}
-          >
+          <Button variant="outline" size="sm" onClick={() => setCreateOpen(true)}>
             <Plus className="size-4" />
             创建第一个分类
           </Button>
@@ -114,11 +103,7 @@ export function CategoriesClient({
           {categories.map((cat) => {
             const count = usage[cat.id] ?? 0;
             return (
-              <li
-                key={cat.id}
-                data-category-id={cat.id}
-                className="flex items-center gap-3 p-4"
-              >
+              <li key={cat.id} data-category-id={cat.id} className="flex items-center gap-3 p-4">
                 <span
                   aria-hidden="true"
                   data-testid={`cat-color-${cat.id}`}

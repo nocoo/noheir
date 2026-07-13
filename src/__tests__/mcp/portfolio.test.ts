@@ -17,7 +17,13 @@ interface MockCall {
   params: unknown[];
 }
 
-function createSequentialMockDb(responses: Array<{ type: "query"; results: unknown[] } | { type: "firstOrNull"; result: unknown } | { type: "execute"; changes?: number }>) {
+function createSequentialMockDb(
+  responses: Array<
+    | { type: "query"; results: unknown[] }
+    | { type: "firstOrNull"; result: unknown }
+    | { type: "execute"; changes?: number }
+  >,
+) {
   const calls: MockCall[] = [];
   let idx = 0;
 
@@ -38,7 +44,9 @@ function createSequentialMockDb(responses: Array<{ type: "query"; results: unkno
       const resp = responses[idx++];
       return { changes: resp?.type === "execute" ? (resp.changes ?? 1) : 1, duration: 1 };
     },
-    async batch() { return []; },
+    async batch() {
+      return [];
+    },
   };
 
   return { db, calls };
@@ -48,7 +56,9 @@ function createSequentialMockDb(responses: Array<{ type: "query"; results: unkno
 // Mock McpServer
 // ---------------------------------------------------------------------------
 
-type ToolHandler = (args: Record<string, unknown>) => Promise<{ content: Array<{ type: string; text: string }>; isError?: boolean }>;
+type ToolHandler = (
+  args: Record<string, unknown>,
+) => Promise<{ content: Array<{ type: string; text: string }>; isError?: boolean }>;
 
 function createMockServer() {
   const tools = new Map<string, ToolHandler>();
@@ -59,7 +69,10 @@ function createMockServer() {
     },
   };
 
-  return { server: server as unknown as import("@modelcontextprotocol/sdk/server/mcp.js").McpServer, tools };
+  return {
+    server: server as unknown as import("@modelcontextprotocol/sdk/server/mcp.js").McpServer,
+    tools,
+  };
 }
 
 function getTool(tools: Map<string, ToolHandler>, name: string): ToolHandler {
@@ -164,7 +177,7 @@ describe("get_product_portfolio", () => {
     expect(parsed.product.name).toBe("招行定期A");
     expect(parsed.units).toHaveLength(2);
     expect(parsed.summary.total_units).toBe(2);
-    expect(parsed.summary.by_status).toEqual({ "已成立": 1, "已清算": 1 });
+    expect(parsed.summary.by_status).toEqual({ 已成立: 1, 已清算: 1 });
     expect(parsed.completeness.complete).toBe(true);
     expect(parsed.completeness.truncated).toBe(false);
   });
@@ -236,7 +249,9 @@ describe("get_product_portfolio", () => {
     await handler({ product_id: "01ABC123" });
 
     // Check that the units query includes status != 已归档
-    const unitsQuery = calls.find((c) => c.sql.includes("capital_units") && c.sql.includes("status !="));
+    const unitsQuery = calls.find(
+      (c) => c.sql.includes("capital_units") && c.sql.includes("status !="),
+    );
     expect(unitsQuery).toBeDefined();
   });
 
@@ -257,7 +272,9 @@ describe("get_product_portfolio", () => {
     await handler({ product_id: "01ABC123", include_archived_units: true });
 
     // Check that the units query does NOT include status != 已归档
-    const unitsQuery = calls.find((c) => c.sql.includes("capital_units") && !c.sql.includes("status !="));
+    const unitsQuery = calls.find(
+      (c) => c.sql.includes("capital_units") && !c.sql.includes("status !="),
+    );
     expect(unitsQuery).toBeDefined();
   });
 

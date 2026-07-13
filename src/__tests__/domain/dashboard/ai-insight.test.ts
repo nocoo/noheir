@@ -63,12 +63,8 @@ describe("ai-insight domain", () => {
 
   it("sorts recurring payments by next date", () => {
     const now = new Date();
-    const soon = new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .slice(0, 10);
-    const later = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .slice(0, 10);
+    const soon = new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const later = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
     const sorted = sortRecurringPaymentsByNextDate([
       {
         id: "p1",

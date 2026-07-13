@@ -15,9 +15,7 @@ describe("navigation (P2-C10 + P3-C11)", () => {
     const planGroup = NAV_GROUPS.find((g) => g.label === "资金计划");
     expect(planGroup).toBeDefined();
     const hrefs = planGroup?.items.map((i) => i.href) ?? [];
-    expect(hrefs).toEqual(
-      expect.arrayContaining(["/plan/calendar", "/plan/categories"]),
-    );
+    expect(hrefs).toEqual(expect.arrayContaining(["/plan/calendar", "/plan/categories"]));
   });
 
   test("资金计划 sits between 存量资金管理 and 系统 (spec order)", () => {
@@ -32,13 +30,7 @@ describe("navigation (P2-C10 + P3-C11)", () => {
   test("existing groups still present (regression)", () => {
     const labels = NAV_GROUPS.map((g) => g.label);
     expect(labels).toEqual(
-      expect.arrayContaining([
-        "总览",
-        "现金流分析",
-        "账户管理",
-        "存量资金管理",
-        "系统",
-      ]),
+      expect.arrayContaining(["总览", "现金流分析", "账户管理", "存量资金管理", "系统"]),
     );
   });
 });

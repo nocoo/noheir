@@ -1,24 +1,23 @@
-import { AppShell } from "@/components/layout"
-import { getAuthedClient } from "@/lib/api-helpers"
-import { toDomainProduct, toUnitDisplayInfo } from "@/lib/capital-mappers"
-import type { UnitDisplayInfo, DomainProduct } from "@/domain/types"
-import { FundsClient } from "./funds-client"
+import { AppShell } from "@/components/layout";
+import { getAuthedClient } from "@/lib/api-helpers";
+import { toDomainProduct, toUnitDisplayInfo } from "@/lib/capital-mappers";
+import type { UnitDisplayInfo, DomainProduct } from "@/domain/types";
+import { FundsClient } from "./funds-client";
 
 export default async function FundsPage() {
-  let units: UnitDisplayInfo[] = []
-  let products: DomainProduct[] = []
+  let units: UnitDisplayInfo[] = [];
+  let products: DomainProduct[] = [];
 
   try {
-    const { userId, client } = await getAuthedClient()
+    const { userId, client } = await getAuthedClient();
     const [unitsResult, productsResult] = await Promise.all([
       client.listUnits(userId, { with_products: true }),
       client.listProducts(userId),
-    ])
-    units = unitsResult.units
-      .map((raw) => toUnitDisplayInfo(raw as Record<string, unknown>))
+    ]);
+    units = unitsResult.units.map((raw) => toUnitDisplayInfo(raw as Record<string, unknown>));
     products = productsResult.products.map((raw) =>
       toDomainProduct(raw as Record<string, unknown>),
-    )
+    );
   } catch {
     // Not authenticated or Worker unavailable
   }
@@ -41,11 +40,11 @@ export default async function FundsPage() {
     daysUntilAvailable: u.daysUntilAvailable,
     daysUntilLocked: u.daysUntilLocked,
     isAvailable: u.isAvailable,
-  }))
+  }));
 
   return (
     <AppShell>
       <FundsClient units={serialized} products={products} />
     </AppShell>
-  )
+  );
 }

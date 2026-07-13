@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { cn } from "@/lib/utils"
-import { Card, CardContent } from "@/components/ui/card"
+import { cn } from "@/lib/utils";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface StatCardProps {
-  title: string
-  value: string
-  icon: React.ElementType
-  variant: "income" | "expense" | "warning" | "primary"
+  title: string;
+  value: string;
+  icon: React.ElementType;
+  variant: "income" | "expense" | "warning" | "primary";
 }
 
 const variantStyles: Record<
@@ -34,22 +34,20 @@ const variantStyles: Record<
     text: "text-primary",
     iconText: "text-primary",
   },
-}
+};
 
 export function StatCard({ title, value, icon: Icon, variant }: StatCardProps) {
-  const styles = variantStyles[variant]
+  const styles = variantStyles[variant];
 
   return (
     <Card className={cn("border-l-4", styles.border)}>
       <CardContent className="flex items-center justify-between p-4">
         <div className="min-w-0 flex-1">
           <p className="text-muted-foreground truncate text-xs">{title}</p>
-          <p className={cn("truncate text-xl font-bold", styles.text)}>
-            {value}
-          </p>
+          <p className={cn("truncate text-xl font-bold", styles.text)}>{value}</p>
         </div>
         <Icon className={cn("size-7 shrink-0 opacity-40", styles.iconText)} />
       </CardContent>
     </Card>
-  )
+  );
 }

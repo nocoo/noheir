@@ -91,10 +91,7 @@ export function generateRefreshToken(): string {
 // createMcpToken
 // ---------------------------------------------------------------------------
 
-export async function createMcpToken(
-  db: Db,
-  input: CreateMcpTokenInput,
-): Promise<McpToken> {
+export async function createMcpToken(db: Db, input: CreateMcpTokenInput): Promise<McpToken> {
   const id = ulid();
   const now = new Date();
   const issuedAt = now.toISOString();
@@ -148,14 +145,8 @@ export async function createMcpToken(
 // getMcpTokenById
 // ---------------------------------------------------------------------------
 
-export async function getMcpTokenById(
-  db: Db,
-  id: string,
-): Promise<McpToken | null> {
-  return db.firstOrNull<McpToken>(
-    "SELECT * FROM mcp_tokens WHERE id = ?",
-    [id],
-  );
+export async function getMcpTokenById(db: Db, id: string): Promise<McpToken | null> {
+  return db.firstOrNull<McpToken>("SELECT * FROM mcp_tokens WHERE id = ?", [id]);
 }
 
 // ---------------------------------------------------------------------------
@@ -200,15 +191,9 @@ export async function getValidTokenByRefreshHash(
 // ---------------------------------------------------------------------------
 
 /** Update last_used_at timestamp for a token. */
-export async function updateLastUsed(
-  db: Db,
-  id: string,
-): Promise<void> {
+export async function updateLastUsed(db: Db, id: string): Promise<void> {
   const now = new Date().toISOString();
-  await db.execute(
-    "UPDATE mcp_tokens SET last_used_at = ? WHERE id = ?",
-    [now, id],
-  );
+  await db.execute("UPDATE mcp_tokens SET last_used_at = ? WHERE id = ?", [now, id]);
 }
 
 // ---------------------------------------------------------------------------
@@ -216,10 +201,7 @@ export async function updateLastUsed(
 // ---------------------------------------------------------------------------
 
 /** Revoke a token by ID. */
-export async function revokeToken(
-  db: Db,
-  id: string,
-): Promise<boolean> {
+export async function revokeToken(db: Db, id: string): Promise<boolean> {
   const now = new Date().toISOString();
   const meta = await db.execute(
     "UPDATE mcp_tokens SET revoked = 1, revoked_at = ? WHERE id = ? AND revoked = 0",
@@ -260,11 +242,7 @@ export async function revokeTokensByClientAndUser(
 // ---------------------------------------------------------------------------
 
 /** List all tokens (for admin display). */
-export async function listMcpTokens(
-  db: Db,
-): Promise<McpToken[]> {
-  const result = await db.query<McpToken>(
-    "SELECT * FROM mcp_tokens ORDER BY issued_at DESC",
-  );
+export async function listMcpTokens(db: Db): Promise<McpToken[]> {
+  const result = await db.query<McpToken>("SELECT * FROM mcp_tokens ORDER BY issued_at DESC");
   return result.results;
 }

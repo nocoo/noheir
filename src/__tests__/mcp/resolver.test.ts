@@ -31,10 +31,9 @@ const SAMPLE_PRODUCT_2: ResolvedProduct = {
   code: "CMB-D-002",
 };
 
-function createMockDb(options: {
-  queryResults?: unknown[][];
-  firstOrNullResults?: unknown[];
-} = {}): Db {
+function createMockDb(
+  options: { queryResults?: unknown[][]; firstOrNullResults?: unknown[] } = {},
+): Db {
   const { queryResults = [], firstOrNullResults = [] } = options;
   let queryIdx = 0;
   let firstOrNullIdx = 0;
@@ -47,8 +46,12 @@ function createMockDb(options: {
     async firstOrNull<T>(_sql: string, _params?: unknown[]): Promise<T | null> {
       return (firstOrNullResults[firstOrNullIdx++] ?? null) as T | null;
     },
-    async execute() { return { changes: 1, duration: 1 }; },
-    async batch() { return []; },
+    async execute() {
+      return { changes: 1, duration: 1 };
+    },
+    async batch() {
+      return [];
+    },
   };
 }
 

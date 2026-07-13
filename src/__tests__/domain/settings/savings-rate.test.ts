@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  clampSavingsRate,
-  getSavingsRateTone,
-} from "@/domain/settings/savings-rate";
+import { clampSavingsRate, getSavingsRateTone } from "@/domain/settings/savings-rate";
 
 describe("savings-rate settings domain", () => {
   it("clamps savings rate to 0-100 range", () => {

@@ -28,11 +28,7 @@ vi.mock("sonner", () => ({
   toast: { success: toastSuccess, error: toastError },
 }));
 
-import {
-  menuItemsFor,
-  RuleList,
-  type RuleListCategory,
-} from "@/components/plan/rule-list";
+import { menuItemsFor, RuleList, type RuleListCategory } from "@/components/plan/rule-list";
 import type { RecurrenceRule } from "@/lib/recurring-expense/rule-types";
 
 function rule(overrides: Partial<RecurrenceRule>): RecurrenceRule {
@@ -125,9 +121,7 @@ describe("RuleList render (P3-C8)", () => {
   test("missing category → muted color fallback", () => {
     const r = rule({ id: "r1", categoryId: "ghost", amountCents: 100 });
     render(<RuleList rules={[r]} categoryMap={catMap([])} todayIso={TODAY} />);
-    expect(
-      screen.getByTestId("rule-color-r1").style.backgroundColor,
-    ).toContain("muted-foreground");
+    expect(screen.getByTestId("rule-color-r1").style.backgroundColor).toContain("muted-foreground");
   });
 
   test("status chip: paused (no date suffix)", () => {
@@ -179,13 +173,7 @@ describe("RuleList render (P3-C8)", () => {
   });
 
   test("status chip: active (no date suffix)", () => {
-    render(
-      <RuleList
-        rules={[rule({ id: "r1" })]}
-        categoryMap={catMap([])}
-        todayIso={TODAY}
-      />,
-    );
+    render(<RuleList rules={[rule({ id: "r1" })]} categoryMap={catMap([])} todayIso={TODAY} />);
     const chip = screen.getByTestId("status-r1");
     expect(chip).toHaveTextContent("进行中");
     expect(chip.textContent).not.toMatch(/·/);
@@ -233,9 +221,7 @@ describe("RuleList menu items per status (P3-C8)", () => {
   test("ended row menu has only 编辑 + 删除", async () => {
     render(
       <RuleList
-        rules={[
-          rule({ id: "r1", name: "A", status: "ended", endedAt: "2026-05-01" }),
-        ]}
+        rules={[rule({ id: "r1", name: "A", status: "ended", endedAt: "2026-05-01" })]}
         categoryMap={catMap([])}
         todayIso={TODAY}
         onEditRule={() => {}}

@@ -1,10 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 
-import {
-  buildSummaries,
-  PlanSummaryCards,
-} from "@/components/plan/plan-summary-cards";
+import { buildSummaries, PlanSummaryCards } from "@/components/plan/plan-summary-cards";
 import type { RecurrenceRule } from "@/lib/recurring-expense/rule-types";
 
 function rule(overrides: Partial<RecurrenceRule>): RecurrenceRule {
@@ -104,9 +101,7 @@ describe("buildSummaries (P3-C6)", () => {
 
 describe("PlanSummaryCards render (P3-C6)", () => {
   test("renders three cards with expected labels and zero amounts when no rules", () => {
-    render(
-      <PlanSummaryCards rules={[]} viewMonth="2026-06-01" todayIso="2026-06-07" />,
-    );
+    render(<PlanSummaryCards rules={[]} viewMonth="2026-06-01" todayIso="2026-06-07" />);
     const group = screen.getByRole("group", { name: "周期支出汇总" });
     const cards = within(group)
       .getAllByText(/当月|自今日起 30 天|自今日起 12 个月/)
@@ -117,9 +112,7 @@ describe("PlanSummaryCards render (P3-C6)", () => {
   });
 
   test("each card has data-summary-key for selector targeting", () => {
-    render(
-      <PlanSummaryCards rules={[]} viewMonth="2026-06-01" todayIso="2026-06-07" />,
-    );
+    render(<PlanSummaryCards rules={[]} viewMonth="2026-06-01" todayIso="2026-06-07" />);
     const group = screen.getByRole("group");
     expect(group.querySelector("[data-summary-key='month']")).not.toBeNull();
     expect(group.querySelector("[data-summary-key='next30']")).not.toBeNull();
@@ -128,9 +121,7 @@ describe("PlanSummaryCards render (P3-C6)", () => {
 
   test("month card amount reflects sumMonth for the visible month", () => {
     const r = rule({ amountCents: 12345, dayOfMonth: 1, startDate: "2026-01-01" });
-    render(
-      <PlanSummaryCards rules={[r]} viewMonth="2026-06-01" todayIso="2026-06-07" />,
-    );
+    render(<PlanSummaryCards rules={[r]} viewMonth="2026-06-01" todayIso="2026-06-07" />);
     const month = document.querySelector(
       "[data-summary-key='month'] [data-amount-cents]",
     ) as HTMLElement | null;
@@ -140,12 +131,8 @@ describe("PlanSummaryCards render (P3-C6)", () => {
 
   test("aria-label on the amount mentions the window label and formatted amount", () => {
     const r = rule({ amountCents: 100000, dayOfMonth: 1, startDate: "2026-01-01" });
-    render(
-      <PlanSummaryCards rules={[r]} viewMonth="2026-06-01" todayIso="2026-06-07" />,
-    );
-    const monthAmount = document.querySelector(
-      "[data-summary-key='month'] [data-amount-cents]",
-    );
+    render(<PlanSummaryCards rules={[r]} viewMonth="2026-06-01" todayIso="2026-06-07" />);
+    const monthAmount = document.querySelector("[data-summary-key='month'] [data-amount-cents]");
     expect(monthAmount?.getAttribute("aria-label")).toContain("当月");
     expect(monthAmount?.getAttribute("aria-label")).toContain("¥1,000");
   });
@@ -165,12 +152,8 @@ describe("PlanSummaryCards render (P3-C6)", () => {
     ) as HTMLElement | null;
     expect(month?.getAttribute("data-amount-cents")).toBe("5000");
     // July: same shape, but the month sum is still one occurrence (Jul 5).
-    rerender(
-      <PlanSummaryCards rules={[r]} viewMonth="2026-07-01" todayIso="2026-06-07" />,
-    );
-    month = document.querySelector(
-      "[data-summary-key='month'] [data-amount-cents]",
-    );
+    rerender(<PlanSummaryCards rules={[r]} viewMonth="2026-07-01" todayIso="2026-06-07" />);
+    month = document.querySelector("[data-summary-key='month'] [data-amount-cents]");
     expect(month?.getAttribute("data-amount-cents")).toBe("5000");
   });
 });

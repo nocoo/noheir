@@ -82,7 +82,10 @@ CAUTION:
 - Associated contribution logs may become orphaned`,
     {
       id: z.string().describe("Unit ID to delete"),
-      force: z.boolean().optional().describe("Force delete even if contribution logs exist (default: false)"),
+      force: z
+        .boolean()
+        .optional()
+        .describe("Force delete even if contribution logs exist (default: false)"),
     },
     async (args) => {
       const { db, userId } = ctx;
@@ -113,10 +116,7 @@ CAUTION:
       }
 
       // Delete the unit
-      await db.execute(
-        "DELETE FROM capital_units WHERE id = ? AND user_id = ?",
-        [args.id, userId],
-      );
+      await db.execute("DELETE FROM capital_units WHERE id = ? AND user_id = ?", [args.id, userId]);
 
       return ok({
         success: true,

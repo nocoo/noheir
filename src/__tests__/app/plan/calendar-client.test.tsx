@@ -15,14 +15,7 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-const {
-  createMock,
-  updateMock,
-  deleteMock,
-  pauseMock,
-  resumeMock,
-  endMock,
-} = vi.hoisted(() => ({
+const { createMock, updateMock, deleteMock, pauseMock, resumeMock, endMock } = vi.hoisted(() => ({
   createMock: vi.fn(),
   updateMock: vi.fn(),
   deleteMock: vi.fn(),
@@ -45,10 +38,7 @@ vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
-import {
-  CalendarClient,
-  ruleToFormInitial,
-} from "@/app/plan/calendar/calendar-client";
+import { CalendarClient, ruleToFormInitial } from "@/app/plan/calendar/calendar-client";
 import type { RecurrenceRule } from "@/lib/recurring-expense/rule-types";
 
 function rule(overrides: Partial<RecurrenceRule>): RecurrenceRule {
@@ -120,36 +110,20 @@ describe("ruleToFormInitial (P3-C10)", () => {
 
 describe("CalendarClient render (P3-C10)", () => {
   test("heading + new-rule button + summary cards + calendar + rule list", () => {
-    render(
-      <CalendarClient
-        rules={[rule({ id: "r1" })]}
-        categories={CATS}
-        todayIso={TODAY}
-      />,
-    );
+    render(<CalendarClient rules={[rule({ id: "r1" })]} categories={CATS} todayIso={TODAY} />);
     expect(screen.getByText("资金计划日历")).toBeInTheDocument();
     expect(screen.getByTestId("open-create-rule")).toBeInTheDocument();
     // Summary cards group label from PlanSummaryCards.
-    expect(
-      screen.getByRole("group", { name: "周期支出汇总" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "周期支出汇总" })).toBeInTheDocument();
     // Calendar grid from PlanCalendar.
     expect(screen.getByRole("grid")).toBeInTheDocument();
     // Rule list section.
     expect(screen.getByText("所有规则")).toBeInTheDocument();
-    expect(
-      screen.getByRole("list", { name: "周期支出" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "周期支出" })).toBeInTheDocument();
   });
 
   test("calendar defaults to the month containing todayIso", () => {
-    render(
-      <CalendarClient
-        rules={[]}
-        categories={[]}
-        todayIso="2026-06-07"
-      />,
-    );
+    render(<CalendarClient rules={[]} categories={[]} todayIso="2026-06-07" />);
     expect(screen.getByText("2026 年 6 月")).toBeInTheDocument();
   });
 });
@@ -164,13 +138,7 @@ describe("CalendarClient navigation (P3-C10)", () => {
 
   test("上一月 goes back, wrapping the year correctly", async () => {
     const user = userEvent.setup();
-    render(
-      <CalendarClient
-        rules={[]}
-        categories={[]}
-        todayIso="2026-01-15"
-      />,
-    );
+    render(<CalendarClient rules={[]} categories={[]} todayIso="2026-01-15" />);
     await user.click(screen.getByRole("button", { name: "上一月" }));
     expect(screen.getByText("2025 年 12 月")).toBeInTheDocument();
   });
@@ -197,9 +165,7 @@ describe("CalendarClient day → popover wiring (P3-C10)", () => {
       />,
     );
     const cells = screen.getAllByRole("gridcell");
-    const june10 = cells.find(
-      (c) => c.getAttribute("data-iso") === "2026-06-10",
-    );
+    const june10 = cells.find((c) => c.getAttribute("data-iso") === "2026-06-10");
     if (!june10) throw new Error("missing June 10");
     await user.click(june10);
     const dialog = await screen.findByRole("dialog");
@@ -213,17 +179,11 @@ describe("CalendarClient day → popover wiring (P3-C10)", () => {
 describe("CalendarClient create/edit dialogs (P3-C10)", () => {
   test("新建周期支出 button opens the create dialog with empty form", async () => {
     const user = userEvent.setup();
-    render(
-      <CalendarClient rules={[]} categories={CATS} todayIso={TODAY} />,
-    );
+    render(<CalendarClient rules={[]} categories={CATS} todayIso={TODAY} />);
     await user.click(screen.getByTestId("open-create-rule"));
-    expect(
-      await screen.findByRole("dialog", { name: "新建周期支出" }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "新建周期支出" })).toBeInTheDocument();
     // Form aria-label confirms it's the create form.
-    expect(
-      screen.getByRole("form", { name: "新建周期支出" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("form", { name: "新建周期支出" })).toBeInTheDocument();
   });
 
   test("rule list 编辑 menu opens the edit dialog with the rule prefilled", async () => {
@@ -235,14 +195,10 @@ describe("CalendarClient create/edit dialogs (P3-C10)", () => {
         todayIso={TODAY}
       />,
     );
-    await user.click(
-      screen.getByRole("button", { name: "房贷 操作菜单" }),
-    );
+    await user.click(screen.getByRole("button", { name: "房贷 操作菜单" }));
     await user.click(await screen.findByRole("menuitem", { name: "编辑" }));
     const dialog = await screen.findByRole("dialog", { name: "编辑周期支出" });
-    expect(
-      within(dialog).getByLabelText("名称"),
-    ).toHaveValue("房贷");
+    expect(within(dialog).getByLabelText("名称")).toHaveValue("房贷");
     expect(within(dialog).getByLabelText("金额 (元)")).toHaveValue(2500);
   });
 
@@ -256,9 +212,7 @@ describe("CalendarClient create/edit dialogs (P3-C10)", () => {
       />,
     );
     const cells = screen.getAllByRole("gridcell");
-    const june10 = cells.find(
-      (c) => c.getAttribute("data-iso") === "2026-06-10",
-    );
+    const june10 = cells.find((c) => c.getAttribute("data-iso") === "2026-06-10");
     if (!june10) throw new Error("missing");
     await user.click(june10);
     const popover = await screen.findByRole("dialog");
@@ -332,11 +286,7 @@ describe("CalendarClient router.refresh on mutation success (P3-C10 fix)", () =>
     const user = userEvent.setup();
     pauseMock.mockResolvedValueOnce({ success: true, data: undefined });
     render(
-      <CalendarClient
-        rules={[rule({ id: "r1", name: "A" })]}
-        categories={CATS}
-        todayIso={TODAY}
-      />,
+      <CalendarClient rules={[rule({ id: "r1", name: "A" })]} categories={CATS} todayIso={TODAY} />,
     );
     await user.click(screen.getByRole("button", { name: "A 操作菜单" }));
     await user.click(await screen.findByRole("menuitem", { name: "暂停" }));
@@ -355,11 +305,7 @@ describe("CalendarClient router.refresh on mutation success (P3-C10 fix)", () =>
     const user = userEvent.setup();
     deleteMock.mockResolvedValueOnce({ success: true, data: undefined });
     render(
-      <CalendarClient
-        rules={[rule({ id: "r1", name: "A" })]}
-        categories={CATS}
-        todayIso={TODAY}
-      />,
+      <CalendarClient rules={[rule({ id: "r1", name: "A" })]} categories={CATS} todayIso={TODAY} />,
     );
     await user.click(screen.getByRole("button", { name: "A 操作菜单" }));
     await user.click(await screen.findByRole("menuitem", { name: "删除" }));

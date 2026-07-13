@@ -1,8 +1,6 @@
 import type { AccountType, AccountTypeConfig } from "../types";
 
-export const getUniqueAccounts = (
-  transactions: Array<{ account: string }>,
-) => {
+export const getUniqueAccounts = (transactions: Array<{ account: string }>) => {
   const accounts = new Set(transactions.map((t) => t.account));
   return Array.from(accounts).sort();
 };
@@ -12,9 +10,7 @@ export const buildAccountTypesUpdate = (
   accountName: string,
   type: AccountType,
 ) => {
-  const existingIndex = accountTypes.findIndex(
-    (acc) => acc.accountName === accountName,
-  );
+  const existingIndex = accountTypes.findIndex((acc) => acc.accountName === accountName);
   const next = [...accountTypes];
 
   if (existingIndex >= 0) {
@@ -40,10 +36,7 @@ export const applyBatchAccountTypes = (
   return next;
 };
 
-export const groupAccountsByType = (
-  accounts: string[],
-  accountTypes: AccountTypeConfig[],
-) => {
+export const groupAccountsByType = (accounts: string[], accountTypes: AccountTypeConfig[]) => {
   const grouped: Record<AccountType, string[]> = {
     debit: [],
     credit: [],

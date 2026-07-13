@@ -23,10 +23,7 @@ function linearRegression(data: number[]): {
   const xValues = Array.from({ length: n }, (_, i) => i);
   const sumX = xValues.reduce((a, b) => a + b, 0);
   const sumY = data.reduce((a, b) => a + b, 0);
-  const sumXY = xValues.reduce(
-    (sum, x, i) => sum + x * (data[i] ?? 0),
-    0,
-  );
+  const sumXY = xValues.reduce((sum, x, i) => sum + x * (data[i] ?? 0), 0);
   const sumXX = xValues.reduce((sum, x) => sum + x * x, 0);
 
   const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
@@ -38,16 +35,12 @@ function linearRegression(data: number[]): {
 function coefficientOfVariation(data: number[]): number {
   if (data.length < 2) return 0;
   const mean = data.reduce((a, b) => a + b, 0) / data.length;
-  const variance =
-    data.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / data.length;
+  const variance = data.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / data.length;
   const stdDev = Math.sqrt(variance);
   return mean === 0 ? 0 : stdDev / mean;
 }
 
-function calculateHHI(
-  incomeBySource: Map<string, number>,
-  totalIncome: number,
-): number {
+function calculateHHI(incomeBySource: Map<string, number>, totalIncome: number): number {
   if (totalIncome === 0) return 1;
   let hhi = 0;
   for (const amount of incomeBySource.values()) {
@@ -155,8 +148,7 @@ function calculateGrowthScore(
       incomeSlope,
       expenseSlope,
       trendDifference: trendDiff,
-      interpretation:
-        trendDiff > 0 ? "收入增长跑赢支出" : "支出增长快于收入",
+      interpretation: trendDiff > 0 ? "收入增长跑赢支出" : "支出增长快于收入",
     },
   };
 }
@@ -201,9 +193,7 @@ function calculateRigidityScore(
 
 // ── Dimension 3: Quality (15%) ──
 
-function calculateQualityScore(
-  transactions: DomainTransaction[] | undefined,
-): QualityScoreResult {
+function calculateQualityScore(transactions: DomainTransaction[] | undefined): QualityScoreResult {
   const incomeBySource = new Map<string, number>();
   let totalIncome = 0;
 
@@ -281,8 +271,7 @@ function calculateResilienceScore(
       negativeCashflowMonths: negativeMonths,
       totalMonths: monthlyData.length,
       cashflowCV: cv,
-      interpretation:
-        negativeRatio === 0 ? "现金流稳定" : "存在现金流风险",
+      interpretation: negativeRatio === 0 ? "现金流稳定" : "存在现金流风险",
     },
   };
 }
@@ -302,8 +291,7 @@ function calculateSavingsScore(
 
   const totalIncome = monthlyData.reduce((sum, d) => sum + d.income, 0);
   const totalExpense = monthlyData.reduce((sum, d) => sum + d.expense, 0);
-  const annualSavingsRate =
-    totalIncome > 0 ? (totalIncome - totalExpense) / totalIncome : 0;
+  const annualSavingsRate = totalIncome > 0 ? (totalIncome - totalExpense) / totalIncome : 0;
 
   let score = 0;
   if (annualSavingsRate >= 0.3) score = 20;
@@ -356,11 +344,7 @@ export function calculateFinancialHealth(
   const safeTotalIncome = Number.isFinite(totalIncome) ? totalIncome : 0;
 
   const growth = calculateGrowthScore(safeMonthlyData);
-  const rigidity = calculateRigidityScore(
-    transactions,
-    safeTotalIncome,
-    fixedExpenseCategories,
-  );
+  const rigidity = calculateRigidityScore(transactions, safeTotalIncome, fixedExpenseCategories);
   const quality = calculateQualityScore(transactions);
   const resilience = calculateResilienceScore(safeMonthlyData);
   const savings = calculateSavingsScore(safeMonthlyData);
@@ -369,11 +353,7 @@ export function calculateFinancialHealth(
   const expenseTrend = linearRegression(safeMonthlyData.map((d) => d.expense));
 
   const totalScore =
-    growth.score +
-    rigidity.score +
-    quality.score +
-    resilience.score +
-    savings.score;
+    growth.score + rigidity.score + quality.score + resilience.score + savings.score;
 
   const percentage = totalScore / 100;
   let grade: FinancialHealthResult["grade"];

@@ -29,9 +29,7 @@ function actionError(err: unknown, fallback: string): { success: false; error: s
   return { success: false, error: fallback };
 }
 
-export async function createExpenseCategory(
-  data: unknown,
-): Promise<ActionResult<{ id: string }>> {
+export async function createExpenseCategory(data: unknown): Promise<ActionResult<{ id: string }>> {
   const parsed = categoryInputSchema.safeParse(data);
   if (!parsed.success) {
     return {
@@ -49,10 +47,7 @@ export async function createExpenseCategory(
   }
 }
 
-export async function updateExpenseCategory(
-  id: string,
-  data: unknown,
-): Promise<ActionResult> {
+export async function updateExpenseCategory(id: string, data: unknown): Promise<ActionResult> {
   const parsed = categoryInputSchema.partial().safeParse(data);
   if (!parsed.success) {
     return {
@@ -70,9 +65,7 @@ export async function updateExpenseCategory(
   }
 }
 
-export async function deleteExpenseCategory(
-  id: string,
-): Promise<ActionResult> {
+export async function deleteExpenseCategory(id: string): Promise<ActionResult> {
   try {
     const { userId, client } = await getAuthedClient();
     await client.deleteExpenseCategory(userId, id);

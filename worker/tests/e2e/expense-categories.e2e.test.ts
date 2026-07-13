@@ -146,18 +146,14 @@ describe("E2E: /api/expense-categories (P1-C5)", () => {
 
   test("CORS preflight allows the standard headers", async () => {
     // OPTIONS preflight from a browser-style request
-    const res = await fetch(
-      `${BASE_URL}/api/expense-categories`,
-      {
-        method: "OPTIONS",
-        headers: {
-          Origin: "https://noheir.app",
-          "Access-Control-Request-Method": "POST",
-          "Access-Control-Request-Headers":
-            "Content-Type, Authorization, X-User-Id",
-        },
+    const res = await fetch(`${BASE_URL}/api/expense-categories`, {
+      method: "OPTIONS",
+      headers: {
+        Origin: "https://noheir.app",
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "Content-Type, Authorization, X-User-Id",
       },
-    );
+    });
     expect(res.status).toBeLessThan(400);
     const allowHeaders = (res.headers.get("access-control-allow-headers") ?? "").toLowerCase();
     expect(allowHeaders).toContain("x-user-id");

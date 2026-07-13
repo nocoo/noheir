@@ -14,17 +14,19 @@ export function createUnitsRepo(db: DrizzleD1Database) {
      */
     enrichWithAvailability(
       units: UnitWithProduct[],
-      latestInvestLogs: Map<string, ContributionLog>
+      latestInvestLogs: Map<string, ContributionLog>,
     ): UnitWithAvailability[] {
       return units.map((unit) => {
         const latestInvest = latestInvestLogs.get(unit.id) ?? null;
         const availability = computeAvailability(
           latestInvest ? { operationDate: latestInvest.operationDate } : null,
-          unit.product ? {
-            lockPeriodDays: unit.product.lockPeriodDays,
-            openDays: unit.product.openDays,
-            cycleDays: unit.product.cycleDays,
-          } : null
+          unit.product
+            ? {
+                lockPeriodDays: unit.product.lockPeriodDays,
+                openDays: unit.product.openDays,
+                cycleDays: unit.product.cycleDays,
+              }
+            : null,
         );
         return {
           ...unit,
@@ -33,12 +35,15 @@ export function createUnitsRepo(db: DrizzleD1Database) {
       });
     },
 
-    async findAll(userId: string, filters?: {
-      status?: string;
-      strategy?: string;
-      tactics?: string;
-      currency?: string;
-    }): Promise<CapitalUnit[]> {
+    async findAll(
+      userId: string,
+      filters?: {
+        status?: string;
+        strategy?: string;
+        tactics?: string;
+        currency?: string;
+      },
+    ): Promise<CapitalUnit[]> {
       // Build all conditions upfront, then apply with and()
       const conditions = [eq(capitalUnits.userId, userId)];
 
@@ -64,12 +69,15 @@ export function createUnitsRepo(db: DrizzleD1Database) {
     },
 
     /** LEFT JOIN with financial_products — behavioral contract from get_units_with_products RPC */
-    async findAllWithProducts(userId: string, filters?: {
-      status?: string;
-      strategy?: string;
-      tactics?: string;
-      currency?: string;
-    }): Promise<UnitWithProduct[]> {
+    async findAllWithProducts(
+      userId: string,
+      filters?: {
+        status?: string;
+        strategy?: string;
+        tactics?: string;
+        currency?: string;
+      },
+    ): Promise<UnitWithProduct[]> {
       // Build all conditions upfront
       const conditions = [eq(capitalUnits.userId, userId)];
 
@@ -129,7 +137,10 @@ export function createUnitsRepo(db: DrizzleD1Database) {
       };
     },
 
-    async create(userId: string, data: Omit<NewCapitalUnit, "id" | "userId" | "createdAt">): Promise<CapitalUnit> {
+    async create(
+      userId: string,
+      data: Omit<NewCapitalUnit, "id" | "userId" | "createdAt">,
+    ): Promise<CapitalUnit> {
       return await db
         .insert(capitalUnits)
         .values({ ...data, userId })
@@ -137,7 +148,11 @@ export function createUnitsRepo(db: DrizzleD1Database) {
         .get();
     },
 
-    async update(userId: string, id: string, data: Partial<Omit<NewCapitalUnit, "id" | "userId" | "createdAt">>): Promise<CapitalUnit | null> {
+    async update(
+      userId: string,
+      id: string,
+      data: Partial<Omit<NewCapitalUnit, "id" | "userId" | "createdAt">>,
+    ): Promise<CapitalUnit | null> {
       const rows = await db
         .update(capitalUnits)
         .set(data)

@@ -1,59 +1,45 @@
-"use client"
+"use client";
 
-import { useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
-import { toast } from "sonner"
-import {
-  Settings,
-  Save,
-  Target,
-  TrendingUp,
-} from "lucide-react"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Slider } from "@/components/ui/slider"
-import { clampSavingsRate, getSavingsRateTone } from "@/domain/settings/savings-rate"
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Settings, Save, Target, TrendingUp } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { clampSavingsRate, getSavingsRateTone } from "@/domain/settings/savings-rate";
 import {
   clampMinReturnRate,
   clampMaxReturnRate,
   DEFAULT_MIN_RETURN_RATE,
   DEFAULT_MAX_RETURN_RATE,
-} from "@/domain/settings/return-rate"
-import {
-  saveGeneralSettings,
-  saveReturnRateSettings,
-} from "@/app/actions/settings-actions"
-import { cn } from "@/lib/utils"
+} from "@/domain/settings/return-rate";
+import { saveGeneralSettings, saveReturnRateSettings } from "@/app/actions/settings-actions";
+import { cn } from "@/lib/utils";
 
 interface SettingsClientProps {
-  settingsJson: Record<string, unknown>
+  settingsJson: Record<string, unknown>;
 }
 
 export function SettingsClient({ settingsJson }: SettingsClientProps) {
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
   // Savings rate settings
   const [savingsTarget, setSavingsTarget] = useState(
     Number(settingsJson.savings_rate_target ?? 30),
-  )
+  );
 
   // Return rate settings
   const [minReturnRate, setMinReturnRate] = useState(
     Number(settingsJson.min_return_rate ?? DEFAULT_MIN_RETURN_RATE),
-  )
+  );
   const [maxReturnRate, setMaxReturnRate] = useState(
     Number(settingsJson.max_return_rate ?? DEFAULT_MAX_RETURN_RATE),
-  )
+  );
 
-  const savingsRateTone = getSavingsRateTone(savingsTarget)
+  const savingsRateTone = getSavingsRateTone(savingsTarget);
 
   const handleSave = () => {
     startTransition(async () => {
@@ -64,21 +50,21 @@ export function SettingsClient({ settingsJson }: SettingsClientProps) {
           expectedReturnRate: maxReturnRate,
         }),
         saveReturnRateSettings({ minReturnRate, maxReturnRate }),
-      ])
+      ]);
 
       if (generalResult.success && returnRateResult.success) {
-        toast.success("设置已保存")
-        router.refresh()
+        toast.success("设置已保存");
+        router.refresh();
       } else {
         const errorMsg = !generalResult.success
           ? generalResult.error
           : !returnRateResult.success
             ? returnRateResult.error
-            : "未知错误"
-        toast.error(errorMsg)
+            : "未知错误";
+        toast.error(errorMsg);
       }
-    })
-  }
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -88,9 +74,7 @@ export function SettingsClient({ settingsJson }: SettingsClientProps) {
           <Settings className="text-primary size-6" />
           系统设置
         </h1>
-        <p className="text-muted-foreground text-sm">
-          应用偏好与配置
-        </p>
+        <p className="text-muted-foreground text-sm">应用偏好与配置</p>
       </div>
 
       {/* Savings Rate Settings */}
@@ -106,9 +90,7 @@ export function SettingsClient({ settingsJson }: SettingsClientProps) {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label>目标储蓄率</Label>
-              <span className="text-primary text-2xl font-bold">
-                {savingsTarget}%
-              </span>
+              <span className="text-primary text-2xl font-bold">{savingsTarget}%</span>
             </div>
             <Slider
               value={[savingsTarget]}
@@ -251,5 +233,5 @@ export function SettingsClient({ settingsJson }: SettingsClientProps) {
         </Button>
       </div>
     </div>
-  )
+  );
 }

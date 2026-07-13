@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { useState, useRef, useTransition } from "react"
-import { useRouter } from "next/navigation"
-import { toast } from "sonner"
+import { useState, useRef, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   Database,
   Download,
@@ -19,141 +19,124 @@ import {
   CheckCircle,
   XCircle,
   Activity,
-} from "lucide-react"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Separator } from "@/components/ui/separator"
-import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
-import {
-  exportBackup,
-  restoreBackup,
-  clearAllData,
-} from "@/app/actions/data-actions"
-import type {
-  DataSummary,
-  DataHealthMetrics,
-} from "@/domain/data-management"
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { exportBackup, restoreBackup, clearAllData } from "@/app/actions/data-actions";
+import type { DataSummary, DataHealthMetrics } from "@/domain/data-management";
 import {
   formatCurrency,
   getHealthScore,
   getHealthLabel,
   getHealthColorClass,
-} from "@/domain/data-management"
+} from "@/domain/data-management";
 
 interface ManageClientProps {
-  dataSummary: DataSummary
-  healthMetrics: DataHealthMetrics
+  dataSummary: DataSummary;
+  healthMetrics: DataHealthMetrics;
 }
 
 export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) {
-  const router = useRouter()
-  const fileRef = useRef<HTMLInputElement>(null)
-  const [exporting, setExporting] = useState(false)
-  const [importing, setImporting] = useState(false)
-  const [clearOpen, setClearOpen] = useState(false)
-  const [isPending, startTransition] = useTransition()
-  const [expandedYears, setExpandedYears] = useState<Set<number>>(new Set())
+  const router = useRouter();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [clearOpen, setClearOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [expandedYears, setExpandedYears] = useState<Set<number>>(new Set());
 
-  const healthScore = getHealthScore(healthMetrics)
-  const healthLabel = getHealthLabel(healthScore)
-  const healthColor = getHealthColorClass(healthScore)
+  const healthScore = getHealthScore(healthMetrics);
+  const healthLabel = getHealthLabel(healthScore);
+  const healthColor = getHealthColorClass(healthScore);
 
   const toggleYear = (year: number) => {
     setExpandedYears((prev) => {
-      const next = new Set(prev)
+      const next = new Set(prev);
       if (next.has(year)) {
-        next.delete(year)
+        next.delete(year);
       } else {
-        next.add(year)
+        next.add(year);
       }
-      return next
-    })
-  }
+      return next;
+    });
+  };
 
   const handleExport = async () => {
-    setExporting(true)
+    setExporting(true);
     try {
-      const result = await exportBackup()
+      const result = await exportBackup();
       if (result.success) {
-        const json = JSON.stringify(result.data, null, 2)
-        const blob = new Blob([json], { type: "application/json" })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement("a")
-        a.href = url
-        a.download = `noheir-backup-${new Date().toISOString().slice(0, 10)}.json`
-        a.click()
-        URL.revokeObjectURL(url)
-        toast.success("数据已导出")
+        const json = JSON.stringify(result.data, null, 2);
+        const blob = new Blob([json], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `noheir-backup-${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success("数据已导出");
       } else {
-        toast.error(result.error)
+        toast.error(result.error);
       }
     } finally {
-      setExporting(false)
+      setExporting(false);
     }
-  }
+  };
 
   const handleImportClick = () => {
-    fileRef.current?.click()
-  }
+    fileRef.current?.click();
+  };
 
   const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setImporting(true)
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
     try {
-      const text = await file.text()
-      const data = JSON.parse(text) as Record<string, unknown>
-      const transactions = Array.isArray(data.transactions) ? data.transactions : []
-      const transfers = Array.isArray(data.transfers) ? data.transfers : []
+      const text = await file.text();
+      const data = JSON.parse(text) as Record<string, unknown>;
+      const transactions = Array.isArray(data.transactions) ? data.transactions : [];
+      const transfers = Array.isArray(data.transfers) ? data.transfers : [];
 
-      const result = await restoreBackup({ transactions, transfers })
+      const result = await restoreBackup({ transactions, transfers });
       if (result.success) {
         toast.success(
           `导入完成: ${result.data.transactions}条交易, ${result.data.transfers}条转账`,
-        )
-        router.refresh()
+        );
+        router.refresh();
       } else {
-        toast.error(result.error)
+        toast.error(result.error);
       }
     } catch {
-      toast.error("文件解析失败，请确保是有效的 JSON 备份文件")
+      toast.error("文件解析失败，请确保是有效的 JSON 备份文件");
     } finally {
-      setImporting(false)
-      if (fileRef.current) fileRef.current.value = ""
+      setImporting(false);
+      if (fileRef.current) fileRef.current.value = "";
     }
-  }
+  };
 
   const handleClear = () => {
-    setClearOpen(true)
-  }
+    setClearOpen(true);
+  };
 
   const confirmClear = () => {
     startTransition(async () => {
-      const result = await clearAllData()
+      const result = await clearAllData();
       if (result.success) {
-        toast.success("所有数据已清除")
-        router.refresh()
+        toast.success("所有数据已清除");
+        router.refresh();
       } else {
-        toast.error(result.error)
+        toast.error(result.error);
       }
-      setClearOpen(false)
-    })
-  }
+      setClearOpen(false);
+    });
+  };
 
-  const hasData = dataSummary.totalTransactions > 0 || dataSummary.totalTransfers > 0
+  const hasData = dataSummary.totalTransactions > 0 || dataSummary.totalTransfers > 0;
 
   return (
     <div className="space-y-6">
@@ -163,9 +146,7 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
           <Database className="text-primary size-6" />
           数据管理
         </h1>
-        <p className="text-muted-foreground text-sm">
-          查看数据概览、导出备份与管理数据
-        </p>
+        <p className="text-muted-foreground text-sm">查看数据概览、导出备份与管理数据</p>
       </div>
 
       {/* Overall Summary Card */}
@@ -181,11 +162,15 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
             </div>
             <div>
               <p className="text-xs text-muted-foreground">交易记录</p>
-              <p className="text-2xl font-semibold font-display">{dataSummary.totalTransactions.toLocaleString()}</p>
+              <p className="text-2xl font-semibold font-display">
+                {dataSummary.totalTransactions.toLocaleString()}
+              </p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">转账记录</p>
-              <p className="text-2xl font-semibold font-display">{dataSummary.totalTransfers.toLocaleString()}</p>
+              <p className="text-2xl font-semibold font-display">
+                {dataSummary.totalTransfers.toLocaleString()}
+              </p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">总收入</p>
@@ -262,9 +247,7 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
               </div>
               <div className="flex-1 space-y-2">
                 <Progress value={healthScore} className="h-2" />
-                <p className={`text-sm font-medium ${healthColor}`}>
-                  数据质量{healthLabel}
-                </p>
+                <p className={`text-sm font-medium ${healthColor}`}>数据质量{healthLabel}</p>
                 <div className="flex gap-2 flex-wrap">
                   <Badge variant="outline" className="gap-1 text-xs">
                     <FileText className="size-3" />
@@ -283,7 +266,10 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
                     </Badge>
                   )}
                   {healthMetrics.missingDates === 0 && healthMetrics.zeroAmounts === 0 && (
-                    <Badge variant="outline" className="gap-1 text-xs text-green-600 dark:text-green-400">
+                    <Badge
+                      variant="outline"
+                      className="gap-1 text-xs text-green-600 dark:text-green-400"
+                    >
                       <CheckCircle className="size-3" />
                       无异常
                     </Badge>
@@ -353,9 +339,7 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
         <Card>
           <CardHeader>
             <CardTitle className="text-base">年度数据明细</CardTitle>
-            <CardDescription>
-              点击展开查看每年详细统计
-            </CardDescription>
+            <CardDescription>点击展开查看每年详细统计</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
             {dataSummary.yearlyStats.map((stats) => (
@@ -396,21 +380,29 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
                     <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                       <div>
                         <p className="text-xs text-muted-foreground">收入笔数</p>
-                        <p className="text-lg font-semibold font-display text-income">{stats.incomeCount}</p>
+                        <p className="text-lg font-semibold font-display text-income">
+                          {stats.incomeCount}
+                        </p>
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">支出笔数</p>
-                        <p className="text-lg font-semibold font-display text-expense">{stats.expenseCount}</p>
+                        <p className="text-lg font-semibold font-display text-expense">
+                          {stats.expenseCount}
+                        </p>
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">净收入</p>
-                        <p className={`text-lg font-semibold font-display ${stats.netAmount >= 0 ? "text-income" : "text-expense"}`}>
+                        <p
+                          className={`text-lg font-semibold font-display ${stats.netAmount >= 0 ? "text-income" : "text-expense"}`}
+                        >
                           {formatCurrency(stats.netAmount)}
                         </p>
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">覆盖月份</p>
-                        <p className="text-lg font-semibold font-display">{stats.monthsCovered.length}/12</p>
+                        <p className="text-lg font-semibold font-display">
+                          {stats.monthsCovered.length}/12
+                        </p>
                       </div>
                     </div>
 
@@ -418,7 +410,9 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
                     {stats.dateRange && (
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Calendar className="size-4" />
-                        <span>数据范围: {stats.dateRange.start} ~ {stats.dateRange.end}</span>
+                        <span>
+                          数据范围: {stats.dateRange.start} ~ {stats.dateRange.end}
+                        </span>
                       </div>
                     )}
 
@@ -514,11 +508,7 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
               onChange={handleFileSelected}
               className="hidden"
             />
-            <Button
-              variant="outline"
-              onClick={() => router.push("/import")}
-              className="w-full"
-            >
+            <Button variant="outline" onClick={() => router.push("/import")} className="w-full">
               <TrendingUp className="mr-2 size-4" />
               导入交易/转账
             </Button>
@@ -536,11 +526,7 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
           <CardDescription>以下操作不可撤销，请谨慎操作</CardDescription>
         </CardHeader>
         <CardContent>
-          <Button
-            variant="destructive"
-            onClick={handleClear}
-            disabled={isPending}
-          >
+          <Button variant="destructive" onClick={handleClear} disabled={isPending}>
             <Trash2 className="mr-2 size-4" />
             清除所有数据
           </Button>
@@ -557,7 +543,7 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
         loading={isPending}
       />
     </div>
-  )
+  );
 }
 
 // ── Helper Components ──
@@ -567,17 +553,17 @@ function CompletenessBar({
   percentage,
   icon: Icon,
 }: {
-  name: string
-  percentage: number
-  icon: React.ComponentType<{ className?: string }>
+  name: string;
+  percentage: number;
+  icon: React.ComponentType<{ className?: string }>;
 }) {
   // Use fixed colors: green=good, yellow=warning, red=bad
   // (not semantic income/expense which can swap)
   const getColor = (p: number) => {
-    if (p >= 95) return "bg-green-500"
-    if (p >= 80) return "bg-yellow-500"
-    return "bg-red-500"
-  }
+    if (p >= 95) return "bg-green-500";
+    if (p >= 80) return "bg-yellow-500";
+    return "bg-red-500";
+  };
 
   return (
     <div>
@@ -595,5 +581,5 @@ function CompletenessBar({
         />
       </div>
     </div>
-  )
+  );
 }

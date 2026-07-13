@@ -1,11 +1,5 @@
-import { Trophy } from "lucide-react"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card"
+import { Trophy } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -13,29 +7,29 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { cn } from "@/lib/utils"
-import { getLabelColorClasses } from "@/lib/tag-colors"
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { getLabelColorClasses } from "@/lib/tag-colors";
 
 /** Transaction row for the top transactions table */
 export interface TopTransaction {
-  id: string
-  date: string
-  primaryCategory: string
-  secondaryCategory: string | null
-  tertiaryCategory: string
-  account: string
-  description: string | null
-  amount: number
+  id: string;
+  date: string;
+  primaryCategory: string;
+  secondaryCategory: string | null;
+  tertiaryCategory: string;
+  account: string;
+  description: string | null;
+  amount: number;
 }
 
 export interface TopTransactionsTableProps {
-  title: string
-  description?: string
-  transactions: TopTransaction[]
-  variant: "income" | "expense"
-  colorClass: string
+  title: string;
+  description?: string;
+  transactions: TopTransaction[];
+  variant: "income" | "expense";
+  colorClass: string;
 }
 
 export function TopTransactionsTable({
@@ -69,11 +63,9 @@ export function TopTransactionsTable({
           </TableHeader>
           <TableBody>
             {transactions.map((t, index) => {
-              const primaryColor = getLabelColorClasses(t.primaryCategory)
-              const secondaryColor = getLabelColorClasses(
-                t.secondaryCategory ?? ""
-              )
-              const tertiaryColor = getLabelColorClasses(t.tertiaryCategory)
+              const primaryColor = getLabelColorClasses(t.primaryCategory);
+              const secondaryColor = getLabelColorClasses(t.secondaryCategory ?? "");
+              const tertiaryColor = getLabelColorClasses(t.tertiaryCategory);
 
               return (
                 <TableRow key={t.id}>
@@ -84,38 +76,30 @@ export function TopTransactionsTable({
                           "inline-flex size-6 items-center justify-center rounded-full text-xs font-bold",
                           index === 0 && "bg-yellow-100 text-yellow-700",
                           index === 1 && "bg-gray-100 text-gray-700",
-                          index === 2 && "bg-orange-100 text-orange-700"
+                          index === 2 && "bg-orange-100 text-orange-700",
                         )}
                       >
                         {index + 1}
                       </span>
                     ) : (
-                      <span className="text-muted-foreground">
-                        #{index + 1}
-                      </span>
+                      <span className="text-muted-foreground">#{index + 1}</span>
                     )}
                   </TableCell>
                   <TableCell className="text-sm">{t.date}</TableCell>
                   <TableCell>
-                    <Badge
-                      className={cn(primaryColor.bg, primaryColor.text)}
-                    >
+                    <Badge className={cn(primaryColor.bg, primaryColor.text)}>
                       {t.primaryCategory}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     {t.secondaryCategory && (
-                      <Badge
-                        className={cn(secondaryColor.bg, secondaryColor.text)}
-                      >
+                      <Badge className={cn(secondaryColor.bg, secondaryColor.text)}>
                         {t.secondaryCategory}
                       </Badge>
                     )}
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      className={cn(tertiaryColor.bg, tertiaryColor.text)}
-                    >
+                    <Badge className={cn(tertiaryColor.bg, tertiaryColor.text)}>
                       {t.tertiaryCategory}
                     </Badge>
                   </TableCell>
@@ -125,9 +109,7 @@ export function TopTransactionsTable({
                   <TableCell className="text-muted-foreground text-sm">
                     {t.description ?? "-"}
                   </TableCell>
-                  <TableCell
-                    className={`text-right font-semibold ${colorClass}`}
-                  >
+                  <TableCell className={`text-right font-semibold ${colorClass}`}>
                     ¥
                     {t.amount.toLocaleString("zh-CN", {
                       minimumFractionDigits: 2,
@@ -135,11 +117,11 @@ export function TopTransactionsTable({
                     })}
                   </TableCell>
                 </TableRow>
-              )
+              );
             })}
           </TableBody>
         </Table>
       </CardContent>
     </Card>
-  )
+  );
 }

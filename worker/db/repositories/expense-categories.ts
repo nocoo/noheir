@@ -8,10 +8,7 @@
 import { and, asc, eq } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { expenseCategories } from "../schema";
-import type {
-  ExpenseCategory,
-  NewExpenseCategory,
-} from "../types";
+import type { ExpenseCategory, NewExpenseCategory } from "../types";
 
 export type ExpenseCategoryCreateInput = Omit<
   NewExpenseCategory,
@@ -70,9 +67,7 @@ export function createExpenseCategoriesRepo(db: DrizzleD1Database) {
       const row = await db
         .select()
         .from(expenseCategories)
-        .where(
-          and(eq(expenseCategories.id, id), eq(expenseCategories.userId, userId)),
-        )
+        .where(and(eq(expenseCategories.id, id), eq(expenseCategories.userId, userId)))
         .get();
       return row ?? null;
     },
@@ -108,9 +103,7 @@ export function createExpenseCategoriesRepo(db: DrizzleD1Database) {
         const rows = await db
           .update(expenseCategories)
           .set(patch)
-          .where(
-            and(eq(expenseCategories.id, id), eq(expenseCategories.userId, userId)),
-          )
+          .where(and(eq(expenseCategories.id, id), eq(expenseCategories.userId, userId)))
           .returning();
         const category = rows[0];
         if (!category) {
@@ -130,9 +123,7 @@ export function createExpenseCategoriesRepo(db: DrizzleD1Database) {
     async delete(userId: string, id: string): Promise<boolean> {
       const rows = await db
         .delete(expenseCategories)
-        .where(
-          and(eq(expenseCategories.id, id), eq(expenseCategories.userId, userId)),
-        )
+        .where(and(eq(expenseCategories.id, id), eq(expenseCategories.userId, userId)))
         .returning({ id: expenseCategories.id });
       return rows.length > 0;
     },

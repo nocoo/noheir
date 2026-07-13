@@ -49,9 +49,7 @@ describe("buildYearVsYearData", () => {
       { month: "一月", income: 5000, expense: 3000, balance: 2000 },
       { month: "三月", income: 4000, expense: 2000, balance: 2000 },
     ];
-    const yearB = [
-      { month: "一月", income: 6000, expense: 2500, balance: 3500 },
-    ];
+    const yearB = [{ month: "一月", income: 6000, expense: 2500, balance: 3500 }];
     const result = buildYearVsYearData(yearA, yearB);
     expect(result).toHaveLength(12);
 

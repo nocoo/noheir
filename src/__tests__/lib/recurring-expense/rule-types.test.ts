@@ -79,12 +79,10 @@ describe("recurringExpenseInputSchema (P2-C1)", () => {
   });
 
   test("rejects amount ≤ 0", () => {
-    expect(
-      recurringExpenseInputSchema.safeParse({ ...yearlyBase, amount: 0 }).success,
-    ).toBe(false);
-    expect(
-      recurringExpenseInputSchema.safeParse({ ...yearlyBase, amount: -1 }).success,
-    ).toBe(false);
+    expect(recurringExpenseInputSchema.safeParse({ ...yearlyBase, amount: 0 }).success).toBe(false);
+    expect(recurringExpenseInputSchema.safeParse({ ...yearlyBase, amount: -1 }).success).toBe(
+      false,
+    );
   });
 
   test("rejects startDate not ISO YYYY-MM-DD", () => {
@@ -158,21 +156,21 @@ describe("recurringExpenseInputSchema (P2-C1)", () => {
   });
 
   test("rejects interval < 1", () => {
-    expect(
-      recurringExpenseInputSchema.safeParse({ ...yearlyBase, interval: 0 }).success,
-    ).toBe(false);
-    expect(
-      recurringExpenseInputSchema.safeParse({ ...yearlyBase, interval: -1 }).success,
-    ).toBe(false);
+    expect(recurringExpenseInputSchema.safeParse({ ...yearlyBase, interval: 0 }).success).toBe(
+      false,
+    );
+    expect(recurringExpenseInputSchema.safeParse({ ...yearlyBase, interval: -1 }).success).toBe(
+      false,
+    );
   });
 
   test("rejects dayOfMonth out of 1..31", () => {
-    expect(
-      recurringExpenseInputSchema.safeParse({ ...yearlyBase, dayOfMonth: 0 }).success,
-    ).toBe(false);
-    expect(
-      recurringExpenseInputSchema.safeParse({ ...yearlyBase, dayOfMonth: 32 }).success,
-    ).toBe(false);
+    expect(recurringExpenseInputSchema.safeParse({ ...yearlyBase, dayOfMonth: 0 }).success).toBe(
+      false,
+    );
+    expect(recurringExpenseInputSchema.safeParse({ ...yearlyBase, dayOfMonth: 32 }).success).toBe(
+      false,
+    );
   });
 
   test("rejects weekday out of 0..6", () => {
@@ -200,12 +198,7 @@ describe("recurringExpenseInputSchema (P2-C1)", () => {
   });
 
   test("frequency enum covers all 4 values", () => {
-    expect(RECURRENCE_FREQUENCIES).toEqual([
-      "daily",
-      "weekly",
-      "monthly",
-      "yearly",
-    ]);
+    expect(RECURRENCE_FREQUENCIES).toEqual(["daily", "weekly", "monthly", "yearly"]);
   });
 });
 

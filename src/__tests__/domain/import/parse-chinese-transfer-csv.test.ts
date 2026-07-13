@@ -2,8 +2,7 @@ import { describe, expect, test } from "vitest";
 import { parseChineseTransferCSV } from "@/domain/import/parse-chinese-transfer-csv";
 
 describe("parseChineseTransferCSV", () => {
-  const header =
-    "日期,收支大类,交易分类,交易类型,流入金额,流出金额,币种,资金账户,标签,备注";
+  const header = "日期,收支大类,交易分类,交易类型,流入金额,流出金额,币种,资金账户,标签,备注";
 
   test("parses a valid transfer row", () => {
     const csv = [
@@ -52,20 +51,16 @@ describe("parseChineseTransferCSV", () => {
   });
 
   test("returns error for invalid date format", () => {
-    const csv = [
-      header,
-      "invalid-date,转账,转账,转账 / 转出,0.00,100.00,人民币,招商银行,,",
-    ].join("\n");
+    const csv = [header, "invalid-date,转账,转账,转账 / 转出,0.00,100.00,人民币,招商银行,,"].join(
+      "\n",
+    );
     const result = parseChineseTransferCSV(csv);
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]?.message).toContain("日期格式无效");
   });
 
   test("converts decimal amounts to cents", () => {
-    const csv = [
-      header,
-      "2025-06-01,转账,转账,转账 / 转入,1234.56,0.00,人民币,微信,,",
-    ].join("\n");
+    const csv = [header, "2025-06-01,转账,转账,转账 / 转入,1234.56,0.00,人民币,微信,,"].join("\n");
     const result = parseChineseTransferCSV(csv);
     expect(result.transfers[0]?.inflowAmountCents).toBe(123456);
     expect(result.transfers[0]?.outflowAmountCents).toBe(0);

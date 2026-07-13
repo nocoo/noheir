@@ -3,7 +3,14 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { round2, compact, shortId, compactArray, categoryPath, currencyCode } from "@/lib/mcp/tools/compact";
+import {
+  round2,
+  compact,
+  shortId,
+  compactArray,
+  categoryPath,
+  currencyCode,
+} from "@/lib/mcp/tools/compact";
 
 describe("round2", () => {
   it("should round to 2 decimal places", () => {
@@ -86,11 +93,7 @@ describe("compactArray", () => {
       { c: 2, d: undefined },
       { e: [], f: "hello" },
     ];
-    expect(compactArray(arr)).toEqual([
-      { a: 1 },
-      { c: 2 },
-      { f: "hello" },
-    ]);
+    expect(compactArray(arr)).toEqual([{ a: 1 }, { c: 2 }, { f: "hello" }]);
   });
 
   it("should handle empty array", () => {

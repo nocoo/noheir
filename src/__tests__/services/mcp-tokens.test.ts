@@ -6,10 +6,7 @@
 
 import { describe, it, expect } from "vitest";
 import type { Db, DbMeta, DbQueryResult } from "../../lib/db";
-import type {
-  McpToken,
-  CreateMcpTokenInput,
-} from "../../services/mcp-tokens";
+import type { McpToken, CreateMcpTokenInput } from "../../services/mcp-tokens";
 
 import {
   randomHex,
@@ -44,11 +41,13 @@ interface MockCall {
   params: unknown[];
 }
 
-function createMockDb(overrides: {
-  queryResults?: unknown[];
-  firstOrNullResult?: unknown;
-  executeMeta?: Partial<DbMeta>;
-} = {}) {
+function createMockDb(
+  overrides: {
+    queryResults?: unknown[];
+    firstOrNullResult?: unknown;
+    executeMeta?: Partial<DbMeta>;
+  } = {},
+) {
   const calls: MockCall[] = [];
 
   const db: Db = {

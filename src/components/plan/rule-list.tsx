@@ -195,39 +195,21 @@ export function RuleList({
         const isPending = pendingId === rule.id;
         const items = menuItemsFor(status);
 
-        const handle = async (
-          kind: "pause" | "resume" | "end" | "delete",
-        ) => {
+        const handle = async (kind: "pause" | "resume" | "end" | "delete") => {
           setPendingId(rule.id);
           try {
             switch (kind) {
               case "pause":
-                await callAction(
-                  () => pauseRecurringExpense(rule.id),
-                  "已暂停",
-                  onActionSuccess,
-                );
+                await callAction(() => pauseRecurringExpense(rule.id), "已暂停", onActionSuccess);
                 break;
               case "resume":
-                await callAction(
-                  () => resumeRecurringExpense(rule.id),
-                  "已恢复",
-                  onActionSuccess,
-                );
+                await callAction(() => resumeRecurringExpense(rule.id), "已恢复", onActionSuccess);
                 break;
               case "end":
-                await callAction(
-                  () => endRecurringExpense(rule.id),
-                  "已结束",
-                  onActionSuccess,
-                );
+                await callAction(() => endRecurringExpense(rule.id), "已结束", onActionSuccess);
                 break;
               case "delete":
-                await callAction(
-                  () => deleteRecurringExpense(rule.id),
-                  "已删除",
-                  onActionSuccess,
-                );
+                await callAction(() => deleteRecurringExpense(rule.id), "已删除", onActionSuccess);
                 break;
             }
           } finally {
@@ -240,10 +222,7 @@ export function RuleList({
             key={rule.id}
             data-rule-id={rule.id}
             data-status={status}
-            className={cn(
-              "flex items-center gap-3 p-4",
-              isPending && "opacity-50",
-            )}
+            className={cn("flex items-center gap-3 p-4", isPending && "opacity-50")}
           >
             <span
               aria-hidden="true"
@@ -254,10 +233,7 @@ export function RuleList({
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <p className="truncate text-sm font-medium">{rule.name}</p>
-                <Badge
-                  variant={STATUS_VARIANT[status]}
-                  data-testid={`status-${rule.id}`}
-                >
+                <Badge variant={STATUS_VARIANT[status]} data-testid={`status-${rule.id}`}>
                   {statusChipText(status, rule)}
                 </Badge>
               </div>

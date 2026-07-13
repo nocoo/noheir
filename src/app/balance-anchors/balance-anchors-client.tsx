@@ -1,95 +1,77 @@
-"use client"
+"use client";
 
-import { useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
-import { toast } from "sonner"
-import {
-  Anchor,
-  Save,
-  Plus,
-  Trash2,
-  Calendar,
-  AlertCircle,
-} from "lucide-react"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Anchor, Save, Plus, Trash2, Calendar, AlertCircle } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import type { BalanceAnchor } from "@/domain/types"
-import { groupAnchorsByAccount } from "@/domain/settings/balance-anchors"
-import { saveBalanceAnchors } from "@/app/actions/settings-actions"
+} from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import type { BalanceAnchor } from "@/domain/types";
+import { groupAnchorsByAccount } from "@/domain/settings/balance-anchors";
+import { saveBalanceAnchors } from "@/app/actions/settings-actions";
 
 interface BalanceAnchorsClientProps {
-  accounts: string[]
-  initialAnchors: BalanceAnchor[]
+  accounts: string[];
+  initialAnchors: BalanceAnchor[];
 }
 
-export function BalanceAnchorsClient({
-  accounts,
-  initialAnchors,
-}: BalanceAnchorsClientProps) {
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
+export function BalanceAnchorsClient({ accounts, initialAnchors }: BalanceAnchorsClientProps) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
-  const [anchors, setAnchors] = useState<BalanceAnchor[]>(initialAnchors)
-  const [selectedAccount, setSelectedAccount] = useState("")
-  const [selectedDate, setSelectedDate] = useState("")
-  const [balance, setBalance] = useState("")
+  const [anchors, setAnchors] = useState<BalanceAnchor[]>(initialAnchors);
+  const [selectedAccount, setSelectedAccount] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
+  const [balance, setBalance] = useState("");
 
-  const anchorsByAccount = groupAnchorsByAccount(anchors)
+  const anchorsByAccount = groupAnchorsByAccount(anchors);
 
   const handleAddAnchor = () => {
-    if (!selectedAccount || !selectedDate || balance === "") return
+    if (!selectedAccount || !selectedDate || balance === "") return;
 
     const newAnchor: BalanceAnchor = {
       accountName: selectedAccount,
       date: selectedDate,
       balance: parseFloat(balance),
-    }
+    };
 
     // Remove existing anchor for same account + date if exists
     const filtered = anchors.filter(
       (a) => !(a.accountName === selectedAccount && a.date === selectedDate),
-    )
+    );
 
-    setAnchors([...filtered, newAnchor])
-    setSelectedAccount("")
-    setSelectedDate("")
-    setBalance("")
-  }
+    setAnchors([...filtered, newAnchor]);
+    setSelectedAccount("");
+    setSelectedDate("");
+    setBalance("");
+  };
 
   const handleRemoveAnchor = (accountName: string, date: string) => {
-    setAnchors((prev) =>
-      prev.filter((a) => !(a.accountName === accountName && a.date === date)),
-    )
-  }
+    setAnchors((prev) => prev.filter((a) => !(a.accountName === accountName && a.date === date)));
+  };
 
   const handleSave = () => {
     startTransition(async () => {
-      const result = await saveBalanceAnchors(anchors)
+      const result = await saveBalanceAnchors(anchors);
       if (result.success) {
-        toast.success("余额锚点已保存")
-        router.refresh()
+        toast.success("余额锚点已保存");
+        router.refresh();
       } else {
-        toast.error(result.error)
+        toast.error(result.error);
       }
-    })
-  }
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -99,9 +81,7 @@ export function BalanceAnchorsClient({
           <Anchor className="text-primary size-6" />
           余额锚点设置
         </h1>
-        <p className="text-muted-foreground text-sm">
-          为账户设置已知日期的余额，用于计算历史余额
-        </p>
+        <p className="text-muted-foreground text-sm">为账户设置已知日期的余额，用于计算历史余额</p>
       </div>
 
       {/* Info Alert */}
@@ -175,16 +155,12 @@ export function BalanceAnchorsClient({
       {/* Existing Anchors */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">
-            已设置的余额锚点 ({anchors.length})
-          </CardTitle>
+          <CardTitle className="text-base">已设置的余额锚点 ({anchors.length})</CardTitle>
           <CardDescription>按账户分组显示所有余额锚点</CardDescription>
         </CardHeader>
         <CardContent>
           {Object.keys(anchorsByAccount).length === 0 ? (
-            <div className="text-muted-foreground py-8 text-center">
-              暂无余额锚点
-            </div>
+            <div className="text-muted-foreground py-8 text-center">暂无余额锚点</div>
           ) : (
             <div className="space-y-4">
               {Object.entries(anchorsByAccount).map(([accountName, acctAnchors]) => (
@@ -206,17 +182,13 @@ export function BalanceAnchorsClient({
                           </div>
                           <div className="text-sm">
                             <span className="text-muted-foreground">余额: </span>
-                            <span className="font-semibold">
-                              ¥{anchor.balance.toFixed(2)}
-                            </span>
+                            <span className="font-semibold">¥{anchor.balance.toFixed(2)}</span>
                           </div>
                         </div>
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() =>
-                            handleRemoveAnchor(anchor.accountName, anchor.date)
-                          }
+                          onClick={() => handleRemoveAnchor(anchor.accountName, anchor.date)}
                           className="text-muted-foreground hover:text-destructive size-8"
                         >
                           <Trash2 className="size-4" />
@@ -239,5 +211,5 @@ export function BalanceAnchorsClient({
         </Button>
       </div>
     </div>
-  )
+  );
 }

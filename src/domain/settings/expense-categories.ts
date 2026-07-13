@@ -9,10 +9,7 @@
 /**
  * Toggle a category in the fixed expense list.
  */
-export function toggleFixedExpenseCategory(
-  current: string[],
-  category: string,
-): string[] {
+export function toggleFixedExpenseCategory(current: string[], category: string): string[] {
   const index = current.indexOf(category);
   if (index >= 0) {
     return current.filter((c) => c !== category);
@@ -23,10 +20,7 @@ export function toggleFixedExpenseCategory(
 /**
  * Check if a category is marked as fixed expense.
  */
-export function isFixedExpense(
-  fixedCategories: string[],
-  category: string,
-): boolean {
+export function isFixedExpense(fixedCategories: string[], category: string): boolean {
   return fixedCategories.includes(category);
 }
 

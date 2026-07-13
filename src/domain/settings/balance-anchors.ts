@@ -29,9 +29,7 @@ export const groupAnchorsByAccount = (anchors: BalanceAnchor[]) => {
   return grouped;
 };
 
-export const getDifferenceLevel = (
-  difference: number | null,
-): DifferenceLevel => {
+export const getDifferenceLevel = (difference: number | null): DifferenceLevel => {
   if (difference === null) return null;
   if (difference < 1) return "none";
   if (difference < 100) return "info";
@@ -60,16 +58,11 @@ export const calculateBalanceAtDate = (params: {
     .filter((a) => a.accountName === account && a.date <= date)
     .sort((a, b) => a.date.localeCompare(b.date));
 
-  const baseAnchor =
-    accountAnchors.length > 0
-      ? accountAnchors[accountAnchors.length - 1]
-      : null;
+  const baseAnchor = accountAnchors.length > 0 ? accountAnchors[accountAnchors.length - 1] : null;
   const baseBalance = baseAnchor?.balance ?? 0;
   const baseDate = baseAnchor?.date ?? "2000-01-01";
 
-  const accountTransactions = transactions.filter(
-    (t) => t.account === account,
-  );
+  const accountTransactions = transactions.filter((t) => t.account === account);
   let calculated = baseBalance;
 
   accountTransactions.forEach((t) => {
@@ -108,15 +101,11 @@ export const calculateAnchorDifferences = (params: {
         .sort((a, b) => a.date.localeCompare(b.date));
 
       const baseAnchor =
-        previousAnchors.length > 0
-          ? previousAnchors[previousAnchors.length - 1]
-          : null;
+        previousAnchors.length > 0 ? previousAnchors[previousAnchors.length - 1] : null;
       const baseBalance = baseAnchor?.balance ?? 0;
       const baseDate = baseAnchor?.date ?? "2000-01-01";
 
-      const accountTransactions = transactions.filter(
-        (t) => t.account === accountName,
-      );
+      const accountTransactions = transactions.filter((t) => t.account === accountName);
       let calculated = baseBalance;
 
       accountTransactions.forEach((t) => {

@@ -79,19 +79,16 @@ describe("E2E: recurring-expenses status/endedAt guard regression (P1-C7)", () =
     });
 
     // Seed endedAt = '2026-03-15' via the internal channel.
-    const seedRes = await fetch(
-      `${BASE_URL}/api/recurring-expenses/${rule.id}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.WORKER_TOKEN ?? ""}`,
-          "X-User-Id": userId,
-          "X-Internal-Action": "1",
-        },
-        body: JSON.stringify({ endedAt: "2026-03-15" }),
+    const seedRes = await fetch(`${BASE_URL}/api/recurring-expenses/${rule.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.WORKER_TOKEN ?? ""}`,
+        "X-User-Id": userId,
+        "X-Internal-Action": "1",
       },
-    );
+      body: JSON.stringify({ endedAt: "2026-03-15" }),
+    });
     expect(seedRes.status).toBe(200);
 
     // 1. forward
@@ -133,19 +130,16 @@ describe("E2E: recurring-expenses status/endedAt guard regression (P1-C7)", () =
     });
 
     async function internalPut(payload: Record<string, unknown>): Promise<Rule> {
-      const res = await fetch(
-        `${BASE_URL}/api/recurring-expenses/${rule.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.WORKER_TOKEN ?? ""}`,
-            "X-User-Id": userId,
-            "X-Internal-Action": "1",
-          },
-          body: JSON.stringify(payload),
+      const res = await fetch(`${BASE_URL}/api/recurring-expenses/${rule.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.WORKER_TOKEN ?? ""}`,
+          "X-User-Id": userId,
+          "X-Internal-Action": "1",
         },
-      );
+        body: JSON.stringify(payload),
+      });
       expect(res.status).toBe(200);
       const body = (await res.json()) as { rule: Rule };
       return body.rule;
@@ -174,19 +168,16 @@ describe("E2E: recurring-expenses status/endedAt guard regression (P1-C7)", () =
     // Send `0`, `true`, empty string — none should be treated as the
     // sentinel "1". Only the exact string "1" enables the bypass.
     for (const headerVal of ["0", "true", "", "yes"]) {
-      const res = await fetch(
-        `${BASE_URL}/api/recurring-expenses/${rule.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.WORKER_TOKEN ?? ""}`,
-            "X-User-Id": userId,
-            "X-Internal-Action": headerVal,
-          },
-          body: JSON.stringify({ status: "ended" }),
+      const res = await fetch(`${BASE_URL}/api/recurring-expenses/${rule.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.WORKER_TOKEN ?? ""}`,
+          "X-User-Id": userId,
+          "X-Internal-Action": headerVal,
         },
-      );
+        body: JSON.stringify({ status: "ended" }),
+      });
       expect(res.status).toBe(200);
     }
 

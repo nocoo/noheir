@@ -49,10 +49,7 @@ export const buildIncomeBreakdown = (
       } else {
         passiveIncome += t.amount;
         const key = t.secondaryCategory ?? t.tertiaryCategory;
-        passiveByCategory.set(
-          key,
-          (passiveByCategory.get(key) ?? 0) + t.amount,
-        );
+        passiveByCategory.set(key, (passiveByCategory.get(key) ?? 0) + t.amount);
       }
     });
 
@@ -66,9 +63,7 @@ export const buildIncomeBreakdown = (
 };
 
 export const buildTotalExpense = (transactions: DomainTransaction[]) => {
-  return transactions
-    .filter((t) => t.type === "expense")
-    .reduce((sum, t) => sum + t.amount, 0);
+  return transactions.filter((t) => t.type === "expense").reduce((sum, t) => sum + t.amount, 0);
 };
 
 export const buildFreedomSummary = (
@@ -77,16 +72,11 @@ export const buildFreedomSummary = (
 ): FinancialFreedomSummary => {
   const isFree = passiveIncome >= totalExpense;
   const freedomGap = totalExpense - passiveIncome;
-  const freedomRatio =
-    totalExpense > 0 ? (passiveIncome / totalExpense) * 100 : 0;
+  const freedomRatio = totalExpense > 0 ? (passiveIncome / totalExpense) * 100 : 0;
   const requiredExpenseReduction =
-    totalExpense > 0
-      ? ((totalExpense - passiveIncome) / totalExpense) * 100
-      : 0;
+    totalExpense > 0 ? ((totalExpense - passiveIncome) / totalExpense) * 100 : 0;
   const requiredPassiveIncrease =
-    passiveIncome > 0
-      ? ((totalExpense - passiveIncome) / passiveIncome) * 100
-      : 0;
+    passiveIncome > 0 ? ((totalExpense - passiveIncome) / passiveIncome) * 100 : 0;
 
   return {
     totalExpense,

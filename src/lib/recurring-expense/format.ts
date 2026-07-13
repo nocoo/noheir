@@ -6,15 +6,7 @@
 
 import type { RecurrenceFrequency, RecurrenceRule } from "./rule-types";
 
-const WEEKDAY_LABELS = [
-  "周日",
-  "周一",
-  "周二",
-  "周三",
-  "周四",
-  "周五",
-  "周六",
-] as const;
+const WEEKDAY_LABELS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"] as const;
 
 function intervalLabel(interval: number, unit: string): string {
   if (interval === 1) {
@@ -31,7 +23,7 @@ export function describeFrequency(
     case "daily":
       return intervalLabel(interval, "天");
     case "weekly": {
-      const day = weekday != null ? WEEKDAY_LABELS[weekday] ?? "" : "";
+      const day = weekday != null ? (WEEKDAY_LABELS[weekday] ?? "") : "";
       return `${intervalLabel(interval, "周")}${day ? ` · ${day}` : ""}`;
     }
     case "monthly": {
@@ -39,9 +31,8 @@ export function describeFrequency(
       return `${intervalLabel(interval, "个月")}${day ? ` · ${day}` : ""}`;
     }
     case "yearly": {
-      const date = monthOfYear != null && dayOfMonth != null
-        ? `${monthOfYear} 月 ${dayOfMonth} 日`
-        : "";
+      const date =
+        monthOfYear != null && dayOfMonth != null ? `${monthOfYear} 月 ${dayOfMonth} 日` : "";
       return `${intervalLabel(interval, "年")}${date ? ` · ${date}` : ""}`;
     }
   }

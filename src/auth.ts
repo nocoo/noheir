@@ -50,9 +50,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   cookies: {
     pkceCodeVerifier: {
-      name: useSecureCookies
-        ? "__Secure-authjs.pkce.code_verifier"
-        : "authjs.pkce.code_verifier",
+      name: useSecureCookies ? "__Secure-authjs.pkce.code_verifier" : "authjs.pkce.code_verifier",
       options: {
         httpOnly: true,
         sameSite: "lax",
@@ -70,9 +68,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     },
     callbackUrl: {
-      name: useSecureCookies
-        ? "__Secure-authjs.callback-url"
-        : "authjs.callback-url",
+      name: useSecureCookies ? "__Secure-authjs.callback-url" : "authjs.callback-url",
       options: {
         httpOnly: true,
         sameSite: "lax",
@@ -81,9 +77,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     },
     sessionToken: {
-      name: useSecureCookies
-        ? "__Secure-authjs.session-token"
-        : "authjs.session-token",
+      name: useSecureCookies ? "__Secure-authjs.session-token" : "authjs.session-token",
       options: {
         httpOnly: true,
         sameSite: "lax",
@@ -141,7 +135,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return token;
     },
-    async session({ session, token }: { session: DefaultSession & { user: DefaultSession["user"] & { id: string } }; token: JWT }) {
+    async session({
+      session,
+      token,
+    }: {
+      session: DefaultSession & { user: DefaultSession["user"] & { id: string } };
+      token: JWT;
+    }) {
       // Expose userId to client session
       if (token.userId) {
         session.user.id = token.userId;

@@ -40,20 +40,12 @@ function clampLimit(limit: number | undefined): number {
  * (matches original RPC that only returns 3 distinct values:
  * 'note', 'category', 'account').
  */
-function computeMatchedField(
-  row: Transfer,
-  keyword: string | undefined,
-): string | null {
+function computeMatchedField(row: Transfer, keyword: string | undefined): string | null {
   if (!keyword) return null;
   const kw = keyword.toLowerCase();
   if (row.note && row.note.toLowerCase().includes(kw)) return "note";
-  if (row.primaryCategory && row.primaryCategory.toLowerCase().includes(kw))
-    return "category";
-  if (
-    row.secondaryCategory &&
-    row.secondaryCategory.toLowerCase().includes(kw)
-  )
-    return "category";
+  if (row.primaryCategory && row.primaryCategory.toLowerCase().includes(kw)) return "category";
+  if (row.secondaryCategory && row.secondaryCategory.toLowerCase().includes(kw)) return "category";
   if (row.account.toLowerCase().includes(kw)) return "account";
   return null;
 }
@@ -67,7 +59,7 @@ function buildTagsCondition(filterTags: string[]): SQL {
   // For each tag, we check if the tags column contains the tag as a JSON string element
   // This handles both normal JSON: ["tag1","tag2"]
   // and double-encoded: "[\"tag1\",\"tag2\"]" stored as: ["\"tag1\",\"tag2\"]
-  const conditions = filterTags.map(tag => {
+  const conditions = filterTags.map((tag) => {
     // Escape single quotes for SQL string literal
     const escaped = tag.replace(/'/g, "''");
     // Match patterns:
@@ -88,10 +80,7 @@ export function createTransfersRepo(db: DrizzleD1Database) {
      * All 13 params are optional; all combine with AND logic.
      * Amount filter uses MAX(inflow, outflow) to match GREATEST() behavior.
      */
-    async search(
-      userId: string,
-      params: TransferSearchParams = {},
-    ): Promise<TransferSearchResult> {
+    async search(userId: string, params: TransferSearchParams = {}): Promise<TransferSearchResult> {
       const conditions = [eq(transfers.userId, userId)];
 
       // Keyword: OR across 4 fields
@@ -114,9 +103,7 @@ export function createTransfersRepo(db: DrizzleD1Database) {
 
       // Transaction type
       if (params.transaction_type) {
-        conditions.push(
-          eq(transfers.transactionType, params.transaction_type),
-        );
+        conditions.push(eq(transfers.transactionType, params.transaction_type));
       }
 
       // Date range
@@ -247,11 +234,7 @@ export function createTransfersRepo(db: DrizzleD1Database) {
     },
 
     async deleteByUser(userId: string): Promise<number> {
-      const rows = await db
-        .delete(transfers)
-        .where(eq(transfers.userId, userId))
-        .returning()
-        .all();
+      const rows = await db.delete(transfers).where(eq(transfers.userId, userId)).returning().all();
       return rows.length;
     },
 

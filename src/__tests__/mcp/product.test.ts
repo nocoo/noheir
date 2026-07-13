@@ -17,7 +17,13 @@ interface MockCall {
   params: unknown[];
 }
 
-function createSequentialMockDb(responses: Array<{ type: "query"; results: unknown[] } | { type: "firstOrNull"; result: unknown } | { type: "execute"; changes?: number }>) {
+function createSequentialMockDb(
+  responses: Array<
+    | { type: "query"; results: unknown[] }
+    | { type: "firstOrNull"; result: unknown }
+    | { type: "execute"; changes?: number }
+  >,
+) {
   const calls: MockCall[] = [];
   let idx = 0;
 
@@ -38,7 +44,9 @@ function createSequentialMockDb(responses: Array<{ type: "query"; results: unkno
       const resp = responses[idx++];
       return { changes: resp?.type === "execute" ? (resp.changes ?? 1) : 1, duration: 1 };
     },
-    async batch() { return []; },
+    async batch() {
+      return [];
+    },
   };
 
   return { db, calls };
@@ -48,7 +56,9 @@ function createSequentialMockDb(responses: Array<{ type: "query"; results: unkno
 // Mock McpServer
 // ---------------------------------------------------------------------------
 
-type ToolHandler = (args: Record<string, unknown>) => Promise<{ content: Array<{ type: string; text: string }>; isError?: boolean }>;
+type ToolHandler = (
+  args: Record<string, unknown>,
+) => Promise<{ content: Array<{ type: string; text: string }>; isError?: boolean }>;
 
 function createMockServer() {
   const tools = new Map<string, ToolHandler>();
@@ -59,7 +69,10 @@ function createMockServer() {
     },
   };
 
-  return { server: server as unknown as import("@modelcontextprotocol/sdk/server/mcp.js").McpServer, tools };
+  return {
+    server: server as unknown as import("@modelcontextprotocol/sdk/server/mcp.js").McpServer,
+    tools,
+  };
 }
 
 function getTool(tools: Map<string, ToolHandler>, name: string): ToolHandler {
@@ -100,9 +113,7 @@ describe("get_product", () => {
       // count query
       { type: "firstOrNull", result: { total: 3 } },
       // amount query
-      { type: "query", results: [
-        { currency: "CNY", total_cents: 13000000 },
-      ] },
+      { type: "query", results: [{ currency: "CNY", total_cents: 13000000 }] },
     ]);
 
     const { server, tools } = createMockServer();
@@ -152,10 +163,13 @@ describe("get_product", () => {
       // count query
       { type: "firstOrNull", result: { total: 2 } },
       // amount query (multiple currencies)
-      { type: "query", results: [
-        { currency: "CNY", total_cents: 5000000 },
-        { currency: "USD", total_cents: 200000 },
-      ] },
+      {
+        type: "query",
+        results: [
+          { currency: "CNY", total_cents: 5000000 },
+          { currency: "USD", total_cents: 200000 },
+        ],
+      },
     ]);
 
     const { server, tools } = createMockServer();
@@ -188,7 +202,10 @@ describe("get_product", () => {
   it("returns error when short ID is ambiguous", async () => {
     const { db } = createSequentialMockDb([
       // product query (ambiguous - 2 results)
-      { type: "query", results: [SAMPLE_PRODUCT, { ...SAMPLE_PRODUCT, id: "01ABC999999999999999999999" }] },
+      {
+        type: "query",
+        results: [SAMPLE_PRODUCT, { ...SAMPLE_PRODUCT, id: "01ABC999999999999999999999" }],
+      },
     ]);
 
     const { server, tools } = createMockServer();

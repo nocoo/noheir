@@ -8,9 +8,7 @@ import {
   sortDecisions,
 } from "@/domain/assets/capital-decisions";
 
-const makeProduct = (
-  overrides: Partial<DomainProduct> = {},
-): DomainProduct => ({
+const makeProduct = (overrides: Partial<DomainProduct> = {}): DomainProduct => ({
   id: "p1",
   name: "招行季季宝",
   code: null,
@@ -25,9 +23,7 @@ const makeProduct = (
   ...overrides,
 });
 
-const makeUnit = (
-  overrides: Partial<UnitDisplayInfo> = {},
-): UnitDisplayInfo => ({
+const makeUnit = (overrides: Partial<UnitDisplayInfo> = {}): UnitDisplayInfo => ({
   id: "1",
   unitCode: "A01",
   amount: 10000,
@@ -138,9 +134,7 @@ describe("capital-decisions domain", () => {
     });
 
     it("skips non-已成立 non-计划中 units", () => {
-      const decisions = classifyDecisions([
-        makeUnit({ status: "已归档" }),
-      ]);
+      const decisions = classifyDecisions([makeUnit({ status: "已归档" })]);
       expect(decisions.length).toBe(0);
     });
 
@@ -217,9 +211,7 @@ describe("capital-decisions domain", () => {
 
   describe("sortDecisions", () => {
     it("returns unsorted when no column", () => {
-      const items = [
-        { urgency: "low" as const, reason: "x", unit: makeUnit(), details: "b" },
-      ];
+      const items = [{ urgency: "low" as const, reason: "x", unit: makeUnit(), details: "b" }];
       expect(sortDecisions(items, null, null)).toBe(items);
     });
 
@@ -234,8 +226,18 @@ describe("capital-decisions domain", () => {
 
     it("sorts by 策略", () => {
       const items = [
-        { urgency: "low" as const, reason: "x", unit: makeUnit({ strategy: "长期理财" }), details: "b" },
-        { urgency: "low" as const, reason: "x", unit: makeUnit({ strategy: "短期理财" }), details: "a" },
+        {
+          urgency: "low" as const,
+          reason: "x",
+          unit: makeUnit({ strategy: "长期理财" }),
+          details: "b",
+        },
+        {
+          urgency: "low" as const,
+          reason: "x",
+          unit: makeUnit({ strategy: "短期理财" }),
+          details: "a",
+        },
       ];
       const sorted = sortDecisions(items, "策略", "asc");
       expect(sorted.length).toBe(2);

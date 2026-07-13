@@ -265,9 +265,6 @@ describe("recurring-expense state-machine Server Actions (P2-C9)", () => {
     await pauseRecurringExpense("r1");
     const call = mockClient.updateRecurringExpense.mock.calls[0];
     if (!call) throw new Error("no call");
-    expect(Object.keys(call[2] as Record<string, unknown>).sort()).toEqual([
-      "endedAt",
-      "status",
-    ]);
+    expect(Object.keys(call[2] as Record<string, unknown>).sort()).toEqual(["endedAt", "status"]);
   });
 });

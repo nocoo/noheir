@@ -25,10 +25,7 @@ interface MockCall {
   params: unknown[];
 }
 
-function createMockDb(overrides: {
-  queryResults?: unknown[];
-  firstOrNullResult?: unknown;
-} = {}) {
+function createMockDb(overrides: { queryResults?: unknown[]; firstOrNullResult?: unknown } = {}) {
   const calls: MockCall[] = [];
 
   const db: Db = {
@@ -59,7 +56,9 @@ function createMockDb(overrides: {
 // Mock McpServer — captures tool registrations
 // ---------------------------------------------------------------------------
 
-type ToolHandler = (args: Record<string, unknown>) => Promise<{ content: Array<{ type: string; text: string }>; isError?: boolean }>;
+type ToolHandler = (
+  args: Record<string, unknown>,
+) => Promise<{ content: Array<{ type: string; text: string }>; isError?: boolean }>;
 
 function createMockServer() {
   const tools = new Map<string, ToolHandler>();
@@ -70,7 +69,10 @@ function createMockServer() {
     },
   };
 
-  return { server: server as unknown as import("@modelcontextprotocol/sdk/server/mcp.js").McpServer, tools };
+  return {
+    server: server as unknown as import("@modelcontextprotocol/sdk/server/mcp.js").McpServer,
+    tools,
+  };
 }
 
 function getTool(tools: Map<string, ToolHandler>, name: string): ToolHandler {
@@ -222,7 +224,7 @@ describe("query_transactions", () => {
     expect(data.transactions).toHaveLength(1);
     const tx = data.transactions[0];
     expect(tx.id).toBe("01ABCDEF");
-    expect(tx.amount).toBe(150.50);
+    expect(tx.amount).toBe(150.5);
     expect(tx.currency).toBe("CNY");
     expect(tx.category).toBe("日常支出/餐饮");
     expect(tx.tags).toEqual(["food"]);
@@ -311,7 +313,9 @@ describe("query_transfers", () => {
 describe("get_summary", () => {
   it("should return counts with no includes", async () => {
     const { server, tools } = createMockServer();
-    const { db } = createMockDb({ firstOrNullResult: { transaction_count: 100, transfer_count: 20 } });
+    const { db } = createMockDb({
+      firstOrNullResult: { transaction_count: 100, transfer_count: 20 },
+    });
     registerQueryTools(server, { db, userId });
 
     const result = await at([...tools.values()], [...tools.keys()].indexOf("get_summary"))({});
@@ -337,7 +341,10 @@ describe("get_summary", () => {
     const { server, tools } = createMockServer();
     const db: Db = {
       async query<T>(): Promise<DbQueryResult<T>> {
-        return { results: [{ year: 2025 }, { year: 2024 }] as T[], meta: { changes: 0, duration: 1 } };
+        return {
+          results: [{ year: 2025 }, { year: 2024 }] as T[],
+          meta: { changes: 0, duration: 1 },
+        };
       },
       async firstOrNull<T>(): Promise<T | null> {
         return { transaction_count: 10, transfer_count: 5 } as T;
@@ -345,11 +352,16 @@ describe("get_summary", () => {
       async execute(): Promise<DbMeta> {
         return { changes: 0, duration: 1 };
       },
-      async batch() { return []; },
+      async batch() {
+        return [];
+      },
     };
     registerQueryTools(server, { db, userId });
 
-    const result = await at([...tools.values()], [...tools.keys()].indexOf("get_summary"))({ include: ["years"] });
+    const result = await at(
+      [...tools.values()],
+      [...tools.keys()].indexOf("get_summary"),
+    )({ include: ["years"] });
     const data = parseResult(result);
     expect(data.years).toEqual([2025, 2024]);
   });
@@ -358,17 +370,27 @@ describe("get_summary", () => {
     const { server, tools } = createMockServer();
     const db: Db = {
       async query<T>(): Promise<DbQueryResult<T>> {
-        return { results: [{ account: "Cash" }, { account: "Bank" }] as T[], meta: { changes: 0, duration: 1 } };
+        return {
+          results: [{ account: "Cash" }, { account: "Bank" }] as T[],
+          meta: { changes: 0, duration: 1 },
+        };
       },
       async firstOrNull<T>(): Promise<T | null> {
         return { transaction_count: 0, transfer_count: 0 } as T;
       },
-      async execute(): Promise<DbMeta> { return { changes: 0, duration: 1 }; },
-      async batch() { return []; },
+      async execute(): Promise<DbMeta> {
+        return { changes: 0, duration: 1 };
+      },
+      async batch() {
+        return [];
+      },
     };
     registerQueryTools(server, { db, userId });
 
-    const result = await at([...tools.values()], [...tools.keys()].indexOf("get_summary"))({ include: ["accounts"] });
+    const result = await at(
+      [...tools.values()],
+      [...tools.keys()].indexOf("get_summary"),
+    )({ include: ["accounts"] });
     const data = parseResult(result);
     expect(data.accounts).toEqual(["Cash", "Bank"]);
   });
@@ -377,17 +399,27 @@ describe("get_summary", () => {
     const { server, tools } = createMockServer();
     const db: Db = {
       async query<T>(): Promise<DbQueryResult<T>> {
-        return { results: [{ primary_category: "Food" }] as T[], meta: { changes: 0, duration: 1 } };
+        return {
+          results: [{ primary_category: "Food" }] as T[],
+          meta: { changes: 0, duration: 1 },
+        };
       },
       async firstOrNull<T>(): Promise<T | null> {
         return { transaction_count: 0, transfer_count: 0 } as T;
       },
-      async execute(): Promise<DbMeta> { return { changes: 0, duration: 1 }; },
-      async batch() { return []; },
+      async execute(): Promise<DbMeta> {
+        return { changes: 0, duration: 1 };
+      },
+      async batch() {
+        return [];
+      },
     };
     registerQueryTools(server, { db, userId });
 
-    const result = await at([...tools.values()], [...tools.keys()].indexOf("get_summary"))({ include: ["categories"] });
+    const result = await at(
+      [...tools.values()],
+      [...tools.keys()].indexOf("get_summary"),
+    )({ include: ["categories"] });
     const data = parseResult(result);
     expect(data.categories).toEqual(["Food"]);
   });
@@ -396,17 +428,27 @@ describe("get_summary", () => {
     const { server, tools } = createMockServer();
     const db: Db = {
       async query<T>(): Promise<DbQueryResult<T>> {
-        return { results: [{ currency: "CNY" }, { currency: "USD" }] as T[], meta: { changes: 0, duration: 1 } };
+        return {
+          results: [{ currency: "CNY" }, { currency: "USD" }] as T[],
+          meta: { changes: 0, duration: 1 },
+        };
       },
       async firstOrNull<T>(): Promise<T | null> {
         return { transaction_count: 0, transfer_count: 0 } as T;
       },
-      async execute(): Promise<DbMeta> { return { changes: 0, duration: 1 }; },
-      async batch() { return []; },
+      async execute(): Promise<DbMeta> {
+        return { changes: 0, duration: 1 };
+      },
+      async batch() {
+        return [];
+      },
     };
     registerQueryTools(server, { db, userId });
 
-    const result = await at([...tools.values()], [...tools.keys()].indexOf("get_summary"))({ include: ["currencies"] });
+    const result = await at(
+      [...tools.values()],
+      [...tools.keys()].indexOf("get_summary"),
+    )({ include: ["currencies"] });
     const data = parseResult(result);
     expect(data.currencies).toEqual(["CNY", "USD"]);
   });
@@ -428,12 +470,19 @@ describe("get_monthly_report", () => {
       async firstOrNull<T>(): Promise<T | null> {
         return { income: 1000000, expense: 50000 } as T;
       },
-      async execute(): Promise<DbMeta> { return { changes: 0, duration: 1 }; },
-      async batch() { return []; },
+      async execute(): Promise<DbMeta> {
+        return { changes: 0, duration: 1 };
+      },
+      async batch() {
+        return [];
+      },
     };
     registerQueryTools(server, { db, userId });
 
-    const result = await at([...tools.values()], [...tools.keys()].indexOf("get_monthly_report"))({ year: 2025, month: 6 });
+    const result = await at(
+      [...tools.values()],
+      [...tools.keys()].indexOf("get_monthly_report"),
+    )({ year: 2025, month: 6 });
     const data = parseResult(result);
 
     expect(data.year).toBe(2025);
@@ -453,12 +502,19 @@ describe("get_monthly_report", () => {
       async firstOrNull<T>(): Promise<T | null> {
         return null;
       },
-      async execute(): Promise<DbMeta> { return { changes: 0, duration: 1 }; },
-      async batch() { return []; },
+      async execute(): Promise<DbMeta> {
+        return { changes: 0, duration: 1 };
+      },
+      async batch() {
+        return [];
+      },
     };
     registerQueryTools(server, { db, userId });
 
-    const result = await at([...tools.values()], [...tools.keys()].indexOf("get_monthly_report"))({ year: 2025, month: 1 });
+    const result = await at(
+      [...tools.values()],
+      [...tools.keys()].indexOf("get_monthly_report"),
+    )({ year: 2025, month: 1 });
     const data = parseResult(result);
 
     expect(data.income).toBe(0);
@@ -478,12 +534,19 @@ describe("get_monthly_report", () => {
         calls.push({ sql, params: params ?? [] });
         return { income: 0, expense: 0 } as T;
       },
-      async execute(): Promise<DbMeta> { return { changes: 0, duration: 1 }; },
-      async batch() { return []; },
+      async execute(): Promise<DbMeta> {
+        return { changes: 0, duration: 1 };
+      },
+      async batch() {
+        return [];
+      },
     };
     registerQueryTools(server, { db, userId });
 
-    await at([...tools.values()], [...tools.keys()].indexOf("get_monthly_report"))({ year: 2025, month: 6, currency: "CNY" });
+    await at(
+      [...tools.values()],
+      [...tools.keys()].indexOf("get_monthly_report"),
+    )({ year: 2025, month: 6, currency: "CNY" });
 
     expect(at(calls, 0).sql).toContain("currency = ?");
     expect(at(calls, 0).params).toContain("CNY");
@@ -515,9 +578,7 @@ describe("aggregate_transactions", () => {
   });
 
   it("should group by multiple dimensions", async () => {
-    const rawRows = [
-      { dim1: "Food", dim2: 6, total: 30000, count: 8 },
-    ];
+    const rawRows = [{ dim1: "Food", dim2: 6, total: 30000, count: 8 }];
     const { handler } = setup(rawRows);
     const result = await handler({ group_by: ["category", "month"], year: 2025 });
     const data = parseResult(result);

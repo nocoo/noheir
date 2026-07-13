@@ -23,12 +23,12 @@ const PUBLIC_PATHS = [
   "/login",
   "/terms",
   "/privacy",
-  "/.well-known/",  // OAuth metadata, etc.
-  "/api/mcp/",      // MCP OAuth endpoints (register, authorize, token, etc.)
+  "/.well-known/", // OAuth metadata, etc.
+  "/api/mcp/", // MCP OAuth endpoints (register, authorize, token, etc.)
 ];
 
 function isPublicPath(pathname: string): boolean {
-  return PUBLIC_PATHS.some(p => pathname === p || pathname.startsWith(p));
+  return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p));
 }
 
 export function resolveProxyAction(ctx: ProxyContext): ProxyAction {

@@ -1,19 +1,13 @@
-export {
-  buildSavingsRate,
-} from "./overview";
+export { buildSavingsRate } from "./overview";
 
 export {
   buildSavingsRateChartData,
   buildSavingsRateSummary,
 } from "./savings-rate";
 
-export {
-  buildBalanceWaterfallData,
-} from "./balance-waterfall";
+export { buildBalanceWaterfallData } from "./balance-waterfall";
 
-export {
-  buildYearComparisonChartData,
-} from "./year-comparison";
+export { buildYearComparisonChartData } from "./year-comparison";
 
 export {
   buildFlowTabs,

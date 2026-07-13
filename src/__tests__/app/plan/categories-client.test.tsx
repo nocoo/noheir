@@ -73,15 +73,11 @@ describe("CategoriesClient render (P3-C9)", () => {
   test("category with off-palette colorToken renders fallback color", () => {
     render(
       <CategoriesClient
-        categories={[
-          { id: "c1", name: "bad", colorToken: "rebeccapurple", sortOrder: 0 },
-        ]}
+        categories={[{ id: "c1", name: "bad", colorToken: "rebeccapurple", sortOrder: 0 }]}
         usage={{}}
       />,
     );
-    expect(
-      screen.getByTestId("cat-color-c1").style.backgroundColor,
-    ).toContain("muted-foreground");
+    expect(screen.getByTestId("cat-color-c1").style.backgroundColor).toContain("muted-foreground");
   });
 });
 
@@ -90,20 +86,14 @@ describe("CategoriesClient create dialog (P3-C9)", () => {
     const user = userEvent.setup();
     render(<CategoriesClient categories={[]} usage={{}} />);
     await user.click(screen.getByTestId("open-create"));
-    expect(
-      await screen.findByRole("dialog", { name: "新建分类" }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "新建分类" })).toBeInTheDocument();
   });
 
   test("empty-state CTA opens the create dialog too", async () => {
     const user = userEvent.setup();
     render(<CategoriesClient categories={[]} usage={{}} />);
-    await user.click(
-      screen.getByRole("button", { name: /创建第一个分类/ }),
-    );
-    expect(
-      await screen.findByRole("dialog", { name: "新建分类" }),
-    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /创建第一个分类/ }));
+    expect(await screen.findByRole("dialog", { name: "新建分类" })).toBeInTheDocument();
   });
 });
 
@@ -112,17 +102,13 @@ describe("CategoriesClient edit dialog (P3-C9)", () => {
     const user = userEvent.setup();
     render(
       <CategoriesClient
-        categories={[
-          { id: "c1", name: "房贷", colorToken: "chart-9", sortOrder: 3 },
-        ]}
+        categories={[{ id: "c1", name: "房贷", colorToken: "chart-9", sortOrder: 3 }]}
         usage={{}}
       />,
     );
     await user.click(screen.getByRole("button", { name: "编辑 房贷" }));
     const dialog = await screen.findByRole("dialog", { name: "编辑分类" });
-    expect(
-      within(dialog).getByRole("form", { name: "编辑分类" }),
-    ).toBeInTheDocument();
+    expect(within(dialog).getByRole("form", { name: "编辑分类" })).toBeInTheDocument();
     expect(within(dialog).getByLabelText("分类名")).toHaveValue("房贷");
   });
 });
@@ -132,29 +118,21 @@ describe("CategoriesClient delete confirm (P3-C9)", () => {
     const user = userEvent.setup();
     render(
       <CategoriesClient
-        categories={[
-          { id: "c1", name: "房贷", colorToken: "chart-9", sortOrder: 0 },
-        ]}
+        categories={[{ id: "c1", name: "房贷", colorToken: "chart-9", sortOrder: 0 }]}
         usage={{ c1: 5 }}
       />,
     );
     await user.click(screen.getByRole("button", { name: "删除 房贷" }));
     const dialog = await screen.findByRole("dialog");
-    expect(
-      within(dialog).getByText(/5 条规则正在使用/),
-    ).toBeInTheDocument();
-    expect(
-      within(dialog).getByText(/规则本身不会被删除/),
-    ).toBeInTheDocument();
+    expect(within(dialog).getByText(/5 条规则正在使用/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/规则本身不会被删除/)).toBeInTheDocument();
   });
 
   test("delete with usage = 0 shows the plain confirm copy", async () => {
     const user = userEvent.setup();
     render(
       <CategoriesClient
-        categories={[
-          { id: "c1", name: "空分类", colorToken: "chart-1", sortOrder: 0 },
-        ]}
+        categories={[{ id: "c1", name: "空分类", colorToken: "chart-1", sortOrder: 0 }]}
         usage={{}}
       />,
     );
@@ -168,9 +146,7 @@ describe("CategoriesClient delete confirm (P3-C9)", () => {
     deleteMock.mockResolvedValueOnce({ success: true, data: undefined });
     render(
       <CategoriesClient
-        categories={[
-          { id: "c1", name: "x", colorToken: "chart-1", sortOrder: 0 },
-        ]}
+        categories={[{ id: "c1", name: "x", colorToken: "chart-1", sortOrder: 0 }]}
         usage={{}}
       />,
     );
@@ -187,9 +163,7 @@ describe("CategoriesClient delete confirm (P3-C9)", () => {
     deleteMock.mockResolvedValueOnce({ success: false, error: "无法删除" });
     render(
       <CategoriesClient
-        categories={[
-          { id: "c1", name: "x", colorToken: "chart-1", sortOrder: 0 },
-        ]}
+        categories={[{ id: "c1", name: "x", colorToken: "chart-1", sortOrder: 0 }]}
         usage={{}}
       />,
     );
@@ -219,9 +193,7 @@ describe("CategoriesClient router.refresh after form success (P3-C9 fix)", () =>
     updateMock.mockResolvedValueOnce({ success: true, data: undefined });
     render(
       <CategoriesClient
-        categories={[
-          { id: "c1", name: "old", colorToken: "chart-1", sortOrder: 0 },
-        ]}
+        categories={[{ id: "c1", name: "old", colorToken: "chart-1", sortOrder: 0 }]}
         usage={{}}
       />,
     );

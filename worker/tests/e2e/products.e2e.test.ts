@@ -390,7 +390,11 @@ describe("E2E: Products", () => {
       });
     }
 
-    const res = await api<{ products: Array<Record<string, unknown>>; total_returned: number; total_count: number }>({
+    const res = await api<{
+      products: Array<Record<string, unknown>>;
+      total_returned: number;
+      total_count: number;
+    }>({
       method: "GET",
       path: "/api/products?limit=2&offset=1",
       userId,

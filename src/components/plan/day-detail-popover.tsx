@@ -38,10 +38,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { CHART_TOKENS } from "@/lib/palette";
-import {
-  describeFrequency,
-  formatAmountYuan,
-} from "@/lib/recurring-expense/format";
+import { describeFrequency, formatAmountYuan } from "@/lib/recurring-expense/format";
 import type { RecurrenceRule } from "@/lib/recurring-expense/rule-types";
 
 export interface DayDetailCategory {
@@ -141,9 +138,7 @@ export function DayDetailPopover({
     >
       <DialogContent className={cn("max-w-md p-0", className)}>
         <DialogHeader className="border-b border-border p-4 text-left">
-          <DialogTitle data-testid="day-detail-title">
-            {isoDate ?? ""}
-          </DialogTitle>
+          <DialogTitle data-testid="day-detail-title">{isoDate ?? ""}</DialogTitle>
           <DialogDescription data-testid="day-detail-description">
             {rows.length === 0
               ? "当天无周期支出"
@@ -172,9 +167,7 @@ export function DayDetailPopover({
                     {row.categoryName ? ` · ${row.categoryName}` : ""}
                   </p>
                 </div>
-                <p className="shrink-0 text-sm font-semibold tabular-nums">
-                  {row.amountYuan}
-                </p>
+                <p className="shrink-0 text-sm font-semibold tabular-nums">{row.amountYuan}</p>
                 {onOpenRule ? (
                   <Button
                     type="button"

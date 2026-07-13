@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   ComposedChart,
@@ -11,47 +11,37 @@ import {
   ResponsiveContainer,
   Legend,
   ReferenceLine,
-} from "recharts"
-import { TrendingUp } from "lucide-react"
-import type { MonthlyData } from "@/domain/types"
-import { formatCurrencyFull, formatCurrencyK } from "@/lib/chart-config"
-import { ChartCard } from "@/components/shared/chart-card"
+} from "recharts";
+import { TrendingUp } from "lucide-react";
+import type { MonthlyData } from "@/domain/types";
+import { formatCurrencyFull, formatCurrencyK } from "@/lib/chart-config";
+import { ChartCard } from "@/components/shared/chart-card";
 
-const SAVINGS_HEX = "#8b5cf6"
-const TARGET_HEX = "#f59e0b"
+const SAVINGS_HEX = "#8b5cf6";
+const TARGET_HEX = "#f59e0b";
 
 interface IncomeExpenseChartProps {
-  monthlyData: MonthlyData[]
-  targetSavingsRate: number
+  monthlyData: MonthlyData[];
+  targetSavingsRate: number;
 }
 
 export function IncomeExpenseChart({ monthlyData, targetSavingsRate }: IncomeExpenseChartProps) {
-  const avgIncome =
-    monthlyData.reduce((sum, d) => sum + d.income, 0) / (monthlyData.length || 1)
-  const avgExpense =
-    monthlyData.reduce((sum, d) => sum + d.expense, 0) / (monthlyData.length || 1)
+  const avgIncome = monthlyData.reduce((sum, d) => sum + d.income, 0) / (monthlyData.length || 1);
+  const avgExpense = monthlyData.reduce((sum, d) => sum + d.expense, 0) / (monthlyData.length || 1);
 
   // Compute savings rate per month
   const displayData = monthlyData.map((d) => ({
     ...d,
     savingsRate: d.income > 0 ? ((d.income - d.expense) / d.income) * 100 : 0,
-  }))
+  }));
 
   return (
-    <ChartCard
-      title="收支趋势对比"
-      icon={TrendingUp}
-      className="col-span-full"
-    >
+    <ChartCard title="收支趋势对比" icon={TrendingUp} className="col-span-full">
       <div className="h-[400px]">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={displayData}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-            <XAxis
-              dataKey="month"
-              tick={{ fontSize: 12 }}
-              className="text-muted-foreground"
-            />
+            <XAxis dataKey="month" tick={{ fontSize: 12 }} className="text-muted-foreground" />
             <YAxis
               yAxisId="left"
               tick={{ fontSize: 12 }}
@@ -69,34 +59,34 @@ export function IncomeExpenseChart({ monthlyData, targetSavingsRate }: IncomeExp
             />
             <Tooltip
               content={({ active, payload, label }) => {
-                if (!active || !payload?.length) return null
+                if (!active || !payload?.length) return null;
                 return (
                   <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
                     <p className="mb-1 font-medium">{label}</p>
                     {payload.map((entry) => {
-                      const key = String(entry.dataKey ?? "")
-                      const val = Number(entry.value ?? 0)
+                      const key = String(entry.dataKey ?? "");
+                      const val = Number(entry.value ?? 0);
                       if (key === "savingsRate") {
                         return (
                           <p key={key} style={{ color: SAVINGS_HEX }}>
                             储蓄率: {val.toFixed(1)}%
                           </p>
-                        )
+                        );
                       }
                       return (
-                        <p
-                          key={key}
-                          className="text-muted-foreground"
-                        >
+                        <p key={key} className="text-muted-foreground">
                           {entry.name}: {formatCurrencyFull(val)}
                         </p>
-                      )
+                      );
                     })}
-                    <p className="mt-1 border-t border-border/50 pt-1" style={{ color: TARGET_HEX }}>
+                    <p
+                      className="mt-1 border-t border-border/50 pt-1"
+                      style={{ color: TARGET_HEX }}
+                    >
                       目标储蓄率: {targetSavingsRate}%
                     </p>
                   </div>
-                )
+                );
               }}
             />
             <Legend
@@ -105,8 +95,8 @@ export function IncomeExpenseChart({ monthlyData, targetSavingsRate }: IncomeExp
                   income: "收入",
                   expense: "支出",
                   savingsRate: "储蓄率",
-                }
-                return map[value] ?? value
+                };
+                return map[value] ?? value;
               }}
             />
             <ReferenceLine
@@ -176,5 +166,5 @@ export function IncomeExpenseChart({ monthlyData, targetSavingsRate }: IncomeExp
         </ResponsiveContainer>
       </div>
     </ChartCard>
-  )
+  );
 }

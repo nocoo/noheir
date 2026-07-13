@@ -16,23 +16,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import {
-  parseChineseCSV,
-  type ChineseCSVParseResult,
-} from "@/domain/import/parse-chinese-csv";
-import {
-  countTransactionsByYear,
-  deleteAndImportTransactions,
-} from "@/app/actions/import-actions";
+import { parseChineseCSV, type ChineseCSVParseResult } from "@/domain/import/parse-chinese-csv";
+import { countTransactionsByYear, deleteAndImportTransactions } from "@/app/actions/import-actions";
 
-type ImportStep =
-  | "idle"
-  | "parsing"
-  | "validating"
-  | "confirming"
-  | "uploading"
-  | "done"
-  | "error";
+type ImportStep = "idle" | "parsing" | "validating" | "confirming" | "uploading" | "done" | "error";
 
 export function TransactionImport() {
   const router = useRouter();
@@ -41,8 +28,7 @@ export function TransactionImport() {
   const [step, setStep] = useState<ImportStep>("idle");
   const [fileName, setFileName] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [parseResult, setParseResult] =
-    useState<ChineseCSVParseResult | null>(null);
+  const [parseResult, setParseResult] = useState<ChineseCSVParseResult | null>(null);
   const [csvYear, setCsvYear] = useState<number | null>(null);
   const [existingCount, setExistingCount] = useState<number | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -161,9 +147,7 @@ export function TransactionImport() {
           setStep("error");
         }
       } catch (err) {
-        setErrorMessage(
-          err instanceof Error ? err.message : "上传失败",
-        );
+        setErrorMessage(err instanceof Error ? err.message : "上传失败");
         setStep("error");
       }
     });
@@ -225,24 +209,14 @@ export function TransactionImport() {
 
           <div className="space-y-4">
             <div className="flex justify-center">
-              {step === "idle" && (
-                <Upload className="text-muted-foreground size-8" />
-              )}
+              {step === "idle" && <Upload className="text-muted-foreground size-8" />}
               {(step === "parsing" || step === "validating") && (
                 <Loader2 className="text-primary size-8 animate-spin" />
               )}
-              {step === "confirming" && (
-                <CheckCircle2 className="size-8 text-green-600" />
-              )}
-              {step === "uploading" && (
-                <Loader2 className="text-primary size-8 animate-spin" />
-              )}
-              {step === "done" && (
-                <CheckCircle2 className="size-8 text-green-600" />
-              )}
-              {step === "error" && (
-                <AlertTriangle className="text-destructive size-8" />
-              )}
+              {step === "confirming" && <CheckCircle2 className="size-8 text-green-600" />}
+              {step === "uploading" && <Loader2 className="text-primary size-8 animate-spin" />}
+              {step === "done" && <CheckCircle2 className="size-8 text-green-600" />}
+              {step === "error" && <AlertTriangle className="text-destructive size-8" />}
             </div>
             <div>
               <h3 className="text-lg font-semibold">
@@ -257,14 +231,10 @@ export function TransactionImport() {
               <p className="text-muted-foreground mt-1 text-sm">
                 {step === "idle" && "支持 CSV 格式"}
                 {step === "parsing" && (fileName || "")}
-                {step === "validating" &&
-                  `${parseResult?.transactions.length ?? 0} 条记录`}
-                {step === "confirming" &&
-                  `${parseResult?.transactions.length ?? 0} 条记录`}
-                {step === "uploading" &&
-                  `${parseResult?.transactions.length ?? 0} 条记录`}
-                {step === "done" &&
-                  `已成功导入 ${importedCount} 条收支记录`}
+                {step === "validating" && `${parseResult?.transactions.length ?? 0} 条记录`}
+                {step === "confirming" && `${parseResult?.transactions.length ?? 0} 条记录`}
+                {step === "uploading" && `${parseResult?.transactions.length ?? 0} 条记录`}
+                {step === "done" && `已成功导入 ${importedCount} 条收支记录`}
                 {step === "error" && (errorMessage || "未知错误")}
               </p>
             </div>
@@ -279,9 +249,7 @@ export function TransactionImport() {
             {step === "uploading" && (
               <div className="space-y-2">
                 <Progress value={uploadProgress} />
-                <p className="text-muted-foreground text-xs">
-                  {uploadProgress}% 完成
-                </p>
+                <p className="text-muted-foreground text-xs">{uploadProgress}% 完成</p>
               </div>
             )}
           </div>
@@ -296,10 +264,7 @@ export function TransactionImport() {
                 {csvYear}
               </Badge>
               <div className="text-sm">
-                <span className="font-medium">
-                  {parseResult?.transactions.length}
-                </span>{" "}
-                条记录
+                <span className="font-medium">{parseResult?.transactions.length}</span> 条记录
               </div>
             </div>
 
@@ -307,8 +272,7 @@ export function TransactionImport() {
               <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30">
                 <p className="text-sm text-amber-800 dark:text-amber-300">
                   <AlertTriangle className="mr-1 inline size-4" />
-                  该年份已存在{" "}
-                  <span className="font-medium">{existingCount}</span>{" "}
+                  该年份已存在 <span className="font-medium">{existingCount}</span>{" "}
                   条数据，上传新数据将覆盖旧数据。
                 </p>
               </div>
@@ -322,37 +286,29 @@ export function TransactionImport() {
             )}
 
             {/* Parse warnings */}
-            {parseResult &&
-              parseResult.warnings.length > 0 && (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30">
-                  <p className="mb-1 text-xs font-medium text-amber-800 dark:text-amber-300">
-                    解析警告 ({parseResult.warnings.length})
+            {parseResult && parseResult.warnings.length > 0 && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30">
+                <p className="mb-1 text-xs font-medium text-amber-800 dark:text-amber-300">
+                  解析警告 ({parseResult.warnings.length})
+                </p>
+                {parseResult.warnings.slice(0, 3).map((w, i) => (
+                  <p key={i} className="text-xs text-amber-700 dark:text-amber-400">
+                    行 {w.row}: {w.message}
                   </p>
-                  {parseResult.warnings.slice(0, 3).map((w, i) => (
-                    <p
-                      key={i}
-                      className="text-xs text-amber-700 dark:text-amber-400"
-                    >
-                      行 {w.row}: {w.message}
-                    </p>
-                  ))}
-                  {parseResult.warnings.length > 3 && (
-                    <p className="mt-1 text-xs text-amber-600">
-                      ...还有 {parseResult.warnings.length - 3} 条警告
-                    </p>
-                  )}
-                </div>
-              )}
+                ))}
+                {parseResult.warnings.length > 3 && (
+                  <p className="mt-1 text-xs text-amber-600">
+                    ...还有 {parseResult.warnings.length - 3} 条警告
+                  </p>
+                )}
+              </div>
+            )}
 
             <div className="flex gap-3">
               <Button variant="outline" onClick={resetState}>
                 取消
               </Button>
-              <Button
-                onClick={handleConfirmUpload}
-                disabled={isPending}
-                className="gap-2"
-              >
+              <Button onClick={handleConfirmUpload} disabled={isPending} className="gap-2">
                 确认上传
                 <ArrowRight className="size-4" />
               </Button>

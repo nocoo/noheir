@@ -13,7 +13,7 @@ import type {
   DomainContributionLog,
   ContributionOperationType,
   ContributionSource,
-} from "@/domain/types"
+} from "@/domain/types";
 
 export function toDomainProduct(raw: Record<string, unknown>): DomainProduct {
   return {
@@ -23,23 +23,21 @@ export function toDomainProduct(raw: Record<string, unknown>): DomainProduct {
     channel: raw.channel != null ? String(raw.channel) : null,
     category: raw.category != null ? String(raw.category) : null,
     currency: raw.currency != null ? String(raw.currency) : null,
-    lockPeriodDays:
-      raw.lockPeriodDays != null ? Number(raw.lockPeriodDays) : null,
+    lockPeriodDays: raw.lockPeriodDays != null ? Number(raw.lockPeriodDays) : null,
     openDays: raw.openDays != null ? Number(raw.openDays) : null,
     cycleDays: raw.cycleDays != null ? Number(raw.cycleDays) : null,
-    annualReturnRate:
-      raw.annualReturnRate != null ? Number(raw.annualReturnRate) : null,
+    annualReturnRate: raw.annualReturnRate != null ? Number(raw.annualReturnRate) : null,
     isArchived: Boolean(raw.isArchived),
-  }
+  };
 }
 
 export function toDomainUnit(raw: Record<string, unknown>): DomainUnit {
-  const product = raw.product as Record<string, unknown> | null | undefined
+  const product = raw.product as Record<string, unknown> | null | undefined;
   return {
     id: String(raw.id ?? ""),
     unitCode: String(raw.unitCode ?? ""),
     amount: Number(raw.amountCents ?? 0) / 100,
-    currency: (String(raw.currency ?? "CNY")) as Currency,
+    currency: String(raw.currency ?? "CNY") as Currency,
     status: String(raw.status ?? "已成立") as UnitStatus,
     strategy: String(raw.strategy ?? "") as InvestmentStrategy,
     tactics: String(raw.tactics ?? "") as InvestmentTactics,
@@ -48,7 +46,7 @@ export function toDomainUnit(raw: Record<string, unknown>): DomainUnit {
     endDate: raw.endDate != null ? String(raw.endDate) : null,
     note: raw.note != null ? String(raw.note) : null,
     product: product ? toDomainProduct(product) : null,
-  }
+  };
 }
 
 /**
@@ -57,7 +55,7 @@ export function toDomainUnit(raw: Record<string, unknown>): DomainUnit {
  * are computed by the backend and passed through directly.
  */
 export function toUnitDisplayInfo(raw: Record<string, unknown>): UnitDisplayInfo {
-  const unit = toDomainUnit(raw)
+  const unit = toDomainUnit(raw);
   return {
     ...unit,
     availableDate: raw.availableDate != null ? String(raw.availableDate) : null,
@@ -65,12 +63,12 @@ export function toUnitDisplayInfo(raw: Record<string, unknown>): UnitDisplayInfo
     daysUntilAvailable: raw.daysUntilAvailable != null ? Number(raw.daysUntilAvailable) : null,
     daysUntilLocked: raw.daysUntilLocked != null ? Number(raw.daysUntilLocked) : null,
     latestInvestDate: raw.latestInvestDate != null ? String(raw.latestInvestDate) : null,
-  }
+  };
 }
 
 export function toDomainContributionLog(raw: Record<string, unknown>): DomainContributionLog {
-  const unit = raw.unit as Record<string, unknown> | null | undefined
-  const product = raw.product as Record<string, unknown> | null | undefined
+  const unit = raw.unit as Record<string, unknown> | null | undefined;
+  const product = raw.product as Record<string, unknown> | null | undefined;
 
   return {
     id: String(raw.id ?? ""),
@@ -78,7 +76,7 @@ export function toDomainContributionLog(raw: Record<string, unknown>): DomainCon
     productId: raw.productId != null ? String(raw.productId) : null,
     productName: raw.productName != null ? String(raw.productName) : null,
     operationType: String(raw.operationType ?? "invest") as ContributionOperationType,
-    amount: Number(raw.amountCents ?? 0) / 100,  // cents to yuan
+    amount: Number(raw.amountCents ?? 0) / 100, // cents to yuan
     balanceAfter: raw.balanceAfterCents != null ? Number(raw.balanceAfterCents) / 100 : null,
     operationDate: String(raw.operationDate ?? ""),
     source: String(raw.source ?? "manual") as ContributionSource,
@@ -87,5 +85,5 @@ export function toDomainContributionLog(raw: Record<string, unknown>): DomainCon
     product: product ? toDomainProduct(product) : null,
     isDeleted: raw.deletedAt != null,
     createdAt: new Date(Number(raw.createdAt ?? 0)),
-  }
+  };
 }

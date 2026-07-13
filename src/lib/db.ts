@@ -33,16 +33,10 @@ export interface DbBatchStatement {
 
 export interface Db {
   /** Execute a read-only query and return typed results. */
-  query<T = Record<string, unknown>>(
-    sql: string,
-    params?: unknown[],
-  ): Promise<DbQueryResult<T>>;
+  query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<DbQueryResult<T>>;
 
   /** Convenience: return the first row or null. */
-  firstOrNull<T = Record<string, unknown>>(
-    sql: string,
-    params?: unknown[],
-  ): Promise<T | null>;
+  firstOrNull<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T | null>;
 
   /** Execute a write query (INSERT/UPDATE/DELETE) and return meta. */
   execute(sql: string, params?: unknown[]): Promise<DbMeta>;
@@ -89,37 +83,26 @@ export function createDb(workerUrl: string, workerSecret: string): Db {
         body: JSON.stringify(body),
       });
     } catch (err) {
-      throw new DbError(
-        `Network error: ${err instanceof Error ? err.message : String(err)}`,
-      );
+      throw new DbError(`Network error: ${err instanceof Error ? err.message : String(err)}`);
     }
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      throw new DbError(
-        (data as { error?: string }).error ?? `HTTP ${res.status}`,
-        res.status,
-      );
+      throw new DbError((data as { error?: string }).error ?? `HTTP ${res.status}`, res.status);
     }
 
     return res.json() as Promise<T>;
   }
 
   const db: Db = {
-    async query<T>(
-      sql: string,
-      params?: unknown[],
-    ): Promise<DbQueryResult<T>> {
+    async query<T>(sql: string, params?: unknown[]): Promise<DbQueryResult<T>> {
       return post<DbQueryResult<T>>("/api/v1/query", {
         sql,
         params: params ?? [],
       });
     },
 
-    async firstOrNull<T>(
-      sql: string,
-      params?: unknown[],
-    ): Promise<T | null> {
+    async firstOrNull<T>(sql: string, params?: unknown[]): Promise<T | null> {
       const result = await db.query<T>(sql, params);
       return result.results[0] ?? null;
     },
@@ -133,10 +116,7 @@ export function createDb(workerUrl: string, workerSecret: string): Db {
     },
 
     async batch(statements: DbBatchStatement[]): Promise<DbQueryResult[]> {
-      const result = await post<{ results: DbQueryResult[] }>(
-        "/api/v1/execute",
-        { statements },
-      );
+      const result = await post<{ results: DbQueryResult[] }>("/api/v1/execute", { statements });
       return result.results;
     },
   };

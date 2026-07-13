@@ -5,7 +5,9 @@ import { sqliteTable, text, integer, real, uniqueIndex } from "drizzle-orm/sqlit
 // ============================================================================
 
 export const users = sqliteTable("users", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   email: text("email").notNull().unique(),
   name: text("name"),
   image: text("image"),
@@ -20,8 +22,12 @@ export const users = sqliteTable("users", {
 // ============================================================================
 
 export const financialProducts = sqliteTable("financial_products", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   code: text("code"),
   channel: text("channel"),
@@ -45,8 +51,12 @@ export const financialProducts = sqliteTable("financial_products", {
 // ============================================================================
 
 export const capitalUnits = sqliteTable("capital_units", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   unitCode: text("unit_code").notNull(),
   amountCents: integer("amount_cents").notNull(),
   currency: text("currency").default("CNY"),
@@ -70,8 +80,12 @@ export const capitalUnits = sqliteTable("capital_units", {
 // ============================================================================
 
 export const transactions = sqliteTable("transactions", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   date: text("date").notNull(),
   year: integer("year").notNull(),
   month: integer("month").notNull(),
@@ -97,8 +111,12 @@ export const transactions = sqliteTable("transactions", {
 // ============================================================================
 
 export const transfers = sqliteTable("transfers", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   date: text("date").notNull(),
   year: integer("year").notNull(),
   month: integer("month").notNull(),
@@ -124,7 +142,9 @@ export const transfers = sqliteTable("transfers", {
 
 export const settings = sqliteTable("settings", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  ownerId: text("owner_id").notNull().unique()
+  ownerId: text("owner_id")
+    .notNull()
+    .unique()
     .references(() => users.id, { onDelete: "cascade" }),
   siteName: text("site_name").default(""),
   settings: text("settings").default("{}"), // JSON string
@@ -138,9 +158,15 @@ export const settings = sqliteTable("settings", {
 // ============================================================================
 
 export const contributionLogs = sqliteTable("contribution_logs", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  unitId: text("unit_id").notNull().references(() => capitalUnits.id, { onDelete: "cascade" }),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  unitId: text("unit_id")
+    .notNull()
+    .references(() => capitalUnits.id, { onDelete: "cascade" }),
   productId: text("product_id").references(() => financialProducts.id, { onDelete: "restrict" }),
   productName: text("product_name"), // Snapshot for audit trail
   operationType: text("operation_type").notNull(), // "invest" | "withdraw" | "adjust"
@@ -164,7 +190,9 @@ export const contributionLogs = sqliteTable("contribution_logs", {
 
 // MCP OAuth Clients (Dynamic Client Registration)
 export const mcpClients = sqliteTable("mcp_clients", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   clientId: text("client_id").notNull().unique(),
   clientSecretHash: text("client_secret_hash"),
   clientName: text("client_name").notNull(),
@@ -186,9 +214,13 @@ export const mcpClients = sqliteTable("mcp_clients", {
 
 // MCP Authorization Sessions (authorize → callback intermediate state)
 export const mcpAuthSessions = sqliteTable("mcp_auth_sessions", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   state: text("state").notNull().unique(),
-  clientId: text("client_id").notNull().references(() => mcpClients.clientId, { onDelete: "cascade" }),
+  clientId: text("client_id")
+    .notNull()
+    .references(() => mcpClients.clientId, { onDelete: "cascade" }),
   redirectUri: text("redirect_uri").notNull(),
   codeChallenge: text("code_challenge").notNull(),
   codeChallengeMethod: text("code_challenge_method").notNull().default("S256"),
@@ -203,14 +235,20 @@ export const mcpAuthSessions = sqliteTable("mcp_auth_sessions", {
 
 // MCP Access Tokens
 export const mcpTokens = sqliteTable("mcp_tokens", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   accessTokenHash: text("access_token_hash").notNull().unique(),
   accessTokenPreview: text("access_token_preview").notNull(),
-  clientId: text("client_id").notNull().references(() => mcpClients.clientId, { onDelete: "cascade" }),
+  clientId: text("client_id")
+    .notNull()
+    .references(() => mcpClients.clientId, { onDelete: "cascade" }),
   userId: text("user_id").notNull(),
   scope: text("scope").notNull(),
   clientName: text("client_name"),
-  issuedAt: text("issued_at").notNull().$defaultFn(() => new Date().toISOString()),
+  issuedAt: text("issued_at")
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
   expiresAt: text("expires_at").notNull(),
   revoked: integer("revoked", { mode: "boolean" }).default(false),
   revokedAt: text("revoked_at"),
@@ -220,13 +258,21 @@ export const mcpTokens = sqliteTable("mcp_tokens", {
 
 // MCP Refresh Tokens (supports rotation)
 export const mcpRefreshTokens = sqliteTable("mcp_refresh_tokens", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   refreshTokenHash: text("refresh_token_hash").notNull().unique(),
-  accessTokenId: text("access_token_id").notNull().references(() => mcpTokens.id, { onDelete: "cascade" }),
-  clientId: text("client_id").notNull().references(() => mcpClients.clientId, { onDelete: "cascade" }),
+  accessTokenId: text("access_token_id")
+    .notNull()
+    .references(() => mcpTokens.id, { onDelete: "cascade" }),
+  clientId: text("client_id")
+    .notNull()
+    .references(() => mcpClients.clientId, { onDelete: "cascade" }),
   userId: text("user_id").notNull(),
   scope: text("scope").notNull(),
-  issuedAt: text("issued_at").notNull().$defaultFn(() => new Date().toISOString()),
+  issuedAt: text("issued_at")
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
   expiresAt: text("expires_at").notNull(),
   rotatedAt: text("rotated_at"),
   rotatedTo: text("rotated_to"),
@@ -242,8 +288,12 @@ export const mcpRefreshTokens = sqliteTable("mcp_refresh_tokens", {
 export const expenseCategories = sqliteTable(
   "expense_categories",
   {
-    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     // chart token name (e.g. "chart-7"); rendered as hsl(var(--chart-7))
     // so categories follow the active theme without per-user hex storage.
@@ -257,10 +307,7 @@ export const expenseCategories = sqliteTable(
       .$defaultFn(() => new Date()),
   },
   (table) => ({
-    userNameUnique: uniqueIndex("expense_categories_user_name_uniq").on(
-      table.userId,
-      table.name,
-    ),
+    userNameUnique: uniqueIndex("expense_categories_user_name_uniq").on(table.userId, table.name),
   }),
 );
 
@@ -270,8 +317,12 @@ export const expenseCategories = sqliteTable(
 // ============================================================================
 
 export const recurringExpenses = sqliteTable("recurring_expenses", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   categoryId: text("category_id").references(() => expenseCategories.id, {
     onDelete: "set null",

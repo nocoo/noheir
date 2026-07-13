@@ -137,9 +137,18 @@ LIMITATIONS:
       strategy: z.string().optional().describe("Filter by strategy (e.g., 远期理财)"),
       tactics: z.string().optional().describe("Filter by tactics (e.g., 定期存款)"),
       currency: z.enum(["CNY", "USD", "HKD"]).optional().describe("Filter by currency"),
-      product_id: z.string().optional().describe("Filter by linked product ID (full or 8-char prefix)"),
+      product_id: z
+        .string()
+        .optional()
+        .describe("Filter by linked product ID (full or 8-char prefix)"),
       product_name: z.string().optional().describe("Filter by linked product name (exact match)"),
-      limit: z.number().int().min(1).max(200).optional().describe("Max results (default: 50, max: 200)"),
+      limit: z
+        .number()
+        .int()
+        .min(1)
+        .max(200)
+        .optional()
+        .describe("Max results (default: 50, max: 200)"),
       offset: z.number().int().min(0).optional().describe("Skip N results for pagination"),
     },
     async (args) => {
@@ -208,10 +217,7 @@ LIMITATIONS:
       const units = unitsResult.results;
 
       if (units.length === 0) {
-        return okWithPage(
-          { units: [] },
-          { returned: 0, total, limit, offset, has_more: false },
-        );
+        return okWithPage({ units: [] }, { returned: 0, total, limit, offset, has_more: false });
       }
 
       // Get latest invest logs for availability calculation
@@ -318,7 +324,7 @@ RETURNS:
       const unit = result.results[0];
       if (!unit) {
         return error(`Unit not found: ${args.id}`);
-      };
+      }
 
       // Get latest invest log
       const logSql = `
@@ -570,7 +576,15 @@ RETURNS:
             `INSERT INTO contribution_logs (id, user_id, unit_id, product_id, product_name, operation_type, amount_cents, balance_after_cents, operation_date, source, created_at, updated_at)
              SELECT ?, user_id, id, ?, ?, 'withdraw', amount_cents, 0, ?, 'mcp', ?, ?
              FROM capital_units WHERE id = ?`,
-            [withdrawLogId, existing.product_id, oldProduct?.name ?? null, logNow, logNow, logNow, args.id],
+            [
+              withdrawLogId,
+              existing.product_id,
+              oldProduct?.name ?? null,
+              logNow,
+              logNow,
+              logNow,
+              args.id,
+            ],
           );
         }
 
@@ -586,7 +600,15 @@ RETURNS:
             `INSERT INTO contribution_logs (id, user_id, unit_id, product_id, product_name, operation_type, amount_cents, balance_after_cents, operation_date, source, created_at, updated_at)
              SELECT ?, user_id, id, ?, ?, 'invest', amount_cents, amount_cents, ?, 'mcp', ?, ?
              FROM capital_units WHERE id = ?`,
-            [investLogId, args.product_id, newProduct?.name ?? null, logNow, logNow, logNow, args.id],
+            [
+              investLogId,
+              args.product_id,
+              newProduct?.name ?? null,
+              logNow,
+              logNow,
+              logNow,
+              args.id,
+            ],
           );
         }
       }

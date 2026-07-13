@@ -194,53 +194,35 @@ describe("formatAmountCompact", () => {
 
 describe("deriveDisplayStatus", () => {
   test("paused → 'paused'", () => {
-    expect(
-      deriveDisplayStatus({ status: "paused", endDate: null }, "2026-06-07"),
-    ).toBe("paused");
+    expect(deriveDisplayStatus({ status: "paused", endDate: null }, "2026-06-07")).toBe("paused");
   });
 
   test("ended → 'ended'", () => {
-    expect(
-      deriveDisplayStatus({ status: "ended", endDate: null }, "2026-06-07"),
-    ).toBe("ended");
+    expect(deriveDisplayStatus({ status: "ended", endDate: null }, "2026-06-07")).toBe("ended");
   });
 
   test("active with endDate < today → 'expired' (派生态)", () => {
-    expect(
-      deriveDisplayStatus(
-        { status: "active", endDate: "2024-12-31" },
-        "2026-06-07",
-      ),
-    ).toBe("expired");
+    expect(deriveDisplayStatus({ status: "active", endDate: "2024-12-31" }, "2026-06-07")).toBe(
+      "expired",
+    );
   });
 
   test("active with endDate >= today → 'active'", () => {
-    expect(
-      deriveDisplayStatus(
-        { status: "active", endDate: "2026-06-07" },
-        "2026-06-07",
-      ),
-    ).toBe("active");
-    expect(
-      deriveDisplayStatus(
-        { status: "active", endDate: "2099-01-01" },
-        "2026-06-07",
-      ),
-    ).toBe("active");
+    expect(deriveDisplayStatus({ status: "active", endDate: "2026-06-07" }, "2026-06-07")).toBe(
+      "active",
+    );
+    expect(deriveDisplayStatus({ status: "active", endDate: "2099-01-01" }, "2026-06-07")).toBe(
+      "active",
+    );
   });
 
   test("active without endDate → 'active'", () => {
-    expect(
-      deriveDisplayStatus({ status: "active", endDate: null }, "2026-06-07"),
-    ).toBe("active");
+    expect(deriveDisplayStatus({ status: "active", endDate: null }, "2026-06-07")).toBe("active");
   });
 
   test("paused takes precedence over expired", () => {
-    expect(
-      deriveDisplayStatus(
-        { status: "paused", endDate: "2024-01-01" },
-        "2026-06-07",
-      ),
-    ).toBe("paused");
+    expect(deriveDisplayStatus({ status: "paused", endDate: "2024-01-01" }, "2026-06-07")).toBe(
+      "paused",
+    );
   });
 });

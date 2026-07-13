@@ -15,26 +15,15 @@ import { CHART_TOKENS } from "@/lib/palette";
 // palette so it stays the single source of truth.
 const chartTokenLiterals = CHART_TOKENS as readonly [string, ...string[]];
 
-export const RECURRENCE_FREQUENCIES = [
-  "daily",
-  "weekly",
-  "monthly",
-  "yearly",
-] as const;
+export const RECURRENCE_FREQUENCIES = ["daily", "weekly", "monthly", "yearly"] as const;
 export type RecurrenceFrequency = (typeof RECURRENCE_FREQUENCIES)[number];
 
-export const RECURRING_EXPENSE_STATUSES = [
-  "active",
-  "paused",
-  "ended",
-] as const;
+export const RECURRING_EXPENSE_STATUSES = ["active", "paused", "ended"] as const;
 export type RecurringExpenseStatus = (typeof RECURRING_EXPENSE_STATUSES)[number];
 
 /** Derived display state shown on the rule list — `expired` is NEVER
  *  persisted; it's computed from `endDate < today` for active rules. */
-export type RecurringExpenseDisplayStatus =
-  | RecurringExpenseStatus
-  | "expired";
+export type RecurringExpenseDisplayStatus = RecurringExpenseStatus | "expired";
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -110,10 +99,7 @@ export const recurringExpenseInputSchema = z
         message: "dayOfMonth is required for monthly rules",
       });
     }
-    if (
-      data.frequency === "yearly" &&
-      (data.monthOfYear == null || data.dayOfMonth == null)
-    ) {
+    if (data.frequency === "yearly" && (data.monthOfYear == null || data.dayOfMonth == null)) {
       ctx.addIssue({
         code: "custom",
         path: ["monthOfYear"],

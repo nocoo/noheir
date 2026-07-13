@@ -54,30 +54,13 @@ export const TACTICS = [
   "货币基金",
 ] as const;
 
-export const UNIT_STATUSES = [
-  "已成立",
-  "计划中",
-  "筹集中",
-  "已归档",
-] as const;
+export const UNIT_STATUSES = ["已成立", "计划中", "筹集中", "已归档"] as const;
 
-export const CURRENCIES = [
-  "CNY",
-  "USD",
-  "HKD",
-] as const;
+export const CURRENCIES = ["CNY", "USD", "HKD"] as const;
 
-export const CONTRIBUTION_OPERATION_TYPES = [
-  "invest",
-  "withdraw",
-  "adjust",
-] as const;
+export const CONTRIBUTION_OPERATION_TYPES = ["invest", "withdraw", "adjust"] as const;
 
-export const CONTRIBUTION_SOURCES = [
-  "manual",
-  "auto",
-  "import",
-] as const;
+export const CONTRIBUTION_SOURCES = ["manual", "auto", "import"] as const;
 
 // Derived types
 export type Channel = (typeof CHANNELS)[number];

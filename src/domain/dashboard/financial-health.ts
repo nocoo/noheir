@@ -1,9 +1,7 @@
 import type { DomainTransaction, MonthlyData } from "../types";
 import { calculateFinancialHealth } from "@/lib/financial-health-algorithm";
 
-export const buildSafeMonthlyData = (
-  monthlyData: MonthlyData[],
-): MonthlyData[] => {
+export const buildSafeMonthlyData = (monthlyData: MonthlyData[]): MonthlyData[] => {
   return Array.isArray(monthlyData) ? monthlyData : [];
 };
 
@@ -17,10 +15,5 @@ export const buildFinancialHealthResult = (
   totalIncome: number,
   fixedExpenseCategories: string[],
 ) => {
-  return calculateFinancialHealth(
-    transactions,
-    monthlyData,
-    totalIncome,
-    fixedExpenseCategories,
-  );
+  return calculateFinancialHealth(transactions, monthlyData, totalIncome, fixedExpenseCategories);
 };

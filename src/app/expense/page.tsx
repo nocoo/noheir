@@ -1,7 +1,7 @@
-import { AppShell } from "@/components/layout"
-import { getAuthedClient } from "@/lib/api-helpers"
-import type { DomainTransaction } from "@/domain/types"
-import { toDomainTransaction, buildMonthlyData } from "@/lib/transaction-mappers"
+import { AppShell } from "@/components/layout";
+import { getAuthedClient } from "@/lib/api-helpers";
+import type { DomainTransaction } from "@/domain/types";
+import { toDomainTransaction, buildMonthlyData } from "@/lib/transaction-mappers";
 import {
   buildFilteredTransactions,
   buildTotalAmount,
@@ -9,49 +9,49 @@ import {
   buildMonthlyFiltered,
   buildAverageMonthly,
   buildTransactionLabels,
-} from "@/domain/dashboard/transaction-analysis"
-import { buildCategoryData, buildAccountData } from "@/lib/category-builders"
-import { TransactionAnalysisClient } from "../transaction-analysis-client"
+} from "@/domain/dashboard/transaction-analysis";
+import { buildCategoryData, buildAccountData } from "@/lib/category-builders";
+import { TransactionAnalysisClient } from "../transaction-analysis-client";
 
 export default async function ExpensePage({
   searchParams,
 }: {
-  searchParams: Promise<{ year?: string }>
+  searchParams: Promise<{ year?: string }>;
 }) {
-  const params = await searchParams
-  let transactions: DomainTransaction[] = []
-  let selectedYear: number | null = null
+  const params = await searchParams;
+  let transactions: DomainTransaction[] = [];
+  let selectedYear: number | null = null;
 
   try {
-    const { userId, client } = await getAuthedClient()
-    const metadata = await client.getMetadata(userId)
+    const { userId, client } = await getAuthedClient();
+    const metadata = await client.getMetadata(userId);
 
-    const availableYears = metadata.years.sort((a, b) => b - a)
-    const yearParam = params.year ? Number(params.year) : null
+    const availableYears = metadata.years.sort((a, b) => b - a);
+    const yearParam = params.year ? Number(params.year) : null;
     if (yearParam && availableYears.includes(yearParam)) {
-      selectedYear = yearParam
+      selectedYear = yearParam;
     } else {
-      selectedYear = availableYears[0] ?? new Date().getFullYear()
+      selectedYear = availableYears[0] ?? new Date().getFullYear();
     }
 
-    const result = await client.getAllTransactionsByYear(userId, selectedYear)
+    const result = await client.getAllTransactionsByYear(userId, selectedYear);
     transactions = result.transactions.map((raw) =>
       toDomainTransaction(raw as Record<string, unknown>),
-    )
+    );
   } catch {
     // Not authenticated or Worker unavailable
   }
 
-  const type = "expense" as const
-  const filtered = buildFilteredTransactions(transactions, type)
-  const totalAmount = buildTotalAmount(filtered)
-  const monthlyData = buildMonthlyData(transactions)
-  const monthlyFiltered = buildMonthlyFiltered(monthlyData, type)
-  const avgMonthly = buildAverageMonthly(monthlyFiltered, type)
-  const topTransactions = buildTopTransactions(filtered, 50)
-  const labels = buildTransactionLabels(type)
-  const { chartData, detailList } = buildCategoryData(filtered, totalAmount)
-  const accountData = buildAccountData(filtered, totalAmount, 10)
+  const type = "expense" as const;
+  const filtered = buildFilteredTransactions(transactions, type);
+  const totalAmount = buildTotalAmount(filtered);
+  const monthlyData = buildMonthlyData(transactions);
+  const monthlyFiltered = buildMonthlyFiltered(monthlyData, type);
+  const avgMonthly = buildAverageMonthly(monthlyFiltered, type);
+  const topTransactions = buildTopTransactions(filtered, 50);
+  const labels = buildTransactionLabels(type);
+  const { chartData, detailList } = buildCategoryData(filtered, totalAmount);
+  const accountData = buildAccountData(filtered, totalAmount, 10);
 
   return (
     <AppShell>
@@ -77,5 +77,5 @@ export default async function ExpensePage({
         labels={labels}
       />
     </AppShell>
-  )
+  );
 }

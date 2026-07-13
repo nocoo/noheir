@@ -7,9 +7,7 @@ const nextConfig: NextConfig = {
   // Allow cross-origin requests in development (e.g., from reverse proxies)
   allowedDevOrigins: (() => {
     const envOrigins = process.env.ALLOWED_DEV_ORIGINS;
-    return envOrigins
-      ? envOrigins.split(",").map((o) => o.trim())
-      : ["localhost"];
+    return envOrigins ? envOrigins.split(",").map((o) => o.trim()) : ["localhost"];
   })(),
   // Allow loading images from external domains (e.g., Google avatars)
   images: {

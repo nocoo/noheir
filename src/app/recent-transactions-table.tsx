@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -6,16 +6,16 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { cn } from "@/lib/utils"
-import { getLabelColorClasses } from "@/lib/tag-colors"
-import { formatCurrencyFull } from "@/lib/chart-config"
-import type { DomainTransaction } from "@/domain/types"
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { getLabelColorClasses } from "@/lib/tag-colors";
+import { formatCurrencyFull } from "@/lib/chart-config";
+import type { DomainTransaction } from "@/domain/types";
 
 interface RecentTransactionsTableProps {
-  transactions: DomainTransaction[]
-  icon: React.ElementType
+  transactions: DomainTransaction[];
+  icon: React.ElementType;
 }
 
 export function RecentTransactionsTable({
@@ -29,7 +29,7 @@ export function RecentTransactionsTable({
           <p className="text-muted-foreground">暂无交易记录，请导入数据</p>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -55,12 +55,10 @@ export function RecentTransactionsTable({
           </TableHeader>
           <TableBody>
             {transactions.map((t) => {
-              const primaryColor = getLabelColorClasses(t.primaryCategory)
-              const secondaryColor = getLabelColorClasses(
-                t.secondaryCategory ?? ""
-              )
-              const tertiaryColor = getLabelColorClasses(t.tertiaryCategory)
-              const isIncome = t.type === "income"
+              const primaryColor = getLabelColorClasses(t.primaryCategory);
+              const secondaryColor = getLabelColorClasses(t.secondaryCategory ?? "");
+              const tertiaryColor = getLabelColorClasses(t.tertiaryCategory);
+              const isIncome = t.type === "income";
 
               return (
                 <TableRow key={t.id}>
@@ -68,11 +66,7 @@ export function RecentTransactionsTable({
                   <TableCell>
                     <Badge
                       variant="outline"
-                      className={cn(
-                        primaryColor.bg,
-                        primaryColor.text,
-                        "border-transparent"
-                      )}
+                      className={cn(primaryColor.bg, primaryColor.text, "border-transparent")}
                     >
                       {t.primaryCategory}
                     </Badge>
@@ -81,11 +75,7 @@ export function RecentTransactionsTable({
                     {t.secondaryCategory && (
                       <Badge
                         variant="outline"
-                        className={cn(
-                          secondaryColor.bg,
-                          secondaryColor.text,
-                          "border-transparent"
-                        )}
+                        className={cn(secondaryColor.bg, secondaryColor.text, "border-transparent")}
                       >
                         {t.secondaryCategory}
                       </Badge>
@@ -94,11 +84,7 @@ export function RecentTransactionsTable({
                   <TableCell>
                     <Badge
                       variant="outline"
-                      className={cn(
-                        tertiaryColor.bg,
-                        tertiaryColor.text,
-                        "border-transparent"
-                      )}
+                      className={cn(tertiaryColor.bg, tertiaryColor.text, "border-transparent")}
                     >
                       {t.tertiaryCategory}
                     </Badge>
@@ -112,20 +98,18 @@ export function RecentTransactionsTable({
                   <TableCell
                     className={cn(
                       "text-right font-semibold",
-                      isIncome
-                        ? "text-income dark:text-income"
-                        : "text-expense dark:text-expense"
+                      isIncome ? "text-income dark:text-income" : "text-expense dark:text-expense",
                     )}
                   >
                     {isIncome ? "+" : "-"}
                     {formatCurrencyFull(t.amount)}
                   </TableCell>
                 </TableRow>
-              )
+              );
             })}
           </TableBody>
         </Table>
       </CardContent>
     </Card>
-  )
+  );
 }

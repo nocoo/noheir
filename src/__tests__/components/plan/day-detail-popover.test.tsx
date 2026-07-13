@@ -37,9 +37,7 @@ function catMap(entries: DayDetailCategory[]): Map<string, DayDetailCategory> {
   return new Map(entries.map((c) => [c.id, c]));
 }
 
-function occMap(
-  entries: Array<[string, RecurrenceRule[]]>,
-): Map<string, RecurrenceRule[]> {
+function occMap(entries: Array<[string, RecurrenceRule[]]>): Map<string, RecurrenceRule[]> {
   return new Map(entries);
 }
 
@@ -50,9 +48,7 @@ describe("buildDayDetailRows / sumDay (P3-C7)", () => {
   });
 
   test("day with no occurrences → empty rows, sum 0", () => {
-    expect(
-      buildDayDetailRows("2026-06-07", occMap([]), catMap([])),
-    ).toEqual([]);
+    expect(buildDayDetailRows("2026-06-07", occMap([]), catMap([]))).toEqual([]);
     expect(sumDay("2026-06-07", occMap([]))).toBe(0);
   });
 
@@ -75,11 +71,7 @@ describe("buildDayDetailRows / sumDay (P3-C7)", () => {
 
   test("rule referencing missing category → categoryName=null, color falls back", () => {
     const r1 = rule({ id: "r1", categoryId: "ghost", amountCents: 100 });
-    const rows = buildDayDetailRows(
-      "2026-06-07",
-      occMap([["2026-06-07", [r1]]]),
-      catMap([]),
-    );
+    const rows = buildDayDetailRows("2026-06-07", occMap([["2026-06-07", [r1]]]), catMap([]));
     expect(rows[0]?.categoryName).toBeNull();
     expect(rows[0]?.colorCss).toContain("muted-foreground");
   });
@@ -102,11 +94,7 @@ describe("buildDayDetailRows / sumDay (P3-C7)", () => {
       weekday: 3,
       dayOfMonth: null,
     });
-    const rows = buildDayDetailRows(
-      "2026-06-07",
-      occMap([["2026-06-07", [r]]]),
-      catMap([]),
-    );
+    const rows = buildDayDetailRows("2026-06-07", occMap([["2026-06-07", [r]]]), catMap([]));
     expect(rows[0]?.frequencyText).toContain("每周");
     expect(rows[0]?.frequencyText).toContain("周三");
   });
@@ -114,9 +102,7 @@ describe("buildDayDetailRows / sumDay (P3-C7)", () => {
   test("sumDay sums all amountCents for the day", () => {
     const r1 = rule({ id: "r1", amountCents: 100 });
     const r2 = rule({ id: "r2", amountCents: 250 });
-    expect(
-      sumDay("2026-06-07", occMap([["2026-06-07", [r1, r2]]])),
-    ).toBe(350);
+    expect(sumDay("2026-06-07", occMap([["2026-06-07", [r1, r2]]]))).toBe(350);
   });
 });
 
@@ -159,9 +145,7 @@ describe("DayDetailPopover render (P3-C7)", () => {
     );
     // Radix Dialog wires aria-labelledby → DialogTitle. The accessible
     // name is the title text.
-    expect(
-      screen.getByRole("dialog", { name: "2026-06-07" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "2026-06-07" })).toBeInTheDocument();
   });
 
   test("empty day shows 当天无周期支出 message", () => {
@@ -277,9 +261,7 @@ describe("DayDetailPopover interaction (P3-C7)", () => {
     // proof that we're using the Radix Dialog primitive rather than a
     // hand-rolled overlay; outside-click dismissal is then covered by
     // Radix's own tests in @radix-ui/react-dialog.
-    expect(
-      document.querySelector("[data-slot='dialog-overlay']"),
-    ).not.toBeNull();
+    expect(document.querySelector("[data-slot='dialog-overlay']")).not.toBeNull();
   });
 
   test("clicking inside the inner panel does NOT close", async () => {
@@ -289,9 +271,7 @@ describe("DayDetailPopover interaction (P3-C7)", () => {
       <DayDetailPopover
         open={true}
         isoDate="2026-06-07"
-        occurrencesByDay={occMap([
-          ["2026-06-07", [rule({ id: "r1", name: "x" })]],
-        ])}
+        occurrencesByDay={occMap([["2026-06-07", [rule({ id: "r1", name: "x" })]]])}
         categoryMap={catMap([])}
         onClose={onClose}
       />,
@@ -312,10 +292,7 @@ describe("DayDetailPopover interaction (P3-C7)", () => {
           open={true}
           isoDate="2026-06-07"
           occurrencesByDay={occMap([
-            [
-              "2026-06-07",
-              [rule({ id: "r1", name: "A" }), rule({ id: "r2", name: "B" })],
-            ],
+            ["2026-06-07", [rule({ id: "r1", name: "A" }), rule({ id: "r2", name: "B" })]],
           ])}
           categoryMap={catMap([])}
           onClose={() => {}}
@@ -330,12 +307,8 @@ describe("DayDetailPopover interaction (P3-C7)", () => {
     // buttons because Radix FocusScope holds it inside the dialog.
     for (let i = 0; i < 10; i++) {
       await user.tab();
-      expect(document.activeElement).not.toBe(
-        screen.getByTestId("before"),
-      );
-      expect(document.activeElement).not.toBe(
-        screen.getByTestId("after"),
-      );
+      expect(document.activeElement).not.toBe(screen.getByTestId("before"));
+      expect(document.activeElement).not.toBe(screen.getByTestId("after"));
     }
   });
 
@@ -346,9 +319,7 @@ describe("DayDetailPopover interaction (P3-C7)", () => {
       <DayDetailPopover
         open={true}
         isoDate="2026-06-07"
-        occurrencesByDay={occMap([
-          ["2026-06-07", [rule({ id: "r1", name: "x" })]],
-        ])}
+        occurrencesByDay={occMap([["2026-06-07", [rule({ id: "r1", name: "x" })]]])}
         categoryMap={catMap([])}
         onClose={() => {}}
         onOpenRule={onOpenRule}
@@ -363,9 +334,7 @@ describe("DayDetailPopover interaction (P3-C7)", () => {
       <DayDetailPopover
         open={true}
         isoDate="2026-06-07"
-        occurrencesByDay={occMap([
-          ["2026-06-07", [rule({ id: "r1", name: "x" })]],
-        ])}
+        occurrencesByDay={occMap([["2026-06-07", [rule({ id: "r1", name: "x" })]]])}
         categoryMap={catMap([])}
         onClose={() => {}}
       />,

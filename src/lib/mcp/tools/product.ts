@@ -50,8 +50,17 @@ LIMITATIONS:
       channel: z.string().optional().describe("Filter by channel"),
       category: z.string().optional().describe("Filter by category"),
       currency: z.enum(["CNY", "USD", "HKD"]).optional().describe("Filter by currency"),
-      include_archived: z.boolean().optional().describe("Include archived products (default: false)"),
-      limit: z.number().int().min(1).max(200).optional().describe("Max results (default: 50, max: 200)"),
+      include_archived: z
+        .boolean()
+        .optional()
+        .describe("Include archived products (default: false)"),
+      limit: z
+        .number()
+        .int()
+        .min(1)
+        .max(200)
+        .optional()
+        .describe("Max results (default: 50, max: 200)"),
       offset: z.number().int().min(0).optional().describe("Skip N results for pagination"),
     },
     async (args) => {
@@ -103,17 +112,19 @@ LIMITATIONS:
       const total = countResult?.total ?? 0;
 
       // Compact output: short ID, omit nulls/defaults
-      const products = result.results.map((p) => compact({
-        id: shortId(p.id),
-        name: p.name,
-        code: p.code,
-        channel: p.channel,
-        category: p.category,
-        currency: p.currency,
-        lock_days: p.lock_period_days || null, // omit if 0
-        return_rate: p.annual_return_rate,
-        archived: p.is_archived === 1 ? true : null, // omit if false
-      }));
+      const products = result.results.map((p) =>
+        compact({
+          id: shortId(p.id),
+          name: p.name,
+          code: p.code,
+          channel: p.channel,
+          category: p.category,
+          currency: p.currency,
+          lock_days: p.lock_period_days || null, // omit if 0
+          return_rate: p.annual_return_rate,
+          archived: p.is_archived === 1 ? true : null, // omit if false
+        }),
+      );
 
       const hasMore = offset + products.length < total;
       const nextArgs: Record<string, unknown> = { offset: offset + limit, limit };
@@ -218,9 +229,14 @@ RETURNS:
       };
 
       // Navigation hint when units exist
-      const next = linkedUnitsCount > 0
-        ? { recommended: "related_tool" as const, tool: "get_product_portfolio", args: { product_id: product.id } }
-        : undefined;
+      const next =
+        linkedUnitsCount > 0
+          ? {
+              recommended: "related_tool" as const,
+              tool: "get_product_portfolio",
+              args: { product_id: product.id },
+            }
+          : undefined;
 
       return okWithCompleteness(productData, { complete: true, truncated: false }, next);
     },

@@ -19,7 +19,7 @@ export interface ProductLockInfo {
 export function computeAvailability(
   latestInvestLog: LatestInvestLog | null,
   product: ProductLockInfo | null,
-  today: Date = new Date()
+  today: Date = new Date(),
 ): AvailabilityInfo {
   if (!product || !latestInvestLog) {
     return {
@@ -41,7 +41,7 @@ export function computeAvailability(
   const todayStart = startOfDay(today);
   const initialUnlockStart = startOfDay(initialUnlockDate);
   const daysToInitialUnlock = Math.round(
-    (initialUnlockStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24)
+    (initialUnlockStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24),
   );
 
   // Still in initial lock period

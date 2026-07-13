@@ -5,34 +5,34 @@
  * Example: v0.2-abcd1234
  */
 
-import { execSync } from 'child_process';
-import { writeFileSync, mkdirSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { execSync } from "child_process";
+import { writeFileSync, mkdirSync } from "fs";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const VERSION_FILE = join(__dirname, '../src/lib/version-generated.ts');
-const VERSION_PREFIX = 'v2.0';
+const VERSION_FILE = join(__dirname, "../src/lib/version-generated.ts");
+const VERSION_PREFIX = "v2.0";
 
 try {
   // Get short git hash (7 characters)
-  const gitHash = execSync('git rev-parse --short=7 HEAD', {
-    encoding: 'utf-8',
-    stdio: ['pipe', 'pipe', 'ignore']
+  const gitHash = execSync("git rev-parse --short=7 HEAD", {
+    encoding: "utf-8",
+    stdio: ["pipe", "pipe", "ignore"],
   }).trim();
 
   // Get commit count for build number
-  const commitCount = execSync('git rev-list --count HEAD', {
-    encoding: 'utf-8',
-    stdio: ['pipe', 'pipe', 'ignore']
+  const commitCount = execSync("git rev-list --count HEAD", {
+    encoding: "utf-8",
+    stdio: ["pipe", "pipe", "ignore"],
   }).trim();
 
   // Get branch name
-  const branch = execSync('git rev-parse --abbrev-ref HEAD', {
-    encoding: 'utf-8',
-    stdio: ['pipe', 'pipe', 'ignore']
+  const branch = execSync("git rev-parse --abbrev-ref HEAD", {
+    encoding: "utf-8",
+    stdio: ["pipe", "pipe", "ignore"],
   }).trim();
 
   const version = `${VERSION_PREFIX}-${gitHash}`;
@@ -51,9 +51,9 @@ export const APP_BRANCH = '${branch}';
 `;
 
   // Ensure directory exists
-  mkdirSync(join(__dirname, '../src/lib'), { recursive: true });
+  mkdirSync(join(__dirname, "../src/lib"), { recursive: true });
 
-  writeFileSync(VERSION_FILE, content, 'utf-8');
+  writeFileSync(VERSION_FILE, content, "utf-8");
 
   console.log(`Version generated: ${version}`);
 } catch (_error) {
@@ -69,8 +69,8 @@ export const APP_COMMIT_COUNT = '0';
 export const APP_BRANCH = 'unknown';
 `;
 
-  mkdirSync(join(__dirname, '../src/lib'), { recursive: true });
-  writeFileSync(VERSION_FILE, content, 'utf-8');
+  mkdirSync(join(__dirname, "../src/lib"), { recursive: true });
+  writeFileSync(VERSION_FILE, content, "utf-8");
 
-  console.log('Version generated (fallback): v2.0-dev');
+  console.log("Version generated (fallback): v2.0-dev");
 }

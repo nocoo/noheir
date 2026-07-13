@@ -45,8 +45,7 @@ const FREQ_RADIOS = () => within(FREQ_GROUP()).getAllByRole("radio");
 const INTERVAL = () => screen.getByLabelText("每隔") as HTMLInputElement;
 const DAY = () => screen.queryByLabelText("日") as HTMLInputElement | null;
 const MONTH = () => screen.queryByLabelText("月份") as HTMLInputElement | null;
-const WEEKDAY_GROUP = () =>
-  screen.queryByRole("radiogroup", { name: "周几" });
+const WEEKDAY_GROUP = () => screen.queryByRole("radiogroup", { name: "周几" });
 
 describe("applyFrequencyChange (P3-C2)", () => {
   test("same frequency returns the same object reference (no-op)", () => {
@@ -147,9 +146,7 @@ describe("FrequencyPicker rendering (P3-C2)", () => {
     render(<Wrapper initial={{ frequency: "monthly", dayOfMonth: 15 }} />);
     const monthly = screen.getByRole("radio", { name: "每月" });
     expect(monthly).toHaveAttribute("aria-checked", "true");
-    const checked = FREQ_RADIOS().filter(
-      (r) => r.getAttribute("aria-checked") === "true",
-    );
+    const checked = FREQ_RADIOS().filter((r) => r.getAttribute("aria-checked") === "true");
     expect(checked).toHaveLength(1);
   });
 
@@ -195,11 +192,7 @@ describe("FrequencyPicker conditional fields (P3-C2)", () => {
   });
 
   test("yearly: both monthOfYear AND dayOfMonth present, no weekday", () => {
-    render(
-      <Wrapper
-        initial={{ frequency: "yearly", monthOfYear: 6, dayOfMonth: 1 }}
-      />,
-    );
+    render(<Wrapper initial={{ frequency: "yearly", monthOfYear: 6, dayOfMonth: 1 }} />);
     expect(MONTH()).toHaveValue(6);
     expect(DAY()).toHaveValue(1);
     expect(WEEKDAY_GROUP()).toBeNull();
@@ -255,12 +248,7 @@ describe("FrequencyPicker frequency-switch reset semantics (P3-C2)", () => {
   test("switching monthly → yearly preserves dayOfMonth, requires monthOfYear", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(
-      <Wrapper
-        initial={{ frequency: "monthly", dayOfMonth: 28 }}
-        onChange={onChange}
-      />,
-    );
+    render(<Wrapper initial={{ frequency: "monthly", dayOfMonth: 28 }} onChange={onChange} />);
     await user.click(screen.getByRole("radio", { name: "每年" }));
     const emitted = onChange.mock.calls[0]?.[0] as FrequencyValue | undefined;
     if (!emitted) throw new Error("no onChange call");
@@ -271,12 +259,7 @@ describe("FrequencyPicker frequency-switch reset semantics (P3-C2)", () => {
   test("switching monthly → daily clears dayOfMonth", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(
-      <Wrapper
-        initial={{ frequency: "monthly", dayOfMonth: 15 }}
-        onChange={onChange}
-      />,
-    );
+    render(<Wrapper initial={{ frequency: "monthly", dayOfMonth: 15 }} onChange={onChange} />);
     await user.click(screen.getByRole("radio", { name: "每天" }));
     const emitted = onChange.mock.calls[0]?.[0] as FrequencyValue | undefined;
     if (!emitted) throw new Error("no onChange call");
@@ -392,9 +375,7 @@ describe("FrequencyPicker error display (P3-C2)", () => {
     );
     expect(screen.queryByText("pick a day")).toBeNull();
     unmount();
-    render(
-      <Wrapper initial={{ frequency: "weekly" }} errors={{ weekday: "pick a day" }} />,
-    );
+    render(<Wrapper initial={{ frequency: "weekly" }} errors={{ weekday: "pick a day" }} />);
     expect(screen.getByText("pick a day")).toBeInTheDocument();
     expect(WEEKDAY_GROUP()).toHaveAttribute("aria-invalid", "true");
   });
@@ -522,12 +503,7 @@ describe("FrequencyPicker input clamping (P3-C2 fix)", () => {
   test("dayOfMonth typed as '32' emits null (above 31)", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(
-      <Wrapper
-        initial={{ frequency: "monthly", dayOfMonth: null }}
-        onChange={onChange}
-      />,
-    );
+    render(<Wrapper initial={{ frequency: "monthly", dayOfMonth: null }} onChange={onChange} />);
     const day = DAY();
     if (!day) throw new Error("day input missing");
     await user.type(day, "32");
@@ -539,12 +515,7 @@ describe("FrequencyPicker input clamping (P3-C2 fix)", () => {
   test("dayOfMonth typed as '0' emits null", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(
-      <Wrapper
-        initial={{ frequency: "monthly", dayOfMonth: null }}
-        onChange={onChange}
-      />,
-    );
+    render(<Wrapper initial={{ frequency: "monthly", dayOfMonth: null }} onChange={onChange} />);
     const day = DAY();
     if (!day) throw new Error("day input missing");
     await user.type(day, "0");
@@ -556,12 +527,7 @@ describe("FrequencyPicker input clamping (P3-C2 fix)", () => {
   test("dayOfMonth cleared emits null", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(
-      <Wrapper
-        initial={{ frequency: "monthly", dayOfMonth: 15 }}
-        onChange={onChange}
-      />,
-    );
+    render(<Wrapper initial={{ frequency: "monthly", dayOfMonth: 15 }} onChange={onChange} />);
     const day = DAY();
     if (!day) throw new Error("day input missing");
     await user.clear(day);
@@ -582,18 +548,14 @@ describe("FrequencyPicker weekday keyboard (P3-C2 fix)", () => {
 
   test("exactly one weekday radio is in the tab order (selected one)", () => {
     render(<Wrapper initial={{ frequency: "weekly", weekday: 3 }} />);
-    const tabbable = weekdayRadios().filter(
-      (r) => r.getAttribute("tabIndex") === "0",
-    );
+    const tabbable = weekdayRadios().filter((r) => r.getAttribute("tabIndex") === "0");
     expect(tabbable).toHaveLength(1);
     expect(tabbable[0]).toHaveAccessibleName("周三");
   });
 
   test("when weekday is null, Sunday (index 0) holds the tab stop", () => {
     render(<Wrapper initial={{ frequency: "weekly" }} />);
-    const tabbable = weekdayRadios().filter(
-      (r) => r.getAttribute("tabIndex") === "0",
-    );
+    const tabbable = weekdayRadios().filter((r) => r.getAttribute("tabIndex") === "0");
     expect(tabbable).toHaveLength(1);
     expect(tabbable[0]).toHaveAccessibleName("周日");
   });
@@ -638,16 +600,8 @@ describe("FrequencyPicker weekday keyboard (P3-C2 fix)", () => {
   test("disabled: every weekday radio has tabIndex=-1 and arrow keys are no-op", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(
-      <Wrapper
-        initial={{ frequency: "weekly", weekday: 2 }}
-        disabled
-        onChange={onChange}
-      />,
-    );
-    const tabbable = weekdayRadios().filter(
-      (r) => r.getAttribute("tabIndex") !== "-1",
-    );
+    render(<Wrapper initial={{ frequency: "weekly", weekday: 2 }} disabled onChange={onChange} />);
+    const tabbable = weekdayRadios().filter((r) => r.getAttribute("tabIndex") !== "-1");
     expect(tabbable).toHaveLength(0);
     screen.getByRole("radio", { name: "周二" }).focus();
     await user.keyboard("{ArrowRight}");

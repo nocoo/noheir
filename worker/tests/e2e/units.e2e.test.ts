@@ -230,8 +230,8 @@ describe("E2E: Units", () => {
     });
 
     expect(logs.logs).toHaveLength(2);
-    const withdraw = logs.logs.find(l => l.operationType === "withdraw");
-    const invest = logs.logs.find(l => l.operationType === "invest");
+    const withdraw = logs.logs.find((l) => l.operationType === "withdraw");
+    const invest = logs.logs.find((l) => l.operationType === "invest");
 
     expect(withdraw).toBeDefined();
     expect(withdraw!.productId).toBe(productA.id);
@@ -525,19 +525,37 @@ describe("E2E: Units", () => {
       method: "POST",
       path: "/api/units",
       userId,
-      body: makeUnit({ unitCode: "U1", amountCents: 1000000, strategy: "短期理财", status: "已成立", tactics: "理财产品" }),
+      body: makeUnit({
+        unitCode: "U1",
+        amountCents: 1000000,
+        strategy: "短期理财",
+        status: "已成立",
+        tactics: "理财产品",
+      }),
     });
     await api({
       method: "POST",
       path: "/api/units",
       userId,
-      body: makeUnit({ unitCode: "U2", amountCents: 2000000, strategy: "短期理财", status: "已成立", tactics: "债券基金" }),
+      body: makeUnit({
+        unitCode: "U2",
+        amountCents: 2000000,
+        strategy: "短期理财",
+        status: "已成立",
+        tactics: "债券基金",
+      }),
     });
     await api({
       method: "POST",
       path: "/api/units",
       userId,
-      body: makeUnit({ unitCode: "U3", amountCents: 3000000, strategy: "长期理财", status: "计划中", tactics: "理财产品" }),
+      body: makeUnit({
+        unitCode: "U3",
+        amountCents: 3000000,
+        strategy: "长期理财",
+        status: "计划中",
+        tactics: "理财产品",
+      }),
     });
 
     const res = await api<{
@@ -750,7 +768,11 @@ describe("E2E: Units", () => {
       });
     }
 
-    const res = await api<{ units: Array<Record<string, unknown>>; total_returned: number; total_count: number }>({
+    const res = await api<{
+      units: Array<Record<string, unknown>>;
+      total_returned: number;
+      total_count: number;
+    }>({
       method: "GET",
       path: "/api/units?limit=2&offset=1",
       userId,

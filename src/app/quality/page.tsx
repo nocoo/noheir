@@ -1,6 +1,6 @@
-import { AppShell } from "@/components/layout"
-import { getAuthedClient } from "@/lib/api-helpers"
-import { QualityClient } from "./quality-client"
+import { AppShell } from "@/components/layout";
+import { getAuthedClient } from "@/lib/api-helpers";
+import { QualityClient } from "./quality-client";
 
 export default async function QualityPage() {
   let metadata = {
@@ -11,11 +11,11 @@ export default async function QualityPage() {
     categories: 0,
     currencies: [] as string[],
     tags: [] as string[],
-  }
+  };
 
   try {
-    const { userId, client } = await getAuthedClient()
-    const result = await client.getMetadata(userId)
+    const { userId, client } = await getAuthedClient();
+    const result = await client.getMetadata(userId);
     metadata = {
       transactionCount: result.transaction_count,
       transferCount: result.transfer_count,
@@ -24,7 +24,7 @@ export default async function QualityPage() {
       categories: result.categories.length,
       currencies: result.currencies,
       tags: result.tags,
-    }
+    };
   } catch {
     // Not authenticated or Worker unavailable
   }
@@ -33,5 +33,5 @@ export default async function QualityPage() {
     <AppShell>
       <QualityClient metadata={metadata} />
     </AppShell>
-  )
+  );
 }

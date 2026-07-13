@@ -1,73 +1,67 @@
-"use client"
+"use client";
 
-import { useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
-import { toast } from "sonner"
-import { Bot, Save, Copy, Terminal, Check } from "lucide-react"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Bot, Save, Copy, Terminal, Check } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   PREDEFINED_AI_URLS,
   PREDEFINED_AI_MODELS,
   isCustomOption,
   isConfigComplete,
-} from "@/domain/settings/ai-config"
-import { buildMcpConfigJson } from "@/domain/settings/mcp-config"
-import { saveAiSettings } from "@/app/actions/settings-actions"
+} from "@/domain/settings/ai-config";
+import { buildMcpConfigJson } from "@/domain/settings/mcp-config";
+import { saveAiSettings } from "@/app/actions/settings-actions";
 
 interface AiSettingsClientProps {
-  aiConfig: Record<string, unknown>
+  aiConfig: Record<string, unknown>;
   mcpParams: {
-    workerUrl: string
-  }
+    workerUrl: string;
+  };
 }
 
 export function AiSettingsClient({ aiConfig, mcpParams }: AiSettingsClientProps) {
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
-  const [copied, setCopied] = useState(false)
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [copied, setCopied] = useState(false);
 
-  const [enabled, setEnabled] = useState(Boolean(aiConfig.enabled ?? false))
-  const [baseURL, setBaseURL] = useState(String(aiConfig.baseURL ?? ""))
-  const [modelName, setModelName] = useState(String(aiConfig.modelName ?? ""))
-  const [apiKey, setApiKey] = useState(String(aiConfig.apiKey ?? ""))
+  const [enabled, setEnabled] = useState(Boolean(aiConfig.enabled ?? false));
+  const [baseURL, setBaseURL] = useState(String(aiConfig.baseURL ?? ""));
+  const [modelName, setModelName] = useState(String(aiConfig.modelName ?? ""));
+  const [apiKey, setApiKey] = useState(String(aiConfig.apiKey ?? ""));
 
-  const complete = isConfigComplete({ baseURL, modelName, apiKey })
-  const customUrl = isCustomOption(baseURL, PREDEFINED_AI_URLS)
-  const customModel = isCustomOption(modelName, PREDEFINED_AI_MODELS)
+  const complete = isConfigComplete({ baseURL, modelName, apiKey });
+  const customUrl = isCustomOption(baseURL, PREDEFINED_AI_URLS);
+  const customModel = isCustomOption(modelName, PREDEFINED_AI_MODELS);
 
   const mcpJson = buildMcpConfigJson({
     workerUrl: mcpParams.workerUrl,
-  })
+  });
 
-  const hasMcpCredentials = Boolean(mcpParams.workerUrl)
+  const hasMcpCredentials = Boolean(mcpParams.workerUrl);
 
   const handleCopyMcp = async () => {
     try {
-      await navigator.clipboard.writeText(mcpJson)
-      setCopied(true)
-      toast.success("已复制到剪贴板")
-      setTimeout(() => setCopied(false), 2000)
+      await navigator.clipboard.writeText(mcpJson);
+      setCopied(true);
+      toast.success("已复制到剪贴板");
+      setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error("复制失败")
+      toast.error("复制失败");
     }
-  }
+  };
 
   const handleSave = () => {
     startTransition(async () => {
@@ -76,15 +70,15 @@ export function AiSettingsClient({ aiConfig, mcpParams }: AiSettingsClientProps)
         baseURL,
         modelName,
         apiKey,
-      })
+      });
       if (result.success) {
-        toast.success("AI 设置已保存")
-        router.refresh()
+        toast.success("AI 设置已保存");
+        router.refresh();
       } else {
-        toast.error(result.error)
+        toast.error(result.error);
       }
-    })
-  }
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -94,27 +88,19 @@ export function AiSettingsClient({ aiConfig, mcpParams }: AiSettingsClientProps)
           <Bot className="text-primary size-6" />
           AI 设置
         </h1>
-        <p className="text-muted-foreground text-sm">
-          配置 AI 分析功能的连接参数
-        </p>
+        <p className="text-muted-foreground text-sm">配置 AI 分析功能的连接参数</p>
       </div>
 
       {/* Enable Toggle */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">启用 AI 分析</CardTitle>
-          <CardDescription>
-            开启后将在洞察页面使用 AI 进行智能分析
-          </CardDescription>
+          <CardDescription>开启后将在洞察页面使用 AI 进行智能分析</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <Label htmlFor="ai-enabled">AI 分析</Label>
-            <Switch
-              id="ai-enabled"
-              checked={enabled}
-              onCheckedChange={setEnabled}
-            />
+            <Switch id="ai-enabled" checked={enabled} onCheckedChange={setEnabled} />
           </div>
         </CardContent>
       </Card>
@@ -189,9 +175,7 @@ export function AiSettingsClient({ aiConfig, mcpParams }: AiSettingsClientProps)
       <Card>
         <CardHeader>
           <CardTitle className="text-base">MCP 服务器配置</CardTitle>
-          <CardDescription>
-            为 AI 助手（如 Claude Desktop）提供财务数据只读访问
-          </CardDescription>
+          <CardDescription>为 AI 助手（如 Claude Desktop）提供财务数据只读访问</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {hasMcpCredentials ? (
@@ -205,17 +189,8 @@ export function AiSettingsClient({ aiConfig, mcpParams }: AiSettingsClientProps)
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label>Claude Desktop 配置</Label>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCopyMcp}
-                    className="gap-1.5"
-                  >
-                    {copied ? (
-                      <Check className="size-3.5" />
-                    ) : (
-                      <Copy className="size-3.5" />
-                    )}
+                  <Button variant="outline" size="sm" onClick={handleCopyMcp} className="gap-1.5">
+                    {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
                     {copied ? "已复制" : "复制"}
                   </Button>
                 </div>
@@ -247,5 +222,5 @@ export function AiSettingsClient({ aiConfig, mcpParams }: AiSettingsClientProps)
         </Button>
       </div>
     </div>
-  )
+  );
 }

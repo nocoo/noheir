@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { useEffect, useState, useCallback } from "react"
-import { useRouter } from "next/navigation"
+import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import {
   CommandDialog,
   CommandEmpty,
@@ -10,7 +10,7 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from "@/components/ui/command"
+} from "@/components/ui/command";
 import {
   LayoutDashboard,
   Heart,
@@ -35,13 +35,13 @@ import {
   Database,
   FileUp,
   Shield,
-} from "lucide-react"
+} from "lucide-react";
 
 interface NavItem {
-  label: string
-  href: string
-  icon: React.ElementType
-  group: string
+  label: string;
+  href: string;
+  icon: React.ElementType;
+  group: string;
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -73,41 +73,35 @@ const NAV_ITEMS: NavItem[] = [
   { label: "数据管理", href: "/manage", icon: Database, group: "系统" },
   { label: "数据导入", href: "/import", icon: FileUp, group: "系统" },
   { label: "数据质量", href: "/quality", icon: Shield, group: "系统" },
-]
+];
 
 export function CommandPalette() {
-  const [open, setOpen] = useState(false)
-  const router = useRouter()
+  const [open, setOpen] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault()
-        setOpen((prev) => !prev)
+        e.preventDefault();
+        setOpen((prev) => !prev);
       }
-    }
-    document.addEventListener("keydown", down)
-    return () => document.removeEventListener("keydown", down)
-  }, [])
+    };
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, []);
 
-  const runCommand = useCallback(
-    (command: () => void) => {
-      setOpen(false)
-      command()
-    },
-    [],
-  )
+  const runCommand = useCallback((command: () => void) => {
+    setOpen(false);
+    command();
+  }, []);
 
   // Group items
-  const groups = NAV_ITEMS.reduce<Record<string, NavItem[]>>(
-    (acc, item) => {
-      const group = acc[item.group] ?? []
-      group.push(item)
-      acc[item.group] = group
-      return acc
-    },
-    {},
-  )
+  const groups = NAV_ITEMS.reduce<Record<string, NavItem[]>>((acc, item) => {
+    const group = acc[item.group] ?? [];
+    group.push(item);
+    acc[item.group] = group;
+    return acc;
+  }, {});
 
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
@@ -133,5 +127,5 @@ export function CommandPalette() {
         ))}
       </CommandList>
     </CommandDialog>
-  )
+  );
 }

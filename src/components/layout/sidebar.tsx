@@ -4,20 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import {
-  PanelLeft,
-  LogOut,
-  ChevronUp,
-} from "lucide-react";
+import { PanelLeft, LogOut, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV_GROUPS, ALL_NAV_ITEMS, type NavGroup } from "@/lib/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Collapsible, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useSidebar } from "./sidebar-context";
 import { useYear, YEAR_ENABLED_PATHS } from "./year-context";
@@ -28,9 +19,9 @@ import pkg from "../../../package.json";
  */
 function buildHrefWithYear(href: string, year: number): string {
   if (YEAR_ENABLED_PATHS.has(href)) {
-    return `${href}?year=${year}`
+    return `${href}?year=${year}`;
   }
-  return href
+  return href;
 }
 
 // ── Sub-components ──
@@ -59,7 +50,7 @@ function NavGroupSection({
             <ChevronUp
               className={cn(
                 "h-3.5 w-3.5 text-muted-foreground transition-transform duration-200",
-                !open && "rotate-180"
+                !open && "rotate-180",
               )}
               strokeWidth={1.5}
             />
@@ -77,9 +68,7 @@ function NavGroupSection({
           <div className="flex flex-col gap-0.5 px-3">
             {group.items.map((item) => {
               const isActive =
-                item.href === "/"
-                  ? pathname === "/"
-                  : pathname.startsWith(item.href);
+                item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
 
               return (
                 <Link
@@ -90,7 +79,7 @@ function NavGroupSection({
                     "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-normal transition-colors",
                     isActive
                       ? "bg-accent text-foreground"
-                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground",
                   )}
                 >
                   <item.icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
@@ -134,7 +123,7 @@ export function Sidebar({ mobile = false }: SidebarProps) {
         aria-label={mobile ? "主导航抽屉" : "主导航"}
         className={cn(
           "sticky top-0 flex h-screen shrink-0 flex-col bg-background transition-all duration-300 ease-in-out overflow-hidden",
-          isCollapsed ? "w-[68px]" : "w-[260px]"
+          isCollapsed ? "w-[68px]" : "w-[260px]",
         )}
       >
         {isCollapsed ? (
@@ -143,13 +132,7 @@ export function Sidebar({ mobile = false }: SidebarProps) {
             {/* Logo */}
             <div className="flex h-14 w-full items-center justify-start pl-6 pr-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/logo-24.png"
-                alt="noheir"
-                width={24}
-                height={24}
-                className="shrink-0"
-              />
+              <img src="/logo-24.png" alt="noheir" width={24} height={24} className="shrink-0" />
             </div>
 
             {/* Expand toggle */}
@@ -172,9 +155,7 @@ export function Sidebar({ mobile = false }: SidebarProps) {
             <nav className="flex-1 flex flex-col items-center gap-1 overflow-y-auto pt-1">
               {ALL_NAV_ITEMS.map((item) => {
                 const isActive =
-                  item.href === "/"
-                    ? pathname === "/"
-                    : pathname.startsWith(item.href);
+                  item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
 
                 return (
                   <Tooltip key={item.href}>
@@ -186,7 +167,7 @@ export function Sidebar({ mobile = false }: SidebarProps) {
                           "relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors",
                           isActive
                             ? "bg-accent text-foreground"
-                            : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                            : "text-muted-foreground hover:bg-accent hover:text-foreground",
                         )}
                       >
                         <item.icon className="h-4 w-4" strokeWidth={1.5} />
@@ -204,16 +185,10 @@ export function Sidebar({ mobile = false }: SidebarProps) {
             <div className="py-3 flex justify-center w-full">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button
-                    onClick={handleSignOut}
-                    aria-label="退出登录"
-                    className="cursor-pointer"
-                  >
+                  <button onClick={handleSignOut} aria-label="退出登录" className="cursor-pointer">
                     <Avatar className="h-9 w-9">
                       {userImage && <AvatarImage src={userImage} alt={userName} />}
-                      <AvatarFallback className="text-xs">
-                        {userInitial}
-                      </AvatarFallback>
+                      <AvatarFallback className="text-xs">{userInitial}</AvatarFallback>
                     </Avatar>
                   </button>
                 </TooltipTrigger>
@@ -273,9 +248,7 @@ export function Sidebar({ mobile = false }: SidebarProps) {
               <div className="flex items-center gap-3">
                 <Avatar className="h-9 w-9 shrink-0">
                   {userImage && <AvatarImage src={userImage} alt={userName} />}
-                  <AvatarFallback className="text-xs">
-                    {userInitial}
-                  </AvatarFallback>
+                  <AvatarFallback className="text-xs">{userInitial}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">{userName}</p>

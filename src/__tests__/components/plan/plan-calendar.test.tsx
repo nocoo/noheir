@@ -33,9 +33,7 @@ function rule(overrides: Partial<RecurrenceRule>): RecurrenceRule {
   };
 }
 
-function catMap(
-  entries: PlanCalendarCategory[],
-): Map<string, PlanCalendarCategory> {
+function catMap(entries: PlanCalendarCategory[]): Map<string, PlanCalendarCategory> {
   return new Map(entries.map((c) => [c.id, c]));
 }
 
@@ -101,13 +99,7 @@ describe("aggregateOccurrences (P3-C5)", () => {
 
 describe("PlanCalendar render (P3-C5)", () => {
   test("renders heading, 7 weekday headers, 42 day cells", () => {
-    render(
-      <PlanCalendar
-        viewMonth="2026-02-01"
-        rules={[]}
-        categoryMap={catMap([])}
-      />,
-    );
+    render(<PlanCalendar viewMonth="2026-02-01" rules={[]} categoryMap={catMap([])} />);
     expect(screen.getByText("2026 年 2 月")).toBeInTheDocument();
     expect(screen.getAllByRole("columnheader")).toHaveLength(7);
     expect(screen.getAllByRole("gridcell")).toHaveLength(42);
@@ -124,13 +116,7 @@ describe("PlanCalendar render (P3-C5)", () => {
   });
 
   test("adjacent-month cells render with data-in-month='false'", () => {
-    render(
-      <PlanCalendar
-        viewMonth="2026-01-01"
-        rules={[]}
-        categoryMap={catMap([])}
-      />,
-    );
+    render(<PlanCalendar viewMonth="2026-01-01" rules={[]} categoryMap={catMap([])} />);
     // The first cell is Dec 28 2025.
     const cells = screen.getAllByRole("gridcell");
     expect(cells[0]?.getAttribute("data-iso")).toBe("2025-12-28");
@@ -173,13 +159,7 @@ describe("PlanCalendar occurrence dots (P3-C5)", () => {
 
   test("rule without category falls back to muted color, no crash", () => {
     const r1 = rule({ id: "r1", categoryId: null, dayOfMonth: 5 });
-    render(
-      <PlanCalendar
-        viewMonth="2026-02-01"
-        rules={[r1]}
-        categoryMap={catMap([])}
-      />,
-    );
+    render(<PlanCalendar viewMonth="2026-02-01" rules={[r1]} categoryMap={catMap([])} />);
     const cells = screen.getAllByRole("gridcell");
     const feb5 = cells.find((c) => c.getAttribute("data-iso") === "2026-02-05");
     const dot = feb5?.querySelector("[data-rule-id='r1']");
@@ -236,13 +216,7 @@ describe("PlanCalendar occurrence dots (P3-C5)", () => {
     const rules = Array.from({ length: 3 }, (_, i) =>
       rule({ id: `r${i}`, categoryId: null, dayOfMonth: 12 }),
     );
-    render(
-      <PlanCalendar
-        viewMonth="2026-02-01"
-        rules={rules}
-        categoryMap={catMap([])}
-      />,
-    );
+    render(<PlanCalendar viewMonth="2026-02-01" rules={rules} categoryMap={catMap([])} />);
     const cells = screen.getAllByRole("gridcell");
     const feb12 = cells.find((c) => c.getAttribute("data-iso") === "2026-02-12");
     if (!feb12) throw new Error("missing feb 12");
@@ -254,11 +228,7 @@ describe("PlanCalendar occurrence dots (P3-C5)", () => {
     const active = rule({ id: "r-active", dayOfMonth: 5 });
     const paused = rule({ id: "r-paused", dayOfMonth: 5, status: "paused" });
     render(
-      <PlanCalendar
-        viewMonth="2026-02-01"
-        rules={[active, paused]}
-        categoryMap={catMap([])}
-      />,
+      <PlanCalendar viewMonth="2026-02-01" rules={[active, paused]} categoryMap={catMap([])} />,
     );
     const cells = screen.getAllByRole("gridcell");
     const feb5 = cells.find((c) => c.getAttribute("data-iso") === "2026-02-05");
@@ -302,13 +272,7 @@ describe("PlanCalendar interaction (P3-C5)", () => {
 
   test("missing onSelectDay does not crash", async () => {
     const user = userEvent.setup();
-    render(
-      <PlanCalendar
-        viewMonth="2026-02-01"
-        rules={[]}
-        categoryMap={catMap([])}
-      />,
-    );
+    render(<PlanCalendar viewMonth="2026-02-01" rules={[]} categoryMap={catMap([])} />);
     const cells = screen.getAllByRole("gridcell");
     const feb14 = cells.find((c) => c.getAttribute("data-iso") === "2026-02-14");
     if (!feb14) throw new Error("missing feb 14");
@@ -344,13 +308,7 @@ describe("PlanCalendar banner display (improvement)", () => {
       amountCents: 1234500, // 12,345 yuan → ¥1.2万
       dayOfMonth: 5,
     });
-    render(
-      <PlanCalendar
-        viewMonth="2026-02-01"
-        rules={[r]}
-        categoryMap={catMap([])}
-      />,
-    );
+    render(<PlanCalendar viewMonth="2026-02-01" rules={[r]} categoryMap={catMap([])} />);
     const banner = screen.getByTestId("banner-2026-02-05-r1");
     expect(within(banner).getByText("¥1.2万")).toBeInTheDocument();
   });
@@ -378,9 +336,7 @@ describe("PlanCalendar banner display (improvement)", () => {
     const user = userEvent.setup();
     const onOpenRule = vi.fn();
     const onSelectDay = vi.fn();
-    const rules = Array.from({ length: 5 }, (_, i) =>
-      rule({ id: `r${i}`, dayOfMonth: 8 }),
-    );
+    const rules = Array.from({ length: 5 }, (_, i) => rule({ id: `r${i}`, dayOfMonth: 8 }));
     render(
       <PlanCalendar
         viewMonth="2026-02-01"
@@ -492,13 +448,7 @@ describe("PlanCalendar cross-month occurrences (P3-C5)", () => {
       dayOfMonth: null,
       startDate: "2025-12-28",
     });
-    render(
-      <PlanCalendar
-        viewMonth="2026-01-01"
-        rules={[r]}
-        categoryMap={catMap([])}
-      />,
-    );
+    render(<PlanCalendar viewMonth="2026-01-01" rules={[r]} categoryMap={catMap([])} />);
     const cells = screen.getAllByRole("gridcell");
     // Dec 28 2025 is the first padding cell.
     expect(cells[0]?.getAttribute("data-iso")).toBe("2025-12-28");

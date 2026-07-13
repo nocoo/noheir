@@ -60,14 +60,9 @@ describe("ColorTokenPicker (P3-C1)", () => {
 
   test("drops any caller-supplied token outside the closed set", () => {
     // Mix legal + illegal; only legal should render.
-    render(
-      <Wrapper tokens={["chart-1", "ff0000", "chart-2", "rgb(0,0,0)", "chart-25"]} />,
-    );
+    render(<Wrapper tokens={["chart-1", "ff0000", "chart-2", "rgb(0,0,0)", "chart-25"]} />);
     const radios = ALL_RADIOS();
-    expect(radios.map((r) => r.getAttribute("data-token"))).toEqual([
-      "chart-1",
-      "chart-2",
-    ]);
+    expect(radios.map((r) => r.getAttribute("data-token"))).toEqual(["chart-1", "chart-2"]);
   });
 
   // ── Selection ─────────────────────────────────────────────────────
@@ -79,19 +74,14 @@ describe("ColorTokenPicker (P3-C1)", () => {
     await user.click(screen.getByRole("radio", { name: "Teal" }));
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange).toHaveBeenCalledWith("chart-2");
-    expect(screen.getByRole("radio", { name: "Teal" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
+    expect(screen.getByRole("radio", { name: "Teal" })).toHaveAttribute("aria-checked", "true");
   });
 
   test("only the selected swatch has aria-checked=true", async () => {
     const user = userEvent.setup();
     render(<Wrapper />);
     await user.click(screen.getByRole("radio", { name: "Rose" }));
-    const checked = ALL_RADIOS().filter(
-      (r) => r.getAttribute("aria-checked") === "true",
-    );
+    const checked = ALL_RADIOS().filter((r) => r.getAttribute("aria-checked") === "true");
     expect(checked).toHaveLength(1);
     expect(checked[0]).toHaveAccessibleName("Rose");
   });
@@ -111,18 +101,14 @@ describe("ColorTokenPicker (P3-C1)", () => {
 
   test("exactly one swatch is in the tab order (initial value's index)", () => {
     render(<Wrapper initial="chart-5" />);
-    const tabbable = ALL_RADIOS().filter(
-      (r) => r.getAttribute("tabIndex") === "0",
-    );
+    const tabbable = ALL_RADIOS().filter((r) => r.getAttribute("tabIndex") === "0");
     expect(tabbable).toHaveLength(1);
     expect(tabbable[0]).toHaveAccessibleName("Lime");
   });
 
   test("when nothing is selected, the first swatch holds the tab stop", () => {
     render(<Wrapper />);
-    const tabbable = ALL_RADIOS().filter(
-      (r) => r.getAttribute("tabIndex") === "0",
-    );
+    const tabbable = ALL_RADIOS().filter((r) => r.getAttribute("tabIndex") === "0");
     expect(tabbable).toHaveLength(1);
     expect(tabbable[0]).toHaveAccessibleName("Sky");
   });
@@ -207,19 +193,14 @@ describe("ColorTokenPicker (P3-C1)", () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     render(<Wrapper disabled onChange={onChange} />);
-    expect(screen.getByRole("radiogroup")).toHaveAttribute(
-      "aria-disabled",
-      "true",
-    );
+    expect(screen.getByRole("radiogroup")).toHaveAttribute("aria-disabled", "true");
     await user.click(screen.getByRole("radio", { name: "Sky" }));
     expect(onChange).not.toHaveBeenCalled();
   });
 
   test("disabled: every swatch has tabIndex=-1 (out of tab order)", () => {
     render(<Wrapper disabled />);
-    const tabbable = ALL_RADIOS().filter(
-      (r) => r.getAttribute("tabIndex") !== "-1",
-    );
+    const tabbable = ALL_RADIOS().filter((r) => r.getAttribute("tabIndex") !== "-1");
     expect(tabbable).toHaveLength(0);
   });
 

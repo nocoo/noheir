@@ -1,32 +1,26 @@
-"use client"
+"use client";
 
-import { Shield, CheckCircle, AlertTriangle, Info } from "lucide-react"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
+import { Shield, CheckCircle, AlertTriangle, Info } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 
 interface QualityClientProps {
   metadata: {
-    transactionCount: number
-    transferCount: number
-    years: number[]
-    accounts: number
-    categories: number
-    currencies: string[]
-    tags: string[]
-  }
+    transactionCount: number;
+    transferCount: number;
+    years: number[];
+    accounts: number;
+    categories: number;
+    currencies: string[];
+    tags: string[];
+  };
 }
 
 interface QualityCheck {
-  label: string
-  status: "pass" | "warn" | "info"
-  detail: string
+  label: string;
+  status: "pass" | "warn" | "info";
+  detail: string;
 }
 
 export function QualityClient({ metadata }: QualityClientProps) {
@@ -44,10 +38,7 @@ export function QualityClient({ metadata }: QualityClientProps) {
     {
       label: "数据年份覆盖",
       status: metadata.years.length >= 2 ? "pass" : "info",
-      detail:
-        metadata.years.length > 0
-          ? `${metadata.years.join(", ")}`
-          : "无年份数据",
+      detail: metadata.years.length > 0 ? `${metadata.years.join(", ")}` : "无年份数据",
     },
     {
       label: "账户多样性",
@@ -62,42 +53,38 @@ export function QualityClient({ metadata }: QualityClientProps) {
     {
       label: "币种",
       status: "info",
-      detail: metadata.currencies.length > 0
-        ? metadata.currencies.join(", ")
-        : "无数据",
+      detail: metadata.currencies.length > 0 ? metadata.currencies.join(", ") : "无数据",
     },
     {
       label: "标签使用",
       status: metadata.tags.length >= 3 ? "pass" : "info",
       detail: `${metadata.tags.length} 个标签`,
     },
-  ]
+  ];
 
-  const passCount = checks.filter((c) => c.status === "pass").length
-  const score = Math.round((passCount / checks.length) * 100)
+  const passCount = checks.filter((c) => c.status === "pass").length;
+  const score = Math.round((passCount / checks.length) * 100);
 
   const statusIcon = (status: QualityCheck["status"]) => {
     switch (status) {
       case "pass":
-        return <CheckCircle className="size-4 text-emerald-500" />
+        return <CheckCircle className="size-4 text-emerald-500" />;
       case "warn":
-        return <AlertTriangle className="size-4 text-amber-500" />
+        return <AlertTriangle className="size-4 text-amber-500" />;
       case "info":
-        return <Info className="size-4 text-blue-500" />
+        return <Info className="size-4 text-blue-500" />;
     }
-  }
+  };
 
   const statusBadge = (status: QualityCheck["status"]) => {
     const map = {
       pass: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
       warn: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
       info: "bg-blue-500/15 text-blue-700 dark:text-blue-400",
-    }
-    const labels = { pass: "良好", warn: "注意", info: "信息" }
-    return (
-      <Badge className={map[status] ?? ""}>{labels[status]}</Badge>
-    )
-  }
+    };
+    const labels = { pass: "良好", warn: "注意", info: "信息" };
+    return <Badge className={map[status] ?? ""}>{labels[status]}</Badge>;
+  };
 
   return (
     <div className="space-y-6">
@@ -107,18 +94,14 @@ export function QualityClient({ metadata }: QualityClientProps) {
           <Shield className="text-primary size-6" />
           数据质量
         </h1>
-        <p className="text-muted-foreground text-sm">
-          检查数据完整性与质量指标
-        </p>
+        <p className="text-muted-foreground text-sm">检查数据完整性与质量指标</p>
       </div>
 
       {/* Score */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">质量评分</CardTitle>
-          <CardDescription>
-            基于数据完整度的综合评分
-          </CardDescription>
+          <CardDescription>基于数据完整度的综合评分</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-4">
@@ -148,9 +131,7 @@ export function QualityClient({ metadata }: QualityClientProps) {
                   <span className="text-sm font-medium">{check.label}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground text-xs">
-                    {check.detail}
-                  </span>
+                  <span className="text-muted-foreground text-xs">{check.detail}</span>
                   {statusBadge(check.status)}
                 </div>
               </div>
@@ -159,5 +140,5 @@ export function QualityClient({ metadata }: QualityClientProps) {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

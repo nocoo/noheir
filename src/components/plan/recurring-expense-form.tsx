@@ -108,9 +108,7 @@ export function RecurringExpenseForm({
   const [amountText, setAmountText] = React.useState<string>(
     initial?.amount != null ? initial.amount.toString() : "",
   );
-  const [categoryId, setCategoryId] = React.useState<string>(
-    initial?.categoryId ?? "",
-  );
+  const [categoryId, setCategoryId] = React.useState<string>(initial?.categoryId ?? "");
   const [account, setAccount] = React.useState<string>(initial?.account ?? "");
   const [freq, setFreq] = React.useState<FrequencyValue>(initialFrequency(initial));
   const [startDate, setStartDate] = React.useState<string>(initial?.startDate ?? "");
@@ -137,10 +135,8 @@ export function RecurringExpenseForm({
 
     const freqErrors: FrequencyPickerErrors = {};
     if (freq.interval < 1) freqErrors.interval = "至少为 1";
-    if (freq.frequency === "weekly" && freq.weekday == null)
-      freqErrors.weekday = "请选择周几";
-    if (freq.frequency === "monthly" && freq.dayOfMonth == null)
-      freqErrors.dayOfMonth = "请填写日";
+    if (freq.frequency === "weekly" && freq.weekday == null) freqErrors.weekday = "请选择周几";
+    if (freq.frequency === "monthly" && freq.dayOfMonth == null) freqErrors.dayOfMonth = "请填写日";
     if (freq.frequency === "yearly") {
       if (freq.monthOfYear == null) freqErrors.monthOfYear = "请填写月份";
       if (freq.dayOfMonth == null) freqErrors.dayOfMonth = "请填写日";
@@ -181,9 +177,10 @@ export function RecurringExpenseForm({
         payload.dayOfMonth = freq.dayOfMonth;
       }
 
-      const result = isEdit && initial?.id
-        ? await updateRecurringExpense(initial.id, payload)
-        : await createRecurringExpense(payload);
+      const result =
+        isEdit && initial?.id
+          ? await updateRecurringExpense(initial.id, payload)
+          : await createRecurringExpense(payload);
 
       if (result.success) {
         toast.success(isEdit ? "已更新" : "已创建");
@@ -360,12 +357,7 @@ export function RecurringExpenseForm({
           {isPending ? "保存中..." : isEdit ? "保存" : "创建"}
         </Button>
         {onCancel ? (
-          <Button
-            type="button"
-            variant="outline"
-            disabled={isPending}
-            onClick={onCancel}
-          >
+          <Button type="button" variant="outline" disabled={isPending} onClick={onCancel}>
             取消
           </Button>
         ) : null}

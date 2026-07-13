@@ -22,9 +22,7 @@ export const formatDate = (date: string): string => {
   return d.toLocaleDateString("zh-CN");
 };
 
-export const getChartMargin = (
-  size: "small" | "medium" | "large" = "medium",
-) => {
+export const getChartMargin = (size: "small" | "medium" | "large" = "medium") => {
   const margins = {
     small: { top: 10, right: 20, bottom: 10, left: 10 },
     medium: { top: 20, right: 30, bottom: 20, left: 20 },
@@ -35,8 +33,6 @@ export const getChartMargin = (
 
 export const yAxisWidth = 100;
 
-export const createYAxisCurrencyFormatter = (
-  unit: "standard" | "k" = "k",
-) => {
+export const createYAxisCurrencyFormatter = (unit: "standard" | "k" = "k") => {
   return unit === "standard" ? formatCurrency : formatCurrencyK;
 };

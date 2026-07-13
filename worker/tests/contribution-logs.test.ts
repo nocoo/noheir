@@ -364,7 +364,11 @@ describe("ContributionLogsRepo", () => {
       operationDate: "2026-02-01",
     });
 
-    const result = await repos.contributionLogs.getLatestInvestLogs(userId, [unit1.id, unit2.id, unit3.id]);
+    const result = await repos.contributionLogs.getLatestInvestLogs(userId, [
+      unit1.id,
+      unit2.id,
+      unit3.id,
+    ]);
 
     expect(result.size).toBe(2); // unit3 has no invest log
 
@@ -404,7 +408,12 @@ describe("ContributionLogsRepo", () => {
     });
 
     // Soft delete the newer log
-    await repos.contributionLogs.softDelete(userId, (await repos.contributionLogs.search(userId, { unitId: unit.id })).logs.find(l => l.operationDate === "2026-03-01")!.id);
+    await repos.contributionLogs.softDelete(
+      userId,
+      (await repos.contributionLogs.search(userId, { unitId: unit.id })).logs.find(
+        (l) => l.operationDate === "2026-03-01",
+      )!.id,
+    );
 
     const result = await repos.contributionLogs.getLatestInvestLogs(userId, [unit.id]);
     const log = result.get(unit.id);

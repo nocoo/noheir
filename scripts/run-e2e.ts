@@ -77,9 +77,7 @@ async function waitForHealth(): Promise<void> {
     }
     await Bun.sleep(300);
   }
-  throw new Error(
-    `wrangler dev never became healthy on ${BASE}: ${String(lastErr)}`,
-  );
+  throw new Error(`wrangler dev never became healthy on ${BASE}: ${String(lastErr)}`);
 }
 
 function applyMigrations(): void {
@@ -137,10 +135,7 @@ async function startWrangler(): Promise<void> {
       env: { ...process.env, WRANGLER_LOG: "error" },
     },
   );
-  const drain = async (
-    stream: ReadableStream<Uint8Array>,
-    label: string,
-  ): Promise<void> => {
+  const drain = async (stream: ReadableStream<Uint8Array>, label: string): Promise<void> => {
     const reader = stream.getReader();
     const dec = new TextDecoder();
     while (true) {

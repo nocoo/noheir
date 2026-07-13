@@ -249,7 +249,12 @@ describe("transactions repo", () => {
   test("search by year and month", async () => {
     const repos = getTestRepos();
     await repos.transactions.create(userId, baseTx); // 2026-03
-    await repos.transactions.create(userId, { ...baseTx, year: 2025, month: 12, date: "2025-12-15" });
+    await repos.transactions.create(userId, {
+      ...baseTx,
+      year: 2025,
+      month: 12,
+      date: "2025-12-15",
+    });
 
     const result = await repos.transactions.search(userId, { year: 2026, month: 3 });
     expect(result.total_returned).toBe(1);

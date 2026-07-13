@@ -275,10 +275,7 @@ describe("E2E: Transfers", () => {
   // ── Bulk ──
 
   test("POST /api/transfers/bulk inserts multiple rows", async () => {
-    const rows = [
-      makeTransfer({ note: "bulk-1" }),
-      makeTransfer({ note: "bulk-2" }),
-    ];
+    const rows = [makeTransfer({ note: "bulk-1" }), makeTransfer({ note: "bulk-2" })];
 
     const res = await api<{ inserted: number }>({
       method: "POST",

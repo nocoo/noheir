@@ -6,11 +6,7 @@ import type { User } from "../types";
 export function createUsersRepo(db: DrizzleD1Database) {
   return {
     async findById(id: string): Promise<User | null> {
-      const row = await db
-        .select()
-        .from(users)
-        .where(eq(users.id, id))
-        .get();
+      const row = await db.select().from(users).where(eq(users.id, id)).get();
       return row ?? null;
     },
 
@@ -31,11 +27,7 @@ export function createUsersRepo(db: DrizzleD1Database) {
       image?: string | null | undefined;
       providerAccountId: string;
     }): Promise<User> {
-      const existing = await db
-        .select()
-        .from(users)
-        .where(eq(users.id, data.id))
-        .get();
+      const existing = await db.select().from(users).where(eq(users.id, data.id)).get();
 
       if (existing) {
         const updated = await db

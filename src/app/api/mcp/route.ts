@@ -23,20 +23,14 @@ export async function POST(request: Request) {
   const siteUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
 
   // Step 1: Validate Origin header (DNS rebinding prevention)
-  const originError = validateOrigin(
-    request.headers.get("origin"),
-    siteUrl,
-  );
+  const originError = validateOrigin(request.headers.get("origin"), siteUrl);
   if (originError) {
     return errorResponse(originError.error, originError.status);
   }
 
   // Step 2: Validate Bearer token
   const db = getDb();
-  const authResult = await validateMcpToken(
-    db,
-    request.headers.get("authorization"),
-  );
+  const authResult = await validateMcpToken(db, request.headers.get("authorization"));
   if (!authResult.valid) {
     return errorResponse(authResult.error, authResult.status);
   }

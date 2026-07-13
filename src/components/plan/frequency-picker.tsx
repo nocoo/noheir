@@ -77,10 +77,7 @@ const WEEKDAY_LABELS = ["周日", "周一", "周二", "周三", "周四", "周�
 
 /** Apply a frequency change while wiping fields that don't apply.
  *  Exported for unit tests; pure function. */
-export function applyFrequencyChange(
-  prev: FrequencyValue,
-  next: Frequency,
-): FrequencyValue {
+export function applyFrequencyChange(prev: FrequencyValue, next: Frequency): FrequencyValue {
   if (prev.frequency === next) return prev;
   // Keep interval (semantically meaningful in every mode).
   const base: FrequencyValue = {
@@ -104,11 +101,7 @@ export function applyFrequencyChange(
   return base;
 }
 
-function arrowToIndex(
-  current: number,
-  key: string,
-  count: number,
-): number | null {
+function arrowToIndex(current: number, key: string, count: number): number | null {
   switch (key) {
     case "ArrowRight":
     case "ArrowDown":
@@ -131,11 +124,7 @@ function arrowToIndex(
  *  "user hasn't filled this" from "user typed a valid value" — the
  *  form layer treats null as missing and surfaces a required-field
  *  error rather than silently storing 1. */
-function parseIntInRange(
-  raw: string,
-  min: number,
-  max: number,
-): number | null {
+function parseIntInRange(raw: string, min: number, max: number): number | null {
   if (raw.trim() === "") return null;
   const n = Number(raw);
   if (!Number.isFinite(n)) return null;
@@ -165,9 +154,7 @@ export function FrequencyPicker({
 }: FrequencyPickerProps): React.ReactElement {
   const buttonRef = React.useRef<(HTMLButtonElement | null)[]>([]);
   const selectedIdx = FREQUENCIES.indexOf(value.frequency);
-  const [tabIdx, setTabIdx] = React.useState<number>(
-    selectedIdx >= 0 ? selectedIdx : 0,
-  );
+  const [tabIdx, setTabIdx] = React.useState<number>(selectedIdx >= 0 ? selectedIdx : 0);
   React.useEffect(() => {
     if (selectedIdx >= 0) setTabIdx(selectedIdx);
   }, [selectedIdx]);
@@ -197,9 +184,7 @@ export function FrequencyPicker({
   // value back to 1 mid-keystroke. The committed value still flows
   // through onChange — empty parses as 1 (the domain min) so a partially
   // typed state never produces an invalid value upstream.
-  const [intervalText, setIntervalText] = React.useState<string>(
-    value.interval.toString(),
-  );
+  const [intervalText, setIntervalText] = React.useState<string>(value.interval.toString());
   // External value changes (e.g. parent reset) re-sync the text.
   React.useEffect(() => {
     setIntervalText(value.interval.toString());
@@ -209,17 +194,12 @@ export function FrequencyPicker({
   // (or 0 = Sunday) and follows the user's arrow-key navigation. Same
   // contract as the frequency selector and ColorTokenPicker.
   const weekdayRef = React.useRef<(HTMLButtonElement | null)[]>([]);
-  const [weekdayTabIdx, setWeekdayTabIdx] = React.useState<number>(
-    value.weekday ?? 0,
-  );
+  const [weekdayTabIdx, setWeekdayTabIdx] = React.useState<number>(value.weekday ?? 0);
   React.useEffect(() => {
     if (value.weekday != null) setWeekdayTabIdx(value.weekday);
   }, [value.weekday]);
 
-  const handleWeekdayKey = (
-    e: React.KeyboardEvent<HTMLButtonElement>,
-    idx: number,
-  ) => {
+  const handleWeekdayKey = (e: React.KeyboardEvent<HTMLButtonElement>, idx: number) => {
     if (disabled) return;
     const target = arrowToIndex(idx, e.key, WEEKDAY_LABELS.length);
     if (target === null) return;
@@ -302,9 +282,7 @@ export function FrequencyPicker({
             }}
             className="w-24"
           />
-          <span className="text-sm text-muted-foreground">
-            {FREQ_UNIT[value.frequency]}
-          </span>
+          <span className="text-sm text-muted-foreground">{FREQ_UNIT[value.frequency]}</span>
         </div>
         {errors?.interval ? (
           <p id={`${intervalId}-error`} role="alert" className="text-sm text-destructive">

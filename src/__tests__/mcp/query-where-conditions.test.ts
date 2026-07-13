@@ -70,10 +70,7 @@ describe("buildWhereConditions", () => {
     });
 
     it("should add month condition", () => {
-      const { conditions, values } = buildWhereConditions(
-        { month: 6 },
-        TRANSACTION_FIELD_MAPPINGS,
-      );
+      const { conditions, values } = buildWhereConditions({ month: 6 }, TRANSACTION_FIELD_MAPPINGS);
 
       expect(conditions).toContain(`CAST(strftime('%m', date) AS INTEGER) = ?`);
       expect(values).toContain(6);

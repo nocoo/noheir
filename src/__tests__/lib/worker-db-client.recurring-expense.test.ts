@@ -30,10 +30,7 @@ function setupFetch(responses: Array<{ status: number; body?: unknown }>) {
     const r = responses[idx++] ?? { status: 200 };
     return new Response(r.body != null ? JSON.stringify(r.body) : null, {
       status: r.status,
-      headers:
-        r.status === 204
-          ? {}
-          : { "Content-Type": "application/json" },
+      headers: r.status === 204 ? {} : { "Content-Type": "application/json" },
     });
   });
   vi.stubGlobal("fetch", fetchMock);
@@ -54,9 +51,7 @@ describe("WorkerDbClient — expense category methods (P2-C5)", () => {
   });
 
   test("listExpenseCategories sends GET with auth + user headers", async () => {
-    const { calls, call } = setupFetch([
-      { status: 200, body: { categories: [] } },
-    ]);
+    const { calls, call } = setupFetch([{ status: 200, body: { categories: [] } }]);
     await client.listExpenseCategories("u1");
     expect(calls).toHaveLength(1);
     const req = call(0);
@@ -94,9 +89,7 @@ describe("WorkerDbClient — expense category methods (P2-C5)", () => {
   });
 
   test("updateExpenseCategory PUTs to /:id", async () => {
-    const { call } = setupFetch([
-      { status: 200, body: { category: { id: "c1" } } },
-    ]);
+    const { call } = setupFetch([{ status: 200, body: { category: { id: "c1" } } }]);
     await client.updateExpenseCategory("u1", "c1", { name: "renamed" });
     expect(call(0).method).toBe("PUT");
     expect(call(0).url).toBe(`${BASE}/api/expense-categories/c1`);
@@ -105,9 +98,7 @@ describe("WorkerDbClient — expense category methods (P2-C5)", () => {
 
   test("deleteExpenseCategory DELETEs and tolerates 204", async () => {
     const { call } = setupFetch([{ status: 204 }]);
-    await expect(
-      client.deleteExpenseCategory("u1", "c1"),
-    ).resolves.toBeUndefined();
+    await expect(client.deleteExpenseCategory("u1", "c1")).resolves.toBeUndefined();
     expect(call(0).method).toBe("DELETE");
     expect(call(0).url).toBe(`${BASE}/api/expense-categories/c1`);
   });
@@ -122,18 +113,14 @@ describe("WorkerDbClient — recurring expense methods (P2-C6)", () => {
   });
 
   test("listRecurringExpenses GET", async () => {
-    const { call } = setupFetch([
-      { status: 200, body: { rules: [] } },
-    ]);
+    const { call } = setupFetch([{ status: 200, body: { rules: [] } }]);
     await client.listRecurringExpenses("u1");
     expect(call(0).method).toBe("GET");
     expect(call(0).url).toBe(`${BASE}/api/recurring-expenses`);
   });
 
   test("createRecurringExpense POSTs payload", async () => {
-    const { call } = setupFetch([
-      { status: 201, body: { rule: { id: "r1" } } },
-    ]);
+    const { call } = setupFetch([{ status: 201, body: { rule: { id: "r1" } } }]);
     await client.createRecurringExpense("u1", {
       name: "中行车险",
       amountCents: 800_000,
@@ -148,36 +135,20 @@ describe("WorkerDbClient — recurring expense methods (P2-C6)", () => {
   });
 
   test("updateRecurringExpense (default) does NOT send X-Internal-Action", async () => {
-    const { call } = setupFetch([
-      { status: 200, body: { rule: { id: "r1" } } },
-    ]);
+    const { call } = setupFetch([{ status: 200, body: { rule: { id: "r1" } } }]);
     await client.updateRecurringExpense("u1", "r1", { name: "renamed" });
     expect(call(0).headers["x-internal-action"]).toBeUndefined();
   });
 
   test("updateRecurringExpense with internal:true sends X-Internal-Action: 1", async () => {
-    const { call } = setupFetch([
-      { status: 200, body: { rule: { id: "r1" } } },
-    ]);
-    await client.updateRecurringExpense(
-      "u1",
-      "r1",
-      { status: "paused" },
-      { internal: true },
-    );
+    const { call } = setupFetch([{ status: 200, body: { rule: { id: "r1" } } }]);
+    await client.updateRecurringExpense("u1", "r1", { status: "paused" }, { internal: true });
     expect(call(0).headers["x-internal-action"]).toBe("1");
   });
 
   test("updateRecurringExpense with internal:false explicit also omits the header", async () => {
-    const { call } = setupFetch([
-      { status: 200, body: { rule: { id: "r1" } } },
-    ]);
-    await client.updateRecurringExpense(
-      "u1",
-      "r1",
-      { name: "x" },
-      { internal: false },
-    );
+    const { call } = setupFetch([{ status: 200, body: { rule: { id: "r1" } } }]);
+    await client.updateRecurringExpense("u1", "r1", { name: "x" }, { internal: false });
     expect(call(0).headers["x-internal-action"]).toBeUndefined();
   });
 

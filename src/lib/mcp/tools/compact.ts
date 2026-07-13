@@ -61,12 +61,12 @@ export function categoryPath(...parts: (string | null | undefined)[]): string {
  * Convert Chinese currency names to ISO 4217 codes.
  */
 const CURRENCY_MAP: Record<string, string> = {
-  "人民币": "CNY",
-  "美元": "USD",
-  "港币": "HKD",
-  "日元": "JPY",
-  "欧元": "EUR",
-  "英镑": "GBP",
+  人民币: "CNY",
+  美元: "USD",
+  港币: "HKD",
+  日元: "JPY",
+  欧元: "EUR",
+  英镑: "GBP",
 };
 
 export function currencyCode(currency: string): string {

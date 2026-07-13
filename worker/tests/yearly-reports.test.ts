@@ -45,12 +45,24 @@ describe("reports repo — yearly aggregation", () => {
     test("aggregates income and expense per month", async () => {
       const repos = getTestRepos();
       // Jan income
-      await repos.transactions.create(userId, makeTx({ month: 1, day: 1, date: "2025-01-01", type: "income", amountCents: 100000 }));
-      await repos.transactions.create(userId, makeTx({ month: 1, day: 2, date: "2025-01-02", type: "income", amountCents: 50000 }));
+      await repos.transactions.create(
+        userId,
+        makeTx({ month: 1, day: 1, date: "2025-01-01", type: "income", amountCents: 100000 }),
+      );
+      await repos.transactions.create(
+        userId,
+        makeTx({ month: 1, day: 2, date: "2025-01-02", type: "income", amountCents: 50000 }),
+      );
       // Jan expense
-      await repos.transactions.create(userId, makeTx({ month: 1, day: 3, date: "2025-01-03", type: "expense", amountCents: 30000 }));
+      await repos.transactions.create(
+        userId,
+        makeTx({ month: 1, day: 3, date: "2025-01-03", type: "expense", amountCents: 30000 }),
+      );
       // Mar expense
-      await repos.transactions.create(userId, makeTx({ month: 3, day: 15, date: "2025-03-15", type: "expense", amountCents: 5000 }));
+      await repos.transactions.create(
+        userId,
+        makeTx({ month: 3, day: 15, date: "2025-03-15", type: "expense", amountCents: 5000 }),
+      );
 
       const result = await repos.reports.yearlySummary(userId, 2025);
 
@@ -123,18 +135,33 @@ describe("reports repo — yearly aggregation", () => {
 
     test("groups by primary/secondary/tertiary with totals", async () => {
       const repos = getTestRepos();
-      await repos.transactions.create(userId, makeTx({
-        primaryCategory: "餐饮", secondaryCategory: "外卖", tertiaryCategory: "午餐",
-        amountCents: 3000,
-      }));
-      await repos.transactions.create(userId, makeTx({
-        primaryCategory: "餐饮", secondaryCategory: "外卖", tertiaryCategory: "午餐",
-        amountCents: 2000,
-      }));
-      await repos.transactions.create(userId, makeTx({
-        primaryCategory: "餐饮", secondaryCategory: "堂食", tertiaryCategory: "晚餐",
-        amountCents: 8000,
-      }));
+      await repos.transactions.create(
+        userId,
+        makeTx({
+          primaryCategory: "餐饮",
+          secondaryCategory: "外卖",
+          tertiaryCategory: "午餐",
+          amountCents: 3000,
+        }),
+      );
+      await repos.transactions.create(
+        userId,
+        makeTx({
+          primaryCategory: "餐饮",
+          secondaryCategory: "外卖",
+          tertiaryCategory: "午餐",
+          amountCents: 2000,
+        }),
+      );
+      await repos.transactions.create(
+        userId,
+        makeTx({
+          primaryCategory: "餐饮",
+          secondaryCategory: "堂食",
+          tertiaryCategory: "晚餐",
+          amountCents: 8000,
+        }),
+      );
 
       const result = await repos.reports.categorySummary(userId, 2025);
       expect(result.categories).toHaveLength(2);
@@ -166,9 +193,18 @@ describe("reports repo — yearly aggregation", () => {
 
     test("filters by month", async () => {
       const repos = getTestRepos();
-      await repos.transactions.create(userId, makeTx({ month: 1, date: "2025-01-15", amountCents: 1000 }));
-      await repos.transactions.create(userId, makeTx({ month: 1, date: "2025-01-20", amountCents: 2000 }));
-      await repos.transactions.create(userId, makeTx({ month: 3, date: "2025-03-15", amountCents: 5000 }));
+      await repos.transactions.create(
+        userId,
+        makeTx({ month: 1, date: "2025-01-15", amountCents: 1000 }),
+      );
+      await repos.transactions.create(
+        userId,
+        makeTx({ month: 1, date: "2025-01-20", amountCents: 2000 }),
+      );
+      await repos.transactions.create(
+        userId,
+        makeTx({ month: 3, date: "2025-03-15", amountCents: 5000 }),
+      );
 
       const janResult = await repos.reports.categorySummary(userId, 2025, 1);
       expect(janResult.categories).toHaveLength(1);
@@ -183,9 +219,18 @@ describe("reports repo — yearly aggregation", () => {
 
     test("filters by month and type combined", async () => {
       const repos = getTestRepos();
-      await repos.transactions.create(userId, makeTx({ month: 1, type: "income", amountCents: 100000 }));
-      await repos.transactions.create(userId, makeTx({ month: 1, type: "expense", amountCents: 3000 }));
-      await repos.transactions.create(userId, makeTx({ month: 3, type: "expense", amountCents: 5000 }));
+      await repos.transactions.create(
+        userId,
+        makeTx({ month: 1, type: "income", amountCents: 100000 }),
+      );
+      await repos.transactions.create(
+        userId,
+        makeTx({ month: 1, type: "expense", amountCents: 3000 }),
+      );
+      await repos.transactions.create(
+        userId,
+        makeTx({ month: 3, type: "expense", amountCents: 5000 }),
+      );
 
       const janExpense = await repos.reports.categorySummary(userId, 2025, 1, "expense");
       expect(janExpense.categories).toHaveLength(1);
@@ -198,9 +243,15 @@ describe("reports repo — yearly aggregation", () => {
 
     test("returns all types when type is omitted", async () => {
       const repos = getTestRepos();
-      await repos.transactions.create(userId, makeTx({
-        type: "income", primaryCategory: "工资", tertiaryCategory: "月薪", amountCents: 100000,
-      }));
+      await repos.transactions.create(
+        userId,
+        makeTx({
+          type: "income",
+          primaryCategory: "工资",
+          tertiaryCategory: "月薪",
+          amountCents: 100000,
+        }),
+      );
       await repos.transactions.create(userId, makeTx({ type: "expense", amountCents: 5000 }));
 
       const result = await repos.reports.categorySummary(userId, 2025);
@@ -230,18 +281,38 @@ describe("reports repo — yearly aggregation", () => {
 
     test("groups by account and type", async () => {
       const repos = getTestRepos();
-      await repos.transactions.create(userId, makeTx({
-        account: "招商银行", type: "income", amountCents: 100000,
-      }));
-      await repos.transactions.create(userId, makeTx({
-        account: "招商银行", type: "income", amountCents: 50000,
-      }));
-      await repos.transactions.create(userId, makeTx({
-        account: "招商银行", type: "expense", amountCents: 3000,
-      }));
-      await repos.transactions.create(userId, makeTx({
-        account: "工商银行", type: "expense", amountCents: 7000,
-      }));
+      await repos.transactions.create(
+        userId,
+        makeTx({
+          account: "招商银行",
+          type: "income",
+          amountCents: 100000,
+        }),
+      );
+      await repos.transactions.create(
+        userId,
+        makeTx({
+          account: "招商银行",
+          type: "income",
+          amountCents: 50000,
+        }),
+      );
+      await repos.transactions.create(
+        userId,
+        makeTx({
+          account: "招商银行",
+          type: "expense",
+          amountCents: 3000,
+        }),
+      );
+      await repos.transactions.create(
+        userId,
+        makeTx({
+          account: "工商银行",
+          type: "expense",
+          amountCents: 7000,
+        }),
+      );
 
       const result = await repos.reports.accountSummary(userId, 2025);
       expect(result.accounts).toHaveLength(3); // 招商-income, 招商-expense, 工商-expense
@@ -293,18 +364,33 @@ describe("reports repo — yearly aggregation", () => {
 
     test("groups account_to_category by type/account/primary", async () => {
       const repos = getTestRepos();
-      await repos.transactions.create(userId, makeTx({
-        type: "expense", account: "招商银行", primaryCategory: "餐饮",
-        amountCents: 5000,
-      }));
-      await repos.transactions.create(userId, makeTx({
-        type: "expense", account: "招商银行", primaryCategory: "餐饮",
-        amountCents: 3000,
-      }));
-      await repos.transactions.create(userId, makeTx({
-        type: "income", account: "工商银行", primaryCategory: "工资",
-        amountCents: 100000,
-      }));
+      await repos.transactions.create(
+        userId,
+        makeTx({
+          type: "expense",
+          account: "招商银行",
+          primaryCategory: "餐饮",
+          amountCents: 5000,
+        }),
+      );
+      await repos.transactions.create(
+        userId,
+        makeTx({
+          type: "expense",
+          account: "招商银行",
+          primaryCategory: "餐饮",
+          amountCents: 3000,
+        }),
+      );
+      await repos.transactions.create(
+        userId,
+        makeTx({
+          type: "income",
+          account: "工商银行",
+          primaryCategory: "工资",
+          amountCents: 100000,
+        }),
+      );
 
       const result = await repos.reports.flowSummary(userId, 2025);
       expect(result.account_to_category).toHaveLength(2);
@@ -322,14 +408,22 @@ describe("reports repo — yearly aggregation", () => {
 
     test("groups category_to_subcategory by type/primary/secondary", async () => {
       const repos = getTestRepos();
-      await repos.transactions.create(userId, makeTx({
-        primaryCategory: "餐饮", secondaryCategory: "外卖",
-        amountCents: 5000,
-      }));
-      await repos.transactions.create(userId, makeTx({
-        primaryCategory: "餐饮", secondaryCategory: "堂食",
-        amountCents: 8000,
-      }));
+      await repos.transactions.create(
+        userId,
+        makeTx({
+          primaryCategory: "餐饮",
+          secondaryCategory: "外卖",
+          amountCents: 5000,
+        }),
+      );
+      await repos.transactions.create(
+        userId,
+        makeTx({
+          primaryCategory: "餐饮",
+          secondaryCategory: "堂食",
+          amountCents: 8000,
+        }),
+      );
 
       const result = await repos.reports.flowSummary(userId, 2025);
       expect(result.category_to_subcategory).toHaveLength(2);

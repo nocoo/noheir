@@ -1,25 +1,19 @@
-"use client"
+"use client";
 
-import {
-  TrendingUp,
-  TrendingDown,
-  PiggyBank,
-  Percent,
-  List,
-} from "lucide-react"
-import type { DomainTransaction, MonthlyData } from "@/domain/types"
-import { formatCurrencyFull } from "@/lib/chart-config"
-import { StatCard } from "@/components/shared/stat-card"
-import { IncomeExpenseChart } from "./income-expense-chart"
-import { RecentTransactionsTable } from "./recent-transactions-table"
+import { TrendingUp, TrendingDown, PiggyBank, Percent, List } from "lucide-react";
+import type { DomainTransaction, MonthlyData } from "@/domain/types";
+import { formatCurrencyFull } from "@/lib/chart-config";
+import { StatCard } from "@/components/shared/stat-card";
+import { IncomeExpenseChart } from "./income-expense-chart";
+import { RecentTransactionsTable } from "./recent-transactions-table";
 interface OverviewClientProps {
-  transactions: DomainTransaction[]
-  monthlyData: MonthlyData[]
-  totalIncome: number
-  totalExpense: number
-  balance: number
-  savingsRate: number
-  targetSavingsRate: number
+  transactions: DomainTransaction[];
+  monthlyData: MonthlyData[];
+  totalIncome: number;
+  totalExpense: number;
+  balance: number;
+  savingsRate: number;
+  targetSavingsRate: number;
 }
 
 export function OverviewClient({
@@ -31,9 +25,7 @@ export function OverviewClient({
   savingsRate,
   targetSavingsRate,
 }: OverviewClientProps) {
-  const recentTransactions = [...transactions].sort((a, b) =>
-    b.date.localeCompare(a.date)
-  )
+  const recentTransactions = [...transactions].sort((a, b) => b.date.localeCompare(a.date));
 
   return (
     <div className="space-y-6">
@@ -41,9 +33,7 @@ export function OverviewClient({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">财务概览</h1>
-          <p className="text-muted-foreground text-sm">
-            查看您的财务状况和趋势
-          </p>
+          <p className="text-muted-foreground text-sm">查看您的财务状况和趋势</p>
         </div>
       </div>
 
@@ -79,10 +69,7 @@ export function OverviewClient({
       <IncomeExpenseChart monthlyData={monthlyData} targetSavingsRate={targetSavingsRate} />
 
       {/* Recent Transactions */}
-      <RecentTransactionsTable
-        transactions={recentTransactions}
-        icon={List}
-      />
+      <RecentTransactionsTable transactions={recentTransactions} icon={List} />
     </div>
-  )
+  );
 }

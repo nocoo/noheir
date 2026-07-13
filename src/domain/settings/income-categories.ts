@@ -9,10 +9,7 @@
 /**
  * Toggle a category in the active income list.
  */
-export function toggleActiveIncomeCategory(
-  current: string[],
-  category: string,
-): string[] {
+export function toggleActiveIncomeCategory(current: string[], category: string): string[] {
   const index = current.indexOf(category);
   if (index >= 0) {
     return current.filter((c) => c !== category);
@@ -23,10 +20,7 @@ export function toggleActiveIncomeCategory(
 /**
  * Check if a category is marked as active income.
  */
-export function isActiveIncome(
-  activeCategories: string[],
-  category: string,
-): boolean {
+export function isActiveIncome(activeCategories: string[], category: string): boolean {
   return activeCategories.includes(category);
 }
 
@@ -49,12 +43,4 @@ export function getIncomeTypeDescription(isActive: boolean): string {
 /**
  * Default categories commonly considered as active income.
  */
-export const DEFAULT_ACTIVE_INCOME_HINTS = [
-  "工资",
-  "奖金",
-  "补贴",
-  "兼职",
-  "劳务",
-  "稿费",
-  "咨询",
-];
+export const DEFAULT_ACTIVE_INCOME_HINTS = ["工资", "奖金", "补贴", "兼职", "劳务", "稿费", "咨询"];

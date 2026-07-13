@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   BarChart,
@@ -12,17 +12,11 @@ import {
   PieChart,
   Pie,
   Cell,
-} from "recharts"
-import { Wallet, CreditCard, TrendingUp, TrendingDown } from "lucide-react"
-import type { AccountType } from "@/domain/types"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+} from "recharts";
+import { Wallet, CreditCard, TrendingUp, TrendingDown } from "lucide-react";
+import type { AccountType } from "@/domain/types";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -30,46 +24,46 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { cn } from "@/lib/utils"
-import { formatCurrencyFull, formatCurrencyK } from "@/lib/chart-config"
-import { StatCard } from "@/components/shared/stat-card"
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import { formatCurrencyFull, formatCurrencyK } from "@/lib/chart-config";
+import { StatCard } from "@/components/shared/stat-card";
 
 interface SerializedAccount {
-  name: string
-  income: number
-  expense: number
-  balance: number
-  transactionCount: number
+  name: string;
+  income: number;
+  expense: number;
+  balance: number;
+  transactionCount: number;
 }
 
 interface SerializedAccountGroup {
-  prefix: string
-  totalIncome: number
-  totalExpense: number
-  totalBalance: number
-  totalTransactions: number
-  accountType?: AccountType | undefined
-  accounts: SerializedAccount[]
+  prefix: string;
+  totalIncome: number;
+  totalExpense: number;
+  totalBalance: number;
+  totalTransactions: number;
+  accountType?: AccountType | undefined;
+  accounts: SerializedAccount[];
 }
 
 interface AccountAnalysisClientProps {
-  accounts: SerializedAccount[]
-  accountGroups: SerializedAccountGroup[]
+  accounts: SerializedAccount[];
+  accountGroups: SerializedAccountGroup[];
   chartData: Array<{
-    name: string
-    income: number
-    expense: number
-    balance: number
-  }>
-  pieData: Array<{ name: string; value: number; percentage: number }>
+    name: string;
+    income: number;
+    expense: number;
+    balance: number;
+  }>;
+  pieData: Array<{ name: string; value: number; percentage: number }>;
   summaryStats: {
-    accountCount: number
-    totalTransactions: number
-    totalFlow: number
-    totalIncome: number
-    totalExpense: number
-  }
+    accountCount: number;
+    totalTransactions: number;
+    totalFlow: number;
+    totalIncome: number;
+    totalExpense: number;
+  };
 }
 
 const PIE_COLORS = [
@@ -79,11 +73,11 @@ const PIE_COLORS = [
   "hsl(var(--chart-4))",
   "hsl(var(--chart-5))",
   "#64748b",
-]
+];
 
-const INCOME_HEX = "var(--color-income)"
-const EXPENSE_HEX = "var(--color-expense)"
-const BALANCE_HEX = "var(--color-primary)"
+const INCOME_HEX = "var(--color-income)";
+const EXPENSE_HEX = "var(--color-expense)";
+const BALANCE_HEX = "var(--color-primary)";
 
 export function AccountAnalysisClient({
   accounts,
@@ -101,9 +95,7 @@ export function AccountAnalysisClient({
             <Wallet className="text-primary size-6" />
             账户分析
           </h1>
-          <p className="text-muted-foreground text-sm">
-            各账户收支概览与分布
-          </p>
+          <p className="text-muted-foreground text-sm">各账户收支概览与分布</p>
         </div>
       </div>
 
@@ -147,10 +139,7 @@ export function AccountAnalysisClient({
                 data={chartData.slice(0, 15)}
                 margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
               >
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  className="stroke-border/50"
-                />
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
                 <XAxis
                   dataKey="name"
                   tick={{ fontSize: 11 }}
@@ -166,7 +155,7 @@ export function AccountAnalysisClient({
                 />
                 <Tooltip
                   content={({ active, payload, label }) => {
-                    if (!active || !payload?.length) return null
+                    if (!active || !payload?.length) return null;
                     return (
                       <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
                         <p className="mb-1 font-medium">{label}</p>
@@ -175,33 +164,17 @@ export function AccountAnalysisClient({
                             key={String(entry.dataKey)}
                             style={{ color: String(entry.color ?? "") }}
                           >
-                            {entry.name}:{" "}
-                            {formatCurrencyFull(Number(entry.value ?? 0))}
+                            {entry.name}: {formatCurrencyFull(Number(entry.value ?? 0))}
                           </p>
                         ))}
                       </div>
-                    )
+                    );
                   }}
                 />
                 <Legend />
-                <Bar
-                  dataKey="income"
-                  name="收入"
-                  fill={INCOME_HEX}
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar
-                  dataKey="expense"
-                  name="支出"
-                  fill={EXPENSE_HEX}
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar
-                  dataKey="balance"
-                  name="结余"
-                  fill={BALANCE_HEX}
-                  radius={[4, 4, 0, 0]}
-                />
+                <Bar dataKey="income" name="收入" fill={INCOME_HEX} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="expense" name="支出" fill={EXPENSE_HEX} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="balance" name="结余" fill={BALANCE_HEX} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -236,32 +209,29 @@ export function AccountAnalysisClient({
                     {pieData.map((_, index) => (
                       <Cell
                         key={`cell-${index}`}
-                        fill={
-                          PIE_COLORS[index % PIE_COLORS.length] ??
-                          PIE_COLORS[0] ??
-                          "#64748b"
-                        }
+                        fill={PIE_COLORS[index % PIE_COLORS.length] ?? PIE_COLORS[0] ?? "#64748b"}
                       />
                     ))}
                   </Pie>
                   <Tooltip
                     content={({ active, payload }) => {
-                      if (!active || !payload?.length) return null
-                      const data = payload[0]?.payload as {
-                        name: string
-                        value: number
-                        percentage: number
-                      } | undefined
-                      if (!data) return null
+                      if (!active || !payload?.length) return null;
+                      const data = payload[0]?.payload as
+                        | {
+                            name: string;
+                            value: number;
+                            percentage: number;
+                          }
+                        | undefined;
+                      if (!data) return null;
                       return (
                         <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
                           <p className="font-medium">{data.name}</p>
                           <p className="text-muted-foreground">
-                            {formatCurrencyFull(data.value)} (
-                            {data.percentage.toFixed(1)}%)
+                            {formatCurrencyFull(data.value)} ({data.percentage.toFixed(1)}%)
                           </p>
                         </div>
-                      )
+                      );
                     }}
                   />
                 </PieChart>
@@ -282,16 +252,12 @@ export function AccountAnalysisClient({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <h4 className="font-semibold">{group.prefix}</h4>
-                    <Badge variant="secondary">
-                      {group.accounts.length} 账户
-                    </Badge>
+                    <Badge variant="secondary">{group.accounts.length} 账户</Badge>
                   </div>
                   <span
                     className={cn(
                       "font-medium",
-                      group.totalBalance >= 0
-                        ? "text-income"
-                        : "text-expense",
+                      group.totalBalance >= 0 ? "text-income" : "text-expense",
                     )}
                   >
                     {formatCurrencyFull(group.totalBalance)}
@@ -299,14 +265,9 @@ export function AccountAnalysisClient({
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {group.accounts.slice(0, 6).map((acc) => (
-                    <div
-                      key={acc.name}
-                      className="rounded-md border p-2 text-xs"
-                    >
+                    <div key={acc.name} className="rounded-md border p-2 text-xs">
                       <p className="truncate font-medium">{acc.name}</p>
-                      <p className="text-muted-foreground">
-                        {acc.transactionCount}笔
-                      </p>
+                      <p className="text-muted-foreground">{acc.transactionCount}笔</p>
                     </div>
                   ))}
                 </div>
@@ -345,16 +306,12 @@ export function AccountAnalysisClient({
                   <TableCell
                     className={cn(
                       "text-right font-medium",
-                      acc.balance >= 0
-                        ? "text-income"
-                        : "text-expense",
+                      acc.balance >= 0 ? "text-income" : "text-expense",
                     )}
                   >
                     {formatCurrencyFull(acc.balance)}
                   </TableCell>
-                  <TableCell className="text-right">
-                    {acc.transactionCount}
-                  </TableCell>
+                  <TableCell className="text-right">{acc.transactionCount}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -362,5 +319,5 @@ export function AccountAnalysisClient({
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

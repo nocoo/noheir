@@ -29,9 +29,7 @@ export const getAccountPrefix = (accountName: string): string => {
   return accountName;
 };
 
-export const buildAccountData = (
-  transactions: DomainTransaction[],
-): AccountSummary[] => {
+export const buildAccountData = (transactions: DomainTransaction[]): AccountSummary[] => {
   const accountMap = new Map<string, AccountSummary>();
 
   for (const t of transactions) {
@@ -57,10 +55,7 @@ export const buildAccountData = (
     account.balance = account.income - account.expense;
 
     const catKey = `${t.type}-${t.primaryCategory}`;
-    account.categories.set(
-      catKey,
-      (account.categories.get(catKey) ?? 0) + t.amount,
-    );
+    account.categories.set(catKey, (account.categories.get(catKey) ?? 0) + t.amount);
   }
 
   return Array.from(accountMap.values()).sort(
@@ -78,8 +73,7 @@ export const buildAccountGroups = (
   for (const acc of accountData) {
     const groupKey =
       groupBy === "type"
-        ? (accountTypes?.find((c) => c.accountName === acc.name)?.type ??
-          "unclassified")
+        ? (accountTypes?.find((c) => c.accountName === acc.name)?.type ?? "unclassified")
         : getAccountPrefix(acc.name);
 
     if (!groupMap.has(groupKey)) {
@@ -90,9 +84,7 @@ export const buildAccountGroups = (
         totalExpense: 0,
         totalBalance: 0,
         totalTransactions: 0,
-        ...(groupBy === "type"
-          ? { accountType: groupKey as AccountType }
-          : {}),
+        ...(groupBy === "type" ? { accountType: groupKey as AccountType } : {}),
       });
     }
 
@@ -106,8 +98,7 @@ export const buildAccountGroups = (
   }
 
   return Array.from(groupMap.values()).sort(
-    (a, b) =>
-      b.totalIncome + b.totalExpense - (a.totalIncome + a.totalExpense),
+    (a, b) => b.totalIncome + b.totalExpense - (a.totalIncome + a.totalExpense),
   );
 };
 
@@ -120,14 +111,8 @@ export const buildChartData = (accountData: AccountSummary[]) => {
   }));
 };
 
-export const buildPieData = (
-  accountData: AccountSummary[],
-  threshold = 5,
-) => {
-  const total = accountData.reduce(
-    (sum, acc) => sum + acc.income + acc.expense,
-    0,
-  );
+export const buildPieData = (accountData: AccountSummary[], threshold = 5) => {
+  const total = accountData.reduce((sum, acc) => sum + acc.income + acc.expense, 0);
   if (total <= 0) return [];
 
   const major = accountData.filter((acc) => {

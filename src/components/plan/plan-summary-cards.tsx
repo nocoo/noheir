@@ -22,10 +22,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  sumMonth,
-  sumNextDays,
-} from "@/lib/recurring-expense/occurrences-aggregate";
+import { sumMonth, sumNextDays } from "@/lib/recurring-expense/occurrences-aggregate";
 import { formatAmountYuan } from "@/lib/recurring-expense/format";
 import type { RecurrenceRule } from "@/lib/recurring-expense/rule-types";
 

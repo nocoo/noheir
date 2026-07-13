@@ -73,7 +73,15 @@ describe("Product validation schemas", () => {
     });
 
     test("accepts all valid channels", () => {
-      const channels = ["招商银行", "平安银行", "微众银行", "支付宝", "招银香港", "光大永明", "中信建投"];
+      const channels = [
+        "招商银行",
+        "平安银行",
+        "微众银行",
+        "支付宝",
+        "招银香港",
+        "光大永明",
+        "中信建投",
+      ];
       for (const channel of channels) {
         const result = createProductSchema.safeParse({
           name: "Test",
@@ -86,9 +94,18 @@ describe("Product validation schemas", () => {
 
     test("accepts all valid categories", () => {
       const categories = [
-        "养老年金", "储蓄保险", "混债基金", "债券基金", "货币基金",
-        "股票基金", "指数基金", "宽基指数", "私募基金", "定期存款",
-        "理财产品", "现金+",
+        "养老年金",
+        "储蓄保险",
+        "混债基金",
+        "债券基金",
+        "货币基金",
+        "股票基金",
+        "指数基金",
+        "宽基指数",
+        "私募基金",
+        "定期存款",
+        "理财产品",
+        "现金+",
       ];
       for (const category of categories) {
         const result = createProductSchema.safeParse({
@@ -263,7 +280,16 @@ describe("Unit validation schemas", () => {
     });
 
     test("accepts all valid strategies", () => {
-      const strategies = ["远期理财", "美元资产", "36存单", "长期理财", "短期理财", "中期理财", "进攻计划", "麻麻理财"];
+      const strategies = [
+        "远期理财",
+        "美元资产",
+        "36存单",
+        "长期理财",
+        "短期理财",
+        "中期理财",
+        "进攻计划",
+        "麻麻理财",
+      ];
       for (const strategy of strategies) {
         const result = createUnitSchema.safeParse({
           unitCode: "E01",
@@ -277,8 +303,16 @@ describe("Unit validation schemas", () => {
 
     test("accepts all valid tactics", () => {
       const tactics = [
-        "养老年金", "个人养老金", "定期存款", "理财产品", "现金产品",
-        "债券基金", "偏股基金", "稳健理财", "增额寿险", "货币基金",
+        "养老年金",
+        "个人养老金",
+        "定期存款",
+        "理财产品",
+        "现金产品",
+        "债券基金",
+        "偏股基金",
+        "稳健理财",
+        "增额寿险",
+        "货币基金",
       ];
       for (const t of tactics) {
         const result = createUnitSchema.safeParse({
@@ -385,9 +419,7 @@ describe("updateContributionLogSchema", () => {
     const result = updateContributionLogSchema.safeParse({});
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0]?.message).toContain(
-        "At least one field must be provided",
-      );
+      expect(result.error.issues[0]?.message).toContain("At least one field must be provided");
     }
   });
 
@@ -398,4 +430,3 @@ describe("updateContributionLogSchema", () => {
     expect(result.success).toBe(true);
   });
 });
-

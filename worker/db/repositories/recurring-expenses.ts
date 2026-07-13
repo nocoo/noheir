@@ -14,11 +14,7 @@
 import { and, asc, desc, eq } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { expenseCategories, recurringExpenses } from "../schema";
-import type {
-  NewRecurringExpense,
-  RecurringExpense,
-  RecurringExpenseWithCategory,
-} from "../types";
+import type { NewRecurringExpense, RecurringExpense, RecurringExpenseWithCategory } from "../types";
 
 /** Fields the spec allows on create. `endedAt` and `status` are excluded
  *  — they are only ever set by the end-state-machine action via the
@@ -52,12 +48,7 @@ async function categoryBelongsToUser(
   const row = await db
     .select({ id: expenseCategories.id })
     .from(expenseCategories)
-    .where(
-      and(
-        eq(expenseCategories.id, categoryId),
-        eq(expenseCategories.userId, userId),
-      ),
-    )
+    .where(and(eq(expenseCategories.id, categoryId), eq(expenseCategories.userId, userId)))
     .get();
   return row !== undefined;
 }
@@ -94,19 +85,11 @@ export function createRecurringExpensesRepo(db: DrizzleD1Database) {
       }));
     },
 
-    async findById(
-      userId: string,
-      id: string,
-    ): Promise<RecurringExpense | null> {
+    async findById(userId: string, id: string): Promise<RecurringExpense | null> {
       const row = await db
         .select()
         .from(recurringExpenses)
-        .where(
-          and(
-            eq(recurringExpenses.id, id),
-            eq(recurringExpenses.userId, userId),
-          ),
-        )
+        .where(and(eq(recurringExpenses.id, id), eq(recurringExpenses.userId, userId)))
         .get();
       return row ?? null;
     },
@@ -152,12 +135,7 @@ export function createRecurringExpensesRepo(db: DrizzleD1Database) {
       const rows = await db
         .update(recurringExpenses)
         .set(patch)
-        .where(
-          and(
-            eq(recurringExpenses.id, id),
-            eq(recurringExpenses.userId, userId),
-          ),
-        )
+        .where(and(eq(recurringExpenses.id, id), eq(recurringExpenses.userId, userId)))
         .returning();
       const rule = rows[0];
       if (!rule) {
@@ -169,12 +147,7 @@ export function createRecurringExpensesRepo(db: DrizzleD1Database) {
     async delete(userId: string, id: string): Promise<boolean> {
       const rows = await db
         .delete(recurringExpenses)
-        .where(
-          and(
-            eq(recurringExpenses.id, id),
-            eq(recurringExpenses.userId, userId),
-          ),
-        )
+        .where(and(eq(recurringExpenses.id, id), eq(recurringExpenses.userId, userId)))
         .returning({ id: recurringExpenses.id });
       return rows.length > 0;
     },

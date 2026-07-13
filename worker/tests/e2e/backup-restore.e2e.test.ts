@@ -50,8 +50,18 @@ describe("E2E: Data Export / Import", () => {
 
   test("POST /api/data/import replaces transactions and transfers", async () => {
     // Seed initial data
-    await api({ method: "POST", path: "/api/transactions", userId, body: makeTransaction({ note: "old" }) });
-    await api({ method: "POST", path: "/api/transfers", userId, body: makeTransfer({ note: "old" }) });
+    await api({
+      method: "POST",
+      path: "/api/transactions",
+      userId,
+      body: makeTransaction({ note: "old" }),
+    });
+    await api({
+      method: "POST",
+      path: "/api/transfers",
+      userId,
+      body: makeTransfer({ note: "old" }),
+    });
 
     // Import with new data
     const restored = await api<{

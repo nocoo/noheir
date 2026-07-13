@@ -19,10 +19,7 @@
 // 2/29, monthly day-31 clamp) use a tiny pure helper that operates on
 // (year, month, day) tuples.
 
-import type {
-  RecurrenceFrequency,
-  RecurrenceRule,
-} from "./rule-types";
+import type { RecurrenceFrequency, RecurrenceRule } from "./rule-types";
 
 // ── ISO date parsing / formatting (no `Date` objects) ──
 
@@ -86,23 +83,23 @@ function maxIso(a: string, b: string): string {
 // Howard Hinnant's date algorithms (public domain).
 function toDayNumber(p: YmdParts): number {
   const y = p.month <= 2 ? p.year - 1 : p.year;
-  const era = (y >= 0 ? y : y - 399) / 400 | 0;
+  const era = ((y >= 0 ? y : y - 399) / 400) | 0;
   const yoe = y - era * 400;
   const m = p.month;
-  const doy = ((153 * (m > 2 ? m - 3 : m + 9) + 2) / 5 | 0) + p.day - 1;
-  const doe = yoe * 365 + (yoe / 4 | 0) - (yoe / 100 | 0) + doy;
+  const doy = (((153 * (m > 2 ? m - 3 : m + 9) + 2) / 5) | 0) + p.day - 1;
+  const doe = yoe * 365 + ((yoe / 4) | 0) - ((yoe / 100) | 0) + doy;
   return era * 146097 + doe - 719468;
 }
 
 function fromDayNumber(n: number): YmdParts {
   const z = n + 719468;
-  const era = (z >= 0 ? z : z - 146096) / 146097 | 0;
+  const era = ((z >= 0 ? z : z - 146096) / 146097) | 0;
   const doe = z - era * 146097;
-  const yoe = ((doe - (doe / 1460 | 0) + (doe / 36524 | 0) - (doe / 146096 | 0)) / 365) | 0;
+  const yoe = ((doe - ((doe / 1460) | 0) + ((doe / 36524) | 0) - ((doe / 146096) | 0)) / 365) | 0;
   const y = yoe + era * 400;
-  const doy = doe - (365 * yoe + (yoe / 4 | 0) - (yoe / 100 | 0));
-  const mp = (5 * doy + 2) / 153 | 0;
-  const d = doy - ((153 * mp + 2) / 5 | 0) + 1;
+  const doy = doe - (365 * yoe + ((yoe / 4) | 0) - ((yoe / 100) | 0));
+  const mp = ((5 * doy + 2) / 153) | 0;
+  const d = doy - (((153 * mp + 2) / 5) | 0) + 1;
   const m = mp < 10 ? mp + 3 : mp - 9;
   return {
     year: m <= 2 ? y + 1 : y,
@@ -115,9 +112,9 @@ function fromDayNumber(n: number): YmdParts {
 
 function addMonthsClamped(p: YmdParts, monthsDelta: number, anchorDay: number): YmdParts {
   // Move month, clamp day to the new month's last day if anchor > end of month.
-  const totalMonths = (p.year * 12 + (p.month - 1)) + monthsDelta;
+  const totalMonths = p.year * 12 + (p.month - 1) + monthsDelta;
   const year = Math.floor(totalMonths / 12);
-  const month = (totalMonths % 12 + 12) % 12 + 1;
+  const month = (((totalMonths % 12) + 12) % 12) + 1;
   const lastDay = daysInMonth(year, month);
   const day = Math.min(anchorDay, lastDay);
   return { year, month, day };
@@ -266,16 +263,12 @@ export function computeOccurrences(
 
   switch (rule.frequency) {
     case "daily":
-      return Array.from(
-        walkDaily(start, rule.interval, effectiveFrom, effectiveTo),
-      );
+      return Array.from(walkDaily(start, rule.interval, effectiveFrom, effectiveTo));
     case "weekly": {
       if (rule.weekday == null) {
         throw new Error("weekday is required for weekly rules");
       }
-      return Array.from(
-        walkWeekly(start, rule.interval, rule.weekday, effectiveFrom, effectiveTo),
-      );
+      return Array.from(walkWeekly(start, rule.interval, rule.weekday, effectiveFrom, effectiveTo));
     }
     case "monthly": {
       if (rule.dayOfMonth == null) {

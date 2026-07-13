@@ -63,48 +63,46 @@ export function createReportsRepo(db: DrizzleD1Database) {
         trCurrencies,
       ] = await Promise.all([
         // total_income: SUM(amountCents) WHERE type='income'
-        db.select({
-          total: sql<number>`COALESCE(SUM(${transactions.amountCents}), 0)`,
-        })
+        db
+          .select({
+            total: sql<number>`COALESCE(SUM(${transactions.amountCents}), 0)`,
+          })
           .from(transactions)
           .where(and(txWhere, eq(transactions.type, "income")))
           .get(),
 
         // total_expense: SUM(amountCents) WHERE type='expense'
-        db.select({
-          total: sql<number>`COALESCE(SUM(${transactions.amountCents}), 0)`,
-        })
+        db
+          .select({
+            total: sql<number>`COALESCE(SUM(${transactions.amountCents}), 0)`,
+          })
           .from(transactions)
           .where(and(txWhere, eq(transactions.type, "expense")))
           .get(),
 
         // transaction_count
-        db.select({ count: sql<number>`count(*)` })
-          .from(transactions)
-          .where(txWhere)
-          .get(),
+        db.select({ count: sql<number>`count(*)` }).from(transactions).where(txWhere).get(),
 
         // transfer_count
-        db.select({ count: sql<number>`count(*)` })
-          .from(transfers)
-          .where(trWhere)
-          .get(),
+        db.select({ count: sql<number>`count(*)` }).from(transfers).where(trWhere).get(),
 
         // total_transfer_in / total_transfer_out
-        db.select({
-          total_in: sql<number>`COALESCE(SUM(${transfers.inflowAmountCents}), 0)`,
-          total_out: sql<number>`COALESCE(SUM(${transfers.outflowAmountCents}), 0)`,
-        })
+        db
+          .select({
+            total_in: sql<number>`COALESCE(SUM(${transfers.inflowAmountCents}), 0)`,
+            total_out: sql<number>`COALESCE(SUM(${transfers.outflowAmountCents}), 0)`,
+          })
           .from(transfers)
           .where(trWhere)
           .get(),
 
         // expense_by_category: GROUP BY primary_category ORDER BY total DESC
-        db.select({
-          category: transactions.primaryCategory,
-          total: sql<number>`SUM(${transactions.amountCents})`,
-          count: sql<number>`count(*)`,
-        })
+        db
+          .select({
+            category: transactions.primaryCategory,
+            total: sql<number>`SUM(${transactions.amountCents})`,
+            count: sql<number>`count(*)`,
+          })
           .from(transactions)
           .where(and(txWhere, eq(transactions.type, "expense")))
           .groupBy(transactions.primaryCategory)
@@ -112,11 +110,12 @@ export function createReportsRepo(db: DrizzleD1Database) {
           .all(),
 
         // income_by_category: GROUP BY primary_category ORDER BY total DESC
-        db.select({
-          category: transactions.primaryCategory,
-          total: sql<number>`SUM(${transactions.amountCents})`,
-          count: sql<number>`count(*)`,
-        })
+        db
+          .select({
+            category: transactions.primaryCategory,
+            total: sql<number>`SUM(${transactions.amountCents})`,
+            count: sql<number>`count(*)`,
+          })
           .from(transactions)
           .where(and(txWhere, eq(transactions.type, "income")))
           .groupBy(transactions.primaryCategory)
@@ -124,16 +123,10 @@ export function createReportsRepo(db: DrizzleD1Database) {
           .all(),
 
         // currencies from transactions
-        db.selectDistinct({ value: transactions.currency })
-          .from(transactions)
-          .where(txWhere)
-          .all(),
+        db.selectDistinct({ value: transactions.currency }).from(transactions).where(txWhere).all(),
 
         // currencies from transfers
-        db.selectDistinct({ value: transfers.currency })
-          .from(transfers)
-          .where(trWhere)
-          .all(),
+        db.selectDistinct({ value: transfers.currency }).from(transfers).where(trWhere).all(),
       ]);
 
       const totalIncome = incomeTotals?.total ?? 0;
@@ -143,10 +136,9 @@ export function createReportsRepo(db: DrizzleD1Database) {
       const netAmount = totalIncome - totalExpense;
 
       // Merge currencies (UNION DISTINCT)
-      const currencies = [...new Set([
-        ...txCurrencies.map((r) => r.value),
-        ...trCurrencies.map((r) => r.value),
-      ])].sort();
+      const currencies = [
+        ...new Set([...txCurrencies.map((r) => r.value), ...trCurrencies.map((r) => r.value)]),
+      ].sort();
 
       // Map category breakdowns
       const mapBreakdown = (
@@ -176,10 +168,7 @@ export function createReportsRepo(db: DrizzleD1Database) {
      * Yearly summary: monthly income/expense/count + year totals.
      * Single SQL using CASE expressions for income/expense split.
      */
-    async yearlySummary(
-      userId: string,
-      year: number,
-    ): Promise<YearlySummary> {
+    async yearlySummary(userId: string, year: number): Promise<YearlySummary> {
       const rows = await db
         .select({
           month: transactions.month,
@@ -233,10 +222,7 @@ export function createReportsRepo(db: DrizzleD1Database) {
       month?: number,
       type?: string,
     ): Promise<CategorySummaryResponse> {
-      const conditions = [
-        eq(transactions.userId, userId),
-        eq(transactions.year, year),
-      ];
+      const conditions = [eq(transactions.userId, userId), eq(transactions.year, year)];
       if (month) {
         conditions.push(eq(transactions.month, month));
       }
@@ -276,10 +262,7 @@ export function createReportsRepo(db: DrizzleD1Database) {
     /**
      * Account summary: SUM/COUNT grouped by (account, type).
      */
-    async accountSummary(
-      userId: string,
-      year: number,
-    ): Promise<AccountSummaryResponse> {
+    async accountSummary(userId: string, year: number): Promise<AccountSummaryResponse> {
       const rows = await db
         .select({
           account: transactions.account,
@@ -308,14 +291,8 @@ export function createReportsRepo(db: DrizzleD1Database) {
      * 1. account → primaryCategory (grouped by type, account, primary_category)
      * 2. primaryCategory → secondaryCategory (grouped by type, primary_category, secondary_category)
      */
-    async flowSummary(
-      userId: string,
-      year: number,
-    ): Promise<FlowSummaryResponse> {
-      const baseConditions = and(
-        eq(transactions.userId, userId),
-        eq(transactions.year, year),
-      );
+    async flowSummary(userId: string, year: number): Promise<FlowSummaryResponse> {
+      const baseConditions = and(eq(transactions.userId, userId), eq(transactions.year, year));
 
       const [accountToCategoryRows, categoryToSubRows] = await Promise.all([
         db
@@ -327,11 +304,7 @@ export function createReportsRepo(db: DrizzleD1Database) {
           })
           .from(transactions)
           .where(baseConditions)
-          .groupBy(
-            transactions.type,
-            transactions.account,
-            transactions.primaryCategory,
-          )
+          .groupBy(transactions.type, transactions.account, transactions.primaryCategory)
           .orderBy(desc(sql`SUM(${transactions.amountCents})`))
           .all(),
 
@@ -344,30 +317,24 @@ export function createReportsRepo(db: DrizzleD1Database) {
           })
           .from(transactions)
           .where(baseConditions)
-          .groupBy(
-            transactions.type,
-            transactions.primaryCategory,
-            transactions.secondaryCategory,
-          )
+          .groupBy(transactions.type, transactions.primaryCategory, transactions.secondaryCategory)
           .orderBy(desc(sql`SUM(${transactions.amountCents})`))
           .all(),
       ]);
 
-      const account_to_category: FlowAccountCategoryRow[] =
-        accountToCategoryRows.map((r) => ({
-          type: r.type,
-          account: r.account,
-          primary_category: r.primary_category,
-          total: r.total,
-        }));
+      const account_to_category: FlowAccountCategoryRow[] = accountToCategoryRows.map((r) => ({
+        type: r.type,
+        account: r.account,
+        primary_category: r.primary_category,
+        total: r.total,
+      }));
 
-      const category_to_subcategory: FlowCategoryRow[] =
-        categoryToSubRows.map((r) => ({
-          type: r.type,
-          primary_category: r.primary_category,
-          secondary_category: r.secondary_category,
-          total: r.total,
-        }));
+      const category_to_subcategory: FlowCategoryRow[] = categoryToSubRows.map((r) => ({
+        type: r.type,
+        primary_category: r.primary_category,
+        secondary_category: r.secondary_category,
+        total: r.total,
+      }));
 
       return { account_to_category, category_to_subcategory };
     },

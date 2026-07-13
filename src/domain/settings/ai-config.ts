@@ -14,10 +14,7 @@ export const PREDEFINED_AI_MODELS = [
   { value: "custom", label: "自定义模型" },
 ];
 
-export const isCustomOption = (
-  value: string,
-  list: Array<{ value: string }>,
-) => {
+export const isCustomOption = (value: string, list: Array<{ value: string }>) => {
   return value === "custom" || !list.some((item) => item.value === value);
 };
 

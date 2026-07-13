@@ -51,9 +51,18 @@ RETURNS:
 - When truncated: summary.total_units and total_amount_by_currency reflect full dataset (SQL aggregate); distribution maps are omitted`,
     {
       product_id: z.string().optional().describe("Product ID (full ULID or 8-char prefix)"),
-      product_name: z.string().optional().describe("Product name (exact match; error if ambiguous)"),
-      product_code: z.string().optional().describe("Product code (exact match; error if ambiguous)"),
-      include_archived_units: z.boolean().optional().describe("Include units with status=已归档 (default: false)"),
+      product_name: z
+        .string()
+        .optional()
+        .describe("Product name (exact match; error if ambiguous)"),
+      product_code: z
+        .string()
+        .optional()
+        .describe("Product code (exact match; error if ambiguous)"),
+      include_archived_units: z
+        .boolean()
+        .optional()
+        .describe("Include units with status=已归档 (default: false)"),
     },
     async (args) => {
       const { db, userId } = ctx;
@@ -249,4 +258,3 @@ function buildSummary(units: UnitWithProduct[]): PortfolioSummary {
 
   return summary;
 }
-

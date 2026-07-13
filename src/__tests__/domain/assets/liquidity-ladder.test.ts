@@ -23,9 +23,7 @@ const makeProduct = (): DomainProduct => ({
   isArchived: false,
 });
 
-const makeUnit = (
-  overrides: Partial<UnitDisplayInfo> = {},
-): UnitDisplayInfo => ({
+const makeUnit = (overrides: Partial<UnitDisplayInfo> = {}): UnitDisplayInfo => ({
   id: "1",
   unitCode: "A01",
   amount: 10000,
@@ -56,10 +54,7 @@ describe("liquidity-ladder domain", () => {
 
   it("builds availability from units with available dates", () => {
     // Create a unit becoming available 3 months from now
-    const futureDate = format(
-      startOfMonth(addMonths(new Date(), 3)),
-      "yyyy-MM-dd",
-    );
+    const futureDate = format(startOfMonth(addMonths(new Date(), 3)), "yyyy-MM-dd");
     const units = [
       makeUnit({ availableDate: futureDate, strategy: "长期理财" }),
       makeUnit({
@@ -77,10 +72,7 @@ describe("liquidity-ladder domain", () => {
   });
 
   it("filters out units without availableDate or product", () => {
-    const futureDate = format(
-      startOfMonth(addMonths(new Date(), 2)),
-      "yyyy-MM-dd",
-    );
+    const futureDate = format(startOfMonth(addMonths(new Date(), 2)), "yyyy-MM-dd");
     const units = [
       makeUnit({ availableDate: null }), // no availableDate
       makeUnit({ id: "2", availableDate: futureDate, product: null }), // no product
@@ -162,9 +154,7 @@ describe("buildUpcomingUnits", () => {
 
   it("excludes units not established", () => {
     const futureDate = format(addMonths(new Date(), 1), "yyyy-MM-dd");
-    const units = [
-      makeUnit({ status: "已归档", availableDate: futureDate }),
-    ];
+    const units = [makeUnit({ status: "已归档", availableDate: futureDate })];
     expect(buildUpcomingUnits(units)).toHaveLength(0);
   });
 

@@ -1,30 +1,22 @@
-"use client"
+"use client";
 
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts"
-import { CreditCard } from "lucide-react"
-import { formatCurrencyK, formatCurrencyFull } from "@/lib/chart-config"
-import { ChartCard } from "@/components/shared/chart-card"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { CreditCard } from "lucide-react";
+import { formatCurrencyK, formatCurrencyFull } from "@/lib/chart-config";
+import { ChartCard } from "@/components/shared/chart-card";
 
 export interface AccountChartData {
-  name: string
-  value: number
-  percentage?: number | undefined
+  name: string;
+  value: number;
+  percentage?: number | undefined;
 }
 
 export interface AccountDistributionChartProps {
-  title: string
-  description: string
-  accountData: AccountChartData[]
-  colorHex: string
-  layout: "horizontal" | "vertical"
+  title: string;
+  description: string;
+  accountData: AccountChartData[];
+  colorHex: string;
+  layout: "horizontal" | "vertical";
 }
 
 export function AccountDistributionChart({
@@ -34,7 +26,7 @@ export function AccountDistributionChart({
   colorHex,
   layout,
 }: AccountDistributionChartProps) {
-  const isVertical = layout === "vertical"
+  const isVertical = layout === "vertical";
 
   return (
     <ChartCard title={title} description={description} icon={CreditCard}>
@@ -80,10 +72,10 @@ export function AccountDistributionChart({
             )}
             <Tooltip
               content={({ active, payload }) => {
-                if (!active || !payload?.length) return null
-                const entry = payload[0]
+                if (!active || !payload?.length) return null;
+                const entry = payload[0];
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const pct = (entry?.payload as any)?.percentage as number | undefined
+                const pct = (entry?.payload as any)?.percentage as number | undefined;
                 return (
                   <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
                     <p className="font-medium">{entry?.payload?.name}</p>
@@ -92,7 +84,7 @@ export function AccountDistributionChart({
                       {pct ? ` (${pct.toFixed(1)}%)` : ""}
                     </p>
                   </div>
-                )
+                );
               }}
             />
             <Bar
@@ -104,5 +96,5 @@ export function AccountDistributionChart({
         </ResponsiveContainer>
       </div>
     </ChartCard>
-  )
+  );
 }

@@ -17,9 +17,7 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXTAUTH_URL || "http://localhost:7004"
-  ),
+  metadataBase: new URL(process.env.NEXTAUTH_URL || "http://localhost:7004"),
   title: "noheir - 个人财务管理",
   description: "隐私优先的个人财务记录与分析",
   openGraph: {
@@ -46,9 +44,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body
-        className={`${inter.variable} ${dmSans.variable} antialiased`}
-      >
+      <body className={`${inter.variable} ${dmSans.variable} antialiased`}>
         <AuthProvider>
           {children}
           <CommandPalette />

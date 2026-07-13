@@ -1,22 +1,22 @@
-"use client"
+"use client";
 
-import { useState, useTransition, useMemo } from "react"
-import { toast } from "sonner"
-import { Check, ChevronsUpDown } from "lucide-react"
+import { useState, useTransition, useMemo } from "react";
+import { toast } from "sonner";
+import { Check, ChevronsUpDown } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   Command,
   CommandEmpty,
@@ -24,41 +24,37 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { cn } from "@/lib/utils"
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import {
   createContributionLog,
   updateContributionLog,
-} from "@/app/actions/contribution-log-actions"
+} from "@/app/actions/contribution-log-actions";
 import type {
   DomainContributionLog,
   DomainUnit,
   DomainProduct,
   ContributionOperationType,
-} from "@/domain/types"
+} from "@/domain/types";
 
 const OPERATION_TYPES = [
   { value: "invest" as const, label: "投入" },
   { value: "withdraw" as const, label: "取出" },
   { value: "adjust" as const, label: "调整" },
-]
+];
 
 interface ContributionLogFormProps {
-  log: DomainContributionLog | null
-  units: DomainUnit[]
-  products: DomainProduct[]
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSuccess: () => void
+  log: DomainContributionLog | null;
+  units: DomainUnit[];
+  products: DomainProduct[];
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
 }
 
 export function ContributionLogForm({
@@ -69,7 +65,7 @@ export function ContributionLogForm({
   onOpenChange,
   onSuccess,
 }: ContributionLogFormProps) {
-  const formKey = log?.id ?? "new"
+  const formKey = log?.id ?? "new";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -84,7 +80,7 @@ export function ContributionLogForm({
         />
       </DialogContent>
     </Dialog>
-  )
+  );
 }
 
 function ContributionLogFormInner({
@@ -94,62 +90,57 @@ function ContributionLogFormInner({
   onOpenChange,
   onSuccess,
 }: {
-  log: DomainContributionLog | null
-  units: DomainUnit[]
-  products: DomainProduct[]
-  onOpenChange: (open: boolean) => void
-  onSuccess: () => void
+  log: DomainContributionLog | null;
+  units: DomainUnit[];
+  products: DomainProduct[];
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
 }) {
-  const isEditing = log !== null
-  const [isPending, startTransition] = useTransition()
+  const isEditing = log !== null;
+  const [isPending, startTransition] = useTransition();
 
   // Form state
-  const [unitId, setUnitId] = useState(log?.unitId ?? "")
-  const [productId, setProductId] = useState(log?.productId ?? "")
+  const [unitId, setUnitId] = useState(log?.unitId ?? "");
+  const [productId, setProductId] = useState(log?.productId ?? "");
   const [operationType, setOperationType] = useState<ContributionOperationType>(
-    log?.operationType ?? "invest"
-  )
-  const [amount, setAmount] = useState(
-    log?.amount != null ? String(Math.abs(log.amount)) : ""
-  )
+    log?.operationType ?? "invest",
+  );
+  const [amount, setAmount] = useState(log?.amount != null ? String(Math.abs(log.amount)) : "");
   const [operationDate, setOperationDate] = useState(
-    log?.operationDate ?? new Date().toISOString().slice(0, 10)
-  )
-  const [note, setNote] = useState(log?.note ?? "")
+    log?.operationDate ?? new Date().toISOString().slice(0, 10),
+  );
+  const [note, setNote] = useState(log?.note ?? "");
 
   // Combobox open states
-  const [unitOpen, setUnitOpen] = useState(false)
-  const [productOpen, setProductOpen] = useState(false)
+  const [unitOpen, setUnitOpen] = useState(false);
+  const [productOpen, setProductOpen] = useState(false);
 
   // Selected items for display
-  const selectedUnit = useMemo(
-    () => units.find((u) => u.id === unitId),
-    [units, unitId]
-  )
+  const selectedUnit = useMemo(() => units.find((u) => u.id === unitId), [units, unitId]);
   const selectedProduct = useMemo(
     () => products.find((p) => p.id === productId),
-    [products, productId]
-  )
+    [products, productId],
+  );
 
   const handleSubmit = () => {
     // Validate required fields
     if (!unitId) {
-      toast.error("请选择资金单元")
-      return
+      toast.error("请选择资金单元");
+      return;
     }
     if (!amount || isNaN(parseFloat(amount))) {
-      toast.error("请输入有效金额")
-      return
+      toast.error("请输入有效金额");
+      return;
     }
     if (!operationDate) {
-      toast.error("请选择日期")
-      return
+      toast.error("请选择日期");
+      return;
     }
 
-    const amountValue = parseFloat(amount)
+    const amountValue = parseFloat(amount);
     // withdraw is negative
     const signedAmount =
-      operationType === "withdraw" ? -Math.abs(amountValue) : Math.abs(amountValue)
+      operationType === "withdraw" ? -Math.abs(amountValue) : Math.abs(amountValue);
 
     startTransition(async () => {
       if (isEditing) {
@@ -158,12 +149,12 @@ function ContributionLogFormInner({
           amount: signedAmount,
           operationDate,
           note: note || null,
-        })
+        });
         if (result.success) {
-          toast.success("更新成功")
-          onSuccess()
+          toast.success("更新成功");
+          onSuccess();
         } else {
-          toast.error(result.error)
+          toast.error(result.error);
         }
       } else {
         const result = await createContributionLog({
@@ -174,25 +165,23 @@ function ContributionLogFormInner({
           amount: signedAmount,
           operationDate,
           note: note || null,
-        })
+        });
         if (result.success) {
-          toast.success("创建成功")
-          onSuccess()
+          toast.success("创建成功");
+          onSuccess();
         } else {
-          toast.error(result.error)
+          toast.error(result.error);
         }
       }
-    })
-  }
+    });
+  };
 
   return (
     <>
       <DialogHeader>
         <DialogTitle>{isEditing ? "编辑投入记录" : "新增投入记录"}</DialogTitle>
         <DialogDescription>
-          {isEditing
-            ? "修改投入记录信息"
-            : "记录资金的投入或取出操作"}
+          {isEditing ? "修改投入记录信息" : "记录资金的投入或取出操作"}
         </DialogDescription>
       </DialogHeader>
 
@@ -226,14 +215,14 @@ function ContributionLogFormInner({
                         key={u.id}
                         value={u.unitCode}
                         onSelect={() => {
-                          setUnitId(u.id)
-                          setUnitOpen(false)
+                          setUnitId(u.id);
+                          setUnitOpen(false);
                         }}
                       >
                         <Check
                           className={cn(
                             "mr-2 size-4",
-                            unitId === u.id ? "opacity-100" : "opacity-0"
+                            unitId === u.id ? "opacity-100" : "opacity-0",
                           )}
                         />
                         <div className="flex flex-col">
@@ -276,15 +265,12 @@ function ContributionLogFormInner({
                     <CommandItem
                       value=""
                       onSelect={() => {
-                        setProductId("")
-                        setProductOpen(false)
+                        setProductId("");
+                        setProductOpen(false);
                       }}
                     >
                       <Check
-                        className={cn(
-                          "mr-2 size-4",
-                          !productId ? "opacity-100" : "opacity-0"
-                        )}
+                        className={cn("mr-2 size-4", !productId ? "opacity-100" : "opacity-0")}
                       />
                       <span className="text-muted-foreground">不关联产品</span>
                     </CommandItem>
@@ -293,14 +279,14 @@ function ContributionLogFormInner({
                         key={p.id}
                         value={p.name}
                         onSelect={() => {
-                          setProductId(p.id)
-                          setProductOpen(false)
+                          setProductId(p.id);
+                          setProductOpen(false);
                         }}
                       >
                         <Check
                           className={cn(
                             "mr-2 size-4",
-                            productId === p.id ? "opacity-100" : "opacity-0"
+                            productId === p.id ? "opacity-100" : "opacity-0",
                           )}
                         />
                         <div className="flex flex-col">
@@ -354,9 +340,7 @@ function ContributionLogFormInner({
             placeholder="0.00"
           />
           <p className="text-muted-foreground text-xs">
-            {operationType === "withdraw"
-              ? "取出金额将自动记为负数"
-              : "投入金额记为正数"}
+            {operationType === "withdraw" ? "取出金额将自动记为负数" : "投入金额记为正数"}
           </p>
         </div>
 
@@ -394,5 +378,5 @@ function ContributionLogFormInner({
         </Button>
       </div>
     </>
-  )
+  );
 }

@@ -1,13 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { UnitDisplayInfo, DomainProduct } from "@/domain/types";
-import {
-  buildStrategyHierarchy,
-  buildTotalAmount,
-} from "@/domain/assets/strategy-sunburst";
+import { buildStrategyHierarchy, buildTotalAmount } from "@/domain/assets/strategy-sunburst";
 
-const makeProduct = (
-  overrides: Partial<DomainProduct> = {},
-): DomainProduct => ({
+const makeProduct = (overrides: Partial<DomainProduct> = {}): DomainProduct => ({
   id: "p1",
   name: "招行季季宝",
   code: null,
@@ -22,9 +17,7 @@ const makeProduct = (
   ...overrides,
 });
 
-const makeUnit = (
-  overrides: Partial<UnitDisplayInfo> = {},
-): UnitDisplayInfo => ({
+const makeUnit = (overrides: Partial<UnitDisplayInfo> = {}): UnitDisplayInfo => ({
   id: "1",
   unitCode: "A01",
   amount: 10000,

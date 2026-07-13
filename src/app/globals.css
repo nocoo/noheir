@@ -156,22 +156,39 @@
   /* Font families */
   --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
   --font-serif: var(--font-dm-sans), system-ui, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
 }
 
 @keyframes accordion-down {
-  from { height: 0; }
-  to { height: var(--radix-accordion-content-height); }
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
 }
 
 @keyframes accordion-up {
-  from { height: var(--radix-accordion-content-height); }
-  to { height: 0; }
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
 }
 
 @keyframes caret-blink {
-  0%, 70%, 100% { opacity: 1; }
-  20%, 50% { opacity: 0; }
+  0%,
+  70%,
+  100% {
+    opacity: 1;
+  }
+  20%,
+  50% {
+    opacity: 0;
+  }
 }
 
 /*
@@ -273,30 +290,30 @@
   --bg-alt: 220 14% 92%;
 
   /* ========== 24 Sequential Chart Colors (basalt) ========== */
-  --chart-1: 200 90% 55%;           /* Sky (= primary) */
-  --chart-2: 186 80% 45%;           /* Teal */
-  --chart-3: 166 72% 44%;           /* Jade */
-  --chart-4: 142 71% 45%;           /* Green */
-  --chart-5: 84 65% 46%;            /* Lime */
-  --chart-6: 45 93% 47%;            /* Amber */
-  --chart-7: 30 90% 55%;            /* Orange */
-  --chart-8: 15 85% 52%;            /* Vermilion */
-  --chart-9: 0 72% 51%;             /* Red */
-  --chart-10: 340 82% 55%;          /* Rose */
-  --chart-11: 320 70% 55%;          /* Magenta */
-  --chart-12: 290 65% 55%;          /* Orchid */
-  --chart-13: 270 70% 60%;          /* Purple */
-  --chart-14: 250 65% 58%;          /* Indigo */
-  --chart-15: 230 70% 56%;          /* Cobalt */
-  --chart-16: 210 55% 50%;          /* Steel */
-  --chart-17: 195 45% 55%;          /* Cadet */
-  --chart-18: 160 50% 50%;          /* Seafoam */
-  --chart-19: 100 50% 48%;          /* Olive */
-  --chart-20: 60 65% 45%;           /* Gold */
-  --chart-21: 22 80% 50%;           /* Tangerine */
-  --chart-22: 350 65% 50%;          /* Crimson */
-  --chart-23: 0 0% 25%;             /* Gray */
-  --chart-24: 217 91% 60%;          /* Blue (accent) */
+  --chart-1: 200 90% 55%; /* Sky (= primary) */
+  --chart-2: 186 80% 45%; /* Teal */
+  --chart-3: 166 72% 44%; /* Jade */
+  --chart-4: 142 71% 45%; /* Green */
+  --chart-5: 84 65% 46%; /* Lime */
+  --chart-6: 45 93% 47%; /* Amber */
+  --chart-7: 30 90% 55%; /* Orange */
+  --chart-8: 15 85% 52%; /* Vermilion */
+  --chart-9: 0 72% 51%; /* Red */
+  --chart-10: 340 82% 55%; /* Rose */
+  --chart-11: 320 70% 55%; /* Magenta */
+  --chart-12: 290 65% 55%; /* Orchid */
+  --chart-13: 270 70% 60%; /* Purple */
+  --chart-14: 250 65% 58%; /* Indigo */
+  --chart-15: 230 70% 56%; /* Cobalt */
+  --chart-16: 210 55% 50%; /* Steel */
+  --chart-17: 195 45% 55%; /* Cadet */
+  --chart-18: 160 50% 50%; /* Seafoam */
+  --chart-19: 100 50% 48%; /* Olive */
+  --chart-20: 60 65% 45%; /* Gold */
+  --chart-21: 22 80% 50%; /* Tangerine */
+  --chart-22: 350 65% 50%; /* Crimson */
+  --chart-23: 0 0% 25%; /* Gray */
+  --chart-24: 217 91% 60%; /* Blue (accent) */
 
   /* Chart utility tokens */
   --chart-axis: 0 0% 40%;
@@ -541,12 +558,24 @@
   font-family: var(--font-dm-sans), system-ui, sans-serif;
 }
 
-@utility stagger-1 { animation-delay: 0ms; }
-@utility stagger-2 { animation-delay: 60ms; }
-@utility stagger-3 { animation-delay: 120ms; }
-@utility stagger-4 { animation-delay: 180ms; }
-@utility stagger-5 { animation-delay: 240ms; }
-@utility stagger-6 { animation-delay: 300ms; }
+@utility stagger-1 {
+  animation-delay: 0ms;
+}
+@utility stagger-2 {
+  animation-delay: 60ms;
+}
+@utility stagger-3 {
+  animation-delay: 120ms;
+}
+@utility stagger-4 {
+  animation-delay: 180ms;
+}
+@utility stagger-5 {
+  animation-delay: 240ms;
+}
+@utility stagger-6 {
+  animation-delay: 300ms;
+}
 
 @keyframes fade-up {
   from {
@@ -561,9 +590,15 @@
 
 /* Loading Animation */
 @keyframes loading {
-  0% { transform: translateX(-100%); }
-  50% { transform: translateX(100%); }
-  100% { transform: translateX(-100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
 }
 
 /* Date Input Styling for Dark Mode Support */

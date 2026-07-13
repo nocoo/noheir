@@ -12,9 +12,7 @@ import {
 } from "@/domain/assets/capital-dashboard";
 import type { UnitDisplayInfo } from "@/domain/types";
 
-const makeUnit = (
-  overrides: Partial<UnitDisplayInfo> = {},
-): UnitDisplayInfo => ({
+const makeUnit = (overrides: Partial<UnitDisplayInfo> = {}): UnitDisplayInfo => ({
   id: "1",
   unitCode: "A01",
   amount: 100,
@@ -57,7 +55,21 @@ describe("capital-dashboard domain", () => {
   it("builds idle units", () => {
     const idle = buildIdleUnits([
       makeUnit(),
-      makeUnit({ product: { id: "p1", name: "X", code: null, channel: null, category: null, currency: null, lockPeriodDays: null, openDays: null, cycleDays: null, annualReturnRate: null, isArchived: false } }),
+      makeUnit({
+        product: {
+          id: "p1",
+          name: "X",
+          code: null,
+          channel: null,
+          category: null,
+          currency: null,
+          lockPeriodDays: null,
+          openDays: null,
+          cycleDays: null,
+          annualReturnRate: null,
+          isArchived: false,
+        },
+      }),
     ]);
     expect(idle.length).toBe(1);
   });
@@ -73,10 +85,7 @@ describe("capital-dashboard domain", () => {
   });
 
   it("builds distributions", () => {
-    const units = [
-      makeUnit({ amount: 100 }),
-      makeUnit({ amount: 50 }),
-    ];
+    const units = [makeUnit({ amount: 100 }), makeUnit({ amount: 50 })];
     const currency = buildCurrencyDistribution(units, 150);
     expect(currency[0]?.percentage).toBeCloseTo(100);
 
@@ -92,10 +101,30 @@ describe("capital-dashboard domain", () => {
 
   it("buckets availability into 7d, 30d, 90d, beyond", () => {
     const units = [
-      makeUnit({ availableDate: "2026-01-01", isAvailable: false, daysUntilAvailable: 3, amount: 10 }),
-      makeUnit({ availableDate: "2026-01-01", isAvailable: false, daysUntilAvailable: 15, amount: 20 }),
-      makeUnit({ availableDate: "2026-01-01", isAvailable: false, daysUntilAvailable: 60, amount: 30 }),
-      makeUnit({ availableDate: "2026-01-01", isAvailable: false, daysUntilAvailable: 120, amount: 40 }),
+      makeUnit({
+        availableDate: "2026-01-01",
+        isAvailable: false,
+        daysUntilAvailable: 3,
+        amount: 10,
+      }),
+      makeUnit({
+        availableDate: "2026-01-01",
+        isAvailable: false,
+        daysUntilAvailable: 15,
+        amount: 20,
+      }),
+      makeUnit({
+        availableDate: "2026-01-01",
+        isAvailable: false,
+        daysUntilAvailable: 60,
+        amount: 30,
+      }),
+      makeUnit({
+        availableDate: "2026-01-01",
+        isAvailable: false,
+        daysUntilAvailable: 120,
+        amount: 40,
+      }),
     ];
     const result = buildAvailabilityDistribution(units, 100);
     expect(result.find((r) => r.period === "7天内")?.amount).toBe(10);
@@ -107,16 +136,19 @@ describe("capital-dashboard domain", () => {
   it("skips units without availableDate or not established", () => {
     const units = [
       makeUnit({ availableDate: null, daysUntilAvailable: 5, amount: 10 }),
-      makeUnit({ availableDate: "2026-01-01", status: "计划中", daysUntilAvailable: 5, amount: 10 }),
+      makeUnit({
+        availableDate: "2026-01-01",
+        status: "计划中",
+        daysUntilAvailable: 5,
+        amount: 10,
+      }),
     ];
     const result = buildAvailabilityDistribution(units, 100);
     expect(result).toHaveLength(0);
   });
 
   it("handles 0 totalAssetsAll for percentage", () => {
-    const units = [
-      makeUnit({ availableDate: "2026-01-01", isAvailable: true, amount: 50 }),
-    ];
+    const units = [makeUnit({ availableDate: "2026-01-01", isAvailable: true, amount: 50 })];
     const result = buildAvailabilityDistribution(units, 0);
     expect(result[0]?.percentage).toBe(0);
     expect(result[0]?.amount).toBe(50);

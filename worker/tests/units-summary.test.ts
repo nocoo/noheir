@@ -198,9 +198,7 @@ describe("buildUnitsSummary", () => {
   });
 
   test("skips null strategy/status/tactics in grouping", () => {
-    const units = [
-      mockUnit({ strategy: null, status: null, tactics: null, amountCents: 100000 }),
-    ];
+    const units = [mockUnit({ strategy: null, status: null, tactics: null, amountCents: 100000 })];
 
     const summary = buildUnitsSummary(units);
 

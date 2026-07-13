@@ -1,44 +1,32 @@
-"use client"
+"use client";
 
-import { useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
-import { toast } from "sonner"
-import {
-  Tags,
-  Save,
-  TrendingUp,
-  Shield,
-  Check,
-} from "lucide-react"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { cn } from "@/lib/utils"
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Tags, Save, TrendingUp, Shield, Check } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 import {
   toggleActiveIncomeCategory,
   getIncomeTypeDescription,
-} from "@/domain/settings/income-categories"
+} from "@/domain/settings/income-categories";
 import {
   toggleFixedExpenseCategory,
   getExpenseTypeDescription,
-} from "@/domain/settings/expense-categories"
+} from "@/domain/settings/expense-categories";
 import {
   saveActiveIncomeCategories,
   saveFixedExpenseCategories,
-} from "@/app/actions/settings-actions"
+} from "@/app/actions/settings-actions";
 
 interface CategorySettingsClientProps {
-  incomeCategories: string[]
-  expenseCategories: string[]
-  activeIncomeCategories: string[]
-  fixedExpenseCategories: string[]
+  incomeCategories: string[];
+  expenseCategories: string[];
+  activeIncomeCategories: string[];
+  fixedExpenseCategories: string[];
 }
 
 export function CategorySettingsClient({
@@ -47,42 +35,42 @@ export function CategorySettingsClient({
   activeIncomeCategories: initialActive,
   fixedExpenseCategories: initialFixed,
 }: CategorySettingsClientProps) {
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
-  const [activeIncome, setActiveIncome] = useState<string[]>(initialActive)
-  const [fixedExpense, setFixedExpense] = useState<string[]>(initialFixed)
-  const [showIncomeSelector, setShowIncomeSelector] = useState(false)
-  const [showExpenseSelector, setShowExpenseSelector] = useState(false)
+  const [activeIncome, setActiveIncome] = useState<string[]>(initialActive);
+  const [fixedExpense, setFixedExpense] = useState<string[]>(initialFixed);
+  const [showIncomeSelector, setShowIncomeSelector] = useState(false);
+  const [showExpenseSelector, setShowExpenseSelector] = useState(false);
 
   const handleToggleIncome = (category: string) => {
-    setActiveIncome((prev) => toggleActiveIncomeCategory(prev, category))
-  }
+    setActiveIncome((prev) => toggleActiveIncomeCategory(prev, category));
+  };
 
   const handleToggleExpense = (category: string) => {
-    setFixedExpense((prev) => toggleFixedExpenseCategory(prev, category))
-  }
+    setFixedExpense((prev) => toggleFixedExpenseCategory(prev, category));
+  };
 
   const handleSave = () => {
     startTransition(async () => {
       const [incomeResult, expenseResult] = await Promise.all([
         saveActiveIncomeCategories(activeIncome),
         saveFixedExpenseCategories(fixedExpense),
-      ])
+      ]);
 
       if (incomeResult.success && expenseResult.success) {
-        toast.success("分类设置已保存")
-        router.refresh()
+        toast.success("分类设置已保存");
+        router.refresh();
       } else {
         const errorMsg = !incomeResult.success
           ? incomeResult.error
           : !expenseResult.success
             ? expenseResult.error
-            : "未知错误"
-        toast.error(errorMsg)
+            : "未知错误";
+        toast.error(errorMsg);
       }
-    })
-  }
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -92,9 +80,7 @@ export function CategorySettingsClient({
           <Tags className="text-primary size-6" />
           分类设置
         </h1>
-        <p className="text-muted-foreground text-sm">
-          配置收入和支出分类的类型
-        </p>
+        <p className="text-muted-foreground text-sm">配置收入和支出分类的类型</p>
       </div>
 
       {/* Income Category Settings */}
@@ -130,7 +116,7 @@ export function CategorySettingsClient({
               <ScrollArea className="h-[250px] pr-4">
                 <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
                   {incomeCategories.map((category) => {
-                    const isActive = activeIncome.includes(category)
+                    const isActive = activeIncome.includes(category);
                     return (
                       <button
                         key={category}
@@ -144,18 +130,14 @@ export function CategorySettingsClient({
                         <div
                           className={cn(
                             "flex size-4 shrink-0 items-center justify-center rounded-sm border",
-                            isActive
-                              ? "border-income bg-income"
-                              : "border-muted-foreground",
+                            isActive ? "border-income bg-income" : "border-muted-foreground",
                           )}
                         >
-                          {isActive && (
-                            <Check className="text-income-foreground size-3" />
-                          )}
+                          {isActive && <Check className="text-income-foreground size-3" />}
                         </div>
                         <span className="truncate">{category}</span>
                       </button>
-                    )
+                    );
                   })}
                 </div>
               </ScrollArea>
@@ -180,12 +162,12 @@ export function CategorySettingsClient({
             <p className="font-medium">收入类型说明</p>
             <ul className="text-muted-foreground space-y-1 pl-4">
               <li>
-                • <span className="text-income font-medium">主动收入</span>
-                ：{getIncomeTypeDescription(true)}
+                • <span className="text-income font-medium">主动收入</span>：
+                {getIncomeTypeDescription(true)}
               </li>
               <li>
-                • <span className="text-muted-foreground font-medium">被动收入</span>
-                ：{getIncomeTypeDescription(false)}
+                • <span className="text-muted-foreground font-medium">被动收入</span>：
+                {getIncomeTypeDescription(false)}
               </li>
             </ul>
           </div>
@@ -225,7 +207,7 @@ export function CategorySettingsClient({
               <ScrollArea className="h-[250px] pr-4">
                 <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
                   {expenseCategories.map((category) => {
-                    const isFixed = fixedExpense.includes(category)
+                    const isFixed = fixedExpense.includes(category);
                     return (
                       <button
                         key={category}
@@ -239,18 +221,14 @@ export function CategorySettingsClient({
                         <div
                           className={cn(
                             "flex size-4 shrink-0 items-center justify-center rounded-sm border",
-                            isFixed
-                              ? "border-expense bg-expense"
-                              : "border-muted-foreground",
+                            isFixed ? "border-expense bg-expense" : "border-muted-foreground",
                           )}
                         >
-                          {isFixed && (
-                            <Check className="text-expense-foreground size-3" />
-                          )}
+                          {isFixed && <Check className="text-expense-foreground size-3" />}
                         </div>
                         <span className="truncate">{category}</span>
                       </button>
-                    )
+                    );
                   })}
                 </div>
               </ScrollArea>
@@ -275,12 +253,12 @@ export function CategorySettingsClient({
             <p className="font-medium">支出类型说明</p>
             <ul className="text-muted-foreground space-y-1 pl-4">
               <li>
-                • <span className="text-expense font-medium">固定支出</span>
-                ：{getExpenseTypeDescription(true)}
+                • <span className="text-expense font-medium">固定支出</span>：
+                {getExpenseTypeDescription(true)}
               </li>
               <li>
-                • <span className="text-muted-foreground font-medium">弹性支出</span>
-                ：{getExpenseTypeDescription(false)}
+                • <span className="text-muted-foreground font-medium">弹性支出</span>：
+                {getExpenseTypeDescription(false)}
               </li>
             </ul>
           </div>
@@ -295,5 +273,5 @@ export function CategorySettingsClient({
         </Button>
       </div>
     </div>
-  )
+  );
 }

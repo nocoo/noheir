@@ -60,10 +60,7 @@ describe("okWithPage", () => {
 
   it("should preserve backward-compatible count/limit/offset in data", () => {
     const page: PageMeta = { returned: 50, total: 200, limit: 50, offset: 0, has_more: true };
-    const result = okWithPage(
-      { units: [], count: 50, limit: 50, offset: 0 },
-      page,
-    );
+    const result = okWithPage({ units: [], count: 50, limit: 50, offset: 0 }, page);
     const parsed = parseResult(result);
 
     // Old fields preserved
@@ -115,7 +112,12 @@ describe("okWithCompleteness", () => {
   });
 
   it("should include next hint for truncated results", () => {
-    const completeness: CompletenessMeta = { complete: false, truncated: true, total: 1500, returned: 1000 };
+    const completeness: CompletenessMeta = {
+      complete: false,
+      truncated: true,
+      total: 1500,
+      returned: 1000,
+    };
     const next: NextHint = { recommended: "narrow" };
     const result = okWithCompleteness({ units: [] }, completeness, next);
     const parsed = parseResult(result);
@@ -135,7 +137,10 @@ describe("okWithCompleteness", () => {
 describe("envelope consistency", () => {
   it("ok, okWithPage, okWithCompleteness all produce valid MCP results", () => {
     const r1 = ok({ a: 1 });
-    const r2 = okWithPage({ a: 1 }, { returned: 1, total: 1, limit: 1, offset: 0, has_more: false });
+    const r2 = okWithPage(
+      { a: 1 },
+      { returned: 1, total: 1, limit: 1, offset: 0, has_more: false },
+    );
     const r3 = okWithCompleteness({ a: 1 }, { complete: true, truncated: false });
 
     for (const r of [r1, r2, r3]) {

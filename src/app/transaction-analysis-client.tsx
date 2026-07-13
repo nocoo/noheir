@@ -1,36 +1,36 @@
-"use client"
+"use client";
 
-import { TrendingUp, TrendingDown, Calendar, Wallet } from "lucide-react"
-import type { MonthlyData } from "@/domain/types"
-import type { TransactionAnalysisLabels } from "@/domain/dashboard/transaction-analysis"
+import { TrendingUp, TrendingDown, Calendar, Wallet } from "lucide-react";
+import type { MonthlyData } from "@/domain/types";
+import type { TransactionAnalysisLabels } from "@/domain/dashboard/transaction-analysis";
 import type {
   CategoryGroup,
   PrimaryCategoryGroup,
   AccountChartData,
   TopTransaction,
-} from "@/components/shared"
+} from "@/components/shared";
 import {
   MonthlyTrendChart,
   CategoryDistributionChart,
   AccountDistributionChart,
   CategoryDetailList,
   TopTransactionsTable,
-} from "@/components/shared"
-import { StatCard } from "@/components/shared/stat-card"
-import { formatCurrencyFull } from "@/lib/chart-config"
-import { CHART_COLORS } from "@/lib/palette"
+} from "@/components/shared";
+import { StatCard } from "@/components/shared/stat-card";
+import { formatCurrencyFull } from "@/lib/chart-config";
+import { CHART_COLORS } from "@/lib/palette";
 
 interface TransactionAnalysisClientProps {
-  type: "income" | "expense"
-  totalAmount: number
-  avgMonthly: number
-  transactionCount: number
-  monthlyData: MonthlyData[]
-  chartData: CategoryGroup[]
-  detailList: PrimaryCategoryGroup[]
-  accountData: AccountChartData[]
-  topTransactions: TopTransaction[]
-  labels: TransactionAnalysisLabels
+  type: "income" | "expense";
+  totalAmount: number;
+  avgMonthly: number;
+  transactionCount: number;
+  monthlyData: MonthlyData[];
+  chartData: CategoryGroup[];
+  detailList: PrimaryCategoryGroup[];
+  accountData: AccountChartData[];
+  topTransactions: TopTransaction[];
+  labels: TransactionAnalysisLabels;
 }
 
 export function TransactionAnalysisClient({
@@ -45,28 +45,26 @@ export function TransactionAnalysisClient({
   topTransactions,
   labels,
 }: TransactionAnalysisClientProps) {
-  const isIncome = type === "income"
-  const colorHex = isIncome ? "var(--color-income)" : "var(--color-expense)"
-  const colorClass = isIncome ? "text-income" : "text-expense"
-  const variant = isIncome ? "income" : "expense"
-  const icon = isIncome ? TrendingUp : TrendingDown
-  const dataKey: "income" | "expense" = isIncome ? "income" : "expense"
+  const isIncome = type === "income";
+  const colorHex = isIncome ? "var(--color-income)" : "var(--color-expense)";
+  const colorClass = isIncome ? "text-income" : "text-expense";
+  const variant = isIncome ? "income" : "expense";
+  const icon = isIncome ? TrendingUp : TrendingDown;
+  const dataKey: "income" | "expense" = isIncome ? "income" : "expense";
 
   if (transactionCount === 0) {
     return (
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold">
-              {isIncome ? "收入分析" : "支出分析"}
-            </h1>
+            <h1 className="text-2xl font-bold">{isIncome ? "收入分析" : "支出分析"}</h1>
           </div>
         </div>
         <div className="text-muted-foreground py-8 text-center">
           暂无{isIncome ? "收入" : "支出"}数据
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -74,9 +72,7 @@ export function TransactionAnalysisClient({
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">
-            {isIncome ? "收入分析" : "支出分析"}
-          </h1>
+          <h1 className="text-2xl font-bold">{isIncome ? "收入分析" : "支出分析"}</h1>
           <p className="text-muted-foreground text-sm">
             {isIncome ? "收入来源与趋势分析" : "支出结构与趋势分析"}
           </p>
@@ -152,5 +148,5 @@ export function TransactionAnalysisClient({
         colorClass={colorClass}
       />
     </div>
-  )
+  );
 }

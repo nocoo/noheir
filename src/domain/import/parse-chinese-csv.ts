@@ -117,9 +117,12 @@ function parseTags(tagsStr: string): string {
 }
 
 /** Parse date string and extract year, month, day. */
-function parseDateParts(
-  dateStr: string,
-): { year: number; month: number; day: number; valid: boolean } {
+function parseDateParts(dateStr: string): {
+  year: number;
+  month: number;
+  day: number;
+  valid: boolean;
+} {
   const date = new Date(dateStr);
   if (isNaN(date.getTime())) {
     return { year: 0, month: 0, day: 0, valid: false };
@@ -133,10 +136,7 @@ function parseDateParts(
 }
 
 /** Determine transaction type from inflow/outflow amounts. */
-function determineType(
-  inflowCents: number,
-  outflowCents: number,
-): "income" | "expense" {
+function determineType(inflowCents: number, outflowCents: number): "income" | "expense" {
   if (inflowCents > 0 && outflowCents === 0) return "income";
   if (outflowCents > 0 && inflowCents === 0) return "expense";
   return inflowCents >= outflowCents ? "income" : "expense";
@@ -272,20 +272,13 @@ export function parseChineseCSV(content: string): ChineseCSVParseResult {
       let hasMapping = true;
       let secondaryCategory = "未分类";
 
-      const secondary = findSecondaryCategory(
-        primaryCategory,
-        tertiaryCategory,
-        type,
-      );
+      const secondary = findSecondaryCategory(primaryCategory, tertiaryCategory, type);
       hasMapping = secondary !== null;
       secondaryCategory = secondary || "未分类";
 
       // If tertiary is actually a secondary name, remap
       if (!hasMapping) {
-        const mappings =
-          type === "income"
-            ? DEFAULT_INCOME_CATEGORIES
-            : DEFAULT_EXPENSE_CATEGORIES;
+        const mappings = type === "income" ? DEFAULT_INCOME_CATEGORIES : DEFAULT_EXPENSE_CATEGORIES;
         if (mappings[tertiaryCategory]) {
           secondaryCategory = tertiaryCategory;
           const firstTertiary = mappings[tertiaryCategory]?.[0];

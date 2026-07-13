@@ -52,28 +52,18 @@ export const buildStrategyHierarchy = (
             .sort((a, b) => (b.value ?? 0) - (a.value ?? 0)),
         }))
         .sort((a, b) => {
-          const totalA = (a.children ?? []).reduce(
-            (sum, p) => sum + (p.value ?? 0),
-            0,
-          );
-          const totalB = (b.children ?? []).reduce(
-            (sum, p) => sum + (p.value ?? 0),
-            0,
-          );
+          const totalA = (a.children ?? []).reduce((sum, p) => sum + (p.value ?? 0), 0);
+          const totalB = (b.children ?? []).reduce((sum, p) => sum + (p.value ?? 0), 0);
           return totalB - totalA;
         }),
     }))
     .sort((a, b) => {
       const totalA = (a.children ?? []).reduce(
-        (sum, s) =>
-          sum +
-          (s.children ?? []).reduce((sum2, p) => sum2 + (p.value ?? 0), 0),
+        (sum, s) => sum + (s.children ?? []).reduce((sum2, p) => sum2 + (p.value ?? 0), 0),
         0,
       );
       const totalB = (b.children ?? []).reduce(
-        (sum, s) =>
-          sum +
-          (s.children ?? []).reduce((sum2, p) => sum2 + (p.value ?? 0), 0),
+        (sum, s) => sum + (s.children ?? []).reduce((sum2, p) => sum2 + (p.value ?? 0), 0),
         0,
       );
       return totalB - totalA;
@@ -84,7 +74,5 @@ export const buildStrategyHierarchy = (
 
 export const buildTotalAmount = (units: UnitDisplayInfo[]): number => {
   if (!units) return 0;
-  return units
-    .filter((u) => u.status === "已成立")
-    .reduce((sum, u) => sum + u.amount, 0);
+  return units.filter((u) => u.status === "已成立").reduce((sum, u) => sum + u.amount, 0);
 };

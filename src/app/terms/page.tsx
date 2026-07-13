@@ -1,5 +1,5 @@
-import { AppShell } from "@/components/layout"
-import { FileText } from "lucide-react"
+import { AppShell } from "@/components/layout";
+import { FileText } from "lucide-react";
 
 export default async function TermsPage() {
   return (
@@ -10,9 +10,7 @@ export default async function TermsPage() {
             <FileText className="text-primary size-6" />
             服务条款
           </h1>
-          <p className="text-muted-foreground text-sm">
-            使用本应用即表示您同意以下条款
-          </p>
+          <p className="text-muted-foreground text-sm">使用本应用即表示您同意以下条款</p>
         </div>
 
         <div className="prose prose-sm dark:prose-invert max-w-none space-y-4">
@@ -55,10 +53,8 @@ export default async function TermsPage() {
           </section>
         </div>
 
-        <p className="text-muted-foreground text-xs">
-          最后更新：2026年1月
-        </p>
+        <p className="text-muted-foreground text-xs">最后更新：2026年1月</p>
       </div>
     </AppShell>
-  )
+  );
 }

@@ -51,7 +51,10 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[mcp/token] Error:", error);
     return jsonResponse(
-      { error: "server_error", error_description: error instanceof Error ? error.message : "Internal server error" },
+      {
+        error: "server_error",
+        error_description: error instanceof Error ? error.message : "Internal server error",
+      },
       500,
     );
   }
@@ -68,7 +71,10 @@ async function handleAuthorizationCode(body: FormData): Promise<NextResponse> {
   const codeVerifier = body.get("code_verifier") as string | null;
 
   if (!code || !redirectUri || !clientId || !codeVerifier) {
-    return oauthError("invalid_request", "Missing required fields: code, redirect_uri, client_id, code_verifier");
+    return oauthError(
+      "invalid_request",
+      "Missing required fields: code, redirect_uri, client_id, code_verifier",
+    );
   }
 
   const db = getDb();
@@ -76,7 +82,10 @@ async function handleAuthorizationCode(body: FormData): Promise<NextResponse> {
   // Step 1: Look up the auth code (valid, unconsumed, not expired)
   const authCode = await getAuthCodeByCode(db, code);
   if (!authCode) {
-    return oauthError("invalid_grant", "Authorization code is invalid, expired, or already consumed");
+    return oauthError(
+      "invalid_grant",
+      "Authorization code is invalid, expired, or already consumed",
+    );
   }
 
   // Step 2: Validate client_id matches (validate before consuming)
@@ -144,7 +153,13 @@ async function handleRefreshToken(body: FormData): Promise<NextResponse> {
   await revokeTokensByClientAndUser(db, clientId, existingToken.user_id);
 
   // Issue new token pair
-  return issueTokenPair(db, clientId, existingToken.user_id, existingToken.scope, existingToken.client_name);
+  return issueTokenPair(
+    db,
+    clientId,
+    existingToken.user_id,
+    existingToken.scope,
+    existingToken.client_name,
+  );
 }
 
 // ---------------------------------------------------------------------------

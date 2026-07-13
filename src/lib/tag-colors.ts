@@ -130,30 +130,15 @@ function stringHash(str: string): number {
 
 // ── Public API ──
 
-export function getTagColor(
-  label: string,
-): "default" | "secondary" | "outline" {
+export function getTagColor(label: string): "default" | "secondary" | "outline" {
   const hash = stringHash(label);
   const index = hash % COLOR_KEYS.length;
   const colorKey = COLOR_KEYS[index] ?? "slate";
 
-  if (
-    ["red", "orange", "amber", "yellow", "rose", "expense"].includes(colorKey)
-  ) {
+  if (["red", "orange", "amber", "yellow", "rose", "expense"].includes(colorKey)) {
     return "default";
   }
-  if (
-    [
-      "blue",
-      "cyan",
-      "sky",
-      "indigo",
-      "violet",
-      "purple",
-      "fuchsia",
-      "pink",
-    ].includes(colorKey)
-  ) {
+  if (["blue", "cyan", "sky", "indigo", "violet", "purple", "fuchsia", "pink"].includes(colorKey)) {
     return "secondary";
   }
   return "outline";
@@ -209,9 +194,7 @@ export function getUnitCodePrefix(unitCode: string): string {
   return unitCode.charAt(0).toUpperCase();
 }
 
-export function getUnitCodeColor(
-  unitCode: string,
-): "default" | "secondary" | "outline" {
+export function getUnitCodeColor(unitCode: string): "default" | "secondary" | "outline" {
   return getTagColor(getUnitCodePrefix(unitCode));
 }
 

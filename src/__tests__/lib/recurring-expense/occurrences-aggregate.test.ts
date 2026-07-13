@@ -76,9 +76,7 @@ describe("sumWindow", () => {
 
   test("sums a single monthly rule across 3 months", () => {
     const r = rule({ amountCents: 3_000, dayOfMonth: 15 });
-    expect(
-      sumWindow([r], { fromDate: "2026-01-01", toDate: "2026-03-31" }),
-    ).toBe(9_000); // 3 occurrences × 3000
+    expect(sumWindow([r], { fromDate: "2026-01-01", toDate: "2026-03-31" })).toBe(9_000); // 3 occurrences × 3000
   });
 
   test("sums multiple rules", () => {
@@ -124,23 +122,17 @@ describe("sumWindow", () => {
       endedAt: "2026-03-15",
     });
     // 1/1, 2/1, 3/1 are ≤ endedAt; 4/1 excluded
-    expect(
-      sumWindow([r], { fromDate: "2026-01-01", toDate: "2026-12-31" }),
-    ).toBe(300);
+    expect(sumWindow([r], { fromDate: "2026-01-01", toDate: "2026-12-31" })).toBe(300);
   });
 
   test("window before rule's startDate → 0", () => {
     const r = rule({ startDate: "2027-01-01" });
-    expect(
-      sumWindow([r], { fromDate: "2026-01-01", toDate: "2026-12-31" }),
-    ).toBe(0);
+    expect(sumWindow([r], { fromDate: "2026-01-01", toDate: "2026-12-31" })).toBe(0);
   });
 
   test("cross-month window for monthly rule respects exact bounds", () => {
     const r = rule({ amountCents: 100, dayOfMonth: 15 });
-    expect(
-      sumWindow([r], { fromDate: "2026-01-16", toDate: "2026-03-14" }),
-    ).toBe(100); // only Feb 15
+    expect(sumWindow([r], { fromDate: "2026-01-16", toDate: "2026-03-14" })).toBe(100); // only Feb 15
   });
 });
 

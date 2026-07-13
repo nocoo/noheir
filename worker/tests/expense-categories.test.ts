@@ -151,10 +151,7 @@ describe("expense_categories repo (P1-C3)", () => {
     });
     expect(res).toEqual({ ok: false, reason: "not_found" });
 
-    const stillThere = await repos.expenseCategories.findById(
-      otherId,
-      owned.category.id,
-    );
+    const stillThere = await repos.expenseCategories.findById(otherId, owned.category.id);
     expect(stillThere?.name).toBe("owned-by-other");
   });
 
@@ -188,23 +185,15 @@ describe("expense_categories repo (P1-C3)", () => {
     if (!created.ok) throw new Error("seed failed");
 
     // wrong user
-    expect(await repos.expenseCategories.delete(otherId, created.category.id)).toBe(
-      false,
-    );
-    expect(await repos.expenseCategories.findById(userId, created.category.id))
-      .not.toBeNull();
+    expect(await repos.expenseCategories.delete(otherId, created.category.id)).toBe(false);
+    expect(await repos.expenseCategories.findById(userId, created.category.id)).not.toBeNull();
 
     // correct user
-    expect(await repos.expenseCategories.delete(userId, created.category.id)).toBe(
-      true,
-    );
-    expect(await repos.expenseCategories.findById(userId, created.category.id))
-      .toBeNull();
+    expect(await repos.expenseCategories.delete(userId, created.category.id)).toBe(true);
+    expect(await repos.expenseCategories.findById(userId, created.category.id)).toBeNull();
 
     // already gone
-    expect(await repos.expenseCategories.delete(userId, created.category.id)).toBe(
-      false,
-    );
+    expect(await repos.expenseCategories.delete(userId, created.category.id)).toBe(false);
   });
 
   test("rejects empty name (NOT NULL is enforced by DB; empty string is allowed by spec; trim is route concern)", async () => {

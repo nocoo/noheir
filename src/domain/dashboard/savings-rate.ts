@@ -19,39 +19,29 @@ export interface SavingsRateSummary {
 export const buildSavingsRateChartData = (data: MonthlyData[]) => {
   const chartData: SavingsRateChartPoint[] = data.map((item) => ({
     ...item,
-    savingsRate:
-      item.income > 0
-        ? ((item.income - item.expense) / item.income) * 100
-        : 0,
+    savingsRate: item.income > 0 ? ((item.income - item.expense) / item.income) * 100 : 0,
     savings: item.income - item.expense,
   }));
 
   const totalIncome = chartData.reduce((sum, d) => sum + d.income, 0);
   const totalExpense = chartData.reduce((sum, d) => sum + d.expense, 0);
   const totalSavings = totalIncome - totalExpense;
-  const annualSavingsRate =
-    totalIncome > 0 ? (totalSavings / totalIncome) * 100 : 0;
+  const annualSavingsRate = totalIncome > 0 ? (totalSavings / totalIncome) * 100 : 0;
 
   const firstItem = chartData[0];
-  const bestMonth =
-    firstItem
-      ? chartData.reduce(
-          (best, curr) =>
-            curr.savingsRate > best.savingsRate ? curr : best,
-          firstItem,
-        )
-      : null;
+  const bestMonth = firstItem
+    ? chartData.reduce(
+        (best, curr) => (curr.savingsRate > best.savingsRate ? curr : best),
+        firstItem,
+      )
+    : null;
 
-  const worstMonth =
-    firstItem
-      ? chartData.reduce(
-          (worst, curr) =>
-            curr.income > 0 && curr.savingsRate < worst.savingsRate
-              ? curr
-              : worst,
-          chartData.find((d) => d.income > 0) ?? firstItem,
-        )
-      : null;
+  const worstMonth = firstItem
+    ? chartData.reduce(
+        (worst, curr) => (curr.income > 0 && curr.savingsRate < worst.savingsRate ? curr : worst),
+        chartData.find((d) => d.income > 0) ?? firstItem,
+      )
+    : null;
 
   return {
     chartData,

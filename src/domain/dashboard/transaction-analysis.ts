@@ -27,26 +27,15 @@ export const buildTotalAmount = (transactions: DomainTransaction[]) => {
   return transactions.reduce((sum, t) => sum + t.amount, 0);
 };
 
-export const buildTopTransactions = (
-  transactions: DomainTransaction[],
-  limit = 50,
-) => {
+export const buildTopTransactions = (transactions: DomainTransaction[], limit = 50) => {
   return [...transactions].sort((a, b) => b.amount - a.amount).slice(0, limit);
 };
 
-export const buildMonthlyFiltered = (
-  monthlyData: MonthlyData[],
-  type: TransactionType,
-) => {
-  return monthlyData.filter((d) =>
-    type === "income" ? d.income > 0 : d.expense > 0,
-  );
+export const buildMonthlyFiltered = (monthlyData: MonthlyData[], type: TransactionType) => {
+  return monthlyData.filter((d) => (type === "income" ? d.income > 0 : d.expense > 0));
 };
 
-export const buildAverageMonthly = (
-  monthlyFiltered: MonthlyData[],
-  type: TransactionType,
-) => {
+export const buildAverageMonthly = (monthlyFiltered: MonthlyData[], type: TransactionType) => {
   if (monthlyFiltered.length === 0) return 0;
   const total = monthlyFiltered.reduce(
     (sum, d) => sum + (type === "income" ? d.income : d.expense),
@@ -55,9 +44,7 @@ export const buildAverageMonthly = (
   return total / monthlyFiltered.length;
 };
 
-export const buildTransactionLabels = (
-  type: TransactionType,
-): TransactionAnalysisLabels => {
+export const buildTransactionLabels = (type: TransactionType): TransactionAnalysisLabels => {
   const isIncome = type === "income";
   return {
     total: isIncome ? "总收入" : "总支出",

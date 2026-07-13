@@ -158,8 +158,7 @@ describe("recurring_expenses repo (P1-C4)", () => {
     if (!rule.ok) throw new Error("seed");
 
     expect(await repos.recurringExpenses.delete(otherId, rule.rule.id)).toBe(false);
-    expect(await repos.recurringExpenses.findById(userId, rule.rule.id))
-      .not.toBeNull();
+    expect(await repos.recurringExpenses.findById(userId, rule.rule.id)).not.toBeNull();
 
     expect(await repos.recurringExpenses.delete(userId, rule.rule.id)).toBe(true);
     expect(await repos.recurringExpenses.findById(userId, rule.rule.id)).toBeNull();
@@ -176,8 +175,6 @@ describe("recurring_expenses repo (P1-C4)", () => {
     const rows = await repos.recurringExpenses.findAll(userId);
     expect(rows.map((r) => r.name)).toEqual(["a", "a", "b"]);
     // For duplicate names, newer-created comes first
-    expect(rows[0].createdAt.getTime()).toBeGreaterThanOrEqual(
-      rows[1].createdAt.getTime(),
-    );
+    expect(rows[0].createdAt.getTime()).toBeGreaterThanOrEqual(rows[1].createdAt.getTime());
   });
 });

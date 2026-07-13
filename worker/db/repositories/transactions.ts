@@ -42,18 +42,14 @@ function clampLimit(limit: number | undefined): number {
  * Priority order matches the original RPC: note → primary_category →
  * secondary_category → tertiary_category → account.
  */
-function computeMatchedField(
-  row: Transaction,
-  keyword: string | undefined,
-): string | null {
+function computeMatchedField(row: Transaction, keyword: string | undefined): string | null {
   if (!keyword) return null;
   const kw = keyword.toLowerCase();
   if (row.note && row.note.toLowerCase().includes(kw)) return "note";
   if (row.primaryCategory.toLowerCase().includes(kw)) return "category";
   if (row.secondaryCategory && row.secondaryCategory.toLowerCase().includes(kw))
     return "secondary_category";
-  if (row.tertiaryCategory.toLowerCase().includes(kw))
-    return "tertiary_category";
+  if (row.tertiaryCategory.toLowerCase().includes(kw)) return "tertiary_category";
   if (row.account.toLowerCase().includes(kw)) return "account";
   return null;
 }
@@ -67,7 +63,7 @@ function buildTagsCondition(filterTags: string[]): SQL {
   // For each tag, we check if the tags column contains the tag as a JSON string element
   // This handles both normal JSON: ["tag1","tag2"]
   // and double-encoded: "[\"tag1\",\"tag2\"]" stored as: ["\"tag1\",\"tag2\"]
-  const conditions = filterTags.map(tag => {
+  const conditions = filterTags.map((tag) => {
     // Escape single quotes for SQL string literal
     const escaped = tag.replace(/'/g, "''");
     // Match patterns:
@@ -115,14 +111,10 @@ export function createTransactionsRepo(db: DrizzleD1Database) {
         conditions.push(inArray(transactions.primaryCategory, params.categories));
       }
       if (params.secondary_categories && params.secondary_categories.length > 0) {
-        conditions.push(
-          inArray(transactions.secondaryCategory, params.secondary_categories),
-        );
+        conditions.push(inArray(transactions.secondaryCategory, params.secondary_categories));
       }
       if (params.tertiary_categories && params.tertiary_categories.length > 0) {
-        conditions.push(
-          inArray(transactions.tertiaryCategory, params.tertiary_categories),
-        );
+        conditions.push(inArray(transactions.tertiaryCategory, params.tertiary_categories));
       }
 
       // Type filter
@@ -194,10 +186,7 @@ export function createTransactionsRepo(db: DrizzleD1Database) {
       };
     },
 
-    async findById(
-      userId: string,
-      id: string,
-    ): Promise<Transaction | null> {
+    async findById(userId: string, id: string): Promise<Transaction | null> {
       const row = await db
         .select()
         .from(transactions)
@@ -241,9 +230,7 @@ export function createTransactionsRepo(db: DrizzleD1Database) {
     async update(
       userId: string,
       id: string,
-      data: Partial<
-        Omit<NewTransaction, "id" | "userId" | "createdAt">
-      >,
+      data: Partial<Omit<NewTransaction, "id" | "userId" | "createdAt">>,
     ): Promise<Transaction | null> {
       const rows = await db
         .update(transactions)

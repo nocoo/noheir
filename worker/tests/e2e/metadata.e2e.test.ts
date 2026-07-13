@@ -79,8 +79,8 @@ describe("E2E: Metadata", () => {
       path: "/api/reports/metadata",
       userId,
     });
-    expect((res.categories as string[])).toContain("餐饮");
-    expect((res.tags as string[])).toContain("daily");
-    expect((res.tags as string[])).toContain("food");
+    expect(res.categories as string[]).toContain("餐饮");
+    expect(res.tags as string[]).toContain("daily");
+    expect(res.tags as string[]).toContain("food");
   });
 });

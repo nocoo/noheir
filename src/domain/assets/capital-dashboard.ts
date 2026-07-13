@@ -6,9 +6,7 @@ type DashboardDataLike = {
   upcoming_maturities: Array<{ amount: number }>;
 };
 
-export const buildTotalAssetsByCurrency = (
-  units: UnitDisplayInfo[],
-): Record<Currency, number> => {
+export const buildTotalAssetsByCurrency = (units: UnitDisplayInfo[]): Record<Currency, number> => {
   const totals: Record<Currency, number> = { CNY: 0, USD: 0, HKD: 0 };
   units.forEach((unit) => {
     if (unit.status === "已成立") {
@@ -18,46 +16,32 @@ export const buildTotalAssetsByCurrency = (
   return totals;
 };
 
-export const buildTotalAssetsAll = (
-  totals: Record<Currency, number>,
-): number => {
+export const buildTotalAssetsAll = (totals: Record<Currency, number>): number => {
   return Object.values(totals).reduce((sum, amount) => sum + amount, 0);
 };
 
-export const buildDeploymentRate = (
-  dashboardData?: DashboardDataLike,
-): number => {
+export const buildDeploymentRate = (dashboardData?: DashboardDataLike): number => {
   if (!dashboardData || dashboardData.total_assets === 0) return 0;
   return (dashboardData.invested_amount / dashboardData.total_assets) * 100;
 };
 
-export const buildIdleUnits = (
-  units: UnitDisplayInfo[],
-): UnitDisplayInfo[] => {
+export const buildIdleUnits = (units: UnitDisplayInfo[]): UnitDisplayInfo[] => {
   return units.filter((unit) => unit.status === "已成立" && !unit.product);
 };
 
 export const buildIncomingLiquidity = (
   dashboardData?: DashboardDataLike,
 ): { total: number; count: number } => {
-  const total =
-    dashboardData?.upcoming_maturities.reduce(
-      (sum, m) => sum + m.amount,
-      0,
-    ) ?? 0;
+  const total = dashboardData?.upcoming_maturities.reduce((sum, m) => sum + m.amount, 0) ?? 0;
   const count = dashboardData?.upcoming_maturities.length ?? 0;
   return { total, count };
 };
 
-export const buildCurrencyDistribution = (
-  units: UnitDisplayInfo[],
-  totalAssetsAll: number,
-) => {
+export const buildCurrencyDistribution = (units: UnitDisplayInfo[], totalAssetsAll: number) => {
   const currencyMap: Record<string, number> = {};
   units.forEach((unit) => {
     if (unit.status === "已成立") {
-      currencyMap[unit.currency] =
-        (currencyMap[unit.currency] ?? 0) + unit.amount;
+      currencyMap[unit.currency] = (currencyMap[unit.currency] ?? 0) + unit.amount;
     }
   });
 
@@ -68,10 +52,7 @@ export const buildCurrencyDistribution = (
   }));
 };
 
-export const buildStatusDistribution = (
-  units: UnitDisplayInfo[],
-  totalAssetsAll: number,
-) => {
+export const buildStatusDistribution = (units: UnitDisplayInfo[], totalAssetsAll: number) => {
   const statusMap: Record<string, number> = {};
   units.forEach((unit) => {
     if (unit.status === "已成立") {
@@ -86,10 +67,7 @@ export const buildStatusDistribution = (
   }));
 };
 
-export const buildAvailabilityDistribution = (
-  units: UnitDisplayInfo[],
-  totalAssetsAll: number,
-) => {
+export const buildAvailabilityDistribution = (units: UnitDisplayInfo[], totalAssetsAll: number) => {
   let available = 0;
   let within7d = 0;
   let within30d = 0;

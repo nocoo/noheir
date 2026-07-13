@@ -11,9 +11,7 @@ export type DecisionItem = {
 export type SortColumn = "番号" | "策略" | "紧急度" | "说明";
 export type SortDirection = "asc" | "desc" | null;
 
-export const classifyDecisions = (
-  units: UnitDisplayInfo[],
-): DecisionItem[] => {
+export const classifyDecisions = (units: UnitDisplayInfo[]): DecisionItem[] => {
   const decisions: DecisionItem[] = [];
 
   units.forEach((unit) => {
@@ -51,9 +49,7 @@ export const classifyDecisions = (
 
     if (unit.isAvailable) {
       const daysSinceAvailable =
-        unit.daysUntilAvailable !== null
-          ? -unit.daysUntilAvailable
-          : undefined;
+        unit.daysUntilAvailable !== null ? -unit.daysUntilAvailable : undefined;
       if (daysSinceAvailable !== undefined && daysSinceAvailable <= 30) {
         decisions.push({
           unit,
@@ -72,10 +68,7 @@ export const classifyDecisions = (
       return;
     }
 
-    if (
-      unit.daysUntilAvailable !== null &&
-      unit.daysUntilAvailable <= 7
-    ) {
+    if (unit.daysUntilAvailable !== null && unit.daysUntilAvailable <= 7) {
       const daysText =
         unit.daysUntilAvailable === 0
           ? "今日"
@@ -91,10 +84,7 @@ export const classifyDecisions = (
       return;
     }
 
-    if (
-      unit.daysUntilAvailable !== null &&
-      unit.daysUntilAvailable <= 30
-    ) {
+    if (unit.daysUntilAvailable !== null && unit.daysUntilAvailable <= 30) {
       decisions.push({
         unit,
         reason: "即将解锁",
@@ -141,10 +131,7 @@ export const buildFilterCounts = (decisions: DecisionItem[]) => ({
   low: decisions.filter((d) => d.urgency === "low").length,
 });
 
-export const buildCurrencyTooltip = (
-  currency: Currency,
-  amount: number,
-): string => {
+export const buildCurrencyTooltip = (currency: Currency, amount: number): string => {
   const symbol = { CNY: "¥", USD: "$", HKD: "HK$" }[currency];
   return `${symbol}${amount.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
@@ -161,16 +148,10 @@ export const sortDecisions = (
     let compareValue = 0;
     switch (sortColumn) {
       case "番号":
-        compareValue = a.unit.unitCode.localeCompare(
-          b.unit.unitCode,
-          "zh-CN",
-        );
+        compareValue = a.unit.unitCode.localeCompare(b.unit.unitCode, "zh-CN");
         break;
       case "策略":
-        compareValue = a.unit.strategy.localeCompare(
-          b.unit.strategy,
-          "zh-CN",
-        );
+        compareValue = a.unit.strategy.localeCompare(b.unit.strategy, "zh-CN");
         break;
       case "紧急度":
         compareValue = urgencyOrder[a.urgency] - urgencyOrder[b.urgency];

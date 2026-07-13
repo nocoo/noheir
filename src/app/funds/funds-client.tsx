@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { useState, useTransition, useMemo } from "react"
-import { useRouter } from "next/navigation"
-import { toast } from "sonner"
+import { useState, useTransition, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   Landmark,
   Search,
@@ -14,16 +14,11 @@ import {
   X,
   ArrowUp,
   ArrowDown,
-} from "lucide-react"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -31,174 +26,185 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Label } from "@/components/ui/label"
-import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   UnitCodeBadge,
   StrategyBadge,
   TacticsBadge,
   StatusBadge,
   CurrencyBadge,
-} from "@/components/ui/colored-badge"
-import { UnitEditor, type SerializedUnit } from "@/components/capital/unit-editor"
-import { cn } from "@/lib/utils"
-import { formatCurrencyFull } from "@/lib/chart-config"
-import { CAPITAL_TABLE_COLUMNS } from "@/lib/table-columns"
-import { deleteUnit } from "@/app/actions/unit-actions"
-import type { DomainProduct } from "@/domain/types"
+} from "@/components/ui/colored-badge";
+import { UnitEditor, type SerializedUnit } from "@/components/capital/unit-editor";
+import { cn } from "@/lib/utils";
+import { formatCurrencyFull } from "@/lib/chart-config";
+import { CAPITAL_TABLE_COLUMNS } from "@/lib/table-columns";
+import { deleteUnit } from "@/app/actions/unit-actions";
+import type { DomainProduct } from "@/domain/types";
 
 interface FundsClientProps {
-  units: SerializedUnit[]
-  products: DomainProduct[]
+  units: SerializedUnit[];
+  products: DomainProduct[];
 }
 
 const STRATEGIES = [
-  "远期理财", "美元资产", "36存单",
-  "长期理财", "短期理财", "中期理财",
-  "进攻计划", "麻麻理财",
-]
+  "远期理财",
+  "美元资产",
+  "36存单",
+  "长期理财",
+  "短期理财",
+  "中期理财",
+  "进攻计划",
+  "麻麻理财",
+];
 
 const TACTICS = [
-  "养老年金", "个人养老金", "定期存款",
-  "理财产品", "现金产品", "债券基金",
-  "偏股基金", "稳健理财", "增额寿险",
+  "养老年金",
+  "个人养老金",
+  "定期存款",
+  "理财产品",
+  "现金产品",
+  "债券基金",
+  "偏股基金",
+  "稳健理财",
+  "增额寿险",
   "货币基金",
-]
+];
 
-const STATUSES = ["已成立", "计划中", "筹集中", "已归档"]
+const STATUSES = ["已成立", "计划中", "筹集中", "已归档"];
 
-type SortField = "unitCode" | "amount" | "availableDate" | "status" | "strategy"
-type SortDir = "asc" | "desc"
+type SortField = "unitCode" | "amount" | "availableDate" | "status" | "strategy";
+type SortDir = "asc" | "desc";
 
 export function FundsClient({ units, products }: FundsClientProps) {
-  const router = useRouter()
-  const [search, setSearch] = useState("")
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [editingUnit, setEditingUnit] = useState<SerializedUnit | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<SerializedUnit | null>(null)
-  const [sortField, setSortField] = useState<SortField>("unitCode")
-  const [sortDir, setSortDir] = useState<SortDir>("asc")
-  const [isPending, startTransition] = useTransition()
+  const router = useRouter();
+  const [search, setSearch] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingUnit, setEditingUnit] = useState<SerializedUnit | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<SerializedUnit | null>(null);
+  const [sortField, setSortField] = useState<SortField>("unitCode");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [isPending, startTransition] = useTransition();
 
   // Filter state
-  const [showFilters, setShowFilters] = useState(false)
-  const [filterStatus, setFilterStatus] = useState("all")
-  const [filterStrategy, setFilterStrategy] = useState("all")
-  const [filterTactics, setFilterTactics] = useState("all")
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterStrategy, setFilterStrategy] = useState("all");
+  const [filterTactics, setFilterTactics] = useState("all");
 
   const activeFilterCount = [filterStatus, filterStrategy, filterTactics].filter(
     (f) => f !== "all",
-  ).length
+  ).length;
 
   const resetFilters = () => {
-    setFilterStatus("all")
-    setFilterStrategy("all")
-    setFilterTactics("all")
-  }
+    setFilterStatus("all");
+    setFilterStrategy("all");
+    setFilterTactics("all");
+  };
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
-      setSortDir(sortDir === "asc" ? "desc" : "asc")
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
     } else {
-      setSortField(field)
-      setSortDir("asc")
+      setSortField(field);
+      setSortDir("asc");
     }
-  }
+  };
 
   const getSortIcon = (field: SortField) => {
-    if (sortField !== field) return <ArrowUpDown className="ml-1 inline size-3" />
-    return sortDir === "asc"
-      ? <ArrowUp className="ml-1 inline size-3" />
-      : <ArrowDown className="ml-1 inline size-3" />
-  }
+    if (sortField !== field) return <ArrowUpDown className="ml-1 inline size-3" />;
+    return sortDir === "asc" ? (
+      <ArrowUp className="ml-1 inline size-3" />
+    ) : (
+      <ArrowDown className="ml-1 inline size-3" />
+    );
+  };
 
   const getAriaSort = (field: SortField): "ascending" | "descending" | "none" => {
-    if (sortField !== field) return "none"
-    return sortDir === "asc" ? "ascending" : "descending"
-  }
+    if (sortField !== field) return "none";
+    return sortDir === "asc" ? "ascending" : "descending";
+  };
 
   const filteredAndSorted = useMemo(() => {
     // First filter
     const result = units.filter((u) => {
       // Text search
       if (search) {
-        const q = search.toLowerCase()
+        const q = search.toLowerCase();
         const matches =
           u.unitCode.toLowerCase().includes(q) ||
           u.strategy.includes(search) ||
           u.tactics.includes(search) ||
           (u.productName ?? "").includes(search) ||
-          (u.note ?? "").includes(search)
-        if (!matches) return false
+          (u.note ?? "").includes(search);
+        if (!matches) return false;
       }
       // Status filter
-      if (filterStatus !== "all" && u.status !== filterStatus) return false
+      if (filterStatus !== "all" && u.status !== filterStatus) return false;
       // Strategy filter
-      if (filterStrategy !== "all" && u.strategy !== filterStrategy) return false
+      if (filterStrategy !== "all" && u.strategy !== filterStrategy) return false;
       // Tactics filter
-      if (filterTactics !== "all" && u.tactics !== filterTactics) return false
-      return true
-    })
+      if (filterTactics !== "all" && u.tactics !== filterTactics) return false;
+      return true;
+    });
 
     // Then sort
     result.sort((a, b) => {
-      const dir = sortDir === "asc" ? 1 : -1
+      const dir = sortDir === "asc" ? 1 : -1;
       switch (sortField) {
         case "amount":
-          return (a.amount - b.amount) * dir
+          return (a.amount - b.amount) * dir;
         case "availableDate":
-          return (
-            ((a.availableDate ?? "9999") > (b.availableDate ?? "9999") ? 1 : -1) * dir
-          )
+          return ((a.availableDate ?? "9999") > (b.availableDate ?? "9999") ? 1 : -1) * dir;
         case "status":
-          return a.status.localeCompare(b.status) * dir
+          return a.status.localeCompare(b.status) * dir;
         case "strategy":
-          return a.strategy.localeCompare(b.strategy, "zh-CN") * dir
+          return a.strategy.localeCompare(b.strategy, "zh-CN") * dir;
         default:
-          return a.unitCode.localeCompare(b.unitCode) * dir
+          return a.unitCode.localeCompare(b.unitCode) * dir;
       }
-    })
+    });
 
-    return result
-  }, [units, search, filterStatus, filterStrategy, filterTactics, sortField, sortDir])
+    return result;
+  }, [units, search, filterStatus, filterStrategy, filterTactics, sortField, sortDir]);
 
-  const totalAmount = filteredAndSorted.reduce((sum, u) => sum + u.amount, 0)
+  const totalAmount = filteredAndSorted.reduce((sum, u) => sum + u.amount, 0);
 
   const handleEdit = (unit: SerializedUnit) => {
-    setEditingUnit(unit)
-    setDialogOpen(true)
-  }
+    setEditingUnit(unit);
+    setDialogOpen(true);
+  };
 
   const handleCreate = () => {
-    setEditingUnit(null)
-    setDialogOpen(true)
-  }
+    setEditingUnit(null);
+    setDialogOpen(true);
+  };
 
   const handleDelete = (unit: SerializedUnit) => {
-    setDeleteTarget(unit)
-  }
+    setDeleteTarget(unit);
+  };
 
   const confirmDelete = () => {
-    if (!deleteTarget) return
+    if (!deleteTarget) return;
     startTransition(async () => {
-      const result = await deleteUnit(deleteTarget.id)
+      const result = await deleteUnit(deleteTarget.id);
       if (result.success) {
-        toast.success("资本单位已删除")
-        router.refresh()
+        toast.success("资本单位已删除");
+        router.refresh();
       } else {
-        toast.error(result.error)
+        toast.error(result.error);
       }
-      setDeleteTarget(null)
-    })
-  }
+      setDeleteTarget(null);
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -331,7 +337,10 @@ export function FundsClient({ units, products }: FundsClientProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className={CAPITAL_TABLE_COLUMNS.unitCode} aria-sort={getAriaSort("unitCode")}>
+                <TableHead
+                  className={CAPITAL_TABLE_COLUMNS.unitCode}
+                  aria-sort={getAriaSort("unitCode")}
+                >
                   <button
                     onClick={() => toggleSort("unitCode")}
                     className="hover:text-foreground flex items-center text-sm transition-colors"
@@ -340,7 +349,10 @@ export function FundsClient({ units, products }: FundsClientProps) {
                     {getSortIcon("unitCode")}
                   </button>
                 </TableHead>
-                <TableHead className={CAPITAL_TABLE_COLUMNS.amount} aria-sort={getAriaSort("amount")}>
+                <TableHead
+                  className={CAPITAL_TABLE_COLUMNS.amount}
+                  aria-sort={getAriaSort("amount")}
+                >
                   <button
                     onClick={() => toggleSort("amount")}
                     className="hover:text-foreground flex items-center text-sm transition-colors"
@@ -349,7 +361,10 @@ export function FundsClient({ units, products }: FundsClientProps) {
                     {getSortIcon("amount")}
                   </button>
                 </TableHead>
-                <TableHead className={CAPITAL_TABLE_COLUMNS.strategy} aria-sort={getAriaSort("strategy")}>
+                <TableHead
+                  className={CAPITAL_TABLE_COLUMNS.strategy}
+                  aria-sort={getAriaSort("strategy")}
+                >
                   <button
                     onClick={() => toggleSort("strategy")}
                     className="hover:text-foreground flex items-center text-sm transition-colors"
@@ -360,7 +375,10 @@ export function FundsClient({ units, products }: FundsClientProps) {
                 </TableHead>
                 <TableHead className={CAPITAL_TABLE_COLUMNS.tactics}>战术</TableHead>
                 <TableHead className={CAPITAL_TABLE_COLUMNS.product}>产品</TableHead>
-                <TableHead className={CAPITAL_TABLE_COLUMNS.status} aria-sort={getAriaSort("status")}>
+                <TableHead
+                  className={CAPITAL_TABLE_COLUMNS.status}
+                  aria-sort={getAriaSort("status")}
+                >
                   <button
                     onClick={() => toggleSort("status")}
                     className="hover:text-foreground flex items-center text-sm transition-colors"
@@ -369,7 +387,10 @@ export function FundsClient({ units, products }: FundsClientProps) {
                     {getSortIcon("status")}
                   </button>
                 </TableHead>
-                <TableHead className={CAPITAL_TABLE_COLUMNS.date} aria-sort={getAriaSort("availableDate")}>
+                <TableHead
+                  className={CAPITAL_TABLE_COLUMNS.date}
+                  aria-sort={getAriaSort("availableDate")}
+                >
                   <button
                     onClick={() => toggleSort("availableDate")}
                     className="hover:text-foreground flex items-center text-sm transition-colors"
@@ -389,10 +410,7 @@ export function FundsClient({ units, products }: FundsClientProps) {
                   </TableCell>
                   <TableCell className="font-bold">
                     {formatCurrencyFull(unit.amount)}{" "}
-                    <CurrencyBadge
-                      currency={unit.currency}
-                      className="ml-1 text-xs font-normal"
-                    />
+                    <CurrencyBadge currency={unit.currency} className="ml-1 text-xs font-normal" />
                   </TableCell>
                   <TableCell>
                     <StrategyBadge strategy={unit.strategy} />
@@ -422,11 +440,13 @@ export function FundsClient({ units, products }: FundsClientProps) {
                       {unit.availableDate ?? "—"}
                       {unit.daysUntilAvailable != null && (
                         <span className="ml-1 text-xs">
-                          ({unit.isAvailable
+                          (
+                          {unit.isAvailable
                             ? "可用"
                             : unit.daysUntilAvailable <= 30
                               ? `${unit.daysUntilAvailable}天`
-                              : "锁定中"})
+                              : "锁定中"}
+                          )
                         </span>
                       )}
                     </span>
@@ -456,13 +476,8 @@ export function FundsClient({ units, products }: FundsClientProps) {
               ))}
               {filteredAndSorted.length === 0 && (
                 <TableRow>
-                  <TableCell
-                    colSpan={8}
-                    className="text-muted-foreground py-8 text-center"
-                  >
-                    {search || activeFilterCount > 0
-                      ? "未找到匹配的单位"
-                      : "暂无资本单位"}
+                  <TableCell colSpan={8} className="text-muted-foreground py-8 text-center">
+                    {search || activeFilterCount > 0 ? "未找到匹配的单位" : "暂无资本单位"}
                   </TableCell>
                 </TableRow>
               )}
@@ -475,7 +490,7 @@ export function FundsClient({ units, products }: FundsClientProps) {
       <ConfirmDialog
         open={deleteTarget !== null}
         onOpenChange={(open) => {
-          if (!open) setDeleteTarget(null)
+          if (!open) setDeleteTarget(null);
         }}
         title="删除资本单位"
         description={`确定要删除单位「${deleteTarget?.unitCode ?? ""}」吗？此操作不可撤销。`}
@@ -483,5 +498,5 @@ export function FundsClient({ units, products }: FundsClientProps) {
         loading={isPending}
       />
     </div>
-  )
+  );
 }

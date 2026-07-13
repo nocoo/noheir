@@ -18,8 +18,7 @@ const v = (token: string) => `hsl(var(--${token}))`;
  * Returns a CSS color string with alpha from a CSS custom property.
  * Usage: `withAlpha("chart-1", 0.12)` → `hsl(var(--chart-1) / 0.12)`
  */
-export const withAlpha = (token: string, alpha: number) =>
-  `hsl(var(--${token}) / ${alpha})`;
+export const withAlpha = (token: string, alpha: number) => `hsl(var(--${token}) / ${alpha})`;
 
 // ── CSS-variable resolver (for ECharts / canvas) ──
 
@@ -31,14 +30,8 @@ export const withAlpha = (token: string, alpha: number) =>
  * @returns Computed color string, e.g. `"hsl(200, 90%, 55%)"`, or fallback `"#888"`
  */
 export function resolveColor(token: string): string {
-  if (
-    typeof document === "undefined" ||
-    typeof getComputedStyle === "undefined"
-  )
-    return "#888";
-  const raw = getComputedStyle(document.documentElement)
-    .getPropertyValue(`--${token}`)
-    .trim();
+  if (typeof document === "undefined" || typeof getComputedStyle === "undefined") return "#888";
+  const raw = getComputedStyle(document.documentElement).getPropertyValue(`--${token}`).trim();
   return raw ? `hsl(${raw})` : "#888";
 }
 

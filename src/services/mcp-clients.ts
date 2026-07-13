@@ -37,10 +37,7 @@ export function generateClientId(): string {
 // createMcpClient
 // ---------------------------------------------------------------------------
 
-export async function createMcpClient(
-  db: Db,
-  input: CreateMcpClientInput,
-): Promise<McpClient> {
+export async function createMcpClient(db: Db, input: CreateMcpClientInput): Promise<McpClient> {
   const id = ulid();
   const clientId = generateClientId();
   const now = new Date().toISOString();
@@ -70,10 +67,7 @@ export async function createMcpClient(
 // getMcpClientById
 // ---------------------------------------------------------------------------
 
-export async function getMcpClientById(
-  db: Db,
-  id: string,
-): Promise<McpClient | null> {
+export async function getMcpClientById(db: Db, id: string): Promise<McpClient | null> {
   return db.firstOrNull<McpClient>(
     "SELECT id, client_id, client_name, redirect_uris, grant_types, created_at FROM mcp_clients WHERE id = ?",
     [id],
@@ -84,10 +78,7 @@ export async function getMcpClientById(
 // getMcpClientByClientId
 // ---------------------------------------------------------------------------
 
-export async function getMcpClientByClientId(
-  db: Db,
-  clientId: string,
-): Promise<McpClient | null> {
+export async function getMcpClientByClientId(db: Db, clientId: string): Promise<McpClient | null> {
   return db.firstOrNull<McpClient>(
     "SELECT id, client_id, client_name, redirect_uris, grant_types, created_at FROM mcp_clients WHERE client_id = ?",
     [clientId],

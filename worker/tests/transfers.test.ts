@@ -177,7 +177,13 @@ describe("transfers repo", () => {
   test("search date range", async () => {
     const repos = getTestRepos();
     await repos.transfers.create(userId, baseTr);
-    await repos.transfers.create(userId, { ...baseTr, date: "2025-01-01", year: 2025, month: 1, day: 1 });
+    await repos.transfers.create(userId, {
+      ...baseTr,
+      date: "2025-01-01",
+      year: 2025,
+      month: 1,
+      day: 1,
+    });
     const result = await repos.transfers.search(userId, {
       start_date: "2026-01-01",
       end_date: "2026-12-31",

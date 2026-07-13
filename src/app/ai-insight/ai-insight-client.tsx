@@ -1,42 +1,28 @@
-"use client"
+"use client";
 
-import {
-  Brain,
-  Calendar,
-  AlertTriangle,
-  TrendingUp,
-  Clock,
-  Info,
-  AlertCircle,
-} from "lucide-react"
-import type { RecurringPayment, PaymentInsight } from "@/domain/types"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
-import { cn } from "@/lib/utils"
-import { formatCurrencyFull } from "@/lib/chart-config"
+import { Brain, Calendar, AlertTriangle, TrendingUp, Clock, Info, AlertCircle } from "lucide-react";
+import type { RecurringPayment, PaymentInsight } from "@/domain/types";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import { formatCurrencyFull } from "@/lib/chart-config";
 
 interface AIInsightClientProps {
-  sortedPayments: RecurringPayment[]
-  sortedInsights: PaymentInsight[]
+  sortedPayments: RecurringPayment[];
+  sortedInsights: PaymentInsight[];
   summary: {
-    paymentsCount: number
-    monthlyTotal: number
-    yearlyTotal: number
-    highPriorityCount: number
-  }
+    paymentsCount: number;
+    monthlyTotal: number;
+    yearlyTotal: number;
+    highPriorityCount: number;
+  };
   dataRange: {
-    startDate: string
-    endDate: string
-    transactionCount: number
-  }
+    startDate: string;
+    endDate: string;
+    transactionCount: number;
+  };
 }
 
 const frequencyLabels: Record<string, string> = {
@@ -45,31 +31,31 @@ const frequencyLabels: Record<string, string> = {
   yearly: "每年",
   weekly: "每周",
   biweekly: "每两周",
-}
+};
 
 function getPriorityColor(priority: string): string {
   switch (priority) {
     case "high":
-      return "bg-red-500"
+      return "bg-red-500";
     case "medium":
-      return "bg-yellow-500"
+      return "bg-yellow-500";
     case "low":
-      return "bg-green-500"
+      return "bg-green-500";
     default:
-      return "bg-gray-500"
+      return "bg-gray-500";
   }
 }
 
 function getInsightIcon(type: string) {
   switch (type) {
     case "recurring_payment":
-      return <AlertTriangle className="size-4" />
+      return <AlertTriangle className="size-4" />;
     case "upcoming_renewal":
-      return <Calendar className="size-4" />
+      return <Calendar className="size-4" />;
     case "budget_alert":
-      return <TrendingUp className="size-4" />
+      return <TrendingUp className="size-4" />;
     default:
-      return <Info className="size-4" />
+      return <Info className="size-4" />;
   }
 }
 
@@ -82,10 +68,9 @@ export function AIInsightClient({
   const summaryText =
     summary.paymentsCount > 0
       ? `发现${summary.paymentsCount}个周期性付款，月度总计${formatCurrencyFull(summary.monthlyTotal)}，年度总计${formatCurrencyFull(summary.yearlyTotal)}${summary.highPriorityCount > 0 ? `，${summary.highPriorityCount}项需要立即关注` : ""}。`
-      : "暂未检测到明确的周期性付款模式。"
+      : "暂未检测到明确的周期性付款模式。";
 
-  const isEmpty =
-    sortedPayments.length === 0 && sortedInsights.length === 0
+  const isEmpty = sortedPayments.length === 0 && sortedInsights.length === 0;
 
   return (
     <div className="space-y-6">
@@ -130,42 +115,30 @@ export function AIInsightClient({
                   <Calendar className="size-5" />
                   周期性付款 ({sortedPayments.length})
                 </CardTitle>
-                <CardDescription>
-                  按下次付款时间排序
-                </CardDescription>
+                <CardDescription>按下次付款时间排序</CardDescription>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-96">
                   <div className="space-y-4 pr-4">
                     {sortedPayments.map((payment) => (
-                      <div
-                        key={payment.id}
-                        className="rounded-lg border p-4"
-                      >
+                      <div key={payment.id} className="rounded-lg border p-4">
                         <div className="flex items-start justify-between gap-4">
                           <div className="space-y-2">
                             <div className="flex items-center gap-2">
-                              <h4 className="font-semibold">
-                                {payment.description}
-                              </h4>
+                              <h4 className="font-semibold">{payment.description}</h4>
                               <Badge variant="secondary">
                                 {frequencyLabels[payment.frequency] ?? payment.frequency}
                               </Badge>
                             </div>
                             <div className="text-muted-foreground text-sm">
-                              账户: {payment.account} | 平均:{" "}
-                              {formatCurrencyFull(payment.amount)} | 共
-                              {payment.occurrences}次
+                              账户: {payment.account} | 平均: {formatCurrencyFull(payment.amount)} |
+                              共{payment.occurrences}次
                             </div>
                           </div>
                           <div className="space-y-1 text-right">
                             <div className="text-sm">
-                              <span className="text-muted-foreground">
-                                下次付款:{" "}
-                              </span>
-                              <span className="font-medium">
-                                {payment.nextPaymentDate}
-                              </span>
+                              <span className="text-muted-foreground">下次付款: </span>
+                              <span className="font-medium">{payment.nextPaymentDate}</span>
                             </div>
                             <div className="text-muted-foreground text-xs">
                               平均间隔: {payment.averageInterval}天
@@ -174,14 +147,8 @@ export function AIInsightClient({
                         </div>
                         <Separator className="my-3" />
                         <div className="space-y-1 text-sm">
-                          <div>
-                            年度总计:{" "}
-                            {formatCurrencyFull(payment.yearlyTotal)}
-                          </div>
-                          <div>
-                            月度估算:{" "}
-                            {formatCurrencyFull(payment.yearlyTotal / 12)}
-                          </div>
+                          <div>年度总计: {formatCurrencyFull(payment.yearlyTotal)}</div>
+                          <div>月度估算: {formatCurrencyFull(payment.yearlyTotal / 12)}</div>
                         </div>
                       </div>
                     ))}
@@ -197,9 +164,7 @@ export function AIInsightClient({
                   <AlertTriangle className="size-5" />
                   智能提醒 ({sortedInsights.length})
                 </CardTitle>
-                <CardDescription>
-                  按优先级排序
-                </CardDescription>
+                <CardDescription>按优先级排序</CardDescription>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-96">
@@ -210,10 +175,7 @@ export function AIInsightClient({
                       </div>
                     ) : (
                       sortedInsights.map((insight, index) => (
-                        <div
-                          key={`${insight.type}-${index}`}
-                          className="rounded-lg border p-4"
-                        >
+                        <div key={`${insight.type}-${index}`} className="rounded-lg border p-4">
                           <div className="flex items-start gap-3">
                             <div
                               className={cn(
@@ -229,9 +191,7 @@ export function AIInsightClient({
                                 </h4>
                                 <Badge
                                   variant={
-                                    insight.priority === "high"
-                                      ? "destructive"
-                                      : "secondary"
+                                    insight.priority === "high" ? "destructive" : "secondary"
                                   }
                                 >
                                   {insight.priority === "high"
@@ -241,9 +201,7 @@ export function AIInsightClient({
                                       : "建议"}
                                 </Badge>
                               </div>
-                              <p className="text-muted-foreground text-sm">
-                                {insight.description}
-                              </p>
+                              <p className="text-muted-foreground text-sm">{insight.description}</p>
                               <p className="text-primary text-sm font-medium">
                                 💡 {insight.recommendation}
                               </p>
@@ -278,21 +236,15 @@ export function AIInsightClient({
               <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-3">
                 <div>
                   <span className="text-muted-foreground">开始日期:</span>
-                  <div className="font-medium">
-                    {dataRange.startDate || "—"}
-                  </div>
+                  <div className="font-medium">{dataRange.startDate || "—"}</div>
                 </div>
                 <div>
                   <span className="text-muted-foreground">结束日期:</span>
-                  <div className="font-medium">
-                    {dataRange.endDate || "—"}
-                  </div>
+                  <div className="font-medium">{dataRange.endDate || "—"}</div>
                 </div>
                 <div>
                   <span className="text-muted-foreground">交易记录:</span>
-                  <div className="font-medium">
-                    {dataRange.transactionCount}笔
-                  </div>
+                  <div className="font-medium">{dataRange.transactionCount}笔</div>
                 </div>
               </div>
             </CardContent>
@@ -300,5 +252,5 @@ export function AIInsightClient({
         </>
       )}
     </div>
-  )
+  );
 }

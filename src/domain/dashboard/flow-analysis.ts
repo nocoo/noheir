@@ -10,6 +10,4 @@ export const buildFlowTitle = () => ({
   description: "可视化资金从来源到分类的流向分布",
 });
 
-export const buildFlowTransactions = (
-  transactions: DomainTransaction[],
-) => transactions;
+export const buildFlowTransactions = (transactions: DomainTransaction[]) => transactions;
