@@ -9,7 +9,7 @@ cd "$(dirname "$0")/.."
 
 ts() { python3 -c 'import time;print(f"{time.time():.4f}")'; }
 
-# Stage a trivial whitespace edit so lint-staged has something to chew on.
+# Stage a trivial whitespace edit so the hook has a modified file to see.
 STAGE_FILE="src/lib/utils.ts"
 ORIG_CONTENT=""
 restore() {
