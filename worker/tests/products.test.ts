@@ -27,7 +27,7 @@ describe("products repo", () => {
 
     const found = await repos.products.findById(userId, created.id);
     expect(found).not.toBeNull();
-    expect(found!.name).toBe(created.name);
+    expect(found?.name).toBe(created.name);
   });
 
   test("findAll returns all for user", async () => {
@@ -56,7 +56,7 @@ describe("products repo", () => {
 
     const result = await repos.products.findAll(userId, { channel: "支付宝" });
     expect(result).toHaveLength(1);
-    expect(result[0]!.channel).toBe("支付宝");
+    expect(result[0]?.channel).toBe("支付宝");
   });
 
   test("findAll filters by category", async () => {
@@ -84,8 +84,8 @@ describe("products repo", () => {
       name: "Updated Name",
       annualReturnRate: 0.035,
     });
-    expect(updated!.name).toBe("Updated Name");
-    expect(updated!.annualReturnRate).toBe(0.035);
+    expect(updated?.name).toBe("Updated Name");
+    expect(updated?.annualReturnRate).toBe(0.035);
   });
 
   test("update returns null for non-existent", async () => {

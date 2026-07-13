@@ -36,7 +36,7 @@ describe("transactions repo", () => {
 
     const found = await repos.transactions.findById(userId, created.id);
     expect(found).not.toBeNull();
-    expect(found!.id).toBe(created.id);
+    expect(found?.id).toBe(created.id);
   });
 
   test("findById returns null for wrong user", async () => {
@@ -56,8 +56,8 @@ describe("transactions repo", () => {
       note: "updated note",
     });
     expect(updated).not.toBeNull();
-    expect(updated!.amountCents).toBe(5000);
-    expect(updated!.note).toBe("updated note");
+    expect(updated?.amountCents).toBe(5000);
+    expect(updated?.note).toBe("updated note");
   });
 
   test("update returns null for non-existent", async () => {
@@ -132,7 +132,7 @@ describe("transactions repo", () => {
 
     const result = await repos.transactions.search(userId, { keyword: "沙拉" });
     expect(result.total_returned).toBe(1);
-    expect(result.transactions[0]!.matched_field).toBe("note");
+    expect(result.transactions[0]?.matched_field).toBe("note");
   });
 
   test("search keyword matches primary_category and returns matched_field='category'", async () => {
@@ -141,7 +141,7 @@ describe("transactions repo", () => {
 
     const result = await repos.transactions.search(userId, { keyword: "餐饮" });
     expect(result.total_returned).toBe(1);
-    expect(result.transactions[0]!.matched_field).toBe("category");
+    expect(result.transactions[0]?.matched_field).toBe("category");
   });
 
   test("search keyword matches secondary_category", async () => {
@@ -150,7 +150,7 @@ describe("transactions repo", () => {
 
     const result = await repos.transactions.search(userId, { keyword: "外卖" });
     expect(result.total_returned).toBe(1);
-    expect(result.transactions[0]!.matched_field).toBe("secondary_category");
+    expect(result.transactions[0]?.matched_field).toBe("secondary_category");
   });
 
   test("search keyword matches tertiary_category", async () => {
@@ -164,7 +164,7 @@ describe("transactions repo", () => {
 
     const result = await repos.transactions.search(userId, { keyword: "午餐" });
     expect(result.total_returned).toBe(1);
-    expect(result.transactions[0]!.matched_field).toBe("tertiary_category");
+    expect(result.transactions[0]?.matched_field).toBe("tertiary_category");
   });
 
   test("search keyword matches account", async () => {
@@ -179,7 +179,7 @@ describe("transactions repo", () => {
 
     const result = await repos.transactions.search(userId, { keyword: "招商" });
     expect(result.total_returned).toBe(1);
-    expect(result.transactions[0]!.matched_field).toBe("account");
+    expect(result.transactions[0]?.matched_field).toBe("account");
   });
 
   test("search matched_field is null when no keyword", async () => {
@@ -187,7 +187,7 @@ describe("transactions repo", () => {
     await repos.transactions.create(userId, baseTx);
 
     const result = await repos.transactions.search(userId);
-    expect(result.transactions[0]!.matched_field).toBeNull();
+    expect(result.transactions[0]?.matched_field).toBeNull();
   });
 
   test("search by categories filter (IN)", async () => {
@@ -208,7 +208,7 @@ describe("transactions repo", () => {
 
     const result = await repos.transactions.search(userId, { type: "income" });
     expect(result.total_returned).toBe(1);
-    expect(result.transactions[0]!.type).toBe("income");
+    expect(result.transactions[0]?.type).toBe("income");
   });
 
   test("search by accounts filter", async () => {
@@ -243,7 +243,7 @@ describe("transactions repo", () => {
       max_amount_cents: 8000,
     });
     expect(result.total_returned).toBe(1);
-    expect(result.transactions[0]!.amountCents).toBe(5000);
+    expect(result.transactions[0]?.amountCents).toBe(5000);
   });
 
   test("search by year and month", async () => {
@@ -335,9 +335,9 @@ describe("transactions repo", () => {
     await repos.transactions.create(userId, { ...baseTx, date: "2026-03-10", day: 10 });
 
     const result = await repos.transactions.search(userId);
-    expect(result.transactions[0]!.date).toBe("2026-03-15");
-    expect(result.transactions[1]!.date).toBe("2026-03-10");
-    expect(result.transactions[2]!.date).toBe("2026-03-01");
+    expect(result.transactions[0]?.date).toBe("2026-03-15");
+    expect(result.transactions[1]?.date).toBe("2026-03-10");
+    expect(result.transactions[2]?.date).toBe("2026-03-01");
   });
 
   test("search AND logic: multiple filters combine", async () => {
@@ -386,7 +386,7 @@ describe("transactions repo", () => {
 
     const result = await repos.transactions.findAllByUser(userId);
     expect(result.length).toBe(1);
-    expect(result[0]!.note).toBe("公司附近的沙拉");
+    expect(result[0]?.note).toBe("公司附近的沙拉");
   });
 
   // ── findAllByYear ──
@@ -417,7 +417,7 @@ describe("transactions repo", () => {
 
     const result = await repos.transactions.findAllByYear(userId, 2026);
     expect(result.length).toBe(1);
-    expect(result[0]!.year).toBe(2026);
+    expect(result[0]?.year).toBe(2026);
   });
 
   test("findAllByYear isolates by user", async () => {
@@ -445,8 +445,8 @@ describe("transactions repo", () => {
 
     const result = await repos.transactions.findAllByYear(userId, 2026);
     expect(result.length).toBe(3);
-    expect(result[0]!.date).toBe("2026-03-20");
-    expect(result[1]!.date).toBe("2026-03-10");
-    expect(result[2]!.date).toBe("2026-03-01");
+    expect(result[0]?.date).toBe("2026-03-20");
+    expect(result[1]?.date).toBe("2026-03-10");
+    expect(result[2]?.date).toBe("2026-03-01");
   });
 });

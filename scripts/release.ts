@@ -17,9 +17,9 @@
  *   Requires `gh` CLI authenticated for GitHub release creation.
  */
 
-import { spawn } from "child_process";
-import { existsSync, readFileSync, writeFileSync } from "fs";
-import { resolve as pathResolve } from "path";
+import { spawn } from "node:child_process";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { resolve as pathResolve } from "node:path";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -74,7 +74,7 @@ function readJson(path: string): Record<string, unknown> {
 }
 
 function writeJson(path: string, data: Record<string, unknown>): void {
-  writeFileSync(path, JSON.stringify(data, null, 2) + "\n");
+  writeFileSync(path, `${JSON.stringify(data, null, 2)}\n`);
 }
 
 function bumpVersion(current: string, arg: string): string {
@@ -200,13 +200,13 @@ function updateChangelog(entry: string): void {
   if (idx !== -1) {
     const insertAt = idx + marker.length;
     const updated =
-      content.slice(0, insertAt) + "\n\n" + entry + content.slice(insertAt).replace(/^\n+/, "\n");
+      `${content.slice(0, insertAt)}\n\n${entry}${content.slice(insertAt).replace(/^\n+/, "\n")}`;
     writeFileSync(CHANGELOG, updated);
   } else {
     // Fallback: prepend after first line
     const firstNewline = content.indexOf("\n");
     const updated =
-      content.slice(0, firstNewline + 1) + "\n" + entry + content.slice(firstNewline + 1);
+      `${content.slice(0, firstNewline + 1)}\n${entry}${content.slice(firstNewline + 1)}`;
     writeFileSync(CHANGELOG, updated);
   }
 }

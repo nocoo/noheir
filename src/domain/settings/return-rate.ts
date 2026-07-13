@@ -54,7 +54,6 @@ export function getReturnRateTextClass(status: ReturnRateStatus): string {
       return "text-amber-600 dark:text-amber-400";
     case "high":
       return "text-rose-600 dark:text-rose-400";
-    case "normal":
     default:
       return "text-emerald-600 dark:text-emerald-400";
   }
@@ -69,7 +68,6 @@ export function getReturnRateBgClass(status: ReturnRateStatus): string {
       return "bg-amber-50 dark:bg-amber-500/10";
     case "high":
       return "bg-rose-50 dark:bg-rose-500/10";
-    case "normal":
     default:
       return "bg-emerald-50 dark:bg-emerald-500/10";
   }
@@ -84,7 +82,6 @@ export function getReturnRateDescription(status: ReturnRateStatus): string {
       return "收益率偏低，资金利用效率可能不足";
     case "high":
       return "收益率较高，可能存在较大风险";
-    case "normal":
     default:
       return "收益率正常";
   }

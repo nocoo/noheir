@@ -631,7 +631,7 @@ app.get("/api/units", async (c) => {
   const effectiveFieldLevel = with_products === "true" ? "full" : fieldLevel;
 
   // available_within_days requires standard or full (forces upgrade if minimal)
-  const needsAvailability = availableWithinDays !== undefined && !isNaN(availableWithinDays);
+  const needsAvailability = availableWithinDays !== undefined && !Number.isNaN(availableWithinDays);
   const computeLevel =
     needsAvailability && effectiveFieldLevel === "minimal" ? "standard" : effectiveFieldLevel;
 

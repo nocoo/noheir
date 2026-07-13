@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   computeAvailability,
-  type LatestInvestLog,
-  type ProductLockInfo,
 } from "../lib/availability";
 
 describe("computeAvailability", () => {

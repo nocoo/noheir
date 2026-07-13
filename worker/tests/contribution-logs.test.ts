@@ -46,7 +46,7 @@ describe("ContributionLogsRepo", () => {
 
     const found = await repos.contributionLogs.findById(userId, created.id);
     expect(found).not.toBeNull();
-    expect(found!.id).toBe(created.id);
+    expect(found?.id).toBe(created.id);
   });
 
   test("search with filters", async () => {
@@ -122,10 +122,10 @@ describe("ContributionLogsRepo", () => {
 
     const result = await repos.contributionLogs.search(userId, {});
     expect(result.logs).toHaveLength(1);
-    expect(result.logs[0]!.unit).not.toBeNull();
-    expect(result.logs[0]!.unit!.unitCode).toBe("U-2026-001");
-    expect(result.logs[0]!.product).not.toBeNull();
-    expect(result.logs[0]!.product!.name).toBe("Test Fund");
+    expect(result.logs[0]?.unit).not.toBeNull();
+    expect(result.logs[0]?.unit?.unitCode).toBe("U-2026-001");
+    expect(result.logs[0]?.product).not.toBeNull();
+    expect(result.logs[0]?.product?.name).toBe("Test Fund");
   });
 
   test("summarizeByUnit calculates totals", async () => {
@@ -211,12 +211,12 @@ describe("ContributionLogsRepo", () => {
     // Search with includeDeleted should find it
     const found = await repos.contributionLogs.search(userId, { includeDeleted: true });
     expect(found.logs).toHaveLength(1);
-    expect(found.logs[0]!.deletedAt).not.toBeNull();
+    expect(found.logs[0]?.deletedAt).not.toBeNull();
 
     // Restore
     const restored = await repos.contributionLogs.restore(userId, created.id);
     expect(restored).not.toBeNull();
-    expect(restored!.deletedAt).toBeNull();
+    expect(restored?.deletedAt).toBeNull();
 
     // Now search should find it again
     const afterRestore = await repos.contributionLogs.search(userId, {});
@@ -240,8 +240,8 @@ describe("ContributionLogsRepo", () => {
     });
 
     expect(updated).not.toBeNull();
-    expect(updated!.amountCents).toBe(150000);
-    expect(updated!.note).toBe("Updated amount");
+    expect(updated?.amountCents).toBe(150000);
+    expect(updated?.note).toBe("Updated amount");
   });
 
   test("user isolation", async () => {
@@ -266,11 +266,11 @@ describe("ContributionLogsRepo", () => {
 
     const user1Logs = await repos.contributionLogs.search(userId, {});
     expect(user1Logs.logs).toHaveLength(1);
-    expect(user1Logs.logs[0]!.amountCents).toBe(100000);
+    expect(user1Logs.logs[0]?.amountCents).toBe(100000);
 
     const user2Logs = await repos.contributionLogs.search("other-user", {});
     expect(user2Logs.logs).toHaveLength(1);
-    expect(user2Logs.logs[0]!.amountCents).toBe(200000);
+    expect(user2Logs.logs[0]?.amountCents).toBe(200000);
   });
 
   test("summarizeByUnit excludes soft-deleted logs", async () => {
@@ -374,12 +374,12 @@ describe("ContributionLogsRepo", () => {
 
     const log1 = result.get(unit1.id);
     expect(log1).toBeDefined();
-    expect(log1!.operationDate).toBe("2026-03-01"); // Latest invest
-    expect(log1!.amountCents).toBe(200000);
+    expect(log1?.operationDate).toBe("2026-03-01"); // Latest invest
+    expect(log1?.amountCents).toBe(200000);
 
     const log2 = result.get(unit2.id);
     expect(log2).toBeDefined();
-    expect(log2!.operationDate).toBe("2026-02-15");
+    expect(log2?.operationDate).toBe("2026-02-15");
 
     expect(result.get(unit3.id)).toBeUndefined();
   });
@@ -394,7 +394,7 @@ describe("ContributionLogsRepo", () => {
     const repos = getTestRepos();
     const unit = await repos.units.create(userId, baseUnit);
 
-    const oldLog = await repos.contributionLogs.create(userId, {
+    const _oldLog = await repos.contributionLogs.create(userId, {
       unitId: unit.id,
       operationType: "invest",
       amountCents: 100000,
@@ -412,12 +412,12 @@ describe("ContributionLogsRepo", () => {
       userId,
       (await repos.contributionLogs.search(userId, { unitId: unit.id })).logs.find(
         (l) => l.operationDate === "2026-03-01",
-      )!.id,
+      )?.id,
     );
 
     const result = await repos.contributionLogs.getLatestInvestLogs(userId, [unit.id]);
     const log = result.get(unit.id);
     expect(log).toBeDefined();
-    expect(log!.operationDate).toBe("2026-01-01"); // Falls back to older log
+    expect(log?.operationDate).toBe("2026-01-01"); // Falls back to older log
   });
 });

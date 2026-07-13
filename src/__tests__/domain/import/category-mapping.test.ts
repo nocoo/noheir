@@ -11,9 +11,9 @@ describe("DEFAULT_EXPENSE_CATEGORIES", () => {
   });
 
   test("日常吃喝 contains expected tertiary categories", () => {
-    expect(DEFAULT_EXPENSE_CATEGORIES["日常吃喝"]).toContain("吃饭");
-    expect(DEFAULT_EXPENSE_CATEGORIES["日常吃喝"]).toContain("外卖");
-    expect(DEFAULT_EXPENSE_CATEGORIES["日常吃喝"]).toContain("超市");
+    expect(DEFAULT_EXPENSE_CATEGORIES.日常吃喝).toContain("吃饭");
+    expect(DEFAULT_EXPENSE_CATEGORIES.日常吃喝).toContain("外卖");
+    expect(DEFAULT_EXPENSE_CATEGORIES.日常吃喝).toContain("超市");
   });
 });
 
@@ -23,7 +23,7 @@ describe("DEFAULT_INCOME_CATEGORIES", () => {
   });
 
   test("薪资收入 contains 工资", () => {
-    expect(DEFAULT_INCOME_CATEGORIES["薪资收入"]).toContain("工资");
+    expect(DEFAULT_INCOME_CATEGORIES.薪资收入).toContain("工资");
   });
 });
 

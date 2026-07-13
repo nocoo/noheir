@@ -59,7 +59,7 @@ function getStatusBadge(score: number, max: number) {
 export function FinancialHealthClient({ healthResult, monthlyData }: FinancialHealthClientProps) {
   const { totalScore, maxScore, grade, dimensions } = healthResult;
   const colors = gradeColors[grade] ??
-    gradeColors["D"] ?? {
+    gradeColors.D ?? {
       text: "text-destructive",
       bg: "bg-destructive/10",
       border: "border-destructive",

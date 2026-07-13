@@ -79,31 +79,31 @@ describe("palette", () => {
 
   describe("domain token maps", () => {
     it("STRATEGY_TOKEN_MAP has expected strategies", () => {
-      expect(STRATEGY_TOKEN_MAP["长期理财"]).toBe("chart-3");
-      expect(STRATEGY_TOKEN_MAP["美元资产"]).toBe("chart-13");
-      expect(STRATEGY_TOKEN_MAP["进攻计划"]).toBe("chart-9");
+      expect(STRATEGY_TOKEN_MAP.长期理财).toBe("chart-3");
+      expect(STRATEGY_TOKEN_MAP.美元资产).toBe("chart-13");
+      expect(STRATEGY_TOKEN_MAP.进攻计划).toBe("chart-9");
     });
 
     it("TACTICS_TOKEN_MAP has expected tactics", () => {
-      expect(TACTICS_TOKEN_MAP["养老年金"]).toBe("chart-24");
-      expect(TACTICS_TOKEN_MAP["定期存款"]).toBe("chart-2");
-      expect(TACTICS_TOKEN_MAP["偏股基金"]).toBe("chart-9");
+      expect(TACTICS_TOKEN_MAP.养老年金).toBe("chart-24");
+      expect(TACTICS_TOKEN_MAP.定期存款).toBe("chart-2");
+      expect(TACTICS_TOKEN_MAP.偏股基金).toBe("chart-9");
     });
 
     it("CURRENCY_TOKEN_MAP has all currencies", () => {
-      expect(CURRENCY_TOKEN_MAP["CNY"]).toBe("chart-9");
-      expect(CURRENCY_TOKEN_MAP["USD"]).toBe("chart-24");
-      expect(CURRENCY_TOKEN_MAP["HKD"]).toBe("chart-6");
+      expect(CURRENCY_TOKEN_MAP.CNY).toBe("chart-9");
+      expect(CURRENCY_TOKEN_MAP.USD).toBe("chart-24");
+      expect(CURRENCY_TOKEN_MAP.HKD).toBe("chart-6");
     });
 
     it("STATUS_TOKEN_MAP has all statuses", () => {
-      expect(STATUS_TOKEN_MAP["已成立"]).toBe("chart-3");
-      expect(STATUS_TOKEN_MAP["计划中"]).toBe("chart-9");
-      expect(STATUS_TOKEN_MAP["已归档"]).toBe("chart-16");
+      expect(STATUS_TOKEN_MAP.已成立).toBe("chart-3");
+      expect(STATUS_TOKEN_MAP.计划中).toBe("chart-9");
+      expect(STATUS_TOKEN_MAP.已归档).toBe("chart-16");
     });
 
     it("MATURITY_TOKEN_MAP has periods", () => {
-      expect(MATURITY_TOKEN_MAP["已到期"]).toBe("chart-9");
+      expect(MATURITY_TOKEN_MAP.已到期).toBe("chart-9");
       expect(MATURITY_TOKEN_MAP["7天内"]).toBe("chart-7");
       expect(MATURITY_TOKEN_MAP["90天以上"]).toBe("chart-3");
     });

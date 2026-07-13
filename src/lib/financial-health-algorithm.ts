@@ -29,7 +29,7 @@ function linearRegression(data: number[]): {
   const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
   const intercept = (sumY - slope * sumX) / n;
 
-  return { slope: isNaN(slope) ? 0 : slope, intercept };
+  return { slope: Number.isNaN(slope) ? 0 : slope, intercept };
 }
 
 function coefficientOfVariation(data: number[]): number {

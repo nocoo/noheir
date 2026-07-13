@@ -38,7 +38,7 @@ describe("settings repo", () => {
     await repos.settings.upsert(userId, { siteName: "Test Site" });
     const result = await repos.settings.getByUserId(userId);
     expect(result).not.toBeNull();
-    expect(result!.siteName).toBe("Test Site");
+    expect(result?.siteName).toBe("Test Site");
   });
 
   test("upsert is user-isolated", async () => {
@@ -49,7 +49,7 @@ describe("settings repo", () => {
 
     const s1 = await repos.settings.getByUserId(userId);
     const s2 = await repos.settings.getByUserId("other-user");
-    expect(s1!.siteName).toBe("User 1");
-    expect(s2!.siteName).toBe("User 2");
+    expect(s1?.siteName).toBe("User 1");
+    expect(s2?.siteName).toBe("User 2");
   });
 });

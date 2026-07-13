@@ -12,7 +12,7 @@ describe("balance-anchors domain", () => {
       { accountName: "A", date: "2024-01-01", balance: 100 },
       { accountName: "A", date: "2024-02-01", balance: 200 },
     ]);
-    expect(grouped["A"]?.[0]?.date).toBe("2024-02-01");
+    expect(grouped.A?.[0]?.date).toBe("2024-02-01");
   });
 
   it("calculates balance and difference", () => {

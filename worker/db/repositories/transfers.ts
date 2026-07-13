@@ -43,9 +43,9 @@ function clampLimit(limit: number | undefined): number {
 function computeMatchedField(row: Transfer, keyword: string | undefined): string | null {
   if (!keyword) return null;
   const kw = keyword.toLowerCase();
-  if (row.note && row.note.toLowerCase().includes(kw)) return "note";
-  if (row.primaryCategory && row.primaryCategory.toLowerCase().includes(kw)) return "category";
-  if (row.secondaryCategory && row.secondaryCategory.toLowerCase().includes(kw)) return "category";
+  if (row.note?.toLowerCase().includes(kw)) return "note";
+  if (row.primaryCategory?.toLowerCase().includes(kw)) return "category";
+  if (row.secondaryCategory?.toLowerCase().includes(kw)) return "category";
   if (row.account.toLowerCase().includes(kw)) return "account";
   return null;
 }

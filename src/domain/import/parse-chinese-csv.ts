@@ -102,7 +102,7 @@ function parseToCents(value: string): number {
   if (!value || value.trim() === "" || value === "0.00") return 0;
   const cleaned = value.replace(/[^\d.-]/g, "");
   const parsed = parseFloat(cleaned);
-  if (isNaN(parsed)) return 0;
+  if (Number.isNaN(parsed)) return 0;
   return Math.round(Math.abs(parsed) * 100);
 }
 
@@ -124,7 +124,7 @@ function parseDateParts(dateStr: string): {
   valid: boolean;
 } {
   const date = new Date(dateStr);
-  if (isNaN(date.getTime())) {
+  if (Number.isNaN(date.getTime())) {
     return { year: 0, month: 0, day: 0, valid: false };
   }
   return {

@@ -37,7 +37,7 @@ export async function rawFetch(opts: FetchOptions): Promise<Response> {
   };
 
   if (!opts.omitAuth) {
-    headers["Authorization"] = `Bearer ${opts.token ?? WORKER_TOKEN}`;
+    headers.Authorization = `Bearer ${opts.token ?? WORKER_TOKEN}`;
   }
   if (opts.userId) {
     headers["X-User-Id"] = opts.userId;

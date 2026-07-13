@@ -30,7 +30,7 @@ describe("units repo", () => {
 
     const found = await repos.units.findById(userId, created.id);
     expect(found).not.toBeNull();
-    expect(found!.unitCode).toBe(created.unitCode);
+    expect(found?.unitCode).toBe(created.unitCode);
   });
 
   test("findAll", async () => {
@@ -49,7 +49,7 @@ describe("units repo", () => {
 
     const result = await repos.units.findAll(userId, { status: "已归档" });
     expect(result).toHaveLength(1);
-    expect(result[0]!.status).toBe("已归档");
+    expect(result[0]?.status).toBe("已归档");
   });
 
   test("findAll filters by strategy", async () => {
@@ -100,9 +100,9 @@ describe("units repo", () => {
     const withProduct = result.find((u) => u.productId === product.id);
     const withoutProduct = result.find((u) => u.productId === null);
 
-    expect(withProduct!.product).not.toBeNull();
-    expect(withProduct!.product!.name).toBe("Test Fund");
-    expect(withoutProduct!.product).toBeNull();
+    expect(withProduct?.product).not.toBeNull();
+    expect(withProduct?.product?.name).toBe("Test Fund");
+    expect(withoutProduct?.product).toBeNull();
   });
 
   test("findAllWithProducts filters by status", async () => {
@@ -112,7 +112,7 @@ describe("units repo", () => {
 
     const result = await repos.units.findAllWithProducts(userId, { status: "已归档" });
     expect(result).toHaveLength(1);
-    expect(result[0]!.status).toBe("已归档");
+    expect(result[0]?.status).toBe("已归档");
   });
 
   test("findAllWithProducts filters by strategy", async () => {
@@ -122,7 +122,7 @@ describe("units repo", () => {
 
     const result = await repos.units.findAllWithProducts(userId, { strategy: "短期理财" });
     expect(result).toHaveLength(1);
-    expect(result[0]!.strategy).toBe("短期理财");
+    expect(result[0]?.strategy).toBe("短期理财");
   });
 
   test("findAllWithProducts filters by tactics", async () => {
@@ -132,7 +132,7 @@ describe("units repo", () => {
 
     const result = await repos.units.findAllWithProducts(userId, { tactics: "货币基金" });
     expect(result).toHaveLength(1);
-    expect(result[0]!.tactics).toBe("货币基金");
+    expect(result[0]?.tactics).toBe("货币基金");
   });
 
   test("findAllWithProducts filters by currency", async () => {
@@ -142,7 +142,7 @@ describe("units repo", () => {
 
     const result = await repos.units.findAllWithProducts(userId, { currency: "USD" });
     expect(result).toHaveLength(1);
-    expect(result[0]!.currency).toBe("USD");
+    expect(result[0]?.currency).toBe("USD");
   });
 
   test("findAllWithProducts combines multiple filters with AND logic", async () => {
@@ -166,8 +166,8 @@ describe("units repo", () => {
       strategy: "短期理财",
     });
     expect(result).toHaveLength(1);
-    expect(result[0]!.status).toBe("已归档");
-    expect(result[0]!.strategy).toBe("短期理财");
+    expect(result[0]?.status).toBe("已归档");
+    expect(result[0]?.strategy).toBe("短期理财");
   });
 
   test("findAll combines multiple filters with AND logic", async () => {
@@ -191,8 +191,8 @@ describe("units repo", () => {
       strategy: "短期理财",
     });
     expect(result).toHaveLength(1);
-    expect(result[0]!.status).toBe("已归档");
-    expect(result[0]!.strategy).toBe("短期理财");
+    expect(result[0]?.status).toBe("已归档");
+    expect(result[0]?.strategy).toBe("短期理财");
   });
 
   test("update", async () => {
@@ -202,8 +202,8 @@ describe("units repo", () => {
       amountCents: 2000000,
       status: "已归档",
     });
-    expect(updated!.amountCents).toBe(2000000);
-    expect(updated!.status).toBe("已归档");
+    expect(updated?.amountCents).toBe(2000000);
+    expect(updated?.status).toBe("已归档");
   });
 
   test("delete", async () => {

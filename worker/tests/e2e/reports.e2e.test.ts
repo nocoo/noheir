@@ -114,8 +114,8 @@ describe("E2E: Reports", () => {
     });
     expect(res.expense_by_category).toHaveLength(2);
     // Sorted DESC by total
-    expect(res.expense_by_category[0]!.category).toBe("交通");
-    expect(res.expense_by_category[0]!.total).toBe(7000);
+    expect(res.expense_by_category[0]?.category).toBe("交通");
+    expect(res.expense_by_category[0]?.total).toBe(7000);
   });
 
   test("GET /api/reports/monthly-summary ignores other months", async () => {

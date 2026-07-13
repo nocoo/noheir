@@ -4,7 +4,7 @@
 
 import { describe, expect, test } from "vitest";
 import type { FinancialProduct } from "../db/types";
-import { buildProductsSummary, type ProductsSummary } from "../lib/products-summary";
+import { buildProductsSummary, } from "../lib/products-summary";
 
 // Helper to create mock product
 function mockProduct(overrides: Partial<FinancialProduct> = {}): FinancialProduct {
@@ -54,8 +54,8 @@ describe("buildProductsSummary", () => {
 
     const summary = buildProductsSummary(products, 0);
 
-    expect(summary.by_channel["招商银行"]).toBe(2);
-    expect(summary.by_channel["支付宝"]).toBe(1);
+    expect(summary.by_channel.招商银行).toBe(2);
+    expect(summary.by_channel.支付宝).toBe(1);
   });
 
   test("groups by category", () => {
@@ -67,8 +67,8 @@ describe("buildProductsSummary", () => {
 
     const summary = buildProductsSummary(products, 0);
 
-    expect(summary.by_category["理财产品"]).toBe(1);
-    expect(summary.by_category["定期存款"]).toBe(2);
+    expect(summary.by_category.理财产品).toBe(1);
+    expect(summary.by_category.定期存款).toBe(2);
   });
 
   test("groups by currency", () => {
@@ -80,8 +80,8 @@ describe("buildProductsSummary", () => {
 
     const summary = buildProductsSummary(products, 0);
 
-    expect(summary.by_currency["CNY"]).toBe(2);
-    expect(summary.by_currency["USD"]).toBe(1);
+    expect(summary.by_currency.CNY).toBe(2);
+    expect(summary.by_currency.USD).toBe(1);
   });
 
   test("handles null channel/category/currency", () => {
@@ -108,13 +108,13 @@ describe("buildProductsSummary", () => {
     expect(summary.total_count).toBe(4);
     expect(summary.archived_count).toBe(2);
 
-    expect(summary.by_channel["招商银行"]).toBe(2);
-    expect(summary.by_channel["支付宝"]).toBe(1);
+    expect(summary.by_channel.招商银行).toBe(2);
+    expect(summary.by_channel.支付宝).toBe(1);
 
-    expect(summary.by_category["理财产品"]).toBe(2);
-    expect(summary.by_category["定期存款"]).toBe(1);
+    expect(summary.by_category.理财产品).toBe(2);
+    expect(summary.by_category.定期存款).toBe(1);
 
-    expect(summary.by_currency["CNY"]).toBe(2);
-    expect(summary.by_currency["USD"]).toBe(1);
+    expect(summary.by_currency.CNY).toBe(2);
+    expect(summary.by_currency.USD).toBe(1);
   });
 });

@@ -4,7 +4,7 @@
 
 import { describe, expect, test } from "vitest";
 import type { UnitWithAvailability } from "../db/repositories/units";
-import { buildUnitsSummary, type UnitsSummary } from "../lib/units-summary";
+import { buildUnitsSummary, } from "../lib/units-summary";
 
 // Helper to create mock unit
 function mockUnit(overrides: Partial<UnitWithAvailability> = {}): UnitWithAvailability {
@@ -71,8 +71,8 @@ describe("buildUnitsSummary", () => {
 
     const summary = buildUnitsSummary(units);
 
-    expect(summary.by_strategy["短期理财"]).toEqual({ count: 2, amount_cents: 300000 });
-    expect(summary.by_strategy["长期理财"]).toEqual({ count: 1, amount_cents: 300000 });
+    expect(summary.by_strategy.短期理财).toEqual({ count: 2, amount_cents: 300000 });
+    expect(summary.by_strategy.长期理财).toEqual({ count: 1, amount_cents: 300000 });
   });
 
   test("groups by status", () => {
@@ -84,8 +84,8 @@ describe("buildUnitsSummary", () => {
 
     const summary = buildUnitsSummary(units);
 
-    expect(summary.by_status["已成立"]).toEqual({ count: 2, amount_cents: 300000 });
-    expect(summary.by_status["计划中"]).toEqual({ count: 1, amount_cents: 300000 });
+    expect(summary.by_status.已成立).toEqual({ count: 2, amount_cents: 300000 });
+    expect(summary.by_status.计划中).toEqual({ count: 1, amount_cents: 300000 });
   });
 
   test("groups by tactics", () => {
@@ -97,8 +97,8 @@ describe("buildUnitsSummary", () => {
 
     const summary = buildUnitsSummary(units);
 
-    expect(summary.by_tactics["理财产品"]).toEqual({ count: 2, amount_cents: 400000 });
-    expect(summary.by_tactics["债券基金"]).toEqual({ count: 1, amount_cents: 200000 });
+    expect(summary.by_tactics.理财产品).toEqual({ count: 2, amount_cents: 400000 });
+    expect(summary.by_tactics.债券基金).toEqual({ count: 1, amount_cents: 200000 });
   });
 
   test("categorizes availability: available_now when daysUntilAvailable <= 0", () => {

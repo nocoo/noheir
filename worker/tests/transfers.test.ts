@@ -35,7 +35,7 @@ describe("transfers repo", () => {
 
     const found = await repos.transfers.findById(userId, created.id);
     expect(found).not.toBeNull();
-    expect(found!.id).toBe(created.id);
+    expect(found?.id).toBe(created.id);
   });
 
   test("findById returns null for wrong user", async () => {
@@ -51,7 +51,7 @@ describe("transfers repo", () => {
     const updated = await repos.transfers.update(userId, created.id, {
       inflowAmountCents: 200000,
     });
-    expect(updated!.inflowAmountCents).toBe(200000);
+    expect(updated?.inflowAmountCents).toBe(200000);
   });
 
   test("delete", async () => {
@@ -93,7 +93,7 @@ describe("transfers repo", () => {
     await repos.transfers.create(userId, baseTr);
     const result = await repos.transfers.search(userId, { keyword: "定期账户" });
     expect(result.total_returned).toBe(1);
-    expect(result.transfers[0]!.matched_field).toBe("note");
+    expect(result.transfers[0]?.matched_field).toBe("note");
   });
 
   test("search keyword matches primaryCategory → matched_field='category'", async () => {
@@ -101,7 +101,7 @@ describe("transfers repo", () => {
     await repos.transfers.create(userId, { ...baseTr, note: null });
     const result = await repos.transfers.search(userId, { keyword: "内部" });
     expect(result.total_returned).toBe(1);
-    expect(result.transfers[0]!.matched_field).toBe("category");
+    expect(result.transfers[0]?.matched_field).toBe("category");
   });
 
   test("search keyword matches secondaryCategory → matched_field='category' (NOT 'secondary_category')", async () => {
@@ -109,7 +109,7 @@ describe("transfers repo", () => {
     await repos.transfers.create(userId, { ...baseTr, note: null, primaryCategory: null });
     const result = await repos.transfers.search(userId, { keyword: "转账" });
     expect(result.total_returned).toBe(1);
-    expect(result.transfers[0]!.matched_field).toBe("category");
+    expect(result.transfers[0]?.matched_field).toBe("category");
   });
 
   test("search keyword matches account → matched_field='account'", async () => {
@@ -122,7 +122,7 @@ describe("transfers repo", () => {
     });
     const result = await repos.transfers.search(userId, { keyword: "招商" });
     expect(result.total_returned).toBe(1);
-    expect(result.transfers[0]!.matched_field).toBe("account");
+    expect(result.transfers[0]?.matched_field).toBe("account");
   });
 
   test("search by accounts filter", async () => {
@@ -156,7 +156,7 @@ describe("transfers repo", () => {
       min_amount_cents: 60000,
     });
     expect(result.total_returned).toBe(1);
-    expect(result.transfers[0]!.inflowAmountCents).toBe(100000);
+    expect(result.transfers[0]?.inflowAmountCents).toBe(100000);
   });
 
   test("search tags overlap", async () => {
@@ -204,7 +204,7 @@ describe("transfers repo", () => {
     await repos.transfers.create(userId, { ...baseTr, date: "2026-03-01", day: 1 });
     await repos.transfers.create(userId, { ...baseTr, date: "2026-03-20", day: 20 });
     const result = await repos.transfers.search(userId);
-    expect(result.transfers[0]!.date).toBe("2026-03-20");
+    expect(result.transfers[0]?.date).toBe("2026-03-20");
   });
 
   // ── findAllByUser (backup/export) ──
@@ -239,7 +239,7 @@ describe("transfers repo", () => {
 
     const result = await repos.transfers.findAllByUser(userId);
     expect(result.length).toBe(1);
-    expect(result[0]!.note).toBe("转入定期账户");
+    expect(result[0]?.note).toBe("转入定期账户");
   });
 
   // ── findAllByYear ──
@@ -270,7 +270,7 @@ describe("transfers repo", () => {
 
     const result = await repos.transfers.findAllByYear(userId, 2026);
     expect(result.length).toBe(1);
-    expect(result[0]!.year).toBe(2026);
+    expect(result[0]?.year).toBe(2026);
   });
 
   test("findAllByYear isolates by user", async () => {
@@ -298,8 +298,8 @@ describe("transfers repo", () => {
 
     const result = await repos.transfers.findAllByYear(userId, 2026);
     expect(result.length).toBe(3);
-    expect(result[0]!.date).toBe("2026-03-20");
-    expect(result[1]!.date).toBe("2026-03-10");
-    expect(result[2]!.date).toBe("2026-03-01");
+    expect(result[0]?.date).toBe("2026-03-20");
+    expect(result[1]?.date).toBe("2026-03-10");
+    expect(result[2]?.date).toBe("2026-03-01");
   });
 });

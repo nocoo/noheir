@@ -133,8 +133,8 @@ describe("E2E: Units", () => {
       userId,
     });
     expect(res.units).toHaveLength(1);
-    expect(res.units[0]!.product).toBeDefined();
-    expect((res.units[0]!.product as Record<string, unknown>).name).toBe("招银理财月度宝");
+    expect(res.units[0]?.product).toBeDefined();
+    expect((res.units[0]?.product as Record<string, unknown>).name).toBe("招银理财月度宝");
   });
 
   test("GET /api/units?with_products=true returns null product when unlinked", async () => {
@@ -151,7 +151,7 @@ describe("E2E: Units", () => {
       userId,
     });
     expect(res.units).toHaveLength(1);
-    expect(res.units[0]!.product).toBeNull();
+    expect(res.units[0]?.product).toBeNull();
   });
 
   // ── Auto-logging on productId change ──
@@ -187,8 +187,8 @@ describe("E2E: Units", () => {
     });
 
     expect(logs.logs).toHaveLength(1);
-    expect(logs.logs[0]!.operationType).toBe("invest");
-    expect(logs.logs[0]!.productId).toBe(product.id);
+    expect(logs.logs[0]?.operationType).toBe("invest");
+    expect(logs.logs[0]?.productId).toBe(product.id);
   });
 
   test("PUT /api/units/:id creates withdraw + invest when switching products", async () => {
@@ -234,9 +234,9 @@ describe("E2E: Units", () => {
     const invest = logs.logs.find((l) => l.operationType === "invest");
 
     expect(withdraw).toBeDefined();
-    expect(withdraw!.productId).toBe(productA.id);
+    expect(withdraw?.productId).toBe(productA.id);
     expect(invest).toBeDefined();
-    expect(invest!.productId).toBe(productB.id);
+    expect(invest?.productId).toBe(productB.id);
   });
 
   test("PUT /api/units/:id rejects productId with other fields", async () => {
@@ -574,16 +574,16 @@ describe("E2E: Units", () => {
     expect(res.total_amount_cents).toBe(6000000);
 
     // By strategy
-    expect(res.by_strategy["短期理财"]).toEqual({ count: 2, amount_cents: 3000000 });
-    expect(res.by_strategy["长期理财"]).toEqual({ count: 1, amount_cents: 3000000 });
+    expect(res.by_strategy.短期理财).toEqual({ count: 2, amount_cents: 3000000 });
+    expect(res.by_strategy.长期理财).toEqual({ count: 1, amount_cents: 3000000 });
 
     // By status
-    expect(res.by_status["已成立"]).toEqual({ count: 2, amount_cents: 3000000 });
-    expect(res.by_status["计划中"]).toEqual({ count: 1, amount_cents: 3000000 });
+    expect(res.by_status.已成立).toEqual({ count: 2, amount_cents: 3000000 });
+    expect(res.by_status.计划中).toEqual({ count: 1, amount_cents: 3000000 });
 
     // By tactics
-    expect(res.by_tactics["理财产品"]).toEqual({ count: 2, amount_cents: 4000000 });
-    expect(res.by_tactics["债券基金"]).toEqual({ count: 1, amount_cents: 2000000 });
+    expect(res.by_tactics.理财产品).toEqual({ count: 2, amount_cents: 4000000 });
+    expect(res.by_tactics.债券基金).toEqual({ count: 1, amount_cents: 2000000 });
   });
 
   test("GET /api/units/summary categorizes availability correctly", async () => {

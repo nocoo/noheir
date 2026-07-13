@@ -94,7 +94,7 @@ function parseToCents(value: string): number {
   if (!value || value.trim() === "" || value === "0.00") return 0;
   const cleaned = value.replace(/[^\d.-]/g, "");
   const parsed = parseFloat(cleaned);
-  if (isNaN(parsed)) return 0;
+  if (Number.isNaN(parsed)) return 0;
   return Math.round(Math.abs(parsed) * 100);
 }
 

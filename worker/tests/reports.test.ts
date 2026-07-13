@@ -99,12 +99,12 @@ describe("reports repo", () => {
     const report = await repos.reports.monthly(userId, 2026, 3);
     expect(report.expense_by_category).toHaveLength(2);
     // 交通 (10000) should be first, then 餐饮 (8000)
-    expect(report.expense_by_category[0]!.category).toBe("交通");
-    expect(report.expense_by_category[0]!.total).toBe(10000);
-    expect(report.expense_by_category[0]!.count).toBe(1);
-    expect(report.expense_by_category[1]!.category).toBe("餐饮");
-    expect(report.expense_by_category[1]!.total).toBe(8000);
-    expect(report.expense_by_category[1]!.count).toBe(2);
+    expect(report.expense_by_category[0]?.category).toBe("交通");
+    expect(report.expense_by_category[0]?.total).toBe(10000);
+    expect(report.expense_by_category[0]?.count).toBe(1);
+    expect(report.expense_by_category[1]?.category).toBe("餐饮");
+    expect(report.expense_by_category[1]?.total).toBe(8000);
+    expect(report.expense_by_category[1]?.count).toBe(2);
   });
 
   test("monthly: income_by_category", async () => {
@@ -120,8 +120,8 @@ describe("reports repo", () => {
 
     const report = await repos.reports.monthly(userId, 2026, 3);
     expect(report.income_by_category).toHaveLength(2);
-    expect(report.income_by_category[0]!.category).toBe("工资");
-    expect(report.income_by_category[0]!.total).toBe(200000);
+    expect(report.income_by_category[0]?.category).toBe("工资");
+    expect(report.income_by_category[0]?.total).toBe(200000);
   });
 
   test("monthly: filters by year and month", async () => {

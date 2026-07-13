@@ -254,16 +254,16 @@ describe("E2E: Products", () => {
     expect(res.archived_count).toBe(0);
 
     // By channel
-    expect(res.by_channel["招商银行"]).toBe(2);
-    expect(res.by_channel["支付宝"]).toBe(1);
+    expect(res.by_channel.招商银行).toBe(2);
+    expect(res.by_channel.支付宝).toBe(1);
 
     // By category
-    expect(res.by_category["理财产品"]).toBe(2);
-    expect(res.by_category["定期存款"]).toBe(1);
+    expect(res.by_category.理财产品).toBe(2);
+    expect(res.by_category.定期存款).toBe(1);
 
     // By currency
-    expect(res.by_currency["CNY"]).toBe(2);
-    expect(res.by_currency["USD"]).toBe(1);
+    expect(res.by_currency.CNY).toBe(2);
+    expect(res.by_currency.USD).toBe(1);
   });
 
   test("GET /api/products/summary excludes archived products by default", async () => {
@@ -294,8 +294,8 @@ describe("E2E: Products", () => {
     // Only active products in breakdown
     expect(res.total_count).toBe(1);
     expect(res.archived_count).toBe(1);
-    expect(res.by_channel["招商银行"]).toBe(1);
-    expect(res.by_channel["支付宝"]).toBeUndefined();
+    expect(res.by_channel.招商银行).toBe(1);
+    expect(res.by_channel.支付宝).toBeUndefined();
   });
 
   test("GET /api/products/summary?includeArchived=true includes archived products", async () => {
@@ -326,8 +326,8 @@ describe("E2E: Products", () => {
     // All products in breakdown
     expect(res.total_count).toBe(2);
     expect(res.archived_count).toBe(1);
-    expect(res.by_channel["招商银行"]).toBe(1);
-    expect(res.by_channel["支付宝"]).toBe(1);
+    expect(res.by_channel.招商银行).toBe(1);
+    expect(res.by_channel.支付宝).toBe(1);
   });
 
   // ── Fields and Pagination ──

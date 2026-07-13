@@ -51,7 +51,7 @@ export const buildMonthlyAvailability = (units: UnitDisplayInfo[], monthsAhead =
 
   const monthlyAvailability: MonthlyAvailability[] = [];
   monthlyMap.forEach((strategyMap, month) => {
-    const monthDate = new Date(month + "-01");
+    const monthDate = new Date(`${month}-01`);
     const monthLabel = format(monthDate, "yyyy年M月", { locale: zhCN });
 
     strategyMap.forEach((amount, strategy) => {
@@ -60,7 +60,7 @@ export const buildMonthlyAvailability = (units: UnitDisplayInfo[], monthsAhead =
   });
 
   months.forEach((month) => {
-    const monthDate = new Date(month + "-01");
+    const monthDate = new Date(`${month}-01`);
     const monthLabel = format(monthDate, "yyyy年M月", { locale: zhCN });
     strategySet.forEach((strategy) => {
       if (!monthlyAvailability.find((m) => m.month === month && m.strategy === strategy)) {

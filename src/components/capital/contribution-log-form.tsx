@@ -128,7 +128,7 @@ function ContributionLogFormInner({
       toast.error("请选择资金单元");
       return;
     }
-    if (!amount || isNaN(parseFloat(amount))) {
+    if (!amount || Number.isNaN(parseFloat(amount))) {
       toast.error("请输入有效金额");
       return;
     }
