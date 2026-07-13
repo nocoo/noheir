@@ -12,11 +12,13 @@ jobs:
     uses: nocoo/base-ci/.github/workflows/bun-quality.yml@aec4adc1a817c56790d1698329ef9398a15a754a  # v2026.5
     with:
       ignore-scripts: true
+      trusted-native-deps: "@biomejs/biome,@tailwindcss/oxide,better-sqlite3,esbuild,next,sharp,unrs-resolver,workerd"
       extra-install-dirs: "worker"
       pre-command: "bun run build"
       test-command: "bun run test:coverage"
       typecheck-command: "bun run typecheck"
       osv-config: "osv-scanner.toml"
+      enable-worker: "true"
       enable-l2: "true"
       l2-command: "bun run test:e2e"
       enable-l3: "true"
