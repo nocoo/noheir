@@ -199,14 +199,12 @@ function updateChangelog(entry: string): void {
 
   if (idx !== -1) {
     const insertAt = idx + marker.length;
-    const updated =
-      `${content.slice(0, insertAt)}\n\n${entry}${content.slice(insertAt).replace(/^\n+/, "\n")}`;
+    const updated = `${content.slice(0, insertAt)}\n\n${entry}${content.slice(insertAt).replace(/^\n+/, "\n")}`;
     writeFileSync(CHANGELOG, updated);
   } else {
     // Fallback: prepend after first line
     const firstNewline = content.indexOf("\n");
-    const updated =
-      `${content.slice(0, firstNewline + 1)}\n${entry}${content.slice(firstNewline + 1)}`;
+    const updated = `${content.slice(0, firstNewline + 1)}\n${entry}${content.slice(firstNewline + 1)}`;
     writeFileSync(CHANGELOG, updated);
   }
 }

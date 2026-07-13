@@ -4,8 +4,7 @@ import { cn } from "@/lib/utils";
 
 function Label({ className, ...props }: React.ComponentProps<"label">) {
   return (
-    // Label is associated with its control by the caller via htmlFor / nesting.
-    // eslint-disable-next-line jsx-a11y/label-has-associated-control
+    // biome-ignore lint/a11y/noLabelWithoutControl: shadcn-style generic Label; caller supplies htmlFor / nesting
     <label
       data-slot="label"
       className={cn(

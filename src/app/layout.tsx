@@ -37,8 +37,7 @@ export default function RootLayout({
       <head>
         {/* Blocking script: apply dark class and color scheme before first paint to prevent FOUC */}
         <script
-          // Inline blocking script body to avoid FOUC; content is a static literal.
-          // eslint-disable-next-line @eslint-react/dom-no-dangerously-set-innerhtml
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: static literal, no user input
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var s=localStorage.getItem("theme");var d=window.matchMedia("(prefers-color-scheme:dark)").matches;if(s==="dark"||(s!=="light"&&d))document.documentElement.classList.add("dark");var c=localStorage.getItem("colorScheme");if(c==="swapped")document.documentElement.classList.add("color-scheme-swapped")}catch(e){}})()`,
           }}

@@ -9,7 +9,7 @@
  *
  * This ensures FK order is respected (units reference products).
  */
-import { api, } from "./client";
+import { api } from "./client";
 
 /**
  * Ensure a test user exists in the users table.

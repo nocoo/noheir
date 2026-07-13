@@ -642,7 +642,9 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .recharts-line,
 .recharts-responsive-container,
 .recharts-responsive-container * {
+  /* biome-ignore lint/complexity/noImportantStyles: recharts injects inline styles; !important is required to override them */
   outline: none !important;
+  /* biome-ignore lint/complexity/noImportantStyles: recharts injects inline styles; !important is required to override them */
   box-shadow: none !important;
 }
 
@@ -654,6 +656,8 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .recharts-surface:focus-visible,
 .recharts-responsive-container:focus,
 .recharts-responsive-container:focus-visible {
+  /* biome-ignore lint/complexity/noImportantStyles: recharts injects inline styles; !important is required to override them */
   outline: none !important;
+  /* biome-ignore lint/complexity/noImportantStyles: recharts injects inline styles; !important is required to override them */
   box-shadow: none !important;
 }

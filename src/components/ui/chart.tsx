@@ -78,7 +78,7 @@ function ChartStyle({ id, config }: { id: string; config: ChartConfig }) {
     <style
       // CSS custom-property block built from a fixed THEMES table and the
       // caller's typed config — required to scope chart colors per id at runtime.
-      // eslint-disable-next-line @eslint-react/dom-no-dangerously-set-innerhtml
+      // biome-ignore lint/security/noDangerouslySetInnerHtml: CSS built from fixed THEMES + typed config, no user input
       dangerouslySetInnerHTML={{
         __html: Object.entries(THEMES)
           .map(

@@ -4,7 +4,7 @@
 
 import { describe, expect, test } from "vitest";
 import type { FinancialProduct } from "../db/types";
-import { buildProductsSummary, } from "../lib/products-summary";
+import { buildProductsSummary } from "../lib/products-summary";
 
 // Helper to create mock product
 function mockProduct(overrides: Partial<FinancialProduct> = {}): FinancialProduct {

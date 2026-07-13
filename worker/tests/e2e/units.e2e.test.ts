@@ -133,8 +133,9 @@ describe("E2E: Units", () => {
       userId,
     });
     expect(res.units).toHaveLength(1);
-    expect(res.units[0]?.product).toBeDefined();
-    expect((res.units[0]?.product as Record<string, unknown>).name).toBe("招银理财月度宝");
+    const joined = res.units[0]?.product;
+    expect(joined).toBeDefined();
+    expect((joined as Record<string, unknown>).name).toBe("招银理财月度宝");
   });
 
   test("GET /api/units?with_products=true returns null product when unlinked", async () => {

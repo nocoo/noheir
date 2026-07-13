@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  computeAvailability,
-} from "../lib/availability";
+import { computeAvailability } from "../lib/availability";
 
 describe("computeAvailability", () => {
   const today = new Date("2026-04-05");
