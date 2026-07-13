@@ -86,7 +86,7 @@ bun run dev
 
 ### 测试与文档要求
 
-- 代码规范检查：`bunx eslint . --max-warnings=0`
+- 代码规范检查：`bun run lint`
 - UT：`vitest run`
 - 覆盖率：`vitest run --coverage`
 - UT 覆盖率目标：**90%**

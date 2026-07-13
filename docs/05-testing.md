@@ -3,7 +3,7 @@
 ## 代码规范检查
 
 ```bash
-bunx eslint . --max-warnings=0
+bun run lint
 ```
 
 ## 单元测试
