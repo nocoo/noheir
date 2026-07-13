@@ -11,8 +11,6 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
-    "@nocoo/base-mcp": "^0.1.1",
     "drizzle-orm": "^0.45.2",
     "hono": "4.12.29",
     "zod": "^4.4.3"
