@@ -51,6 +51,7 @@
     "zod": "4.3.6"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.3",
     "@eslint-react/eslint-plugin": "5.14.5",
     "@next/eslint-plugin-next": "16.2.10",
     "@playwright/test": "1.61.1",
@@ -80,6 +81,7 @@
     "vitest": "4.1.10"
   },
   "trustedDependencies": [
+    "@biomejs/biome",
     "esbuild",
     "sharp",
     "unrs-resolver",
