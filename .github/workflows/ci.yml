@@ -18,7 +18,12 @@ jobs:
       test-command: "bun run test:coverage"
       typecheck-command: "bun run typecheck"
       osv-config: "osv-scanner.toml"
-      enable-worker: "true"
+      # enable-worker is blocked on nocoo/base-ci#5 — the shared
+      # "Install extra dirs" step tries to `cd worker` from inside
+      # the worker-tests job (which already `working-directory`s to
+      # worker/), turning it into `worker/worker` and failing.
+      # Re-enable once that lands.
+      # enable-worker: "true"
       enable-l2: "true"
       l2-command: "bun run test:e2e"
       enable-l3: "true"
