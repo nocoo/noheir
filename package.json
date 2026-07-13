@@ -6,7 +6,9 @@
     "dev": "next dev --port 7004",
     "build": "next build",
     "start": "next start --port 7004",
-    "lint": "eslint --cache --cache-location node_modules/.cache/eslint/ --max-warnings=0",
+    "lint": "biome check --error-on-warnings .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:worker": "cd worker && vitest run",
@@ -89,8 +91,8 @@
     "next"
   ],
   "lint-staged": {
-    "*.{ts,tsx}": [
-      "eslint --cache --cache-location node_modules/.cache/eslint/ --max-warnings=0 --no-warn-ignored"
+    "*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css,md}": [
+      "biome check --error-on-warnings --no-errors-on-unmatched"
     ]
   },
   "overrides": {

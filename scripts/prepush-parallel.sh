@@ -18,7 +18,7 @@ run_bg() {
 }
 
 run_bg tests npm run test:coverage
-run_bg lint ./node_modules/.bin/eslint --cache --cache-location node_modules/.cache/eslint/ --max-warnings=0
+run_bg lint ./node_modules/.bin/biome check --error-on-warnings .
 
 if [ "${SKIP_SECURITY:-0}" != "1" ]; then
   if command -v osv-scanner >/dev/null 2>&1; then

@@ -16,7 +16,7 @@ run_bg() {
 cd "$ROOT"
 
 run_bg tests npm run test:coverage
-run_bg lint ./node_modules/.bin/eslint --cache --cache-location node_modules/.cache/eslint/ --max-warnings=0
+run_bg lint ./node_modules/.bin/biome check --error-on-warnings .
 run_bg typecheck ./node_modules/.bin/tsc --noEmit
 
 FAIL=0
