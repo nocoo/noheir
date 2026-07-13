@@ -144,7 +144,6 @@ export function CategoryForm({
           placeholder="例如：房贷"
           // Form opens in a dialog; auto-focusing the only text input is the
           // expected UX so the user can type immediately.
-          // eslint-disable-next-line jsx-a11y/no-autofocus
           autoFocus
         />
         {errors.name ? (

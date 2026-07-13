@@ -254,7 +254,6 @@ describe("financial-health-algorithm", () => {
     });
 
     it("handles non-array monthlyData", () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = calculateFinancialHealth([], null as any, 0, []);
       expect(result.maxScore).toBe(100);
     });

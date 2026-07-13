@@ -62,7 +62,6 @@ describe("enrichWithAvailability", () => {
         if (args.length === 0) {
           super(mockNow);
         } else {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           super(...(args as unknown as [any]));
         }
       }

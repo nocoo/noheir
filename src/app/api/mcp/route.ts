@@ -5,10 +5,6 @@
  * Validates OAuth tokens and dispatches to registered tools.
  */
 
-// @modelcontextprotocol/sdk exposes the transport class only via the
-// `./server/webStandardStreamableHttp.js` subpath, not a top-level barrel.
-// import-x can't see it through the package's exports map; TS resolves fine.
-// eslint-disable-next-line import-x/no-unresolved
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
