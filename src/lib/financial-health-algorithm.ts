@@ -35,7 +35,7 @@ function linearRegression(data: number[]): {
 function coefficientOfVariation(data: number[]): number {
   if (data.length < 2) return 0;
   const mean = data.reduce((a, b) => a + b, 0) / data.length;
-  const variance = data.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / data.length;
+  const variance = data.reduce((sum, val) => sum + (val - mean) ** 2, 0) / data.length;
   const stdDev = Math.sqrt(variance);
   return mean === 0 ? 0 : stdDev / mean;
 }

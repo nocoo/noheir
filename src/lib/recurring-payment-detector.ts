@@ -128,7 +128,7 @@ function analyzePeriodicity(transactions: DomainTransaction[]): PeriodicityPatte
 
   const averageInterval = intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
   const variance =
-    intervals.reduce((sum, interval) => sum + Math.pow(interval - averageInterval, 2), 0) /
+    intervals.reduce((sum, interval) => sum + (interval - averageInterval) ** 2, 0) /
     intervals.length;
   const standardDeviation = Math.sqrt(variance);
 
