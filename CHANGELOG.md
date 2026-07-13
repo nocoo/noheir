@@ -2,6 +2,123 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.0] - 2026-07-13
+
+### Features
+
+- **ci** — switch lint entrypoint from eslint to biome
+
+### Fixes
+
+- **lint** — restore no-console rule for src/**
+- eliminate array-index keys and residual noExplicitAny sites
+- **a11y** — scope useSemanticElements suppressions to intentional patterns
+- **a11y** — explicit type='button' on non-submit buttons
+
+### Refactoring
+
+- **worker** — eliminate non-null assertions in repositories and validation
+- apply biome unsafe fixes (isNaN, node: protocol, optional chain, template literals)
+- convert React value imports to type imports (biome auto-fix)
+
+### Documentation
+
+- sync zod version note to 4.4.3
+- update command-annotation comments from eslint to biome
+- note src/** noConsole override in baseline
+- point lint instructions at bun run lint (biome)
+- fill in biome baseline with final rule decisions
+- correct `bun pm trust` semantics under root ignoreScripts gate
+
+### Chores
+
+- **deps** — upgrade @nocoo/base-mcp 0.1.1 → 0.2.0
+- **worker** — remove unused MCP dependencies
+- **deps** — unify zod on 4.4.3 across the tree
+- **deps** — upgrade typescript to ^7.0.2 (+ @typescript/native-preview for next build)
+- remove dead lint-staged config and dependency
+- remove stale eslint-disable comments
+- **deps** — remove eslint and all eslint plugins
+- **lint** — resolve remaining biome findings
+- **deps** — bump postcss 8.5.17 → 8.5.18
+- **deps** — bump hono 4.12.29 → 4.12.30
+- **deps** — bump @eslint-react/eslint-plugin 5.14.5 → 5.14.6
+- **deps** — bump @cloudflare/workers-types 5.20260711.1 → 5.20260712.1 in worker
+- **lint** — switch biome indent to 2 spaces + tailwind directives
+- **deps** — add @biomejs/biome@2.5.3 devDep
+- **lint** — add biome configs alongside eslint
+- **deps** — bump @cloudflare/workers-types 5.20260710.1 → 5.20260711.1 in worker
+- **deps** — bump @eslint-react/eslint-plugin 5.14.1 → 5.14.5
+- **deps** — bump postcss 8.5.16 → 8.5.17
+- **deps** — bump @cloudflare/workers-types 5.20260708.1 → 5.20260710.1 in worker
+- **deps** — bump @eslint-react/eslint-plugin 5.13.2 → 5.14.1
+- **deps** — bump eslint 10.6.0 → 10.7.0
+- **deps** — bump hono 4.12.28 → 4.12.29
+- **deps** — bump wrangler 4.107.1 → 4.110.0 in worker
+- **deps** — bump @eslint-react/eslint-plugin 5.12.1 → 5.13.2
+- **deps** — bump lucide-react 1.23.0 → 1.24.0
+- **deps** — bump @eslint-react/eslint-plugin 5.11.2 → 5.12.1
+- **deps** — bump @types/node 26.1.0 → 26.1.1
+- **deps** — bump @cloudflare/workers-types 5.20260706.1 → 5.20260708.1 in worker
+- **deps** — bump wrangler 4.107.0 → 4.107.1 in worker
+- remove obsolete one-shot scripts
+- drop hardcoded token fallback in migrate script
+- **deps** — bump hono 4.12.27 → 4.12.28
+- **deps** — bump typescript-eslint 8.62.1 → 8.63.0
+- **deps** — bump radix-ui 1.6.1 → 1.6.2
+- **deps** — bump vitest 4.1.9 → 4.1.10
+- **deps** — bump @vitest/coverage-v8 4.1.9 → 4.1.10
+- **deps** — bump @cloudflare/workers-types 5.20260705.1 → 5.20260706.1 in worker
+- **deps** — bump @eslint-react/eslint-plugin 5.10.4 → 5.11.2
+- **deps** — bump @cloudflare/workers-types 5.20260704.1 → 5.20260705.1 in worker
+- **deps** — bump @cloudflare/workers-types 5.20260703.1 → 5.20260704.1 in worker
+- **deps** — bump @eslint-react/eslint-plugin 5.10.3 → 5.10.4
+- **deps** — bump recharts 3.9.1 → 3.9.2
+- **deps** — bump @cloudflare/workers-types 4.20260702.1 → 5.20260703.1 in worker
+- **deps** — bump @eslint-react/eslint-plugin 5.10.1 → 5.10.3
+- **deps** — bump @cloudflare/workers-types 4.20260701.1 → 4.20260702.1 in worker
+- **deps** — bump wrangler 4.106.0 → 4.107.0 in worker
+- **deps** — bump @eslint-react/eslint-plugin 5.10.0 → 5.10.1
+- add root .npmrc for supply chain security baseline
+- **deps** — bump next 16.2.9 → 16.2.10
+- **deps** — bump lucide-react 1.22.0 → 1.23.0
+- **deps** — bump @types/node 26.0.1 → 26.1.0
+- **deps** — bump @next/eslint-plugin-next 16.2.9 → 16.2.10
+- **deps** — bump @cloudflare/workers-types 4.20260630.1 → 4.20260701.1 in worker
+- **deps** — upgrade dependencies (batch 2026-07-01) (#160)
+- **deps** — upgrade dependencies (batch 2026-06-30) (#155)
+- **deps** — bump postcss 8.5.15 → 8.5.16 (deps + overrides)
+- **deps** — bump lucide-react 1.21.0 → 1.22.0
+- **deps** — bump eslint-plugin-import-x 4.17.0 → 4.17.1
+- **deps** — bump @eslint-react/eslint-plugin 5.9.5 → 5.10.0
+- **deps** — bump @cloudflare/workers-types 4.20260626.1 → 4.20260628.1 in worker
+- **deps** — bump @cloudflare/workers-types 4.20260625.1 → 4.20260626.1 in worker
+- **deps** — bump @eslint-react/eslint-plugin 5.9.3 → 5.9.5
+- **deps** — bump eslint 10.5.0 → 10.6.0
+- **deps** — bump @cloudflare/workers-types 4.20260624.1 → 4.20260625.1 in worker
+- **deps** — bump wrangler 4.104.0 → 4.105.0 in worker
+- **deps** — bump @eslint-react/eslint-plugin 5.9.2 → 5.9.3
+- **deps** — bump @types/node 26.0.0 → 26.0.1
+- **deps** — bump @cloudflare/workers-types 4.20260623.1 → 4.20260624.1 in worker
+- **deps** — bump wrangler 4.103.0 → 4.104.0 in worker
+- **deps** — bump recharts 3.8.1 → 3.9.0
+- **deps** — bump hono 4.12.26 → 4.12.27 in root + worker (incl. overrides)
+- **deps** — bump @playwright/test 1.61.0 → 1.61.1
+- **deps** — bump @cloudflare/workers-types 4.20260621.1 → 4.20260623.1 in worker
+- **deps** — bump globals 16.4.0 → 17.7.0
+- **deps** — bump lint plugins (patch+minor)
+- **lint** — drop suppressions for non-existent @eslint-react rule ids
+
+### CI
+
+- bump base-ci to v2026.6 and re-enable worker tests
+- enable worker tests and allowlist native postinstall
+
+### Style
+
+- sort imports with biome assist
+- format entire codebase with biome
+
 ## [2.3.5] - 2026-06-22
 
 ### Features
