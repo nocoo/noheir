@@ -494,7 +494,7 @@ Commands:
 bun run test                    # L1 + L2 unit/workflow tests
 bun run test:coverage           # With coverage report
 bun run typecheck               # Type checking
-bun run lint                    # Lint (eslint --max-warnings=0)
+bun run lint                    # Lint (biome check --error-on-warnings)
 ```
 
 ### Phase 6: Atomic Commit Strategy

@@ -55,7 +55,7 @@
 bun run dev               # 启动 Next.js dev 服务（port 7004）
 bun run build             # 生产构建（含 typecheck）
 bun run typecheck         # tsc --noEmit
-bun run lint              # eslint, max-warnings=0
+bun run lint              # biome check --error-on-warnings
 bun run test              # 主仓 Vitest 单测
 bun run test:worker       # Worker 单测（含新增 repository / SQL 端点）
 
