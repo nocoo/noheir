@@ -13,12 +13,12 @@ interface StrategyClientProps {
 }
 
 export function StrategyClient({ hierarchy, totalAmount }: StrategyClientProps) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: echarts option shape is too complex to type strictly here
   const option = useMemo<any>(
     () => ({
       tooltip: {
         trigger: "item",
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // biome-ignore lint/suspicious/noExplicitAny: echarts formatter callback params are dynamic
         formatter: (params: any) => {
           const value = params.value ?? 0;
           const percentage = totalAmount > 0 ? ((value / totalAmount) * 100).toFixed(2) : "0.00";

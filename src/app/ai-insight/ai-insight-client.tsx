@@ -175,6 +175,7 @@ export function AIInsightClient({
                       </div>
                     ) : (
                       sortedInsights.map((insight, index) => (
+                        // biome-ignore lint/suspicious/noArrayIndexKey: PaymentInsight has no stable id; list is re-derived per render
                         <div key={`${insight.type}-${index}`} className="rounded-lg border p-4">
                           <div className="flex items-start gap-3">
                             <div

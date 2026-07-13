@@ -239,6 +239,7 @@ export function SavingsRateClient({
                 <Bar yAxisId="right" dataKey="savings" opacity={0.6} radius={[4, 4, 0, 0]}>
                   {chartData.map((entry, index) => (
                     <Cell
+                      // biome-ignore lint/suspicious/noArrayIndexKey: recharts Cell binds to data position
                       key={`cell-${index}`}
                       fill={entry.savings >= 0 ? INCOME_HEX : EXPENSE_HEX}
                     />

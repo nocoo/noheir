@@ -58,6 +58,28 @@
           }
         }
       }
+    },
+    {
+      "includes": [
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "**/*.spec.ts",
+        "src/__tests__/**",
+        "worker/tests/**",
+        "e2e/**"
+      ],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noExplicitAny": "off",
+            "noFocusedTests": "error",
+            "noSkippedTests": "error"
+          },
+          "style": {
+            "noNonNullAssertion": "off"
+          }
+        }
+      }
     }
   ]
 }

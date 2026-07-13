@@ -309,7 +309,7 @@ export function FrequencyPicker({
               return (
                 // biome-ignore lint/a11y/useSemanticElements: styled chip, not a native input radio
                 <button
-                  key={w}
+                  key={label}
                   ref={(el) => {
                     weekdayRef.current[w] = el;
                   }}

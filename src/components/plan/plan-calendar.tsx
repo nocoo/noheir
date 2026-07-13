@@ -246,7 +246,7 @@ export function PlanCalendar({
                   without a popover hop. */}
               {visibleBanners.length > 0 ? (
                 <div className="flex flex-col gap-0.5">
-                  {visibleBanners.map((rule, idx) => {
+                  {visibleBanners.map((rule) => {
                     const cat = rule.categoryId ? categoryMap.get(rule.categoryId) : undefined;
                     const colorToken = cat?.colorToken;
                     const isPaletteToken =
@@ -254,7 +254,7 @@ export function PlanCalendar({
                     const color = tokenColor(colorToken);
                     return (
                       <button
-                        key={`${rule.id}-${idx}`}
+                        key={`${cell.iso}-${rule.id}`}
                         type="button"
                         data-rule-id={rule.id}
                         data-color={isPaletteToken ? colorToken : "fallback"}

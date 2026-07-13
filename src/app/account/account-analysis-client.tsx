@@ -208,6 +208,7 @@ export function AccountAnalysisClient({
                   >
                     {pieData.map((_, index) => (
                       <Cell
+                        // biome-ignore lint/suspicious/noArrayIndexKey: recharts Cell binds to data position
                         key={`cell-${index}`}
                         fill={PIE_COLORS[index % PIE_COLORS.length] ?? PIE_COLORS[0] ?? "#64748b"}
                       />

@@ -33,6 +33,7 @@ function Slider({
       </SliderPrimitive.Track>
       {Array.from({ length: _values.length }, (_, index) => (
         <SliderPrimitive.Thumb
+          // biome-ignore lint/suspicious/noArrayIndexKey: fixed-length array of visually-identical thumbs
           key={index}
           className="border-primary bg-background ring-ring/50 block size-4 rounded-full border transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
         />

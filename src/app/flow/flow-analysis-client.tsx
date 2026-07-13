@@ -42,7 +42,7 @@ function FlowList({ flows, colors }: { flows: FlowNode[]; colors: string[] }) {
         const colorClass = colors[index % colors.length] ?? colors[0] ?? "bg-gray-400";
 
         return (
-          <div key={`${flow.source}-${flow.target}-${index}`} className="space-y-1">
+          <div key={`${flow.source}-${flow.target}`} className="space-y-1">
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="text-xs">

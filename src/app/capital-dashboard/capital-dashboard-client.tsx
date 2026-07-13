@@ -97,6 +97,7 @@ function DistributionPie({
                 >
                   {data.map((_, i) => (
                     <Cell
+                      // biome-ignore lint/suspicious/noArrayIndexKey: recharts Cell binds to data position
                       key={`cell-${i}`}
                       fill={PIE_COLORS[i % PIE_COLORS.length] ?? PIE_COLORS[0] ?? "#64748b"}
                     />

@@ -226,6 +226,7 @@ export function CategoryDetailList({
                                             : 0;
                                         return (
                                           <div
+                                            // biome-ignore lint/suspicious/noArrayIndexKey: CategoryTransaction has no stable id; date+amount can collide
                                             key={`${tx.date}-${idx}`}
                                             className="hover:bg-muted/10 flex items-center gap-3 rounded px-3 py-2 transition-colors"
                                           >

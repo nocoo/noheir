@@ -101,12 +101,12 @@ export function InvestmentTimeline({
     <div className="space-y-2">
       {/* Bar */}
       <div className="relative flex h-6 overflow-hidden rounded-md">
-        {segments.map((seg, i) => {
+        {segments.map((seg) => {
           const width = ((seg.endDate.getTime() - seg.startDate.getTime()) / totalMs) * 100;
           if (width <= 0) return null;
           return (
             <div
-              key={i}
+              key={`${seg.type}-${seg.startDate.getTime()}`}
               className={
                 seg.type === "locked"
                   ? "flex items-center justify-center bg-red-200 text-red-800 dark:bg-red-900/40 dark:text-red-300"

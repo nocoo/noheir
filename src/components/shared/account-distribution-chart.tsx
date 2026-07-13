@@ -74,7 +74,7 @@ export function AccountDistributionChart({
               content={({ active, payload }) => {
                 if (!active || !payload?.length) return null;
                 const entry = payload[0];
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                // biome-ignore lint/suspicious/noExplicitAny: recharts Tooltip payload shape is untyped
                 const pct = (entry?.payload as any)?.percentage as number | undefined;
                 return (
                   <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">

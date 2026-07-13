@@ -13,6 +13,7 @@ function Barcode() {
     <div className="flex items-stretch gap-[1.5px] h-full">
       {bars.map((w, i) => (
         <div
+          // biome-ignore lint/suspicious/noArrayIndexKey: purely decorative bars, fixed-length list
           key={`bar-${i}`}
           className="rounded-[0.5px] bg-primary-foreground"
           style={{ width: `${w * 1.5}px`, opacity: i % 3 === 0 ? 0.9 : 0.5 }}

@@ -501,7 +501,7 @@ function MonthSelect({
       </SelectTrigger>
       <SelectContent>
         {MONTH_NAMES.map((name, idx) => (
-          <SelectItem key={idx} value={String(idx)}>
+          <SelectItem key={name} value={String(idx)}>
             {name}
           </SelectItem>
         ))}

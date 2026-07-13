@@ -299,8 +299,11 @@ export function TransferImport() {
                 <p className="mb-1 text-xs font-medium text-amber-800 dark:text-amber-300">
                   解析警告 ({parseResult.warnings.length})
                 </p>
-                {parseResult.warnings.slice(0, 3).map((w, i) => (
-                  <p key={i} className="text-xs text-amber-700 dark:text-amber-400">
+                {parseResult.warnings.slice(0, 3).map((w) => (
+                  <p
+                    key={`${w.row}-${w.message}`}
+                    className="text-xs text-amber-700 dark:text-amber-400"
+                  >
                     行 {w.row}: {w.message}
                   </p>
                 ))}

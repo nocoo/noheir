@@ -101,7 +101,7 @@ ${colorConfig
 
 const ChartTooltip = RechartsPrimitive.Tooltip;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: recharts Tooltip payload shape is dynamic
 type TooltipPayloadItem = Record<string, any>;
 
 interface ChartTooltipContentProps extends React.ComponentProps<"div"> {
