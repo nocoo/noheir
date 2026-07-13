@@ -1,22 +1,22 @@
 "use client";
 
-import { TrendingUp, TrendingDown, Calendar, Wallet } from "lucide-react";
-import type { MonthlyData } from "@/domain/types";
-import type { TransactionAnalysisLabels } from "@/domain/dashboard/transaction-analysis";
+import { Calendar, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import type {
+  AccountChartData,
   CategoryGroup,
   PrimaryCategoryGroup,
-  AccountChartData,
   TopTransaction,
 } from "@/components/shared";
 import {
-  MonthlyTrendChart,
-  CategoryDistributionChart,
   AccountDistributionChart,
   CategoryDetailList,
+  CategoryDistributionChart,
+  MonthlyTrendChart,
   TopTransactionsTable,
 } from "@/components/shared";
 import { StatCard } from "@/components/shared/stat-card";
+import type { TransactionAnalysisLabels } from "@/domain/dashboard/transaction-analysis";
+import type { MonthlyData } from "@/domain/types";
 import { formatCurrencyFull } from "@/lib/chart-config";
 import { CHART_COLORS } from "@/lib/palette";
 

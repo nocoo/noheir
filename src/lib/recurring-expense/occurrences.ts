@@ -300,6 +300,6 @@ export function computeOccurrences(
   }
 }
 
-// Re-export for the aggregate helper / tests.
-export { parseIso, formatIso, toDayNumber, fromDayNumber, daysInMonth };
 export type { RecurrenceFrequency };
+// Re-export for the aggregate helper / tests.
+export { daysInMonth, formatIso, fromDayNumber, parseIso, toDayNumber };

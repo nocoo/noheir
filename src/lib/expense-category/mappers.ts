@@ -2,4 +2,4 @@
 // the import site stays close to consumers (categories live in their
 // own folder per the spec § Project Structure).
 
-export { toCategory, type CategoryRow, type ExpenseCategory } from "../recurring-expense/mappers";
+export { type CategoryRow, type ExpenseCategory, toCategory } from "../recurring-expense/mappers";

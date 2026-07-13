@@ -10,11 +10,14 @@
 //   `usage` — the per-category rule count is computed server-side so the
 //   delete-confirm dialog can warn that N rules will lose their color.
 
-import * as React from "react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import * as React from "react";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { deleteExpenseCategory } from "@/app/actions/expense-category-actions";
+import { CategoryForm } from "@/components/plan/category-form";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Dialog,
   DialogContent,
@@ -22,9 +25,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { CategoryForm } from "@/components/plan/category-form";
-import { deleteExpenseCategory } from "@/app/actions/expense-category-actions";
 import { CHART_TOKENS } from "@/lib/palette";
 
 export interface CategoryRow {

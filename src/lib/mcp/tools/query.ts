@@ -6,9 +6,9 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { categoryPath, compact, currencyCode, round2, shortId } from "./compact";
 import type { ToolContext } from "./types";
 import { ok, okWithPage } from "./types";
-import { compact, shortId, categoryPath, round2, currencyCode } from "./compact";
 
 // ---------------------------------------------------------------------------
 // Helpers

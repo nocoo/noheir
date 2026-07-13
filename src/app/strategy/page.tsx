@@ -1,8 +1,8 @@
 import { AppShell } from "@/components/layout";
+import { buildStrategyHierarchy, buildTotalAmount } from "@/domain/assets/strategy-sunburst";
+import type { UnitDisplayInfo } from "@/domain/types";
 import { getAuthedClient } from "@/lib/api-helpers";
 import { toUnitDisplayInfo } from "@/lib/capital-mappers";
-import type { UnitDisplayInfo } from "@/domain/types";
-import { buildStrategyHierarchy, buildTotalAmount } from "@/domain/assets/strategy-sunburst";
 import { StrategyClient } from "./strategy-client";
 
 export default async function StrategyPage() {

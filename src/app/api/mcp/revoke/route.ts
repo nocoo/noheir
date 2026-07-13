@@ -6,7 +6,7 @@
 
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
-import { sha256, revokeToken, getValidTokenByHash } from "@/services/mcp-tokens";
+import { getValidTokenByHash, revokeToken, sha256 } from "@/services/mcp-tokens";
 
 function oauthError(error: string, description: string, status = 400): NextResponse {
   return NextResponse.json({ error, error_description: description }, { status });

@@ -1,17 +1,18 @@
 "use client";
 
+import { Layers } from "lucide-react";
 import { useState } from "react";
 import {
-  BarChart,
   Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
 } from "recharts";
-import { Layers } from "lucide-react";
+import { ChartCard } from "@/components/shared/chart-card";
 import {
   Select,
   SelectContent,
@@ -19,8 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatCurrencyK, formatCurrencyFull } from "@/lib/chart-config";
-import { ChartCard } from "@/components/shared/chart-card";
+import { formatCurrencyFull, formatCurrencyK } from "@/lib/chart-config";
 
 /** Category drill-down structure for the distribution chart */
 export interface CategoryGroup {

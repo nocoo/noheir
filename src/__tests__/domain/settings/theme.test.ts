@@ -1,19 +1,19 @@
 import { describe, expect, it } from "vitest";
 import {
-  VALID_THEMES,
-  VALID_COLOR_SCHEMES,
-  isValidTheme,
-  isValidColorScheme,
-  normalizeTheme,
-  normalizeColorScheme,
-  getIncomeTextClass,
-  getExpenseTextClass,
-  getIncomeColorHsl,
-  getExpenseColorHsl,
-  getIncomeColorHex,
-  getExpenseColorHex,
-  THEME_OPTIONS,
   COLOR_SCHEME_OPTIONS,
+  getExpenseColorHex,
+  getExpenseColorHsl,
+  getExpenseTextClass,
+  getIncomeColorHex,
+  getIncomeColorHsl,
+  getIncomeTextClass,
+  isValidColorScheme,
+  isValidTheme,
+  normalizeColorScheme,
+  normalizeTheme,
+  THEME_OPTIONS,
+  VALID_COLOR_SCHEMES,
+  VALID_THEMES,
 } from "@/domain/settings/theme";
 
 describe("theme domain", () => {

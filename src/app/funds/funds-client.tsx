@@ -1,24 +1,42 @@
 "use client";
 
-import { useState, useTransition, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import {
-  Landmark,
-  Search,
-  Plus,
-  Pencil,
-  Trash2,
+  ArrowDown,
+  ArrowUp,
   ArrowUpDown,
   Filter,
+  Landmark,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
   X,
-  ArrowUp,
-  ArrowDown,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useRouter } from "next/navigation";
+import { useMemo, useState, useTransition } from "react";
+import { toast } from "sonner";
+import { deleteUnit } from "@/app/actions/unit-actions";
+import { type SerializedUnit, UnitEditor } from "@/components/capital/unit-editor";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  CurrencyBadge,
+  StatusBadge,
+  StrategyBadge,
+  TacticsBadge,
+  UnitCodeBadge,
+} from "@/components/ui/colored-badge";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -27,28 +45,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import {
-  UnitCodeBadge,
-  StrategyBadge,
-  TacticsBadge,
-  StatusBadge,
-  CurrencyBadge,
-} from "@/components/ui/colored-badge";
-import { UnitEditor, type SerializedUnit } from "@/components/capital/unit-editor";
-import { cn } from "@/lib/utils";
+import type { DomainProduct } from "@/domain/types";
 import { formatCurrencyFull } from "@/lib/chart-config";
 import { CAPITAL_TABLE_COLUMNS } from "@/lib/table-columns";
-import { deleteUnit } from "@/app/actions/unit-actions";
-import type { DomainProduct } from "@/domain/types";
+import { cn } from "@/lib/utils";
 
 interface FundsClientProps {
   units: SerializedUnit[];

@@ -1,8 +1,8 @@
 import { describe, expect, test } from "vitest";
 import {
+  toCategory,
   toRecurrenceRule,
   toRecurrenceRuleView,
-  toCategory,
 } from "@/lib/recurring-expense/mappers";
 
 const baseRow = {

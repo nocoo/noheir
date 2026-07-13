@@ -1,5 +1,5 @@
+import { addMonths, format, startOfMonth } from "date-fns";
 import { describe, expect, it } from "vitest";
-import type { UnitDisplayInfo, DomainProduct } from "@/domain/types";
 import {
   buildMonthlyAvailability,
   buildSeries,
@@ -7,7 +7,7 @@ import {
   buildUpcomingUnits,
   type MonthlyAvailability,
 } from "@/domain/assets/liquidity-ladder";
-import { format, addMonths, startOfMonth } from "date-fns";
+import type { DomainProduct, UnitDisplayInfo } from "@/domain/types";
 
 const makeProduct = (): DomainProduct => ({
   id: "p1",

@@ -1,26 +1,26 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { Check, Save, Shield, Tags, TrendingUp } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Tags, Save, TrendingUp, Shield, Check } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
-import {
-  toggleActiveIncomeCategory,
-  getIncomeTypeDescription,
-} from "@/domain/settings/income-categories";
-import {
-  toggleFixedExpenseCategory,
-  getExpenseTypeDescription,
-} from "@/domain/settings/expense-categories";
 import {
   saveActiveIncomeCategories,
   saveFixedExpenseCategories,
 } from "@/app/actions/settings-actions";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  getExpenseTypeDescription,
+  toggleFixedExpenseCategory,
+} from "@/domain/settings/expense-categories";
+import {
+  getIncomeTypeDescription,
+  toggleActiveIncomeCategory,
+} from "@/domain/settings/income-categories";
+import { cn } from "@/lib/utils";
 
 interface CategorySettingsClientProps {
   incomeCategories: string[];

@@ -30,8 +30,8 @@
 //     a single edit-flow implementation.
 
 import * as React from "react";
-import { cn } from "@/lib/utils";
 import { CHART_TOKENS } from "@/lib/palette";
+import { formatAmountCompact } from "@/lib/recurring-expense/format";
 import {
   computeOccurrences,
   formatIso,
@@ -39,8 +39,8 @@ import {
   parseIso,
   toDayNumber,
 } from "@/lib/recurring-expense/occurrences";
-import { formatAmountCompact } from "@/lib/recurring-expense/format";
 import type { RecurrenceRule } from "@/lib/recurring-expense/rule-types";
+import { cn } from "@/lib/utils";
 
 export interface PlanCalendarCategory {
   id: string;

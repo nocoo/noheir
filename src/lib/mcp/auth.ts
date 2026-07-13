@@ -4,7 +4,7 @@
 
 import type { Db } from "@/lib/db";
 import type { McpToken } from "@/services/mcp-tokens";
-import { getValidTokenByHash, updateLastUsed, sha256 } from "@/services/mcp-tokens";
+import { getValidTokenByHash, sha256, updateLastUsed } from "@/services/mcp-tokens";
 
 // ---------------------------------------------------------------------------
 // Types

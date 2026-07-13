@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import { AppShell } from "@/components/layout";
+import type { DomainProduct, UnitDisplayInfo } from "@/domain/types";
 import { getAuthedClient } from "@/lib/api-helpers";
 import { toDomainProduct, toUnitDisplayInfo } from "@/lib/capital-mappers";
-import type { DomainProduct, UnitDisplayInfo } from "@/domain/types";
 import { ProductsClient } from "./products-client";
 
 export default async function ProductsPage() {

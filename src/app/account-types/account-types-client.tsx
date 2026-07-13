@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { CreditCard, Save } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
+import { saveAccountTypes } from "@/app/actions/settings-actions";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -14,9 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { AccountType, AccountTypeConfig } from "@/domain/types";
 import { buildAccountTypesUpdate } from "@/domain/settings/account-types";
-import { saveAccountTypes } from "@/app/actions/settings-actions";
+import type { AccountType, AccountTypeConfig } from "@/domain/types";
 
 const TYPE_LABELS: Record<AccountType, { label: string; color: string }> = {
   debit: { label: "储蓄卡", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" },

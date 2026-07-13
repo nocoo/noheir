@@ -1,10 +1,10 @@
 "use client";
 
+import { ArrowRight, ArrowRightLeft } from "lucide-react";
 import { useState } from "react";
-import { ArrowRightLeft, ArrowRight } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatCurrencyFull } from "@/lib/chart-config";
 
 interface FlowNode {

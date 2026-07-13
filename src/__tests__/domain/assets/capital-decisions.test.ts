@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import type { UnitDisplayInfo, DomainProduct } from "@/domain/types";
 import {
-  classifyDecisions,
+  buildCurrencyTooltip,
   buildDecisionStats,
   buildFilterCounts,
-  buildCurrencyTooltip,
+  classifyDecisions,
   sortDecisions,
 } from "@/domain/assets/capital-decisions";
+import type { DomainProduct, UnitDisplayInfo } from "@/domain/types";
 
 const makeProduct = (overrides: Partial<DomainProduct> = {}): DomainProduct => ({
   id: "p1",

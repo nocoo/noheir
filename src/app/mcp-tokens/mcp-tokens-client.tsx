@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
-import { KeyRound, Copy, Check, Terminal, ExternalLink } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Check, Copy, ExternalLink, KeyRound, Terminal } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------

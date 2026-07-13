@@ -1,10 +1,10 @@
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import {
   createProductSchema,
-  updateProductSchema,
   createUnitSchema,
-  updateUnitSchema,
   updateContributionLogSchema,
+  updateProductSchema,
+  updateUnitSchema,
 } from "../db/validation";
 
 describe("Product validation schemas", () => {

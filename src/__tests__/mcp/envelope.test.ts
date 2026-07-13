@@ -2,15 +2,15 @@
  * Tests for MCP envelope utilities (okWithPage, okWithCompleteness)
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  ok,
-  okWithPage,
-  okWithCompleteness,
-  type McpToolResult,
-  type PageMeta,
   type CompletenessMeta,
+  type McpToolResult,
   type NextHint,
+  ok,
+  okWithCompleteness,
+  okWithPage,
+  type PageMeta,
 } from "@/lib/mcp/tools/types";
 
 /** Helper to parse JSON from MCP result */

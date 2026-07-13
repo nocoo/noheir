@@ -1,28 +1,35 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
 import {
-  Droplets,
-  Calendar,
-  TrendingUp,
   BarChart3,
-  ExternalLink,
-  Warehouse,
+  Calendar,
   ChevronDown,
+  Droplets,
+  ExternalLink,
+  TrendingUp,
+  Warehouse,
 } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 import {
-  BarChart,
   Bar,
-  XAxis,
-  YAxis,
+  BarChart,
   CartesianGrid,
-  Tooltip,
   Legend,
   ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { StatCard } from "@/components/shared/stat-card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  ProductBadge,
+  StrategyBadge,
+  TacticsBadge,
+  UnitCodeBadge,
+} from "@/components/ui/colored-badge";
 import {
   Table,
   TableBody,
@@ -31,17 +38,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  UnitCodeBadge,
-  StrategyBadge,
-  TacticsBadge,
-  ProductBadge,
-} from "@/components/ui/colored-badge";
+import type { UpcomingUnit } from "@/domain/assets/liquidity-ladder";
 import { formatCurrencyFull, formatCurrencyK, yAxisWidth } from "@/lib/chart-config";
 import { CAPITAL_TABLE_COLUMNS } from "@/lib/table-columns";
-import { StatCard } from "@/components/shared/stat-card";
 import { cn } from "@/lib/utils";
-import type { UpcomingUnit } from "@/domain/assets/liquidity-ladder";
 
 interface LiquidityClientProps {
   chartData: Record<string, string | number>[];

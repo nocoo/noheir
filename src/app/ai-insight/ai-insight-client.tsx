@@ -1,13 +1,13 @@
 "use client";
 
-import { Brain, Calendar, AlertTriangle, TrendingUp, Clock, Info, AlertCircle } from "lucide-react";
-import type { RecurringPayment, PaymentInsight } from "@/domain/types";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { AlertCircle, AlertTriangle, Brain, Calendar, Clock, Info, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
+import type { PaymentInsight, RecurringPayment } from "@/domain/types";
 import { formatCurrencyFull } from "@/lib/chart-config";
+import { cn } from "@/lib/utils";
 
 interface AIInsightClientProps {
   sortedPayments: RecurringPayment[];

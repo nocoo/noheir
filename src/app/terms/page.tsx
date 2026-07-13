@@ -1,5 +1,5 @@
-import { AppShell } from "@/components/layout";
 import { FileText } from "lucide-react";
+import { AppShell } from "@/components/layout";
 
 export default async function TermsPage() {
   return (

@@ -20,8 +20,8 @@
 // selection (the spec calls for keyboard-and-a11y test coverage,
 // so the keyboard behavior is a contract pinned by tests).
 
-import * as React from "react";
 import { Check } from "lucide-react";
+import * as React from "react";
 import { CHART_TOKENS } from "@/lib/palette";
 import { cn } from "@/lib/utils";
 

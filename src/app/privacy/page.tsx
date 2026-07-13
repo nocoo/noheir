@@ -1,5 +1,5 @@
-import { AppShell } from "@/components/layout";
 import { ShieldCheck } from "lucide-react";
+import { AppShell } from "@/components/layout";
 
 export default async function PrivacyPage() {
   return (

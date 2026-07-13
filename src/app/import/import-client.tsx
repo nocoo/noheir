@@ -1,6 +1,6 @@
 "use client";
 
-import { FileUp, ArrowRightLeft } from "lucide-react";
+import { ArrowRightLeft, FileUp } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TransactionImport } from "./transaction-import";
 import { TransferImport } from "./transfer-import";

@@ -7,15 +7,15 @@
 // package's exports map; TypeScript resolves it fine at compile time.
 // eslint-disable-next-line import-x/no-unresolved
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { APP_VERSION } from "@/lib/version";
 import type { Db } from "@/lib/db";
+import { APP_VERSION } from "@/lib/version";
 import {
-  registerQueryTools,
-  registerProductTools,
-  registerUnitTools,
   registerDeleteTools,
-  registerSummaryTools,
   registerPortfolioTools,
+  registerProductTools,
+  registerQueryTools,
+  registerSummaryTools,
+  registerUnitTools,
 } from "./tools";
 
 /** Create a new McpServer instance with all tools registered. */

@@ -2,8 +2,8 @@
 // MCP Token data layer — access & refresh token management
 // ---------------------------------------------------------------------------
 
-import type { Db } from "@/lib/db";
 import { ulid } from "ulid";
+import type { Db } from "@/lib/db";
 
 // ---------------------------------------------------------------------------
 // Types

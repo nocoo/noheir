@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import { getTestRepos, resetTestDb, seedUser } from "./setup";
 import type { RecurringExpenseCreateInput } from "../db/repositories";
+import { getTestRepos, resetTestDb, seedUser } from "./setup";
 
 const userId = "test-user-1";
 const otherId = "other-user";

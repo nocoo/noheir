@@ -1,11 +1,11 @@
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import {
-  buildYearlyStats,
   buildDataHealthMetrics,
   buildDataSummary,
-  getHealthScore,
-  getHealthLabel,
+  buildYearlyStats,
   formatCurrency,
+  getHealthLabel,
+  getHealthScore,
 } from "@/domain/data-management";
 import type { DomainTransaction, DomainTransfer } from "@/domain/types";
 

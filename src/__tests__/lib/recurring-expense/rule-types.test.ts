@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
-  RECURRENCE_FREQUENCIES,
   categoryInputSchema,
+  RECURRENCE_FREQUENCIES,
   recurringExpenseInputSchema,
   recurringExpenseUpdateSchema,
 } from "@/lib/recurring-expense/rule-types";

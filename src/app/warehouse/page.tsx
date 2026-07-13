@@ -1,7 +1,7 @@
 import { AppShell } from "@/components/layout";
+import type { DomainProduct, UnitDisplayInfo } from "@/domain/types";
 import { getAuthedClient } from "@/lib/api-helpers";
 import { toDomainProduct, toUnitDisplayInfo } from "@/lib/capital-mappers";
-import type { UnitDisplayInfo, DomainProduct } from "@/domain/types";
 import { WarehouseClient } from "./warehouse-client";
 
 export default async function WarehousePage() {

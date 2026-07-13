@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
-  PREDEFINED_AI_MODELS,
-  PREDEFINED_AI_URLS,
   buildFinalConfig,
   isConfigComplete,
   isCustomOption,
+  PREDEFINED_AI_MODELS,
+  PREDEFINED_AI_URLS,
 } from "@/domain/settings/ai-config";
 
 describe("ai-config domain", () => {

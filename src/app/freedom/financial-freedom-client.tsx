@@ -1,18 +1,18 @@
 "use client";
 
+import { Briefcase, Coins, Lightbulb, Target } from "lucide-react";
 import { useState } from "react";
-import { Target, Briefcase, Coins, Lightbulb } from "lucide-react";
-import type { FinancialFreedomSummary } from "@/domain/dashboard/financial-freedom";
-import {
-  buildReduceExpenseScenario,
-  buildIncreaseIncomeScenario,
-} from "@/domain/dashboard/financial-freedom";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
+import type { FinancialFreedomSummary } from "@/domain/dashboard/financial-freedom";
+import {
+  buildIncreaseIncomeScenario,
+  buildReduceExpenseScenario,
+} from "@/domain/dashboard/financial-freedom";
 import { formatCurrencyFull } from "@/lib/chart-config";
+import { cn } from "@/lib/utils";
 
 interface CategoryItem {
   name: string;

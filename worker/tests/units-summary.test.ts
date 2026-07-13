@@ -2,9 +2,9 @@
  * Unit tests for units-summary.ts
  */
 
-import { describe, test, expect } from "vitest";
-import { buildUnitsSummary, type UnitsSummary } from "../lib/units-summary";
+import { describe, expect, test } from "vitest";
 import type { UnitWithAvailability } from "../db/repositories/units";
+import { buildUnitsSummary, type UnitsSummary } from "../lib/units-summary";
 
 // Helper to create mock unit
 function mockUnit(overrides: Partial<UnitWithAvailability> = {}): UnitWithAvailability {

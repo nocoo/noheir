@@ -1,5 +1,5 @@
-import NextAuth, { type DefaultSession } from "next-auth";
 import type { JWT } from "@auth/core/jwt";
+import NextAuth, { type DefaultSession } from "next-auth";
 import Google from "next-auth/providers/google";
 import { WorkerDbClient } from "./lib/worker-db-client";
 

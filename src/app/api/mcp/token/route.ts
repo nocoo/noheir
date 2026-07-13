@@ -6,19 +6,19 @@
  * - refresh_token: Refresh access token
  */
 
+import { verifyPkceS256 } from "@nocoo/base-mcp/auth";
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
-import { verifyPkceS256 } from "@nocoo/base-mcp/auth";
-import { getAuthCodeByCode, consumeAuthCode } from "@/services/mcp-auth-codes";
+import { consumeAuthCode, getAuthCodeByCode } from "@/services/mcp-auth-codes";
 import { getMcpClientByClientId } from "@/services/mcp-clients";
 import {
+  ACCESS_TOKEN_TTL,
+  createMcpToken,
   generateAccessToken,
   generateRefreshToken,
-  sha256,
-  createMcpToken,
-  revokeTokensByClientAndUser,
   getValidTokenByRefreshHash,
-  ACCESS_TOKEN_TTL,
+  revokeTokensByClientAndUser,
+  sha256,
 } from "@/services/mcp-tokens";
 
 function jsonResponse(data: unknown, status = 200): NextResponse {

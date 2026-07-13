@@ -7,15 +7,15 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import type { ToolContext } from "./types";
-import { okWithCompleteness, error } from "./types";
+import { compact, currencyCode, round2 } from "./compact";
 import { resolveProduct } from "./resolver";
-import { compact, round2, currencyCode } from "./compact";
+import type { ToolContext } from "./types";
+import { error, okWithCompleteness } from "./types";
 import {
-  enrichWithAvailability,
-  type UnitWithProduct,
-  type UnitEnriched,
   type ContributionLog,
+  enrichWithAvailability,
+  type UnitEnriched,
+  type UnitWithProduct,
 } from "./unit";
 
 // ---------------------------------------------------------------------------

@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { BarChart3, PiggyBank, Percent, Clock, X } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { BarChart3, Clock, Percent, PiggyBank, X } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { StatCard } from "@/components/shared/stat-card";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -10,20 +13,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { StatCard } from "@/components/shared/stat-card";
-import { formatCurrencyFull } from "@/lib/chart-config";
-import { CHART_COLORS } from "@/lib/palette";
 import {
-  buildTotalAssetsByCurrency,
-  buildTotalAssetsAll,
-  buildIdleUnits,
-  buildCurrencyDistribution,
-  buildStatusDistribution,
   buildAvailabilityDistribution,
+  buildCurrencyDistribution,
+  buildIdleUnits,
+  buildStatusDistribution,
+  buildTotalAssetsAll,
+  buildTotalAssetsByCurrency,
 } from "@/domain/assets/capital-dashboard";
 import type { UnitDisplayInfo } from "@/domain/types";
+import { formatCurrencyFull } from "@/lib/chart-config";
+import { CHART_COLORS } from "@/lib/palette";
 
 interface DistributionItem {
   name: string;

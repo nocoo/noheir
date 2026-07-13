@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
-  toggleFixedExpenseCategory,
-  isFixedExpense,
-  getExpenseTypeLabel,
-  getExpenseTypeDescription,
   DEFAULT_FIXED_EXPENSE_HINTS,
+  getExpenseTypeDescription,
+  getExpenseTypeLabel,
+  isFixedExpense,
+  toggleFixedExpenseCategory,
 } from "@/domain/settings/expense-categories";
 
 describe("expense-categories domain", () => {

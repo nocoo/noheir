@@ -1,9 +1,9 @@
 import { AppShell } from "@/components/layout";
-import { getAuthedClient } from "@/lib/api-helpers";
-import { ManageClient } from "./manage-client";
+import { buildDataHealthMetrics, buildDataSummary } from "@/domain/data-management";
 import type { DomainTransaction, DomainTransfer } from "@/domain/types";
-import { buildDataSummary, buildDataHealthMetrics } from "@/domain/data-management";
+import { getAuthedClient } from "@/lib/api-helpers";
 import { toDomainTransaction, toDomainTransfer } from "@/lib/transaction-mappers";
+import { ManageClient } from "./manage-client";
 
 export default async function ManagePage() {
   let dataSummary = {

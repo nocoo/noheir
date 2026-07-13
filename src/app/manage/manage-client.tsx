@@ -1,39 +1,39 @@
 "use client";
 
-import { useState, useRef, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import {
-  Database,
-  Download,
-  Upload,
-  Trash2,
+  Activity,
   AlertTriangle,
-  TrendingUp,
   Calendar,
-  FileText,
-  Wallet,
-  Tag,
+  CheckCircle,
   ChevronDown,
   ChevronUp,
-  CheckCircle,
+  Database,
+  Download,
+  FileText,
+  Tag,
+  Trash2,
+  TrendingUp,
+  Upload,
+  Wallet,
   XCircle,
-  Activity,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import { useRef, useState, useTransition } from "react";
+import { toast } from "sonner";
+import { clearAllData, exportBackup, restoreBackup } from "@/app/actions/data-actions";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { exportBackup, restoreBackup, clearAllData } from "@/app/actions/data-actions";
-import type { DataSummary, DataHealthMetrics } from "@/domain/data-management";
+import type { DataHealthMetrics, DataSummary } from "@/domain/data-management";
 import {
   formatCurrency,
-  getHealthScore,
-  getHealthLabel,
   getHealthColorClass,
+  getHealthLabel,
+  getHealthScore,
 } from "@/domain/data-management";
 
 interface ManageClientProps {

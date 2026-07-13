@@ -28,9 +28,16 @@
 //     `categoryMap`, `todayIso`. Display status comes from
 //     deriveDisplayStatus (P2-C4) so we don't duplicate the rule.
 
+import { MoreHorizontal } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
-import { MoreHorizontal } from "lucide-react";
+import { deleteRecurringExpense } from "@/app/actions/recurring-expense-actions";
+import {
+  endRecurringExpense,
+  pauseRecurringExpense,
+  resumeRecurringExpense,
+} from "@/app/actions/recurring-expense-state-actions";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -39,24 +46,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import { CHART_TOKENS } from "@/lib/palette";
 import {
-  describeFrequency,
   deriveDisplayStatus,
+  describeFrequency,
   formatAmountYuan,
 } from "@/lib/recurring-expense/format";
 import type {
   RecurrenceRule,
   RecurringExpenseDisplayStatus,
 } from "@/lib/recurring-expense/rule-types";
-import {
-  endRecurringExpense,
-  pauseRecurringExpense,
-  resumeRecurringExpense,
-} from "@/app/actions/recurring-expense-state-actions";
-import { deleteRecurringExpense } from "@/app/actions/recurring-expense-actions";
+import { cn } from "@/lib/utils";
 
 export interface RuleListCategory {
   id: string;

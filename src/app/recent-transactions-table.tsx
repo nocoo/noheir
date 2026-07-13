@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -7,11 +8,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { getLabelColorClasses } from "@/lib/tag-colors";
-import { formatCurrencyFull } from "@/lib/chart-config";
 import type { DomainTransaction } from "@/domain/types";
+import { formatCurrencyFull } from "@/lib/chart-config";
+import { getLabelColorClasses } from "@/lib/tag-colors";
+import { cn } from "@/lib/utils";
 
 interface RecentTransactionsTableProps {
   transactions: DomainTransaction[];

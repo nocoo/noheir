@@ -3,14 +3,14 @@
  * Replaces the Gen 1 useCategoryData / useAccountData hooks.
  */
 
-import type { DomainTransaction } from "@/domain/types";
 import type {
+  AccountChartData,
   CategoryGroup,
   PrimaryCategoryGroup,
   SecondaryCategory,
   TertiaryCategory,
-  AccountChartData,
 } from "@/components/shared";
+import type { DomainTransaction } from "@/domain/types";
 
 const THRESHOLD = 5; // 5% threshold for "other" grouping
 

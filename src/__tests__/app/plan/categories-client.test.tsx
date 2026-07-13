@@ -1,6 +1,6 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const { deleteMock, createMock, updateMock } = vi.hoisted(() => ({
   deleteMock: vi.fn(),

@@ -20,11 +20,11 @@
 // is handled by computeOccurrences.
 
 import * as React from "react";
-import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
-import { sumMonth, sumNextDays } from "@/lib/recurring-expense/occurrences-aggregate";
 import { formatAmountYuan } from "@/lib/recurring-expense/format";
+import { sumMonth, sumNextDays } from "@/lib/recurring-expense/occurrences-aggregate";
 import type { RecurrenceRule } from "@/lib/recurring-expense/rule-types";
+import { cn } from "@/lib/utils";
 
 const NEXT_DAYS_WINDOW = 30;
 const NEXT_YEAR_WINDOW = 365;

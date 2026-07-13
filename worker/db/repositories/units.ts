@@ -1,8 +1,8 @@
-import { eq, and, desc } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
+import { type AvailabilityInfo, computeAvailability } from "../../lib/availability";
 import { capitalUnits, financialProducts } from "../schema";
-import type { CapitalUnit, NewCapitalUnit, UnitWithProduct, ContributionLog } from "../types";
-import { computeAvailability, type AvailabilityInfo } from "../../lib/availability";
+import type { CapitalUnit, ContributionLog, NewCapitalUnit, UnitWithProduct } from "../types";
 
 export interface UnitWithAvailability extends UnitWithProduct, AvailabilityInfo {}
 

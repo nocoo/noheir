@@ -1,13 +1,13 @@
 import { AppShell } from "@/components/layout";
-import { getAuthedClient } from "@/lib/api-helpers";
-import { toUnitDisplayInfo } from "@/lib/capital-mappers";
-import type { UnitDisplayInfo } from "@/domain/types";
 import {
   buildMonthlyAvailability,
   buildSeries,
   buildSummaryStats,
   buildUpcomingUnits,
 } from "@/domain/assets/liquidity-ladder";
+import type { UnitDisplayInfo } from "@/domain/types";
+import { getAuthedClient } from "@/lib/api-helpers";
+import { toUnitDisplayInfo } from "@/lib/capital-mappers";
 import { LiquidityClient } from "./liquidity-client";
 
 export default async function LiquidityPage() {

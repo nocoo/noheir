@@ -1,8 +1,8 @@
 import { AppShell } from "@/components/layout";
-import { getAuthedClient } from "@/lib/api-helpers";
+import { buildFreedomSummary, buildIncomeBreakdown } from "@/domain/dashboard/financial-freedom";
 import type { DomainTransaction } from "@/domain/types";
+import { getAuthedClient } from "@/lib/api-helpers";
 import { toDomainTransaction } from "@/lib/transaction-mappers";
-import { buildIncomeBreakdown, buildFreedomSummary } from "@/domain/dashboard/financial-freedom";
 import { FinancialFreedomClient } from "./financial-freedom-client";
 
 export default async function FreedomPage({

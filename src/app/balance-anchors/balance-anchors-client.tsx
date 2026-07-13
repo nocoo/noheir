@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { AlertCircle, Anchor, Calendar, Plus, Save, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Anchor, Save, Plus, Trash2, Calendar, AlertCircle } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { saveBalanceAnchors } from "@/app/actions/settings-actions";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -16,10 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import type { BalanceAnchor } from "@/domain/types";
 import { groupAnchorsByAccount } from "@/domain/settings/balance-anchors";
-import { saveBalanceAnchors } from "@/app/actions/settings-actions";
+import type { BalanceAnchor } from "@/domain/types";
 
 interface BalanceAnchorsClientProps {
   accounts: string[];

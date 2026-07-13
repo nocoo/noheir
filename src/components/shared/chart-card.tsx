@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export interface ChartCardProps {
   title: string;

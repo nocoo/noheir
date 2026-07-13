@@ -1,18 +1,18 @@
 "use client";
 
 import {
-  AreaChart,
   Area,
+  AreaChart,
+  CartesianGrid,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine,
 } from "recharts";
-import type { MonthlyData } from "@/domain/types";
-import { formatCurrencyK, formatCurrencyFull } from "@/lib/chart-config";
 import { ChartCard } from "@/components/shared/chart-card";
+import type { MonthlyData } from "@/domain/types";
+import { formatCurrencyFull, formatCurrencyK } from "@/lib/chart-config";
 
 export interface MonthlyTrendChartProps {
   title: string;

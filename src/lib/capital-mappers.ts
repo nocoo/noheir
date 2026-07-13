@@ -3,16 +3,16 @@
  */
 
 import type {
-  DomainProduct,
-  DomainUnit,
-  UnitDisplayInfo,
-  Currency,
-  InvestmentStrategy,
-  InvestmentTactics,
-  UnitStatus,
-  DomainContributionLog,
   ContributionOperationType,
   ContributionSource,
+  Currency,
+  DomainContributionLog,
+  DomainProduct,
+  DomainUnit,
+  InvestmentStrategy,
+  InvestmentTactics,
+  UnitDisplayInfo,
+  UnitStatus,
 } from "@/domain/types";
 
 export function toDomainProduct(raw: Record<string, unknown>): DomainProduct {

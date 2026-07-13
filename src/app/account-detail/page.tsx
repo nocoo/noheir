@@ -1,12 +1,12 @@
 import { AppShell } from "@/components/layout";
-import { getAuthedClient } from "@/lib/api-helpers";
-import type { DomainTransaction, DomainTransfer } from "@/domain/types";
-import { toDomainTransaction, parseTags } from "@/lib/transaction-mappers";
 import {
+  buildAccountDetailData,
   buildBalanceEntries,
   buildUniqueAccounts,
-  buildAccountDetailData,
 } from "@/domain/dashboard/account-detail";
+import type { DomainTransaction, DomainTransfer } from "@/domain/types";
+import { getAuthedClient } from "@/lib/api-helpers";
+import { parseTags, toDomainTransaction } from "@/lib/transaction-mappers";
 import { AccountDetailClient } from "./account-detail-client";
 
 function toDomainTransfer(raw: Record<string, unknown>): DomainTransfer {

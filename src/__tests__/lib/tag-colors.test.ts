@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  getLabelColorClasses,
   getLabelColorHex,
   getTagColor,
-  getLabelColorClasses,
-  getUnitCodePrefix,
   getUnitCodeColor,
+  getUnitCodePrefix,
 } from "@/lib/tag-colors";
 
 describe("tag-colors", () => {

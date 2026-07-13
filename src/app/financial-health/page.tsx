@@ -1,14 +1,14 @@
 import { AppShell } from "@/components/layout";
-import { getAuthedClient } from "@/lib/api-helpers";
-import type { DomainTransaction, MonthlyData } from "@/domain/types";
-import { toDomainTransaction } from "@/lib/transaction-mappers";
 import {
+  buildFinancialHealthResult,
   buildSafeMonthlyData,
   buildSafeTotalIncome,
-  buildFinancialHealthResult,
 } from "@/domain/dashboard/financial-health";
-import { FinancialHealthClient } from "./financial-health-client";
+import type { DomainTransaction, MonthlyData } from "@/domain/types";
+import { getAuthedClient } from "@/lib/api-helpers";
 import { MONTH_NAMES } from "@/lib/constants";
+import { toDomainTransaction } from "@/lib/transaction-mappers";
+import { FinancialHealthClient } from "./financial-health-client";
 
 export default async function FinancialHealthPage({
   searchParams,

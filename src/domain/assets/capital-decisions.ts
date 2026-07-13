@@ -1,5 +1,5 @@
-import type { UnitDisplayInfo, Currency } from "../types";
 import { formatCurrencyFull } from "@/lib/chart-config";
+import type { Currency, UnitDisplayInfo } from "../types";
 
 export type DecisionItem = {
   unit: UnitDisplayInfo;

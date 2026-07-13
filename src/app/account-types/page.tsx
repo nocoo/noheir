@@ -1,7 +1,7 @@
 import { AppShell } from "@/components/layout";
-import { getAuthedClient } from "@/lib/api-helpers";
 import { groupAccountsByType } from "@/domain/settings/account-types";
 import type { AccountTypeConfig } from "@/domain/types";
+import { getAuthedClient } from "@/lib/api-helpers";
 import { AccountTypesClient } from "./account-types-client";
 
 export default async function AccountTypesPage() {

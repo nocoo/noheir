@@ -1,13 +1,13 @@
 import { AppShell } from "@/components/layout";
-import { getAuthedClient } from "@/lib/api-helpers";
-import type { DomainTransaction } from "@/domain/types";
-import { toDomainTransaction } from "@/lib/transaction-mappers";
-import { detectRecurringPayments, generatePaymentInsights } from "@/lib/recurring-payment-detector";
 import {
   buildInsightSummaryData,
   sortInsightsByPriority,
   sortRecurringPaymentsByNextDate,
 } from "@/domain/dashboard/ai-insight";
+import type { DomainTransaction } from "@/domain/types";
+import { getAuthedClient } from "@/lib/api-helpers";
+import { detectRecurringPayments, generatePaymentInsights } from "@/lib/recurring-payment-detector";
+import { toDomainTransaction } from "@/lib/transaction-mappers";
 import { AIInsightClient } from "./ai-insight-client";
 
 export default async function AIInsightPage({

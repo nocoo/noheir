@@ -20,23 +20,23 @@
 //     the action calls `revalidatePath("/plan")`, so a fresh request
 //     re-hydrates the props (no stale local state).
 
-import * as React from "react";
-import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useRouter } from "next/navigation";
+import * as React from "react";
+import { DayDetailPopover } from "@/components/plan/day-detail-popover";
 import {
-  PlanCalendar,
   aggregateOccurrences,
+  PlanCalendar,
   type PlanCalendarCategory,
 } from "@/components/plan/plan-calendar";
 import { PlanSummaryCards } from "@/components/plan/plan-summary-cards";
-import { DayDetailPopover } from "@/components/plan/day-detail-popover";
-import { RuleList, type RuleListCategory } from "@/components/plan/rule-list";
 import {
   RecurringExpenseForm,
   type RecurringExpenseFormInitial,
 } from "@/components/plan/recurring-expense-form";
+import { RuleList, type RuleListCategory } from "@/components/plan/rule-list";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatIso, parseIso } from "@/lib/recurring-expense/occurrences";
 import type { RecurrenceRule } from "@/lib/recurring-expense/rule-types";
 

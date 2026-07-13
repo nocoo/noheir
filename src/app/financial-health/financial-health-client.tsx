@@ -1,31 +1,31 @@
 "use client";
 
 import {
+  AlertCircle,
+  CheckCircle2,
   HeartPulse,
-  TrendingUp,
+  Info,
+  PiggyBank,
   Shield,
   Target,
-  Zap,
-  PiggyBank,
-  CheckCircle2,
-  AlertCircle,
+  TrendingUp,
   XCircle,
-  Info,
+  Zap,
 } from "lucide-react";
 import {
+  PolarAngleAxis,
+  PolarGrid,
+  PolarRadiusAxis,
   Radar,
   RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
   ResponsiveContainer,
   Tooltip,
 } from "recharts";
-import type { FinancialHealthResult } from "@/lib/financial-health-algorithm";
-import type { MonthlyData } from "@/domain/types";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import type { MonthlyData } from "@/domain/types";
+import type { FinancialHealthResult } from "@/lib/financial-health-algorithm";
 import { cn } from "@/lib/utils";
 
 interface FinancialHealthClientProps {

@@ -12,9 +12,9 @@
  *   });
  */
 import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
-import { createAllRepos, type AllRepos } from "../db/repositories";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import { type AllRepos, createAllRepos } from "../db/repositories";
 
 let sqlite: Database.Database;
 let db: BetterSQLite3Database;

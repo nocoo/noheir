@@ -2,8 +2,8 @@
  * Tests for MCP types utilities (ok, error helpers)
  */
 
-import { describe, it, expect } from "vitest";
-import { ok, error, type McpToolResult } from "@/lib/mcp/tools/types";
+import { describe, expect, it } from "vitest";
+import { error, type McpToolResult, ok } from "@/lib/mcp/tools/types";
 
 /** Helper to extract text from MCP result */
 function getText(result: McpToolResult): string {

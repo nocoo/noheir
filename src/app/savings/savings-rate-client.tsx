@@ -1,23 +1,23 @@
 "use client";
 
+import { PiggyBank, Target, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import {
-  ComposedChart,
   Bar,
+  CartesianGrid,
+  Cell,
+  ComposedChart,
   Line,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine,
-  Cell,
 } from "recharts";
-import { TrendingUp, TrendingDown, PiggyBank, Target, Wallet } from "lucide-react";
-import type { SavingsRateChartPoint, SavingsRateSummary } from "@/domain/dashboard/savings-rate";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import type { SavingsRateChartPoint, SavingsRateSummary } from "@/domain/dashboard/savings-rate";
 import { formatCurrencyFull, formatCurrencyK } from "@/lib/chart-config";
+import { cn } from "@/lib/utils";
 
 interface SavingsRateClientProps {
   chartData: SavingsRateChartPoint[];

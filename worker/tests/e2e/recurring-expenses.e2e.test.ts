@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import { api, rawFetch, BASE_URL, TEST_USER_B } from "./helpers/client";
 import { ensureTestUser } from "./helpers/cleanup";
+import { api, BASE_URL, rawFetch, TEST_USER_B } from "./helpers/client";
 
 const userId = TEST_USER_B;
 

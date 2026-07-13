@@ -1,36 +1,30 @@
 "use client";
 
-import { useState, useTransition, useMemo } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
-import { toast } from "sonner";
 import {
-  Package,
-  Search,
-  Plus,
-  Pencil,
-  Trash2,
-  Filter,
-  X,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  Warehouse,
   Archive,
   ArchiveRestore,
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  Filter,
+  Package,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+  Warehouse,
+  X,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useMemo, useState, useTransition } from "react";
+import { toast } from "sonner";
+import { createProduct, deleteProduct, updateProduct } from "@/app/actions/product-actions";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CategoryBadge, ChannelBadge, CurrencyBadge } from "@/components/ui/colored-badge";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Dialog,
   DialogContent,
@@ -39,6 +33,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -46,16 +42,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Label } from "@/components/ui/label";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { ChannelBadge, CategoryBadge, CurrencyBadge } from "@/components/ui/colored-badge";
-import { createProduct, updateProduct, deleteProduct } from "@/app/actions/product-actions";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  DEFAULT_MAX_RETURN_RATE,
+  DEFAULT_MIN_RETURN_RATE,
   getReturnRateStatus,
   getReturnRateTextClass,
-  DEFAULT_MIN_RETURN_RATE,
-  DEFAULT_MAX_RETURN_RATE,
 } from "@/domain/settings";
 import type { DomainProduct } from "@/domain/types";
 

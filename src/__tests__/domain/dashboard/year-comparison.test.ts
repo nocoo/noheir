@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildMonthVsMonthData,
   buildYearComparisonChartData,
   buildYearVsYearData,
-  buildMonthVsMonthData,
 } from "@/domain/dashboard/year-comparison";
 
 describe("buildYearComparisonChartData", () => {

@@ -1,9 +1,9 @@
 import type {
-  DomainTransaction,
-  DomainTransfer,
   AccountType,
   AccountTypeConfig,
   BalanceAnchor,
+  DomainTransaction,
+  DomainTransfer,
 } from "../types";
 
 // ── Local Types ──

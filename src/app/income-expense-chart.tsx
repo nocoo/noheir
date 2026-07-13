@@ -1,21 +1,21 @@
 "use client";
 
+import { TrendingUp } from "lucide-react";
 import {
-  ComposedChart,
   Bar,
+  CartesianGrid,
+  ComposedChart,
+  Legend,
   Line,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-  ReferenceLine,
 } from "recharts";
-import { TrendingUp } from "lucide-react";
+import { ChartCard } from "@/components/shared/chart-card";
 import type { MonthlyData } from "@/domain/types";
 import { formatCurrencyFull, formatCurrencyK } from "@/lib/chart-config";
-import { ChartCard } from "@/components/shared/chart-card";
 
 const SAVINGS_HEX = "#8b5cf6";
 const TARGET_HEX = "#f59e0b";

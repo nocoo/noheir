@@ -2,9 +2,9 @@
  * Tests for MCP entity resolver (resolveProduct)
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import type { Db, DbQueryResult } from "@/lib/db";
-import { resolveProduct, type ResolvedProduct } from "@/lib/mcp/tools/resolver";
+import { type ResolvedProduct, resolveProduct } from "@/lib/mcp/tools/resolver";
 
 // ---------------------------------------------------------------------------
 // Helpers

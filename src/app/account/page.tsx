@@ -1,11 +1,11 @@
 import { AppShell } from "@/components/layout";
-import { getAuthedClient } from "@/lib/api-helpers";
 import type { AccountSummary } from "@/domain/dashboard/account-analysis";
 import {
   buildAccountGroups,
   buildChartData,
   buildPieData,
 } from "@/domain/dashboard/account-analysis";
+import { getAuthedClient } from "@/lib/api-helpers";
 import { AccountAnalysisClient } from "./account-analysis-client";
 
 export default async function AccountPage({

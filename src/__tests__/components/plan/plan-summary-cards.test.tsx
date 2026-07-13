@@ -1,5 +1,5 @@
-import { describe, expect, test } from "vitest";
 import { render, screen, within } from "@testing-library/react";
+import { describe, expect, test } from "vitest";
 
 import { buildSummaries, PlanSummaryCards } from "@/components/plan/plan-summary-cards";
 import type { RecurrenceRule } from "@/lib/recurring-expense/rule-types";

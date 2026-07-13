@@ -2,8 +2,8 @@
 // MCP Client data layer — CRUD for dynamic client registration
 // ---------------------------------------------------------------------------
 
-import type { Db } from "@/lib/db";
 import { ulid } from "ulid";
+import type { Db } from "@/lib/db";
 
 // ---------------------------------------------------------------------------
 // Types

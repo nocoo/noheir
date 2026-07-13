@@ -1,8 +1,8 @@
 "use server";
 
-import { getAuthedClient } from "@/lib/api-helpers";
-import type { ActionResult } from "@/lib/action-result";
 import type { AccountTypeConfig, BalanceAnchor } from "@/domain/types";
+import type { ActionResult } from "@/lib/action-result";
+import { getAuthedClient } from "@/lib/api-helpers";
 
 // ── Helper: read-modify-write the settings JSON column ──
 

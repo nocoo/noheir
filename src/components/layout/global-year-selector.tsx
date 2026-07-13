@@ -1,10 +1,10 @@
 "use client";
 
-import { useTransition } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { useYear } from "./year-context";
 import { cn } from "@/lib/utils";
+import { useYear } from "./year-context";
 
 export function GlobalYearSelector() {
   const { year, years, setYear, isYearEnabled } = useYear();

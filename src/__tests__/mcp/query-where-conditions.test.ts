@@ -4,7 +4,7 @@
  * This test ensures date filtering and other special fields work correctly.
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { buildWhereConditions, filterDefined } from "@/lib/mcp/tools/query";
 
 // Field mappings as used in query_transactions

@@ -1,4 +1,4 @@
-import type { RecurringPayment, PaymentInsight } from "../types";
+import type { PaymentInsight, RecurringPayment } from "../types";
 
 export const buildInsightSummaryData = (
   payments: RecurringPayment[],

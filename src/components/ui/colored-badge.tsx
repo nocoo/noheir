@@ -7,16 +7,16 @@
  */
 
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { getLabelColorClasses, getUnitCodePrefix } from "@/lib/tag-colors";
 import {
-  withAlpha,
+  getCurrencyToken,
+  getStatusToken,
   getStrategyToken,
   getTacticsToken,
-  getStatusToken,
-  getCurrencyToken,
   hashToChartToken,
+  withAlpha,
 } from "@/lib/palette";
+import { getLabelColorClasses, getUnitCodePrefix } from "@/lib/tag-colors";
+import { cn } from "@/lib/utils";
 
 interface ColoredBadgeProps {
   label: string;

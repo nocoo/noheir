@@ -2,8 +2,8 @@ import { notFound } from "next/navigation";
 import { AppShell } from "@/components/layout";
 import { getAuthedClient } from "@/lib/api-helpers";
 import { FEATURE_PLAN_CALENDAR } from "@/lib/navigation";
-import { toRecurrenceRule } from "@/lib/recurring-expense/mappers";
 import type { RecurringExpenseRow } from "@/lib/recurring-expense/mappers";
+import { toRecurrenceRule } from "@/lib/recurring-expense/mappers";
 import { CalendarClient } from "./calendar-client";
 
 // /plan/calendar — the recurring-expense calendar feature surface.

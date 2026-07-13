@@ -2,14 +2,14 @@
  * Tests for MCP compact utilities
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  round2,
-  compact,
-  shortId,
-  compactArray,
   categoryPath,
+  compact,
+  compactArray,
   currencyCode,
+  round2,
+  shortId,
 } from "@/lib/mcp/tools/compact";
 
 describe("round2", () => {

@@ -1,32 +1,32 @@
 "use client";
 
+import { GitCompare } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
-  ComposedChart,
   Bar,
+  CartesianGrid,
+  ComposedChart,
+  Legend,
   Line,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  ReferenceLine,
 } from "recharts";
-import { GitCompare } from "lucide-react";
-import type { MonthlyData } from "@/domain/types";
-import { buildYearVsYearData, buildMonthVsMonthData } from "@/domain/dashboard/year-comparison";
-import { MONTH_NAMES } from "@/lib/constants";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
-  SelectTrigger,
   SelectContent,
   SelectItem,
+  SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatCurrencyK, formatCurrencyFull } from "@/lib/chart-config";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { buildMonthVsMonthData, buildYearVsYearData } from "@/domain/dashboard/year-comparison";
+import type { MonthlyData } from "@/domain/types";
+import { formatCurrencyFull, formatCurrencyK } from "@/lib/chart-config";
+import { MONTH_NAMES } from "@/lib/constants";
 
 // ── Color constants ──
 

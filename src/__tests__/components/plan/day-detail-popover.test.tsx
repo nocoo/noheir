@@ -1,12 +1,12 @@
-import { describe, expect, test, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { describe, expect, test, vi } from "vitest";
 
 import {
   buildDayDetailRows,
+  type DayDetailCategory,
   DayDetailPopover,
   sumDay,
-  type DayDetailCategory,
 } from "@/components/plan/day-detail-popover";
 import type { RecurrenceRule } from "@/lib/recurring-expense/rule-types";
 

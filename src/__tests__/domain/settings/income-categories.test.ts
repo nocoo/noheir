@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
-  toggleActiveIncomeCategory,
-  isActiveIncome,
-  getIncomeTypeLabel,
-  getIncomeTypeDescription,
   DEFAULT_ACTIVE_INCOME_HINTS,
+  getIncomeTypeDescription,
+  getIncomeTypeLabel,
+  isActiveIncome,
+  toggleActiveIncomeCategory,
 } from "@/domain/settings/income-categories";
 
 describe("income-categories domain", () => {

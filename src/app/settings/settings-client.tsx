@@ -1,21 +1,21 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { Save, Settings, Target, TrendingUp } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Settings, Save, Target, TrendingUp } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { saveGeneralSettings, saveReturnRateSettings } from "@/app/actions/settings-actions";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { clampSavingsRate, getSavingsRateTone } from "@/domain/settings/savings-rate";
 import {
-  clampMinReturnRate,
   clampMaxReturnRate,
-  DEFAULT_MIN_RETURN_RATE,
+  clampMinReturnRate,
   DEFAULT_MAX_RETURN_RATE,
+  DEFAULT_MIN_RETURN_RATE,
 } from "@/domain/settings/return-rate";
-import { saveGeneralSettings, saveReturnRateSettings } from "@/app/actions/settings-actions";
+import { clampSavingsRate, getSavingsRateTone } from "@/domain/settings/savings-rate";
 import { cn } from "@/lib/utils";
 
 interface SettingsClientProps {

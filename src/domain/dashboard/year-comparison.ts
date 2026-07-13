@@ -1,5 +1,5 @@
-import type { YearlyComparison, MonthlyData } from "../types";
 import { MONTH_NAMES } from "@/lib/constants";
+import type { MonthlyData, YearlyComparison } from "../types";
 
 // ── Existing year-over-year chart (kept for backwards compat) ──
 

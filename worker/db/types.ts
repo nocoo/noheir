@@ -2,19 +2,19 @@
  * Inferred types from Drizzle schema for use across Worker and tests.
  */
 import type {
-  users,
-  financialProducts,
   capitalUnits,
+  contributionLogs,
+  expenseCategories,
+  financialProducts,
+  mcpAuthSessions,
+  mcpClients,
+  mcpRefreshTokens,
+  mcpTokens,
+  recurringExpenses,
+  settings,
   transactions,
   transfers,
-  settings,
-  contributionLogs,
-  mcpClients,
-  mcpAuthSessions,
-  mcpTokens,
-  mcpRefreshTokens,
-  expenseCategories,
-  recurringExpenses,
+  users,
 } from "./schema";
 
 // ── Select types (rows read from DB) ──

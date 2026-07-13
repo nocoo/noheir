@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
 import { ChevronDown, ChevronRight, FileText } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useMemo, useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 /** Transaction entry within a tertiary category */
 export interface CategoryTransaction {

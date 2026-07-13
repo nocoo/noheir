@@ -1,7 +1,7 @@
-import { eq, and } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { settings } from "../schema";
-import type { Setting, NewSetting } from "../types";
+import type { NewSetting, Setting } from "../types";
 
 export function createSettingsRepo(db: DrizzleD1Database) {
   return {

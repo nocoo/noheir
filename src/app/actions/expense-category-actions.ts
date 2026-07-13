@@ -9,8 +9,8 @@
 // the action stays a thin adapter.
 
 import { revalidatePath } from "next/cache";
-import { getAuthedClient } from "@/lib/api-helpers";
 import type { ActionResult } from "@/lib/action-result";
+import { getAuthedClient } from "@/lib/api-helpers";
 import { categoryInputSchema } from "@/lib/recurring-expense/rule-types";
 import { WorkerDbError } from "@/lib/worker-db-client";
 

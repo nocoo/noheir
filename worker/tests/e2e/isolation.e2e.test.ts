@@ -1,7 +1,7 @@
-import { describe, test, expect, beforeEach } from "vitest";
-import { api, TEST_USER_A, TEST_USER_B } from "./helpers/client";
+import { beforeEach, describe, expect, test } from "vitest";
 import { cleanupUser } from "./helpers/cleanup";
-import { makeTransaction, makeTransfer, makeProduct, makeUnit } from "./helpers/seed";
+import { api, TEST_USER_A, TEST_USER_B } from "./helpers/client";
+import { makeProduct, makeTransaction, makeTransfer, makeUnit } from "./helpers/seed";
 
 describe("E2E: Cross-user isolation", () => {
   beforeEach(async () => {

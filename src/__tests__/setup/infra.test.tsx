@@ -1,7 +1,7 @@
-import { describe, expect, test } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import * as React from "react";
+import { describe, expect, test } from "vitest";
 
 // P3-C0 infra smoke: proves the .test.tsx → jsdom → RTL → user-event →
 // jest-dom matcher stack is wired end-to-end. Not a feature test.

@@ -1,6 +1,6 @@
 import { AppShell } from "@/components/layout";
-import { getAuthedClient } from "@/lib/api-helpers";
 import type { MonthlyData } from "@/domain/types";
+import { getAuthedClient } from "@/lib/api-helpers";
 import { MONTH_NAMES } from "@/lib/constants";
 import { YearComparisonClient } from "./year-comparison-client";
 

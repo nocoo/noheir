@@ -6,7 +6,7 @@
  * - Color scheme: default (green income, red expense) / swapped (red income, green expense)
  */
 
-import type { Theme, ColorScheme } from "@/domain/types";
+import type { ColorScheme, Theme } from "@/domain/types";
 
 // ── Theme validation ──
 

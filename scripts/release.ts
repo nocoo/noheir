@@ -18,8 +18,8 @@
  */
 
 import { spawn } from "child_process";
+import { existsSync, readFileSync, writeFileSync } from "fs";
 import { resolve as pathResolve } from "path";
-import { readFileSync, writeFileSync, existsSync } from "fs";
 
 // ---------------------------------------------------------------------------
 // Constants

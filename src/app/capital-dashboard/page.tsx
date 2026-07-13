@@ -1,7 +1,7 @@
 import { AppShell } from "@/components/layout";
+import { buildDeploymentRate } from "@/domain/assets/capital-dashboard";
 import { getAuthedClient } from "@/lib/api-helpers";
 import { toUnitDisplayInfo } from "@/lib/capital-mappers";
-import { buildDeploymentRate } from "@/domain/assets/capital-dashboard";
 import { CapitalDashboardClient } from "./capital-dashboard-client";
 
 export default async function CapitalDashboardPage() {

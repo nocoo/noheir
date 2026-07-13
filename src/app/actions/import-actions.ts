@@ -1,7 +1,7 @@
 "use server";
 
-import { getAuthedClient } from "@/lib/api-helpers";
 import type { ActionResult } from "@/lib/action-result";
+import { getAuthedClient } from "@/lib/api-helpers";
 
 /**
  * Batch size for sending rows to the Worker's /bulk endpoint.

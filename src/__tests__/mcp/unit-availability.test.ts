@@ -4,11 +4,11 @@
  * Tests enrichWithAvailability function which calculates availability status.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
+  type ContributionLog,
   enrichWithAvailability,
   type UnitWithProduct,
-  type ContributionLog,
 } from "@/lib/mcp/tools/unit";
 
 // Test data factory

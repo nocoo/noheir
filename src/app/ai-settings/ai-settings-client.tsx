@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { Bot, Check, Copy, Save, Terminal } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Bot, Save, Copy, Terminal, Check } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { saveAiSettings } from "@/app/actions/settings-actions";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -16,14 +16,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import {
-  PREDEFINED_AI_URLS,
-  PREDEFINED_AI_MODELS,
-  isCustomOption,
   isConfigComplete,
+  isCustomOption,
+  PREDEFINED_AI_MODELS,
+  PREDEFINED_AI_URLS,
 } from "@/domain/settings/ai-config";
 import { buildMcpConfigJson } from "@/domain/settings/mcp-config";
-import { saveAiSettings } from "@/app/actions/settings-actions";
 
 interface AiSettingsClientProps {
   aiConfig: Record<string, unknown>;

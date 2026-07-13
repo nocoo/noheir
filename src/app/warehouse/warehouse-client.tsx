@@ -1,36 +1,36 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef, useSyncExternalStore, useCallback } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
 import {
-  Warehouse,
-  Search,
-  X,
-  Layers,
-  Flag,
-  Compass,
-  Target,
-  RotateCcw,
   Building2,
-  Package,
-  Clock,
   ChevronDown,
+  Clock,
+  Compass,
+  Flag,
+  Layers,
+  Package,
+  RotateCcw,
+  Search,
+  Target,
+  Warehouse,
+  X,
 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { type SerializedUnit, UnitEditor } from "@/components/capital/unit-editor";
 import { Card, CardContent } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import type { DomainProduct } from "@/domain/types";
 import { formatCurrencyFull } from "@/lib/chart-config";
 import {
-  withAlpha,
+  getAvailabilityToken,
+  getStatusToken,
   getStrategyToken,
   getTacticsToken,
-  getStatusToken,
-  getAvailabilityToken,
   hashToChartToken,
+  withAlpha,
 } from "@/lib/palette";
-import { UnitEditor, type SerializedUnit } from "@/components/capital/unit-editor";
-import type { DomainProduct } from "@/domain/types";
+import { cn } from "@/lib/utils";
 
 const STRATEGIES = [
   "远期理财",

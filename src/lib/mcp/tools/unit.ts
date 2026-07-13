@@ -6,12 +6,12 @@
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { z } from "zod";
-import type { ToolContext } from "./types";
-import { ok, okWithPage, okWithCompleteness, error } from "./types";
 import { ulid } from "ulid";
-import { compact, shortId, round2, currencyCode } from "./compact";
+import { z } from "zod";
+import { compact, currencyCode, round2, shortId } from "./compact";
 import { resolveProduct } from "./resolver";
+import type { ToolContext } from "./types";
+import { error, ok, okWithCompleteness, okWithPage } from "./types";
 
 // ---------------------------------------------------------------------------
 // Types

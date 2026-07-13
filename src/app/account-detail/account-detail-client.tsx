@@ -1,19 +1,19 @@
 "use client";
 
+import { CreditCard } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  LineChart,
+  CartesianGrid,
   Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
 } from "recharts";
-import { CreditCard } from "lucide-react";
-import type { DailyBalance, DisplayEntry } from "@/domain/dashboard/account-detail";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { StatCard } from "@/components/shared/stat-card";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -29,9 +29,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
+import type { DailyBalance, DisplayEntry } from "@/domain/dashboard/account-detail";
 import { formatCurrencyFull, formatCurrencyK } from "@/lib/chart-config";
-import { StatCard } from "@/components/shared/stat-card";
+import { cn } from "@/lib/utils";
 
 interface AccountDetailSummary {
   totalIncome: number;

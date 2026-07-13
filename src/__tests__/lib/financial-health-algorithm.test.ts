@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { calculateFinancialHealth, healthAlgorithm } from "@/lib/financial-health-algorithm";
 import type { DomainTransaction } from "@/domain/types";
+import { calculateFinancialHealth, healthAlgorithm } from "@/lib/financial-health-algorithm";
 
 const makeTx = (overrides: Partial<DomainTransaction> = {}): DomainTransaction => ({
   id: "1",

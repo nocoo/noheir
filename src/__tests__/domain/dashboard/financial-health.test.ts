@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildFinancialHealthResult,
   buildSafeMonthlyData,
   buildSafeTotalIncome,
-  buildFinancialHealthResult,
 } from "@/domain/dashboard/financial-health";
 
 describe("financial-health domain", () => {

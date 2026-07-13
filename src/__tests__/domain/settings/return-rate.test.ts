@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
-  clampReturnRate,
-  clampMinReturnRate,
   clampMaxReturnRate,
-  getReturnRateStatus,
-  getReturnRateTextClass,
+  clampMinReturnRate,
+  clampReturnRate,
+  DEFAULT_MAX_RETURN_RATE,
+  DEFAULT_MIN_RETURN_RATE,
   getReturnRateBgClass,
   getReturnRateDescription,
-  DEFAULT_MIN_RETURN_RATE,
-  DEFAULT_MAX_RETURN_RATE,
+  getReturnRateStatus,
+  getReturnRateTextClass,
 } from "@/domain/settings/return-rate";
 
 describe("return-rate domain", () => {

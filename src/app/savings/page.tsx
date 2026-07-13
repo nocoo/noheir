@@ -1,12 +1,12 @@
 import { AppShell } from "@/components/layout";
-import { getAuthedClient } from "@/lib/api-helpers";
-import type { MonthlyData } from "@/domain/types";
 import {
   buildSavingsRateChartData,
   buildSavingsRateSummary,
 } from "@/domain/dashboard/savings-rate";
-import { SavingsRateClient } from "./savings-rate-client";
+import type { MonthlyData } from "@/domain/types";
+import { getAuthedClient } from "@/lib/api-helpers";
 import { MONTH_NAMES } from "@/lib/constants";
+import { SavingsRateClient } from "./savings-rate-client";
 
 export default async function SavingsPage({
   searchParams,

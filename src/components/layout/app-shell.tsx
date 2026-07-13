@@ -1,16 +1,9 @@
 "use client";
 
-import { Suspense, useEffect, useMemo } from "react";
-import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Suspense, useEffect, useMemo } from "react";
 import { GithubIcon } from "@/components/icons/github-icon";
-import { Sidebar } from "./sidebar";
-import { SidebarProvider, useSidebar } from "./sidebar-context";
-import { YearProvider } from "./year-context";
-import { ThemeToggle } from "./theme-toggle";
-import { Breadcrumbs } from "./breadcrumbs";
-import { GlobalYearSelector } from "./global-year-selector";
-import { ALL_NAV_ITEMS, NAV_GROUPS } from "@/lib/navigation";
 import {
   Sheet,
   SheetContent,
@@ -19,6 +12,13 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ALL_NAV_ITEMS, NAV_GROUPS } from "@/lib/navigation";
+import { Breadcrumbs } from "./breadcrumbs";
+import { GlobalYearSelector } from "./global-year-selector";
+import { Sidebar } from "./sidebar";
+import { SidebarProvider, useSidebar } from "./sidebar-context";
+import { ThemeToggle } from "./theme-toggle";
+import { YearProvider } from "./year-context";
 
 interface AppShellProps {
   children: React.ReactNode;

@@ -11,8 +11,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
+import { AUTH_CODE_TTL, createAuthSession } from "@/services/mcp-auth-codes";
 import { getMcpClientByClientId } from "@/services/mcp-clients";
-import { createAuthSession, AUTH_CODE_TTL } from "@/services/mcp-auth-codes";
 
 function errorResponse(message: string, status = 400): NextResponse {
   return NextResponse.json({ error: message }, { status });

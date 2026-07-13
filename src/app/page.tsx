@@ -1,10 +1,10 @@
 import { AppShell } from "@/components/layout";
-import { getAuthedClient } from "@/lib/api-helpers";
 import { buildSavingsRate } from "@/domain/dashboard/overview";
 import type { DomainTransaction, MonthlyData } from "@/domain/types";
+import { getAuthedClient } from "@/lib/api-helpers";
+import { MONTH_NAMES } from "@/lib/constants";
 import { toDomainTransaction } from "@/lib/transaction-mappers";
 import { OverviewClient } from "./overview-client";
-import { MONTH_NAMES } from "@/lib/constants";
 
 export default async function OverviewPage({
   searchParams,

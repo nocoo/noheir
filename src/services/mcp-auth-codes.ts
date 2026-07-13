@@ -2,8 +2,8 @@
 // MCP Auth Code data layer — OAuth authorization sessions & codes
 // ---------------------------------------------------------------------------
 
-import type { Db } from "@/lib/db";
 import { ulid } from "ulid";
+import type { Db } from "@/lib/db";
 
 // ---------------------------------------------------------------------------
 // Types

@@ -4,25 +4,25 @@
  * Tests all CRUD operations and helper functions for MCP OAuth tokens.
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import type { Db, DbMeta, DbQueryResult } from "../../lib/db";
-import type { McpToken, CreateMcpTokenInput } from "../../services/mcp-tokens";
+import type { CreateMcpTokenInput, McpToken } from "../../services/mcp-tokens";
 
 import {
-  randomHex,
-  sha256,
+  ACCESS_TOKEN_TTL,
+  createMcpToken,
   generateAccessToken,
   generateRefreshToken,
-  createMcpToken,
   getMcpTokenById,
   getValidTokenByHash,
   getValidTokenByRefreshHash,
-  updateLastUsed,
+  listMcpTokens,
+  REFRESH_TOKEN_TTL,
+  randomHex,
   revokeToken,
   revokeTokensByClientAndUser,
-  listMcpTokens,
-  ACCESS_TOKEN_TTL,
-  REFRESH_TOKEN_TTL,
+  sha256,
+  updateLastUsed,
 } from "../../services/mcp-tokens";
 
 /** Safe array access for test assertions */

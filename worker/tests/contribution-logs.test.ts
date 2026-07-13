@@ -1,5 +1,5 @@
-import { describe, test, expect, beforeEach } from "vitest";
-import { resetTestDb, getTestRepos, seedUser } from "./setup";
+import { beforeEach, describe, expect, test } from "vitest";
+import { getTestRepos, resetTestDb, seedUser } from "./setup";
 
 describe("ContributionLogsRepo", () => {
   const userId = "test-user-1";

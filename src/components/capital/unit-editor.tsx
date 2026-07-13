@@ -1,22 +1,12 @@
 "use client";
 
-import { useState, useTransition, useMemo } from "react";
+import { Check, ChevronsUpDown, ExternalLink, Package, Plus, X } from "lucide-react";
+import Link from "next/link";
+import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Plus, Package, X, Check, ChevronsUpDown, ExternalLink } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { createProduct } from "@/app/actions/product-actions";
+import { createUnit, updateUnit } from "@/app/actions/unit-actions";
+import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -26,18 +16,28 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
-import Link from "next/link";
-import { createUnit, updateUnit } from "@/app/actions/unit-actions";
-import { createProduct } from "@/app/actions/product-actions";
+import { Textarea } from "@/components/ui/textarea";
 import type { DomainProduct } from "@/domain/types";
 import { buildUnitUpdateDiff, type UnitFormSnapshot } from "@/lib/unit-update-diff";
+import { cn } from "@/lib/utils";
 import { InvestmentTimeline } from "./investment-timeline";
 
 // ── Constants ──

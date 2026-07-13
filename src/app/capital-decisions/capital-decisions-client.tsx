@@ -1,18 +1,19 @@
 "use client";
 
-import { useState, useMemo } from "react";
 import {
-  Lightbulb,
   AlertTriangle,
-  Clock,
-  CheckCircle,
-  ArrowUpDown,
-  ArrowUp,
   ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  CheckCircle,
+  Clock,
+  Lightbulb,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CurrencyBadge, StrategyBadge, UnitCodeBadge } from "@/components/ui/colored-badge";
 import {
   Table,
   TableBody,
@@ -21,10 +22,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { UnitCodeBadge, StrategyBadge, CurrencyBadge } from "@/components/ui/colored-badge";
-import { cn } from "@/lib/utils";
 import { formatCurrencyFull } from "@/lib/chart-config";
 import { CAPITAL_TABLE_COLUMNS } from "@/lib/table-columns";
+import { cn } from "@/lib/utils";
 
 interface SerializedDecision {
   unitCode: string;

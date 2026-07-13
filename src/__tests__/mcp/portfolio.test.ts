@@ -4,7 +4,7 @@
  * Tests get_product_portfolio via mock McpServer.
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import type { Db, DbMeta, DbQueryResult } from "@/lib/db";
 import { registerPortfolioTools } from "@/lib/mcp/tools/portfolio";
 

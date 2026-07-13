@@ -1,8 +1,8 @@
 "use client";
 
-import { Shield, CheckCircle, AlertTriangle, Info } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { AlertTriangle, CheckCircle, Info, Shield } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 
 interface QualityClientProps {

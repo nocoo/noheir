@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
-import { Layers } from "lucide-react";
 import ReactECharts from "echarts-for-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { formatCurrencyFull } from "@/lib/chart-config";
+import { Layers } from "lucide-react";
+import { useMemo } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { SunburstData } from "@/domain/assets/strategy-sunburst";
+import { formatCurrencyFull } from "@/lib/chart-config";
 
 interface StrategyClientProps {
   hierarchy: SunburstData;

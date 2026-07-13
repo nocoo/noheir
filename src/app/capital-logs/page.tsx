@@ -1,8 +1,8 @@
 import { AppShell } from "@/components/layout";
+import type { DomainContributionLog, DomainProduct, DomainUnit } from "@/domain/types";
 import { getAuthedClient } from "@/lib/api-helpers";
-import { toDomainContributionLog, toDomainUnit, toDomainProduct } from "@/lib/capital-mappers";
+import { toDomainContributionLog, toDomainProduct, toDomainUnit } from "@/lib/capital-mappers";
 import { CapitalLogsClient } from "./capital-logs-client";
-import type { DomainContributionLog, DomainUnit, DomainProduct } from "@/domain/types";
 
 export default async function CapitalLogsPage() {
   let logs: DomainContributionLog[] = [];

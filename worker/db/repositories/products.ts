@@ -1,4 +1,4 @@
-import { eq, and, sql, desc, type SQL } from "drizzle-orm";
+import { and, desc, eq, type SQL, sql } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { financialProducts } from "../schema";
 import type { FinancialProduct, NewFinancialProduct } from "../types";

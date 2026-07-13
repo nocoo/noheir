@@ -20,14 +20,14 @@
 
 import * as React from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ColorTokenPicker } from "@/components/plan/color-token-picker";
 import {
   createExpenseCategory,
   updateExpenseCategory,
 } from "@/app/actions/expense-category-actions";
+import { ColorTokenPicker } from "@/components/plan/color-token-picker";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { CHART_TOKENS } from "@/lib/palette";
 
 export interface CategoryFormInitial {

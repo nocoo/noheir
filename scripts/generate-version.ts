@@ -6,8 +6,8 @@
  */
 
 import { execSync } from "child_process";
-import { writeFileSync, mkdirSync } from "fs";
-import { join, dirname } from "path";
+import { mkdirSync, writeFileSync } from "fs";
+import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);

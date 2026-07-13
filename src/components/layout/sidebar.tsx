@@ -1,18 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { ChevronUp, LogOut, PanelLeft } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
-import { PanelLeft, LogOut, ChevronUp } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { NAV_GROUPS, ALL_NAV_ITEMS, type NavGroup } from "@/lib/navigation";
+import { signOut, useSession } from "next-auth/react";
+import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Collapsible, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ALL_NAV_ITEMS, NAV_GROUPS, type NavGroup } from "@/lib/navigation";
+import { cn } from "@/lib/utils";
+import pkg from "../../../package.json";
 import { useSidebar } from "./sidebar-context";
 import { useYear, YEAR_ENABLED_PATHS } from "./year-context";
-import pkg from "../../../package.json";
 
 /**
  * Build href with year param if the target path supports it

@@ -1,5 +1,5 @@
-import type { DomainTransaction, MonthlyData } from "../types";
 import { calculateFinancialHealth } from "@/lib/financial-health-algorithm";
+import type { DomainTransaction, MonthlyData } from "../types";
 
 export const buildSafeMonthlyData = (monthlyData: MonthlyData[]): MonthlyData[] => {
   return Array.isArray(monthlyData) ? monthlyData : [];

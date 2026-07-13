@@ -11,9 +11,9 @@
  */
 
 import {
-  findSecondaryCategory,
   DEFAULT_EXPENSE_CATEGORIES,
   DEFAULT_INCOME_CATEGORIES,
+  findSecondaryCategory,
 } from "./category-mapping";
 
 // ── Types ──

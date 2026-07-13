@@ -4,8 +4,8 @@
  * L1 unit tests for extractBearerToken, validateOrigin, and validateMcpToken.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { extractBearerToken, validateOrigin, validateMcpToken } from "@/lib/mcp/auth";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { extractBearerToken, validateMcpToken, validateOrigin } from "@/lib/mcp/auth";
 import type { McpToken } from "@/services/mcp-tokens";
 
 const { mockGetValidTokenByHash, mockUpdateLastUsed, mockSha256 } = vi.hoisted(() => ({

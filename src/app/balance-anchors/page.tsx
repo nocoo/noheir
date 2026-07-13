@@ -1,6 +1,6 @@
 import { AppShell } from "@/components/layout";
-import { getAuthedClient } from "@/lib/api-helpers";
 import type { BalanceAnchor } from "@/domain/types";
+import { getAuthedClient } from "@/lib/api-helpers";
 import { BalanceAnchorsClient } from "./balance-anchors-client";
 
 export default async function BalanceAnchorsPage() {

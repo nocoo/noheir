@@ -1,11 +1,11 @@
 import { AppShell } from "@/components/layout";
-import { getAuthedClient } from "@/lib/api-helpers";
-import { toUnitDisplayInfo } from "@/lib/capital-mappers";
 import {
-  classifyDecisions,
   buildDecisionStats,
   buildFilterCounts,
+  classifyDecisions,
 } from "@/domain/assets/capital-decisions";
+import { getAuthedClient } from "@/lib/api-helpers";
+import { toUnitDisplayInfo } from "@/lib/capital-mappers";
 import { CapitalDecisionsClient } from "./capital-decisions-client";
 
 export default async function CapitalDecisionsPage() {

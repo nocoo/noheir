@@ -1,16 +1,16 @@
 import { AppShell } from "@/components/layout";
-import { getAuthedClient } from "@/lib/api-helpers";
-import type { DomainTransaction } from "@/domain/types";
-import { toDomainTransaction, buildMonthlyData } from "@/lib/transaction-mappers";
 import {
-  buildFilteredTransactions,
-  buildTotalAmount,
-  buildTopTransactions,
-  buildMonthlyFiltered,
   buildAverageMonthly,
+  buildFilteredTransactions,
+  buildMonthlyFiltered,
+  buildTopTransactions,
+  buildTotalAmount,
   buildTransactionLabels,
 } from "@/domain/dashboard/transaction-analysis";
-import { buildCategoryData, buildAccountData } from "@/lib/category-builders";
+import type { DomainTransaction } from "@/domain/types";
+import { getAuthedClient } from "@/lib/api-helpers";
+import { buildAccountData, buildCategoryData } from "@/lib/category-builders";
+import { buildMonthlyData, toDomainTransaction } from "@/lib/transaction-mappers";
 import { TransactionAnalysisClient } from "../transaction-analysis-client";
 
 export default async function ExpensePage({

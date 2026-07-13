@@ -2,9 +2,9 @@
  * Unit tests for products-summary.ts
  */
 
-import { describe, test, expect } from "vitest";
-import { buildProductsSummary, type ProductsSummary } from "../lib/products-summary";
+import { describe, expect, test } from "vitest";
 import type { FinancialProduct } from "../db/types";
+import { buildProductsSummary, type ProductsSummary } from "../lib/products-summary";
 
 // Helper to create mock product
 function mockProduct(overrides: Partial<FinancialProduct> = {}): FinancialProduct {

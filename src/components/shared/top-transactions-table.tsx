@@ -1,5 +1,6 @@
 import { Trophy } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -8,9 +9,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import { getLabelColorClasses } from "@/lib/tag-colors";
+import { cn } from "@/lib/utils";
 
 /** Transaction row for the top transactions table */
 export interface TopTransaction {

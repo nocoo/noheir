@@ -1,9 +1,9 @@
 "use client";
 
-import { signIn } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
 import { Shield } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { signIn } from "next-auth/react";
+import { Suspense } from "react";
 import { GithubIcon } from "@/components/icons/github-icon";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 

@@ -1,4 +1,4 @@
-import type { DomainTransaction, AccountTypeConfig, AccountType } from "../types";
+import type { AccountType, AccountTypeConfig, DomainTransaction } from "../types";
 
 export interface AccountSummary {
   name: string;

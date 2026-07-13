@@ -5,7 +5,7 @@
  * using statistical periodicity analysis. No external API calls.
  */
 
-import type { DomainTransaction, RecurringPayment, PaymentInsight } from "@/domain/types";
+import type { DomainTransaction, PaymentInsight, RecurringPayment } from "@/domain/types";
 
 // ── Internal types ──
 

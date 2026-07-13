@@ -4,7 +4,7 @@
  * Tests get_product enhancement with linked_units_count, linked_units_amount, and next hint.
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import type { Db, DbMeta, DbQueryResult } from "@/lib/db";
 import { registerProductTools } from "@/lib/mcp/tools/product";
 

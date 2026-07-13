@@ -1,22 +1,22 @@
 "use client";
 
+import { CreditCard, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import {
-  BarChart,
   Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-  PieChart,
-  Pie,
-  Cell,
 } from "recharts";
-import { Wallet, CreditCard, TrendingUp, TrendingDown } from "lucide-react";
-import type { AccountType } from "@/domain/types";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { StatCard } from "@/components/shared/stat-card";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -25,9 +25,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
+import type { AccountType } from "@/domain/types";
 import { formatCurrencyFull, formatCurrencyK } from "@/lib/chart-config";
-import { StatCard } from "@/components/shared/stat-card";
+import { cn } from "@/lib/utils";
 
 interface SerializedAccount {
   name: string;

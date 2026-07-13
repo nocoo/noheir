@@ -5,8 +5,8 @@ import {
   buildAccountType,
   buildBalanceEntries,
   buildUniqueAccounts,
-  sortDisplayEntries,
   type DisplayEntry,
+  sortDisplayEntries,
 } from "@/domain/dashboard/account-detail";
 import type { DomainTransaction, DomainTransfer } from "@/domain/types";
 

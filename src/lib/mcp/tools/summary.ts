@@ -5,9 +5,9 @@
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { currencyCode, round2 } from "./compact";
 import type { ToolContext } from "./types";
 import { ok } from "./types";
-import { round2, currencyCode } from "./compact";
 
 // ---------------------------------------------------------------------------
 // Register Summary Tools

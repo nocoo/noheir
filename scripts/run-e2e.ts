@@ -13,9 +13,9 @@
  * remote test database it relied on.
  */
 
-import { spawn, type Subprocess } from "bun";
 import { rmSync } from "node:fs";
 import { createServer } from "node:net";
+import { type Subprocess, spawn } from "bun";
 
 // noheir's port band per the personal port plan: dev 7004, L2 (E2E)
 // dev + 10000 = 17004, BDD dev + 20000 (unused). E2E_PORT can override.

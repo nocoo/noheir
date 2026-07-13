@@ -28,6 +28,7 @@
 //     (P3-C8), not here.
 
 import * as React from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -35,11 +36,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { CHART_TOKENS } from "@/lib/palette";
 import { describeFrequency, formatAmountYuan } from "@/lib/recurring-expense/format";
 import type { RecurrenceRule } from "@/lib/recurring-expense/rule-types";
+import { cn } from "@/lib/utils";
 
 export interface DayDetailCategory {
   id: string;

@@ -1,9 +1,9 @@
 "use client";
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { CreditCard } from "lucide-react";
-import { formatCurrencyK, formatCurrencyFull } from "@/lib/chart-config";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ChartCard } from "@/components/shared/chart-card";
+import { formatCurrencyFull, formatCurrencyK } from "@/lib/chart-config";
 
 export interface AccountChartData {
   name: string;
