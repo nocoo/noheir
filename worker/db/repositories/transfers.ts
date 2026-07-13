@@ -87,6 +87,7 @@ export function createTransfersRepo(db: DrizzleD1Database) {
       if (params.keyword) {
         const pattern = `%${params.keyword}%`;
         conditions.push(
+          // biome-ignore lint/style/noNonNullAssertion: drizzle's or() returns SQL | undefined even with non-empty args
           or(
             like(transfers.note, pattern),
             like(transfers.primaryCategory, pattern),

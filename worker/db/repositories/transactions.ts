@@ -47,8 +47,7 @@ function computeMatchedField(row: Transaction, keyword: string | undefined): str
   const kw = keyword.toLowerCase();
   if (row.note?.toLowerCase().includes(kw)) return "note";
   if (row.primaryCategory.toLowerCase().includes(kw)) return "category";
-  if (row.secondaryCategory?.toLowerCase().includes(kw))
-    return "secondary_category";
+  if (row.secondaryCategory?.toLowerCase().includes(kw)) return "secondary_category";
   if (row.tertiaryCategory.toLowerCase().includes(kw)) return "tertiary_category";
   if (row.account.toLowerCase().includes(kw)) return "account";
   return null;
@@ -96,6 +95,7 @@ export function createTransactionsRepo(db: DrizzleD1Database) {
       if (params.keyword) {
         const pattern = `%${params.keyword}%`;
         conditions.push(
+          // biome-ignore lint/style/noNonNullAssertion: drizzle's or() returns SQL | undefined even with non-empty args
           or(
             like(transactions.note, pattern),
             like(transactions.primaryCategory, pattern),

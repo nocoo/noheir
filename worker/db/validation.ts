@@ -43,10 +43,11 @@ export const createProductSchema = z
   })
   .refine(
     (data) => {
-      const hasOpen = data.openDays != null;
-      const hasCycle = data.cycleDays != null;
+      const { openDays, cycleDays } = data;
+      const hasOpen = openDays != null;
+      const hasCycle = cycleDays != null;
       if (hasOpen !== hasCycle) return false;
-      if (hasOpen && hasCycle && data.cycleDays! <= data.openDays!) return false;
+      if (hasOpen && hasCycle && cycleDays <= openDays) return false;
       return true;
     },
     {
@@ -83,15 +84,16 @@ export const updateProductSchema = z
   })
   .refine(
     (data) => {
-      const hasOpen = data.openDays !== undefined;
-      const hasCycle = data.cycleDays !== undefined;
+      const { openDays, cycleDays } = data;
+      const hasOpen = openDays !== undefined;
+      const hasCycle = cycleDays !== undefined;
       if (hasOpen !== hasCycle) return false;
       if (!hasOpen) return true;
       // Both present: must be both null or both non-null
-      const openNull = data.openDays === null;
-      const cycleNull = data.cycleDays === null;
+      const openNull = openDays === null;
+      const cycleNull = cycleDays === null;
       if (openNull !== cycleNull) return false;
-      if (!openNull && !cycleNull && data.cycleDays! <= data.openDays!) return false;
+      if (openDays != null && cycleDays != null && cycleDays <= openDays) return false;
       return true;
     },
     {
