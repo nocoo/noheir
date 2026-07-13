@@ -179,6 +179,7 @@ export function TransferImport() {
     <Card>
       <CardContent className="space-y-6 p-6">
         {/* Upload Area */}
+        {/* biome-ignore lint/a11y/useSemanticElements: dropzone needs drag/drop events; <button> is semantically wrong here */}
         <div
           className={`relative cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
             isDragging

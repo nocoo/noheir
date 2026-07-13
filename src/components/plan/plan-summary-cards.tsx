@@ -83,6 +83,7 @@ export function PlanSummaryCards({
   );
 
   return (
+    // biome-ignore lint/a11y/useSemanticElements: purely visual group, not a form fieldset
     <div
       className={cn("grid grid-cols-1 gap-4 sm:grid-cols-3", className)}
       role="group"
@@ -92,6 +93,7 @@ export function PlanSummaryCards({
         <Card key={item.key} data-summary-key={item.key} className="border-l-4 border-l-primary/60">
           <CardContent className="p-4">
             <p className="text-sm text-muted-foreground">{item.label}</p>
+            {/* biome-ignore lint/a11y/useAriaPropsSupportedByRole: intentional screen-reader label combining number and unit */}
             <p
               className="mt-1 text-2xl font-semibold tabular-nums"
               data-amount-cents={item.amount}

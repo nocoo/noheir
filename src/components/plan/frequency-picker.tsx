@@ -228,6 +228,7 @@ export function FrequencyPicker({
             const selected = f === value.frequency;
             const isTabStop = idx === tabIdx;
             return (
+              // biome-ignore lint/a11y/useSemanticElements: styled chip, not a native input radio
               <button
                 key={f}
                 ref={(el) => {
@@ -306,6 +307,7 @@ export function FrequencyPicker({
               const selected = value.weekday === w;
               const isTabStop = w === weekdayTabIdx;
               return (
+                // biome-ignore lint/a11y/useSemanticElements: styled chip, not a native input radio
                 <button
                   key={w}
                   ref={(el) => {

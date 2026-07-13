@@ -158,6 +158,7 @@ export function ColorTokenPicker({
         const name = TOKEN_NAMES[token] ?? token;
         const isTabStop = idx === tabIndex;
         return (
+          // biome-ignore lint/a11y/useSemanticElements: styled swatch, not a native input radio
           <button
             key={token}
             ref={(el) => {

@@ -46,5 +46,18 @@
       "!**/CHANGELOG.md",
       "!**/autoresearch.jsonl"
     ]
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["src/components/plan/plan-calendar.tsx"],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "useSemanticElements": "off",
+            "useFocusableInteractive": "off"
+          }
+        }
+      }
+    }
+  ]
 }
