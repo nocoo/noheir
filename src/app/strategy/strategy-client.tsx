@@ -1,8 +1,7 @@
 "use client";
 
-import ReactECharts from "echarts-for-react";
+import { ResponsiveSunburst } from "@nivo/sunburst";
 import { Layers } from "lucide-react";
-import { useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { SunburstData } from "@/domain/assets/strategy-sunburst";
 import { formatCurrencyFull } from "@/lib/chart-config";
@@ -13,88 +12,6 @@ interface StrategyClientProps {
 }
 
 export function StrategyClient({ hierarchy, totalAmount }: StrategyClientProps) {
-  // biome-ignore lint/suspicious/noExplicitAny: echarts option shape is too complex to type strictly here
-  const option = useMemo<any>(
-    () => ({
-      tooltip: {
-        trigger: "item",
-        // biome-ignore lint/suspicious/noExplicitAny: echarts formatter callback params are dynamic
-        formatter: (params: any) => {
-          const value = params.value ?? 0;
-          const percentage = totalAmount > 0 ? ((value / totalAmount) * 100).toFixed(2) : "0.00";
-          return `
-          <div style="padding: 8px;">
-            <div style="font-weight: 600; margin-bottom: 4px;">${params.name ?? ""}</div>
-            <div style="font-size: 12px; color: #666;">
-              金额: ¥${value.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}<br/>
-              占比: ${percentage}%
-            </div>
-          </div>
-        `;
-        },
-      },
-      series: [
-        {
-          type: "sunburst",
-          data: hierarchy.children ?? [],
-          radius: [0, "90%"],
-          emphasis: {
-            focus: "ancestor",
-          },
-          levels: [
-            {}, // Level 0: root (hidden)
-            {
-              // Level 1: Currency
-              r0: "0%",
-              r: "30%",
-              itemStyle: {
-                borderWidth: 2,
-                borderColor: "#fff",
-              },
-              label: {
-                rotate: "tangential",
-                align: "center",
-                fontSize: 14,
-                fontWeight: 600,
-              },
-            },
-            {
-              // Level 2: Strategy
-              r0: "30%",
-              r: "60%",
-              itemStyle: {
-                borderWidth: 2,
-                borderColor: "#fff",
-              },
-              label: {
-                rotate: "tangential",
-                align: "center",
-                fontSize: 12,
-              },
-            },
-            {
-              // Level 3: Product
-              r0: "60%",
-              r: "90%",
-              label: {
-                align: "center",
-                fontSize: 11,
-                position: "outside",
-                padding: 3,
-                silent: false,
-              },
-              itemStyle: {
-                borderWidth: 1,
-                borderColor: "#fff",
-              },
-            },
-          ],
-        },
-      ],
-    }),
-    [hierarchy, totalAmount],
-  );
-
   const hasData = (hierarchy.children?.length ?? 0) > 0;
 
   return (
@@ -120,10 +37,49 @@ export function StrategyClient({ hierarchy, totalAmount }: StrategyClientProps) 
         <CardContent>
           <div className="h-[600px]">
             {hasData ? (
-              <ReactECharts
-                option={option}
-                style={{ height: "100%", width: "100%" }}
-                opts={{ renderer: "canvas" }}
+              <ResponsiveSunburst<SunburstData>
+                data={hierarchy}
+                id="name"
+                value="value"
+                cornerRadius={2}
+                borderColor="#fff"
+                borderWidth={2}
+                colors={{ scheme: "nivo" }}
+                childColor={{ from: "color", modifiers: [["brighter", 0.15]] }}
+                inheritColorFromParent
+                enableArcLabels
+                arcLabel={(d) => d.id.toString()}
+                arcLabelsSkipAngle={12}
+                arcLabelsTextColor={{ from: "color", modifiers: [["darker", 3]] }}
+                animate
+                motionConfig="gentle"
+                tooltip={({ id, value }) => {
+                  const percentage =
+                    totalAmount > 0 ? ((value / totalAmount) * 100).toFixed(2) : "0.00";
+                  const formatted = value.toLocaleString("zh-CN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  });
+                  return (
+                    <div
+                      style={{
+                        background: "white",
+                        padding: 8,
+                        border: "1px solid #eee",
+                        borderRadius: 4,
+                        fontSize: 12,
+                        color: "#333",
+                      }}
+                    >
+                      <div style={{ fontWeight: 600, marginBottom: 4 }}>{id}</div>
+                      <div style={{ color: "#666" }}>
+                        金额: ¥{formatted}
+                        <br />
+                        占比: {percentage}%
+                      </div>
+                    </div>
+                  );
+                }}
               />
             ) : (
               <div className="text-muted-foreground flex h-full items-center justify-center">
