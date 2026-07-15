@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.1] - 2026-07-15
+
+### Features
+
+- **strategy** — colour sunburst arcs from the project palette
+
+### Fixes
+
+- **strategy** — bind sunburst arc-label colour to --foreground
+- **strategy** — let CSS drive sunburst colours so theme flips repaint arcs
+- **strategy** — key currency palette on the ISO code, not the display label
+- **strategy** — disable inheritColorFromParent so colorForNode drives every ring
+- **strategy** — decouple sunburst rings so the currency ring doesn't tint the outer rings
+- **strategy** — path-based ids in sunburst hierarchy
+
+### Refactoring
+
+- **strategy** — migrate sunburst from echarts to @nivo/sunburst
+
+### Documentation
+
+- **env** — update .env.example to reflect Cloudflare Worker + NextAuth stack
+
+### Chores
+
+- prune leftover echarts adapters after the nivo migration
+
 ## [2.4.0] - 2026-07-13
 
 ### Features
