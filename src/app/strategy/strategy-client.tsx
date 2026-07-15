@@ -81,19 +81,19 @@ export function StrategyClient({ hierarchy, totalAmount }: StrategyClientProps) 
             {hasData ? (
               <ResponsiveSunburst<SunburstData>
                 data={hierarchy}
-                id="name"
+                id="id"
                 value="value"
                 cornerRadius={2}
                 borderColor="#fff"
                 borderWidth={2}
                 colors={colorForNode}
                 enableArcLabels
-                arcLabel={(d) => d.id.toString()}
+                arcLabel={(d) => d.data.name}
                 arcLabelsSkipAngle={12}
                 arcLabelsTextColor={{ from: "color", modifiers: [["darker", 3]] }}
                 animate
                 motionConfig="gentle"
-                tooltip={({ id, value }) => {
+                tooltip={({ data, value }) => {
                   const percentage =
                     totalAmount > 0 ? ((value / totalAmount) * 100).toFixed(2) : "0.00";
                   const formatted = value.toLocaleString("zh-CN", {
@@ -111,7 +111,7 @@ export function StrategyClient({ hierarchy, totalAmount }: StrategyClientProps) 
                         color: "#333",
                       }}
                     >
-                      <div style={{ fontWeight: 600, marginBottom: 4 }}>{id}</div>
+                      <div style={{ fontWeight: 600, marginBottom: 4 }}>{data.name}</div>
                       <div style={{ color: "#666" }}>
                         金额: ¥{formatted}
                         <br />

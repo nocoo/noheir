@@ -2,6 +2,9 @@ import { getLabelColorHex } from "@/lib/tag-colors";
 import type { UnitDisplayInfo } from "../types";
 
 export type SunburstData = {
+  /** Globally unique node id for React reconciliation (path-based). */
+  id: string;
+  /** Display label shown in the arc + tooltip. */
   name: string;
   value?: number;
   children?: SunburstData[];
@@ -13,7 +16,7 @@ export const buildStrategyHierarchy = (
   rootName: string,
 ): SunburstData => {
   if (!units || units.length === 0) {
-    return { name: rootName, children: [] };
+    return { id: rootName, name: rootName, children: [] };
   }
 
   const establishedUnits = units.filter((unit) => unit.status === "已成立");
@@ -38,25 +41,35 @@ export const buildStrategyHierarchy = (
   };
 
   const children = Object.entries(hierarchy)
-    .map(([currency, strategies]) => ({
-      name: currencyNames[currency] ?? currency,
-      children: Object.entries(strategies)
-        .map(([strategy, products]) => ({
-          name: strategy,
-          children: Object.entries(products)
-            .map(([product, amount]) => ({
-              name: product,
-              value: amount,
-              itemStyle: { color: getLabelColorHex(product) },
-            }))
-            .sort((a, b) => (b.value ?? 0) - (a.value ?? 0)),
-        }))
-        .sort((a, b) => {
-          const totalA = (a.children ?? []).reduce((sum, p) => sum + (p.value ?? 0), 0);
-          const totalB = (b.children ?? []).reduce((sum, p) => sum + (p.value ?? 0), 0);
-          return totalB - totalA;
-        }),
-    }))
+    .map(([currency, strategies]) => {
+      const currencyLabel = currencyNames[currency] ?? currency;
+      return {
+        id: currencyLabel,
+        name: currencyLabel,
+        children: Object.entries(strategies)
+          .map(([strategy, products]) => ({
+            // Same strategy name can appear under multiple currencies —
+            // prefix with currency to keep the id unique for React keys.
+            id: `${currencyLabel}/${strategy}`,
+            name: strategy,
+            children: Object.entries(products)
+              .map(([product, amount]) => ({
+                // Same product name can recur across strategies (e.g. 灵活宝
+                // under two different strategies) — prefix the full path.
+                id: `${currencyLabel}/${strategy}/${product}`,
+                name: product,
+                value: amount,
+                itemStyle: { color: getLabelColorHex(product) },
+              }))
+              .sort((a, b) => (b.value ?? 0) - (a.value ?? 0)),
+          }))
+          .sort((a, b) => {
+            const totalA = (a.children ?? []).reduce((sum, p) => sum + (p.value ?? 0), 0);
+            const totalB = (b.children ?? []).reduce((sum, p) => sum + (p.value ?? 0), 0);
+            return totalB - totalA;
+          }),
+      };
+    })
     .sort((a, b) => {
       const totalA = (a.children ?? []).reduce(
         (sum, s) => sum + (s.children ?? []).reduce((sum2, p) => sum2 + (p.value ?? 0), 0),
@@ -69,7 +82,7 @@ export const buildStrategyHierarchy = (
       return totalB - totalA;
     });
 
-  return { name: rootName, children };
+  return { id: rootName, name: rootName, children };
 };
 
 export const buildTotalAmount = (units: UnitDisplayInfo[]): number => {
