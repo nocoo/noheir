@@ -7,15 +7,26 @@ import type { SunburstData } from "@/domain/assets/strategy-sunburst";
 import { formatCurrencyFull } from "@/lib/chart-config";
 import {
   getCurrencyToken,
-  getStrategyToken,
   resolveColor,
   shadeChartColor,
   stableHash,
+  VIVID_COLOR_INDICES,
 } from "@/lib/palette";
 
 interface StrategyClientProps {
   hierarchy: SunburstData;
   totalAmount: number;
+}
+
+/**
+ * Which chart-N slot to use for the strategy at the given palette index.
+ * Cycles through VIVID_COLOR_INDICES (22 vivid slots, skipping the two gray
+ * tones) so neighbouring strategies never land on the same slot even when the
+ * tree grows past 22 strategies (unlikely but possible).
+ */
+function strategyToken(paletteIndex: number): string {
+  const slot = VIVID_COLOR_INDICES[paletteIndex % VIVID_COLOR_INDICES.length];
+  return `chart-${slot}`;
 }
 
 // Level 3 products share their parent strategy's chart-N token; nudge L by
@@ -30,27 +41,30 @@ function productShadeDelta(name: string): number {
 }
 
 /**
- * SVG fill for one sunburst arc, respecting the project-wide palette
- * (`src/lib/palette.ts`):
- *   depth 1 (currency) → CURRENCY_TOKEN_MAP
- *   depth 2 (strategy) → STRATEGY_TOKEN_MAP (unknown strategies fall back to
- *                         a stable hash so new strategies get a distinct hue)
- *   depth 3 (product)  → parent strategy's token, shaded by ±3–12 L points
+ * SVG fill for one sunburst arc:
+ *   depth 1 (currency) → CURRENCY_TOKEN_MAP  (semantic: CNY red / USD blue / HKD amber)
+ *   depth 2 (strategy) → chart-N picked from VIVID_COLOR_INDICES by the
+ *                        strategy's global paletteIndex (assigned in
+ *                        strategy-sunburst.ts). Independent from the depth-1
+ *                        family, so the middle ring cycles hues rather than
+ *                        inheriting the currency tint.
+ *   depth 3 (product)  → parent strategy's chart-N, shaded by ±3–12 L points
+ *                        via a hash of the product name.
  */
 function colorForNode(node: {
   depth: number;
-  data: { name: string };
-  parent?: { data: { name: string } };
+  data: SunburstData;
+  parent?: { data: SunburstData };
 }): string {
   if (node.depth === 1) {
     return resolveColor(getCurrencyToken(node.data.name));
   }
   if (node.depth === 2) {
-    return resolveColor(getStrategyToken(node.data.name));
+    const idx = node.data.paletteIndex ?? 0;
+    return resolveColor(strategyToken(idx));
   }
-  const parentStrategy = node.parent?.data.name;
-  if (!parentStrategy) return resolveColor(getStrategyToken(node.data.name));
-  return shadeChartColor(getStrategyToken(parentStrategy), productShadeDelta(node.data.name));
+  const parentIdx = node.parent?.data.paletteIndex ?? 0;
+  return shadeChartColor(strategyToken(parentIdx), productShadeDelta(node.data.name));
 }
 
 export function StrategyClient({ hierarchy, totalAmount }: StrategyClientProps) {

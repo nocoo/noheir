@@ -9,6 +9,14 @@ export type SunburstData = {
   value?: number;
   children?: SunburstData[];
   itemStyle?: { color?: string };
+  /**
+   * For depth-2 (strategy) nodes only: a stable integer that the /strategy
+   * client uses to pick a palette colour. Assigned in traversal order after
+   * the hierarchy is fully built + sorted so the ring cycles through hues
+   * left-to-right rather than clumping the CNY / USD / HKD sub-trees on
+   * neighbouring slots of the palette wheel.
+   */
+  paletteIndex?: number;
 };
 
 export const buildStrategyHierarchy = (
@@ -81,6 +89,16 @@ export const buildStrategyHierarchy = (
       );
       return totalB - totalA;
     });
+
+  // After both sort passes, assign a monotonically-increasing paletteIndex
+  // to every strategy node in visual (post-sort) traversal order. Counter
+  // spans across currencies so neighbouring arcs never share a slot.
+  let strategyCounter = 0;
+  for (const currencyNode of children) {
+    for (const strategyNode of currencyNode.children ?? []) {
+      (strategyNode as SunburstData).paletteIndex = strategyCounter++;
+    }
+  }
 
   return { id: rootName, name: rootName, children };
 };

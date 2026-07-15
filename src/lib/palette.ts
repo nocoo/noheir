@@ -193,7 +193,7 @@ export const MATURITY_TOKEN_MAP: Record<string, string> = {
 // ── Vivid color indices (excluding gray/steel: 16, 23) ──
 // Used for hash-based color assignment to ensure vibrant colors
 
-const VIVID_COLOR_INDICES = [
+export const VIVID_COLOR_INDICES = [
   1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 24,
 ] as const;
 
