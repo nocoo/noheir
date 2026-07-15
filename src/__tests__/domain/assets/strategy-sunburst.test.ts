@@ -69,6 +69,7 @@ describe("strategy-sunburst domain", () => {
     // CNY should come first (larger total)
     const cny = data.children?.[0];
     expect(cny?.name).toBe("人民币");
+    expect(cny?.currencyCode).toBe("CNY");
     expect(cny?.children?.length).toBe(1); // "长期理财"
 
     const strategy = cny?.children?.[0];

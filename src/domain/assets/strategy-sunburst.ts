@@ -6,6 +6,12 @@ export type SunburstData = {
   id: string;
   /** Display label shown in the arc + tooltip. */
   name: string;
+  /**
+   * For depth-1 (currency) nodes only: the original ISO code (CNY / USD / HKD).
+   * Kept alongside the localised \`name\` so palette lookups (which are keyed
+   * on the code) don't have to reverse the display label.
+   */
+  currencyCode?: string;
   value?: number;
   children?: SunburstData[];
   itemStyle?: { color?: string };
@@ -54,6 +60,7 @@ export const buildStrategyHierarchy = (
       return {
         id: currencyLabel,
         name: currencyLabel,
+        currencyCode: currency,
         children: Object.entries(strategies)
           .map(([strategy, products]) => ({
             // Same strategy name can appear under multiple currencies —

@@ -57,7 +57,11 @@ function colorForNode(node: {
   parent?: { data: SunburstData };
 }): string {
   if (node.depth === 1) {
-    return resolveColor(getCurrencyToken(node.data.name));
+    // depth-1 nodes carry the ISO currency code; the localised display label
+    // lives on `name`. Palette look-up must key on the code, not the label,
+    // or "人民币" falls through to hashToChartToken and picks a wrong hue.
+    const code = node.data.currencyCode ?? node.data.name;
+    return resolveColor(getCurrencyToken(code));
   }
   if (node.depth === 2) {
     const idx = node.data.paletteIndex ?? 0;
