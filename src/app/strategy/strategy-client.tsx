@@ -6,8 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import type { SunburstData } from "@/domain/assets/strategy-sunburst";
 import { formatCurrencyFull } from "@/lib/chart-config";
 import {
+  chartVar,
   getCurrencyToken,
-  resolveColor,
   shadeChartColor,
   stableHash,
   VIVID_COLOR_INDICES,
@@ -61,11 +61,11 @@ function colorForNode(node: {
     // lives on `name`. Palette look-up must key on the code, not the label,
     // or "人民币" falls through to hashToChartToken and picks a wrong hue.
     const code = node.data.currencyCode ?? node.data.name;
-    return resolveColor(getCurrencyToken(code));
+    return chartVar(getCurrencyToken(code));
   }
   if (node.depth === 2) {
     const idx = node.data.paletteIndex ?? 0;
-    return resolveColor(strategyToken(idx));
+    return chartVar(strategyToken(idx));
   }
   const parentIdx = node.parent?.data.paletteIndex ?? 0;
   return shadeChartColor(strategyToken(parentIdx), productShadeDelta(node.data.name));

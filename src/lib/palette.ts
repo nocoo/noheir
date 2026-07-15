@@ -44,25 +44,26 @@ export function resolveColors(tokens: readonly string[]): string[] {
 }
 
 /**
- * Resolve a CSS variable to a color and shift its L (lightness) by `deltaL` percentage
- * points. `deltaL > 0` brightens, `deltaL < 0` darkens. Clamped to [0, 100].
+ * A CSS colour string that reads from --{token} and shifts its L (lightness)
+ * by `deltaL` percentage points via CSS relative-colour syntax. Positive
+ * brightens, negative darkens; L is clamped to [0, 100] inside the CSS
+ * `clamp()`.
  *
- * Motivation: canvas / SVG renderers (nivo sunburst, echarts pre-2026-07) can't
- * consume raw CSS vars, and libraries that DO accept them can't apply
- * brighter/darker modifiers because those need a real color. This lets us keep
- * the single source of truth (chart-N CSS vars) while shading sibling arcs
- * without pulling in d3-color as a direct dependency.
+ * Motivation: keeping the shade computation inside CSS (as opposed to
+ * reading the resolved value from the DOM once) means the browser
+ * re-computes on theme flips, so charts follow light/dark automatically.
+ *
+ * The `hsl(from …)` form was added in CSS Color 4 and is supported by
+ * Chrome 119+, Safari 16.4+, Firefox 128+.
  */
 export function shadeChartColor(token: string, deltaL: number): string {
-  if (typeof document === "undefined" || typeof getComputedStyle === "undefined") return "#888";
-  const raw = getComputedStyle(document.documentElement).getPropertyValue(`--${token}`).trim();
-  if (!raw) return "#888";
-  // CSS custom property stores `H S% L%` (space-separated, per tailwind convention).
-  const match = raw.match(/^(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)%\s+(-?\d+(?:\.\d+)?)%$/);
-  if (!match) return `hsl(${raw})`;
-  const [, h, s, l] = match;
-  const newL = Math.max(0, Math.min(100, Number(l) + deltaL));
-  return `hsl(${h} ${s}% ${newL}%)`;
+  return `hsl(from hsl(var(--${token})) h s clamp(0, calc(l + ${deltaL}), 100))`;
+}
+
+/** \`hsl(var(--{token}))\` — the raw CSS-var reference; browser resolves on
+ *  every paint so theme flips repaint charts without JS re-render. */
+export function chartVar(token: string): string {
+  return `hsl(var(--${token}))`;
 }
 
 // ── 24 sequential chart colors ──
