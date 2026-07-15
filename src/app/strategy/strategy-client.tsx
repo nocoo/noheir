@@ -101,6 +101,12 @@ export function StrategyClient({ hierarchy, totalAmount }: StrategyClientProps) 
                 borderColor="#fff"
                 borderWidth={2}
                 colors={colorForNode}
+                // Nivo defaults inheritColorFromParent to true, which
+                // short-circuits our per-depth palette function for every
+                // arc at depth > 1. Disable it so colorForNode drives ALL
+                // three rings — otherwise every strategy and product just
+                // inherits its currency's colour.
+                inheritColorFromParent={false}
                 enableArcLabels
                 arcLabel={(d) => d.data.name}
                 arcLabelsSkipAngle={12}
