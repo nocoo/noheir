@@ -43,6 +43,28 @@ export function resolveColors(tokens: readonly string[]): string[] {
   return tokens.map(resolveColor);
 }
 
+/**
+ * Resolve a CSS variable to a color and shift its L (lightness) by `deltaL` percentage
+ * points. `deltaL > 0` brightens, `deltaL < 0` darkens. Clamped to [0, 100].
+ *
+ * Motivation: canvas / SVG renderers (nivo sunburst, echarts pre-2026-07) can't
+ * consume raw CSS vars, and libraries that DO accept them can't apply
+ * brighter/darker modifiers because those need a real color. This lets us keep
+ * the single source of truth (chart-N CSS vars) while shading sibling arcs
+ * without pulling in d3-color as a direct dependency.
+ */
+export function shadeChartColor(token: string, deltaL: number): string {
+  if (typeof document === "undefined" || typeof getComputedStyle === "undefined") return "#888";
+  const raw = getComputedStyle(document.documentElement).getPropertyValue(`--${token}`).trim();
+  if (!raw) return "#888";
+  // CSS custom property stores `H S% L%` (space-separated, per tailwind convention).
+  const match = raw.match(/^(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)%\s+(-?\d+(?:\.\d+)?)%$/);
+  if (!match) return `hsl(${raw})`;
+  const [, h, s, l] = match;
+  const newL = Math.max(0, Math.min(100, Number(l) + deltaL));
+  return `hsl(${h} ${s}% ${newL}%)`;
+}
+
 // ── 24 sequential chart colors ──
 
 export const chart = {
@@ -179,7 +201,7 @@ const VIVID_COLOR_INDICES = [
  * Stable hash function (DJB2) for string to number.
  * Same input always produces same output.
  */
-function stableHash(str: string): number {
+export function stableHash(str: string): number {
   let hash = 5381;
   for (let i = 0; i < str.length; i++) {
     hash = ((hash << 5) + hash + str.charCodeAt(i)) >>> 0;
