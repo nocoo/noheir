@@ -114,7 +114,13 @@ export function StrategyClient({ hierarchy, totalAmount }: StrategyClientProps) 
                 enableArcLabels
                 arcLabel={(d) => d.data.name}
                 arcLabelsSkipAngle={12}
-                arcLabelsTextColor={{ from: "color", modifiers: [["darker", 3]] }}
+                // Nivo's `{ from: "color", modifiers: [["darker", N]] }` runs
+                // its argument through d3-color.rgb(), which returns NaN
+                // channels for CSS var / relative-colour strings (our arc
+                // colours) — that stringifies to rgb(0, 0, 0), unreadable in
+                // dark mode. Bind straight to --foreground so the label
+                // colour follows the current theme without any modifier.
+                arcLabelsTextColor="hsl(var(--foreground))"
                 animate
                 motionConfig="gentle"
                 tooltip={({ data, value }) => {
