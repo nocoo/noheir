@@ -1,4 +1,3 @@
-import { getLabelColorHex } from "@/lib/tag-colors";
 import type { UnitDisplayInfo } from "../types";
 
 export type SunburstData = {
@@ -14,7 +13,6 @@ export type SunburstData = {
   currencyCode?: string;
   value?: number;
   children?: SunburstData[];
-  itemStyle?: { color?: string };
   /**
    * For depth-2 (strategy) nodes only: a stable integer that the /strategy
    * client uses to pick a palette colour. Assigned in traversal order after
@@ -74,7 +72,6 @@ export const buildStrategyHierarchy = (
                 id: `${currencyLabel}/${strategy}/${product}`,
                 name: product,
                 value: amount,
-                itemStyle: { color: getLabelColorHex(product) },
               }))
               .sort((a, b) => (b.value ?? 0) - (a.value ?? 0)),
           }))

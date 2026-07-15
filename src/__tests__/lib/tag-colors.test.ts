@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   getLabelColorClasses,
-  getLabelColorHex,
   getTagColor,
   getUnitCodeColor,
   getUnitCodePrefix,
@@ -17,15 +16,6 @@ describe("tag-colors", () => {
   it("returns valid badge variant", () => {
     const variant = getTagColor("test");
     expect(["default", "secondary", "outline"]).toContain(variant);
-  });
-
-  it("returns hex color string", () => {
-    const hex = getLabelColorHex("test");
-    expect(hex).toMatch(/^#[0-9a-f]{6}$/);
-  });
-
-  it("returns consistent hex for same label", () => {
-    expect(getLabelColorHex("foo")).toBe(getLabelColorHex("foo"));
   });
 
   it("returns bg and text classes", () => {

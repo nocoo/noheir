@@ -104,11 +104,4 @@ describe("strategy-sunburst domain", () => {
     ];
     expect(buildTotalAmount(units)).toBe(10000);
   });
-
-  it("assigns hex colors to products", () => {
-    const units = [makeUnit()];
-    const data = buildStrategyHierarchy(units, "资产");
-    const product = data.children?.[0]?.children?.[0]?.children?.[0];
-    expect(product?.itemStyle?.color).toMatch(/^#[0-9a-f]{6}$/);
-  });
 });

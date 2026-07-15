@@ -159,36 +159,6 @@ export function getLabelColorClasses(label: string): {
   return { bg: color.label, text: color.text };
 }
 
-const COLOR_HEX_MAP: Record<string, string> = {
-  slate: "#64748b",
-  red: "#ef4444",
-  orange: "#f97316",
-  amber: "#f59e0b",
-  yellow: "#eab308",
-  lime: "#84cc16",
-  green: "#22c55e",
-  emerald: "#10b981",
-  teal: "#14b8a6",
-  cyan: "#06b6d4",
-  sky: "#0ea5e9",
-  blue: "#3b82f6",
-  indigo: "#6366f1",
-  violet: "#8b5cf6",
-  purple: "#a855f7",
-  fuchsia: "#d946ef",
-  pink: "#ec4899",
-  rose: "#e11d48",
-  income: "#059669",
-  expense: "#e11d48",
-};
-
-export function getLabelColorHex(label: string): string {
-  const hash = stringHash(label);
-  const index = hash % COLOR_KEYS.length;
-  const key = COLOR_KEYS[index] ?? "slate";
-  return COLOR_HEX_MAP[key] ?? "#6b7280";
-}
-
 export function getUnitCodePrefix(unitCode: string): string {
   if (!unitCode) return "Unknown";
   return unitCode.charAt(0).toUpperCase();

@@ -4,11 +4,9 @@
  * All values reference CSS custom properties defined in globals.css.
  * Use these constants everywhere instead of hardcoded HSL strings.
  *
- * Two consumption patterns:
- *   1. DOM/SVG (Recharts, inline styles) → use `CHART_COLORS[n]`
- *      These return `hsl(var(--chart-N))` which the browser resolves.
- *   2. Canvas (ECharts) → use `resolveColor("chart-1")` at render time.
- *      This reads the computed value from the DOM so ECharts gets a real color.
+ * SVG/DOM consumers (Recharts, Nivo, inline styles) can use these tokens
+ * directly — `hsl(var(--chart-N))` is browser-resolved on every paint, so
+ * theme flips repaint charts without JS re-rendering.
  */
 
 /** Helper — wraps a CSS custom property name for inline style usage. */
@@ -19,29 +17,6 @@ const v = (token: string) => `hsl(var(--${token}))`;
  * Usage: `withAlpha("chart-1", 0.12)` → `hsl(var(--chart-1) / 0.12)`
  */
 export const withAlpha = (token: string, alpha: number) => `hsl(var(--${token}) / ${alpha})`;
-
-// ── CSS-variable resolver (for ECharts / canvas) ──
-
-/**
- * Resolve a CSS custom property to a computed color string at runtime.
- * Required for canvas-based renderers (ECharts) that cannot read CSS variables.
- *
- * @param token - CSS variable name without `--`, e.g. `"chart-1"` or `"income"`
- * @returns Computed color string, e.g. `"hsl(200, 90%, 55%)"`, or fallback `"#888"`
- */
-export function resolveColor(token: string): string {
-  if (typeof document === "undefined" || typeof getComputedStyle === "undefined") return "#888";
-  const raw = getComputedStyle(document.documentElement).getPropertyValue(`--${token}`).trim();
-  return raw ? `hsl(${raw})` : "#888";
-}
-
-/**
- * Resolve an array of CSS variable tokens to computed colors.
- * Convenience wrapper for ECharts color arrays.
- */
-export function resolveColors(tokens: readonly string[]): string[] {
-  return tokens.map(resolveColor);
-}
 
 /**
  * A CSS colour string that reads from --{token} and shifts its L (lightness)
@@ -106,19 +81,6 @@ export const CHART_TOKENS = Array.from(
   { length: 24 },
   (_, i) => `chart-${i + 1}`,
 ) as readonly string[];
-
-/**
- * Resolve all 24 chart colors at once for ECharts.
- * Call this inside a component body / useEffect so it picks up the current theme.
- */
-export function resolveChartColors(): string[] {
-  return resolveColors(CHART_TOKENS);
-}
-
-/** Get resolved color by chart index (wraps around 24 colors). For ECharts. */
-export function resolveChartColor(index: number): string {
-  return resolveColor(`chart-${(index % 24) + 1}`);
-}
 
 // ── Semantic aliases ──
 
@@ -299,29 +261,4 @@ export function statusColor(status: string): string {
 /** Get CSS-variable color string for a maturity period (for SVG/Recharts). */
 export function maturityColor(period: string): string {
   return v(getMaturityToken(period));
-}
-
-/** Resolve strategy color for ECharts. */
-export function resolveStrategyColor(strategy: string): string {
-  return resolveColor(getStrategyToken(strategy));
-}
-
-/** Resolve tactics color for ECharts. */
-export function resolveTacticsColor(tactics: string): string {
-  return resolveColor(getTacticsToken(tactics));
-}
-
-/** Resolve currency color for ECharts. */
-export function resolveCurrencyColor(currency: string): string {
-  return resolveColor(getCurrencyToken(currency));
-}
-
-/** Resolve status color for ECharts. */
-export function resolveStatusColor(status: string): string {
-  return resolveColor(getStatusToken(status));
-}
-
-/** Resolve maturity color for ECharts. */
-export function resolveMaturityColor(period: string): string {
-  return resolveColor(getMaturityToken(period));
 }
