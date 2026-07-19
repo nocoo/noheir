@@ -6,7 +6,7 @@
       "name": "noheir-worker",
       "dependencies": {
         "drizzle-orm": "^0.45.2",
-        "hono": "4.12.30",
+        "hono": "4.12.31",
         "zod": "^4.4.3",
       },
       "devDependencies": {
@@ -30,7 +30,7 @@
     "@hono/node-server": "1.19.13",
     "esbuild": "^0.28.1",
     "fast-uri": "3.1.2",
-    "hono": "4.12.30",
+    "hono": "4.12.31",
     "ip-address": "10.2.0",
     "qs": "6.15.2",
     "undici": "7.28.0",
@@ -332,7 +332,7 @@
 
     "has-flag": ["has-flag@4.0.0", "", {}, "sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ=="],
 
-    "hono": ["hono@4.12.30", "", {}, "sha512-emn+JoJjrN9YTpRDS5it/UI2SO9BAE37T6I3d963RxcZ81G9A4pr2SZTEiiaiKbzx+NKRg5BZ89fCL7gCJCUog=="],
+    "hono": ["hono@4.12.31", "", {}, "sha512-zJIHFrl6bq3RDd2YusFNCDlM8qUprxKswyi/OPzPyzKDdyBXDqWx8bZlZ7R+saTdSTatUmb3O7K4SspGPaEOQg=="],
 
     "html-escaper": ["html-escaper@2.0.2", "", {}, "sha512-H2iMtd0I4Mt5eYiapRdIDjp+XzelXQ0tFE4JS7YFwFevXXMmOp9myNrUvCg0D6ws8iqkRPBfKHgbwig1SmlLfg=="],
 
