@@ -82,7 +82,7 @@
   ],
   "overrides": {
     "@babel/core": "7.29.6",
-    "@hono/node-server": "1.19.13",
+    "@hono/node-server": "2.0.5",
     "esbuild": "^0.28.1",
     "fast-uri": "3.1.4",
     "hono": "4.12.31",

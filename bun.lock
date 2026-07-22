@@ -62,7 +62,7 @@
   ],
   "overrides": {
     "@babel/core": "7.29.6",
-    "@hono/node-server": "1.19.13",
+    "@hono/node-server": "2.0.5",
     "esbuild": "^0.28.1",
     "fast-uri": "3.1.4",
     "hono": "4.12.31",
@@ -208,7 +208,7 @@
 
     "@floating-ui/utils": ["@floating-ui/utils@0.2.12", "", {}, "sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww=="],
 
-    "@hono/node-server": ["@hono/node-server@1.19.13", "", { "peerDependencies": { "hono": "^4" } }, "sha512-TsQLe4i2gvoTtrHje625ngThGBySOgSK3Xo2XRYOdqGN1teR8+I7vchQC46uLJi8OF62YTYA3AhSpumtkhsaKQ=="],
+    "@hono/node-server": ["@hono/node-server@2.0.5", "", { "peerDependencies": { "hono": "^4" } }, "sha512-yQFvDmyDo3y6rEOJZDUYPJ49DIKTPpIk4kGvm40xx4Ejne0Pu9a1+exxPN+C1UppWK/WGZX9F++/Xs231tE86g=="],
 
     "@img/colour": ["@img/colour@1.1.0", "", {}, "sha512-Td76q7j57o/tLVdgS746cYARfSyxk8iEfRxewL9h4OMzYhbW4TAcppl0mT4eyqXddh6L/jwoM75mo7ixa/pCeQ=="],
 
