@@ -17,9 +17,11 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { type SerializedUnit, UnitEditor } from "@/components/capital/unit-editor";
+import { UnitTooltip } from "@/components/capital/unit-tooltip";
 import { Card, CardContent } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { DomainProduct } from "@/domain/types";
 import { formatCurrencyFull } from "@/lib/chart-config";
 import {
@@ -210,6 +212,13 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
     };
   }, [units]);
 
+  // Index products by id for O(1) tooltip lookup
+  const productById = useMemo(() => {
+    const map = new Map<string, DomainProduct>();
+    for (const p of products) map.set(p.id, p);
+    return map;
+  }, [products]);
+
   // Save filters to localStorage when they change
   useEffect(() => {
     saveFilters({
@@ -374,195 +383,156 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
   };
 
   return (
-    <div className="space-y-3 sm:space-y-4">
-      {/* Header Row: Title left, Search right */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <h1 className="flex items-center gap-2 text-xl font-bold sm:text-2xl">
-            <Warehouse className="text-primary size-5 shrink-0 sm:size-6" />
-            资本仓库
-          </h1>
-          <p className="text-muted-foreground text-xs sm:text-sm">
-            {groupedUnits.length}个分组 · {filtered.length}个单位 ·{" "}
-            {formatCurrencyFull(totalAmount)}
-          </p>
-        </div>
+    <TooltipProvider delayDuration={150} skipDelayDuration={100}>
+      <div className="space-y-3 sm:space-y-4">
+        {/* Header Row: Title left, Search right */}
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <h1 className="flex items-center gap-2 text-xl font-bold sm:text-2xl">
+              <Warehouse className="text-primary size-5 shrink-0 sm:size-6" />
+              资本仓库
+            </h1>
+            <p className="text-muted-foreground text-xs sm:text-sm">
+              {groupedUnits.length}个分组 · {filtered.length}个单位 ·{" "}
+              {formatCurrencyFull(totalAmount)}
+            </p>
+          </div>
 
-        {/* Search - right aligned, always visible */}
-        <div className="relative shrink-0">
-          <Search className="text-muted-foreground absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2" />
-          <Input
-            ref={searchInputRef}
-            placeholder="筛选 /"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="h-8 w-[120px] pl-8 pr-7 text-xs sm:h-9 sm:w-[160px] sm:text-sm"
-          />
-          {search && (
-            <button
-              type="button"
-              onClick={() => {
-                setSearch("");
-                searchInputRef.current?.focus();
-              }}
-              className="text-muted-foreground hover:text-foreground absolute right-2 top-1/2 -translate-y-1/2"
-            >
-              <X className="size-3.5" />
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Filter Rows */}
-      <Collapsible open={!filtersCollapsed} onOpenChange={(open) => setFiltersCollapsed(!open)}>
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <CollapsibleTrigger className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-[10px] sm:text-xs">
-            <ChevronDown
-              className={cn(
-                "size-3 transition-transform sm:size-3.5",
-                filtersCollapsed && "-rotate-90",
-              )}
+          {/* Search - right aligned, always visible */}
+          <div className="relative shrink-0">
+            <Search className="text-muted-foreground absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2" />
+            <Input
+              ref={searchInputRef}
+              placeholder="筛选 /"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-8 w-[120px] pl-8 pr-7 text-xs sm:h-9 sm:w-[160px] sm:text-sm"
             />
-            <span>筛选</span>
-            {activeFilterCount > 0 && (
-              <span className="bg-primary text-primary-foreground rounded-full px-1.5 text-[9px]">
-                {activeFilterCount}
-              </span>
+            {search && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch("");
+                  searchInputRef.current?.focus();
+                }}
+                className="text-muted-foreground hover:text-foreground absolute right-2 top-1/2 -translate-y-1/2"
+              >
+                <X className="size-3.5" />
+              </button>
             )}
-          </CollapsibleTrigger>
-          {/* Reset All Button - always visible */}
-          {hasActiveFilters && (
-            <button
-              type="button"
-              onClick={resetAllFilters}
-              className="text-muted-foreground hover:text-foreground ml-auto flex items-center gap-1 text-[10px] sm:text-xs"
-              title="重置所有筛选"
-            >
-              <RotateCcw className="size-3" />
-              <span className="hidden sm:inline">重置</span>
-            </button>
-          )}
+          </div>
         </div>
 
-        <CollapsibleContent className="space-y-1.5 pt-1.5 sm:space-y-2 sm:pt-2">
-          {/* Row 1: Group By */}
+        {/* Filter Rows */}
+        <Collapsible open={!filtersCollapsed} onOpenChange={(open) => setFiltersCollapsed(!open)}>
           <div className="flex items-center gap-1.5 sm:gap-2">
-            <div className="text-muted-foreground flex w-12 shrink-0 items-center gap-1 text-[10px] sm:w-14 sm:text-xs">
-              <Layers className="size-3 sm:size-3.5" />
-              <span>分组</span>
-            </div>
-            {GROUP_BY_OPTIONS.map((opt) => (
-              <button
-                type="button"
-                key={opt.value}
-                onClick={() => setGroupBy(opt.value)}
+            <CollapsibleTrigger className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-[10px] sm:text-xs">
+              <ChevronDown
                 className={cn(
-                  "rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors sm:px-2.5 sm:py-1 sm:text-xs",
-                  groupBy === opt.value
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted hover:bg-muted/80 text-muted-foreground",
+                  "size-3 transition-transform sm:size-3.5",
+                  filtersCollapsed && "-rotate-90",
                 )}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Row 2: Availability */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <div className="text-muted-foreground flex w-12 shrink-0 items-center gap-1 text-[10px] sm:w-14 sm:text-xs">
-              <Clock className="size-3 sm:size-3.5" />
-              <span>可用</span>
-            </div>
-            {AVAILABILITY_OPTIONS.map((opt) => (
+              />
+              <span>筛选</span>
+              {activeFilterCount > 0 && (
+                <span className="bg-primary text-primary-foreground rounded-full px-1.5 text-[9px]">
+                  {activeFilterCount}
+                </span>
+              )}
+            </CollapsibleTrigger>
+            {/* Reset All Button - always visible */}
+            {hasActiveFilters && (
               <button
                 type="button"
-                key={opt.value}
-                onClick={() =>
-                  setFilterAvailability(filterAvailability === opt.value ? "all" : opt.value)
-                }
-                className={cn(
-                  "rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors sm:px-2.5 sm:py-1 sm:text-xs",
-                  filterAvailability === opt.value
-                    ? opt.color
-                    : "bg-muted hover:bg-muted/80 text-muted-foreground",
-                )}
+                onClick={resetAllFilters}
+                className="text-muted-foreground hover:text-foreground ml-auto flex items-center gap-1 text-[10px] sm:text-xs"
+                title="重置所有筛选"
               >
-                {opt.label}
-              </button>
-            ))}
-            {filterAvailability !== "all" && (
-              <button
-                type="button"
-                onClick={() => setFilterAvailability("all")}
-                className="text-muted-foreground hover:text-foreground ml-1"
-              >
-                <X className="size-3" />
+                <RotateCcw className="size-3" />
+                <span className="hidden sm:inline">重置</span>
               </button>
             )}
           </div>
 
-          {/* Row 3: Status */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <div className="text-muted-foreground flex w-12 shrink-0 items-center gap-1 text-[10px] sm:w-14 sm:text-xs">
-              <Flag className="size-3 sm:size-3.5" />
-              <span>状态</span>
+          <CollapsibleContent className="space-y-1.5 pt-1.5 sm:space-y-2 sm:pt-2">
+            {/* Row 1: Group By */}
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="text-muted-foreground flex w-12 shrink-0 items-center gap-1 text-[10px] sm:w-14 sm:text-xs">
+                <Layers className="size-3 sm:size-3.5" />
+                <span>分组</span>
+              </div>
+              {GROUP_BY_OPTIONS.map((opt) => (
+                <button
+                  type="button"
+                  key={opt.value}
+                  onClick={() => setGroupBy(opt.value)}
+                  className={cn(
+                    "rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors sm:px-2.5 sm:py-1 sm:text-xs",
+                    groupBy === opt.value
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted hover:bg-muted/80 text-muted-foreground",
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
-            {STATUSES.map((s) => (
-              <button
-                type="button"
-                key={s}
-                onClick={() => toggleFilter(filterStatus, s, setFilterStatus)}
-                className={cn(
-                  "rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors sm:px-2.5 sm:py-1 sm:text-xs",
-                  filterStatus === s
-                    ? "text-primary-foreground"
-                    : "bg-muted hover:bg-muted/80 text-muted-foreground",
-                )}
-                style={
-                  filterStatus === s
-                    ? {
-                        backgroundColor: withAlpha(getStatusToken(s), 1),
-                      }
-                    : undefined
-                }
-              >
-                {s}
-              </button>
-            ))}
-            {filterStatus !== "all" && (
-              <button
-                type="button"
-                onClick={() => setFilterStatus("all")}
-                className="text-muted-foreground hover:text-foreground ml-1"
-              >
-                <X className="size-3" />
-              </button>
-            )}
-          </div>
 
-          {/* Row 3: Strategy */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <div className="text-muted-foreground flex w-12 shrink-0 items-center gap-1 text-[10px] sm:w-14 sm:text-xs">
-              <Compass className="size-3 sm:size-3.5" />
-              <span>策略</span>
+            {/* Row 2: Availability */}
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="text-muted-foreground flex w-12 shrink-0 items-center gap-1 text-[10px] sm:w-14 sm:text-xs">
+                <Clock className="size-3 sm:size-3.5" />
+                <span>可用</span>
+              </div>
+              {AVAILABILITY_OPTIONS.map((opt) => (
+                <button
+                  type="button"
+                  key={opt.value}
+                  onClick={() =>
+                    setFilterAvailability(filterAvailability === opt.value ? "all" : opt.value)
+                  }
+                  className={cn(
+                    "rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors sm:px-2.5 sm:py-1 sm:text-xs",
+                    filterAvailability === opt.value
+                      ? opt.color
+                      : "bg-muted hover:bg-muted/80 text-muted-foreground",
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+              {filterAvailability !== "all" && (
+                <button
+                  type="button"
+                  onClick={() => setFilterAvailability("all")}
+                  className="text-muted-foreground hover:text-foreground ml-1"
+                >
+                  <X className="size-3" />
+                </button>
+              )}
             </div>
-            <div className="flex flex-wrap gap-1 sm:gap-1.5">
-              {STRATEGIES.map((s) => (
+
+            {/* Row 3: Status */}
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="text-muted-foreground flex w-12 shrink-0 items-center gap-1 text-[10px] sm:w-14 sm:text-xs">
+                <Flag className="size-3 sm:size-3.5" />
+                <span>状态</span>
+              </div>
+              {STATUSES.map((s) => (
                 <button
                   type="button"
                   key={s}
-                  onClick={() => toggleFilter(filterStrategy, s, setFilterStrategy)}
+                  onClick={() => toggleFilter(filterStatus, s, setFilterStatus)}
                   className={cn(
                     "rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors sm:px-2.5 sm:py-1 sm:text-xs",
-                    filterStrategy === s
+                    filterStatus === s
                       ? "text-primary-foreground"
                       : "bg-muted hover:bg-muted/80 text-muted-foreground",
                   )}
                   style={
-                    filterStrategy === s
+                    filterStatus === s
                       ? {
-                          backgroundColor: withAlpha(getStrategyToken(s), 1),
+                          backgroundColor: withAlpha(getStatusToken(s), 1),
                         }
                       : undefined
                   }
@@ -570,239 +540,293 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
                   {s}
                 </button>
               ))}
-              {filterStrategy !== "all" && (
+              {filterStatus !== "all" && (
                 <button
                   type="button"
-                  onClick={() => setFilterStrategy("all")}
+                  onClick={() => setFilterStatus("all")}
                   className="text-muted-foreground hover:text-foreground ml-1"
                 >
                   <X className="size-3" />
                 </button>
               )}
             </div>
-          </div>
 
-          {/* Row 5: Tactics */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <div className="text-muted-foreground flex w-12 shrink-0 items-center gap-1 text-[10px] sm:w-14 sm:text-xs">
-              <Target className="size-3 sm:size-3.5" />
-              <span>战术</span>
+            {/* Row 3: Strategy */}
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="text-muted-foreground flex w-12 shrink-0 items-center gap-1 text-[10px] sm:w-14 sm:text-xs">
+                <Compass className="size-3 sm:size-3.5" />
+                <span>策略</span>
+              </div>
+              <div className="flex flex-wrap gap-1 sm:gap-1.5">
+                {STRATEGIES.map((s) => (
+                  <button
+                    type="button"
+                    key={s}
+                    onClick={() => toggleFilter(filterStrategy, s, setFilterStrategy)}
+                    className={cn(
+                      "rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors sm:px-2.5 sm:py-1 sm:text-xs",
+                      filterStrategy === s
+                        ? "text-primary-foreground"
+                        : "bg-muted hover:bg-muted/80 text-muted-foreground",
+                    )}
+                    style={
+                      filterStrategy === s
+                        ? {
+                            backgroundColor: withAlpha(getStrategyToken(s), 1),
+                          }
+                        : undefined
+                    }
+                  >
+                    {s}
+                  </button>
+                ))}
+                {filterStrategy !== "all" && (
+                  <button
+                    type="button"
+                    onClick={() => setFilterStrategy("all")}
+                    className="text-muted-foreground hover:text-foreground ml-1"
+                  >
+                    <X className="size-3" />
+                  </button>
+                )}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-1 sm:gap-1.5">
-              {TACTICS.map((t) => (
-                <button
-                  type="button"
-                  key={t}
-                  onClick={() => toggleFilter(filterTactics, t, setFilterTactics)}
-                  className={cn(
-                    "rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors sm:px-2.5 sm:py-1 sm:text-xs",
-                    filterTactics === t
-                      ? "text-primary-foreground"
-                      : "bg-muted hover:bg-muted/80 text-muted-foreground",
+
+            {/* Row 5: Tactics */}
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="text-muted-foreground flex w-12 shrink-0 items-center gap-1 text-[10px] sm:w-14 sm:text-xs">
+                <Target className="size-3 sm:size-3.5" />
+                <span>战术</span>
+              </div>
+              <div className="flex flex-wrap gap-1 sm:gap-1.5">
+                {TACTICS.map((t) => (
+                  <button
+                    type="button"
+                    key={t}
+                    onClick={() => toggleFilter(filterTactics, t, setFilterTactics)}
+                    className={cn(
+                      "rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors sm:px-2.5 sm:py-1 sm:text-xs",
+                      filterTactics === t
+                        ? "text-primary-foreground"
+                        : "bg-muted hover:bg-muted/80 text-muted-foreground",
+                    )}
+                    style={
+                      filterTactics === t
+                        ? {
+                            backgroundColor: withAlpha(getTacticsToken(t), 1),
+                          }
+                        : undefined
+                    }
+                  >
+                    {t}
+                  </button>
+                ))}
+                {filterTactics !== "all" && (
+                  <button
+                    type="button"
+                    onClick={() => setFilterTactics("all")}
+                    className="text-muted-foreground hover:text-foreground ml-1"
+                  >
+                    <X className="size-3" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Row 6: Channel (derived from data) */}
+            {channels.length > 0 && (
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <div className="text-muted-foreground flex w-12 shrink-0 items-center gap-1 text-[10px] sm:w-14 sm:text-xs">
+                  <Building2 className="size-3 sm:size-3.5" />
+                  <span>渠道</span>
+                </div>
+                <div className="flex flex-wrap gap-1 sm:gap-1.5">
+                  {channels.map((c) => (
+                    <button
+                      type="button"
+                      key={c}
+                      onClick={() => toggleFilter(filterChannel, c, setFilterChannel)}
+                      className={cn(
+                        "rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors sm:px-2.5 sm:py-1 sm:text-xs",
+                        filterChannel === c
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted hover:bg-muted/80 text-muted-foreground",
+                      )}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                  {filterChannel !== "all" && (
+                    <button
+                      type="button"
+                      onClick={() => setFilterChannel("all")}
+                      className="text-muted-foreground hover:text-foreground ml-1"
+                    >
+                      <X className="size-3" />
+                    </button>
                   )}
-                  style={
-                    filterTactics === t
-                      ? {
-                          backgroundColor: withAlpha(getTacticsToken(t), 1),
-                        }
-                      : undefined
-                  }
-                >
-                  {t}
-                </button>
-              ))}
-              {filterTactics !== "all" && (
-                <button
-                  type="button"
-                  onClick={() => setFilterTactics("all")}
-                  className="text-muted-foreground hover:text-foreground ml-1"
-                >
-                  <X className="size-3" />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Row 6: Channel (derived from data) */}
-          {channels.length > 0 && (
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <div className="text-muted-foreground flex w-12 shrink-0 items-center gap-1 text-[10px] sm:w-14 sm:text-xs">
-                <Building2 className="size-3 sm:size-3.5" />
-                <span>渠道</span>
+                </div>
               </div>
-              <div className="flex flex-wrap gap-1 sm:gap-1.5">
-                {channels.map((c) => (
-                  <button
-                    type="button"
-                    key={c}
-                    onClick={() => toggleFilter(filterChannel, c, setFilterChannel)}
-                    className={cn(
-                      "rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors sm:px-2.5 sm:py-1 sm:text-xs",
-                      filterChannel === c
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted hover:bg-muted/80 text-muted-foreground",
-                    )}
-                  >
-                    {c}
-                  </button>
-                ))}
-                {filterChannel !== "all" && (
-                  <button
-                    type="button"
-                    onClick={() => setFilterChannel("all")}
-                    className="text-muted-foreground hover:text-foreground ml-1"
-                  >
-                    <X className="size-3" />
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
+            )}
 
-          {/* Row 7: Product (derived from data) */}
-          {productNames.length > 0 && (
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <div className="text-muted-foreground flex w-12 shrink-0 items-center gap-1 text-[10px] sm:w-14 sm:text-xs">
-                <Package className="size-3 sm:size-3.5" />
-                <span>产品</span>
+            {/* Row 7: Product (derived from data) */}
+            {productNames.length > 0 && (
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <div className="text-muted-foreground flex w-12 shrink-0 items-center gap-1 text-[10px] sm:w-14 sm:text-xs">
+                  <Package className="size-3 sm:size-3.5" />
+                  <span>产品</span>
+                </div>
+                <div className="flex flex-wrap gap-1 sm:gap-1.5">
+                  {productNames.map((p) => (
+                    <button
+                      type="button"
+                      key={p}
+                      onClick={() => toggleFilter(filterProduct, p, setFilterProduct)}
+                      className={cn(
+                        "rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors sm:px-2.5 sm:py-1 sm:text-xs",
+                        filterProduct === p
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted hover:bg-muted/80 text-muted-foreground",
+                      )}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                  {filterProduct !== "all" && (
+                    <button
+                      type="button"
+                      onClick={() => setFilterProduct("all")}
+                      className="text-muted-foreground hover:text-foreground ml-1"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="flex flex-wrap gap-1 sm:gap-1.5">
-                {productNames.map((p) => (
-                  <button
-                    type="button"
-                    key={p}
-                    onClick={() => toggleFilter(filterProduct, p, setFilterProduct)}
-                    className={cn(
-                      "rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors sm:px-2.5 sm:py-1 sm:text-xs",
-                      filterProduct === p
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted hover:bg-muted/80 text-muted-foreground",
-                    )}
-                  >
-                    {p}
-                  </button>
-                ))}
-                {filterProduct !== "all" && (
-                  <button
-                    type="button"
-                    onClick={() => setFilterProduct("all")}
-                    className="text-muted-foreground hover:text-foreground ml-1"
-                  >
-                    <X className="size-3" />
-                  </button>
-                )}
+            )}
+          </CollapsibleContent>
+        </Collapsible>
+
+        {/* Grouped Waffle Grid */}
+        {groupedUnits.map(([groupName, groupUnits]) => {
+          const colorToken = getGroupToken(groupName, groupBy);
+          const groupTotal = groupUnits.reduce((sum, u) => sum + u.amount, 0);
+
+          return (
+            <div key={groupName} className="space-y-2 sm:space-y-3">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <div
+                  className="size-2.5 rounded-sm sm:size-3"
+                  style={{ backgroundColor: withAlpha(colorToken, 1) }}
+                />
+                <h2 className="text-xs font-semibold sm:text-sm">{groupName}</h2>
+                <span className="text-muted-foreground text-[10px] sm:text-xs">
+                  {groupUnits.length}个 · {formatCurrencyFull(groupTotal)}
+                </span>
               </div>
-            </div>
-          )}
-        </CollapsibleContent>
-      </Collapsible>
-
-      {/* Grouped Waffle Grid */}
-      {groupedUnits.map(([groupName, groupUnits]) => {
-        const colorToken = getGroupToken(groupName, groupBy);
-        const groupTotal = groupUnits.reduce((sum, u) => sum + u.amount, 0);
-
-        return (
-          <div key={groupName} className="space-y-2 sm:space-y-3">
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <div
-                className="size-2.5 rounded-sm sm:size-3"
-                style={{ backgroundColor: withAlpha(colorToken, 1) }}
-              />
-              <h2 className="text-xs font-semibold sm:text-sm">{groupName}</h2>
-              <span className="text-muted-foreground text-[10px] sm:text-xs">
-                {groupUnits.length}个 · {formatCurrencyFull(groupTotal)}
-              </span>
-            </div>
-            <div className="grid grid-cols-2 gap-1.5 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8 3xl:grid-cols-9 4xl:grid-cols-10">
-              {groupUnits.map((unit) => {
-                const strategyToken = getStrategyToken(unit.strategy);
-                const availabilityToken = getAvailabilityToken(
-                  unit.daysUntilAvailable,
-                  unit.status,
-                );
-                // Show different secondary info based on groupBy
-                const secondaryInfo = groupBy === "tactics" ? unit.strategy : unit.tactics;
-                return (
-                  <Card
-                    key={unit.id}
-                    className="relative cursor-pointer overflow-hidden border transition-shadow"
-                    style={{
-                      backgroundColor: withAlpha(availabilityToken, 0.1),
-                      borderColor: withAlpha(availabilityToken, 0.2),
-                    }}
-                    onClick={() => {
-                      setSelectedUnit(unit);
-                      setEditorOpen(true);
-                    }}
-                  >
-                    <div
-                      className="absolute left-0 top-0 h-full w-0.5 sm:w-1"
-                      style={{ backgroundColor: withAlpha(strategyToken, 1) }}
-                    />
-                    {/* Unit code as large watermark - full height, right aligned */}
-                    <div className="pointer-events-none absolute inset-0 flex items-center justify-end overflow-hidden pr-1.5 sm:pr-3">
-                      <span
-                        className="text-xl font-black leading-none sm:text-3xl"
-                        style={{ color: withAlpha(strategyToken, 0.35) }}
+              <div className="grid grid-cols-2 gap-1.5 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8 3xl:grid-cols-9 4xl:grid-cols-10">
+                {groupUnits.map((unit) => {
+                  const strategyToken = getStrategyToken(unit.strategy);
+                  const availabilityToken = getAvailabilityToken(
+                    unit.daysUntilAvailable,
+                    unit.status,
+                  );
+                  // Show different secondary info based on groupBy
+                  const secondaryInfo = groupBy === "tactics" ? unit.strategy : unit.tactics;
+                  const product = unit.productId ? (productById.get(unit.productId) ?? null) : null;
+                  return (
+                    <Tooltip key={unit.id}>
+                      <TooltipTrigger asChild>
+                        <Card
+                          className="relative cursor-pointer overflow-hidden border transition-shadow"
+                          style={{
+                            backgroundColor: withAlpha(availabilityToken, 0.1),
+                            borderColor: withAlpha(availabilityToken, 0.2),
+                          }}
+                          onClick={() => {
+                            setSelectedUnit(unit);
+                            setEditorOpen(true);
+                          }}
+                        >
+                          <div
+                            className="absolute left-0 top-0 h-full w-0.5 sm:w-1"
+                            style={{ backgroundColor: withAlpha(strategyToken, 1) }}
+                          />
+                          {/* Unit code as large watermark - full height, right aligned */}
+                          <div className="pointer-events-none absolute inset-0 flex items-center justify-end overflow-hidden pr-1.5 sm:pr-3">
+                            <span
+                              className="text-xl font-black leading-none sm:text-3xl"
+                              style={{ color: withAlpha(strategyToken, 0.35) }}
+                            >
+                              {getSeriesPrefix(unit.unitCode)}
+                            </span>
+                          </div>
+                          <CardContent className="relative space-y-0.5 p-1.5 pl-2 sm:p-2 sm:pl-3">
+                            <p className="text-foreground text-[10px] font-bold sm:text-xs">
+                              {formatCurrencyFull(unit.amount)}
+                            </p>
+                            <p className="text-muted-foreground truncate text-[9px] sm:text-[10px]">
+                              {secondaryInfo}
+                            </p>
+                            {unit.daysUntilAvailable != null ? (
+                              <p
+                                className="text-[9px] font-medium sm:text-[10px]"
+                                style={{ color: withAlpha(availabilityToken, 1) }}
+                              >
+                                {unit.daysUntilAvailable <= 0
+                                  ? unit.daysUntilLocked != null
+                                    ? `已可用 · 剩${unit.daysUntilLocked}天`
+                                    : "已可用"
+                                  : unit.daysUntilAvailable <= 30
+                                    ? `${unit.daysUntilAvailable}天`
+                                    : "锁定中"}
+                              </p>
+                            ) : unit.status === "计划中" ? (
+                              <p
+                                className="text-[9px] font-medium sm:text-[10px]"
+                                style={{ color: withAlpha(availabilityToken, 1) }}
+                              >
+                                计划中
+                              </p>
+                            ) : null}
+                          </CardContent>
+                        </Card>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="top"
+                        align="start"
+                        sideOffset={6}
+                        collisionPadding={8}
+                        className="border-0 bg-transparent p-0 text-inherit shadow-none [&>svg]:hidden"
                       >
-                        {getSeriesPrefix(unit.unitCode)}
-                      </span>
-                    </div>
-                    <CardContent className="relative space-y-0.5 p-1.5 pl-2 sm:p-2 sm:pl-3">
-                      <p className="text-foreground text-[10px] font-bold sm:text-xs">
-                        {formatCurrencyFull(unit.amount)}
-                      </p>
-                      <p className="text-muted-foreground truncate text-[9px] sm:text-[10px]">
-                        {secondaryInfo}
-                      </p>
-                      {unit.daysUntilAvailable != null ? (
-                        <p
-                          className="text-[9px] font-medium sm:text-[10px]"
-                          style={{ color: withAlpha(availabilityToken, 1) }}
-                        >
-                          {unit.daysUntilAvailable <= 0
-                            ? unit.daysUntilLocked != null
-                              ? `已可用 · 剩${unit.daysUntilLocked}天`
-                              : "已可用"
-                            : unit.daysUntilAvailable <= 30
-                              ? `${unit.daysUntilAvailable}天`
-                              : "锁定中"}
-                        </p>
-                      ) : unit.status === "计划中" ? (
-                        <p
-                          className="text-[9px] font-medium sm:text-[10px]"
-                          style={{ color: withAlpha(availabilityToken, 1) }}
-                        >
-                          计划中
-                        </p>
-                      ) : null}
-                    </CardContent>
-                  </Card>
-                );
-              })}
+                        <UnitTooltip unit={unit} product={product} />
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                })}
+              </div>
             </div>
+          );
+        })}
+
+        {filtered.length === 0 && (
+          <div className="text-muted-foreground py-12 text-center">
+            {search || activeFilterCount > 0 ? "未找到匹配的单位" : "暂无资本单位"}
           </div>
-        );
-      })}
+        )}
 
-      {filtered.length === 0 && (
-        <div className="text-muted-foreground py-12 text-center">
-          {search || activeFilterCount > 0 ? "未找到匹配的单位" : "暂无资本单位"}
-        </div>
-      )}
-
-      {/* Unit Editor Dialog */}
-      <UnitEditor
-        unit={selectedUnit}
-        products={products}
-        open={editorOpen}
-        onOpenChange={(open) => {
-          setEditorOpen(open);
-          if (!open) setSelectedUnit(null);
-        }}
-        onSuccess={() => router.refresh()}
-      />
-    </div>
+        {/* Unit Editor Dialog */}
+        <UnitEditor
+          unit={selectedUnit}
+          products={products}
+          open={editorOpen}
+          onOpenChange={(open) => {
+            setEditorOpen(open);
+            if (!open) setSelectedUnit(null);
+          }}
+          onSuccess={() => router.refresh()}
+        />
+      </div>
+    </TooltipProvider>
   );
 }
