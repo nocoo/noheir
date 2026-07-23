@@ -22,48 +22,12 @@ import {
   getTacticsToken,
   withAlpha,
 } from "@/lib/palette";
+import { computeUnlockPhase } from "@/lib/unit-tooltip-phase";
 import { cn } from "@/lib/utils";
 
 export interface UnitTooltipProps {
   unit: SerializedUnit;
   product: DomainProduct | null;
-}
-
-type UnlockPhase =
-  | { kind: "locked"; daysLeft: number; ratio: number | null }
-  | { kind: "openWindow"; daysLeft: number; ratio: number | null }
-  | { kind: "available"; ratio: null }
-  | { kind: "planned"; ratio: null }
-  | { kind: "archived"; ratio: null }
-  | { kind: "unknown"; ratio: null };
-
-function computeUnlockPhase(unit: SerializedUnit, product: DomainProduct | null): UnlockPhase {
-  if (unit.status === "已归档") return { kind: "archived", ratio: null };
-  if (unit.status === "计划中") return { kind: "planned", ratio: null };
-
-  const d = unit.daysUntilAvailable;
-  const dLock = unit.daysUntilLocked;
-  const lockPeriod = product?.lockPeriodDays ?? null;
-  const openDays = product?.openDays ?? null;
-  const cycleDays = product?.cycleDays ?? null;
-
-  if (d != null && d > 0) {
-    // Distinguish initial-lock vs cyclic-closed-window:
-    // once past the first unlock, remaining days must fit within one closed window
-    // (cycleDays - openDays), so use that as the denominator for cyclic products.
-    const closedWindow =
-      cycleDays != null && openDays != null && cycleDays > openDays ? cycleDays - openDays : null;
-    const isCyclicClosed = closedWindow != null && d <= closedWindow;
-    const denom = isCyclicClosed ? closedWindow : (lockPeriod ?? null);
-    const ratio = denom && denom > 0 ? Math.max(0, Math.min(1, 1 - d / denom)) : null;
-    return { kind: "locked", daysLeft: d, ratio };
-  }
-  if (dLock != null && dLock >= 0) {
-    const ratio = openDays && openDays > 0 ? Math.max(0, Math.min(1, 1 - dLock / openDays)) : null;
-    return { kind: "openWindow", daysLeft: dLock, ratio };
-  }
-  if (d != null && d <= 0) return { kind: "available", ratio: null };
-  return { kind: "unknown", ratio: null };
 }
 
 function SectionTitle({ icon, label }: { icon: React.ReactNode; label: string }) {
