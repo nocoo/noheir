@@ -117,7 +117,7 @@ export function UnitTooltip({ unit, product }: UnitTooltipProps) {
   const channel = unit.productChannel ?? product?.channel ?? null;
   const category = product?.category ?? null;
   const annual =
-    product?.annualReturnRate != null ? `${product.annualReturnRate.toFixed(2)}%` : null;
+    product?.annualReturnRate != null ? `${(product.annualReturnRate * 100).toFixed(2)}%` : null;
   const meta: string[] = [];
   if (product?.lockPeriodDays != null) meta.push(`锁定 ${product.lockPeriodDays}d`);
   if (product?.openDays != null) meta.push(`开放 ${product.openDays}d`);
