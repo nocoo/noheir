@@ -807,7 +807,8 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
                         align="start"
                         sideOffset={6}
                         collisionPadding={8}
-                        className="border-0 bg-transparent p-0 text-inherit shadow-none [&>svg]:hidden"
+                        showArrow={false}
+                        className="border-0 bg-transparent p-0 text-inherit shadow-none"
                       >
                         <UnitTooltip unit={unit} product={product} />
                       </TooltipContent>
