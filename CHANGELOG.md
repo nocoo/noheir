@@ -2,6 +2,57 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.2] - 2026-07-23
+
+### Features
+
+- add hover tooltip panel to warehouse unit cards
+
+### Fixes
+
+- detect initial-lock phase via latestInvestDate + lockPeriodDays
+- use Chinese section titles in unit tooltip
+- hide tooltip arrow via showArrow prop to remove black block
+- make warehouse unit cards keyboard-accessible
+- multiply annualReturnRate by 100 for display
+- use closed-window denominator for cyclic products in tooltip progress
+
+### Refactoring
+
+- use unified Badge components for strategy/tactics/product in tooltip
+
+### Chores
+
+- **deps** — bump @hono/node-server override 2.0.5 → 2.0.11 (security)
+- **deps** — extend sharp override to worker workspace (security)
+- **deps** — bump better-sqlite3 12.11.1 → 13.0.1
+- **deps** — add sharp override → 0.35.3 (security)
+- **deps** — bump @hono/node-server override 1.19.13 → 2.0.5 (security)
+- **deps** — bump fast-uri override 3.1.2 → 3.1.4 (security)
+- **deps** — bump @biomejs/biome 2.5.4 → 2.5.5
+- **deps** — bump @cloudflare/workers-types 5.20260719.1 → 5.20260721.1
+- **deps** — bump next 16.2.10 → 16.2.11
+- **deps** — bump postcss 8.5.20 → 8.5.21
+- **deps** — bump react + react-dom 19.2.7 → 19.2.8
+- **deps** — bump wrangler 4.112.0 → 4.113.0
+- **deps** — bump @testing-library/jest-dom 6.9.1 → 7.0.0
+- **deps** — bump recharts 3.9.2 → 3.10.0
+- **deps** — bump radix-ui 1.6.3 → 1.6.4
+- **deps** — bump @cloudflare/workers-types 5.20260718.1 → 5.20260719.1
+- **deps** — bump postcss 8.5.19 → 8.5.20
+- **deps** — bump radix-ui 1.6.2 → 1.6.3
+- **deps** — bump hono 4.12.30 → 4.12.31
+- **deps** — bump @cloudflare/workers-types 5.20260717.1 → 5.20260718.1
+- **deps** — bump lucide-react 1.24.0 → 1.25.0
+- **deps** — bump wrangler 4.111.0 → 4.112.0
+- **deps** — bump @cloudflare/workers-types 5.20260716.1 → 5.20260717.1
+- **deps** — bump tailwindcss 4.3.2 → 4.3.3
+- **deps** — bump @tailwindcss/postcss 4.3.2 → 4.3.3
+- **deps** — bump @cloudflare/workers-types 5.20260715.1 → 5.20260716.1
+- **deps** — bump wrangler 4.110.0 → 4.111.0
+- **deps** — bump @cloudflare/workers-types 5.20260713.1 → 5.20260715.1
+- **deps** — bump @biomejs/biome 2.5.3 → 2.5.4
+
 ## [2.4.1] - 2026-07-15
 
 ### Features
