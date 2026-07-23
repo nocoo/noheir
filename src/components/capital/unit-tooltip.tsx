@@ -180,7 +180,7 @@ export function UnitTooltip({ unit, product }: UnitTooltipProps) {
 
       {/* Product */}
       <div className="space-y-1.5 px-3.5 py-2.5">
-        <SectionTitle icon={<Package2 className="size-3" />} label="Product" />
+        <SectionTitle icon={<Package2 className="size-3" />} label="产品" />
         {productName ? (
           <>
             <ProductBadge productName={productName} className="text-[11px]" />
@@ -208,7 +208,7 @@ export function UnitTooltip({ unit, product }: UnitTooltipProps) {
 
       {/* Timeline */}
       <div className="space-y-1 px-3.5 py-2.5">
-        <SectionTitle icon={<CalendarClock className="size-3" />} label="Timeline" />
+        <SectionTitle icon={<CalendarClock className="size-3" />} label="时间线" />
         <div className="space-y-1 pt-0.5">
           <DataRow
             label="起始"
@@ -237,7 +237,7 @@ export function UnitTooltip({ unit, product }: UnitTooltipProps) {
 
       {/* Unlock Status */}
       <div className="space-y-2 px-3.5 py-2.5">
-        <SectionTitle icon={<Activity className="size-3" />} label="Unlock Status" />
+        <SectionTitle icon={<Activity className="size-3" />} label="解禁状态" />
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5">
             <span
@@ -292,7 +292,7 @@ export function UnitTooltip({ unit, product }: UnitTooltipProps) {
         <>
           <Separator className="opacity-40" />
           <div className="space-y-1 px-3.5 py-2.5">
-            <SectionTitle icon={<Sparkles className="size-3" />} label="Note" />
+            <SectionTitle icon={<Sparkles className="size-3" />} label="备注" />
             <p className="text-foreground/80 line-clamp-3 text-[11px] leading-relaxed">
               {unit.note}
             </p>
