@@ -42,10 +42,17 @@ function computeUnlockPhase(unit: SerializedUnit, product: DomainProduct | null)
   const dLock = unit.daysUntilLocked;
   const lockPeriod = product?.lockPeriodDays ?? null;
   const openDays = product?.openDays ?? null;
+  const cycleDays = product?.cycleDays ?? null;
 
   if (d != null && d > 0) {
-    const ratio =
-      lockPeriod && lockPeriod > 0 ? Math.max(0, Math.min(1, 1 - d / lockPeriod)) : null;
+    // Distinguish initial-lock vs cyclic-closed-window:
+    // once past the first unlock, remaining days must fit within one closed window
+    // (cycleDays - openDays), so use that as the denominator for cyclic products.
+    const closedWindow =
+      cycleDays != null && openDays != null && cycleDays > openDays ? cycleDays - openDays : null;
+    const isCyclicClosed = closedWindow != null && d <= closedWindow;
+    const denom = isCyclicClosed ? closedWindow : (lockPeriod ?? null);
+    const ratio = denom && denom > 0 ? Math.max(0, Math.min(1, 1 - d / denom)) : null;
     return { kind: "locked", daysLeft: d, ratio };
   }
   if (dLock != null && dLock >= 0) {
