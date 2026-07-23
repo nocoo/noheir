@@ -738,7 +738,10 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
                     <Tooltip key={unit.id}>
                       <TooltipTrigger asChild>
                         <Card
-                          className="relative cursor-pointer overflow-hidden border transition-shadow"
+                          role="button"
+                          tabIndex={0}
+                          aria-label={`资金单元 ${unit.unitCode}`}
+                          className="focus-visible:ring-ring relative cursor-pointer overflow-hidden border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
                           style={{
                             backgroundColor: withAlpha(availabilityToken, 0.1),
                             borderColor: withAlpha(availabilityToken, 0.2),
@@ -746,6 +749,13 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
                           onClick={() => {
                             setSelectedUnit(unit);
                             setEditorOpen(true);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              setSelectedUnit(unit);
+                              setEditorOpen(true);
+                            }
                           }}
                         >
                           <div
