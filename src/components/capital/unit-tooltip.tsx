@@ -6,7 +6,10 @@ import {
   CategoryBadge,
   ChannelBadge,
   CurrencyBadge,
+  ProductBadge,
   StatusBadge,
+  StrategyBadge,
+  TacticsBadge,
   UnitCodeBadge,
 } from "@/components/ui/colored-badge";
 import { Separator } from "@/components/ui/separator";
@@ -168,25 +171,8 @@ export function UnitTooltip({ unit, product }: UnitTooltipProps) {
           <CurrencyBadge currency={unit.currency} className="text-[10px]" />
         </div>
         <div className="text-muted-foreground flex flex-wrap items-center gap-1 text-[10px]">
-          <span
-            className="rounded-sm px-1.5 py-0.5 font-medium"
-            style={{
-              backgroundColor: withAlpha(strategyToken, 0.15),
-              color: withAlpha(strategyToken, 1),
-            }}
-          >
-            {unit.strategy}
-          </span>
-          <span className="opacity-40">·</span>
-          <span
-            className="rounded-sm px-1.5 py-0.5 font-medium"
-            style={{
-              backgroundColor: withAlpha(tacticsToken, 0.15),
-              color: withAlpha(tacticsToken, 1),
-            }}
-          >
-            {unit.tactics}
-          </span>
+          <StrategyBadge strategy={unit.strategy} className="text-[10px]" />
+          <TacticsBadge tactics={unit.tactics} className="text-[10px]" />
         </div>
       </div>
 
@@ -197,7 +183,7 @@ export function UnitTooltip({ unit, product }: UnitTooltipProps) {
         <SectionTitle icon={<Package2 className="size-3" />} label="Product" />
         {productName ? (
           <>
-            <div className="text-foreground truncate text-[12px] font-medium">{productName}</div>
+            <ProductBadge productName={productName} className="text-[11px]" />
             <div className="flex flex-wrap items-center gap-1">
               {channel && <ChannelBadge channel={channel} className="text-[9px] px-1.5 py-0" />}
               {category && <CategoryBadge category={category} className="text-[9px] px-1.5 py-0" />}
