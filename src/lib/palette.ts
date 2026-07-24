@@ -234,8 +234,7 @@ export function getAvailabilityToken(
   if (status === "计划中") return "chart-7"; // orange
   if (daysUntilAvailable == null) return "chart-4"; // green fallback
   if (daysUntilAvailable <= 0) return "chart-4"; // green
-  if (daysUntilAvailable <= 30) return "chart-6"; // amber
-  return "chart-9"; // red
+  return "chart-9"; // red (locked, any duration)
 }
 
 /** Get CSS-variable color string for a strategy (for SVG/Recharts). */
