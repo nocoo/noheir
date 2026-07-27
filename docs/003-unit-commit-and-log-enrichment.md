@@ -377,7 +377,12 @@ const rows = await db.select({
 
 SQL 只按 `operation_date DESC` 排，次级排序在 JS 里做（单元维度只有几十行，SQL 排序无收益，且 `CASE` 表达式还得往 `worker/tests/setup.ts` 里抄一份）。
 
-**顺带修 `getLatestInvestLogs`**：它用同样有问题的 `desc(createdAt)` 做次级排序，喂给 `/warehouse`、`/funds` 和 MCP 的 `availableDate`。同一 `operation_date` 上有两条不同编码的 invest 日志时会选错。用同一个比较器修掉。
+**顺带修两个共用同一坏排序的读取路径**：
+
+1. `getLatestInvestLogs`（`worker/db/repositories/contribution-logs.ts:34-72`）—— 用同样有问题的 `desc(createdAt)` 做次级排序，喂给 `/warehouse`、`/funds` 和 MCP 的 `availableDate`。同一 `operation_date` 上有两条不同编码的 invest 日志时会选错。
+2. `search()`（同文件 `:124`）—— `/capital-logs` 主列表的排序，同样是 `desc(operationDate), desc(createdAt)`。**只修单元时间线不够**：主日志页是用户看历史的主入口，两处必须用同一个比较器，否则同一批数据在两个页面顺序不一致。
+
+两处都改为「SQL 只按 `operation_date DESC` 排 → JS 侧用 `sortLogsForTimeline` 做次级排序」。`search()` 因为有 `limit/offset` 分页，需注意归一化排序发生在**分页之后**（页内重排），这对 500 条上限内的单元时间线无影响，对主列表则意味着跨页边界的同日期记录顺序仍可能不理想 —— 记入 [Risk 8]，本期不做跨页全量排序。
 
 ### [Decision I] 不动 "productId 必须单独更新" 约束
 
@@ -508,8 +513,10 @@ buildCommitPayload({ unit, form, operations, commitNote, operationDate }): Commi
 
 | # | Commit | 文件 | 门控 |
 |---|---|---|---|
-| P1-C1 | `feat(schema): add pnl_cents to contribution_logs` | `worker/db/schema.ts`, `worker/tests/setup.ts` | 仓库测试加 pnl 用例；typecheck |
-| P1-C2 | `feat(db): add 0008 pnl_cents migration` | `worker/db/migrations/0008_contribution_log_pnl.sql` | 本地 `wrangler d1 migrations apply --local`；**部署门：合并后先 `--remote` 应用，再合入后续 commit** |
+| P1-C1 | `feat(db): add 0008 pnl_cents migration` | `worker/db/migrations/0008_contribution_log_pnl.sql` | 本地 `wrangler d1 migrations apply noheir-db --local`；**部署门：本 commit 合并后立即 `--remote` 应用到生产，确认 `PRAGMA table_info(contribution_logs)` 含 `pnl_cents` 后，才继续合入 P1-C2** |
+| P1-C2 | `feat(schema): add pnl_cents to contribution_logs` | `worker/db/schema.ts`, `worker/tests/setup.ts` | 仓库测试加 pnl 用例；typecheck |
+
+> **顺序不可颠倒**：先 migration、再 schema/代码。反过来会出现"已部署的 Worker 引用了远端尚不存在的列"的窗口，`pnl_cents` 相关查询会直接 500。这也是为什么两个 commit 之间夹了一道**人工部署门**而不是连续合并。
 | P1-C3 | `feat(worker): normalize mixed created_at encodings` | `worker/lib/contribution-log-time.ts` | 新建测试，每一支覆盖，≥95% |
 | P1-C4 | `fix(worker): tiebreak latest invest log by normalized time` | `worker/db/repositories/contribution-logs.ts` | 混合编码夹具测试 |
 | P1-C5 | `feat(worker): list unit logs with normalized timestamps` | 同仓库文件（原始 `sql<>` 投影） | 仓库测试 |
@@ -548,11 +555,13 @@ P3-C1 提取 `unit-panel-primitives.tsx` · P3-C2 `unit-log-timeline.tsx` + RTL 
 ## Risks & Mitigations
 
 1. **守卫链 SQL 写错 → 静默空提交**。缓解：构建器是纯函数且 95% 门控；e2e 必须包含"并发修改导致 409"与"全成/全不成"两类断言。回退：`/commit` 是新端点，旧 `PUT` 路径未动，revert P1-C9 即可。
-2. **`worker/tests/setup.ts` 的 DDL 与 migration 分叉**。缓解：P1-C1 与 P1-C2 相邻落地，且 P1-C1 的测试会因缺列而失败，形成天然门控。
+2. **`worker/tests/setup.ts` 的 DDL 与 migration 分叉**。缓解：P1-C1（migration）与 P1-C2（schema + 测试 DDL）相邻落地，且 P1-C2 的测试会因缺列而失败，形成天然门控。
 3. **Drizzle 时间戳编解码器吃掉原始值**。缓解：仓库用 `sql<>` 原始投影；测试用原始 sqlite 插入三种编码夹具。
 4. **`max-w-6xl` 在 1024–1280px 之间过挤**。缓解：`lg:` 断点为 1024px，先在 1280px 与 1024px 两档手测；必要时提到 `xl:grid-cols-3`。
 5. **时间线无分页**：`searchContributionLogs` 上限 500。缓解：取 500 上限并在列表底部标注"仅显示最近 500 条"。
 6. **提交后对话框数据陈旧**：`router.refresh()` 重渲页面但不刷新对话框内**自行拉取**的时间线。缓解：提交成功后对话框自己重拉日志，并清空暂存操作与备注框。
+7. **存量 65 条 MCP withdraw 符号错误污染汇总**（B2a）。因"存量不管"不回填，`summarizeByUnit` 对这些单元的"累计投入"会偏高。缓解：P2-C7 修好写入侧后不再新增；在 `/capital-logs` 的统计卡加一行脚注说明历史 MCP 数据可能失真。若后续要修，是一条独立的一次性 `UPDATE ... SET amount_cents = -amount_cents WHERE source='mcp' AND operation_type='withdraw' AND amount_cents > 0`，需单独 spec 评估。
+8. **主日志列表跨页排序**：`search()` 的归一化次级排序发生在 SQL 分页之后，跨页边界上同 `operation_date` 的记录顺序仍可能不理想。缓解：本期只保证页内正确；单元时间线（500 条上限、无分页）不受影响。
 
 ## References
 
