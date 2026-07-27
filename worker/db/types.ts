@@ -54,6 +54,9 @@ export interface ContributionSummary {
   totalInvested: number;
   totalWithdrawn: number;
   netAmount: number;
+  /** Sum of pnl_cents, treating NULL as 0. Required, not optional — callers
+   *  would otherwise all need `?? 0`. See docs/003 § Decision J. */
+  totalPnl: number;
   logCount: number;
   unitCount?: number; // Only for product summary
 }

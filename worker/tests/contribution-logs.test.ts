@@ -295,6 +295,56 @@ describe("ContributionLogsRepo", () => {
     expect(summary.totalWithdrawn).toBe(50000);
     expect(summary.netAmount).toBe(250000);
     expect(summary.logCount).toBe(3);
+    expect(summary.totalPnl).toBe(0);
+  });
+
+  test("summarizeByUnit sums pnlCents, treating null as 0", async () => {
+    const repos = getTestRepos();
+    const unit = await repos.units.create(userId, baseUnit);
+
+    await repos.contributionLogs.create(userId, {
+      unitId: unit.id,
+      operationType: "withdraw",
+      amountCents: -100000,
+      pnlCents: 5000,
+      operationDate: "2026-01-01",
+    });
+    await repos.contributionLogs.create(userId, {
+      unitId: unit.id,
+      operationType: "withdraw",
+      amountCents: -50000,
+      pnlCents: -1200,
+      operationDate: "2026-02-01",
+    });
+    await repos.contributionLogs.create(userId, {
+      unitId: unit.id,
+      operationType: "invest",
+      amountCents: 100000,
+      operationDate: "2026-03-01",
+    });
+
+    const summary = await repos.contributionLogs.summarizeByUnit(userId, unit.id);
+    expect(summary.totalPnl).toBe(3800);
+  });
+
+  // docs/003 § 待确认 4: zero-amount adjust rows fall into the `else` branch and
+  // land in totalWithdrawn (adding 0) while still counting toward logCount.
+  // Numerically harmless — pinned here rather than changed.
+  test("summarizeByUnit counts zero-amount adjust rows in logCount", async () => {
+    const repos = getTestRepos();
+    const unit = await repos.units.create(userId, baseUnit);
+
+    await repos.contributionLogs.create(userId, {
+      unitId: unit.id,
+      operationType: "adjust",
+      amountCents: 0,
+      operationDate: "2026-01-01",
+    });
+
+    const summary = await repos.contributionLogs.summarizeByUnit(userId, unit.id);
+    expect(summary.totalInvested).toBe(0);
+    expect(summary.totalWithdrawn).toBe(0);
+    expect(summary.logCount).toBe(1);
   });
 
   test("summarizeByProduct with multiple units", async () => {

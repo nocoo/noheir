@@ -249,8 +249,10 @@ export function createContributionLogsRepo(db: DrizzleD1Database) {
 
       let totalInvested = 0;
       let totalWithdrawn = 0;
+      let totalPnl = 0;
 
       for (const row of rows) {
+        totalPnl += row.pnlCents ?? 0;
         if (row.amountCents > 0) {
           totalInvested += row.amountCents;
         } else {
@@ -262,6 +264,7 @@ export function createContributionLogsRepo(db: DrizzleD1Database) {
         totalInvested,
         totalWithdrawn,
         netAmount: totalInvested - totalWithdrawn,
+        totalPnl,
         logCount: rows.length,
       };
     },
@@ -281,10 +284,12 @@ export function createContributionLogsRepo(db: DrizzleD1Database) {
 
       let totalInvested = 0;
       let totalWithdrawn = 0;
+      let totalPnl = 0;
       const unitIds = new Set<string>();
 
       for (const row of rows) {
         unitIds.add(row.unitId);
+        totalPnl += row.pnlCents ?? 0;
         if (row.amountCents > 0) {
           totalInvested += row.amountCents;
         } else {
@@ -296,6 +301,7 @@ export function createContributionLogsRepo(db: DrizzleD1Database) {
         totalInvested,
         totalWithdrawn,
         netAmount: totalInvested - totalWithdrawn,
+        totalPnl,
         logCount: rows.length,
         unitCount: unitIds.size,
       };
