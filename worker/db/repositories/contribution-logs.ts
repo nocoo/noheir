@@ -1,5 +1,17 @@
-import { and, desc, eq, gte, inArray, isNotNull, isNull, lte } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  getTableColumns,
+  gte,
+  inArray,
+  isNotNull,
+  isNull,
+  lte,
+  sql,
+} from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
+import { compareLogsForTimeline, normalizeLogTimestamp } from "../../lib/contribution-log-time";
 import { capitalUnits, contributionLogs, financialProducts } from "../schema";
 import type {
   ContributionLog,
@@ -46,8 +58,13 @@ export function createContributionLogsRepo(db: DrizzleD1Database) {
 
       for (let i = 0; i < unitIds.length; i += BATCH_SIZE) {
         const batch = unitIds.slice(i, i + BATCH_SIZE);
+        // Project created_at raw: Drizzle's mode:"timestamp" codec would decode
+        // the three production encodings (ms / s / ISO text) incorrectly.
         const rows = await db
-          .select()
+          .select({
+            ...getTableColumns(contributionLogs),
+            rawCreatedAt: sql<number | string | null>`${contributionLogs.createdAt}`,
+          })
           .from(contributionLogs)
           .where(
             and(
@@ -57,11 +74,26 @@ export function createContributionLogsRepo(db: DrizzleD1Database) {
               isNull(contributionLogs.deletedAt),
             ),
           )
-          .orderBy(desc(contributionLogs.operationDate), desc(contributionLogs.createdAt))
+          .orderBy(desc(contributionLogs.operationDate))
           .all();
 
+        const sorted = [...rows].sort((a, b) =>
+          compareLogsForTimeline(
+            {
+              operationDate: a.operationDate,
+              createdAtMs: normalizeLogTimestamp(a.rawCreatedAt),
+              id: a.id,
+            },
+            {
+              operationDate: b.operationDate,
+              createdAtMs: normalizeLogTimestamp(b.rawCreatedAt),
+              id: b.id,
+            },
+          ),
+        );
+
         // Group by unitId, take the first (latest) for each
-        for (const row of rows) {
+        for (const { rawCreatedAt: _rawCreatedAt, ...row } of sorted) {
           if (!result.has(row.unitId)) {
             result.set(row.unitId, row);
           }

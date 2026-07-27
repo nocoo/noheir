@@ -1,5 +1,6 @@
+import { sql } from "drizzle-orm";
 import { beforeEach, describe, expect, test } from "vitest";
-import { getTestRepos, resetTestDb, seedUser } from "./setup";
+import { getTestDb, getTestRepos, resetTestDb, seedUser } from "./setup";
 
 describe("ContributionLogsRepo", () => {
   const userId = "test-user-1";
@@ -88,6 +89,32 @@ describe("ContributionLogsRepo", () => {
 
     const found = await repos.contributionLogs.findById(userId, withPnl.id);
     expect(found?.pnlCents).toBe(12345);
+  });
+
+  test("getLatestInvestLogs picks newest across mixed created_at encodings", async () => {
+    const repos = getTestRepos();
+    const db = getTestDb();
+    const unit = await repos.units.create(userId, baseUnit);
+    const product = await repos.products.create(userId, baseProduct);
+
+    // Three production encodings, same operation_date, inserted raw to bypass
+    // Drizzle's timestamp codec. Newest is `auto` (see docs/003 § B1).
+    const rows = [
+      ["log-mcp", "2026-07-02T05:51:49.226Z"], // ISO text  → 1782971509226ms
+      ["log-auto", 1784956591451], // integer ms
+      ["log-drizzle", 1751435509], // integer seconds → 1751435509000ms
+    ] as const;
+
+    for (const [id, createdAt] of rows) {
+      db.run(
+        sql`INSERT INTO contribution_logs
+          (id, user_id, unit_id, product_id, operation_type, amount_cents, operation_date, source, created_at, updated_at)
+          VALUES (${id}, ${userId}, ${unit.id}, ${product.id}, 'invest', 100000, '2026-07-02', 'manual', ${createdAt}, ${createdAt})`,
+      );
+    }
+
+    const latest = await repos.contributionLogs.getLatestInvestLogs(userId, [unit.id]);
+    expect(latest.get(unit.id)?.id).toBe("log-auto");
   });
 
   test("search with filters", async () => {
