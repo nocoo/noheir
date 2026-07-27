@@ -151,6 +151,39 @@ export const MATURITY_TOKEN_MAP: Record<string, string> = {
   "90天以上": "chart-3", // jade
 };
 
+/**
+ * Product category → chart token mapping.
+ *
+ * Product badges colour by category rather than by name: 34 products hashed
+ * into 22 slots collide ~79% of the time (pigeonhole, not a hash defect), so
+ * two unrelated products would share a colour with no meaning behind it. With
+ * 12 categories in 22 slots every category gets its own hue, and two products
+ * sharing a colour now tells the reader something true — they are the same kind.
+ *
+ * Hues are grouped by risk family so neighbours read as related, while keeping
+ * enough separation inside each family to stay distinguishable:
+ *   cash & deposits → sky / teal / cobalt · fixed income → jade / seafoam / green
+ *   equity & index → red / orange / tangerine / rose · insurance → purple / orchid
+ */
+export const PRODUCT_CATEGORY_TOKEN_MAP: Record<string, string> = {
+  // Cash & deposits — cool, calm
+  "现金+": "chart-1", // sky
+  货币基金: "chart-2", // teal
+  定期存款: "chart-15", // cobalt
+  // Fixed income — green-leaning
+  债券基金: "chart-3", // jade
+  混债基金: "chart-18", // seafoam
+  理财产品: "chart-4", // green
+  // Equity & index — warm, higher risk
+  股票基金: "chart-9", // red
+  指数基金: "chart-7", // orange
+  宽基指数: "chart-21", // tangerine
+  私募基金: "chart-10", // rose
+  // Insurance & pension — purple family
+  养老年金: "chart-13", // purple
+  储蓄保险: "chart-12", // orchid
+};
+
 // Note: DEFAULT_TOKEN removed - we now use hashToChartToken for unknown values
 
 // ── Vivid color indices (excluding gray/steel: 16, 23) ──
@@ -222,6 +255,25 @@ export function getCurrencyToken(currency: string): string {
  */
 export function getMaturityToken(period: string): string {
   return MATURITY_TOKEN_MAP[period] ?? hashToChartToken(period);
+}
+
+/**
+ * Get chart token for a product category.
+ * Unknown categories fall back to a hash so nothing renders colourless.
+ */
+export function getProductCategoryToken(category: string): string {
+  return PRODUCT_CATEGORY_TOKEN_MAP[category] ?? hashToChartToken(category);
+}
+
+/**
+ * Get chart token for a product.
+ *
+ * Prefers the product's category (stable, meaningful, collision-free across the
+ * 12 known categories) and falls back to hashing the name when the category is
+ * unknown — e.g. logs that only snapshotted `product_name`.
+ */
+export function getProductToken(productName: string, category?: string | null): string {
+  return category ? getProductCategoryToken(category) : hashToChartToken(productName);
 }
 
 /**

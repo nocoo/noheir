@@ -10,12 +10,15 @@ import {
   chartPrimary,
   currencyColor,
   getCurrencyToken,
+  getProductCategoryToken,
+  getProductToken,
   getStatusToken,
   getStrategyToken,
   getTacticsToken,
   hashToChartToken,
   MATURITY_TOKEN_MAP,
   maturityColor,
+  PRODUCT_CATEGORY_TOKEN_MAP,
   STATUS_TOKEN_MAP,
   STRATEGY_TOKEN_MAP,
   statusColor,
@@ -129,6 +132,54 @@ describe("palette", () => {
       const tokens = Array.from({ length: 100 }, (_, i) => hashToChartToken(`test-${i}`));
       expect(tokens).not.toContain("chart-16");
       expect(tokens).not.toContain("chart-23");
+    });
+  });
+
+  describe("product category colouring", () => {
+    // 34 real products hashed into 22 slots collide ~79% of the time — a
+    // pigeonhole limit, not a hash defect. Colouring by category instead gives
+    // every one of the 12 categories its own hue, so a shared colour now means
+    // "same kind of product" rather than "unlucky hash".
+    it("gives every known category a distinct token", () => {
+      const categories = Object.keys(PRODUCT_CATEGORY_TOKEN_MAP);
+      const tokens = categories.map((c) => getProductCategoryToken(c));
+      expect(categories).toHaveLength(12);
+      expect(new Set(tokens).size).toBe(categories.length);
+    });
+
+    it("never assigns the gray tokens to a category", () => {
+      const tokens = Object.values(PRODUCT_CATEGORY_TOKEN_MAP);
+      expect(tokens).not.toContain("chart-16");
+      expect(tokens).not.toContain("chart-23");
+    });
+
+    it("falls back to a hash for an unknown category", () => {
+      expect(getProductCategoryToken("未知类别")).toMatch(/^chart-\d+$/);
+    });
+
+    it("colours a product by its category when known", () => {
+      expect(getProductToken("活期+ PLUS (5万)", "货币基金")).toBe(
+        getProductCategoryToken("货币基金"),
+      );
+    });
+
+    it("gives same-category products the same colour", () => {
+      // The exact pair that collided arbitrarily under name hashing.
+      expect(getProductToken("活期+ PLUS (5万)", "货币基金")).toBe(
+        getProductToken("活期+ PLUS (1万)", "货币基金"),
+      );
+    });
+
+    it("separates products of different categories", () => {
+      expect(getProductToken("享定存三年期", "定期存款")).not.toBe(
+        getProductToken("金盈年年养老年金", "养老年金"),
+      );
+    });
+
+    it("falls back to name hashing when the category is absent", () => {
+      // Log rows that only snapshotted product_name still get a colour.
+      expect(getProductToken("灵活宝")).toBe(hashToChartToken("灵活宝"));
+      expect(getProductToken("灵活宝", null)).toBe(hashToChartToken("灵活宝"));
     });
   });
 

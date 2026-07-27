@@ -1,41 +1,25 @@
 /**
  * Colored Badge Components
  *
- * Uses centralized color token system from palette.ts for domain-specific
- * badges (strategy, tactics, status, currency). Falls back to tag-colors
- * for generic labels.
+ * Every badge here renders from the chart token palette in palette.ts, so the
+ * capital domain reads as one system in both light and dark mode. Known values
+ * (strategy, tactics, status, currency, product category) get a dedicated hue;
+ * free-text values (unit code prefix, channel) are hashed onto the same palette.
  */
 
 import { Badge } from "@/components/ui/badge";
 import {
   getCurrencyToken,
+  getProductCategoryToken,
+  getProductToken,
   getStatusToken,
   getStrategyToken,
   getTacticsToken,
   hashToChartToken,
   withAlpha,
 } from "@/lib/palette";
-import { getLabelColorClasses, getUnitCodePrefix } from "@/lib/tag-colors";
+import { getUnitCodePrefix } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
-
-interface ColoredBadgeProps {
-  label: string;
-  className?: string | undefined;
-}
-
-/**
- * Generic auto-colored badge using tag-colors (Tailwind classes).
- * Uses 20-color DJB2 hash algorithm for consistent colors.
- */
-export function ColoredBadge({ label, className }: ColoredBadgeProps) {
-  const { bg, text } = getLabelColorClasses(label);
-
-  return (
-    <Badge variant="outline" className={cn(bg, text, "border-transparent font-normal", className)}>
-      {label}
-    </Badge>
-  );
-}
 
 /**
  * Badge using chart color token (CSS variables).
@@ -110,24 +94,41 @@ export function CurrencyBadge({ currency, className }: { currency: string; class
   return <ChartColorBadge label={currency} token={token} className={className} />;
 }
 
-/** Channel badge (generic auto-colored) */
+/** Channel badge — channels are free text, so hashed onto the chart palette. */
 export function ChannelBadge({ channel, className }: { channel: string; className?: string }) {
-  return <ColoredBadge label={channel} className={className} />;
+  return (
+    <ChartColorBadge label={channel} token={hashToChartToken(channel)} className={className} />
+  );
 }
 
-/** Category badge (generic auto-colored) */
+/** Category badge — one dedicated hue per known product category. */
 export function CategoryBadge({ category, className }: { category: string; className?: string }) {
-  return <ColoredBadge label={category} className={className} />;
+  return (
+    <ChartColorBadge
+      label={category}
+      token={getProductCategoryToken(category)}
+      className={className}
+    />
+  );
 }
 
-/** Product name badge (generic auto-colored) */
+/**
+ * Product name badge.
+ *
+ * Coloured by `category` when known: hashing 34 product names into 22 slots
+ * collides ~79% of the time, which made two unrelated products share a colour
+ * for no reason. Category colouring makes a shared colour mean "same kind".
+ * Falls back to hashing the name when no category is available.
+ */
 export function ProductBadge({
   productName,
+  category,
   className,
 }: {
   productName: string;
+  category?: string | null | undefined;
   className?: string;
 }) {
-  const token = hashToChartToken(productName);
+  const token = getProductToken(productName, category);
   return <ChartColorBadge label={productName} token={token} className={className} />;
 }
