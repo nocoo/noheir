@@ -33,19 +33,19 @@ export interface ExpectedUnitSnapshot {
 }
 
 export interface CommitMetadata {
-  unitCode?: string;
-  amountCents?: number;
-  currency?: string;
-  status?: string;
-  strategy?: string;
-  tactics?: string;
-  startDate?: string | null;
-  unitNote?: string | null;
+  unitCode?: string | undefined;
+  amountCents?: number | undefined;
+  currency?: string | undefined;
+  status?: string | undefined;
+  strategy?: string | undefined;
+  tactics?: string | undefined;
+  startDate?: string | null | undefined;
+  unitNote?: string | null | undefined;
 }
 
 export type CommitOperation =
   | { kind: "swap_unit_code"; targetUnitId: string }
-  | { kind: "switch_product"; toProductId: string | null; pnlCents?: number | null };
+  | { kind: "switch_product"; toProductId: string | null; pnlCents?: number | null | undefined };
 
 export interface SwapTarget {
   id: string;
@@ -253,7 +253,11 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
 
   // ── [3..n] logs, each guarded on the unit reaching its post-state ──
   const unitStatementCount = statements.length;
-  const logGuard = `EXISTS (SELECT 1 FROM capital_units WHERE id = ? AND user_id = ? AND unit_code = ?)`;
+  // updated_at is the discriminator: only statement [0] writes this exact value,
+  // so a collapsed batch leaves every log INSERT matching zero rows. unit_code
+  // alone is not enough — a commit that changes neither code nor product would
+  // otherwise pass the guard even after [0] failed its CAS.
+  const logGuard = `EXISTS (SELECT 1 FROM capital_units WHERE id = ? AND user_id = ? AND unit_code = ? AND updated_at = ?)`;
   const pushLog = (log: {
     unitId: string;
     productId: string | null;
@@ -287,6 +291,7 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
         log.unitId,
         userId,
         log.guardUnitCode,
+        now,
       ],
     });
   };

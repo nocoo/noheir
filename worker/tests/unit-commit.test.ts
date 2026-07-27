@@ -153,6 +153,18 @@ describe("buildCommitStatements — CAS guard", () => {
     const [head] = buildCommitStatements(makeInput({ metadata: { amountCents: 2 } }));
     expect(head?.sql).toContain("end_date = ?");
   });
+
+  // Regression: a commit that changes neither unit_code nor product still has to
+  // collapse its log INSERTs when [0] loses the CAS. updated_at is the only
+  // value unique to this batch, so it is what the log guard keys off.
+  test("log guard keys off updated_at, not just unit_code", () => {
+    const stmts = buildCommitStatements(
+      makeInput({ metadata: { strategy: "短期理财" }, commitNote: "n" }),
+    );
+    const log = stmts.find((s) => s.sql.includes("INSERT INTO contribution_logs"));
+    expect(log?.sql).toContain("updated_at = ?");
+    expect(log?.params.slice(-4)).toEqual(["unit-a", "u1", "CU01-001", NOW]);
+  });
 });
 
 describe("buildCommitStatements — swap_unit_code", () => {

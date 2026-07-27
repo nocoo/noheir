@@ -5,6 +5,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { type AllRepos, createAllRepos } from "../db/repositories";
 import {
+  commitUnitSchema,
   createContributionLogSchema,
   createExpenseCategorySchema,
   createProductSchema,
@@ -17,6 +18,7 @@ import {
   updateRecurringExpenseSchema,
   updateUnitSchema,
 } from "../db/validation";
+import { buildCommitStatements } from "../lib/unit-commit";
 import { APP_VERSION, COMPONENT_NAME } from "../lib/version";
 
 /** Strip undefined values from an object at runtime.
@@ -934,6 +936,126 @@ app.delete("/api/units/:id", async (c) => {
   const repos = c.get("repos");
   const ok = await repos.units.delete(userId, c.req.param("id"));
   return ok ? c.json({ success: true }) : c.json({ error: "Not found" }, 404);
+});
+
+// ── Unit Commit (docs/003) ──
+
+/**
+ * Timeline for one unit, plus the raw snapshot the client echoes back as
+ * `expected` on commit. Returned together so the two can't drift, and so the
+ * client is never tempted to build `expected` from a mapped/defaulted shape.
+ */
+app.get("/api/units/:id/logs", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const id = c.req.param("id");
+
+  const unit = await repos.units.findById(userId, id);
+  if (!unit) {
+    return c.json({ error: "Not found" }, 404);
+  }
+
+  const logs = await repos.contributionLogs.listByUnit(userId, id);
+
+  return c.json({
+    logs,
+    expected: {
+      unitCode: unit.unitCode,
+      amountCents: unit.amountCents,
+      productId: unit.productId,
+      currency: unit.currency,
+      status: unit.status,
+      strategy: unit.strategy,
+      tactics: unit.tactics,
+      startDate: unit.startDate,
+      endDate: unit.endDate,
+      note: unit.note,
+    },
+  });
+});
+
+app.post("/api/units/:id/commit", async (c) => {
+  const userId = c.get("userId");
+  const repos = c.get("repos");
+  const d1 = c.get("d1");
+  const id = c.req.param("id");
+  const body = await c.req.json();
+
+  const parsed = commitUnitSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: parsed.error.issues.map((i) => i.message).join("; ") }, 400);
+  }
+
+  const original = await repos.units.findById(userId, id);
+  if (!original) {
+    return c.json({ error: "Not found" }, 404);
+  }
+
+  const { metadata, operations, commitNote, expected } = parsed.data;
+  const operationDate = parsed.data.operationDate ?? getLocalDateString();
+
+  // ── Referential checks (Zod cannot query the DB) ──
+  const swapOp = operations.find((o) => o.kind === "swap_unit_code");
+  let swapTarget: { id: string; unitCode: string } | undefined;
+  if (swapOp) {
+    if (swapOp.targetUnitId === id) {
+      return c.json({ error: "Cannot swap a unit code with itself" }, 400);
+    }
+    const target = await repos.units.findById(userId, swapOp.targetUnitId);
+    if (!target) {
+      return c.json({ error: "Swap target unit not found" }, 404);
+    }
+    swapTarget = { id: target.id, unitCode: target.unitCode };
+  }
+
+  const switchOp = operations.find((o) => o.kind === "switch_product");
+  let toProduct: { id: string; name: string | null } | null = null;
+  if (switchOp) {
+    if (switchOp.toProductId === original.productId) {
+      return c.json({ error: "Unit is already in that product" }, 400);
+    }
+    if (switchOp.pnlCents != null && !original.productId) {
+      return c.json({ error: "pnl requires an existing product to withdraw from" }, 400);
+    }
+    if (switchOp.toProductId) {
+      const product = await repos.products.findById(userId, switchOp.toProductId);
+      if (!product) {
+        return c.json({ error: "Target product not found" }, 404);
+      }
+      toProduct = { id: product.id, name: product.name };
+    }
+  }
+
+  const fromProduct = original.productId
+    ? await repos.products.findById(userId, original.productId)
+    : null;
+
+  const statements = buildCommitStatements({
+    userId,
+    unitId: id,
+    expected,
+    metadata,
+    operations,
+    operationDate,
+    commitNote,
+    swapTarget,
+    fromProduct: fromProduct ? { id: fromProduct.id, name: fromProduct.name } : null,
+    toProduct,
+    now: Date.now(),
+    newId: () => crypto.randomUUID(),
+  });
+
+  // One batch = one transaction. A stale `expected` makes statement [0] match
+  // zero rows, which collapses every guarded statement after it — so a conflict
+  // is a committed no-op we detect here rather than a partial write.
+  const results = await d1.batch(statements.map((s) => d1.prepare(s.sql).bind(...s.params)));
+
+  if (!results[0]?.meta.changes) {
+    return c.json({ error: "Conflict: unit was modified by another request. Please retry." }, 409);
+  }
+
+  const row = await repos.units.findById(userId, id);
+  return c.json({ unit: row });
 });
 
 // ── Contribution Logs ──
