@@ -139,7 +139,8 @@ export interface UnitDisplayInfo extends DomainUnit {
 // ── Contribution Log types ──
 
 export type ContributionOperationType = "invest" | "withdraw" | "adjust";
-export type ContributionSource = "manual" | "auto" | "import";
+/** "mcp" mirrors 132 existing production rows — see docs/003 § Decision K. */
+export type ContributionSource = "manual" | "auto" | "import" | "mcp";
 
 export interface DomainContributionLog {
   id: string;
