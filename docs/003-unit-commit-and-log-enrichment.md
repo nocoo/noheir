@@ -207,8 +207,10 @@ export const commitUnitSchema = z.object({
 
 | 字段 | 落库位置 | 语义 | 生命周期 |
 |---|---|---|---|
-| `metadata.unitNote` | `capital_units.note` | 单元的**持久**备注 | 一直存在，可被后续编辑覆盖 |
-| `commitNote` | `contribution_logs.note` | **本次提交**的审计备注 | 写入即不可变，构成历史 |
+| `metadata.unitNote` | `capital_units.note` | 单元的**持久**备注 | 随单元存在，每次编辑覆盖前值，只保留最新 |
+| `commitNote` | `contribution_logs.note` | **本次提交**的审计备注 | 随日志行永久留存；后续再提交只会新增行，不会改动旧行 |
+
+> `commitNote` 落库后**不会被后续提交覆盖**（每次提交写新行），但它**不是技术上不可变** —— 现有 `PUT /api/contribution-logs/:id`（`updateContributionLogSchema`）允许单独编辑某条日志的 `note`，`/capital-logs` 页面也提供了编辑入口。本期不收紧该 API：事后修正笔误是合理需求，且日志行本就带 `updatedAt`。
 
 校验分两层：**形状**用 Zod 判别联合（`db/validation.ts` 在 worker 覆盖率 `include` 内，白拿测试覆盖）；**引用完整性**在端点内查库 —— 目标单元存在且属于本人、目标 ≠ 自己、目标产品存在、新产品 ≠ 当前产品，以及 [Decision D] 的损益前置条件。
 
@@ -515,18 +517,20 @@ buildCommitPayload({ unit, form, operations, commitNote, operationDate }): Commi
 |---|---|---|---|
 | P1-C1 | `feat(db): add 0008 pnl_cents migration` | `worker/db/migrations/0008_contribution_log_pnl.sql` | 本地 `wrangler d1 migrations apply noheir-db --local`；**部署门：本 commit 合并后立即 `--remote` 应用到生产，确认 `PRAGMA table_info(contribution_logs)` 含 `pnl_cents` 后，才继续合入 P1-C2** |
 | P1-C2 | `feat(schema): add pnl_cents to contribution_logs` | `worker/db/schema.ts`, `worker/tests/setup.ts` | 仓库测试加 pnl 用例；typecheck |
-
-> **顺序不可颠倒**：先 migration、再 schema/代码。反过来会出现"已部署的 Worker 引用了远端尚不存在的列"的窗口，`pnl_cents` 相关查询会直接 500。这也是为什么两个 commit 之间夹了一道**人工部署门**而不是连续合并。
 | P1-C3 | `feat(worker): normalize mixed created_at encodings` | `worker/lib/contribution-log-time.ts` | 新建测试，每一支覆盖，≥95% |
 | P1-C4 | `fix(worker): tiebreak latest invest log by normalized time` | `worker/db/repositories/contribution-logs.ts` | 混合编码夹具测试 |
-| P1-C5 | `feat(worker): list unit logs with normalized timestamps` | 同仓库文件（原始 `sql<>` 投影） | 仓库测试 |
-| P1-C6 | `feat(worker): accept pnlCents in log validation` | `worker/db/validation.ts` + 仓库 `Pick<>` | validation 测试 + **回归测试钉死 B3** |
-| P1-C7 | `feat(worker): unit commit statement builder` | `worker/lib/unit-commit.ts`（纯，含 `resolveEndDate`） | 新建测试，≥95%，覆盖 4 种归档状态转移（[Decision F]） —— **本期承重 commit** |
-| P1-C8 | `feat(worker): add commitUnitSchema` | `worker/db/validation.ts` | validation 测试 |
-| P1-C9 | `feat(worker): POST /api/units/:id/commit` | `worker/src/index.ts`（仅管道） | 新建 e2e：409（全字段锚点）、全成/全不成、`endDate` 不变量、无产品时带 pnl 返 400 |
-| P1-C10 | `feat(worker): GET /api/units/:id/logs` | `worker/src/index.ts` | e2e |
-| P1-C11 | `fix(worker): use local date for auto-log operation_date` | `worker/src/index.ts:814` | e2e 断言本地日期（B4） |
-| P1-C12 | `feat(worker): include totalPnl in unit summary` | 仓库 + 端点 | 仓库测试 + e2e |
+| P1-C5 | `fix(worker): apply normalized sort to log search` | 同仓库文件 `search()` | 仓库测试：同 `operation_date` 下三种编码混排结果稳定 |
+| P1-C6 | `feat(worker): list unit logs with normalized timestamps` | 同仓库文件（原始 `sql<>` 投影） | 仓库测试 |
+| P1-C7 | `feat(worker): accept pnlCents in log validation` | `worker/db/validation.ts` + 仓库 `Pick<>` | validation 测试 + **回归测试钉死 B3** |
+| P1-C8 | `feat(worker): unit commit statement builder` | `worker/lib/unit-commit.ts`（纯，含 `resolveEndDate`） | 新建测试，≥95%，覆盖 4 种归档状态转移（[Decision F]） —— **本期承重 commit** |
+| P1-C9 | `feat(worker): add commitUnitSchema` | `worker/db/validation.ts` | validation 测试 |
+| P1-C10 | `feat(worker): POST /api/units/:id/commit` | `worker/src/index.ts`（仅管道） | 新建 e2e：409（全字段锚点）、全成/全不成、`endDate` 不变量、无产品时带 pnl 返 400、**全 NULL 可选字段的单元能正常提交**（[Decision B]） |
+| P1-C11 | `feat(worker): GET /api/units/:id/logs` | `worker/src/index.ts` | e2e |
+| P1-C12 | `fix(worker): use local date for auto-log operation_date` | `worker/src/index.ts:814` | e2e 断言本地日期（B4） |
+| P1-C13 | `feat(worker): include totalPnl in summaries` | 仓库 + `worker/db/types.ts` + 端点 | 仓库测试 + e2e（见 [Decision J]） |
+| P1-C14 | `feat(worker): add mcp to contribution sources` | `worker/db/enums.ts` + validation | validation 测试（见 [Decision K]） |
+
+> **P1-C1 / P1-C2 顺序不可颠倒**：先 migration、再 schema/代码。反过来会出现"已部署的 Worker 引用了远端尚不存在的列"的窗口，`pnl_cents` 相关查询会直接 500。这也是为什么两个 commit 之间夹了一道**人工部署门**而不是连续合并。
 
 ### Phase 2 — Domain + Actions（不碰 UI）
 
@@ -554,7 +558,7 @@ P3-C1 提取 `unit-panel-primitives.tsx` · P3-C2 `unit-log-timeline.tsx` + RTL 
 
 ## Risks & Mitigations
 
-1. **守卫链 SQL 写错 → 静默空提交**。缓解：构建器是纯函数且 95% 门控；e2e 必须包含"并发修改导致 409"与"全成/全不成"两类断言。回退：`/commit` 是新端点，旧 `PUT` 路径未动，revert P1-C9 即可。
+1. **守卫链 SQL 写错 → 静默空提交**。缓解：构建器是纯函数且 95% 门控；e2e 必须包含"并发修改导致 409"与"全成/全不成"两类断言。回退：`/commit` 是新端点，旧 `PUT` 路径未动，revert P1-C10 即可。
 2. **`worker/tests/setup.ts` 的 DDL 与 migration 分叉**。缓解：P1-C1（migration）与 P1-C2（schema + 测试 DDL）相邻落地，且 P1-C2 的测试会因缺列而失败，形成天然门控。
 3. **Drizzle 时间戳编解码器吃掉原始值**。缓解：仓库用 `sql<>` 原始投影；测试用原始 sqlite 插入三种编码夹具。
 4. **`max-w-6xl` 在 1024–1280px 之间过挤**。缓解：`lg:` 断点为 1024px，先在 1280px 与 1024px 两档手测；必要时提到 `xl:grid-cols-3`。
