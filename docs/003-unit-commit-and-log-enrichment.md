@@ -107,7 +107,9 @@ WHERE operation_date NOT GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]';
 
 ### B3. `contribution-logs` 仓库 `update()` 有字段白名单
 
-`worker/db/repositories/contribution-logs.ts:224-228` 的 `Pick<>` 只列了 5 个字段。**不加 `"pnlCents"` 就会静默丢弃**，且调用点因 `stripUndefined` 放宽类型而不报错。
+`worker/db/repositories/contribution-logs.ts:224-228` 的 `Pick<>` 只列了 5 个字段。**不加 `"pnlCents"` 则端点层无法把它传进来** —— 端点用 `stripUndefined(parsed.data)` 传参，多出的字段会被 TS 在调用点拒绝。
+
+> **实测澄清**：这是**类型层**护栏，不是运行时行为。直接调仓库并绕过类型（如测试里）时，Drizzle 仍会把字段写入 DB；移除白名单项也**不会**让 `tsc --noEmit` 报错（调用点在端点，不在仓库）。所以针对它写"回归测试"是无效的 —— 测试只能锁住"pnl 可被更新"这一行为本身。
 
 ### B4. 自动日志用 UTC 而非本地日期
 
@@ -601,7 +603,7 @@ buildCommitPayload({ unit, form, operations, commitNote, operationDate }): Commi
 | P1-C4 | `fix(worker): tiebreak latest invest log by normalized time` | `worker/db/repositories/contribution-logs.ts` | 混合编码夹具测试 |
 | P1-C5 | `fix(worker): apply normalized sort to log search` | 同仓库文件 `search()` | 仓库测试：同 `operation_date` 下三种编码混排结果稳定 |
 | P1-C6 | `feat(worker): list unit logs with normalized timestamps` | 同仓库文件（原始 `sql<>` 投影） | 仓库测试 |
-| P1-C7 | `feat(worker): accept pnlCents in log validation` | `worker/db/validation.ts` + 仓库 `Pick<>` | validation 测试 + **回归测试钉死 B3** |
+| P1-C7 | `feat(worker): accept pnlCents in log validation` | `worker/db/validation.ts` + 仓库 `Pick<>` | validation 测试 + 仓库 pnl 更新行为测试（B3 澄清见上） |
 | P1-C8 | `feat(worker): unit commit statement builder` | `worker/lib/unit-commit.ts`（纯，含 `resolveEndDate`） | 新建测试，≥95%，覆盖 5 种归档状态转移（[Decision F]） —— **本期承重 commit** |
 | P1-C9 | `feat(worker): add commitUnitSchema` | `worker/db/validation.ts` | validation 测试 |
 | P1-C10 | `feat(worker): POST /api/units/:id/commit` | `worker/src/index.ts`（仅管道） | 新建 e2e：409（全字段锚点）、全成/全不成、`endDate` 不变量、无产品时带 pnl 返 400、**全 NULL 可选字段的单元能正常提交**（[Decision B]） |

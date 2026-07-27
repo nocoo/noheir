@@ -184,6 +184,7 @@ export const createContributionLogSchema = z.object({
   }),
   amountCents: z.number().int("amountCents must be an integer"),
   balanceAfterCents: z.number().int().optional().nullable(),
+  pnlCents: z.number().int().optional().nullable(),
   operationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "operationDate must be YYYY-MM-DD"),
   source: z.enum(CONTRIBUTION_SOURCES).default("manual"),
   note: z.string().max(1000).optional().nullable(),
@@ -194,6 +195,7 @@ export const updateContributionLogSchema = z
     operationType: z.enum(CONTRIBUTION_OPERATION_TYPES).optional(),
     amountCents: z.number().int().optional(),
     balanceAfterCents: z.number().int().optional().nullable(),
+    pnlCents: z.number().int().optional().nullable(),
     operationDate: z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/)

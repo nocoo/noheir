@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  createContributionLogSchema,
   createProductSchema,
   createUnitSchema,
   updateContributionLogSchema,
@@ -428,5 +429,45 @@ describe("updateContributionLogSchema", () => {
       amountCents: 1234,
     });
     expect(result.success).toBe(true);
+  });
+
+  test("accepts pnlCents including negative and null", () => {
+    expect(updateContributionLogSchema.safeParse({ pnlCents: 500 }).success).toBe(true);
+    expect(updateContributionLogSchema.safeParse({ pnlCents: -500 }).success).toBe(true);
+    expect(updateContributionLogSchema.safeParse({ pnlCents: null }).success).toBe(true);
+  });
+
+  test("rejects non-integer pnlCents", () => {
+    expect(updateContributionLogSchema.safeParse({ pnlCents: 1.5 }).success).toBe(false);
+  });
+});
+
+describe("createContributionLogSchema", () => {
+  const base = {
+    unitId: "123e4567-e89b-12d3-a456-426614174000",
+    operationType: "invest" as const,
+    amountCents: 100000,
+    operationDate: "2026-07-27",
+  };
+
+  test("accepts valid log without pnlCents", () => {
+    const result = createContributionLogSchema.safeParse(base);
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.source).toBe("manual");
+  });
+
+  test("accepts pnlCents including negative and null", () => {
+    expect(createContributionLogSchema.safeParse({ ...base, pnlCents: 500 }).success).toBe(true);
+    expect(createContributionLogSchema.safeParse({ ...base, pnlCents: -500 }).success).toBe(true);
+    expect(createContributionLogSchema.safeParse({ ...base, pnlCents: null }).success).toBe(true);
+  });
+
+  test("rejects non-integer pnlCents", () => {
+    expect(createContributionLogSchema.safeParse({ ...base, pnlCents: 1.5 }).success).toBe(false);
+  });
+
+  test("rejects malformed operationDate", () => {
+    const result = createContributionLogSchema.safeParse({ ...base, operationDate: "2026-7-2" });
+    expect(result.success).toBe(false);
   });
 });

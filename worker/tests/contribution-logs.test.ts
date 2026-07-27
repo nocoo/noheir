@@ -383,6 +383,32 @@ describe("ContributionLogsRepo", () => {
     expect(updated?.note).toBe("Updated amount");
   });
 
+  // docs/003 § B3: update()'s Pick<> allowlist is a TYPE-level guard — it stops
+  // the endpoint layer from passing pnlCents through stripUndefined(). Drizzle
+  // itself would persist the field either way, so this test locks the behaviour
+  // rather than the allowlist.
+  test("update persists pnlCents", async () => {
+    const repos = getTestRepos();
+    const unit = await repos.units.create(userId, baseUnit);
+
+    const created = await repos.contributionLogs.create(userId, {
+      unitId: unit.id,
+      operationType: "withdraw",
+      amountCents: -100000,
+      operationDate: "2026-04-01",
+    });
+    expect(created.pnlCents).toBeNull();
+
+    const updated = await repos.contributionLogs.update(userId, created.id, { pnlCents: 4200 });
+    expect(updated?.pnlCents).toBe(4200);
+
+    const reread = await repos.contributionLogs.findById(userId, created.id);
+    expect(reread?.pnlCents).toBe(4200);
+
+    const cleared = await repos.contributionLogs.update(userId, created.id, { pnlCents: null });
+    expect(cleared?.pnlCents).toBeNull();
+  });
+
   test("user isolation", async () => {
     const repos = getTestRepos();
     seedUser("other-user", "other@example.com");

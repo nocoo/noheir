@@ -319,7 +319,12 @@ export function createContributionLogsRepo(db: DrizzleD1Database) {
       data: Partial<
         Pick<
           ContributionLog,
-          "operationType" | "amountCents" | "balanceAfterCents" | "operationDate" | "note"
+          | "operationType"
+          | "amountCents"
+          | "balanceAfterCents"
+          | "pnlCents"
+          | "operationDate"
+          | "note"
         >
       >,
     ): Promise<ContributionLog | null> {
