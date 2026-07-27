@@ -91,7 +91,7 @@ FROM contribution_logs GROUP BY 1,2;
 
 `summarizeByUnit`（`worker/db/repositories/contribution-logs.ts:158-163`）按 `amountCents > 0` 判定投入 —— 这 65 条取出会被全部统计成投入。**这比时间戳问题严重得多**，它直接污染金额汇总。
 
-**B2b — `source='mcp'` 不在枚举内。** `CONTRIBUTION_SOURCES`（`worker/db/enums.ts:63`）只有 `manual | auto | import`，但生产有 132 行 `mcp`。这些行**无法通过 `/capital-logs` 的来源筛选器**，也会让 `searchContributionLogsSchema` 的 `source` 参数永远匹配不到它们。
+**B2b — `source='mcp'` 不在枚举内。** `CONTRIBUTION_SOURCES`（`worker/db/enums.ts:63`）只有 `manual | auto | import`，但生产有 132 行 `mcp`。这些行**无法通过 `/capital-logs` 的来源筛选器**，也会让 `searchContributionLogsSchema` 的 `source` 参数永远匹配不到它们。处理方案见 [Decision K]（正式入枚举，而非改写为 `auto`）。
 
 **B2c — ISO 时间戳写进了 `operation_date`。** `logNow`（完整 ISO 串）被绑给 `operation_date`，该列约定 `YYYY-MM-DD`。生产验证：
 
@@ -103,7 +103,7 @@ WHERE operation_date NOT GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]';
 
 `operation_date` 是时间线的**主排序键**，必须修。
 
-> **三者必须一起修**（P2-C7），只修日期不足以阻止错误数据继续产生。修完加回归测试钉死符号与来源。存量的 65 条错误符号行按"存量不管"处理，但需在 [Risk 7] 记录其对汇总的已知影响。
+> **B2a 与 B2c 必须一起修**（P2-C7）—— 只修日期不足以阻止错误数据继续产生，修完加回归测试钉死符号。**B2b 走另一条路**：不改 MCP 的写入值，而是把 `mcp` 正式加进枚举（[Decision K]，P1-C14 + P2-C8）。存量的 65 条错误符号行按"存量不管"处理，但需在 [Risk 7] 记录其对汇总的已知影响。
 
 ### B3. `contribution-logs` 仓库 `update()` 有字段白名单
 
@@ -434,6 +434,26 @@ SQL 只按 `operation_date DESC` 排，次级排序在 JS 里做（单元维度�
 
 聚合口径：`SUM(COALESCE(pnl_cents, 0))`，跳过软删除行（与现有 `summarizeByUnit` 的 `deletedAt IS NULL` 条件一致）。`unitCount?: number` 那种"仅 product 侧有"的可选字段模式**不复用** —— 它已经是既有设计里的一处别扭，不该再加一个。
 
+### [Decision K] `source='mcp'` 正式入枚举，而非改写为 `auto`
+
+B2b 指出生产有 132 行 `source='mcp'`，而 `CONTRIBUTION_SOURCES`（`worker/db/enums.ts:63`）只有 `manual | auto | import`。两条路可走：
+
+| 方案 | 做法 | 问题 |
+|---|---|---|
+| ① 未来写 `auto` | MCP 改成写已有的 `auto` | **存量 132 行不迁移**（存量不管），它们会永远卡在枚举外：`/capital-logs` 的来源筛选器筛不出、`searchContributionLogsSchema` 的 `source` 参数匹配不到。等于把已知脏数据永久藏起来 |
+| ② **正式加 `mcp`**（采纳） | 枚举、领域类型、UI 筛选器同步加 | 改动面跨 worker/web，需拆两个 commit |
+
+**选 ②**。理由是存量既然不迁移，枚举就必须**如实反映库里真实存在的值**，否则筛选器对用户撒谎。而且 `mcp` 与 `auto` 语义本就不同 —— 一个是 AI 助手代操作，一个是系统在用户改产品时自动补记，混为一谈会丢失可追溯性。
+
+**必须拆两个 commit**（文档自身规则：任何 commit 不得同时改 `worker/` 与 `src/`）：
+
+- **P1-C14** `feat(worker): add mcp to contribution sources` —— `worker/db/enums.ts:63` 加 `"mcp"`；`createContributionLogSchema` / `searchContributionLogsSchema` 自动跟随（它们引用同一常量）。测试：`worker/tests/validation.test.ts` 断言 `source: "mcp"` 通过校验。
+- **P2-C8** `feat(types): add mcp to contribution source union` —— `src/domain/types.ts:142` 的 union 加 `"mcp"`；`src/app/capital-logs/capital-logs-client.tsx:62` 的 `SOURCES` 数组加 `{ value: "mcp", label: "AI 助手" }`。
+
+> **部署顺序**：P1-C14 先上（worker 放宽校验），P2-C8 后上（web 展示）。反过来会出现 web 发 `source=mcp` 查询而 worker 校验拒绝的窗口。
+
+> 注意 P2-C7 修的是**未来**的 MCP 写入（符号/日期），P1-C14 + P2-C8 解决的是**存量**132 行的可见性。两者互补，都要做。
+
 ---
 
 ## UI
@@ -520,7 +540,7 @@ buildCommitPayload({ unit, form, operations, commitNote, operationDate }): Commi
 | `src/domain/types.ts` | `DomainContributionLog` 加 `pnl`；`ContributionSummary` 加 `totalPnl` |
 | `src/app/actions/contribution-log-actions.ts` | create/update 加 `pnl?`，`Math.round(pnl * 100)` |
 | `src/app/capital-logs/capital-logs-client.tsx` | 加"收益"列（否则损益在主日志页不可见） |
-| `src/lib/mcp/tools/unit.ts:576,600` | **不需要**改 pnl（显式列表 + 可空列）；但要修 B2 三重缺陷：金额符号、`source` 枚举、`operation_date` 格式 |
+| `src/lib/mcp/tools/unit.ts:576,600` | **不需要**改 pnl（显式列表 + 可空列）；但要修 B2a（金额符号）与 B2c（`operation_date` 格式）。`source` 保持写 `'mcp'`，改的是枚举而非写入值（[Decision K]） |
 
 备份/恢复与 MCP 查询不枚举 `contribution_logs` 列 —— 已核实，无影响。
 
@@ -570,7 +590,7 @@ buildCommitPayload({ unit, form, operations, commitNote, operationDate }): Commi
 
 ### Phase 2 — Domain + Actions（不碰 UI）
 
-P2-C1 类型（`DomainContributionLog.pnl`、`ContributionSummary.totalPnl`、`SerializedUnit` 迁至 `src/domain/types.ts` 并 re-export）· P2-C2 `capital-mappers.ts`（pnl + `createdAtMs`）· P2-C3 `worker-db-client.ts`（`commitUnit`、`listUnitLogs`、pnl 参数）· P2-C4 `src/lib/unit-commit-plan.ts` + 测试 · P2-C5 `refactor: fold unit-update-diff into unit-commit-plan` + 测试迁移 · P2-C6 Server Actions · **P2-C7 `fix(mcp): correct withdraw sign, source and date format`（B2a/b/c 一并修 + 回归测试）**
+P2-C1 类型（`DomainContributionLog.pnl`、`ContributionSummary.totalPnl`、`SerializedUnit` 迁至 `src/domain/types.ts` 并 re-export）· P2-C2 `capital-mappers.ts`（pnl + `createdAtMs`）· P2-C3 `worker-db-client.ts`（`commitUnit`、`listUnitLogs`、pnl 参数、两个 summary 加 `totalPnl`）· P2-C4 `src/lib/unit-commit-plan.ts` + 测试 · P2-C5 `refactor: fold unit-update-diff into unit-commit-plan` + 测试迁移 · P2-C6 Server Actions · **P2-C7 `fix(mcp): correct withdraw sign, source and date format`（B2a/b/c 一并修 + 回归测试）** · **P2-C8 `feat(types): add mcp to contribution source union`（[Decision K]，须在 P1-C14 之后部署）**
 
 ### Phase 3 — UI
 
