@@ -366,7 +366,26 @@ export function resolveEndDate(
 
 ### 新增 `GET /api/units/:id/logs`
 
-返回该单元全部日志（上限 500），`created_at` 已在**服务端归一化**为 `createdAtMs: number | null`，前端不再重复实现归一化逻辑。
+**一次请求同时满足对话框的两个需求**：时间线数据 + `expected` 并发快照。
+
+```ts
+{
+  logs: Array<ContributionLogRow & { createdAtMs: number | null }>,  // 上限 500，已归一化排序
+  expected: ExpectedUnitSnapshot,   // 与 expectedUnitSchema 同形状的 10 个字段
+}
+```
+
+`created_at` 已在**服务端归一化**为 `createdAtMs: number | null`（[Decision H]），前端不再重复实现归一化逻辑。
+
+**`expected` 一并返回，而不是让前端另调 `GET /api/units/:id`**，有三个理由：
+
+1. **原子性**：两次请求之间单元可能被改，快照与日志会来自不同时刻。同一次查询取出，`expected` 与 `logs` 天然一致。
+2. **防误用**：前端手边已有映射过的 `SerializedUnit`，若不显式给一份 raw 快照，实现者极可能顺手拿它当 `expected` —— 而 `toDomainUnit` 的 `?? ""` / `?? "CNY"` 兜底会让守卫恒不匹配（[Decision B]）。返回专用字段是把正确用法变成默认用法。
+3. **少一次往返**：对话框打开时只发一个请求。
+
+`ExpectedUnitSnapshot` 直接取自 `repos.units.findById()` 的原始行（`null` 保持 `null`，不经任何映射），字段与 `expectedUnitSchema` 严格一一对应 —— 客户端把它**原样**放进 `/commit` 的 `expected` 即可，不做任何加工。
+
+`src/lib/worker-db-client.ts` 的 `listUnitLogs` 返回类型必须同步声明这两个 key，否则前端拿不到 `expected` 且无类型报错（与 [Decision J] 里两个 summary 方法内联声明的坑同源）。
 
 ### [Decision H] 时间戳归一化
 
@@ -449,14 +468,15 @@ B2b 指出生产有 132 行 `source='mcp'`，而 `CONTRIBUTION_SOURCES`（`worke
 
 **选 ②**。理由是存量既然不迁移，枚举就必须**如实反映库里真实存在的值**，否则筛选器对用户撒谎。而且 `mcp` 与 `auto` 语义本就不同 —— 一个是 AI 助手代操作，一个是系统在用户改产品时自动补记，混为一谈会丢失可追溯性。
 
-**必须拆两个 commit**（文档自身规则：任何 commit 不得同时改 `worker/` 与 `src/`）：
+**必须拆三个 commit**（文档自身规则：任何 commit 不得同时改 `worker/` 与 `src/`；且 Phase 2 不碰 UI）：
 
 - **P1-C14** `feat(worker): add mcp to contribution sources` —— `worker/db/enums.ts:63` 加 `"mcp"`；`createContributionLogSchema` / `searchContributionLogsSchema` 自动跟随（它们引用同一常量）。测试：`worker/tests/validation.test.ts` 断言 `source: "mcp"` 通过校验。
-- **P2-C8** `feat(types): add mcp to contribution source union` —— `src/domain/types.ts:142` 的 union 加 `"mcp"`；`src/app/capital-logs/capital-logs-client.tsx:62` 的 `SOURCES` 数组加 `{ value: "mcp", label: "AI 助手" }`。
+- **P2-C8** `feat(types): add mcp to contribution source union` —— 仅改 `src/domain/types.ts:142` 的 union 加 `"mcp"`。**不含 UI**。
+- **P3-C7**（并入既有的 `/capital-logs` 改动）—— `src/app/capital-logs/capital-logs-client.tsx:62` 的 `SOURCES` 数组加 `{ value: "mcp", label: "AI 助手" }`。
 
-> **部署顺序**：P1-C14 先上（worker 放宽校验），P2-C8 后上（web 展示）。反过来会出现 web 发 `source=mcp` 查询而 worker 校验拒绝的窗口。
+> **部署顺序**：P1-C14 先上（worker 放宽校验），P2-C8 / P3-C7 后上（web 展示）。反过来会出现 web 发 `source=mcp` 查询而 worker 校验拒绝的窗口。
 
-> 注意 P2-C7 修的是**未来**的 MCP 写入（符号/日期），P1-C14 + P2-C8 解决的是**存量**132 行的可见性。两者互补，都要做。
+> 注意 P2-C7 修的是**未来**的 MCP 写入（符号/日期），P1-C14 + P2-C8 + P3-C7 解决的是**存量** 132 行的可见性。两者互补，都要做。
 
 ---
 
@@ -543,7 +563,7 @@ buildCommitPayload({ unit, form, operations, commitNote, operationDate }): Commi
 | `src/lib/capital-mappers.ts` | `toDomainContributionLog`（:69-90）加 `pnl`；`createdAt`（:87）改为优先取 `createdAtMs` |
 | `src/domain/types.ts` | `DomainContributionLog` 加 `pnl`；`ContributionSummary` 加 `totalPnl` |
 | `src/app/actions/contribution-log-actions.ts` | create/update 加 `pnl?`，`Math.round(pnl * 100)` |
-| `src/app/capital-logs/capital-logs-client.tsx` | 加"收益"列（否则损益在主日志页不可见） |
+| `src/app/capital-logs/capital-logs-client.tsx` | 加"收益"列（否则损益在主日志页不可见）；`SOURCES` 数组加 `mcp`（[Decision K]，P3-C7） |
 | `src/lib/mcp/tools/unit.ts:576,600` | **不需要**改 pnl（显式列表 + 可空列）；但要修 B2a（金额符号）与 B2c（`operation_date` 格式）。`source` 保持写 `'mcp'`，改的是枚举而非写入值（[Decision K]） |
 
 备份/恢复与 MCP 查询不枚举 `contribution_logs` 列 —— 已核实，无影响。
@@ -585,7 +605,7 @@ buildCommitPayload({ unit, form, operations, commitNote, operationDate }): Commi
 | P1-C8 | `feat(worker): unit commit statement builder` | `worker/lib/unit-commit.ts`（纯，含 `resolveEndDate`） | 新建测试，≥95%，覆盖 5 种归档状态转移（[Decision F]） —— **本期承重 commit** |
 | P1-C9 | `feat(worker): add commitUnitSchema` | `worker/db/validation.ts` | validation 测试 |
 | P1-C10 | `feat(worker): POST /api/units/:id/commit` | `worker/src/index.ts`（仅管道） | 新建 e2e：409（全字段锚点）、全成/全不成、`endDate` 不变量、无产品时带 pnl 返 400、**全 NULL 可选字段的单元能正常提交**（[Decision B]） |
-| P1-C11 | `feat(worker): GET /api/units/:id/logs` | `worker/src/index.ts` | e2e |
+| P1-C11 | `feat(worker): GET /api/units/:id/logs` | `worker/src/index.ts` | e2e：`logs` 已归一化排序 + **`expected` 的 10 个字段与 DB 原始值逐一相等（`null` 不被兜底）** |
 | P1-C12 | `fix(worker): use local date for auto-log operation_date` | `worker/src/index.ts:814` | e2e 断言本地日期（B4） |
 | P1-C13 | `feat(worker): include totalPnl in summaries` | 仓库 + `worker/db/types.ts` + 端点 | 仓库测试 + e2e（见 [Decision J]） |
 | P1-C14 | `feat(worker): add mcp to contribution sources` | `worker/db/enums.ts` + validation | validation 测试（见 [Decision K]） |
@@ -594,11 +614,11 @@ buildCommitPayload({ unit, form, operations, commitNote, operationDate }): Commi
 
 ### Phase 2 — Domain + Actions（不碰 UI）
 
-P2-C1 类型（`DomainContributionLog.pnl`、`ContributionSummary.totalPnl`、`SerializedUnit` 迁至 `src/domain/types.ts` 并 re-export）· P2-C2 `capital-mappers.ts`（pnl + `createdAtMs`）· P2-C3 `worker-db-client.ts`（`commitUnit`、`listUnitLogs`、pnl 参数、两个 summary 加 `totalPnl`）· P2-C4 `src/lib/unit-commit-plan.ts` + 测试 · P2-C5 `refactor: fold unit-update-diff into unit-commit-plan` + 测试迁移 · P2-C6 Server Actions · **P2-C7 `fix(mcp): correct withdraw sign, source and date format`（B2a/b/c 一并修 + 回归测试）** · **P2-C8 `feat(types): add mcp to contribution source union`（[Decision K]，须在 P1-C14 之后部署）**
+P2-C1 类型（`DomainContributionLog.pnl`、`ContributionSummary.totalPnl`、`SerializedUnit` 迁至 `src/domain/types.ts` 并 re-export）· P2-C2 `capital-mappers.ts`（pnl + `createdAtMs`）· P2-C3 `worker-db-client.ts`（`commitUnit`、`listUnitLogs` 含 `expected`、pnl 参数、两个 summary 加 `totalPnl`）· P2-C4 `src/lib/unit-commit-plan.ts` + 测试 · P2-C5 `refactor: fold unit-update-diff into unit-commit-plan` + 测试迁移 · P2-C6 Server Actions · **P2-C7 `fix(mcp): correct withdraw sign and date format`（B2a + B2c + 回归测试；B2b 走 [Decision K] 另行处理）** · **P2-C8 `feat(types): add mcp to contribution source union`（仅 `src/domain/types.ts` 的 union，UI 筛选器留到 P3-C7；须在 P1-C14 之后部署）**
 
 ### Phase 3 — UI
 
-P3-C1 提取 `unit-panel-primitives.tsx` · P3-C2 `unit-log-timeline.tsx` + RTL · P3-C3 `unit-swap-picker.tsx` + RTL · P3-C4 `unit-operations-panel.tsx` + RTL · P3-C5 三栏布局 + 备注框 + 接 `/commit`（**仅编辑模式**）· P3-C6 时间线逐行 pnl 内联编辑 · P3-C7 `/capital-logs` 收益列 + 独立日志表单 pnl 字段 · P3-C8 文档收尾 + release
+P3-C1 提取 `unit-panel-primitives.tsx` · P3-C2 `unit-log-timeline.tsx` + RTL · P3-C3 `unit-swap-picker.tsx` + RTL · P3-C4 `unit-operations-panel.tsx` + RTL · P3-C5 三栏布局 + 备注框 + 接 `/commit`（**仅编辑模式**）· P3-C6 时间线逐行 pnl 内联编辑 · P3-C7 `/capital-logs` 收益列 + 独立日志表单 pnl 字段 + **来源筛选器加 `mcp`（[Decision K]）** · P3-C8 文档收尾 + release
 
 ---
 
