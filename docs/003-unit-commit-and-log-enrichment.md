@@ -24,7 +24,7 @@
 ### 不做什么
 
 - **存量不管**：不迁移、不回填历史数据。新列可空，旧行为 `NULL`。
-- 不改 `PUT /api/units/:id` 的 `productId` 单独更新约束（理由见 [Decision D]）。
+- 不改 `PUT /api/units/:id` 的 `productId` 单独更新约束（理由见 [Decision I]）。
 - 不做日志分页（500 条上限 + 提示，见 [Risk 5]）。
 
 ---
@@ -185,7 +185,7 @@ export const commitUnitSchema = z.object({
   operations: z.array(commitOperationSchema).max(2).default([]),
   operationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   commitNote: z.string().max(1000).optional().nullable(),  // → contribution_logs.note
-  expected: expectedUnitSchema,                            // 见 [Decision E]
+  expected: expectedUnitSchema,                            // 见 [Decision B]
 })
 .refine(d => d.metadata !== undefined || d.operations.length > 0 || (d.commitNote ?? "").length > 0,
   { message: "commit must contain metadata, operations, or a note" })
@@ -195,7 +195,7 @@ export const commitUnitSchema = z.object({
 .refine(d => !(d.metadata?.unitCode !== undefined
                && d.operations.some(o => o.kind === "swap_unit_code")),
   { message: "unitCode cannot be edited while a code swap is staged" })
-// [P0-1] 改金额与切换产品互斥，见 [Decision F]
+// [P0-1] 改金额与切换产品互斥，见 [Decision C]
 .refine(d => !(d.metadata?.amountCents !== undefined
                && d.operations.some(o => o.kind === "switch_product")),
   { message: "amount cannot be edited while a product switch is staged" });
@@ -210,9 +210,9 @@ export const commitUnitSchema = z.object({
 | `metadata.unitNote` | `capital_units.note` | 单元的**持久**备注 | 一直存在，可被后续编辑覆盖 |
 | `commitNote` | `contribution_logs.note` | **本次提交**的审计备注 | 写入即不可变，构成历史 |
 
-校验分两层：**形状**用 Zod 判别联合（`db/validation.ts` 在 worker 覆盖率 `include` 内，白拿测试覆盖）；**引用完整性**在端点内查库 —— 目标单元存在且属于本人、目标 ≠ 自己、目标产品存在、新产品 ≠ 当前产品，以及 [Decision G] 的损益前置条件。
+校验分两层：**形状**用 Zod 判别联合（`db/validation.ts` 在 worker 覆盖率 `include` 内，白拿测试覆盖）；**引用完整性**在端点内查库 —— 目标单元存在且属于本人、目标 ≠ 自己、目标产品存在、新产品 ≠ 当前产品，以及 [Decision D] 的损益前置条件。
 
-### [Decision E] 乐观并发锚点必须覆盖全部待改字段
+### [Decision B] 乐观并发锚点必须覆盖全部待改字段
 
 **原设计的 `expected` 只有 `unitCode` + `productId`，不足以保护元数据**（P0-2）：用户打开对话框后若另一请求改了金额或状态，本次提交会**静默覆盖**对方的修改，而守卫链完全不会察觉——因为守卫只比对了番号和产品。
 
@@ -236,7 +236,7 @@ const expectedUnitSchema = z.object({
 
 **代价**：`note` 或 `startDate` 这类字段被他人改动也会触发 409，即使本次并不打算改它们。对单人使用的个人财务系统而言，误报 409 远优于静默覆盖。
 
-### [Decision F] 金额修改与产品切换：禁止同批次
+### [Decision C] 金额修改与产品切换：禁止同批次
 
 P0-1 指出的歧义真实存在：`switch_product` 要写 `withdraw(-amt)` + `invest(+amt)`，若同一批次里 `amountCents` 也在变，`amt` 到底取旧值还是新值无法自洽——
 
@@ -246,7 +246,7 @@ P0-1 指出的歧义真实存在：`switch_product` 要写 `withdraw(-amt)` + `i
 
 **结论：Zod 层直接拒绝，UI 层在暂存了 `switch_product` 时禁用金额输入框并给出提示**（反之亦然）。用户要同时做，就分两次保存——这恰好在日志里留下两条语义清晰的记录。
 
-### [Decision G] 无 `withdraw` 行时不接受损益
+### [Decision D] 无 `withdraw` 行时不接受损益
 
 `switch_product` 在当前产品为 `null`（未关联）时**不会**产生 `withdraw` 行，而 `pnl_cents` 挂在 `withdraw` 上（见"语义"表）。此时若客户端仍传了 `pnlCents`，损益会被**静默丢弃**（P1-6）。
 
@@ -254,7 +254,7 @@ P0-1 指出的歧义真实存在：`switch_product` 要写 `withdraw(-amt)` + `i
 
 UI 侧同步：`unit-operations-panel` 在当前无关联产品时**不渲染**损益输入框。
 
-### [Decision A] 原子性方案：守卫链单批次，取代 CAS + 补偿
+### [Decision E] 原子性方案：守卫链单批次，取代 CAS + 补偿
 
 **结论：整个提交放进一个 `d1.batch()`，把 CAS 判据写进每条语句的 `WHERE`，后续语句依赖前序语句的"后置状态"，批次结束后读 `results[0].meta.changes` 判定 409。不写任何补偿代码。**
 
@@ -283,7 +283,7 @@ D1 的 `batch()` 是真事务（官方文档："If a statement in the sequence f
          WHERE EXISTS (SELECT 1 FROM capital_units WHERE id=A AND ... )
 ```
 
-`[0]` 号语句承担全部乐观并发判定（[Decision E]）：`expected` 的每个字段都在 `WHERE` 里。任一字段被他人改动即匹配 0 行，后续语句因守卫落空而全部塌缩。
+`[0]` 号语句承担全部乐观并发判定（[Decision B]）：`expected` 的每个字段都在 `WHERE` 里。任一字段被他人改动即匹配 0 行，后续语句因守卫落空而全部塌缩。
 
 ```ts
 const results = await d1.batch(stmts);
@@ -298,7 +298,33 @@ if (!results[0]?.meta.changes) {
 
 **代码分层**：`worker/lib/unit-commit.ts` 导出**纯**构建器，返回 `{ sql, params }[]` 与生成的备注串；`worker/src/index.ts` 只做 `d1.prepare(...).bind(...)` + `d1.batch` 的管道工作。分支逻辑进 `worker/lib/**`（95% 覆盖率门控），管道留在 `src/index.ts`（不门控）。
 
-### [Decision B] 番号对换写几条日志
+### [Decision F] `/commit` 必须复用 `endDate` 状态不变量
+
+现有 `PUT /api/units/:id`（`worker/src/index.ts:901-922`）在写库前强制一条不变量：
+
+- 状态转为 `已归档` 且未显式给 `endDate` → 自动填 `getLocalDateString()`
+- 状态**非**归档 → **无条件清空** `endDate = null`
+
+新端点的 SQL 构建器如果不复用这条规则，会产生"非归档却带结束日期"或"已归档却无结束日期"的非法状态（P0-3）—— 而且因为 `/commit` 走的是手写 SQL 而非 `repos.units.update()`，它**绕过了所有既有防护**。
+
+**做法**：把该规则提取为纯函数放进 `worker/lib/unit-commit.ts`，供构建器调用：
+
+```ts
+export function resolveEndDate(
+  finalStatus: string,
+  originalStatus: string,
+  originalEndDate: string | null,
+  today: string,
+): string | null;
+```
+
+`metadata.status` 出现时以新值为准，否则沿用 `original.status`；返回值无条件并入 `[0]` 号语句的 `SET` 子句（**即使本次没改 status** —— 因为非归档单元的 `endDate` 必须恒为 `null`，这正是现有实现 `:919-922` 的语义）。
+
+`commitMetadataSchema` **不含 `endDate`**（与不含 `productId` 同理）：它是派生字段，只能由不变量决定，不接受客户端直接写入。
+
+**测试**：`worker/tests/unit-commit.test.ts` 覆盖 4 种状态转移组合（→归档 / 归档→归档 / 归档→非归档 / 非归档→非归档）；e2e 断言"把已归档单元改回已成立后 `end_date` 为 `NULL`"。
+
+### [Decision G] 番号对换写几条日志
 
 **两条 `adjust`，每个单元各一条，`amount_cents = 0`，`pnl_cents = NULL`，`source = "auto"`。**
 
@@ -314,7 +340,7 @@ if (!results[0]?.meta.changes) {
 
 返回该单元全部日志（上限 500），`created_at` 已在**服务端归一化**为 `createdAtMs: number | null`，前端不再重复实现归一化逻辑。
 
-### [Decision C] 时间戳归一化
+### [Decision H] 时间戳归一化
 
 新建纯模块 `worker/lib/contribution-log-time.ts`（在 95% 覆盖率 `include` 内 —— 这正是目的，下表每一支都是强制测试用例）：
 
@@ -353,7 +379,7 @@ SQL 只按 `operation_date DESC` 排，次级排序在 JS 里做（单元维度�
 
 **顺带修 `getLatestInvestLogs`**：它用同样有问题的 `desc(createdAt)` 做次级排序，喂给 `/warehouse`、`/funds` 和 MCP 的 `availableDate`。同一 `operation_date` 上有两条不同编码的 invest 日志时会选错。用同一个比较器修掉。
 
-### [Decision D] 不动 "productId 必须单独更新" 约束
+### [Decision I] 不动 "productId 必须单独更新" 约束
 
 `worker/db/validation.ts:164-174` 的约束不是领域规则，而是 `PUT /api/units/:id` 双分支实现的护栏 —— productId 分支在 `:898` 提前返回，会静默丢弃其他字段。放宽它意味着合并双分支，改变 MCP 工具及其他 `PUT` 调用方的行为，并作废 `worker/tests/validation.test.ts:399` 与 `worker/tests/e2e/units.e2e.test.ts:243`。那是一次独立的重构，有自己的风险面。
 
@@ -432,7 +458,7 @@ buildUnitMetadataDiff(initial, current): UnitMetadataPatch | null
 buildCommitPayload({ unit, form, operations, commitNote, operationDate }): CommitUnitInput | null
 ```
 
-需在 `src/__tests__/lib/unit-commit-plan.test.ts` 钉死的不变量：每种 `kind` 至多一个；`swap_unit_code` 的 `targetUnitId === unit.id` 被拒；`switch_product` 的 `toProductId === fromProductId` 被拒；元数据无变更 **且** 无操作 **且** `commitNote` 为空时 `buildCommitPayload` 返回 `null`；元→分用 `Math.round(x * 100)`；**暂存 `swap_unit_code` 时 `unitCode` 输入被禁用**（[P1-5]）；**暂存 `switch_product` 时金额输入被禁用**（[Decision F]）；`expected` 快照取自打开对话框时的原始单元，包含全部 9 个字段（[Decision E]）。
+需在 `src/__tests__/lib/unit-commit-plan.test.ts` 钉死的不变量：每种 `kind` 至多一个；`swap_unit_code` 的 `targetUnitId === unit.id` 被拒；`switch_product` 的 `toProductId === fromProductId` 被拒；元数据无变更 **且** 无操作 **且** `commitNote` 为空时 `buildCommitPayload` 返回 `null`；元→分用 `Math.round(x * 100)`；**暂存 `swap_unit_code` 时 `unitCode` 输入被禁用**（[P1-5]）；**暂存 `switch_product` 时金额输入被禁用**（[Decision C]）；`expected` 快照取自打开对话框时的原始单元，包含全部 9 个字段（[Decision B]）。
 
 > 底部备注框绑定的是 `commitNote`（审计备注，写进日志）；单元的持久备注 `unitNote` 仍是栏1 的普通表单字段，走 `metadata`。两者在 UI 上要有明确区分的 label，避免用户混淆。
 
@@ -488,9 +514,9 @@ buildCommitPayload({ unit, form, operations, commitNote, operationDate }): Commi
 | P1-C4 | `fix(worker): tiebreak latest invest log by normalized time` | `worker/db/repositories/contribution-logs.ts` | 混合编码夹具测试 |
 | P1-C5 | `feat(worker): list unit logs with normalized timestamps` | 同仓库文件（原始 `sql<>` 投影） | 仓库测试 |
 | P1-C6 | `feat(worker): accept pnlCents in log validation` | `worker/db/validation.ts` + 仓库 `Pick<>` | validation 测试 + **回归测试钉死 B3** |
-| P1-C7 | `feat(worker): unit commit statement builder` | `worker/lib/unit-commit.ts`（纯） | 新建测试，≥95% —— **本期承重 commit** |
+| P1-C7 | `feat(worker): unit commit statement builder` | `worker/lib/unit-commit.ts`（纯，含 `resolveEndDate`） | 新建测试，≥95%，覆盖 4 种归档状态转移（[Decision F]） —— **本期承重 commit** |
 | P1-C8 | `feat(worker): add commitUnitSchema` | `worker/db/validation.ts` | validation 测试 |
-| P1-C9 | `feat(worker): POST /api/units/:id/commit` | `worker/src/index.ts`（仅管道） | 新建 e2e：409、全成/全不成 |
+| P1-C9 | `feat(worker): POST /api/units/:id/commit` | `worker/src/index.ts`（仅管道） | 新建 e2e：409（全字段锚点）、全成/全不成、`endDate` 不变量、无产品时带 pnl 返 400 |
 | P1-C10 | `feat(worker): GET /api/units/:id/logs` | `worker/src/index.ts` | e2e |
 | P1-C11 | `fix(worker): use local date for auto-log operation_date` | `worker/src/index.ts:814` | e2e 断言本地日期（B4） |
 | P1-C12 | `feat(worker): include totalPnl in unit summary` | 仓库 + 端点 | 仓库测试 + e2e |
@@ -511,7 +537,7 @@ P3-C1 提取 `unit-panel-primitives.tsx` · P3-C2 `unit-log-timeline.tsx` + RTL 
 
 1. **只填备注就保存**：不改任何字段、不暂存任何操作，只写一条 `commitNote` —— 写一条裸 `adjust` 日志，还是禁用"保存"？上面的 Zod refine 目前**允许**。我倾向允许（在你的心智模型里备注本身就是一条日志），但需要明确。
 
-2. **`commitNote` 重复**：一次保存同时做"对换 + 切换产品"会产生 **4 条带相同 `commitNote`** 的日志（对换 2 条 `adjust` + 切换 2 条 `withdraw`/`invest`），`/capital-logs` 上会显得吵。选项：全部带（每行自包含，审计最好）/ 只有第一条带。我倾向全部带，但视觉噪音要你认可。（注：因 [Decision F] 禁止金额与切换产品同批次，上限从 5 条降为 4 条。）
+2. **`commitNote` 重复**：一次保存同时做"对换 + 切换产品"会产生 **4 条带相同 `commitNote`** 的日志（对换 2 条 `adjust` + 切换 2 条 `withdraw`/`invest`），`/capital-logs` 上会显得吵。选项：全部带（每行自包含，审计最好）/ 只有第一条带。我倾向全部带，但视觉噪音要你认可。（注：因 [Decision C] 禁止金额与切换产品同批次，上限从 5 条降为 4 条。）
 
 3. **时间线的 pnl 编辑不进 `/commit`**：D5 的暂存只覆盖**操作**，"逐行改历史日志的损益"没被规定。我倾向它**即时生效**（自己发 `PUT /api/contribution-logs/:id` + 自己的 toast），因为它编辑的是历史而非加入本次待提交集合。一致但更贵的方案是加一个 `update_log` 操作类型。
 
