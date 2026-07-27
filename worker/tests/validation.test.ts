@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  commitUnitSchema,
   createContributionLogSchema,
   createProductSchema,
   createUnitSchema,
@@ -490,5 +491,127 @@ describe("createContributionLogSchema", () => {
   test("rejects malformed operationDate", () => {
     const result = createContributionLogSchema.safeParse({ ...base, operationDate: "2026-7-2" });
     expect(result.success).toBe(false);
+  });
+});
+
+describe("commitUnitSchema", () => {
+  const expected = {
+    unitCode: "CU01-001",
+    amountCents: 1000000,
+    productId: "123e4567-e89b-12d3-a456-426614174000",
+    currency: "CNY",
+    status: "已成立",
+    strategy: "长期理财",
+    tactics: "债券基金",
+    startDate: "2026-01-01",
+    endDate: null,
+    note: null,
+  };
+  const PROD_B = "223e4567-e89b-12d3-a456-426614174000";
+  const UNIT_B = "323e4567-e89b-12d3-a456-426614174000";
+
+  test("accepts metadata-only commit", () => {
+    const r = commitUnitSchema.safeParse({ expected, metadata: { amountCents: 2000000 } });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.operations).toEqual([]);
+  });
+
+  test("accepts note-only commit", () => {
+    expect(commitUnitSchema.safeParse({ expected, commitNote: "记一笔" }).success).toBe(true);
+  });
+
+  test("rejects a commit with nothing in it", () => {
+    const r = commitUnitSchema.safeParse({ expected });
+    expect(r.success).toBe(false);
+    if (!r.success) {
+      expect(r.error.issues.some((i) => i.message.includes("must contain metadata"))).toBe(true);
+    }
+  });
+
+  test("rejects a blank-only note", () => {
+    expect(commitUnitSchema.safeParse({ expected, commitNote: "   " }).success).toBe(false);
+  });
+
+  test("rejects empty metadata object", () => {
+    const r = commitUnitSchema.safeParse({ expected, metadata: {} });
+    expect(r.success).toBe(false);
+  });
+
+  test("metadata cannot carry productId or endDate", () => {
+    const r = commitUnitSchema.safeParse({ expected, metadata: { productId: PROD_B } });
+    expect(r.success).toBe(false); // stripped → metadata becomes empty
+  });
+
+  test("expected mirrors DB nullability", () => {
+    const allNull = {
+      ...expected,
+      productId: null,
+      currency: null,
+      status: null,
+      strategy: null,
+      tactics: null,
+      startDate: null,
+    };
+    expect(commitUnitSchema.safeParse({ expected: allNull, commitNote: "x" }).success).toBe(true);
+  });
+
+  test("rejects duplicate operation kinds", () => {
+    const r = commitUnitSchema.safeParse({
+      expected,
+      operations: [
+        { kind: "switch_product", toProductId: PROD_B },
+        { kind: "switch_product", toProductId: null },
+      ],
+    });
+    expect(r.success).toBe(false);
+    if (!r.success) {
+      expect(r.error.issues.some((i) => i.message.includes("at most one operation"))).toBe(true);
+    }
+  });
+
+  test("rejects editing unitCode while a swap is staged", () => {
+    const r = commitUnitSchema.safeParse({
+      expected,
+      metadata: { unitCode: "CU01-999" },
+      operations: [{ kind: "swap_unit_code", targetUnitId: UNIT_B }],
+    });
+    expect(r.success).toBe(false);
+    if (!r.success) {
+      expect(r.error.issues.some((i) => i.message.includes("unitCode cannot be edited"))).toBe(
+        true,
+      );
+    }
+  });
+
+  test("rejects editing amount while a switch is staged", () => {
+    const r = commitUnitSchema.safeParse({
+      expected,
+      metadata: { amountCents: 5 },
+      operations: [{ kind: "switch_product", toProductId: PROD_B }],
+    });
+    expect(r.success).toBe(false);
+    if (!r.success) {
+      expect(r.error.issues.some((i) => i.message.includes("amount cannot be edited"))).toBe(true);
+    }
+  });
+
+  test("allows swap + switch together", () => {
+    const r = commitUnitSchema.safeParse({
+      expected,
+      operations: [
+        { kind: "swap_unit_code", targetUnitId: UNIT_B },
+        { kind: "switch_product", toProductId: PROD_B, pnlCents: -500 },
+      ],
+    });
+    expect(r.success).toBe(true);
+  });
+
+  test("rejects malformed operationDate", () => {
+    const r = commitUnitSchema.safeParse({
+      expected,
+      commitNote: "x",
+      operationDate: "2026-7-2",
+    });
+    expect(r.success).toBe(false);
   });
 });

@@ -173,6 +173,87 @@ export const updateUnitSchema = z
     { message: "productId must be updated alone; cannot combine with other fields" },
   );
 
+// ── Unit Commit (docs/003) ──
+
+/** Raw capital_units snapshot, mirroring the DB's nullability exactly. */
+export const expectedUnitSchema = z.object({
+  unitCode: z.string(),
+  amountCents: z.number().int(),
+  productId: z.string().uuid().nullable(),
+  currency: z.string().nullable(),
+  status: z.string().nullable(),
+  strategy: z.string().nullable(),
+  tactics: z.string().nullable(),
+  startDate: z.string().nullable(),
+  endDate: z.string().nullable(),
+  note: z.string().nullable(),
+});
+
+const commitOperationSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("swap_unit_code"),
+    targetUnitId: z.string().uuid(),
+  }),
+  z.object({
+    kind: z.literal("switch_product"),
+    toProductId: z.string().uuid().nullable(),
+    pnlCents: z.number().int().optional().nullable(),
+  }),
+]);
+
+/** Excludes productId (only expressible as an operation) and endDate (derived). */
+const commitMetadataSchema = z
+  .object({
+    unitCode: z.string().min(1).optional(),
+    amountCents: z.number().int().min(0).optional(),
+    currency: z.enum(CURRENCIES).optional(),
+    status: z.enum(UNIT_STATUSES).optional(),
+    strategy: z.enum(STRATEGIES).optional(),
+    tactics: z.enum(TACTICS).optional(),
+    startDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "startDate must be YYYY-MM-DD")
+      .optional()
+      .nullable(),
+    unitNote: z.string().optional().nullable(),
+  })
+  .refine((m) => Object.keys(m).length > 0, { message: "metadata must not be empty" });
+
+export const commitUnitSchema = z
+  .object({
+    metadata: commitMetadataSchema.optional(),
+    operations: z.array(commitOperationSchema).max(2).default([]),
+    operationDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "operationDate must be YYYY-MM-DD")
+      .optional(),
+    commitNote: z.string().max(1000).optional().nullable(),
+    expected: expectedUnitSchema,
+  })
+  .refine(
+    (d) =>
+      d.metadata !== undefined || d.operations.length > 0 || (d.commitNote ?? "").trim().length > 0,
+    { message: "commit must contain metadata, operations, or a note" },
+  )
+  .refine((d) => new Set(d.operations.map((o) => o.kind)).size === d.operations.length, {
+    message: "at most one operation of each kind per commit",
+  })
+  .refine(
+    (d) =>
+      !(
+        d.metadata?.unitCode !== undefined && d.operations.some((o) => o.kind === "swap_unit_code")
+      ),
+    { message: "unitCode cannot be edited while a code swap is staged" },
+  )
+  .refine(
+    (d) =>
+      !(
+        d.metadata?.amountCents !== undefined &&
+        d.operations.some((o) => o.kind === "switch_product")
+      ),
+    { message: "amount cannot be edited while a product switch is staged" },
+  );
+
 // ── Contribution Logs ──
 
 export const createContributionLogSchema = z.object({
@@ -232,6 +313,8 @@ export type UpdateUnitInput = z.infer<typeof updateUnitSchema>;
 export type CreateContributionLogInput = z.infer<typeof createContributionLogSchema>;
 export type UpdateContributionLogInput = z.infer<typeof updateContributionLogSchema>;
 export type SearchContributionLogsInput = z.infer<typeof searchContributionLogsSchema>;
+export type CommitUnitInput = z.infer<typeof commitUnitSchema>;
+export type ExpectedUnitInput = z.infer<typeof expectedUnitSchema>;
 
 // ── Expense categories (002 spec) ──
 // The colorToken / chart palette is defined in the web app; we keep a
