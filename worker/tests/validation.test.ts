@@ -155,6 +155,27 @@ describe("Product validation schemas", () => {
       }
     });
 
+    // Cyclic-lock pairing: openDays and cycleDays must travel together.
+    test("rejects openDays without cycleDays and vice versa", () => {
+      expect(updateProductSchema.safeParse({ openDays: 7 }).success).toBe(false);
+      expect(updateProductSchema.safeParse({ cycleDays: 30 }).success).toBe(false);
+    });
+
+    test("rejects mixing null with a value", () => {
+      expect(updateProductSchema.safeParse({ openDays: null, cycleDays: 30 }).success).toBe(false);
+      expect(updateProductSchema.safeParse({ openDays: 7, cycleDays: null }).success).toBe(false);
+    });
+
+    test("accepts both null or both set with cycle > open", () => {
+      expect(updateProductSchema.safeParse({ openDays: null, cycleDays: null }).success).toBe(true);
+      expect(updateProductSchema.safeParse({ openDays: 7, cycleDays: 30 }).success).toBe(true);
+    });
+
+    test("rejects cycleDays <= openDays", () => {
+      expect(updateProductSchema.safeParse({ openDays: 30, cycleDays: 30 }).success).toBe(false);
+      expect(updateProductSchema.safeParse({ openDays: 30, cycleDays: 7 }).success).toBe(false);
+    });
+
     test("validates channel if provided", () => {
       const result = updateProductSchema.safeParse({
         channel: "无效渠道",
