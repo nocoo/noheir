@@ -48,7 +48,7 @@ export function UnitSwapPicker({
           role="combobox"
           aria-expanded={open}
           aria-label="选择对换单元"
-          className="h-8 w-full justify-between text-xs font-normal"
+          className="h-9 w-full justify-between text-xs font-normal"
         >
           {selected ? selected.unitCode : "选择对换单元..."}
           <ChevronsUpDown className="ml-2 size-3.5 shrink-0 opacity-50" />

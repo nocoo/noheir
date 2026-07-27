@@ -99,9 +99,9 @@ export function UnitOperationsPanel({
         <div className="flex flex-col gap-1.5">
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             size="sm"
-            className="h-8 justify-start text-xs"
+            className="h-9 justify-start text-xs"
             onClick={() => setSwitchOpen((v) => !v)}
             disabled={stagedSwitch !== undefined}
           >
@@ -110,9 +110,9 @@ export function UnitOperationsPanel({
           </Button>
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             size="sm"
-            className="h-8 justify-start text-xs"
+            className="h-9 justify-start text-xs"
             onClick={() => setSwapOpen((v) => !v)}
             disabled={stagedSwap !== undefined}
           >
@@ -131,7 +131,7 @@ export function UnitOperationsPanel({
                   variant="outline"
                   role="combobox"
                   aria-label="选择新产品"
-                  className="h-8 w-full justify-between text-xs font-normal"
+                  className="h-9 w-full justify-between text-xs font-normal"
                 >
                   {pendingProductId === undefined
                     ? "选择产品..."
@@ -192,7 +192,7 @@ export function UnitOperationsPanel({
                   value={pnlInput}
                   onChange={(e) => setPnlInput(e.target.value)}
                   placeholder="如 500 或 -200"
-                  className="h-8 text-xs"
+                  className="h-9 text-xs"
                 />
               </div>
             )}
@@ -200,7 +200,7 @@ export function UnitOperationsPanel({
             <Button
               type="button"
               size="sm"
-              className="h-7 w-full text-xs"
+              className="h-9 w-full text-xs"
               onClick={confirmSwitch}
               disabled={pendingProductId === undefined}
             >
@@ -236,7 +236,7 @@ export function UnitOperationsPanel({
             {operations.map((op) => (
               <li
                 key={op.kind}
-                className="border-primary/40 bg-primary/5 flex items-start gap-2 rounded-lg border border-dashed p-2"
+                className="border-primary/30 bg-primary/10 flex items-start gap-2 rounded-md border p-2.5"
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium">{describeStagedOperation(op)}</p>
