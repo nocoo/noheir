@@ -216,6 +216,42 @@ describe("E2E: Unit commit", () => {
     expect(adjustB?.productName).toBe("P-B");
   });
 
+  test("swap logs the partner's product as of commit time", async () => {
+    const pa = await createProduct({ name: "CC-A", code: "CCA-1" });
+    const pb = await createProduct({ name: "CC-B", code: "CCB-1" });
+    const a = await createUnit({ unitCode: "CC-001" });
+    const b = await createUnit({ unitCode: "CC-002" });
+
+    await api({ method: "PUT", path: `/api/units/${b.id}`, userId, body: { productId: pa.id } });
+
+    const current = await api<{ unit: UnitRow }>({
+      method: "GET",
+      path: `/api/units/${a.id}`,
+      userId,
+    });
+
+    // The partner moves to another product before the commit is issued.
+    await api({ method: "PUT", path: `/api/units/${b.id}`, userId, body: { productId: pb.id } });
+
+    await api({
+      method: "POST",
+      path: `/api/units/${a.id}/commit`,
+      userId,
+      body: {
+        expected: snapshot(current.unit),
+        operations: [{ kind: "swap_unit_code", targetUnitId: b.id }],
+      },
+    });
+
+    // The endpoint reads the partner inside the request, so the log carries the
+    // product the partner is in NOW (pb), never the one it had earlier (pa).
+    // The batch guard additionally pins that read against the write.
+    const logsB = await logsFor(String(b.id));
+    const adjustB = logsB.logs.find((l) => l.operationType === "adjust");
+    expect(adjustB?.productId).toBe(pb.id);
+    expect(adjustB?.productName).toBe("CC-B");
+  });
+
   test("backdating a commit does not backdate the archive date", async () => {
     const unit = await createUnit();
     const shanghaiToday = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Shanghai" });

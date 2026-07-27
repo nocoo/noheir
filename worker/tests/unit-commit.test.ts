@@ -210,6 +210,31 @@ describe("buildCommitStatements — swap_unit_code", () => {
     expect(stmts[0]?.params).toContain("unit-b");
   });
 
+  test("[0] also guards the partner's product", () => {
+    const stmts = buildCommitStatements(swapInput);
+    // The partner's product is snapshotted onto its log, so a concurrent switch
+    // between the endpoint read and the batch must collapse the whole commit.
+    const whereClause = (stmts[0]?.sql ?? "").split(" WHERE ")[1] ?? "";
+    expect(whereClause).toContain("product_id = ?");
+    expect(stmts[0]?.params).toContain("prod-b");
+  });
+
+  test("[0] guards a partner with no product using IS NULL", () => {
+    const stmts = buildCommitStatements(
+      makeInput({
+        operations: [{ kind: "swap_unit_code", targetUnitId: "unit-b" }],
+        swapTarget: {
+          id: "unit-b",
+          unitCode: "CU01-002",
+          productId: null,
+          productName: null,
+        },
+      }),
+    );
+    const existsClause = (stmts[0]?.sql ?? "").split("EXISTS (")[1] ?? "";
+    expect(existsClause).toContain("product_id IS NULL");
+  });
+
   test("[1] guards on [0]'s post-state", () => {
     const stmts = buildCommitStatements(swapInput);
     // The EXISTS checks unit-a already carries the partner's code.

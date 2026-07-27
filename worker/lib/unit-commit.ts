@@ -216,10 +216,13 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
   where.push(nullSafeEq("note", expected.note, whereParams));
 
   if (swapOp && swapTarget) {
-    where.push(
-      "EXISTS (SELECT 1 FROM capital_units WHERE id = ? AND user_id = ? AND unit_code = ?)",
-    );
+    // The partner's product is snapshotted onto its log, so it must also be
+    // guarded: without this, a concurrent switch between the endpoint's read
+    // and the batch would log the partner against a product it already left.
+    const targetGuard: string[] = ["id = ?", "user_id = ?", "unit_code = ?"];
     whereParams.push(swapTarget.id, userId, swapTarget.unitCode);
+    targetGuard.push(nullSafeEq("product_id", swapTarget.productId, whereParams));
+    where.push(`EXISTS (SELECT 1 FROM capital_units WHERE ${targetGuard.join(" AND ")})`);
   }
 
   statements.push({
