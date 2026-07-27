@@ -1,0 +1,64 @@
+/**
+ * Normalization for `contribution_logs.created_at`, which exists in three
+ * incompatible encodings in production (see docs/003 § B1):
+ *   - `auto` / `import` rows: integer milliseconds
+ *   - `mcp` rows:             ISO-8601 text
+ *   - Drizzle-written rows:   integer seconds (schema declares mode:"timestamp")
+ *
+ * Callers must pass the RAW column value. Drizzle's timestamp codec decodes
+ * `value * 1000`, which turns a millisecond row into year ~58500 and an ISO
+ * text row into `Invalid Date`, destroying the information we need here.
+ */
+
+/** Values at or above this are milliseconds; below, seconds. Unambiguous
+ * because seconds and milliseconds for any date from 2001 to 5138 differ by
+ * three orders of magnitude. */
+const MS_THRESHOLD = 1e12;
+
+export function normalizeLogTimestamp(raw: unknown): number | null {
+  if (raw == null) return null;
+
+  if (raw instanceof Date) {
+    const t = raw.getTime();
+    return Number.isNaN(t) ? null : t;
+  }
+
+  if (typeof raw === "number") {
+    if (!Number.isFinite(raw) || raw <= 0) return null;
+    return raw >= MS_THRESHOLD ? raw : raw * 1000;
+  }
+
+  if (typeof raw === "string") {
+    const trimmed = raw.trim();
+    if (trimmed === "") return null;
+    if (/^\d+$/.test(trimmed)) return normalizeLogTimestamp(Number(trimmed));
+    const parsed = Date.parse(trimmed);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+
+  return null;
+}
+
+export interface TimelineSortable {
+  operationDate: string;
+  createdAtMs: number | null;
+  id: string;
+}
+
+/** operationDate DESC → createdAtMs DESC (nulls last) → id DESC. */
+export function compareLogsForTimeline(a: TimelineSortable, b: TimelineSortable): number {
+  if (a.operationDate !== b.operationDate) {
+    return a.operationDate < b.operationDate ? 1 : -1;
+  }
+  if (a.createdAtMs !== b.createdAtMs) {
+    if (a.createdAtMs == null) return 1;
+    if (b.createdAtMs == null) return -1;
+    return b.createdAtMs - a.createdAtMs;
+  }
+  if (a.id === b.id) return 0;
+  return a.id < b.id ? 1 : -1;
+}
+
+export function sortLogsForTimeline<T extends TimelineSortable>(logs: T[]): T[] {
+  return [...logs].sort(compareLogsForTimeline);
+}
