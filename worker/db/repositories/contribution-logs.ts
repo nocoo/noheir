@@ -37,7 +37,7 @@ export interface ContributionLogsSearchParams {
 }
 
 export interface ContributionLogsSearchResult {
-  logs: ContributionLogWithRelations[];
+  logs: Array<ContributionLogWithRelations & { createdAtMs: number | null }>;
   total: number;
 }
 
@@ -225,8 +225,11 @@ export function createContributionLogsRepo(db: DrizzleD1Database) {
       const total = sorted.length;
 
       return {
+        // createdAtMs travels with the row: the web mapper must not have to
+        // re-parse the three raw encodings (docs/003 § B1).
         logs: sorted.map((row) => ({
           ...row.log,
+          createdAtMs: normalizeLogTimestamp(row.rawCreatedAt),
           unit: row.unit,
           product: row.product,
         })),

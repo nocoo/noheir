@@ -186,6 +186,14 @@ describe("ContributionLogsRepo", () => {
     const result = await repos.contributionLogs.search(userId, { unitId: unit.id });
     // Same order the unit timeline uses — both go through compareLogsForTimeline.
     expect(result.logs.map((l) => l.id)).toEqual(["s-auto", "s-mcp", "s-drizzle"]);
+
+    // createdAtMs must ride along, or the web mapper falls back to parsing the
+    // raw column and produces Invalid Date for the mcp rows.
+    expect(result.logs.map((l) => l.createdAtMs)).toEqual([
+      1784956591451,
+      Date.parse("2026-07-02T05:51:49.226Z"),
+      1751435509 * 1000,
+    ]);
   });
 
   test("search with filters", async () => {
