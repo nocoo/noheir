@@ -117,6 +117,52 @@ describe("ContributionLogsRepo", () => {
     expect(latest.get(unit.id)?.id).toBe("log-auto");
   });
 
+  test("listByUnit returns normalized timestamps, newest first, excluding deleted", async () => {
+    const repos = getTestRepos();
+    const db = getTestDb();
+    const unit = await repos.units.create(userId, baseUnit);
+    const other = await repos.units.create(userId, { ...baseUnit, unitCode: "U-2026-999" });
+    const product = await repos.products.create(userId, baseProduct);
+
+    const rows = [
+      ["t-mcp", "2026-07-02T05:51:49.226Z", "2026-07-02"],
+      ["t-auto", 1784956591451, "2026-07-02"],
+      ["t-old", 1751435509, "2026-01-01"],
+    ] as const;
+
+    for (const [id, createdAt, opDate] of rows) {
+      db.run(
+        sql`INSERT INTO contribution_logs
+          (id, user_id, unit_id, product_id, operation_type, amount_cents, operation_date, source, created_at, updated_at)
+          VALUES (${id}, ${userId}, ${unit.id}, ${product.id}, 'invest', 100000, ${opDate}, 'manual', ${createdAt}, ${createdAt})`,
+      );
+    }
+
+    // Belongs to another unit — must not appear.
+    db.run(
+      sql`INSERT INTO contribution_logs
+        (id, user_id, unit_id, product_id, operation_type, amount_cents, operation_date, source, created_at, updated_at)
+        VALUES ('t-other', ${userId}, ${other.id}, ${product.id}, 'invest', 1, '2026-07-02', 'manual', 1784956591451, 1784956591451)`,
+    );
+
+    const soft = await repos.contributionLogs.create(userId, {
+      unitId: unit.id,
+      productId: product.id,
+      operationType: "adjust",
+      amountCents: 0,
+      operationDate: "2026-07-03",
+      source: "manual",
+    });
+    await repos.contributionLogs.softDelete(userId, soft.id);
+
+    const timeline = await repos.contributionLogs.listByUnit(userId, unit.id);
+
+    expect(timeline.map((l) => l.id)).toEqual(["t-auto", "t-mcp", "t-old"]);
+    expect(timeline[0]?.createdAtMs).toBe(1784956591451);
+    expect(timeline[1]?.createdAtMs).toBe(Date.parse("2026-07-02T05:51:49.226Z"));
+    expect(timeline[2]?.createdAtMs).toBe(1751435509 * 1000);
+  });
+
   test("search orders mixed created_at encodings consistently", async () => {
     const repos = getTestRepos();
     const db = getTestDb();

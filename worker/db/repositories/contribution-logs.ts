@@ -11,7 +11,11 @@ import {
   sql,
 } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
-import { compareLogsForTimeline, normalizeLogTimestamp } from "../../lib/contribution-log-time";
+import {
+  compareLogsForTimeline,
+  normalizeLogTimestamp,
+  sortLogsForTimeline,
+} from "../../lib/contribution-log-time";
 import { capitalUnits, contributionLogs, financialProducts } from "../schema";
 import type {
   ContributionLog,
@@ -36,6 +40,12 @@ export interface ContributionLogsSearchResult {
   logs: ContributionLogWithRelations[];
   total: number;
 }
+
+/** A log row with its created_at normalized to epoch milliseconds. */
+export type ContributionLogForTimeline = ContributionLog & { createdAtMs: number | null };
+
+/** Cap for a single unit's timeline — see docs/003 § Risk 5. */
+export const UNIT_TIMELINE_LIMIT = 500;
 
 export function createContributionLogsRepo(db: DrizzleD1Database) {
   return {
@@ -110,6 +120,40 @@ export function createContributionLogsRepo(db: DrizzleD1Database) {
         .where(and(eq(contributionLogs.id, id), eq(contributionLogs.userId, userId)))
         .get();
       return row ?? null;
+    },
+
+    /**
+     * All logs for one unit, newest first, with created_at normalized.
+     * Backs the unit dialog timeline (docs/003 § GET /api/units/:id/logs).
+     */
+    async listByUnit(
+      userId: string,
+      unitId: string,
+      limit: number = UNIT_TIMELINE_LIMIT,
+    ): Promise<ContributionLogForTimeline[]> {
+      const rows = await db
+        .select({
+          ...getTableColumns(contributionLogs),
+          rawCreatedAt: sql<number | string | null>`${contributionLogs.createdAt}`,
+        })
+        .from(contributionLogs)
+        .where(
+          and(
+            eq(contributionLogs.userId, userId),
+            eq(contributionLogs.unitId, unitId),
+            isNull(contributionLogs.deletedAt),
+          ),
+        )
+        .orderBy(desc(contributionLogs.operationDate))
+        .limit(limit)
+        .all();
+
+      const mapped = rows.map(({ rawCreatedAt, ...row }) => ({
+        ...row,
+        createdAtMs: normalizeLogTimestamp(rawCreatedAt),
+      }));
+
+      return sortLogsForTimeline(mapped);
     },
 
     async search(
