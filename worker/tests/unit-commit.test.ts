@@ -31,6 +31,7 @@ function makeInput(over: Partial<BuildCommitInput> = {}): BuildCommitInput {
     expected,
     operations: [],
     operationDate: TODAY,
+    today: TODAY,
     now: NOW,
     newId: () => `log-${++n}`,
     ...over,
@@ -154,6 +155,20 @@ describe("buildCommitStatements — CAS guard", () => {
     expect(head?.sql).toContain("end_date = ?");
   });
 
+  // Backdating a log must not backdate the archive date: operationDate is when
+  // the money moved, `today` is when the archive happened (docs/003 § Decision F).
+  test("archiving uses today, not a backdated operationDate", () => {
+    const [head] = buildCommitStatements(
+      makeInput({
+        metadata: { status: "已归档" },
+        operationDate: "2020-01-01",
+        today: TODAY,
+      }),
+    );
+    expect(head?.params).toContain(TODAY);
+    expect(head?.params).not.toContain("2020-01-01");
+  });
+
   // Regression: a commit that changes neither unit_code nor product still has to
   // collapse its log INSERTs when [0] loses the CAS. updated_at is the only
   // value unique to this batch, so it is what the log guard keys off.
@@ -169,8 +184,14 @@ describe("buildCommitStatements — CAS guard", () => {
 
 describe("buildCommitStatements — swap_unit_code", () => {
   const swapInput = makeInput({
+    fromProduct: { id: "prod-a", name: "招行朝朝盈" },
     operations: [{ kind: "swap_unit_code", targetUnitId: "unit-b" }],
-    swapTarget: { id: "unit-b", unitCode: "CU01-002" },
+    swapTarget: {
+      id: "unit-b",
+      unitCode: "CU01-002",
+      productId: "prod-b",
+      productName: "工行添利",
+    },
     commitNote: "年度调整",
   });
 
@@ -193,6 +214,16 @@ describe("buildCommitStatements — swap_unit_code", () => {
     const stmts = buildCommitStatements(swapInput);
     // The EXISTS checks unit-a already carries the partner's code.
     expect(stmts[1]?.params.slice(-3)).toEqual(["unit-a", "u1", "CU01-002"]);
+  });
+
+  test("each unit's log keeps its own product snapshot", () => {
+    const stmts = buildCommitStatements(swapInput);
+    // A swap moves no money and no products — each row must still join to the
+    // product its own unit sits in (docs/003 § Decision G).
+    expect(stmts[2]?.params[3]).toBe("prod-a");
+    expect(stmts[2]?.params[4]).toBe("招行朝朝盈");
+    expect(stmts[3]?.params[3]).toBe("prod-b");
+    expect(stmts[3]?.params[4]).toBe("工行添利");
   });
 
   test("both units get a log with amount 0 and null pnl", () => {

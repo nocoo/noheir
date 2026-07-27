@@ -18,7 +18,7 @@ import {
   updateRecurringExpenseSchema,
   updateUnitSchema,
 } from "../db/validation";
-import { buildCommitStatements } from "../lib/unit-commit";
+import { buildCommitStatements, type SwapTarget } from "../lib/unit-commit";
 import { APP_VERSION, COMPONENT_NAME } from "../lib/version";
 
 /** Strip undefined values from an object at runtime.
@@ -996,7 +996,7 @@ app.post("/api/units/:id/commit", async (c) => {
 
   // ── Referential checks (Zod cannot query the DB) ──
   const swapOp = operations.find((o) => o.kind === "swap_unit_code");
-  let swapTarget: { id: string; unitCode: string } | undefined;
+  let swapTarget: SwapTarget | undefined;
   if (swapOp) {
     if (swapOp.targetUnitId === id) {
       return c.json({ error: "Cannot swap a unit code with itself" }, 400);
@@ -1005,7 +1005,15 @@ app.post("/api/units/:id/commit", async (c) => {
     if (!target) {
       return c.json({ error: "Swap target unit not found" }, 404);
     }
-    swapTarget = { id: target.id, unitCode: target.unitCode };
+    const targetProduct = target.productId
+      ? await repos.products.findById(userId, target.productId)
+      : null;
+    swapTarget = {
+      id: target.id,
+      unitCode: target.unitCode,
+      productId: target.productId,
+      productName: targetProduct?.name ?? null,
+    };
   }
 
   const switchOp = operations.find((o) => o.kind === "switch_product");
@@ -1037,6 +1045,7 @@ app.post("/api/units/:id/commit", async (c) => {
     metadata,
     operations,
     operationDate,
+    today: getLocalDateString(),
     commitNote,
     swapTarget,
     fromProduct: fromProduct ? { id: fromProduct.id, name: fromProduct.name } : null,

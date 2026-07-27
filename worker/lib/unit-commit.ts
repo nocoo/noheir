@@ -50,6 +50,10 @@ export type CommitOperation =
 export interface SwapTarget {
   id: string;
   unitCode: string;
+  /** The partner's own product, snapshotted onto its adjust log so the row
+   *  still joins on /capital-logs. A swap does not move products. */
+  productId: string | null;
+  productName: string | null;
 }
 
 export interface ProductRef {
@@ -64,6 +68,9 @@ export interface BuildCommitInput {
   metadata?: CommitMetadata | undefined;
   operations: CommitOperation[];
   operationDate: string;
+  /** Local "today" for the archive date. Distinct from operationDate, which the
+   *  user may backdate when recording a past event — archiving still happens now. */
+  today: string;
   commitNote?: string | null | undefined;
   /** Resolved swap partner, required when a swap_unit_code op is present. */
   swapTarget?: SwapTarget | undefined;
@@ -155,6 +162,7 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
     metadata,
     operations,
     operationDate,
+    today,
     commitNote,
     swapTarget,
     fromProduct,
@@ -189,7 +197,7 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
 
   // Always written: non-archived units must have end_date = NULL.
   const finalStatus = metadata?.status ?? expected.status;
-  set("end_date", resolveEndDate(finalStatus, expected.status, expected.endDate, operationDate));
+  set("end_date", resolveEndDate(finalStatus, expected.status, expected.endDate, today));
   set("updated_at", now);
 
   const whereParams: unknown[] = [];
@@ -310,8 +318,8 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
     });
     pushLog({
       unitId: swapTarget.id,
-      productId: null,
-      productName: null,
+      productId: swapTarget.productId,
+      productName: swapTarget.productName,
       operationType: "adjust",
       amountCents: 0,
       pnlCents: null,

@@ -173,6 +173,76 @@ describe("E2E: Unit commit", () => {
     }
   });
 
+  test("swap logs keep each unit's own product", async () => {
+    const pa = await createProduct({ name: "P-A", code: "PA-1" });
+    const pb = await createProduct({ name: "P-B", code: "PB-1" });
+    const a = await createUnit({ unitCode: "SW-001" });
+    const b = await createUnit({ unitCode: "SW-002" });
+
+    for (const [unit, product] of [
+      [a, pa],
+      [b, pb],
+    ] as const) {
+      await api({
+        method: "PUT",
+        path: `/api/units/${unit.id}`,
+        userId,
+        body: { productId: product.id },
+      });
+    }
+
+    const current = await api<{ unit: UnitRow }>({
+      method: "GET",
+      path: `/api/units/${a.id}`,
+      userId,
+    });
+
+    await api({
+      method: "POST",
+      path: `/api/units/${a.id}/commit`,
+      userId,
+      body: {
+        expected: snapshot(current.unit),
+        operations: [{ kind: "swap_unit_code", targetUnitId: b.id }],
+      },
+    });
+
+    const logsA = await logsFor(String(a.id));
+    const logsB = await logsFor(String(b.id));
+    const adjustA = logsA.logs.find((l) => l.operationType === "adjust");
+    const adjustB = logsB.logs.find((l) => l.operationType === "adjust");
+    expect(adjustA?.productId).toBe(pa.id);
+    expect(adjustB?.productId).toBe(pb.id);
+    expect(adjustB?.productName).toBe("P-B");
+  });
+
+  test("backdating a commit does not backdate the archive date", async () => {
+    const unit = await createUnit();
+    const shanghaiToday = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Shanghai" });
+
+    await api({
+      method: "POST",
+      path: `/api/units/${unit.id}/commit`,
+      userId,
+      body: {
+        expected: snapshot(unit),
+        metadata: { status: "已归档" },
+        operationDate: "2020-01-01",
+        commitNote: "补录",
+      },
+    });
+
+    const after = await api<{ unit: UnitRow }>({
+      method: "GET",
+      path: `/api/units/${unit.id}`,
+      userId,
+    });
+    expect(after.unit.endDate).toBe(shanghaiToday);
+
+    const { logs } = await logsFor(String(unit.id));
+    expect(logs[0]?.operationDate).toBe("2020-01-01");
+  });
+
   test("switch_product writes withdraw + invest with pnl on the withdraw", async () => {
     const from = await createProduct({ name: "A产品", code: "A-1" });
     const to = await createProduct({ name: "B产品", code: "B-1" });
