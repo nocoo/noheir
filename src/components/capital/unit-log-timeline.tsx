@@ -98,7 +98,7 @@ export function UnitLogTimeline({ logs, loading, onRefresh, limit = 500 }: UnitL
 
   if (loading) {
     return (
-      <div className="flex h-full min-h-0 flex-col gap-4">
+      <div className="flex min-h-0 flex-col gap-4 lg:h-full">
         <div className="flex h-4 shrink-0 items-center">
           <SectionTitle icon={<History className="size-3" />} label="历史记录" />
         </div>
@@ -110,7 +110,7 @@ export function UnitLogTimeline({ logs, loading, onRefresh, limit = 500 }: UnitL
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
+    <div className="flex min-h-0 flex-col gap-4 lg:h-full">
       <div className="flex h-4 shrink-0 items-center justify-between">
         <SectionTitle icon={<History className="size-3" />} label="历史记录" />
         {totalPnl !== 0 && (
@@ -129,9 +129,9 @@ export function UnitLogTimeline({ logs, loading, onRefresh, limit = 500 }: UnitL
       </div>
 
       {logs.length === 0 ? (
-        <p className="text-muted-foreground flex-1 py-6 text-center text-xs">暂无历史记录</p>
+        <p className="text-muted-foreground py-6 text-center text-xs lg:flex-1">暂无历史记录</p>
       ) : (
-        <ul className="divide-border min-h-0 flex-1 divide-y overflow-y-auto">
+        <ul className="divide-border min-h-0 divide-y lg:flex-1 lg:overflow-y-auto">
           {logs.map((log) => {
             const meta = OPERATION_META[log.operationType] ?? OPERATION_META.adjust;
             const Icon = meta.icon;

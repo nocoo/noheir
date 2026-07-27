@@ -224,9 +224,10 @@ export function UnitCommitDialog({
             operations panel are anchored to it, so acting earlier would mean
             acting on data the guard will not compare. */}
         <fieldset disabled={loading} className="space-y-4 disabled:opacity-60">
-          <div className="grid gap-6 lg:h-[52vh] lg:min-h-[420px] lg:grid-cols-3">
-            {/* ── Column 1: basic info ── */}
-            <div className="space-y-3">
+          <div className="grid items-stretch gap-6 lg:grid-cols-3">
+            {/* ── Column 1: basic info — the tallest by nature, so it sets the
+                band height the other two columns fill. ── */}
+            <div className="space-y-4">
               <SectionTitle icon={<Info className="size-3" />} label="基础信息" />
 
               <div className="space-y-1.5">
@@ -385,8 +386,15 @@ export function UnitCommitDialog({
                 )}
             </div>
 
-            {/* ── Column 3: history ── */}
-            <UnitLogTimeline logs={logs} loading={loading} onRefresh={refreshLogs} />
+            {/* ── Column 3: history ──
+                Absolutely positioned inside a relative cell so its content
+                cannot grow the row: it fills exactly what column 1 established
+                and scrolls beyond that. */}
+            <div className="relative">
+              <div className="lg:absolute lg:inset-0">
+                <UnitLogTimeline logs={logs} loading={loading} onRefresh={refreshLogs} />
+              </div>
+            </div>
           </div>
 
           <Separator />
