@@ -619,9 +619,12 @@ buildCommitPayload({ unit, form, operations, commitNote, operationDate }): Commi
 
 > **P1-C1 / P1-C2 顺序不可颠倒**：先 migration、再 schema/代码。反过来会出现"已部署的 Worker 引用了远端尚不存在的列"的窗口，`pnl_cents` 相关查询会直接 500。这也是为什么两个 commit 之间夹了一道**人工部署门**而不是连续合并。
 
-### Phase 2 — Domain + Actions（不碰 UI）
+### Phase 2 — Domain + Actions（不碰 UI）✅ 已完成
 
-P2-C1 类型（`DomainContributionLog.pnl`、`ContributionSummary.totalPnl`、`SerializedUnit` 迁至 `src/domain/types.ts` 并 re-export）· P2-C2 `capital-mappers.ts`（pnl + `createdAtMs`）· P2-C3 `worker-db-client.ts`（`commitUnit`、`listUnitLogs` 含 `expected`、pnl 参数、两个 summary 加 `totalPnl`）· P2-C4 `src/lib/unit-commit-plan.ts` + 测试 · P2-C5 `refactor: fold unit-update-diff into unit-commit-plan` + 测试迁移 · P2-C6 Server Actions · **P2-C7 `fix(mcp): correct withdraw sign and date format`（B2a + B2c + 回归测试；B2b 走 [Decision K] 另行处理）** · **P2-C8 `feat(types): add mcp to contribution source union`（仅 `src/domain/types.ts` 的 union，UI 筛选器留到 P3-C7；须在 P1-C14 之后部署）**
+> **落地记录**：web 测试 **975 → 1009**，typecheck / lint 全绿。新增 `src/__tests__/lib/capital-mappers.test.ts`（此前无测试）与 `src/__tests__/mcp/unit-log-writer.test.ts`（对 SQL 文本做回归断言，锁住 B2a/B2c）。
+
+
+P2-C1 类型（`DomainContributionLog.pnl`、`ContributionSummary.totalPnl`、`SerializedUnit` 迁至 `src/domain/types.ts` 并 re-export）· P2-C2 `capital-mappers.ts`（pnl + `createdAtMs`）· P2-C3 `worker-db-client.ts`（`commitUnit`、`listUnitLogs` 含 `expected`、pnl 参数、两个 summary 加 `totalPnl`）· P2-C4 `src/lib/unit-commit-plan.ts` + 测试 · ~~P2-C5 `refactor: fold unit-update-diff into unit-commit-plan`~~ **→ 顺序调整为 P3-C6**（删除 `unit-update-diff.ts` 必须在 unit-editor 改用 `/commit` 之后，否则破坏编译）· P2-C6 Server Actions · **P2-C7 `fix(mcp): correct withdraw sign and date format`（B2a + B2c + 回归测试；B2b 走 [Decision K] 另行处理）** · **P2-C8 `feat(types): add mcp to contribution source union`（仅 `src/domain/types.ts` 的 union，UI 筛选器留到 P3-C7；须在 P1-C14 之后部署）**
 
 ### Phase 3 — UI
 
