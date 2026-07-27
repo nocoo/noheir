@@ -334,9 +334,11 @@ if (!results[0]?.meta.changes) {
 **做法**：把该规则提取为纯函数放进 `worker/lib/unit-commit.ts`，供构建器调用：
 
 ```ts
+// status 在 DB 中可空（worker/db/schema.ts:63 是 .default("已成立") 而非 .notNull()），
+// 签名必须容纳 null，否则传入 original.status 时 tsc 直接报错。
 export function resolveEndDate(
-  finalStatus: string,
-  originalStatus: string,
+  finalStatus: string | null,
+  originalStatus: string | null,
   originalEndDate: string | null,
   today: string,
 ): string | null;
@@ -344,9 +346,11 @@ export function resolveEndDate(
 
 `metadata.status` 出现时以新值为准，否则沿用 `original.status`；返回值无条件并入 `[0]` 号语句的 `SET` 子句（**即使本次没改 status** —— 因为非归档单元的 `endDate` 必须恒为 `null`，这正是现有实现 `:919-922` 的语义）。
 
+**`null` 按"非归档"处理**：`finalStatus !== "已归档"` 即清空 `endDate`，`null` 自然落入该分支，与现有 `PUT` 的 `else` 分支语义一致。生产实测 178 个单元的 `status` 目前均非 NULL（已成立 151 / 计划中 26 / 筹集中 1），但 DB 允许，测试必须覆盖。
+
 `commitMetadataSchema` **不含 `endDate`**（与不含 `productId` 同理）：它是派生字段，只能由不变量决定，不接受客户端直接写入。
 
-**测试**：`worker/tests/unit-commit.test.ts` 覆盖 4 种状态转移组合（→归档 / 归档→归档 / 归档→非归档 / 非归档→非归档）；e2e 断言"把已归档单元改回已成立后 `end_date` 为 `NULL`"。
+**测试**：`worker/tests/unit-commit.test.ts` 覆盖 5 种状态转移组合（→归档 / 归档→归档 / 归档→非归档 / 非归档→非归档 / **原状态为 `null`**）；e2e 断言"把已归档单元改回已成立后 `end_date` 为 `NULL`"。
 
 ### [Decision G] 番号对换写几条日志
 
@@ -578,7 +582,7 @@ buildCommitPayload({ unit, form, operations, commitNote, operationDate }): Commi
 | P1-C5 | `fix(worker): apply normalized sort to log search` | 同仓库文件 `search()` | 仓库测试：同 `operation_date` 下三种编码混排结果稳定 |
 | P1-C6 | `feat(worker): list unit logs with normalized timestamps` | 同仓库文件（原始 `sql<>` 投影） | 仓库测试 |
 | P1-C7 | `feat(worker): accept pnlCents in log validation` | `worker/db/validation.ts` + 仓库 `Pick<>` | validation 测试 + **回归测试钉死 B3** |
-| P1-C8 | `feat(worker): unit commit statement builder` | `worker/lib/unit-commit.ts`（纯，含 `resolveEndDate`） | 新建测试，≥95%，覆盖 4 种归档状态转移（[Decision F]） —— **本期承重 commit** |
+| P1-C8 | `feat(worker): unit commit statement builder` | `worker/lib/unit-commit.ts`（纯，含 `resolveEndDate`） | 新建测试，≥95%，覆盖 5 种归档状态转移（[Decision F]） —— **本期承重 commit** |
 | P1-C9 | `feat(worker): add commitUnitSchema` | `worker/db/validation.ts` | validation 测试 |
 | P1-C10 | `feat(worker): POST /api/units/:id/commit` | `worker/src/index.ts`（仅管道） | 新建 e2e：409（全字段锚点）、全成/全不成、`endDate` 不变量、无产品时带 pnl 返 400、**全 NULL 可选字段的单元能正常提交**（[Decision B]） |
 | P1-C11 | `feat(worker): GET /api/units/:id/logs` | `worker/src/index.ts` | e2e |
