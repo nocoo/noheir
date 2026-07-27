@@ -43,7 +43,7 @@
 | D6 | 元数据日志金额 | `amount_cents` **一律记 0**。日志是文字记录，不参与金额统计 |
 | D7 | 损益录入口 | ① 切换产品的暂存面板内；② 单元对话框时间线里逐条可编辑 |
 | D8 | 原子性 | **新建 `POST /api/units/:id/commit`**，一次接收元数据 + 操作列表 + 备注，`d1.batch` 全成或全不成 |
-| D9 | 时间线数据源 | 打开对话框时**按需拉取**（不由页面预取） |
+| D9 | 时间线数据源 | 打开对话框时**按需拉取**（不由页面预取）。同一次拉取顺带取回 `expected` 用的 raw 单元快照，见 [Decision B] |
 | D10 | 对换目标范围 | **任意单元**，搜索选择 |
 
 ---
@@ -219,18 +219,39 @@ export const commitUnitSchema = z.object({
 **原设计的 `expected` 只有 `unitCode` + `productId`，不足以保护元数据**（P0-2）：用户打开对话框后若另一请求改了金额或状态，本次提交会**静默覆盖**对方的修改，而守卫链完全不会察觉——因为守卫只比对了番号和产品。
 
 ```ts
+// 严格镜像 capital_units 的可空性（worker/db/schema.ts:53-76）。
+// currency/status/strategy/tactics/startDate/endDate/note 在 DB 里【全部可空】。
 const expectedUnitSchema = z.object({
-  unitCode:    z.string(),
+  unitCode:    z.string(),                    // NOT NULL
+  amountCents: z.number().int(),              // NOT NULL
   productId:   z.string().uuid().nullable(),
-  amountCents: z.number().int(),
-  currency:    z.string(),
-  status:      z.string(),
-  strategy:    z.string(),
-  tactics:     z.string(),
+  currency:    z.string().nullable(),
+  status:      z.string().nullable(),
+  strategy:    z.string().nullable(),
+  tactics:     z.string().nullable(),
   startDate:   z.string().nullable(),
+  endDate:     z.string().nullable(),         // ← 原设计漏掉，生产 178 行全为 NULL
   note:        z.string().nullable(),
 });
 ```
+
+**为什么必须镜像可空性 —— 这是会让功能直接不可用的坑。** 生产实测（178 个单元）：
+
+| 字段 | NULL 行数 | 影响 |
+|---|---|---|
+| `end_date` | **178 / 178** | 原设计**根本没把它放进 `expected`**，并发修改不受保护 |
+| `note` | **84 / 178** | 若声明为非空 `string`，这 84 个单元**永远无法提交** |
+| `start_date` | **26 / 178** | 同上 |
+| `currency` / `status` / `strategy` / `tactics` | 0 | 当前无 NULL，但 DB 允许，schema 必须容纳 |
+
+而 `toDomainUnit`（`src/lib/capital-mappers.ts`）会做兜底转换：`strategy`/`tactics` 用 `?? ""`，`currency`/`status` 用 `?? "CNY"` / `?? "已成立"`。**若前端把这些兜底值回传当 `expected`，与 DB 的 `NULL` 比较必然不等 → 恒 409**。
+
+**两条硬约束**：
+
+1. **`expected` 必须取自未经兜底的原始响应**，不能用 `toDomainUnit` / `SerializedUnit` 的产物。`GET /api/units/:id` 返回什么就原样回传什么，`null` 保持 `null`。实现上意味着 `UnitEditor` 需要单独持有一份 raw 快照，而不是复用已映射的 `SerializedUnit`。
+2. **所有可空字段用空安全比较**：SQLite 里 `col = NULL` 恒为 `NULL`（不是 `TRUE`），必须展开成 `col IS NULL`（当 expected 为 null）或 `col = ?`（否则），共 8 个可空字段。这与 `worker/src/index.ts:792-794` 既有的 `product_id` 双分支写法一致，只是要写 8 遍 —— 在 `worker/lib/unit-commit.ts` 里抽个 `nullSafeEq(col, value)` 助手统一生成。
+
+**测试必须钉死**：e2e 造一个 `note`/`startDate`/`endDate` 全为 `NULL` 的单元，断言它能正常提交（不返 409）。这条用例直接对应上面 84 行的现实数据。
 
 客户端从 `GET /api/units/:id` 读到什么就原样回传什么，守卫链的 `[0]` 号语句把**每一个** `expected` 字段都并进 `WHERE`。任意字段被他人改动 → 匹配 0 行 → 整批塌缩 → 409。
 
@@ -265,12 +286,13 @@ D1 的 `batch()` 是真事务（官方文档："If a statement in the sequence f
 最坏情况（对换 A↔B + 切换产品 + 改元数据）的语句序与守卫：
 
 ```
-[0] UPDATE capital_units SET unit_code='CU-B', <metadata>, updated_at=?
+[0] UPDATE capital_units SET unit_code='CU-B', <metadata>, end_date=<resolveEndDate(...)>, updated_at=?
       WHERE id=A AND user_id=?
-        AND unit_code=<exp.unitCode> AND <product_id 匹配 exp.productId>
-        AND amount_cents=<exp.amountCents> AND currency=<exp.currency>
-        AND status=<exp.status> AND strategy=<exp.strategy> AND tactics=<exp.tactics>
-        AND <start_date 匹配 exp.startDate> AND <note 匹配 exp.note>
+        AND unit_code=? AND amount_cents=?                      -- NOT NULL，直接等值
+        AND <nullSafeEq(product_id)> AND <nullSafeEq(currency)>  -- 以下 8 个可空字段
+        AND <nullSafeEq(status)>     AND <nullSafeEq(strategy)>  -- 均展开成
+        AND <nullSafeEq(tactics)>    AND <nullSafeEq(start_date)>-- `IS NULL` 或 `= ?`
+        AND <nullSafeEq(end_date)>   AND <nullSafeEq(note)>
         AND EXISTS (SELECT 1 FROM capital_units WHERE id=B AND user_id=? AND unit_code='CU-B')
 
 [1] UPDATE capital_units SET unit_code='CU-A', updated_at=?
@@ -279,13 +301,13 @@ D1 的 `batch()` 是真事务（官方文档："If a statement in the sequence f
                                              -- ↑ A 的【后置】状态：仅当 [0] 生效才成立
 
 [2] UPDATE capital_units SET product_id=?, updated_at=?
-      WHERE id=A AND user_id=? AND <product_id 匹配 exp.productId> AND unit_code='CU-B'
+      WHERE id=A AND user_id=? AND <nullSafeEq(product_id)> AND unit_code='CU-B'
 
 [3..n] INSERT INTO contribution_logs (...) SELECT ?,?,...
          WHERE EXISTS (SELECT 1 FROM capital_units WHERE id=A AND ... )
 ```
 
-`[0]` 号语句承担全部乐观并发判定（[Decision B]）：`expected` 的每个字段都在 `WHERE` 里。任一字段被他人改动即匹配 0 行，后续语句因守卫落空而全部塌缩。
+`[0]` 号语句承担全部乐观并发判定（[Decision B]）：`expected` 的 10 个字段全部在 `WHERE` 里，其中 8 个可空字段走 `nullSafeEq`。任一字段被他人改动即匹配 0 行，后续语句因守卫落空而全部塌缩。
 
 ```ts
 const results = await d1.batch(stmts);
@@ -296,7 +318,7 @@ if (!results[0]?.meta.changes) {
 
 **为什么不沿用 `PUT /api/units/:id` 的 CAS→batch→补偿模式**：现有补偿路径（`worker/src/index.ts:869-894`）已经有一条"补偿也失败就只 `console.error`"的不可恢复分支。扩展到"两个单元 + 最多 5 条日志"意味着要为每一种部分前缀写逆操作，组合爆炸，且逆操作自身还会失败。守卫链**没有需要补偿的失败态**。
 
-**诚实记录代价**：① SQL 更密（每条带 `EXISTS`，且 `[0]` 带全字段比对）；② 409 由 `meta.changes === 0` 推断，"单元在读写之间被删除"也会归到 409 —— 对用户而言这恰好是正确答案；③ SQLite 无 `<=>`，空安全比较必须展开成 `col IS NULL` / `col = ?` 两支，照抄 `worker/src/index.ts:792-794` 既有写法（`productId`、`startDate`、`note` 三个可空字段都要）。
+**诚实记录代价**：① SQL 更密（每条带 `EXISTS`，且 `[0]` 带 10 字段比对）；② 409 由 `meta.changes === 0` 推断，"单元在读写之间被删除"也会归到 409 —— 对用户而言这恰好是正确答案；③ SQLite 无 `<=>`，8 个可空字段全部要展开成 `col IS NULL` / `col = ?` 两支，用 `nullSafeEq` 助手统一生成，写法沿袭 `worker/src/index.ts:792-794`。
 
 **代码分层**：`worker/lib/unit-commit.ts` 导出**纯**构建器，返回 `{ sql, params }[]` 与生成的备注串；`worker/src/index.ts` 只做 `d1.prepare(...).bind(...)` + `d1.batch` 的管道工作。分支逻辑进 `worker/lib/**`（95% 覆盖率门控），管道留在 `src/index.ts`（不门控）。
 
@@ -465,7 +487,7 @@ buildUnitMetadataDiff(initial, current): UnitMetadataPatch | null
 buildCommitPayload({ unit, form, operations, commitNote, operationDate }): CommitUnitInput | null
 ```
 
-需在 `src/__tests__/lib/unit-commit-plan.test.ts` 钉死的不变量：每种 `kind` 至多一个；`swap_unit_code` 的 `targetUnitId === unit.id` 被拒；`switch_product` 的 `toProductId === fromProductId` 被拒；元数据无变更 **且** 无操作 **且** `commitNote` 为空时 `buildCommitPayload` 返回 `null`；元→分用 `Math.round(x * 100)`；**暂存 `swap_unit_code` 时 `unitCode` 输入被禁用**（[P1-5]）；**暂存 `switch_product` 时金额输入被禁用**（[Decision C]）；`expected` 快照取自打开对话框时的原始单元，包含全部 9 个字段（[Decision B]）。
+需在 `src/__tests__/lib/unit-commit-plan.test.ts` 钉死的不变量：每种 `kind` 至多一个；`swap_unit_code` 的 `targetUnitId === unit.id` 被拒；`switch_product` 的 `toProductId === fromProductId` 被拒；元数据无变更 **且** 无操作 **且** `commitNote` 为空时 `buildCommitPayload` 返回 `null`；元→分用 `Math.round(x * 100)`；**暂存 `swap_unit_code` 时 `unitCode` 输入被禁用**（[P1-5]）；**暂存 `switch_product` 时金额输入被禁用**（[Decision C]）；`expected` 快照取自打开对话框时 `GET /api/units/:id` 的**原始响应**（10 个字段，`null` 保持 `null`，**不得**用 `toDomainUnit`/`SerializedUnit` 的兜底产物，[Decision B]）。
 
 > 底部备注框绑定的是 `commitNote`（审计备注，写进日志）；单元的持久备注 `unitNote` 仍是栏1 的普通表单字段，走 `metadata`。两者在 UI 上要有明确区分的 label，避免用户混淆。
 
