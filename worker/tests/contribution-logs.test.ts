@@ -49,6 +49,47 @@ describe("ContributionLogsRepo", () => {
     expect(found?.id).toBe(created.id);
   });
 
+  test("pnlCents round-trips and defaults to null", async () => {
+    const repos = getTestRepos();
+    const unit = await repos.units.create(userId, baseUnit);
+    const product = await repos.products.create(userId, baseProduct);
+
+    const withPnl = await repos.contributionLogs.create(userId, {
+      unitId: unit.id,
+      productId: product.id,
+      operationType: "withdraw",
+      amountCents: -500000,
+      pnlCents: 12345,
+      operationDate: "2026-04-02",
+      source: "manual",
+    });
+    expect(withPnl.pnlCents).toBe(12345);
+
+    const negative = await repos.contributionLogs.create(userId, {
+      unitId: unit.id,
+      productId: product.id,
+      operationType: "withdraw",
+      amountCents: -100000,
+      pnlCents: -6789,
+      operationDate: "2026-04-03",
+      source: "manual",
+    });
+    expect(negative.pnlCents).toBe(-6789);
+
+    const omitted = await repos.contributionLogs.create(userId, {
+      unitId: unit.id,
+      productId: product.id,
+      operationType: "invest",
+      amountCents: 500000,
+      operationDate: "2026-04-04",
+      source: "manual",
+    });
+    expect(omitted.pnlCents).toBeNull();
+
+    const found = await repos.contributionLogs.findById(userId, withPnl.id);
+    expect(found?.pnlCents).toBe(12345);
+  });
+
   test("search with filters", async () => {
     const repos = getTestRepos();
     const unit1 = await repos.units.create(userId, baseUnit);

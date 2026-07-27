@@ -73,6 +73,7 @@ CREATE TABLE IF NOT EXISTS contribution_logs (
   operation_type TEXT NOT NULL,
   amount_cents INTEGER NOT NULL,
   balance_after_cents INTEGER,
+  pnl_cents INTEGER,
   operation_date TEXT NOT NULL,
   source TEXT DEFAULT 'manual',
   note TEXT,

@@ -172,6 +172,7 @@ export const contributionLogs = sqliteTable("contribution_logs", {
   operationType: text("operation_type").notNull(), // "invest" | "withdraw" | "adjust"
   amountCents: integer("amount_cents").notNull(), // Positive = invest, negative = withdraw
   balanceAfterCents: integer("balance_after_cents"), // Balance snapshot after operation
+  pnlCents: integer("pnl_cents"), // Realized gain/loss, independent of amountCents
   operationDate: text("operation_date").notNull(), // YYYY-MM-DD
   source: text("source").default("manual"), // "manual" | "auto" | "import"
   note: text("note"),
