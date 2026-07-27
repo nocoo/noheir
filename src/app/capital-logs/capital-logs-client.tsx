@@ -181,7 +181,7 @@ export function CapitalLogsClient({ logs: initialLogs, units, products }: Capita
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold">
             <History className="text-primary size-6" />
-            投入日志
+            时间视图
           </h1>
           <p className="text-muted-foreground text-sm">
             资金投入/取出历史记录
