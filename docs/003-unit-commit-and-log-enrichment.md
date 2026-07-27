@@ -593,7 +593,12 @@ buildCommitPayload({ unit, form, operations, commitNote, operationDate }): Commi
 
 **Phase 0（前置，非 commit）**：`cd worker && bun install`（B5）。
 
-### Phase 1 — Worker + DB
+### Phase 1 — Worker + DB ✅ 已完成
+
+> **落地记录**：14 个 commit 全部完成，生产 migration 已应用并验证（`pnl_cents INTEGER`，可空、无默认值）。worker 测试 **247 → 321**，e2e **154 全过**，覆盖率 **92.06%/78.66%（原未达标）→ 97.49%/94.91%**。
+>
+> **实施中发现并修正的方案缺陷**：日志 INSERT 的守卫最初只比对 `unit_code`，导致"既不改番号也不换产品"的提交在 CAS 落空后**日志仍会写入**（守卫恒真）。已改为以 `updated_at = now` 作判据 —— 只有 `[0]` 号语句会写入这个值。**该缺陷只有 e2e 能捕获**（`better-sqlite3` 无 `d1.batch()`），印证了文档"原子性只在 e2e 可测"的判断。已补单元测试 `log guard keys off updated_at` 防回归。
+
 
 | # | Commit | 文件 | 门控 |
 |---|---|---|---|
