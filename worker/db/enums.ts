@@ -60,7 +60,10 @@ export const CURRENCIES = ["CNY", "USD", "HKD"] as const;
 
 export const CONTRIBUTION_OPERATION_TYPES = ["invest", "withdraw", "adjust"] as const;
 
-export const CONTRIBUTION_SOURCES = ["manual", "auto", "import"] as const;
+// "mcp" is included because 132 production rows already carry it (written by
+// src/lib/mcp/tools/unit.ts). Leaving it out of the enum would make those rows
+// unfilterable rather than making them go away. See docs/003 § Decision K.
+export const CONTRIBUTION_SOURCES = ["manual", "auto", "import", "mcp"] as const;
 
 // Derived types
 export type Channel = (typeof CHANNELS)[number];

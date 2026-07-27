@@ -615,3 +615,22 @@ describe("commitUnitSchema", () => {
     expect(r.success).toBe(false);
   });
 });
+
+describe("contribution source enum (docs/003 Decision K)", () => {
+  const base = {
+    unitId: "123e4567-e89b-12d3-a456-426614174000",
+    operationType: "invest" as const,
+    amountCents: 100000,
+    operationDate: "2026-07-27",
+  };
+
+  test("accepts mcp alongside the original sources", () => {
+    for (const source of ["manual", "auto", "import", "mcp"]) {
+      expect(createContributionLogSchema.safeParse({ ...base, source }).success).toBe(true);
+    }
+  });
+
+  test("still rejects an unknown source", () => {
+    expect(createContributionLogSchema.safeParse({ ...base, source: "nope" }).success).toBe(false);
+  });
+});
