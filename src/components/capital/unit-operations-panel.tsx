@@ -51,7 +51,8 @@ export function UnitOperationsPanel({
   const [swapOpen, setSwapOpen] = useState(false);
   const [switchOpen, setSwitchOpen] = useState(false);
   const [productPickerOpen, setProductPickerOpen] = useState(false);
-  const [pendingProductId, setPendingProductId] = useState<string | null>(null);
+  // undefined = nothing picked yet; null = explicitly chose 取消关联.
+  const [pendingProductId, setPendingProductId] = useState<string | null | undefined>(undefined);
   const [pnlInput, setPnlInput] = useState("");
 
   const stagedSwap = findStagedOperation(operations, "swap_unit_code");
@@ -61,6 +62,7 @@ export function UnitOperationsPanel({
   const pendingProduct = products.find((p) => p.id === pendingProductId) ?? null;
 
   const confirmSwitch = () => {
+    if (pendingProductId === undefined) return;
     const pnl = pnlInput.trim();
     onStage({
       kind: "switch_product",
@@ -71,7 +73,7 @@ export function UnitOperationsPanel({
       pnl: pnl === "" ? null : Number(pnl),
     });
     setSwitchOpen(false);
-    setPendingProductId(null);
+    setPendingProductId(undefined);
     setPnlInput("");
   };
 
@@ -129,7 +131,9 @@ export function UnitOperationsPanel({
                   aria-label="选择新产品"
                   className="h-8 w-full justify-between text-xs font-normal"
                 >
-                  {pendingProduct?.name ?? "选择产品..."}
+                  {pendingProductId === undefined
+                    ? "选择产品..."
+                    : (pendingProduct?.name ?? "取消关联")}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
@@ -138,15 +142,20 @@ export function UnitOperationsPanel({
                   <CommandList>
                     <CommandEmpty>未找到产品</CommandEmpty>
                     <CommandGroup>
-                      <CommandItem
-                        value="__none__"
-                        onSelect={() => {
-                          setPendingProductId(null);
-                          setProductPickerOpen(false);
-                        }}
-                      >
-                        <span className="text-muted-foreground">取消关联</span>
-                      </CommandItem>
+                      {/* Unlinking is only meaningful when a product is linked;
+                          offering it otherwise would stage a null → null no-op
+                          that the server rejects with 400. */}
+                      {unit.productId && (
+                        <CommandItem
+                          value="__none__"
+                          onSelect={() => {
+                            setPendingProductId(null);
+                            setProductPickerOpen(false);
+                          }}
+                        >
+                          <span className="text-muted-foreground">取消关联</span>
+                        </CommandItem>
+                      )}
                       {products
                         .filter((p) => p.id !== unit.productId)
                         .map((p) => (
@@ -186,7 +195,13 @@ export function UnitOperationsPanel({
               </div>
             )}
 
-            <Button type="button" size="sm" className="h-7 w-full text-xs" onClick={confirmSwitch}>
+            <Button
+              type="button"
+              size="sm"
+              className="h-7 w-full text-xs"
+              onClick={confirmSwitch}
+              disabled={pendingProductId === undefined}
+            >
               确认切换
             </Button>
           </div>

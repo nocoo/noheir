@@ -103,6 +103,39 @@ describe("UnitOperationsPanel", () => {
     });
   });
 
+  test("confirm stays disabled until a product is picked", async () => {
+    const user = userEvent.setup();
+    const { onStage } = setup();
+
+    await user.click(screen.getByRole("button", { name: "切换投入产品" }));
+    // Not picking anything must not silently stage an unlink.
+    expect(screen.getByRole("button", { name: "确认切换" })).toBeDisabled();
+    expect(onStage).not.toHaveBeenCalled();
+  });
+
+  test("explicitly choosing 取消关联 stages a null target", async () => {
+    const user = userEvent.setup();
+    const { onStage } = setup();
+
+    await user.click(screen.getByRole("button", { name: "切换投入产品" }));
+    await user.click(screen.getByRole("combobox", { name: "选择新产品" }));
+    await user.click(screen.getByText("取消关联"));
+
+    // The trigger must reflect the choice, not fall back to the placeholder.
+    expect(screen.getByRole("combobox", { name: "选择新产品" })).toHaveTextContent("取消关联");
+    await user.click(screen.getByRole("button", { name: "确认切换" }));
+    expect(onStage).toHaveBeenCalledWith(expect.objectContaining({ toProductId: null }));
+  });
+
+  test("hides 取消关联 when the unit has no product", async () => {
+    const user = userEvent.setup();
+    setup({ unit: makeUnit({ productId: null, productName: null }) });
+
+    await user.click(screen.getByRole("button", { name: "切换投入产品" }));
+    await user.click(screen.getByRole("combobox", { name: "选择新产品" }));
+    expect(screen.queryByText("取消关联")).not.toBeInTheDocument();
+  });
+
   test("omits the pnl field when there is no product to exit", async () => {
     const user = userEvent.setup();
     setup({ unit: makeUnit({ productId: null, productName: null }) });
