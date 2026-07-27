@@ -46,6 +46,7 @@ import type {
   DomainUnit,
 } from "@/domain/types";
 import { formatCurrencyFull } from "@/lib/chart-config";
+import { formatOperationDate } from "@/lib/local-date";
 import { CAPITAL_TABLE_COLUMNS } from "@/lib/table-columns";
 
 interface CapitalLogsClientProps {
@@ -336,7 +337,9 @@ export function CapitalLogsClient({ logs: initialLogs, units, products }: Capita
                   const OpIcon = op.icon;
                   return (
                     <TableRow key={log.id} className={log.isDeleted ? "opacity-50" : ""}>
-                      <TableCell className="text-xs">{log.operationDate}</TableCell>
+                      <TableCell className="text-xs whitespace-nowrap">
+                        {formatOperationDate(log.operationDate)}
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <OpIcon className={`size-3 ${op.color}`} />

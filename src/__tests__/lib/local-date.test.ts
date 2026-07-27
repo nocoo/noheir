@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { getLocalDateString } from "@/lib/local-date";
+import { formatOperationDate, getLocalDateString } from "@/lib/local-date";
 
 describe("getLocalDateString", () => {
   test("formats as YYYY-MM-DD", () => {
@@ -21,5 +21,21 @@ describe("getLocalDateString", () => {
 
   test("pads single-digit months and days", () => {
     expect(getLocalDateString(new Date("2026-01-05T04:00:00Z"))).toBe("2026-01-05");
+  });
+});
+
+describe("formatOperationDate", () => {
+  test("passes a well-formed date through untouched", () => {
+    expect(formatOperationDate("2026-01-16")).toBe("2026-01-16");
+  });
+
+  test("trims the 132 legacy rows that hold a full ISO timestamp", () => {
+    // Real shape written by the old MCP path — see docs/003 § B2c.
+    expect(formatOperationDate("2026-04-12T01:52:50.622Z")).toBe("2026-04-12");
+  });
+
+  test("leaves an unrecognized value alone rather than truncating blindly", () => {
+    expect(formatOperationDate("unknown")).toBe("unknown");
+    expect(formatOperationDate("")).toBe("");
   });
 });
