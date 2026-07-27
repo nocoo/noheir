@@ -40,6 +40,7 @@ import type {
   DomainProduct,
   DomainUnit,
 } from "@/domain/types";
+import { getLocalDateString } from "@/lib/local-date";
 import { cn } from "@/lib/utils";
 
 const OPERATION_TYPES = [
@@ -106,9 +107,7 @@ function ContributionLogFormInner({
     log?.operationType ?? "invest",
   );
   const [amount, setAmount] = useState(log?.amount != null ? String(Math.abs(log.amount)) : "");
-  const [operationDate, setOperationDate] = useState(
-    log?.operationDate ?? new Date().toISOString().slice(0, 10),
-  );
+  const [operationDate, setOperationDate] = useState(log?.operationDate ?? getLocalDateString());
   const [pnl, setPnl] = useState(log?.pnl != null ? String(log.pnl) : "");
   const [note, setNote] = useState(log?.note ?? "");
 
