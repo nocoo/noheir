@@ -813,7 +813,7 @@ app.put("/api/units/:id", async (c) => {
     }
 
     // Phase 2: Insert logs (UPDATE succeeded, we "own" this transition)
-    const today = new Date().toISOString().slice(0, 10);
+    const today = getLocalDateString();
     const logStatements: D1PreparedStatement[] = [];
 
     if (original.productId) {

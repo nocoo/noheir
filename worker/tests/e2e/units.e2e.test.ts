@@ -190,6 +190,10 @@ describe("E2E: Units", () => {
     expect(logs.logs).toHaveLength(1);
     expect(logs.logs[0]?.operationType).toBe("invest");
     expect(logs.logs[0]?.productId).toBe(product.id);
+
+    // operation_date must use Asia/Shanghai, not UTC — see docs/003 § B4.
+    const shanghaiToday = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Shanghai" });
+    expect(logs.logs[0]?.operationDate).toBe(shanghaiToday);
   });
 
   test("PUT /api/units/:id creates withdraw + invest when switching products", async () => {
