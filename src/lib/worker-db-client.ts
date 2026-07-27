@@ -11,6 +11,8 @@
  * WORKER_URL and WORKER_TOKEN are server-only env vars.
  */
 
+import type { ExpectedUnitSnapshot } from "@/domain/types";
+
 export class WorkerDbError extends Error {
   constructor(
     message: string,
@@ -289,6 +291,7 @@ export class WorkerDbClient {
         totalInvested: number;
         totalWithdrawn: number;
         netAmount: number;
+        totalPnl: number;
         logCount: number;
       };
     }>("GET", `/api/contribution-logs/summary/unit/${unitId}`, userId);
@@ -300,6 +303,7 @@ export class WorkerDbClient {
         totalInvested: number;
         totalWithdrawn: number;
         netAmount: number;
+        totalPnl: number;
         logCount: number;
         unitCount: number;
       };
@@ -319,6 +323,7 @@ export class WorkerDbClient {
       operationType: string;
       amountCents: number;
       balanceAfterCents?: number | null;
+      pnlCents?: number | null;
       operationDate: string;
       source?: string;
       note?: string | null;
@@ -334,11 +339,39 @@ export class WorkerDbClient {
       operationType?: string;
       amountCents?: number;
       balanceAfterCents?: number | null;
+      pnlCents?: number | null;
       operationDate?: string;
       note?: string | null;
     },
   ) {
     return this.request<{ log: unknown }>("PUT", `/api/contribution-logs/${id}`, userId, data);
+  }
+
+  /**
+   * Unit timeline + the raw snapshot for optimistic concurrency. Both come from
+   * one request so they cannot drift, and so `expected` is never built from a
+   * mapped shape. See docs/003 § Decision B.
+   */
+  async listUnitLogs(userId: string, unitId: string) {
+    return this.request<{
+      logs: unknown[];
+      expected: ExpectedUnitSnapshot;
+    }>("GET", `/api/units/${unitId}/logs`, userId);
+  }
+
+  /** Atomic multi-change commit: metadata + staged operations + audit note. */
+  async commitUnit(
+    userId: string,
+    unitId: string,
+    data: {
+      expected: ExpectedUnitSnapshot;
+      metadata?: Record<string, unknown>;
+      operations?: Array<Record<string, unknown>>;
+      operationDate?: string;
+      commitNote?: string | null;
+    },
+  ) {
+    return this.request<{ unit: unknown }>("POST", `/api/units/${unitId}/commit`, userId, data);
   }
 
   async deleteContributionLog(userId: string, id: string) {
