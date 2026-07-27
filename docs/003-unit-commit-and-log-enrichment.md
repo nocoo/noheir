@@ -1,0 +1,463 @@
+# 003 Unit Commit & Log Enrichment（资本单元提交与日志增强）
+
+把"已实现一半"的 `contribution_logs` 补成资本单元的一等历史：日志可指定日期、可记损益；"编辑资本单位"对话框改为三栏（基础信息 / 产品与操作 / 历史时间线）；产品切换与番号对换由**下拉选择**改为**暂存式操作按钮**，与元数据修改一起原子提交，并共享一条备注。
+
+## Context
+
+### 为什么做
+
+`contribution_logs` 表（`docs/17-contribution-logs.md`，migration `0002`）已经在记录资金进出，`PUT /api/units/:id` 改 `productId` 时会自动写 `withdraw` + `invest` 两条日志（`worker/src/index.ts:817-867`）。但这套能力对用户是**不可达**的：
+
+1. `/capital-logs` 页面直到本次开发前没有任何入口（已在 `a364801` 补上侧边栏"时间视图"）。
+2. 日志的 `operation_date` 恒为"编辑那天"（`worker/src/index.ts:814` 硬编码 `today`），不是资金实际移动的日期。
+3. 没有损益概念 —— 只有本金流动，赚了多少无处可记。
+4. 单元编辑对话框看不到该单元的任何历史；`InvestmentTimeline`（`src/components/capital/investment-timeline.tsx`）画的是**未来预测**的锁定/开放周期，不是过去。
+5. 产品切换靠下拉框，语义上等同于"改了个字段"，而实际上它是一次有金额、有日期、有理由的**资金操作**。
+
+### 预期结果
+
+- 每条日志可指定日期、可选填损益（`pnl_cents`）。
+- 编辑资本单位 = 三栏视图：左看基础信息，中看产品与操作，右看全部历史（倒序）。
+- 产品切换、番号对换变成显式操作按钮 → 暂存为待生效卡片 → 底部填一条统一备注 → 一次"保存"原子落库。
+- 元数据修改也留痕（`adjust` 日志）。
+
+### 不做什么
+
+- **存量不管**：不迁移、不回填历史数据。新列可空，旧行为 `NULL`。
+- 不改 `PUT /api/units/:id` 的 `productId` 单独更新约束（理由见 [Decision D]）。
+- 不做日志分页（500 条上限 + 提示，见 [Risk 5]）。
+
+---
+
+## 已确认的设计决策
+
+> 以下为需求澄清阶段与用户闭环的结论，实现时不再重开讨论。
+
+| # | 决策 | 内容 |
+|---|---|---|
+| D1 | 损益语义 | **新增独立列** `pnl_cents`。`amount_cents` = 本金流动，`pnl_cents` = 已实现损益。可累加为"该单元累计收益" |
+| D2 | 番号对换范围 | **仅交换 `unitCode` 字符串**。金额、产品、策略、战术全部原地不动 |
+| D3 | 窄屏退化 | 宽屏三栏并排，窄屏纵向堆叠（`lg:grid-cols-3`），全部内容都在 |
+| D4 | 备注形态 | **对话框底部统一一个备注框**。本次保存的所有变更共享这条备注；元数据修改**也**写日志 |
+| D5 | 操作提交时机 | 操作按钮**暂存**为待生效卡片（可撤销），点底部"保存"才统一提交 |
+| D6 | 元数据日志金额 | `amount_cents` **一律记 0**。日志是文字记录，不参与金额统计 |
+| D7 | 损益录入口 | ① 切换产品的暂存面板内；② 单元对话框时间线里逐条可编辑 |
+| D8 | 原子性 | **新建 `POST /api/units/:id/commit`**，一次接收元数据 + 操作列表 + 备注，`d1.batch` 全成或全不成 |
+| D9 | 时间线数据源 | 打开对话框时**按需拉取**（不由页面预取） |
+| D10 | 对换目标范围 | **任意单元**，搜索选择 |
+
+---
+
+## 调查发现的既有缺陷
+
+> 以下均已对**生产 D1** 或源码核实，不是推测。它们影响本期设计，必须一并处理。
+
+### B1. `created_at` 在生产环境有三种编码（已核实）
+
+```sql
+SELECT source, typeof(created_at), COUNT(*) FROM contribution_logs GROUP BY 1,2;
+```
+
+| source | typeof | 行数 | 实际编码 |
+|---|---|---|---|
+| `auto` | integer | 66 | **毫秒**（`1784956591451`） |
+| `import` | integer | 144 | **毫秒**（`1775362679500`） |
+| `mcp` | text | 132 | **ISO 字符串**（`"2026-07-02T05:51:49.226Z"`） |
+
+而 Drizzle schema 声明的是 `integer("created_at", {mode:"timestamp"})` —— **秒**（`worker/db/schema.ts:179`，`mode:"timestamp"` 解码时做 `new Date(value * 1000)`）。建表在 `0002_contribution_logs.sql:15`，是 `created_at INTEGER NOT NULL`，**无默认值**（不像 `0001_initial.sql` 其他表用 `DEFAULT (unixepoch())`），也就是说这一列的编码**完全由写入方决定**，而三个写入方各写各的。结果：`datetime(created_at,'unixepoch')` 对**每一行**都返回 `NULL`。
+
+**三个写入方今天仍在持续制造不一致**：`repos.contributionLogs.create()` 走 Drizzle 写秒；`worker/src/index.ts:838,864` 写 `Date.now()` 毫秒；`src/lib/mcp/tools/unit.ts:577,601` 写 ISO 文本。
+
+**45 个单元**的日志混有不同编码。`getLatestInvestLogs`（`worker/db/repositories/contribution-logs.ts:34-72`）按 `desc(operationDate), desc(createdAt)` 排序 —— 同日期时用毫秒整数和 ISO 文本比大小，结果错误。这直接影响 `/warehouse`、`/funds` 和所有 MCP 单元查询的 `availableDate`。
+
+目前**潜伏**（没有 UI 渲染 `createdAt`），但新时间线要按时间排序，必须处理。因 D-存量不管，**方案是让排序对混合编码健壮，而不是迁移数据**。
+
+### B2. MCP 写入路径有三重缺陷（已核实）
+
+`src/lib/mcp/tools/unit.ts:576-620` 这条自动写日志的路径同时存在三个问题，**且今天仍在持续产生脏数据**。
+
+**B2a — `withdraw` 金额符号写反。** MCP 的 SQL 是 `SELECT ..., 'withdraw', amount_cents, ...`（**正数**），而 Worker 写的是 `-original.amountCents`（负数）。生产验证：
+
+```sql
+SELECT source, operation_type, COUNT(*) n,
+       SUM(CASE WHEN amount_cents>0 THEN 1 ELSE 0 END) AS positive_rows
+FROM contribution_logs GROUP BY 1,2;
+```
+
+| source | type | 行数 | 其中正数 | 判定 |
+|---|---|---|---|---|
+| `auto` | withdraw | 31 | **0** | 正确（全负） |
+| `mcp` | withdraw | 65 | **65** | **全错（全正）** |
+
+`summarizeByUnit`（`worker/db/repositories/contribution-logs.ts:158-163`）按 `amountCents > 0` 判定投入 —— 这 65 条取出会被全部统计成投入。**这比时间戳问题严重得多**，它直接污染金额汇总。
+
+**B2b — `source='mcp'` 不在枚举内。** `CONTRIBUTION_SOURCES`（`worker/db/enums.ts:63`）只有 `manual | auto | import`，但生产有 132 行 `mcp`。这些行**无法通过 `/capital-logs` 的来源筛选器**，也会让 `searchContributionLogsSchema` 的 `source` 参数永远匹配不到它们。
+
+**B2c — ISO 时间戳写进了 `operation_date`。** `logNow`（完整 ISO 串）被绑给 `operation_date`，该列约定 `YYYY-MM-DD`。生产验证：
+
+```sql
+SELECT COUNT(*) FROM contribution_logs
+WHERE operation_date NOT GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]';
+-- 132  ← 与 mcp 行数完全吻合
+```
+
+`operation_date` 是时间线的**主排序键**，必须修。
+
+> **三者必须一起修**（P2-C7），只修日期不足以阻止错误数据继续产生。修完加回归测试钉死符号与来源。存量的 65 条错误符号行按"存量不管"处理，但需在 [Risk 7] 记录其对汇总的已知影响。
+
+### B3. `contribution-logs` 仓库 `update()` 有字段白名单
+
+`worker/db/repositories/contribution-logs.ts:224-228` 的 `Pick<>` 只列了 5 个字段。**不加 `"pnlCents"` 就会静默丢弃**，且调用点因 `stripUndefined` 放宽类型而不报错。
+
+### B4. 自动日志用 UTC 而非本地日期
+
+`worker/src/index.ts:814` 用 `new Date().toISOString().slice(0,10)`，而项目有 `getLocalDateString()`（`worker/src/index.ts:47`，Asia/Shanghai）。晚上操作会记成前一天。
+
+### B5. 本地 worker 依赖未安装（环境问题，非代码缺陷）
+
+`worker/node_modules` 为空，`better-sqlite3`（`worker/package.json:23`）缺失，`bun run test:worker` 现在 **11/16 套件加载失败**（76 个测试通过）。CI 无此问题（`extra-install-dirs: "worker"`）。**动手前先 `cd worker && bun install`**。
+
+---
+
+## Data Model
+
+### 新增列：`contribution_logs.pnl_cents`
+
+```sql
+ALTER TABLE contribution_logs ADD COLUMN pnl_cents INTEGER;
+```
+
+可空、无默认值 → 存量行为 `NULL`，满足"存量不管"。
+
+**必须三处同步**（漏一处 → 单元测试与生产行为分叉）：
+
+| # | 文件 | 改动 |
+|---|---|---|
+| 1 | `worker/db/migrations/0008_contribution_log_pnl.sql` | `ALTER TABLE ... ADD COLUMN pnl_cents INTEGER;` |
+| 2 | `worker/db/schema.ts` | `pnlCents: integer("pnl_cents")`，紧邻 `balanceAfterCents`（~:174） |
+| 3 | `worker/tests/setup.ts` | `SCHEMA_DDL` 里 `contribution_logs` 块加 `pnl_cents INTEGER,`（~:75） |
+
+> worker 单元测试**不读 migrations**，用的是手抄 DDL。这是本项目踩过的坑，见 `worker/tests/setup.ts:23-167`。
+
+### 语义
+
+| 列 | 含义 | 番号对换 | 切换产品 | 元数据修改 |
+|---|---|---|---|---|
+| `amount_cents` | 本金流动 | `0` | `-amt` / `+amt` | `0`（D6） |
+| `pnl_cents` | 已实现损益 | `NULL` | 挂在 `withdraw` 行 | `NULL` |
+| `operation_type` | 复用现有枚举 | `adjust` | `withdraw`+`invest` | `adjust` |
+| `operation_date` | 用户指定，默认今天 | 用户选 | 用户选 | 用户选 |
+
+**不新增 `swap` 枚举值**：`CONTRIBUTION_OPERATION_TYPES`（`worker/db/enums.ts`）被 `createContributionLogSchema`、`searchContributionLogsSchema`、`DomainContributionLog`（`src/domain/types.ts:141`）、`/capital-logs` 筛选器、MCP 工具共用，加值的爆炸半径远大于收益。语义写进 `note`。
+
+---
+
+## API Surface
+
+### 新增 `POST /api/units/:id/commit`
+
+```ts
+// worker/db/validation.ts
+const commitOperationSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("swap_unit_code"), targetUnitId: z.string().uuid() }),
+  z.object({
+    kind: z.literal("switch_product"),
+    toProductId: z.string().uuid().nullable(),
+    pnlCents: z.number().int().optional().nullable(),
+  }),
+]);
+
+export const commitUnitSchema = z.object({
+  metadata: z.object({ /* updateUnitSchema 的字段集，全 optional，但【不含 productId】*/ }).optional(),
+  operations: z.array(commitOperationSchema).max(2).default([]),
+  operationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  note: z.string().max(1000).optional().nullable(),
+  expected: z.object({                    // 乐观并发锚点
+    unitCode: z.string(),
+    productId: z.string().uuid().nullable(),
+  }),
+})
+.refine(d => d.metadata !== undefined || d.operations.length > 0 || (d.note ?? "").length > 0)
+.refine(d => new Set(d.operations.map(o => o.kind)).size === d.operations.length);
+```
+
+`metadata` **刻意不含 `productId`** —— 产品变更只能通过 `switch_product` 操作表达，把写日志的逻辑收敛到一处。
+
+校验分两层：**形状**用 Zod 判别联合（`db/validation.ts` 在 worker 覆盖率 `include` 内，白拿测试覆盖）；**引用完整性**（目标单元存在且属于本人、目标 ≠ 自己、目标产品存在、新产品 ≠ 当前产品）在端点内查库。
+
+### [Decision A] 原子性方案：守卫链单批次，取代 CAS + 补偿
+
+**结论：整个提交放进一个 `d1.batch()`，把 CAS 判据写进每条语句的 `WHERE`，后续语句依赖前序语句的"后置状态"，批次结束后读 `results[0].meta.changes` 判定 409。不写任何补偿代码。**
+
+D1 的 `batch()` 是真事务（官方文档："If a statement in the sequence fails ... it aborts or rolls back the entire sequence."）。矛盾在于批次中途无法读 `meta.changes` 做 CAS 判断。解法是**让判据不需要中途读**——用 SQL 表达守卫，CAS 落空时所有语句匹配 0 行，成为一次无害的空提交，事后统一判定。
+
+最坏情况（对换 A↔B + 切换产品 + 改元数据）的语句序与守卫：
+
+```
+[0] UPDATE capital_units SET unit_code='CU-B', <metadata>, updated_at=?
+      WHERE id=A AND user_id=? AND unit_code='CU-A' AND <product_id 匹配 expected>
+        AND EXISTS (SELECT 1 FROM capital_units WHERE id=B AND user_id=? AND unit_code='CU-B')
+
+[1] UPDATE capital_units SET unit_code='CU-A', updated_at=?
+      WHERE id=B AND user_id=? AND unit_code='CU-B'
+        AND EXISTS (SELECT 1 FROM capital_units WHERE id=A AND user_id=? AND unit_code='CU-B')
+                                             -- ↑ A 的【后置】状态：仅当 [0] 生效才成立
+
+[2] UPDATE capital_units SET product_id=?, updated_at=?
+      WHERE id=A AND user_id=? AND <product_id 匹配 expected> AND unit_code='CU-B'
+
+[3..n] INSERT INTO contribution_logs (...) SELECT ?,?,...
+         WHERE EXISTS (SELECT 1 FROM capital_units WHERE id=A AND ... )
+```
+
+```ts
+const results = await d1.batch(stmts);
+if (!results[0]?.meta.changes) {
+  return c.json({ error: "Conflict: unit was modified by another request. Please retry." }, 409);
+}
+```
+
+**为什么不沿用 `PUT /api/units/:id` 的 CAS→batch→补偿模式**：现有补偿路径（`worker/src/index.ts:869-894`）已经有一条"补偿也失败就只 `console.error`"的不可恢复分支。扩展到"两个单元 + 最多 5 条日志"意味着要为每一种部分前缀写逆操作，组合爆炸，且逆操作自身还会失败。守卫链**没有需要补偿的失败态**。
+
+**诚实记录代价**：① SQL 更密（每条带 `EXISTS`）；② 409 由 `meta.changes === 0` 推断，"单元在读写之间被删除"也会归到 409 —— 对用户而言这恰好是正确答案；③ SQLite 无 `<=>`，空安全比较必须展开成 `product_id IS NULL` / `product_id = ?` 两支，照抄 `worker/src/index.ts:792-794` 既有写法。
+
+**为什么不用 `updated_at` 做版本号**：按具体字段做值比较可避免无关并发编辑引起的假 409；且 `updated_at` 在生产是可空 `INTEGER`（`0003_add_missing_columns.sql`），在 `worker/tests/setup.ts` 却是 `INTEGER NOT NULL DEFAULT 0` —— 可空性不一致会让测试与生产行为分叉。
+
+**代码分层**：`worker/lib/unit-commit.ts` 导出**纯**构建器，返回 `{ sql, params }[]` 与生成的备注串；`worker/src/index.ts` 只做 `d1.prepare(...).bind(...)` + `d1.batch` 的管道工作。分支逻辑进 `worker/lib/**`（95% 覆盖率门控），管道留在 `src/index.ts`（不门控）。
+
+### [Decision B] 番号对换写几条日志
+
+**两条 `adjust`，每个单元各一条，`amount_cents = 0`，`pnl_cents = NULL`，`source = "auto"`。**
+
+- **两个单元都写**：时间线按 `unit_id` 过滤。只写 A 的话，打开 B 的对话框会看到番号莫名变了却无迹可寻。可审计性上不可妥协。
+- `product_id` / `product_name` 取该单元**当前**产品（对换不改产品），这样行在 `/capital-logs` 仍能正确 join。FK 是 `RESTRICT`，产品仍存在，安全。
+- **备注拼装**：机器可读部分在前，用户备注在后 —— `番号对换: CU-A → CU-B` + `\n${note}`。拼装在 `worker/lib/unit-commit.ts` 内完成，可测。
+
+**切换产品**沿用既有语义：对旧产品 `withdraw`（`-amountCents`），对新产品 `invest`（`+amountCents`）。`pnl_cents` 挂在 **`withdraw`** 行 —— 收益在退出时兑现，读者也会在那里找它。
+
+**元数据修改**：一条 `adjust`，`amount_cents = 0`，备注 = 生成的字段变更摘要 + 用户备注。
+
+### 新增 `GET /api/units/:id/logs`
+
+返回该单元全部日志（上限 500），`created_at` 已在**服务端归一化**为 `createdAtMs: number | null`，前端不再重复实现归一化逻辑。
+
+### [Decision C] 时间戳归一化
+
+新建纯模块 `worker/lib/contribution-log-time.ts`（在 95% 覆盖率 `include` 内 —— 这正是目的，下表每一支都是强制测试用例）：
+
+```ts
+export function normalizeLogTimestamp(raw: unknown): number | null;
+export function compareLogsForTimeline(a, b): number;
+export function sortLogsForTimeline<T>(logs: T[]): T[];
+```
+
+| 输入 | 判定 | 输出 |
+|---|---|---|
+| `null` / `undefined` | — | `null` |
+| `Date` | 上游已解码 | `.getTime()`，`NaN` → `null` |
+| `number ≥ 1e12` | 毫秒 | 原值 |
+| `number ∈ [1e9, 1e12)` | 秒 | `× 1000` |
+| `number ∈ (0, 1e9)` | 秒（2001 前 / 测试夹具） | `× 1000` |
+| `number ≤ 0` | 哨兵值 | `null` |
+| 全数字 `string` | 按数字递归 | — |
+| ISO-8601 `string` | `Date.parse` | `NaN` → `null` |
+| 其他 | — | `null` |
+
+`1e12` 这个分界点是无歧义的：2001–5138 年之间，秒与毫秒差三个数量级。**这是唯一不直观的地方，代码里留一行注释说明**。
+
+排序：`operation_date` DESC（`YYYY-MM-DD` 文本字典序可靠）→ `createdAtMs` DESC（`null` 排最后）→ `id` DESC 兜底，保证两个时间戳都不可读时顺序仍确定。
+
+**读取路径是最容易做错的一环**：Drizzle 的 `mode:"timestamp"` 会 `new Date(value * 1000)`，毫秒行解码成公元 58500 年，ISO 文本行解码成 `Invalid Date`。所以归一化**必须跑在原始列值上**，仓库方法要用原始投影绕开编解码器：
+
+```ts
+const rows = await db.select({
+  ...getTableColumns(contributionLogs),
+  rawCreatedAt: sql<number | string | null>`${contributionLogs.createdAt}`,
+})...
+```
+
+SQL 只按 `operation_date DESC` 排，次级排序在 JS 里做（单元维度只有几十行，SQL 排序无收益，且 `CASE` 表达式还得往 `worker/tests/setup.ts` 里抄一份）。
+
+**顺带修 `getLatestInvestLogs`**：它用同样有问题的 `desc(createdAt)` 做次级排序，喂给 `/warehouse`、`/funds` 和 MCP 的 `availableDate`。同一 `operation_date` 上有两条不同编码的 invest 日志时会选错。用同一个比较器修掉。
+
+### [Decision D] 不动 "productId 必须单独更新" 约束
+
+`worker/db/validation.ts:164-174` 的约束不是领域规则，而是 `PUT /api/units/:id` 双分支实现的护栏 —— productId 分支在 `:898` 提前返回，会静默丢弃其他字段。放宽它意味着合并双分支，改变 MCP 工具及其他 `PUT` 调用方的行为，并作废 `worker/tests/validation.test.ts:399` 与 `worker/tests/e2e/units.e2e.test.ts:243`。那是一次独立的重构，有自己的风险面。
+
+对本期 UI **零成本**：编辑器此后不再通过 `PUT` 发 `productId`，产品切换走 `/commit` 的 `switch_product` 操作，`commitUnitSchema.metadata` 也刻意排除了 `productId`。绕行代码自然停止被调用，约束原地不动。
+
+**`src/lib/unit-update-diff.ts` 的去向：改造，不删除。** 编辑器改走 `/commit` 后 `productIdPayload` 成为死代码，但 `otherPayload` 正是 `metadata` 想要的：
+
+- 模块更名 `src/lib/unit-commit-plan.ts`，`buildUnitUpdateDiff` → `buildUnitMetadataDiff(initial, current): UnitMetadataPatch | null`（单一返回值，不再分裂）。
+- 删掉 `src/__tests__/lib/unit-update-diff.test.ts` 中 productId 专属的 4 个用例（:32-62），保留并改造其余 7 个 —— 逐字段拾取与置空的覆盖才是有价值的部分。
+- 独立成一个 `refactor(...)` commit，可单独回滚。该文件**不在** `vitest.config.ts` 的 `coverageExclude` 里，全局 95% 门控，替代品必须保持覆盖。
+
+---
+
+## UI
+
+### 三栏布局
+
+`DialogContent` 本身已是 `grid gap-4`（`src/components/ui/dialog.tsx:52`），**不能**直接加 `grid-cols-3` —— 会把 `DialogHeader` 和关闭按钮也排进列。必须用内层容器：
+
+```tsx
+<DialogContent className="max-h-[90vh] max-w-6xl overflow-y-auto">
+  <DialogHeader>…</DialogHeader>
+  <div className="grid gap-6 lg:grid-cols-3">
+    {/* 栏1 基础信息 · 栏2 产品信息 + 常见操作 · 栏3 历史时间线 */}
+  </div>
+  <Separator />
+  {/* 统一备注框 + 取消 / 保存 */}
+</DialogContent>
+```
+
+响应式白拿：默认单列，≥1024px 三列（D3）。`max-w-6xl` 是本仓库第一个超过 `sm:max-w-2xl` 的对话框 —— 作为**有意的、限定范围的例外**记录在此。
+
+**新建模式保持单栏 `max-w-lg`，并保留产品下拉框。** 没有单元就没有时间线、没有操作、没有日志。"不再用下拉切换产品"只适用于**修改已存在单元**的产品。这是最容易被无声破坏的点，列为验收标准。
+
+### 新增组件（`src/components/capital/`）
+
+| 文件 | 职责 |
+|---|---|
+| `unit-panel-primitives.tsx` | 从 `unit-tooltip.tsx:33-71` 提取 `SectionTitle` + `DataRow`，原文件逐字改为 import |
+| `unit-log-timeline.tsx` | 栏3 纵向历史列表 + 逐行损益内联编辑 |
+| `unit-operations-panel.tsx` | 栏2 操作按钮 + 待生效卡片（逐张可撤销） |
+| `unit-swap-picker.tsx` | 可搜索单元选择器，仿 `unit-editor.tsx:447-534` 的产品选择器 |
+
+栏1、栏2 的纯展示标记留在 `unit-editor.tsx` 内 —— 抽离无逻辑的容器只会增加 prop 钻取而不增加可测性。**只抽有逻辑的部分**。
+
+`unit-log-timeline.tsx` 参照 `src/components/plan/day-detail-popover.tsx:150-183`：`<ul className="divide-y divide-border">` + 前置彩色圆点 + `min-w-0 flex-1` 中段 + 右对齐 `tabular-nums`。
+
+`investment-timeline.tsx` 是**未来预测**的横向甘特条（按产品参数推演锁定/开放周期），与历史无关，**不复用**，原地留在栏2。
+
+操作类型与来源标签必须走 `src/components/ui/colored-badge.tsx`（`CLAUDE.md` 徽章规范）。
+
+**把 `SerializedUnit` 从 `unit-editor.tsx:90` 移到 `src/domain/types.ts`**（它是 `src/app/warehouse/page.tsx:25-44` 和 `funds/page.tsx` 都在构造的领域形状），在 `unit-editor.tsx` 保留 re-export 兼容，避免 `unit-tooltip.tsx:4` 和 4 个新组件都从组件文件 import 类型。
+
+### 暂存状态建模
+
+```ts
+// src/lib/unit-commit-plan.ts（纯函数，覆盖率门控）
+export type StagedOperation =
+  | { kind: "swap_unit_code"; targetUnitId: string; targetUnitCode: string }
+  | { kind: "switch_product";
+      fromProductId: string | null; fromProductName: string | null;
+      toProductId:   string | null; toProductName:   string | null;
+      pnl: number | null;                    // UI 层用元
+    };
+```
+
+每个变体自带卡片渲染所需的展示字段，渲染时无需回查；序列化时剥离并做元→分换算。
+
+同模块的纯函数 API（组件只持有 `useState<StagedOperation[]>`）：
+
+```ts
+stageOperation(current, next): StagedOperation[]     // 同 kind 替换，不可变
+unstageOperation(current, kind): StagedOperation[]
+describeStagedOperation(op): string                   // 卡片标题
+buildUnitMetadataDiff(initial, current): UnitMetadataPatch | null
+buildCommitPayload({ unit, form, operations, note, operationDate }): CommitUnitInput | null
+```
+
+需在 `src/__tests__/lib/unit-commit-plan.test.ts` 钉死的不变量：每种 `kind` 至多一个；`swap_unit_code` 的 `targetUnitId === unit.id` 被拒；`switch_product` 的 `toProductId === fromProductId` 被拒；元数据无变更 **且** 无操作 **且** 备注为空时 `buildCommitPayload` 返回 `null`；元→分用 `Math.round(x * 100)`。
+
+这与既有的 `unit-update-diff.ts` 模式一致 —— 逻辑放进受测纯模块，`unit-editor.tsx`（681 行，无组件测试）保持薄壳。
+
+### `pnl_cents` 全部触点
+
+| 文件 | 改动 |
+|---|---|
+| `worker/db/validation.ts` | `create` **和** `update` 两个 schema 都加 `pnlCents`（后者是时间线内联编辑的通路） |
+| `worker/db/repositories/contribution-logs.ts` | **`update()` 的 `Pick<>` 加 `"pnlCents"`**（B3，否则静默丢弃）；`summarizeByUnit` 加 `totalPnl` |
+| `worker/db/types.ts` | 无需改动，`$inferSelect` 自动带出 |
+| `worker/src/index.ts` | 仅 `/commit` 的 INSERT 列表；`POST /api/contribution-logs` 展开 `parsed.data`，验证放行即可用 |
+| `src/lib/worker-db-client.ts` | 两个日志方法加 `pnlCents?`；新增 `commitUnit` / `listUnitLogs` |
+| `src/lib/capital-mappers.ts` | `toDomainContributionLog`（:69-90）加 `pnl`；`createdAt`（:87）改为优先取 `createdAtMs` |
+| `src/domain/types.ts` | `DomainContributionLog` 加 `pnl`；`ContributionSummary` 加 `totalPnl` |
+| `src/app/actions/contribution-log-actions.ts` | create/update 加 `pnl?`，`Math.round(pnl * 100)` |
+| `src/app/capital-logs/capital-logs-client.tsx` | 加"收益"列（否则损益在主日志页不可见） |
+| `src/lib/mcp/tools/unit.ts:576,600` | **不需要**改 pnl（显式列表 + 可空列）；但要修 B2 三重缺陷：金额符号、`source` 枚举、`operation_date` 格式 |
+
+备份/恢复与 MCP 查询不枚举 `contribution_logs` 列 —— 已核实，无影响。
+
+---
+
+## Testing Strategy（6DQ）
+
+| 维度 | 内容 |
+|---|---|
+| **L1 Unit** | `worker/tests/contribution-log-time.test.ts`（归一化每一支，≥95%）、`worker/tests/unit-commit.test.ts`（语句构建器，≥95%）、`worker/tests/validation.test.ts`（`commitUnitSchema` + `pnlCents`）、`worker/tests/contribution-logs.test.ts`（pnl 往返、混合编码夹具经原始 sqlite 插入）、`src/__tests__/lib/unit-commit-plan.test.ts`（暂存不变量） |
+| **L1 Component** | RTL：`unit-log-timeline` / `unit-swap-picker` / `unit-operations-panel`，参照 `src/__tests__/components/plan/*.test.tsx` |
+| **L2 API** | `worker/tests/e2e/unit-commit.e2e.test.ts`：全成/全不成断言、409 走 `rawFetch`（`api()` 遇非 2xx 抛错）、番号对换后两个单元各有一条日志、`operation_date` 用本地日期 |
+| **G1 静态** | `bun run typecheck && bun run lint`（biome `--error-on-warnings`） |
+| **G2 安全** | pre-push 的 osv-scanner（已在用） |
+| **D1 隔离** | L2 跑本地 `wrangler dev --local`，不连生产 D1 |
+
+**混合编码夹具怎么造**：`worker/tests/setup.ts` 用真实 `better-sqlite3`，可绕过 Drizzle 直接 `INSERT` 出毫秒整数行、秒整数行、ISO 文本行，正是复现 B1 所需。
+
+---
+
+## Implementation Phases
+
+每个步骤是一个**原子 commit**，编号 `P{phase}-C{n}`。每个 commit 后 `bun run test && bun run test:worker && bun run typecheck && bun run lint` 必须全绿。**任何 commit 不得同时改 `worker/` 与 `src/`。**
+
+**Phase 0（前置，非 commit）**：`cd worker && bun install`（B5）。
+
+### Phase 1 — Worker + DB
+
+| # | Commit | 文件 | 门控 |
+|---|---|---|---|
+| P1-C1 | `feat(schema): add pnl_cents to contribution_logs` | `worker/db/schema.ts`, `worker/tests/setup.ts` | 仓库测试加 pnl 用例；typecheck |
+| P1-C2 | `feat(db): add 0008 pnl_cents migration` | `worker/db/migrations/0008_contribution_log_pnl.sql` | 本地 `wrangler d1 migrations apply --local`；**部署门：合并后先 `--remote` 应用，再合入后续 commit** |
+| P1-C3 | `feat(worker): normalize mixed created_at encodings` | `worker/lib/contribution-log-time.ts` | 新建测试，每一支覆盖，≥95% |
+| P1-C4 | `fix(worker): tiebreak latest invest log by normalized time` | `worker/db/repositories/contribution-logs.ts` | 混合编码夹具测试 |
+| P1-C5 | `feat(worker): list unit logs with normalized timestamps` | 同仓库文件（原始 `sql<>` 投影） | 仓库测试 |
+| P1-C6 | `feat(worker): accept pnlCents in log validation` | `worker/db/validation.ts` + 仓库 `Pick<>` | validation 测试 + **回归测试钉死 B3** |
+| P1-C7 | `feat(worker): unit commit statement builder` | `worker/lib/unit-commit.ts`（纯） | 新建测试，≥95% —— **本期承重 commit** |
+| P1-C8 | `feat(worker): add commitUnitSchema` | `worker/db/validation.ts` | validation 测试 |
+| P1-C9 | `feat(worker): POST /api/units/:id/commit` | `worker/src/index.ts`（仅管道） | 新建 e2e：409、全成/全不成 |
+| P1-C10 | `feat(worker): GET /api/units/:id/logs` | `worker/src/index.ts` | e2e |
+| P1-C11 | `fix(worker): use local date for auto-log operation_date` | `worker/src/index.ts:814` | e2e 断言本地日期（B4） |
+| P1-C12 | `feat(worker): include totalPnl in unit summary` | 仓库 + 端点 | 仓库测试 + e2e |
+
+### Phase 2 — Domain + Actions（不碰 UI）
+
+P2-C1 类型（`DomainContributionLog.pnl`、`ContributionSummary.totalPnl`、`SerializedUnit` 迁至 `src/domain/types.ts` 并 re-export）· P2-C2 `capital-mappers.ts`（pnl + `createdAtMs`）· P2-C3 `worker-db-client.ts`（`commitUnit`、`listUnitLogs`、pnl 参数）· P2-C4 `src/lib/unit-commit-plan.ts` + 测试 · P2-C5 `refactor: fold unit-update-diff into unit-commit-plan` + 测试迁移 · P2-C6 Server Actions · **P2-C7 `fix(mcp): correct withdraw sign, source and date format`（B2a/b/c 一并修 + 回归测试）**
+
+### Phase 3 — UI
+
+P3-C1 提取 `unit-panel-primitives.tsx` · P3-C2 `unit-log-timeline.tsx` + RTL · P3-C3 `unit-swap-picker.tsx` + RTL · P3-C4 `unit-operations-panel.tsx` + RTL · P3-C5 三栏布局 + 备注框 + 接 `/commit`（**仅编辑模式**）· P3-C6 时间线逐行 pnl 内联编辑 · P3-C7 `/capital-logs` 收益列 + 独立日志表单 pnl 字段 · P3-C8 文档收尾 + release
+
+---
+
+## 待确认（实现前需拍板）
+
+以下是我在设计意图中发现的**空白或张力**，需要你决定：
+
+1. **只填备注就保存**：不改任何字段、不暂存任何操作，只写一条备注 —— 写一条裸 `adjust` 日志，还是禁用"保存"？上面的 Zod refine 目前**允许**。我倾向允许（在你的心智模型里备注本身就是一条日志），但需要明确。
+
+2. **备注重复**：一次保存同时做"对换 + 切换产品 + 改元数据"会产生 **5 条带相同用户备注**的日志，`/capital-logs` 上会显得吵。选项：全部带（每行自包含，审计最好）/ 只有第一条带。我倾向全部带，但视觉噪音要你认可。
+
+3. **时间线的 pnl 编辑不进 `/commit`**：D5 的暂存只覆盖**操作**，"逐行改历史日志的损益"没被规定。我倾向它**即时生效**（自己发 `PUT /api/contribution-logs/:id` + 自己的 toast），因为它编辑的是历史而非加入本次待提交集合。一致但更贵的方案是加一个 `update_log` 操作类型。
+
+4. **`summarizeByUnit` 与 0 金额行**：`worker/db/repositories/contribution-logs.ts:158-163` 把 `amountCents > 0` 记为投入、`else` 记为取出 —— 于是每条 0 金额 `adjust` 行都落进"取出"分支（加 0）并让 `logCount` 虚高。数值上无害。我倾向**加测试钉住现状**而不改行为。
+
+---
+
+## Risks & Mitigations
+
+1. **守卫链 SQL 写错 → 静默空提交**。缓解：构建器是纯函数且 95% 门控；e2e 必须包含"并发修改导致 409"与"全成/全不成"两类断言。回退：`/commit` 是新端点，旧 `PUT` 路径未动，revert P1-C9 即可。
+2. **`worker/tests/setup.ts` 的 DDL 与 migration 分叉**。缓解：P1-C1 与 P1-C2 相邻落地，且 P1-C1 的测试会因缺列而失败，形成天然门控。
+3. **Drizzle 时间戳编解码器吃掉原始值**。缓解：仓库用 `sql<>` 原始投影；测试用原始 sqlite 插入三种编码夹具。
+4. **`max-w-6xl` 在 1024–1280px 之间过挤**。缓解：`lg:` 断点为 1024px，先在 1280px 与 1024px 两档手测；必要时提到 `xl:grid-cols-3`。
+5. **时间线无分页**：`searchContributionLogs` 上限 500。缓解：取 500 上限并在列表底部标注"仅显示最近 500 条"。
+6. **提交后对话框数据陈旧**：`router.refresh()` 重渲页面但不刷新对话框内**自行拉取**的时间线。缓解：提交成功后对话框自己重拉日志，并清空暂存操作与备注框。
+
+## References
+
+- `docs/17-contribution-logs.md` — `contribution_logs` 原始设计
+- `docs/002-recurring-expense-calendar.md` — 本文档结构与 Phase 划分范本
+- `docs/001-capital-unit-date-refactor.md` — `availableDate` 重构（`daysUntilMaturity → daysUntilAvailable`）
+- `worker/src/index.ts:766-899` — CAS + batch + 补偿的既有先例
+- `src/components/plan/day-detail-popover.tsx:150-183` — 纵向列表视觉范本
+- `src/components/ui/colored-badge.tsx` — 徽章规范
