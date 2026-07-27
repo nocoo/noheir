@@ -420,6 +420,20 @@ SQL 只按 `operation_date DESC` 排，次级排序在 JS 里做（单元维度�
 - 删掉 `src/__tests__/lib/unit-update-diff.test.ts` 中 productId 专属的 4 个用例（:32-62），保留并改造其余 7 个 —— 逐字段拾取与置空的覆盖才是有价值的部分。
 - 独立成一个 `refactor(...)` commit，可单独回滚。该文件**不在** `vitest.config.ts` 的 `coverageExclude` 里，全局 95% 门控，替代品必须保持覆盖。
 
+### [Decision J] `totalPnl` 的类型契约
+
+`ContributionSummary`（`worker/db/types.ts:53`）是**手写 interface**，不是 Drizzle 推断类型 —— 加 `pnl_cents` 列不会让它自动带出 `totalPnl`。P1-C13 必须显式改它，否则端点返回的字段与类型不符，`tsc` 直接报错。
+
+三个子问题一次定死：
+
+| 问题 | 结论 | 理由 |
+|---|---|---|
+| **必填还是可选** | **必填** `totalPnl: number` | 与同结构的 `totalInvested` / `totalWithdrawn` / `netAmount` 一致。无 pnl 数据时聚合为 `0`，不是 `undefined` —— 可选会逼所有消费方写 `?? 0` |
+| **`summarizeByProduct` 是否也返回** | **是** | 两个方法共用同一个 `ContributionSummary` 返回类型（`contribution-logs.ts:174`），加了字段就是两边都有。刻意让 product 侧返回 `0` 反而要写额外分支 |
+| **`WorkerDbClient` 是否同步** | **必须** | `getContributionLogsSummaryByUnit`（`src/lib/worker-db-client.ts:286`）和 `...ByProduct`（`:297`）各自内联声明了返回结构，**不引用** `ContributionSummary`。两处都要手动加 `totalPnl: number`，漏一处则前端拿不到该字段且无类型报错 |
+
+聚合口径：`SUM(COALESCE(pnl_cents, 0))`，跳过软删除行（与现有 `summarizeByUnit` 的 `deletedAt IS NULL` 条件一致）。`unitCount?: number` 那种"仅 product 侧有"的可选字段模式**不复用** —— 它已经是既有设计里的一处别扭，不该再加一个。
+
 ---
 
 ## UI
@@ -499,9 +513,9 @@ buildCommitPayload({ unit, form, operations, commitNote, operationDate }): Commi
 |---|---|
 | `worker/db/validation.ts` | `create` **和** `update` 两个 schema 都加 `pnlCents`（后者是时间线内联编辑的通路） |
 | `worker/db/repositories/contribution-logs.ts` | **`update()` 的 `Pick<>` 加 `"pnlCents"`**（B3，否则静默丢弃）；`summarizeByUnit` 加 `totalPnl` |
-| `worker/db/types.ts` | 无需改动，`$inferSelect` 自动带出 |
+| `worker/db/types.ts` | `ContributionLog` 无需改动（`$inferSelect` 自动带出 `pnlCents`）；但 **`ContributionSummary`（`:53`）是手写 interface，必须显式加 `totalPnl: number`** —— 见 [Decision J] |
 | `worker/src/index.ts` | 仅 `/commit` 的 INSERT 列表；`POST /api/contribution-logs` 展开 `parsed.data`，验证放行即可用 |
-| `src/lib/worker-db-client.ts` | 两个日志方法加 `pnlCents?`；新增 `commitUnit` / `listUnitLogs` |
+| `src/lib/worker-db-client.ts` | 两个日志方法加 `pnlCents?`；新增 `commitUnit` / `listUnitLogs`；**两个 summary 方法（`:286` / `:297`）的内联返回类型各加 `totalPnl: number`**（[Decision J]） |
 | `src/lib/capital-mappers.ts` | `toDomainContributionLog`（:69-90）加 `pnl`；`createdAt`（:87）改为优先取 `createdAtMs` |
 | `src/domain/types.ts` | `DomainContributionLog` 加 `pnl`；`ContributionSummary` 加 `totalPnl` |
 | `src/app/actions/contribution-log-actions.ts` | create/update 加 `pnl?`，`Math.round(pnl * 100)` |
