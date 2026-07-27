@@ -209,6 +209,13 @@ describe("buildCommitPayload", () => {
     expect(buildCommitPayload({ ...base, commitNote: null })).toBeNull();
   });
 
+  // The dialog now pre-fills operationDate with today, so it is always present.
+  // It must not count as a change on its own, or an untouched dialog would
+  // submit an empty commit.
+  test("a date alone is not a change", () => {
+    expect(buildCommitPayload({ ...base, operationDate: "2026-07-28" })).toBeNull();
+  });
+
   test("a note alone is enough to commit", () => {
     const payload = buildCommitPayload({ ...base, commitNote: " 记一笔 " });
     expect(payload?.commitNote).toBe("记一笔");

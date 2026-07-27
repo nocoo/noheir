@@ -37,6 +37,7 @@ import type {
   ExpectedUnitSnapshot,
   SerializedUnit,
 } from "@/domain/types";
+import { getLocalDateString } from "@/lib/local-date";
 import {
   buildCommitPayload,
   formSnapshotFromExpected,
@@ -103,7 +104,9 @@ export function UnitCommitDialog({
 
   const [operations, setOperations] = useState<StagedOperation[]>([]);
   const [commitNote, setCommitNote] = useState("");
-  const [operationDate, setOperationDate] = useState("");
+  // Defaults to today in the app timezone, matching the worker's own default
+  // so a straight save records the same date the user sees.
+  const [operationDate, setOperationDate] = useState(getLocalDateString());
 
   const [logs, setLogs] = useState<DomainContributionLog[]>([]);
   const [loading, setLoading] = useState(true);
