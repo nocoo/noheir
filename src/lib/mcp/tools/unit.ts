@@ -562,7 +562,10 @@ RETURNS:
 
       // If product_id changed, log contribution
       if (args.product_id !== undefined && args.product_id !== existing.product_id) {
-        const logNow = new Date().toISOString();
+        // operation_date is a YYYY-MM-DD column and created_at is epoch ms.
+        // Both used to receive a full ISO string — see docs/003 § B2.
+        const logDate = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Shanghai" });
+        const logNow = Date.now();
 
         // Log withdraw from old product (if any)
         if (existing.product_id) {
@@ -574,13 +577,13 @@ RETURNS:
           );
           await db.execute(
             `INSERT INTO contribution_logs (id, user_id, unit_id, product_id, product_name, operation_type, amount_cents, balance_after_cents, operation_date, source, created_at, updated_at)
-             SELECT ?, user_id, id, ?, ?, 'withdraw', amount_cents, 0, ?, 'mcp', ?, ?
+             SELECT ?, user_id, id, ?, ?, 'withdraw', -amount_cents, 0, ?, 'mcp', ?, ?
              FROM capital_units WHERE id = ?`,
             [
               withdrawLogId,
               existing.product_id,
               oldProduct?.name ?? null,
-              logNow,
+              logDate,
               logNow,
               logNow,
               args.id,
@@ -604,7 +607,7 @@ RETURNS:
               investLogId,
               args.product_id,
               newProduct?.name ?? null,
-              logNow,
+              logDate,
               logNow,
               logNow,
               args.id,
