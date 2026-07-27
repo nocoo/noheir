@@ -830,6 +830,7 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
         <UnitEditor
           unit={selectedUnit}
           products={products}
+          units={units}
           open={editorOpen}
           onOpenChange={(open) => {
             setEditorOpen(open);

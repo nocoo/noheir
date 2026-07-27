@@ -255,6 +255,7 @@ export function FundsClient({ units, products }: FundsClientProps) {
       <UnitEditor
         unit={editingUnit}
         products={products}
+        units={units}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         onSuccess={() => router.refresh()}

@@ -38,6 +38,7 @@ export interface UnitFormSnapshot {
 }
 
 export interface UnitMetadataPatch {
+  [key: string]: unknown;
   unitCode?: string;
   amountCents?: number;
   currency?: string;

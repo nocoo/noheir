@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { createProduct } from "@/app/actions/product-actions";
-import { createUnit, updateUnit } from "@/app/actions/unit-actions";
+import { createUnit } from "@/app/actions/unit-actions";
+import { UnitCommitDialog } from "@/components/capital/unit-commit-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -36,7 +37,6 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import type { DomainProduct, SerializedUnit } from "@/domain/types";
-import { buildUnitUpdateDiff, type UnitFormSnapshot } from "@/lib/unit-update-diff";
 import { cn } from "@/lib/utils";
 import { InvestmentTimeline } from "./investment-timeline";
 
@@ -94,6 +94,8 @@ export type { SerializedUnit } from "@/domain/types";
 interface UnitEditorProps {
   unit: SerializedUnit | null;
   products: DomainProduct[];
+  /** All units, needed as swap targets in edit mode. */
+  units?: SerializedUnit[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
@@ -101,17 +103,43 @@ interface UnitEditorProps {
 
 // ── Main Component ──
 
-export function UnitEditor({ unit, products, open, onOpenChange, onSuccess }: UnitEditorProps) {
+export function UnitEditor({
+  unit,
+  products,
+  units = [],
+  open,
+  onOpenChange,
+  onSuccess,
+}: UnitEditorProps) {
   // Use key to force re-mount inner form when unit changes
   // This ensures form state is always initialized from current unit
   const formKey = unit?.id ?? "new";
+
+  // Edit mode is the three-column commit dialog; creation stays a single-column
+  // form (no timeline, no operations, and the product dropdown still applies).
+  if (unit) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-6xl">
+          <UnitCommitDialog
+            key={formKey}
+            unit={unit}
+            products={products}
+            units={units}
+            onOpenChange={onOpenChange}
+            onSuccess={onSuccess}
+          />
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
         <UnitEditorForm
           key={formKey}
-          unit={unit}
+          unit={null}
           products={products}
           onOpenChange={onOpenChange}
           onSuccess={onSuccess}
@@ -134,8 +162,6 @@ function UnitEditorForm({
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
 }) {
-  const isEditing = unit !== null;
-
   // Unit form state - initialized from unit prop
   const [unitCode, setUnitCode] = useState(unit?.unitCode ?? "");
   const [amount, setAmount] = useState(unit?.amount != null ? String(unit.amount) : "");
@@ -218,77 +244,26 @@ function UnitEditorForm({
     }
 
     startTransition(async () => {
-      if (isEditing && unit) {
-        const initial: UnitFormSnapshot = {
-          unitCode: unit.unitCode,
-          amount: unit.amount,
-          currency: unit.currency,
-          status: unit.status,
-          strategy: unit.strategy,
-          tactics: unit.tactics,
-          productId: unit.productId,
-          startDate: unit.startDate,
-          note: unit.note,
-        };
-        const current: UnitFormSnapshot = {
-          unitCode: unitCode.trim(),
-          amount: Number(amount),
-          currency,
-          status,
-          strategy,
-          tactics,
-          productId: productId,
-          startDate: startDate || null,
-          note: note.trim() || null,
-        };
-        const { productIdPayload, otherPayload } = buildUnitUpdateDiff(initial, current);
+      const payload: Parameters<typeof createUnit>[0] = {
+        unitCode: unitCode.trim(),
+        amount: Number(amount),
+        currency,
+        status,
+        strategy,
+        tactics,
+      };
+      if (productId) payload.productId = productId;
+      if (startDate) payload.startDate = startDate;
+      // endDate is managed automatically by backend based on status
+      if (note.trim()) payload.note = note.trim();
 
-        if (!productIdPayload && !otherPayload) {
-          toast.success("单位已更新");
-          onSuccess();
-          onOpenChange(false);
-          return;
-        }
-
-        if (productIdPayload) {
-          const r = await updateUnit(unit.id, productIdPayload);
-          if (!r.success) {
-            toast.error(r.error);
-            return;
-          }
-        }
-        if (otherPayload) {
-          const r = await updateUnit(unit.id, otherPayload);
-          if (!r.success) {
-            toast.error(r.error);
-            return;
-          }
-        }
-        toast.success("单位已更新");
+      const result = await createUnit(payload);
+      if (result.success) {
+        toast.success("单位已创建");
         onSuccess();
         onOpenChange(false);
       } else {
-        const payload: Parameters<typeof createUnit>[0] = {
-          unitCode: unitCode.trim(),
-          amount: Number(amount),
-          currency,
-          status,
-          strategy,
-          tactics,
-        };
-        if (productId) payload.productId = productId;
-        if (startDate) payload.startDate = startDate;
-        // endDate is managed automatically by backend based on status
-        if (note.trim()) payload.note = note.trim();
-
-        const result = await createUnit(payload);
-        if (result.success) {
-          toast.success("单位已创建");
-          onSuccess();
-          onOpenChange(false);
-        } else {
-          toast.error(result.error);
-        }
+        toast.error(result.error);
       }
     });
   };
@@ -296,10 +271,8 @@ function UnitEditorForm({
   return (
     <>
       <DialogHeader>
-        <DialogTitle>{isEditing ? "编辑资本单位" : "新增资本单位"}</DialogTitle>
-        <DialogDescription>
-          {isEditing ? "修改资本单位信息和关联产品" : "创建新的资本单位并关联投资产品"}
-        </DialogDescription>
+        <DialogTitle>新增资本单位</DialogTitle>
+        <DialogDescription>创建新的资本单位并关联投资产品</DialogDescription>
       </DialogHeader>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -655,7 +628,7 @@ function UnitEditorForm({
             取消
           </Button>
           <Button type="submit" disabled={isPending}>
-            {isPending ? "保存中..." : isEditing ? "保存" : "创建"}
+            {isPending ? "创建中..." : "创建"}
           </Button>
         </div>
       </form>
