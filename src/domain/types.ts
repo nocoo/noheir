@@ -149,6 +149,8 @@ export interface DomainContributionLog {
   operationType: ContributionOperationType;
   amount: number; // Display value (cents / 100), positive = invest, negative = withdraw
   balanceAfter: number | null;
+  /** Realized gain/loss in yuan, independent of `amount`. */
+  pnl: number | null;
   operationDate: string;
   source: ContributionSource;
   note: string | null;
@@ -162,8 +164,59 @@ export interface ContributionSummary {
   totalInvested: number; // cents
   totalWithdrawn: number; // cents
   netAmount: number; // cents
+  totalPnl: number; // cents
   logCount: number;
   unitCount?: number; // only for product summary
+}
+
+/**
+ * Raw capital_units snapshot used as the optimistic-concurrency anchor for
+ * POST /api/units/:id/commit. Mirrors the DB's nullability exactly — it must
+ * come straight from the API, never from a mapper that defaults nulls away.
+ * See docs/003 § Decision B.
+ */
+export interface ExpectedUnitSnapshot {
+  unitCode: string;
+  amountCents: number;
+  productId: string | null;
+  currency: string | null;
+  status: string | null;
+  strategy: string | null;
+  tactics: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  note: string | null;
+}
+
+/** A contribution log with its created_at normalized server-side. */
+export interface UnitTimelineLog extends DomainContributionLog {
+  createdAtMs: number | null;
+}
+
+/**
+ * Flattened, display-ready unit shape passed from Server Components into the
+ * capital client components. Product fields are inlined and availability is
+ * precomputed. Distinct from DomainUnit (nested product) and UnitDisplayInfo.
+ */
+export interface SerializedUnit {
+  id: string;
+  unitCode: string;
+  amount: number;
+  currency: string;
+  status: string;
+  strategy: string;
+  tactics: string;
+  productId: string | null;
+  productName: string | null;
+  productChannel?: string | null;
+  latestInvestDate?: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  note: string | null;
+  availableDate?: string | null;
+  daysUntilAvailable?: number | null;
+  daysUntilLocked?: number | null;
+  isAvailable?: boolean;
 }
 
 // ── Insight types ──

@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import type { DomainProduct } from "@/domain/types";
+import type { DomainProduct, SerializedUnit } from "@/domain/types";
 import { buildUnitUpdateDiff, type UnitFormSnapshot } from "@/lib/unit-update-diff";
 import { cn } from "@/lib/utils";
 import { InvestmentTimeline } from "./investment-timeline";
@@ -87,26 +87,9 @@ const CATEGORIES = [
 
 // ── Types ──
 
-export interface SerializedUnit {
-  id: string;
-  unitCode: string;
-  amount: number;
-  currency: string;
-  status: string;
-  strategy: string;
-  tactics: string;
-  productId: string | null;
-  productName: string | null;
-  productChannel?: string | null;
-  latestInvestDate?: string | null;
-  startDate: string | null;
-  endDate: string | null;
-  note: string | null;
-  availableDate?: string | null;
-  daysUntilAvailable?: number | null;
-  daysUntilLocked?: number | null;
-  isAvailable?: boolean;
-}
+// Moved to src/domain/types.ts (it is a domain shape the page components build);
+// re-exported here so existing imports keep working.
+export type { SerializedUnit } from "@/domain/types";
 
 interface UnitEditorProps {
   unit: SerializedUnit | null;

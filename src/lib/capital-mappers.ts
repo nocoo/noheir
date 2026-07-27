@@ -78,12 +78,16 @@ export function toDomainContributionLog(raw: Record<string, unknown>): DomainCon
     operationType: String(raw.operationType ?? "invest") as ContributionOperationType,
     amount: Number(raw.amountCents ?? 0) / 100, // cents to yuan
     balanceAfter: raw.balanceAfterCents != null ? Number(raw.balanceAfterCents) / 100 : null,
+    pnl: raw.pnlCents != null ? Number(raw.pnlCents) / 100 : null,
     operationDate: String(raw.operationDate ?? ""),
     source: String(raw.source ?? "manual") as ContributionSource,
     note: raw.note != null ? String(raw.note) : null,
     unit: unit ? toDomainUnit(unit) : null,
     product: product ? toDomainProduct(product) : null,
     isDeleted: raw.deletedAt != null,
-    createdAt: new Date(Number(raw.createdAt ?? 0)),
+    // Prefer the server-normalized value: raw createdAt has three incompatible
+    // encodings in production, and `new Date(<ISO string>)` via Number() would
+    // yield Invalid Date. See docs/003 § B1.
+    createdAt: new Date(Number(raw.createdAtMs ?? raw.createdAt ?? 0)),
   };
 }
