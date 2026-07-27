@@ -208,7 +208,7 @@ export function UnitCommitDialog({
     });
   };
 
-  const selectedProduct = products.find((p) => p.id === unit.productId) ?? null;
+  const selectedProduct = products.find((p) => p.id === expected?.productId) ?? null;
 
   return (
     <>
@@ -220,68 +220,91 @@ export function UnitCommitDialog({
       </DialogHeader>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* ── Column 1: basic info ── */}
-          <div className="space-y-3">
-            <SectionTitle icon={<Info className="size-3" />} label="基础信息" />
+        {/* Nothing is editable until the snapshot lands: every field and the
+            operations panel are anchored to it, so acting earlier would mean
+            acting on data the guard will not compare. */}
+        <fieldset disabled={loading} className="space-y-4 disabled:opacity-60">
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* ── Column 1: basic info ── */}
+            <div className="space-y-3">
+              <SectionTitle icon={<Info className="size-3" />} label="基础信息" />
 
-            <div className="space-y-1.5">
-              <Label htmlFor="unitCode" className="text-xs">
-                编号
-              </Label>
-              <Input
-                id="unitCode"
-                value={unitCode}
-                onChange={(e) => setUnitCode(e.target.value)}
-                className="h-9"
-                disabled={codeLocked}
-              />
-              {codeLocked && (
-                <p className="text-muted-foreground text-[10px]">已暂存番号对换，编号不可手改</p>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="amount" className="text-xs">
-                金额
-              </Label>
-              <Input
-                id="amount"
-                type="number"
-                step="0.01"
-                min="0"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="h-9"
-                disabled={amountLocked}
-              />
-              {amountLocked && (
-                <p className="text-muted-foreground text-[10px]">已暂存产品切换，金额不可同时改</p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs">币种</Label>
-                <Select value={currency} onValueChange={setCurrency}>
-                  <SelectTrigger className="h-9" aria-label="币种">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="CNY">CNY</SelectItem>
-                    <SelectItem value="USD">USD</SelectItem>
-                    <SelectItem value="HKD">HKD</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="unitCode" className="text-xs">
+                  编号
+                </Label>
+                <Input
+                  id="unitCode"
+                  value={unitCode}
+                  onChange={(e) => setUnitCode(e.target.value)}
+                  className="h-9"
+                  disabled={codeLocked}
+                />
+                {codeLocked && (
+                  <p className="text-muted-foreground text-[10px]">已暂存番号对换，编号不可手改</p>
+                )}
               </div>
+
               <div className="space-y-1.5">
-                <Label className="text-xs">状态</Label>
-                <Select value={status} onValueChange={setStatus}>
-                  <SelectTrigger className="h-9" aria-label="状态">
+                <Label htmlFor="amount" className="text-xs">
+                  金额
+                </Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="h-9"
+                  disabled={amountLocked}
+                />
+                {amountLocked && (
+                  <p className="text-muted-foreground text-[10px]">
+                    已暂存产品切换，金额不可同时改
+                  </p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">币种</Label>
+                  <Select value={currency} onValueChange={setCurrency}>
+                    <SelectTrigger className="h-9" aria-label="币种">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="CNY">CNY</SelectItem>
+                      <SelectItem value="USD">USD</SelectItem>
+                      <SelectItem value="HKD">HKD</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">状态</Label>
+                  <Select value={status} onValueChange={setStatus}>
+                    <SelectTrigger className="h-9" aria-label="状态">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STATUSES.map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {s}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">策略</Label>
+                <Select value={strategy} onValueChange={setStrategy}>
+                  <SelectTrigger className="h-9" aria-label="策略">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {STATUSES.map((s) => (
+                    {STRATEGIES.map((s) => (
                       <SelectItem key={s} value={s}>
                         {s}
                       </SelectItem>
@@ -289,128 +312,113 @@ export function UnitCommitDialog({
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">战术</Label>
+                <Select value={tactics} onValueChange={setTactics}>
+                  <SelectTrigger className="h-9" aria-label="战术">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TACTICS.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {t}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="startDate" className="text-xs">
+                  开始日期
+                </Label>
+                <Input
+                  id="startDate"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="h-9"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="unitNote" className="text-xs">
+                  单元备注
+                </Label>
+                <Textarea
+                  id="unitNote"
+                  value={unitNote}
+                  onChange={(e) => setUnitNote(e.target.value)}
+                  placeholder="长期保留的说明"
+                  rows={2}
+                  className="resize-none text-sm"
+                />
+              </div>
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs">策略</Label>
-              <Select value={strategy} onValueChange={setStrategy}>
-                <SelectTrigger className="h-9" aria-label="策略">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {STRATEGIES.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs">战术</Label>
-              <Select value={tactics} onValueChange={setTactics}>
-                <SelectTrigger className="h-9" aria-label="战术">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TACTICS.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="startDate" className="text-xs">
-                开始日期
-              </Label>
-              <Input
-                id="startDate"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="h-9"
+            {/* ── Column 2: product + operations ── */}
+            <div className="space-y-4">
+              <UnitOperationsPanel
+                unitId={unit.id}
+                currentProductId={expected?.productId ?? null}
+                units={units}
+                products={products}
+                operations={operations}
+                onStage={(op) => setOperations((prev) => stageOperation(prev, op))}
+                onUnstage={(kind) => setOperations((prev) => unstageOperation(prev, kind))}
               />
+
+              {selectedProduct &&
+                unit.latestInvestDate &&
+                selectedProduct.lockPeriodDays != null &&
+                selectedProduct.lockPeriodDays > 0 && (
+                  <div className="space-y-2">
+                    <SectionTitle icon={<Info className="size-3" />} label="投资时间线" />
+                    <InvestmentTimeline
+                      latestInvestDate={unit.latestInvestDate}
+                      lockPeriodDays={selectedProduct.lockPeriodDays}
+                      openDays={selectedProduct.openDays}
+                      cycleDays={selectedProduct.cycleDays}
+                    />
+                  </div>
+                )}
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="unitNote" className="text-xs">
-                单元备注
+            {/* ── Column 3: history ── */}
+            <UnitLogTimeline logs={logs} loading={loading} onRefresh={refreshLogs} />
+          </div>
+
+          <Separator />
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div className="flex-1 space-y-1.5">
+              <Label htmlFor="commitNote" className="text-xs">
+                本次变更备注
               </Label>
               <Textarea
-                id="unitNote"
-                value={unitNote}
-                onChange={(e) => setUnitNote(e.target.value)}
-                placeholder="长期保留的说明"
+                id="commitNote"
+                value={commitNote}
+                onChange={(e) => setCommitNote(e.target.value)}
+                placeholder="为什么做这次变更（会写入日志）"
                 rows={2}
                 className="resize-none text-sm"
               />
             </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="operationDate" className="text-xs">
+                操作日期
+              </Label>
+              <Input
+                id="operationDate"
+                type="date"
+                value={operationDate}
+                onChange={(e) => setOperationDate(e.target.value)}
+                className="h-9"
+              />
+            </div>
           </div>
-
-          {/* ── Column 2: product + operations ── */}
-          <div className="space-y-4">
-            <UnitOperationsPanel
-              unit={unit}
-              units={units}
-              products={products}
-              operations={operations}
-              onStage={(op) => setOperations((prev) => stageOperation(prev, op))}
-              onUnstage={(kind) => setOperations((prev) => unstageOperation(prev, kind))}
-            />
-
-            {selectedProduct &&
-              unit.latestInvestDate &&
-              selectedProduct.lockPeriodDays != null &&
-              selectedProduct.lockPeriodDays > 0 && (
-                <div className="space-y-2">
-                  <SectionTitle icon={<Info className="size-3" />} label="投资时间线" />
-                  <InvestmentTimeline
-                    latestInvestDate={unit.latestInvestDate}
-                    lockPeriodDays={selectedProduct.lockPeriodDays}
-                    openDays={selectedProduct.openDays}
-                    cycleDays={selectedProduct.cycleDays}
-                  />
-                </div>
-              )}
-          </div>
-
-          {/* ── Column 3: history ── */}
-          <UnitLogTimeline logs={logs} loading={loading} onRefresh={refreshLogs} />
-        </div>
-
-        <Separator />
-
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-          <div className="flex-1 space-y-1.5">
-            <Label htmlFor="commitNote" className="text-xs">
-              本次变更备注
-            </Label>
-            <Textarea
-              id="commitNote"
-              value={commitNote}
-              onChange={(e) => setCommitNote(e.target.value)}
-              placeholder="为什么做这次变更（会写入日志）"
-              rows={2}
-              className="resize-none text-sm"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="operationDate" className="text-xs">
-              操作日期
-            </Label>
-            <Input
-              id="operationDate"
-              type="date"
-              value={operationDate}
-              onChange={(e) => setOperationDate(e.target.value)}
-              className="h-9"
-            />
-          </div>
-        </div>
+        </fieldset>
 
         <div className="flex justify-end gap-2">
           <Button

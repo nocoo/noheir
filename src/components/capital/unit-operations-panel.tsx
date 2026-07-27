@@ -32,7 +32,10 @@ import {
 } from "@/lib/unit-commit-plan";
 
 interface UnitOperationsPanelProps {
-  unit: SerializedUnit;
+  unitId: string;
+  /** From the CAS snapshot, never from a page-level prop: the panel must show
+   *  and act on the same product the guard will compare (docs/003 § Decision B). */
+  currentProductId: string | null;
   units: SerializedUnit[];
   products: DomainProduct[];
   operations: StagedOperation[];
@@ -41,7 +44,8 @@ interface UnitOperationsPanelProps {
 }
 
 export function UnitOperationsPanel({
-  unit,
+  unitId,
+  currentProductId,
   units,
   products,
   operations,
@@ -58,7 +62,7 @@ export function UnitOperationsPanel({
   const stagedSwap = findStagedOperation(operations, "swap_unit_code");
   const stagedSwitch = findStagedOperation(operations, "switch_product");
 
-  const currentProduct = products.find((p) => p.id === unit.productId) ?? null;
+  const currentProduct = products.find((p) => p.id === currentProductId) ?? null;
   const pendingProduct = products.find((p) => p.id === pendingProductId) ?? null;
 
   const confirmSwitch = () => {
@@ -66,8 +70,8 @@ export function UnitOperationsPanel({
     const pnl = pnlInput.trim();
     onStage({
       kind: "switch_product",
-      fromProductId: unit.productId,
-      fromProductName: currentProduct?.name ?? unit.productName,
+      fromProductId: currentProductId,
+      fromProductName: currentProduct?.name ?? null,
       toProductId: pendingProductId,
       toProductName: pendingProduct?.name ?? null,
       pnl: pnl === "" ? null : Number(pnl),
@@ -82,9 +86,7 @@ export function UnitOperationsPanel({
       <div className="space-y-2">
         <SectionTitle icon={<Package className="size-3" />} label="当前产品" />
         <p className="text-sm">
-          {currentProduct?.name ?? unit.productName ?? (
-            <span className="text-muted-foreground">未关联产品</span>
-          )}
+          {currentProduct?.name ?? <span className="text-muted-foreground">未关联产品</span>}
         </p>
         {currentProduct?.channel && (
           <p className="text-muted-foreground text-xs">{currentProduct.channel}</p>
@@ -145,7 +147,7 @@ export function UnitOperationsPanel({
                       {/* Unlinking is only meaningful when a product is linked;
                           offering it otherwise would stage a null → null no-op
                           that the server rejects with 400. */}
-                      {unit.productId && (
+                      {currentProductId && (
                         <CommandItem
                           value="__none__"
                           onSelect={() => {
@@ -157,7 +159,7 @@ export function UnitOperationsPanel({
                         </CommandItem>
                       )}
                       {products
-                        .filter((p) => p.id !== unit.productId)
+                        .filter((p) => p.id !== currentProductId)
                         .map((p) => (
                           <CommandItem
                             key={p.id}
@@ -178,7 +180,7 @@ export function UnitOperationsPanel({
 
             {/* pnl rides the withdraw row, which only exists if there is a
                 product to exit — the server rejects the combination otherwise. */}
-            {unit.productId && (
+            {currentProductId && (
               <div className="space-y-1">
                 <Label htmlFor="switch-pnl" className="text-xs">
                   本次实现损益（可选）
@@ -212,7 +214,7 @@ export function UnitOperationsPanel({
             <Label className="text-xs">与哪个单元对换</Label>
             <UnitSwapPicker
               units={units}
-              currentUnitId={unit.id}
+              currentUnitId={unitId}
               selectedUnitId={null}
               onSelect={(target) => {
                 onStage({

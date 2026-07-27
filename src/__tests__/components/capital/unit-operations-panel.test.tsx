@@ -59,7 +59,8 @@ function setup(over: Partial<React.ComponentProps<typeof UnitOperationsPanel>> =
   const onUnstage = vi.fn();
   render(
     <UnitOperationsPanel
-      unit={makeUnit()}
+      unitId="unit-a"
+      currentProductId="prod-a"
       units={units}
       products={products}
       operations={[]}
@@ -79,8 +80,27 @@ describe("UnitOperationsPanel", () => {
   });
 
   test("shows a placeholder when no product is linked", () => {
-    setup({ unit: makeUnit({ productId: null, productName: null }) });
+    setup({ currentProductId: null });
     expect(screen.getByText("未关联产品")).toBeInTheDocument();
+  });
+
+  // The panel takes the product id explicitly so it cannot silently render a
+  // stale page-level value while the guard compares a different one.
+  test("renders the product it is told, not whatever a unit prop carries", async () => {
+    const user = userEvent.setup();
+    const { onStage } = setup({ currentProductId: "prod-b" });
+
+    expect(screen.getByText("工行添利")).toBeInTheDocument();
+    expect(screen.queryByText("招行朝朝盈")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "切换投入产品" }));
+    await user.click(screen.getByRole("combobox", { name: "选择新产品" }));
+    await user.click(screen.getByText("取消关联"));
+    await user.click(screen.getByRole("button", { name: "确认切换" }));
+
+    expect(onStage).toHaveBeenCalledWith(
+      expect.objectContaining({ fromProductId: "prod-b", fromProductName: "工行添利" }),
+    );
   });
 
   test("staging a product switch reports from/to and pnl", async () => {
@@ -129,7 +149,7 @@ describe("UnitOperationsPanel", () => {
 
   test("hides 取消关联 when the unit has no product", async () => {
     const user = userEvent.setup();
-    setup({ unit: makeUnit({ productId: null, productName: null }) });
+    setup({ currentProductId: null });
 
     await user.click(screen.getByRole("button", { name: "切换投入产品" }));
     await user.click(screen.getByRole("combobox", { name: "选择新产品" }));
@@ -138,7 +158,7 @@ describe("UnitOperationsPanel", () => {
 
   test("omits the pnl field when there is no product to exit", async () => {
     const user = userEvent.setup();
-    setup({ unit: makeUnit({ productId: null, productName: null }) });
+    setup({ currentProductId: null });
 
     await user.click(screen.getByRole("button", { name: /切换投入产品/ }));
     expect(screen.queryByLabelText("本次实现损益（可选）")).not.toBeInTheDocument();
