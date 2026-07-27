@@ -391,21 +391,20 @@ export function UnitCommitDialog({
 
           <Separator />
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <div className="flex-1 space-y-1.5">
               <Label htmlFor="commitNote" className="text-xs">
                 本次变更备注
               </Label>
-              <Textarea
+              <Input
                 id="commitNote"
                 value={commitNote}
                 onChange={(e) => setCommitNote(e.target.value)}
                 placeholder="为什么做这次变更（会写入日志）"
-                rows={2}
-                className="resize-none text-sm"
+                className="h-9"
               />
             </div>
-            <div className="space-y-1.5">
+            <div className="w-full space-y-1.5 sm:w-44">
               <Label htmlFor="operationDate" className="text-xs">
                 操作日期
               </Label>

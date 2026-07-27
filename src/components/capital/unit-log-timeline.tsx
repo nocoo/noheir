@@ -97,8 +97,10 @@ export function UnitLogTimeline({ logs, loading, onRefresh, limit = 500 }: UnitL
 
   if (loading) {
     return (
-      <div className="space-y-3">
-        <SectionTitle icon={<History className="size-3" />} label="历史记录" />
+      <div className="space-y-4">
+        <div className="flex h-4 items-center">
+          <SectionTitle icon={<History className="size-3" />} label="历史记录" />
+        </div>
         {[0, 1, 2].map((i) => (
           <Skeleton key={i} className="h-14 w-full" />
         ))}
@@ -107,8 +109,8 @@ export function UnitLogTimeline({ logs, loading, onRefresh, limit = 500 }: UnitL
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4">
+      <div className="flex h-4 items-center justify-between">
         <SectionTitle icon={<History className="size-3" />} label="历史记录" />
         {totalPnl !== 0 && (
           <span
