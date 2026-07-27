@@ -9,6 +9,7 @@ import {
   RotateCcw,
   Settings2,
   Trash2,
+  TrendingUp,
   X,
 } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
@@ -63,6 +64,7 @@ const SOURCES = [
   { value: "manual", label: "手动录入" },
   { value: "auto", label: "自动记录" },
   { value: "import", label: "数据迁移" },
+  { value: "mcp", label: "AI 助手" },
 ] as const;
 
 function getOperationDisplay(type: ContributionOperationType) {
@@ -120,12 +122,15 @@ export function CapitalLogsClient({ logs: initialLogs, units, products }: Capita
       .filter((l) => l.amount < 0)
       .reduce((sum, l) => sum + Math.abs(l.amount), 0);
 
+    const totalPnl = activeLogs.reduce((sum, l) => sum + (l.pnl ?? 0), 0);
+
     return {
       filteredLogs: filtered,
       stats: {
         totalInvested,
         totalWithdrawn,
         netAmount: totalInvested - totalWithdrawn,
+        totalPnl,
         logCount: activeLogs.length,
       },
     };
@@ -289,7 +294,12 @@ export function CapitalLogsClient({ logs: initialLogs, units, products }: Capita
           icon={History}
           variant="primary"
         />
-        <StatCard title="记录数" value={`${stats.logCount}条`} icon={History} variant="primary" />
+        <StatCard
+          title="累计收益"
+          value={formatCurrencyFull(stats.totalPnl)}
+          icon={TrendingUp}
+          variant={stats.totalPnl >= 0 ? "income" : "expense"}
+        />
       </div>
 
       {/* Logs Table */}
@@ -305,6 +315,7 @@ export function CapitalLogsClient({ logs: initialLogs, units, products }: Capita
                 <TableHead className={CAPITAL_TABLE_COLUMNS.date}>日期</TableHead>
                 <TableHead className={CAPITAL_TABLE_COLUMNS.operationType}>类型</TableHead>
                 <TableHead className={CAPITAL_TABLE_COLUMNS.amount}>金额</TableHead>
+                <TableHead className={CAPITAL_TABLE_COLUMNS.pnl}>收益</TableHead>
                 <TableHead className={CAPITAL_TABLE_COLUMNS.unitCode}>资金单元</TableHead>
                 <TableHead className={CAPITAL_TABLE_COLUMNS.product}>产品</TableHead>
                 <TableHead className={CAPITAL_TABLE_COLUMNS.source}>来源</TableHead>
@@ -315,7 +326,7 @@ export function CapitalLogsClient({ logs: initialLogs, units, products }: Capita
             <TableBody>
               {filteredLogs.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="h-24 text-center">
+                  <TableCell colSpan={9} className="h-24 text-center">
                     暂无记录
                   </TableCell>
                 </TableRow>
@@ -339,6 +350,19 @@ export function CapitalLogsClient({ logs: initialLogs, units, products }: Capita
                       >
                         {log.amount >= 0 ? "+" : ""}
                         {formatCurrencyFull(log.amount)}
+                      </TableCell>
+                      <TableCell
+                        className={`text-right font-medium ${
+                          log.pnl == null
+                            ? "text-muted-foreground"
+                            : log.pnl >= 0
+                              ? "text-green-600"
+                              : "text-red-600"
+                        }`}
+                      >
+                        {log.pnl == null
+                          ? "-"
+                          : `${log.pnl > 0 ? "+" : ""}${formatCurrencyFull(log.pnl)}`}
                       </TableCell>
                       <TableCell>
                         {log.unit?.unitCode ? (

@@ -109,6 +109,7 @@ function ContributionLogFormInner({
   const [operationDate, setOperationDate] = useState(
     log?.operationDate ?? new Date().toISOString().slice(0, 10),
   );
+  const [pnl, setPnl] = useState(log?.pnl != null ? String(log.pnl) : "");
   const [note, setNote] = useState(log?.note ?? "");
 
   // Combobox open states
@@ -147,6 +148,7 @@ function ContributionLogFormInner({
         const result = await updateContributionLog(log.id, {
           operationType,
           amount: signedAmount,
+          pnl: pnl.trim() === "" ? null : Number(pnl),
           operationDate,
           note: note || null,
         });
@@ -163,6 +165,7 @@ function ContributionLogFormInner({
           productName: selectedProduct?.name ?? null,
           operationType,
           amount: signedAmount,
+          pnl: pnl.trim() === "" ? null : Number(pnl),
           operationDate,
           note: note || null,
         });
@@ -342,6 +345,20 @@ function ContributionLogFormInner({
           <p className="text-muted-foreground text-xs">
             {operationType === "withdraw" ? "取出金额将自动记为负数" : "投入金额记为正数"}
           </p>
+        </div>
+
+        {/* Realized P&L */}
+        <div className="space-y-1.5">
+          <Label htmlFor="log-pnl">损益（元，可选）</Label>
+          <Input
+            id="log-pnl"
+            type="number"
+            step="0.01"
+            value={pnl}
+            onChange={(e) => setPnl(e.target.value)}
+            placeholder="如 500 或 -200"
+          />
+          <p className="text-muted-foreground text-xs">本金流动记在金额，已实现收益记在这里</p>
         </div>
 
         {/* Date */}

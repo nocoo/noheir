@@ -18,6 +18,7 @@ export const CAPITAL_TABLE_COLUMNS = {
   currency: "w-[60px] whitespace-nowrap",
   /** Amount column (right-aligned) */
   amount: "w-[110px] text-right whitespace-nowrap",
+  pnl: "w-[100px] text-right whitespace-nowrap",
   /** Date column */
   date: "w-[100px] whitespace-nowrap",
   /** Countdown/availability column */
