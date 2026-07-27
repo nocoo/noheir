@@ -224,7 +224,7 @@ export function UnitCommitDialog({
             operations panel are anchored to it, so acting earlier would mean
             acting on data the guard will not compare. */}
         <fieldset disabled={loading} className="space-y-4 disabled:opacity-60">
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid gap-6 lg:h-[52vh] lg:min-h-[420px] lg:grid-cols-3">
             {/* ── Column 1: basic info ── */}
             <div className="space-y-3">
               <SectionTitle icon={<Info className="size-3" />} label="基础信息" />

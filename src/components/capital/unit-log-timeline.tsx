@@ -10,7 +10,7 @@
  * they amend history, they are not part of the pending change (docs/003 § 待确认 3).
  */
 
-import { ArrowDownLeft, ArrowUpRight, Check, History, Settings2, X } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Check, History, Pencil, Settings2, X } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { updateContributionLog } from "@/app/actions/contribution-log-actions";
@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ContributionOperationType, DomainContributionLog } from "@/domain/types";
 import { formatCurrencyFull } from "@/lib/chart-config";
+import { formatOperationDate } from "@/lib/local-date";
 import { cn } from "@/lib/utils";
 
 const OPERATION_META: Record<
@@ -97,8 +98,8 @@ export function UnitLogTimeline({ logs, loading, onRefresh, limit = 500 }: UnitL
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <div className="flex h-4 items-center">
+      <div className="flex h-full min-h-0 flex-col gap-4">
+        <div className="flex h-4 shrink-0 items-center">
           <SectionTitle icon={<History className="size-3" />} label="历史记录" />
         </div>
         {[0, 1, 2].map((i) => (
@@ -109,8 +110,8 @@ export function UnitLogTimeline({ logs, loading, onRefresh, limit = 500 }: UnitL
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex h-4 items-center justify-between">
+    <div className="flex h-full min-h-0 flex-col gap-4">
+      <div className="flex h-4 shrink-0 items-center justify-between">
         <SectionTitle icon={<History className="size-3" />} label="历史记录" />
         {totalPnl !== 0 && (
           <span
@@ -128,83 +129,94 @@ export function UnitLogTimeline({ logs, loading, onRefresh, limit = 500 }: UnitL
       </div>
 
       {logs.length === 0 ? (
-        <p className="text-muted-foreground py-6 text-center text-xs">暂无历史记录</p>
+        <p className="text-muted-foreground flex-1 py-6 text-center text-xs">暂无历史记录</p>
       ) : (
-        <ul className="divide-border max-h-[420px] divide-y overflow-y-auto">
+        <ul className="divide-border min-h-0 flex-1 divide-y overflow-y-auto">
           {logs.map((log) => {
             const meta = OPERATION_META[log.operationType] ?? OPERATION_META.adjust;
             const Icon = meta.icon;
             const isEditing = editingId === log.id;
 
             return (
-              <li key={log.id} className={cn("flex gap-3 py-2.5", log.isDeleted && "opacity-50")}>
-                <span className={cn("mt-1.5 size-2 shrink-0 rounded-full", meta.dot)} />
+              <li key={log.id} className={cn("space-y-1.5 py-3", log.isDeleted && "opacity-50")}>
+                {/* Row 1: what happened, when, and for how much. Kept on one
+                    line so the amount always lands at the right edge. */}
+                <div className="flex items-center gap-2">
+                  <span className={cn("size-2 shrink-0 rounded-full", meta.dot)} />
+                  <Icon className={cn("size-3.5 shrink-0", meta.text)} />
+                  <span className="shrink-0 text-xs font-medium">{meta.label}</span>
+                  <span className="text-muted-foreground shrink-0 font-mono text-[10px] tabular-nums">
+                    {formatOperationDate(log.operationDate)}
+                  </span>
+                  <span
+                    className={cn(
+                      "ml-auto shrink-0 font-mono text-xs tabular-nums",
+                      log.amount > 0 && "text-green-600 dark:text-green-400",
+                      log.amount < 0 && "text-red-600 dark:text-red-400",
+                      log.amount === 0 && "text-muted-foreground",
+                    )}
+                  >
+                    {log.amount > 0 ? "+" : ""}
+                    {formatCurrencyFull(log.amount)}
+                  </span>
+                </div>
 
-                <div className="min-w-0 flex-1 space-y-1">
-                  <div className="flex items-center gap-1.5">
-                    <Icon className={cn("size-3 shrink-0", meta.text)} />
-                    <span className="text-xs font-medium">{meta.label}</span>
-                    <span className="text-muted-foreground font-mono text-[10px] tabular-nums">
-                      {log.operationDate}
-                    </span>
-                    <Badge variant="outline" className="ml-auto shrink-0 text-[9px]">
-                      {SOURCE_LABELS[log.source] ?? log.source}
-                    </Badge>
-                  </div>
-
+                {/* Row 2: context and the pnl affordance, indented under the dot. */}
+                <div className="flex flex-wrap items-center gap-1.5 pl-4">
                   {(log.productName ?? log.product?.name) && (
                     <ProductBadge
                       productName={log.productName ?? log.product?.name ?? ""}
                       category={log.product?.category}
                     />
                   )}
-
-                  {log.note && (
-                    <p className="text-muted-foreground whitespace-pre-line text-[10px]">
-                      {log.note}
-                    </p>
-                  )}
+                  <Badge variant="outline" className="shrink-0 text-[9px] font-normal">
+                    {SOURCE_LABELS[log.source] ?? log.source}
+                  </Badge>
 
                   {isEditing ? (
-                    <div className="flex items-center gap-1">
+                    <span className="flex items-center gap-1">
                       <Input
                         type="number"
                         step="0.01"
                         value={draftPnl}
                         onChange={(e) => setDraftPnl(e.target.value)}
                         placeholder="损益"
-                        className="h-6 w-24 text-[10px]"
+                        className="h-7 w-24 text-[11px]"
                         aria-label="损益"
                       />
                       <Button
                         type="button"
                         size="icon"
                         variant="ghost"
-                        className="size-6"
+                        className="size-7"
                         onClick={() => savePnl(log)}
                         disabled={isPending}
                         aria-label="保存损益"
                       >
-                        <Check className="size-3" />
+                        <Check className="size-3.5" />
                       </Button>
                       <Button
                         type="button"
                         size="icon"
                         variant="ghost"
-                        className="size-6"
+                        className="size-7"
                         onClick={() => setEditingId(null)}
                         disabled={isPending}
                         aria-label="取消"
                       >
-                        <X className="size-3" />
+                        <X className="size-3.5" />
                       </Button>
-                    </div>
+                    </span>
                   ) : (
-                    <button
+                    <Button
                       type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-6 shrink-0 gap-1 px-2 text-[10px] font-normal"
                       onClick={() => startEdit(log)}
-                      className="text-muted-foreground hover:text-foreground text-[10px] underline-offset-2 hover:underline"
+                      aria-label={log.pnl != null ? "编辑损益" : "记录损益"}
                     >
+                      <Pencil className="size-2.5" />
                       {log.pnl != null ? (
                         <span
                           className={cn(
@@ -214,27 +226,21 @@ export function UnitLogTimeline({ logs, loading, onRefresh, limit = 500 }: UnitL
                               : "text-red-600 dark:text-red-400",
                           )}
                         >
-                          损益 {log.pnl > 0 ? "+" : ""}
+                          {log.pnl > 0 ? "+" : ""}
                           {formatCurrencyFull(log.pnl)}
                         </span>
                       ) : (
                         "记录损益"
                       )}
-                    </button>
+                    </Button>
                   )}
                 </div>
 
-                <span
-                  className={cn(
-                    "shrink-0 self-start font-mono text-xs tabular-nums",
-                    log.amount > 0 ? "text-green-600 dark:text-green-400" : "",
-                    log.amount < 0 ? "text-red-600 dark:text-red-400" : "",
-                    log.amount === 0 ? "text-muted-foreground" : "",
-                  )}
-                >
-                  {log.amount > 0 ? "+" : ""}
-                  {formatCurrencyFull(log.amount)}
-                </span>
+                {log.note && (
+                  <p className="text-muted-foreground whitespace-pre-line pl-4 text-[10px]">
+                    {log.note}
+                  </p>
+                )}
               </li>
             );
           })}
@@ -242,7 +248,9 @@ export function UnitLogTimeline({ logs, loading, onRefresh, limit = 500 }: UnitL
       )}
 
       {logs.length >= limit && (
-        <p className="text-muted-foreground text-center text-[10px]">仅显示最近 {limit} 条</p>
+        <p className="text-muted-foreground shrink-0 text-center text-[10px]">
+          仅显示最近 {limit} 条
+        </p>
       )}
     </div>
   );

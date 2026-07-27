@@ -69,6 +69,20 @@ describe("UnitLogTimeline", () => {
     expect(screen.getAllByText("2026-07-02")).toHaveLength(2);
   });
 
+  test("trims a legacy ISO timestamp down to a date", () => {
+    // 132 production rows carry a full timestamp in operation_date; rendering it
+    // raw wrapped the row onto three lines.
+    render(
+      <UnitLogTimeline
+        logs={[makeLog({ operationDate: "2026-04-12T01:52:50.622Z" })]}
+        loading={false}
+        onRefresh={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("2026-04-12")).toBeInTheDocument();
+    expect(screen.queryByText(/T01:52:50/)).not.toBeInTheDocument();
+  });
+
   test("renders the note and source label", () => {
     render(
       <UnitLogTimeline
@@ -110,7 +124,7 @@ describe("UnitLogTimeline", () => {
     const user = userEvent.setup();
     render(<UnitLogTimeline logs={[makeLog({ pnl: 12 })]} loading={false} onRefresh={vi.fn()} />);
 
-    await user.click(screen.getByRole("button", { name: /损益/ }));
+    await user.click(screen.getByRole("button", { name: "编辑损益" }));
     await user.clear(screen.getByLabelText("损益"));
     await user.click(screen.getByRole("button", { name: "保存损益" }));
 
@@ -121,7 +135,7 @@ describe("UnitLogTimeline", () => {
     const user = userEvent.setup();
     render(<UnitLogTimeline logs={[makeLog({ pnl: 9 })]} loading={false} onRefresh={vi.fn()} />);
 
-    await user.click(screen.getByRole("button", { name: /损益/ }));
+    await user.click(screen.getByRole("button", { name: "编辑损益" }));
     const input = screen.getByLabelText("损益");
     await user.clear(input);
     await user.click(input);
