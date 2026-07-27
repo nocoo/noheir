@@ -151,7 +151,10 @@ export function UnitLogTimeline({ logs, loading, onRefresh, limit = 500 }: UnitL
                   </div>
 
                   {(log.productName ?? log.product?.name) && (
-                    <ProductBadge productName={log.productName ?? log.product?.name ?? ""} />
+                    <ProductBadge
+                      productName={log.productName ?? log.product?.name ?? ""}
+                      category={log.product?.category}
+                    />
                   )}
 
                   {log.note && (

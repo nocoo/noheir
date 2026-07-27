@@ -132,6 +132,7 @@ export type UpcomingUnit = {
   tactics: string;
   productName: string | null;
   productChannel: string | null;
+  productCategory: string | null;
   availableDate: string;
   monthKey: string;
   monthLabel: string;
@@ -171,6 +172,7 @@ export const buildUpcomingUnits = (units: UnitDisplayInfo[], monthsAhead = 24): 
         tactics: unit.tactics,
         productName: unit.product?.name ?? null,
         productChannel: unit.product?.channel ?? null,
+        productCategory: unit.product?.category ?? null,
         availableDate: availableDateStr,
         monthKey,
         monthLabel,

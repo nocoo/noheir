@@ -113,7 +113,7 @@ export function UnitTooltip({ unit, product }: UnitTooltipProps) {
         <SectionTitle icon={<Package2 className="size-3" />} label="产品" />
         {productName ? (
           <>
-            <ProductBadge productName={productName} className="text-[11px]" />
+            <ProductBadge productName={productName} category={category} className="text-[11px]" />
             <div className="flex flex-wrap items-center gap-1">
               {channel && <ChannelBadge channel={channel} className="text-[9px] px-1.5 py-0" />}
               {category && <CategoryBadge category={category} className="text-[9px] px-1.5 py-0" />}

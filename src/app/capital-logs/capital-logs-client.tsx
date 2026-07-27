@@ -373,7 +373,10 @@ export function CapitalLogsClient({ logs: initialLogs, units, products }: Capita
                       </TableCell>
                       <TableCell>
                         {log.productName || log.product?.name ? (
-                          <ProductBadge productName={log.productName ?? log.product?.name ?? ""} />
+                          <ProductBadge
+                            productName={log.productName ?? log.product?.name ?? ""}
+                            category={log.product?.category}
+                          />
                         ) : (
                           <span className="text-muted-foreground text-xs">-</span>
                         )}

@@ -275,7 +275,10 @@ export function LiquidityClient({
                                   <Link
                                     href={`/products?q=${encodeURIComponent(unit.productName)}`}
                                   >
-                                    <ProductBadge productName={unit.productName} />
+                                    <ProductBadge
+                                      productName={unit.productName}
+                                      category={unit.productCategory}
+                                    />
                                   </Link>
                                 ) : (
                                   <span className="text-muted-foreground text-sm">—</span>
