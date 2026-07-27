@@ -6,6 +6,7 @@ import {
   describeStagedOperation,
   eligibleSwapTargets,
   findStagedOperation,
+  formSnapshotFromExpected,
   isAmountLocked,
   isUnitCodeLocked,
   type StagedOperation,
@@ -161,6 +162,41 @@ describe("buildUnitMetadataDiff", () => {
       expect(diff).not.toBeNull();
       expect(diff?.[patchKey]).toBe(value);
     }
+  });
+});
+
+describe("formSnapshotFromExpected", () => {
+  test("derives the form from the same snapshot the guard uses", () => {
+    expect(formSnapshotFromExpected(expected)).toEqual(form);
+  });
+
+  test("supplies display fallbacks for nullable columns", () => {
+    const allNull = {
+      ...expected,
+      currency: null,
+      status: null,
+      strategy: null,
+      tactics: null,
+      startDate: null,
+      note: null,
+    };
+    const derived = formSnapshotFromExpected(allNull);
+    expect(derived.currency).toBe("CNY");
+    expect(derived.status).toBe("已成立");
+    expect(derived.strategy).toBe("");
+    expect(derived.tactics).toBe("");
+    // Nullable dates/notes stay null so an untouched field diffs as unchanged.
+    expect(derived.startDate).toBeNull();
+    expect(derived.note).toBeNull();
+  });
+
+  test("a round trip through the form produces no diff", () => {
+    const derived = formSnapshotFromExpected(expected);
+    expect(buildUnitMetadataDiff(derived, { ...derived })).toBeNull();
+  });
+
+  test("cents convert to yuan", () => {
+    expect(formSnapshotFromExpected({ ...expected, amountCents: 12345 }).amount).toBe(123.45);
   });
 });
 

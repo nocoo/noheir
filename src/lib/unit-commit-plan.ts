@@ -61,6 +61,29 @@ function toCents(yuan: number): number {
   return Math.round(yuan * 100);
 }
 
+/**
+ * Derive the editable form state from the raw CAS anchor.
+ *
+ * The form and `expected` MUST come from the same snapshot: initializing the
+ * form from a page-level prop while anchoring CAS on a separately-fetched row
+ * lets the user edit stale values that then pass the guard, silently clobbering
+ * a concurrent change.
+ *
+ * Nullable columns get display fallbacks here (never sent back as `expected`).
+ */
+export function formSnapshotFromExpected(expected: ExpectedUnitSnapshot): UnitFormSnapshot {
+  return {
+    unitCode: expected.unitCode,
+    amount: expected.amountCents / 100,
+    currency: expected.currency ?? "CNY",
+    status: expected.status ?? "已成立",
+    strategy: expected.strategy ?? "",
+    tactics: expected.tactics ?? "",
+    startDate: expected.startDate,
+    note: expected.note,
+  };
+}
+
 /** Replaces any existing operation of the same kind; never mutates. */
 export function stageOperation(
   current: StagedOperation[],

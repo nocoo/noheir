@@ -39,6 +39,7 @@ import type {
 } from "@/domain/types";
 import {
   buildCommitPayload,
+  formSnapshotFromExpected,
   isAmountLocked,
   isUnitCodeLocked,
   type StagedOperation,
@@ -86,52 +87,72 @@ export function UnitCommitDialog({
   onOpenChange,
   onSuccess,
 }: UnitCommitDialogProps) {
-  const initialForm: UnitFormSnapshot = {
-    unitCode: unit.unitCode,
-    amount: unit.amount,
-    currency: unit.currency,
-    status: unit.status,
-    strategy: unit.strategy,
-    tactics: unit.tactics,
-    startDate: unit.startDate,
-    note: unit.note,
-  };
+  // Form values and the CAS anchor are derived from ONE snapshot, so the user
+  // can never edit stale values that then pass the guard (docs/003 § Decision B).
+  const [expected, setExpected] = useState<ExpectedUnitSnapshot | null>(null);
+  const [initialForm, setInitialForm] = useState<UnitFormSnapshot | null>(null);
 
-  const [unitCode, setUnitCode] = useState(unit.unitCode);
-  const [amount, setAmount] = useState(String(unit.amount));
-  const [currency, setCurrency] = useState(unit.currency);
-  const [status, setStatus] = useState(unit.status);
-  const [strategy, setStrategy] = useState(unit.strategy);
-  const [tactics, setTactics] = useState(unit.tactics);
-  const [startDate, setStartDate] = useState(unit.startDate ?? "");
-  const [unitNote, setUnitNote] = useState(unit.note ?? "");
+  const [unitCode, setUnitCode] = useState("");
+  const [amount, setAmount] = useState("");
+  const [currency, setCurrency] = useState("CNY");
+  const [status, setStatus] = useState("已成立");
+  const [strategy, setStrategy] = useState("");
+  const [tactics, setTactics] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [unitNote, setUnitNote] = useState("");
 
   const [operations, setOperations] = useState<StagedOperation[]>([]);
   const [commitNote, setCommitNote] = useState("");
   const [operationDate, setOperationDate] = useState("");
 
   const [logs, setLogs] = useState<DomainContributionLog[]>([]);
-  const [expected, setExpected] = useState<ExpectedUnitSnapshot | null>(null);
-  const [loadingLogs, setLoadingLogs] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
 
-  // The commit anchor must be the raw API row — a mapped SerializedUnit has
-  // nulls defaulted away and would fail the guard forever (docs/003 § Decision B).
-  const loadLogs = useCallback(async () => {
-    setLoadingLogs(true);
+  const applySnapshot = useCallback((snapshot: ExpectedUnitSnapshot) => {
+    const form = formSnapshotFromExpected(snapshot);
+    setExpected(snapshot);
+    setInitialForm(form);
+    setUnitCode(form.unitCode);
+    setAmount(String(form.amount));
+    setCurrency(form.currency);
+    setStatus(form.status);
+    setStrategy(form.strategy);
+    setTactics(form.tactics);
+    setStartDate(form.startDate ?? "");
+    setUnitNote(form.note ?? "");
+  }, []);
+
+  /** Initial load: seeds both the anchor and the form. */
+  const loadAll = useCallback(async () => {
+    setLoading(true);
     const result = await listUnitContributionLogs(unit.id);
     if (result.success) {
       setLogs(result.data.logs);
-      setExpected(result.data.expected);
+      applySnapshot(result.data.expected);
     } else {
       toast.error(result.error);
     }
-    setLoadingLogs(false);
+    setLoading(false);
+  }, [unit.id, applySnapshot]);
+
+  /**
+   * Refresh after an inline pnl edit. Deliberately does NOT touch `expected`:
+   * editing a contribution log leaves capital_units untouched, so re-anchoring
+   * would silently adopt any concurrent unit change the user hasn't seen.
+   */
+  const refreshLogs = useCallback(async () => {
+    const result = await listUnitContributionLogs(unit.id);
+    if (result.success) {
+      setLogs(result.data.logs);
+    } else {
+      toast.error(result.error);
+    }
   }, [unit.id]);
 
   useEffect(() => {
-    void loadLogs();
-  }, [loadLogs]);
+    void loadAll();
+  }, [loadAll]);
 
   const codeLocked = isUnitCodeLocked(operations);
   const amountLocked = isAmountLocked(operations);
@@ -139,7 +160,7 @@ export function UnitCommitDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!expected) {
+    if (!expected || !initialForm) {
       toast.error("单元数据尚未加载完成");
       return;
     }
@@ -358,7 +379,7 @@ export function UnitCommitDialog({
           </div>
 
           {/* ── Column 3: history ── */}
-          <UnitLogTimeline logs={logs} loading={loadingLogs} onRefresh={loadLogs} />
+          <UnitLogTimeline logs={logs} loading={loading} onRefresh={refreshLogs} />
         </div>
 
         <Separator />
@@ -400,7 +421,7 @@ export function UnitCommitDialog({
           >
             取消
           </Button>
-          <Button type="submit" disabled={isPending || !expected}>
+          <Button type="submit" disabled={isPending || !expected || loading}>
             {isPending ? "保存中..." : "保存"}
           </Button>
         </div>
