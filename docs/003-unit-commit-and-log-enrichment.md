@@ -665,6 +665,21 @@ P3-C1 提取 `unit-panel-primitives.tsx` · P3-C2 `unit-log-timeline.tsx` + RTL 
 7. **存量 65 条 MCP withdraw 符号错误污染汇总**（B2a）。因"存量不管"不回填，`summarizeByUnit` 对这些单元的"累计投入"会偏高。缓解：P2-C7 修好写入侧后不再新增；在 `/capital-logs` 的统计卡加一行脚注说明历史 MCP 数据可能失真。若后续要修，是一条独立的一次性 `UPDATE ... SET amount_cents = -amount_cents WHERE source='mcp' AND operation_type='withdraw' AND amount_cents > 0`，需单独 spec 评估。
 8. **主日志列表跨页排序**：`search()` 的归一化次级排序发生在 SQL 分页之后，跨页边界上同 `operation_date` 的记录顺序仍可能不理想。缓解：本期只保证页内正确；单元时间线（500 条上限、无分页）不受影响。
 
+## 落地后审查修复（R4）
+
+实现完成后的代码审查发现 6 个问题，均已修复：
+
+| 级别 | 问题 | 修复 |
+|---|---|---|
+| P1 | **表单与 CAS 锚点不同源** —— 表单从 `unit` prop 初始化，`expected` 来自另一次请求。两者版本不同则用户基于旧数据编辑却用新快照过 CAS，**静默覆盖并发修改** | 新增 `formSnapshotFromExpected()`，表单在快照到达后从**同一份** raw 数据派生。另拆出 `refreshLogs()`：内联 pnl 编辑只动 `contribution_logs`，**不重新锚定** `expected` |
+| P1 | **对换目标日志丢失产品快照** —— `productId`/`productName` 写死 `null`，违反 Decision G "取该单元当前产品" | `SwapTarget` 增加产品字段，端点查询目标单元的产品一并传入 |
+| P2 | **归档日期误用操作日期** —— 补录历史日志并同时归档时，`end_date` 被回填成历史日期 | `BuildCommitInput` 拆出独立的 `today` 参数；`operationDate` 是资金移动时间，`today` 是归档时间 |
+| P2 | **产品选择未区分"未选择"与"取消关联"** —— 两者都用 `null`，且确认按钮始终可用 | `undefined` = 未选择（确认按钮禁用），`null` = 显式取消关联；单元本就无产品时隐藏"取消关联"选项（避免 `null → null` 被后端 400） |
+| P3 | 独立日志表单用 UTC 默认日期 | 新增 `src/lib/local-date.ts`，与 worker 的 `getLocalDateString` 对齐 |
+| P3 | `search()` 用 `createdAtMs` 排序却不返回该字段 | 随行返回，前端 mapper 不再回退解析混合编码 |
+
+> **验证方式**：P1-2 与 P2-3 的修复都先临时回退代码，确认新增测试能精准捕获，再还原。测试 web **1024 → 1035**、worker **321 → 323**、e2e **154 → 156**，覆盖率 97.84% / 94.91% / 100%。
+
 ## References
 
 - `docs/17-contribution-logs.md` — `contribution_logs` 原始设计
