@@ -148,21 +148,40 @@ export function createContributionLogsRepo(db: DrizzleD1Database) {
           log: contributionLogs,
           unit: capitalUnits,
           product: financialProducts,
+          rawCreatedAt: sql<number | string | null>`${contributionLogs.createdAt}`,
         })
         .from(contributionLogs)
         .leftJoin(capitalUnits, eq(contributionLogs.unitId, capitalUnits.id))
         .leftJoin(financialProducts, eq(contributionLogs.productId, financialProducts.id))
         .where(and(...conditions))
-        .orderBy(desc(contributionLogs.operationDate), desc(contributionLogs.createdAt))
+        .orderBy(desc(contributionLogs.operationDate))
         .limit(limit)
         .offset(offset)
         .all();
 
+      // Secondary sort in JS on normalized timestamps; SQL cannot compare the
+      // three production created_at encodings. Runs after pagination — see
+      // docs/003 § Risk 8 for the cross-page caveat.
+      const sorted = [...rows].sort((a, b) =>
+        compareLogsForTimeline(
+          {
+            operationDate: a.log.operationDate,
+            createdAtMs: normalizeLogTimestamp(a.rawCreatedAt),
+            id: a.log.id,
+          },
+          {
+            operationDate: b.log.operationDate,
+            createdAtMs: normalizeLogTimestamp(b.rawCreatedAt),
+            id: b.log.id,
+          },
+        ),
+      );
+
       // For now, total = returned count. Could add COUNT(*) query for pagination.
-      const total = rows.length;
+      const total = sorted.length;
 
       return {
-        logs: rows.map((row) => ({
+        logs: sorted.map((row) => ({
           ...row.log,
           unit: row.unit,
           product: row.product,

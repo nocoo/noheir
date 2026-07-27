@@ -117,6 +117,31 @@ describe("ContributionLogsRepo", () => {
     expect(latest.get(unit.id)?.id).toBe("log-auto");
   });
 
+  test("search orders mixed created_at encodings consistently", async () => {
+    const repos = getTestRepos();
+    const db = getTestDb();
+    const unit = await repos.units.create(userId, baseUnit);
+    const product = await repos.products.create(userId, baseProduct);
+
+    const rows = [
+      ["s-mcp", "2026-07-02T05:51:49.226Z"],
+      ["s-auto", 1784956591451],
+      ["s-drizzle", 1751435509],
+    ] as const;
+
+    for (const [id, createdAt] of rows) {
+      db.run(
+        sql`INSERT INTO contribution_logs
+          (id, user_id, unit_id, product_id, operation_type, amount_cents, operation_date, source, created_at, updated_at)
+          VALUES (${id}, ${userId}, ${unit.id}, ${product.id}, 'invest', 100000, '2026-07-02', 'manual', ${createdAt}, ${createdAt})`,
+      );
+    }
+
+    const result = await repos.contributionLogs.search(userId, { unitId: unit.id });
+    // Same order the unit timeline uses — both go through compareLogsForTimeline.
+    expect(result.logs.map((l) => l.id)).toEqual(["s-auto", "s-mcp", "s-drizzle"]);
+  });
+
   test("search with filters", async () => {
     const repos = getTestRepos();
     const unit1 = await repos.units.create(userId, baseUnit);
