@@ -202,13 +202,15 @@ describe("E2E: Unit commit", () => {
     expect(logs).toHaveLength(0);
   });
 
+  // Note: this covers the API contract (stale expected → 409, no extra log), not
+  // the same-millisecond race. Two HTTP calls land on different timestamps, so
+  // this passes against the old timestamp guard too — the race itself is pinned
+  // in worker/tests/unit-commit-execution.test.ts, which controls `now`.
   test("a losing commit writes no log even when it wanted the same result", async () => {
     const unit = await createUnit({ amountCents: 100000 });
     const stale = snapshot(unit);
 
-    // Another request makes the exact edit this one intends. The row ends up in
-    // the state this commit was aiming for, so a post-state guard would match —
-    // only a per-commit token can tell the two apart.
+    // Another request makes the exact edit this one intends.
     await api({
       method: "POST",
       path: `/api/units/${unit.id}/commit`,
