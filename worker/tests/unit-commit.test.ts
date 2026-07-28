@@ -173,6 +173,30 @@ describe("buildCommitStatements — CAS guard", () => {
   // its log INSERTs when [0] loses the CAS. The guard therefore asserts the
   // row holds this commit's full post-state, not just a timestamp that two
   // concurrent requests could share.
+  // A note-only commit writes almost nothing, so a guard derived from the SET
+  // list would omit amount_cents — and could then match a row a concurrent
+  // request had just changed, writing logs for a commit that returned 409.
+  test("log guard covers CAS columns this commit did not write", () => {
+    const stmts = buildCommitStatements(makeInput({ commitNote: "只是记一笔" }));
+    const log = stmts.find((s) => s.sql.includes("INSERT INTO contribution_logs"));
+    const guard = (log?.sql ?? "").split("WHERE EXISTS")[1] ?? "";
+    for (const col of [
+      "unit_code",
+      "amount_cents",
+      "product_id",
+      "currency",
+      "status",
+      "strategy",
+      "tactics",
+      "start_date",
+      "updated_at",
+    ]) {
+      expect(guard).toContain(col);
+    }
+    // Unchanged columns are asserted at the value the client saw.
+    expect(log?.params).toContain(expected.amountCents);
+  });
+
   test("log guard asserts the full post-state of [0]", () => {
     const stmts = buildCommitStatements(
       makeInput({ metadata: { strategy: "短期理财" }, commitNote: "n" }),

@@ -50,7 +50,11 @@ function snapshot(u: UnitRow) {
 }
 
 async function logsFor(unitId: string) {
-  return api<{ logs: Record<string, unknown>[]; expected: Record<string, unknown> }>({
+  return api<{
+    logs: Record<string, unknown>[];
+    expected: Record<string, unknown>;
+    currentProductName: string | null;
+  }>({
     method: "GET",
     path: `/api/units/${unitId}/logs`,
     userId,
@@ -171,6 +175,31 @@ describe("E2E: Unit commit", () => {
     const { logs } = await logsFor(String(unit.id));
     expect(logs.filter((l) => l.operationType === "withdraw")).toHaveLength(0);
     expect(logs.filter((l) => l.productId === to.id)).toHaveLength(0);
+  });
+
+  test("a stale note-only commit writes no log", async () => {
+    const unit = await createUnit();
+    const stale = snapshot(unit);
+
+    // Another request moves the amount. A note-only commit sets almost nothing,
+    // so its log guard must still notice the row no longer matches.
+    await api({
+      method: "PUT",
+      path: `/api/units/${unit.id}`,
+      userId,
+      body: { amountCents: 4242424 },
+    });
+
+    const res = await rawFetch({
+      method: "POST",
+      path: `/api/units/${unit.id}/commit`,
+      userId,
+      body: { expected: stale, commitNote: "should not be written" },
+    });
+    expect(res.status).toBe(409);
+
+    const { logs } = await logsFor(String(unit.id));
+    expect(logs).toHaveLength(0);
   });
 
   test("a unit whose optional fields are all NULL can still commit", async () => {
@@ -503,6 +532,27 @@ describe("E2E: Unit logs endpoint", () => {
     expect(res.expected).toEqual(snapshot(unit));
     expect(res.expected.note).toBeNull();
     expect(res.expected.endDate).toBeNull();
+  });
+
+  test("resolves the current product name from the same read as expected", async () => {
+    const product = await createProduct({ name: "SNAP-A", code: "SA-1" });
+    const unit = await createUnit();
+
+    const before = await logsFor(String(unit.id));
+    expect(before.currentProductName).toBeNull();
+
+    await api({
+      method: "PUT",
+      path: `/api/units/${unit.id}`,
+      userId,
+      body: { productId: product.id },
+    });
+
+    // The name must accompany the id in `expected`, not be looked up client-side
+    // from a list that omits archived products.
+    const after = await logsFor(String(unit.id));
+    expect(after.expected.productId).toBe(product.id);
+    expect(after.currentProductName).toBe("SNAP-A");
   });
 
   test("404 for an unknown unit", async () => {

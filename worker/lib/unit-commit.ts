@@ -78,12 +78,9 @@ export interface BuildCommitInput {
   fromProduct?: ProductRef | null | undefined;
   /** Product the unit moves into, for the invest log. */
   toProduct?: ProductRef | null | undefined;
-  /** Epoch ms stamped onto created_at / updated_at.
-   *
-   *  Doubles as this batch's marker: the log guards match on it to prove [0]
-   *  applied. Two commits landing in the same millisecond would otherwise let
-   *  the loser's logs match the winner's row, so the caller must make this
-   *  unique per request rather than passing a bare Date.now(). */
+  /** Epoch ms stamped onto created_at / updated_at. Need not be unique: the
+   *  log guards assert every CAS-guarded column, so a shared millisecond alone
+   *  cannot make a losing commit's guard match. */
   now: number;
   /** UUID factory (injected so the builder stays pure and testable). */
   newId: () => string;
@@ -266,15 +263,38 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
   // the row now holds every value [0] would have written — the post-state of
   // this specific commit. A losing CAS leaves at least one field at its old
   // value, so the EXISTS fails and the INSERTs match zero rows.
+  //
+  // Every CAS-guarded column is asserted, not just the ones this commit wrote:
+  // a note-only commit sets almost nothing, so a guard built from the SET list
+  // alone would ignore amount_cents and could match a row another request had
+  // just changed (given a shared updated_at millisecond).
+  const written = new Map<string, unknown>();
+  for (const [i, fragment] of sets.entries()) {
+    written.set(fragment.slice(0, fragment.indexOf(" ")), setParams[i]);
+  }
+
   const postStateCols: string[] = ["id = ?", "user_id = ?"];
   const postStateParams: unknown[] = [unitId, userId];
-  for (const [i, fragment] of sets.entries()) {
-    // `sets` holds "col = ?" fragments in the same order as setParams. A SET
-    // may write NULL (end_date on a non-archived unit), and `col = NULL` is
-    // never true in SQL — those need IS NULL instead.
-    const column = fragment.slice(0, fragment.indexOf(" "));
-    postStateCols.push(nullSafeEq(column, setParams[i], postStateParams));
-  }
+  const assertPostState = (column: string, priorValue: unknown) => {
+    // Columns this commit wrote must equal the new value; the rest must still
+    // equal what the client saw. `col = NULL` is never true in SQL, so nulls
+    // go through IS NULL.
+    const value = written.has(column) ? written.get(column) : priorValue;
+    postStateCols.push(nullSafeEq(column, value, postStateParams));
+  };
+
+  assertPostState("unit_code", expected.unitCode);
+  assertPostState("amount_cents", expected.amountCents);
+  assertPostState("product_id", expected.productId);
+  assertPostState("currency", expected.currency);
+  assertPostState("status", expected.status);
+  assertPostState("strategy", expected.strategy);
+  assertPostState("tactics", expected.tactics);
+  assertPostState("start_date", expected.startDate);
+  assertPostState("end_date", expected.endDate);
+  assertPostState("note", expected.note);
+  assertPostState("updated_at", now);
+
   const logGuardSql = `EXISTS (SELECT 1 FROM capital_units WHERE ${postStateCols.join(" AND ")})`;
   const pushLog = (log: {
     unitId: string;
