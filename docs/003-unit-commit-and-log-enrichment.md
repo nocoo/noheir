@@ -659,17 +659,17 @@ P3-C1 提取 `unit-panel-primitives.tsx` · P3-C2 `unit-log-timeline.tsx` + RTL 
 
 ---
 
-## 待确认（实现前需拍板）
+## 设计空白的处置（已实现，按倾向落地）
 
-以下是我在设计意图中发现的**空白或张力**，需要你决定：
+以下是设计意图里的**空白或张力**。实现时按每条注明的倾向执行，未再回头确认；如与预期不符，改动成本都很低。
 
-1. **只填备注就保存**：不改任何字段、不暂存任何操作，只写一条 `commitNote` —— 写一条裸 `adjust` 日志，还是禁用"保存"？上面的 Zod refine 目前**允许**。我倾向允许（在你的心智模型里备注本身就是一条日志），但需要明确。
+1. **只填备注就保存 → 允许**，写一条裸 `adjust` 日志（`amount_cents = 0`）。备注本身就是一条历史记录。Zod refine 放行，`buildCommitPayload` 在"无元数据 + 无操作 + 空备注"时才返回 `null`。
 
-2. **`commitNote` 重复**：一次保存同时做"对换 + 切换产品"会产生 **4 条带相同 `commitNote`** 的日志（对换 2 条 `adjust` + 切换 2 条 `withdraw`/`invest`），`/capital-logs` 上会显得吵。选项：全部带（每行自包含，审计最好）/ 只有第一条带。我倾向全部带，但视觉噪音要你认可。（注：因 [Decision C] 禁止金额与切换产品同批次，上限从 5 条降为 4 条。）
+2. **`commitNote` 每行都带**。一次保存同时做"对换 + 切换产品"会产生 4 条带相同备注的日志（对换 2 条 `adjust` + 切换 1 条 `withdraw` + 1 条 `invest`）。选择让每行自包含，审计时不必回溯同批次的其他行 —— 代价是 `/capital-logs` 上看着重复。
 
-3. **时间线的 pnl 编辑不进 `/commit`**：D5 的暂存只覆盖**操作**，"逐行改历史日志的损益"没被规定。我倾向它**即时生效**（自己发 `PUT /api/contribution-logs/:id` + 自己的 toast），因为它编辑的是历史而非加入本次待提交集合。一致但更贵的方案是加一个 `update_log` 操作类型。
+3. **时间线的 pnl 编辑即时生效**，不进 `/commit` 的暂存集合：它修改的是**已有历史**，而暂存表达的是"对当前单元的待生效变更"，两者语义不同。走独立的 `PUT /api/contribution-logs/:id` + 自己的 toast。因此 `refreshLogs()` 刻意不重取 `expected`（编辑日志不动 `capital_units`）。
 
-4. **`summarizeByUnit` 与 0 金额行**：`worker/db/repositories/contribution-logs.ts:158-163` 把 `amountCents > 0` 记为投入、`else` 记为取出 —— 于是每条 0 金额 `adjust` 行都落进"取出"分支（加 0）并让 `logCount` 虚高。数值上无害。我倾向**加测试钉住现状**而不改行为。
+4. **`summarizeByUnit` 的 0 金额行保持现状**：`amountCents > 0` 记为投入、`else` 记为取出，于是 0 金额的 `adjust` 行落进"取出"分支（加 0）并让 `logCount` 计入。金额统计不受影响，改判定反而要动一个被多处依赖的函数。已加测试钉住该行为，见 `summarizeByUnit counts zero-amount adjust rows in logCount`。
 
 ---
 
