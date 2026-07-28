@@ -788,7 +788,7 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
                             >
                               {/* Sits in the upper-right of the triangle, the
                                   only part with enough width for a glyph. */}
-                              <Zap className="absolute right-0.5 top-0.5 size-2 fill-white/70 text-white/70 sm:size-2.5" />
+                              <Zap className="absolute right-1 top-1 size-2 fill-white/70 text-white/70 sm:size-2.5" />
                             </div>
                           )}
                           {/* Unit code as large watermark - full height, right aligned */}
