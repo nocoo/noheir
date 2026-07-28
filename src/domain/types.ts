@@ -90,7 +90,9 @@ export type InvestmentTactics =
   | "偏股基金"
   | "稳健理财"
   | "增额寿险"
-  | "货币基金";
+  | "货币基金"
+  | "混债基金"
+  | "现金管理";
 
 export type UnitStatus = "已成立" | "计划中" | "筹集中" | "已归档";
 

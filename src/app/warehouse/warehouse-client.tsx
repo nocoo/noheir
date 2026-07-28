@@ -55,6 +55,9 @@ const TACTICS = [
   "稳健理财",
   "增额寿险",
   "货币基金",
+  // Present in production data before the enum existed (B25/B26, E01).
+  "混债基金",
+  "现金管理",
 ];
 const STATUSES = ["已成立", "计划中", "筹集中", "已归档"];
 const AVAILABILITY_OPTIONS = [

@@ -125,6 +125,10 @@ export const TACTICS_TOKEN_MAP: Record<string, string> = {
   稳健理财: "chart-4", // green
   增额寿险: "chart-12", // orchid
   货币基金: "chart-18", // seafoam
+  // Legacy values that predate the enum (B25/B26, E01). Hues picked to sit
+  // beside their family: bonds near cobalt, cash near lime.
+  混债基金: "chart-17", // cadet — next to 债券基金's cobalt
+  现金管理: "chart-19", // olive — next to 现金产品's lime
 };
 
 /** Currency → chart token mapping */
