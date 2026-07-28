@@ -304,8 +304,9 @@ D1 的 `batch()` 是真事务（官方文档："If a statement in the sequence f
 
 [1] UPDATE capital_units SET unit_code='CU-A', updated_at=?
       WHERE id=B AND user_id=? AND unit_code='CU-B'
-        AND EXISTS (SELECT 1 FROM capital_units WHERE id=A AND user_id=? AND unit_code='CU-B')
-                                             -- ↑ A 的【后置】状态：仅当 [0] 生效才成立
+        AND EXISTS (SELECT 1 FROM capital_units
+                    WHERE id=A AND user_id=? AND commit_token=?)
+                                             -- ↑ 同样只认 token，不认番号
 
 [2..n] INSERT INTO contribution_logs (...) SELECT ?,?,...
          WHERE EXISTS (SELECT 1 FROM capital_units
@@ -315,7 +316,7 @@ D1 的 `batch()` 是真事务（官方文档："If a statement in the sequence f
 
 **产品切换并入 `[0]`**，不再是独立语句：独立语句只能重新校验 `product_id` + `unit_code`，而 `[0]` 因**其他字段**过期失败时这两者都没变 —— 切换会照常生效，接口却返回 409。
 
-**日志守卫用 `commit_token` 而非后置状态**：后置状态是可复现的业务值，两个请求做相同修改时无法区分谁是作者。详见 Phase 1 落地记录里的三轮迭代。
+**`[1]` 与日志守卫都用 `commit_token`，不用后置状态**：后置状态是可复现的业务值，两个请求做相同修改时无法区分谁是作者。`[1]` 尤其危险 —— `unit_code` **没有唯一索引**，别的请求完全可能把 A 改成同样的番号，于是"A 已带上 B 的番号"为真却不是本次提交造成的，输家的 `[1]` 照改伙伴（复现：`changes=[0,1,0,0]`，409 背后发生了部分写入）。详见 Phase 1 落地记录里的迭代过程。
 
 `[0]` 号语句承担全部乐观并发判定（[Decision B]）：`expected` 的 10 个字段全部在 `WHERE` 里，其中 8 个可空字段走 `nullSafeEq`。任一字段被他人改动即匹配 0 行，后续语句因守卫落空而全部塌缩。
 
@@ -611,9 +612,11 @@ buildCommitPayload({ unit, form, operations, commitNote, operationDate }): Commi
 > 2. **改用 `updated_at = now`** → 两个请求可能落在同一毫秒，输家的守卫会匹配赢家写下的时间戳。
 > 3. **改用完整后置状态** → 看似严密，但两个请求做**相同修改**时后置状态一致，输家仍会匹配（用 SQLite 复现：`updateChanges=0, logInsertChanges=1`）。
 >
-> 最终方案是 `0009` 迁移新增的 `capital_units.commit_token`：每次请求生成随机 token，由 `[0]` 写入、由每条日志 INSERT 比对。**只有它能证明"这行是我改的"，而非"这行长得像我要的样子"**。
+> 最终方案是 `0009` 迁移新增的 `capital_units.commit_token`：每次请求生成随机 token，由 `[0]` 写入、由 `[1]` 与每条日志 INSERT 比对。**只有它能证明"这行是我改的"，而非"这行长得像我要的样子"**。
 >
-> 教训：业务字段的后置状态可以重复，不能用作身份凭证。
+> 4. **补漏**：token 最初只用在日志守卫上，`[1]`（改对换伙伴的番号）仍在比对 `unit_code`。而 `unit_code` **没有唯一索引** —— 别的请求可以把 A 改成同样的番号，于是输家的 `[1]` 照样改了伙伴 B（复现：`changes=[0,1,0,0]`，接口返回 409 但数据库已部分写入）。`[1]` 也改用 token 后闭合。
+>
+> 教训：业务字段的后置状态可以重复，不能用作身份凭证 —— 而且一旦引入身份凭证，**每一条依赖"前序是否成功"的语句都要用它**，漏一条就留一个洞。
 
 
 | # | Commit | 文件 | 门控 |
