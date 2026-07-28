@@ -1,15 +1,4 @@
-import {
-  and,
-  desc,
-  eq,
-  getTableColumns,
-  gte,
-  inArray,
-  isNotNull,
-  isNull,
-  lte,
-  sql,
-} from "drizzle-orm";
+import { and, desc, eq, getTableColumns, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import {
   compareLogsForTimeline,
@@ -144,7 +133,7 @@ export function createContributionLogsRepo(db: DrizzleD1Database) {
             isNull(contributionLogs.deletedAt),
           ),
         )
-        .orderBy(desc(contributionLogs.operationDate))
+        .orderBy(sql`substr(${contributionLogs.operationDate}, 1, 10) DESC`)
         .limit(limit)
         .all();
 
@@ -177,11 +166,15 @@ export function createContributionLogsRepo(db: DrizzleD1Database) {
       if (params.source) {
         conditions.push(eq(contributionLogs.source, params.source));
       }
+      // substr() over the raw column so the 132 legacy ISO rows (docs/003 § B2c)
+      // compare as plain dates instead of sorting after every same-day entry.
       if (params.startDate) {
-        conditions.push(gte(contributionLogs.operationDate, params.startDate));
+        conditions.push(
+          sql`substr(${contributionLogs.operationDate}, 1, 10) >= ${params.startDate}`,
+        );
       }
       if (params.endDate) {
-        conditions.push(lte(contributionLogs.operationDate, params.endDate));
+        conditions.push(sql`substr(${contributionLogs.operationDate}, 1, 10) <= ${params.endDate}`);
       }
 
       const limit = params.limit ?? 100;
@@ -198,7 +191,7 @@ export function createContributionLogsRepo(db: DrizzleD1Database) {
         .leftJoin(capitalUnits, eq(contributionLogs.unitId, capitalUnits.id))
         .leftJoin(financialProducts, eq(contributionLogs.productId, financialProducts.id))
         .where(and(...conditions))
-        .orderBy(desc(contributionLogs.operationDate))
+        .orderBy(sql`substr(${contributionLogs.operationDate}, 1, 10) DESC`)
         .limit(limit)
         .offset(offset)
         .all();

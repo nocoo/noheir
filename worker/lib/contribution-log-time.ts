@@ -45,10 +45,18 @@ export interface TimelineSortable {
   id: string;
 }
 
-/** operationDate DESC → createdAtMs DESC (nulls last) → id DESC. */
+/**
+ * operationDate DESC → createdAtMs DESC (nulls last) → id DESC.
+ *
+ * Dates are compared by their first 10 characters: 132 legacy rows hold a full
+ * ISO timestamp, and comparing raw would sort them after every plain-date entry
+ * on the same day instead of falling through to the createdAtMs tiebreak.
+ */
 export function compareLogsForTimeline(a: TimelineSortable, b: TimelineSortable): number {
-  if (a.operationDate !== b.operationDate) {
-    return a.operationDate < b.operationDate ? 1 : -1;
+  const dateA = a.operationDate.slice(0, 10);
+  const dateB = b.operationDate.slice(0, 10);
+  if (dateA !== dateB) {
+    return dateA < dateB ? 1 : -1;
   }
   if (a.createdAtMs !== b.createdAtMs) {
     if (a.createdAtMs == null) return 1;

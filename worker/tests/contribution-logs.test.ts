@@ -196,6 +196,29 @@ describe("ContributionLogsRepo", () => {
     ]);
   });
 
+  test("date filters match legacy ISO operation_date rows", async () => {
+    const repos = getTestRepos();
+    const db = getTestDb();
+    const unit = await repos.units.create(userId, baseUnit);
+
+    // The shape the old MCP writer left behind on 132 production rows.
+    db.run(
+      sql`INSERT INTO contribution_logs
+        (id, user_id, unit_id, operation_type, amount_cents, operation_date, source, created_at, updated_at)
+        VALUES ('iso-row', ${userId}, ${unit.id}, 'invest', 100, '2026-07-02T05:51:49.226Z', 'mcp', 1, 1)`,
+    );
+
+    // Raw string comparison would exclude it: 'T05:...' sorts after '2026-07-02'.
+    const sameDay = await repos.contributionLogs.search(userId, {
+      startDate: "2026-07-02",
+      endDate: "2026-07-02",
+    });
+    expect(sameDay.logs.map((l) => l.id)).toContain("iso-row");
+
+    const before = await repos.contributionLogs.search(userId, { endDate: "2026-07-01" });
+    expect(before.logs.map((l) => l.id)).not.toContain("iso-row");
+  });
+
   test("search with filters", async () => {
     const repos = getTestRepos();
     const unit1 = await repos.units.create(userId, baseUnit);
