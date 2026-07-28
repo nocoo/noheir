@@ -288,26 +288,34 @@ D1 的 `batch()` 是真事务（官方文档："If a statement in the sequence f
 最坏情况（对换 A↔B + 切换产品 + 改元数据）的语句序与守卫：
 
 ```
-[0] UPDATE capital_units SET unit_code='CU-B', <metadata>, end_date=<resolveEndDate(...)>, updated_at=?
+[0] UPDATE capital_units
+      SET unit_code='CU-B', <metadata>, product_id=?,      -- 产品切换同属本行
+          end_date=<resolveEndDate(...)>,
+          commit_token=<本次请求的随机 UUID>, updated_at=?
       WHERE id=A AND user_id=?
         AND unit_code=? AND amount_cents=?                      -- NOT NULL，直接等值
         AND <nullSafeEq(product_id)> AND <nullSafeEq(currency)>  -- 以下 8 个可空字段
         AND <nullSafeEq(status)>     AND <nullSafeEq(strategy)>  -- 均展开成
         AND <nullSafeEq(tactics)>    AND <nullSafeEq(start_date)>-- `IS NULL` 或 `= ?`
         AND <nullSafeEq(end_date)>   AND <nullSafeEq(note)>
-        AND EXISTS (SELECT 1 FROM capital_units WHERE id=B AND user_id=? AND unit_code='CU-B')
+        AND EXISTS (SELECT 1 FROM capital_units
+                    WHERE id=B AND user_id=? AND unit_code='CU-B'
+                      AND <nullSafeEq(product_id)>)              -- 伙伴的产品也守
 
 [1] UPDATE capital_units SET unit_code='CU-A', updated_at=?
       WHERE id=B AND user_id=? AND unit_code='CU-B'
         AND EXISTS (SELECT 1 FROM capital_units WHERE id=A AND user_id=? AND unit_code='CU-B')
                                              -- ↑ A 的【后置】状态：仅当 [0] 生效才成立
 
-[2] UPDATE capital_units SET product_id=?, updated_at=?
-      WHERE id=A AND user_id=? AND <nullSafeEq(product_id)> AND unit_code='CU-B'
-
-[3..n] INSERT INTO contribution_logs (...) SELECT ?,?,...
-         WHERE EXISTS (SELECT 1 FROM capital_units WHERE id=A AND ... )
+[2..n] INSERT INTO contribution_logs (...) SELECT ?,?,...
+         WHERE EXISTS (SELECT 1 FROM capital_units
+                       WHERE id=A AND user_id=? AND commit_token=?)
+                                             -- ↑ 只有 [0] 写得出这个 token
 ```
+
+**产品切换并入 `[0]`**，不再是独立语句：独立语句只能重新校验 `product_id` + `unit_code`，而 `[0]` 因**其他字段**过期失败时这两者都没变 —— 切换会照常生效，接口却返回 409。
+
+**日志守卫用 `commit_token` 而非后置状态**：后置状态是可复现的业务值，两个请求做相同修改时无法区分谁是作者。详见 Phase 1 落地记录里的三轮迭代。
 
 `[0]` 号语句承担全部乐观并发判定（[Decision B]）：`expected` 的 10 个字段全部在 `WHERE` 里，其中 8 个可空字段走 `nullSafeEq`。任一字段被他人改动即匹配 0 行，后续语句因守卫落空而全部塌缩。
 
