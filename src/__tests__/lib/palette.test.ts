@@ -135,6 +135,27 @@ describe("palette", () => {
     });
   });
 
+  describe("tactics colouring", () => {
+    // 混债基金 / 现金管理 existed in production (B25/B26, E01) before the enum
+    // did. Adding them to TACTICS without a token would have dropped them onto
+    // an arbitrary hashed colour.
+    it("covers the legacy values that predate the enum", () => {
+      expect(TACTICS_TOKEN_MAP["混债基金"]).toBeDefined();
+      expect(TACTICS_TOKEN_MAP["现金管理"]).toBeDefined();
+    });
+
+    it("gives every tactic a distinct token", () => {
+      const tokens = Object.values(TACTICS_TOKEN_MAP);
+      expect(new Set(tokens).size).toBe(tokens.length);
+    });
+
+    it("never assigns the gray tokens", () => {
+      const tokens = Object.values(TACTICS_TOKEN_MAP);
+      expect(tokens).not.toContain("chart-16");
+      expect(tokens).not.toContain("chart-23");
+    });
+  });
+
   describe("product category colouring", () => {
     // 34 real products hashed into 22 slots collide ~79% of the time — a
     // pigeonhole limit, not a hash defect. Colouring by category instead gives
