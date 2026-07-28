@@ -1,6 +1,5 @@
 {
   "name": "noheir-worker",
-  "version": "2.2.0",
   "private": true,
   "scripts": {
     "dev": "wrangler dev",
