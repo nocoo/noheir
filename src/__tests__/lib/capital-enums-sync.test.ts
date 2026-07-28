@@ -18,7 +18,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, test } from "vitest";
-import { STRATEGY_TOKEN_MAP, TACTICS_TOKEN_MAP } from "@/lib/palette";
+import { PRODUCT_CATEGORY_TOKEN_MAP, STRATEGY_TOKEN_MAP, TACTICS_TOKEN_MAP } from "@/lib/palette";
 
 const root = process.cwd();
 const read = (p: string) => readFileSync(join(root, p), "utf8");
@@ -59,6 +59,18 @@ const CASES = [
   { arrayName: "TACTICS", unionName: "InvestmentTactics", tokenMap: TACTICS_TOKEN_MAP },
   { arrayName: "UNIT_STATUSES", unionName: "UnitStatus", clientName: "STATUSES" },
 ] as const;
+
+describe("warehouse card category flag", () => {
+  // The flag is a bare string comparison against the product category. A typo,
+  // or renaming the category, would silently stop flagging anything — nothing
+  // would error, the corner would just never appear.
+  test("the flagged category is a real product category", () => {
+    const source = read("src/app/warehouse/warehouse-client.tsx");
+    const match = source.match(/const FLAGGED_CATEGORY = "([^"]+)"/);
+    expect(match).not.toBeNull();
+    expect(Object.keys(PRODUCT_CATEGORY_TOKEN_MAP)).toContain(match?.[1]);
+  });
+});
 
 describe("capital enum copies stay in sync", () => {
   for (const c of CASES) {

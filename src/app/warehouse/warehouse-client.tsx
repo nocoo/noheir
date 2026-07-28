@@ -13,6 +13,7 @@ import {
   Target,
   Warehouse,
   X,
+  Zap,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
@@ -26,6 +27,7 @@ import type { DomainProduct } from "@/domain/types";
 import { formatCurrencyFull } from "@/lib/chart-config";
 import {
   getAvailabilityToken,
+  getProductCategoryToken,
   getStatusToken,
   getStrategyToken,
   getTacticsToken,
@@ -118,6 +120,10 @@ function getGroupKey(unit: SerializedUnit, groupBy: GroupByOption): string {
       return unit.tactics;
   }
 }
+
+/** Product category singled out on the cards — the most liquid holdings. */
+const FLAGGED_CATEGORY = "现金+";
+const FLAGGED_CATEGORY_TOKEN = getProductCategoryToken(FLAGGED_CATEGORY);
 
 const STORAGE_KEY = "warehouse-filters";
 
@@ -737,13 +743,15 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
                   // Show different secondary info based on groupBy
                   const secondaryInfo = groupBy === "tactics" ? unit.strategy : unit.tactics;
                   const product = unit.productId ? (productById.get(unit.productId) ?? null) : null;
+                  const category = unit.productCategory ?? product?.category ?? null;
+                  const isFlagged = category === FLAGGED_CATEGORY;
                   return (
                     <Tooltip key={unit.id}>
                       <TooltipTrigger asChild>
                         <Card
                           role="button"
                           tabIndex={0}
-                          aria-label={`资金单元 ${unit.unitCode}`}
+                          aria-label={`资金单元 ${unit.unitCode}${isFlagged ? ` · ${FLAGGED_CATEGORY}` : ""}`}
                           className="focus-visible:ring-ring relative cursor-pointer overflow-hidden border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
                           style={{
                             backgroundColor: withAlpha(availabilityToken, 0.1),
@@ -765,6 +773,24 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
                             className="absolute left-0 top-0 h-full w-0.5 sm:w-1"
                             style={{ backgroundColor: withAlpha(strategyToken, 1) }}
                           />
+                          {/* Clipped top-right corner flagging 现金+ holdings.
+                              Only 4 of 152 placed units sit in that category, so
+                              the mark reads as an exception worth scanning for
+                              rather than as decoration on every card. */}
+                          {isFlagged && (
+                            <div
+                              className="pointer-events-none absolute right-0 top-0 size-5 sm:size-6"
+                              style={{
+                                backgroundColor: withAlpha(FLAGGED_CATEGORY_TOKEN, 1),
+                                clipPath: "polygon(100% 0, 0 0, 100% 100%)",
+                              }}
+                              aria-hidden="true"
+                            >
+                              {/* Sits in the upper-right of the triangle, the
+                                  only part with enough width for a glyph. */}
+                              <Zap className="absolute right-0.5 top-0.5 size-2 fill-white/70 text-white/70 sm:size-2.5" />
+                            </div>
+                          )}
                           {/* Unit code as large watermark - full height, right aligned */}
                           <div className="pointer-events-none absolute inset-0 flex items-center justify-end overflow-hidden pr-1.5 sm:pr-3">
                             <span

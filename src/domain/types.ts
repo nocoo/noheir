@@ -212,6 +212,7 @@ export interface SerializedUnit {
   productId: string | null;
   productName: string | null;
   productChannel?: string | null;
+  productCategory?: string | null;
   latestInvestDate?: string | null;
   startDate: string | null;
   endDate: string | null;
