@@ -94,6 +94,9 @@ export function UnitCommitDialog({
   // Form values and the CAS anchor are derived from ONE snapshot, so the user
   // can never edit stale values that then pass the guard (docs/003 § Decision B).
   const [expected, setExpected] = useState<ExpectedUnitSnapshot | null>(null);
+  // Resolved server-side alongside `expected`, so the name always belongs to the
+  // product id the guard will compare against.
+  const [currentProductName, setCurrentProductName] = useState<string | null>(null);
   const [initialForm, setInitialForm] = useState<UnitFormSnapshot | null>(null);
 
   const [unitCode, setUnitCode] = useState("");
@@ -135,6 +138,7 @@ export function UnitCommitDialog({
     const result = await listUnitContributionLogs(unit.id);
     if (result.success) {
       setLogs(result.data.logs);
+      setCurrentProductName(result.data.currentProductName);
       applySnapshot(result.data.expected);
     } else {
       toast.error(result.error);
@@ -375,7 +379,7 @@ export function UnitCommitDialog({
               <UnitOperationsPanel
                 unitId={unit.id}
                 currentProductId={expected?.productId ?? null}
-                currentProductName={unit.productName}
+                currentProductName={currentProductName}
                 units={units}
                 products={products}
                 operations={operations}

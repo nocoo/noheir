@@ -356,6 +356,7 @@ export class WorkerDbClient {
     return this.request<{
       logs: unknown[];
       expected: ExpectedUnitSnapshot;
+      currentProductName: string | null;
     }>("GET", `/api/units/${unitId}/logs`, userId);
   }
 

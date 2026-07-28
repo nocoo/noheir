@@ -965,9 +965,16 @@ app.get("/api/units/:id/logs", async (c) => {
   }
 
   const logs = await repos.contributionLogs.listByUnit(userId, id);
+  // Resolved here so the name matches the product id in `expected`. The client
+  // list omits archived products, and pairing a fresh id with a name looked up
+  // from a stale prop could label the unit with a different product entirely.
+  const currentProduct = unit.productId
+    ? await repos.products.findById(userId, unit.productId)
+    : null;
 
   return c.json({
     logs,
+    currentProductName: currentProduct?.name ?? null,
     expected: {
       unitCode: unit.unitCode,
       amountCents: unit.amountCents,

@@ -109,9 +109,13 @@ export async function restoreContributionLog(id: string): Promise<ActionResult> 
 }
 
 /** Fetch one unit's timeline plus the raw snapshot used as the commit anchor. */
-export async function listUnitContributionLogs(
-  unitId: string,
-): Promise<ActionResult<{ logs: DomainContributionLog[]; expected: ExpectedUnitSnapshot }>> {
+export async function listUnitContributionLogs(unitId: string): Promise<
+  ActionResult<{
+    logs: DomainContributionLog[];
+    expected: ExpectedUnitSnapshot;
+    currentProductName: string | null;
+  }>
+> {
   try {
     const { userId, client } = await getAuthedClient();
     const result = await client.listUnitLogs(userId, unitId);
@@ -120,6 +124,7 @@ export async function listUnitContributionLogs(
       data: {
         logs: result.logs.map((raw) => toDomainContributionLog(raw as Record<string, unknown>)),
         expected: result.expected,
+        currentProductName: result.currentProductName,
       },
     };
   } catch (err) {
