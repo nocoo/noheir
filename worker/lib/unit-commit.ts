@@ -78,7 +78,12 @@ export interface BuildCommitInput {
   fromProduct?: ProductRef | null | undefined;
   /** Product the unit moves into, for the invest log. */
   toProduct?: ProductRef | null | undefined;
-  /** Epoch ms stamped onto created_at / updated_at. */
+  /** Epoch ms stamped onto created_at / updated_at.
+   *
+   *  Doubles as this batch's marker: the log guards match on it to prove [0]
+   *  applied. Two commits landing in the same millisecond would otherwise let
+   *  the loser's logs match the winner's row, so the caller must make this
+   *  unique per request rather than passing a bare Date.now(). */
   now: number;
   /** UUID factory (injected so the builder stays pure and testable). */
   newId: () => string;
@@ -194,6 +199,11 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
   if (metadata?.tactics !== undefined) set("tactics", metadata.tactics);
   if (metadata?.startDate !== undefined) set("start_date", metadata.startDate);
   if (metadata?.unitNote !== undefined) set("note", metadata.unitNote);
+  // Same row as the metadata edit, so it rides the same CAS. Kept out of a
+  // separate statement: that one could only re-check product_id + unit_code,
+  // neither of which changes when [0] fails on some other field — the switch
+  // would then apply while the endpoint reported 409.
+  if (switchOp) set("product_id", switchOp.toProductId);
 
   // Always written: non-archived units must have end_date = NULL.
   const finalStatus = metadata?.status ?? expected.status;
@@ -249,26 +259,23 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
     });
   }
 
-  // ── [2] the product switch, guarded on [0]'s post-state ──
-  const postUnitCode = finalUnitCode ?? expected.unitCode;
-  if (switchOp) {
-    const productWhere: unknown[] = [switchOp.toProductId, now, unitId, userId];
-    const guard = nullSafeEq("product_id", expected.productId, productWhere);
-    productWhere.push(postUnitCode);
-    statements.push({
-      sql: `UPDATE capital_units SET product_id = ?, updated_at = ?
-            WHERE id = ? AND user_id = ? AND ${guard} AND unit_code = ?`,
-      params: productWhere,
-    });
-  }
-
   // ── [3..n] logs, each guarded on the unit reaching its post-state ──
   const unitStatementCount = statements.length;
-  // updated_at is the discriminator: only statement [0] writes this exact value,
-  // so a collapsed batch leaves every log INSERT matching zero rows. unit_code
-  // alone is not enough — a commit that changes neither code nor product would
-  // otherwise pass the guard even after [0] failed its CAS.
-  const logGuard = `EXISTS (SELECT 1 FROM capital_units WHERE id = ? AND user_id = ? AND unit_code = ? AND updated_at = ?)`;
+  // Logs may only exist if [0] applied. Rather than trusting a timestamp to be
+  // unique per batch (two commits can share a millisecond), the guard asserts
+  // the row now holds every value [0] would have written — the post-state of
+  // this specific commit. A losing CAS leaves at least one field at its old
+  // value, so the EXISTS fails and the INSERTs match zero rows.
+  const postStateCols: string[] = ["id = ?", "user_id = ?"];
+  const postStateParams: unknown[] = [unitId, userId];
+  for (const [i, fragment] of sets.entries()) {
+    // `sets` holds "col = ?" fragments in the same order as setParams. A SET
+    // may write NULL (end_date on a non-archived unit), and `col = NULL` is
+    // never true in SQL — those need IS NULL instead.
+    const column = fragment.slice(0, fragment.indexOf(" "));
+    postStateCols.push(nullSafeEq(column, setParams[i], postStateParams));
+  }
+  const logGuardSql = `EXISTS (SELECT 1 FROM capital_units WHERE ${postStateCols.join(" AND ")})`;
   const pushLog = (log: {
     unitId: string;
     productId: string | null;
@@ -277,14 +284,13 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
     amountCents: number;
     pnlCents: number | null;
     note: string;
-    guardUnitCode: string;
   }) => {
     statements.push({
       sql: `INSERT INTO contribution_logs
               (id, user_id, unit_id, product_id, product_name, operation_type,
                amount_cents, pnl_cents, operation_date, source, note, created_at, updated_at)
             SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-            WHERE ${logGuard}`,
+            WHERE ${logGuardSql}`,
       params: [
         newId(),
         userId,
@@ -299,10 +305,7 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
         log.note,
         now,
         now,
-        log.unitId,
-        userId,
-        log.guardUnitCode,
-        now,
+        ...postStateParams,
       ],
     });
   };
@@ -317,7 +320,6 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
       amountCents: 0,
       pnlCents: null,
       note: composeNote(context, commitNote),
-      guardUnitCode: swapTarget.unitCode,
     });
     pushLog({
       unitId: swapTarget.id,
@@ -327,7 +329,6 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
       amountCents: 0,
       pnlCents: null,
       note: composeNote(context, commitNote),
-      guardUnitCode: expected.unitCode,
     });
   }
 
@@ -342,7 +343,6 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
         amountCents: -amount,
         pnlCents: switchOp.pnlCents ?? null,
         note: composeNote(`切换产品: 退出 ${fromProduct?.name ?? "未知产品"}`, commitNote),
-        guardUnitCode: postUnitCode,
       });
     }
     if (switchOp.toProductId) {
@@ -354,7 +354,6 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
         amountCents: amount,
         pnlCents: null,
         note: composeNote(`切换产品: 投入 ${toProduct?.name ?? "未知产品"}`, commitNote),
-        guardUnitCode: postUnitCode,
       });
     }
   }
@@ -370,7 +369,6 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
       amountCents: 0,
       pnlCents: null,
       note: composeNote(`元数据修改: ${metadataParts.join(", ")}`, commitNote),
-      guardUnitCode: postUnitCode,
     });
   }
 
@@ -385,7 +383,6 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
       amountCents: 0,
       pnlCents: null,
       note: commitNote.trim(),
-      guardUnitCode: postUnitCode,
     });
   }
 

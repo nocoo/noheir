@@ -120,6 +120,59 @@ describe("E2E: Unit commit", () => {
     expect(logs).toHaveLength(0); // all-or-nothing
   });
 
+  test("a stale expected blocks a staged product switch too", async () => {
+    const from = await createProduct({ name: "ATOM-A", code: "AA-1" });
+    const to = await createProduct({ name: "ATOM-B", code: "AB-1" });
+    const unit = await createUnit({ amountCents: 1000000 });
+
+    await api({
+      method: "PUT",
+      path: `/api/units/${unit.id}`,
+      userId,
+      body: { productId: from.id },
+    });
+    const current = await api<{ unit: UnitRow }>({
+      method: "GET",
+      path: `/api/units/${unit.id}`,
+      userId,
+    });
+
+    // Someone changes the amount; the product is untouched, so a guard that
+    // only checks product_id + unit_code would still match.
+    await api({
+      method: "PUT",
+      path: `/api/units/${unit.id}`,
+      userId,
+      body: { amountCents: 7777777 },
+    });
+
+    const res = await rawFetch({
+      method: "POST",
+      path: `/api/units/${unit.id}/commit`,
+      userId,
+      body: {
+        expected: snapshot(current.unit),
+        operations: [{ kind: "switch_product", toProductId: to.id }],
+      },
+    });
+    expect(res.status).toBe(409);
+
+    // All-or-nothing: the product must not have moved, and no log written.
+    const after = await api<{ unit: UnitRow }>({
+      method: "GET",
+      path: `/api/units/${unit.id}`,
+      userId,
+    });
+    expect(after.unit.productId).toBe(from.id);
+
+    // The earlier PUT that linked the product wrote its own invest log, so
+    // count only what a switch would have added: a withdraw, or an invest
+    // pointing at the target product.
+    const { logs } = await logsFor(String(unit.id));
+    expect(logs.filter((l) => l.operationType === "withdraw")).toHaveLength(0);
+    expect(logs.filter((l) => l.productId === to.id)).toHaveLength(0);
+  });
+
   test("a unit whose optional fields are all NULL can still commit", async () => {
     // 84 of 178 production units have note = NULL — see docs/003 § Decision B.
     const unit = await createUnit({ note: null, startDate: null });

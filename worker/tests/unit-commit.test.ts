@@ -169,16 +169,22 @@ describe("buildCommitStatements — CAS guard", () => {
     expect(head?.params).not.toContain("2020-01-01");
   });
 
-  // Regression: a commit that changes neither unit_code nor product still has to
-  // collapse its log INSERTs when [0] loses the CAS. updated_at is the only
-  // value unique to this batch, so it is what the log guard keys off.
-  test("log guard keys off updated_at, not just unit_code", () => {
+  // A commit that changes neither unit_code nor product still has to collapse
+  // its log INSERTs when [0] loses the CAS. The guard therefore asserts the
+  // row holds this commit's full post-state, not just a timestamp that two
+  // concurrent requests could share.
+  test("log guard asserts the full post-state of [0]", () => {
     const stmts = buildCommitStatements(
       makeInput({ metadata: { strategy: "短期理财" }, commitNote: "n" }),
     );
     const log = stmts.find((s) => s.sql.includes("INSERT INTO contribution_logs"));
-    expect(log?.sql).toContain("updated_at = ?");
-    expect(log?.params.slice(-4)).toEqual(["unit-a", "u1", "CU01-001", NOW]);
+    const guard = (log?.sql ?? "").split("WHERE EXISTS")[1] ?? "";
+    expect(guard).toContain("strategy = ?");
+    expect(guard).toContain("updated_at = ?");
+    // A non-archived unit writes end_date = NULL, and `col = NULL` never
+    // matches — the guard has to use IS NULL for it.
+    expect(guard).toContain("end_date IS NULL");
+    expect(log?.params).toContain("短期理财");
   });
 });
 
@@ -274,9 +280,12 @@ describe("buildCommitStatements — switch_product", () => {
         toProduct: { id: "prod-b", name: "工行添利" },
       }),
     );
-    expect(stmts).toHaveLength(4); // unit update, product update, withdraw, invest
-    const withdraw = stmts[2];
-    const invest = stmts[3];
+    // The product switch rides statement [0] rather than a separate UPDATE,
+    // so it cannot apply when the CAS fails.
+    expect(stmts).toHaveLength(3); // unit update (incl. product), withdraw, invest
+    expect(stmts[0]?.sql).toContain("product_id = ?");
+    const withdraw = stmts[1];
+    const invest = stmts[2];
     expect(withdraw?.params[5]).toBe("withdraw");
     expect(withdraw?.params[6]).toBe(-1000000);
     expect(withdraw?.params[7]).toBe(5000); // pnl rides the withdraw row

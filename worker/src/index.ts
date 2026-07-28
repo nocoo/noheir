@@ -942,8 +942,17 @@ app.delete("/api/units/:id", async (c) => {
 
 /**
  * Timeline for one unit, plus the raw snapshot the client echoes back as
- * `expected` on commit. Returned together so the two can't drift, and so the
- * client is never tempted to build `expected` from a mapped/defaulted shape.
+ * `expected` on commit.
+ *
+ * They travel together so the client is never tempted to build `expected` from
+ * a mapped/defaulted shape — that was the actual failure mode (docs/003 §
+ * Decision B), since `toDomainUnit` turns NULLs into "" and would fail the
+ * guard forever.
+ *
+ * This is not a consistent snapshot: the unit and the logs are two reads, so a
+ * concurrent commit between them can pair an older `expected` with newer logs.
+ * That is harmless — a stale `expected` simply loses the CAS and returns 409,
+ * which is exactly what should happen.
  */
 app.get("/api/units/:id/logs", async (c) => {
   const userId = c.get("userId");
