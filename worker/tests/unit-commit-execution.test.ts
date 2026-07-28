@@ -57,6 +57,24 @@ function commit(token: string, note: string, now = 1_700_000_000_000) {
   return statements.map((s) => db.prepare(s.sql).run(...(s.params as unknown[])));
 }
 
+/** A swap commit whose CAS may or may not hold. */
+function swapCommit(token: string, now = 1_700_000_000_000) {
+  let n = 0;
+  const statements = buildCommitStatements({
+    userId: "usr",
+    unitId: "unit-a",
+    expected,
+    operations: [{ kind: "swap_unit_code", targetUnitId: "unit-b" }],
+    swapTarget: { id: "unit-b", unitCode: "CU01-002", productId: null, productName: null },
+    operationDate: "2026-07-28",
+    today: "2026-07-28",
+    now,
+    commitToken: token,
+    newId: () => `${token}-log-${++n}`,
+  });
+  return statements.map((s) => db.prepare(s.sql).run(...(s.params as unknown[])));
+}
+
 describe("commit execution against SQLite", () => {
   beforeEach(() => {
     db = new Database(":memory:");
@@ -86,6 +104,48 @@ describe("commit execution against SQLite", () => {
     const rows = db.prepare("SELECT note FROM contribution_logs").all() as { note: string }[];
     expect(rows).toHaveLength(1);
     expect(rows[0]?.note).toContain("winner");
+  });
+
+  test("a losing swap leaves the partner untouched", () => {
+    db.prepare(
+      `INSERT INTO capital_units VALUES ('unit-b','usr','CU01-002',200000,NULL,'CNY','已成立','长期理财','债券基金',NULL,NULL,NULL,NULL,1)`,
+    ).run();
+
+    // Another request already renamed A to the swap target's code. unit_code has
+    // no unique index, so this is a legal state — and it makes "A carries B's
+    // code" true without this commit having caused it.
+    db.prepare("UPDATE capital_units SET unit_code='CU01-002' WHERE id='unit-a'").run();
+
+    const changes = swapCommit("token-late").map((r) => r.changes);
+
+    // [0] loses the CAS, so nothing at all may be written.
+    expect(changes[0]).toBe(0);
+    expect(changes.slice(1).every((c) => c === 0)).toBe(true);
+
+    const partner = db.prepare("SELECT unit_code FROM capital_units WHERE id='unit-b'").get() as {
+      unit_code: string;
+    };
+    expect(partner.unit_code).toBe("CU01-002");
+    expect(db.prepare("SELECT COUNT(*) n FROM contribution_logs").get()).toEqual({ n: 0 });
+  });
+
+  test("a winning swap exchanges both codes and logs both units", () => {
+    db.prepare(
+      `INSERT INTO capital_units VALUES ('unit-b','usr','CU01-002',200000,NULL,'CNY','已成立','长期理财','债券基金',NULL,NULL,NULL,NULL,1)`,
+    ).run();
+
+    const changes = swapCommit("token-ok").map((r) => r.changes);
+    expect(changes.every((c) => c === 1)).toBe(true);
+
+    const rows = db.prepare("SELECT id, unit_code FROM capital_units ORDER BY id").all() as {
+      id: string;
+      unit_code: string;
+    }[];
+    expect(rows).toEqual([
+      { id: "unit-a", unit_code: "CU01-002" },
+      { id: "unit-b", unit_code: "CU01-001" },
+    ]);
+    expect(db.prepare("SELECT COUNT(*) n FROM contribution_logs").get()).toEqual({ n: 2 });
   });
 
   test("the winner's token is what lands on the row", () => {

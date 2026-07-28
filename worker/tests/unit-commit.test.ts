@@ -247,10 +247,12 @@ describe("buildCommitStatements — swap_unit_code", () => {
     expect(existsClause).toContain("product_id IS NULL");
   });
 
-  test("[1] guards on [0]'s post-state", () => {
+  test("[1] proves [0] applied via the token", () => {
     const stmts = buildCommitStatements(swapInput);
-    // The EXISTS checks unit-a already carries the partner's code.
-    expect(stmts[1]?.params.slice(-3)).toEqual(["unit-a", "u1", "CU01-002"]);
+    // unit_code has no unique index, so "A now carries B's code" can be true
+    // without this commit having caused it. Only the token settles authorship.
+    expect(stmts[1]?.sql).toContain("commit_token = ?");
+    expect(stmts[1]?.params.slice(-3)).toEqual(["unit-a", "u1", TOKEN]);
   });
 
   test("each unit's log keeps its own product snapshot", () => {

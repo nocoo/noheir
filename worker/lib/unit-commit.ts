@@ -241,12 +241,16 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
     params: [...setParams, ...whereParams],
   });
 
-  // ── [1] the swap partner, guarded on [0]'s post-state ──
+  // ── [1] the swap partner, proving [0] applied ──
   if (swapOp && swapTarget) {
+    // Keyed on the token, not on the source unit's post-state code: unit_code
+    // has no unique index, so another request could have renamed A to the same
+    // value. That made a losing [0] still rename B — a partial write behind a
+    // 409 (reproduced: changes=[0,1,0,0]).
     statements.push({
       sql: `UPDATE capital_units SET unit_code = ?, updated_at = ?
             WHERE id = ? AND user_id = ? AND unit_code = ?
-              AND EXISTS (SELECT 1 FROM capital_units WHERE id = ? AND user_id = ? AND unit_code = ?)`,
+              AND EXISTS (SELECT 1 FROM capital_units WHERE id = ? AND user_id = ? AND commit_token = ?)`,
       params: [
         expected.unitCode,
         now,
@@ -255,7 +259,7 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
         swapTarget.unitCode,
         unitId,
         userId,
-        swapTarget.unitCode,
+        commitToken,
       ],
     });
   }
