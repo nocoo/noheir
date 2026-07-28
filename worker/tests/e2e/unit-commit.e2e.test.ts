@@ -202,6 +202,33 @@ describe("E2E: Unit commit", () => {
     expect(logs).toHaveLength(0);
   });
 
+  test("a losing commit writes no log even when it wanted the same result", async () => {
+    const unit = await createUnit({ amountCents: 100000 });
+    const stale = snapshot(unit);
+
+    // Another request makes the exact edit this one intends. The row ends up in
+    // the state this commit was aiming for, so a post-state guard would match —
+    // only a per-commit token can tell the two apart.
+    await api({
+      method: "POST",
+      path: `/api/units/${unit.id}/commit`,
+      userId,
+      body: { expected: stale, metadata: { amountCents: 200000 }, commitNote: "winner" },
+    });
+
+    const res = await rawFetch({
+      method: "POST",
+      path: `/api/units/${unit.id}/commit`,
+      userId,
+      body: { expected: stale, metadata: { amountCents: 200000 }, commitNote: "loser" },
+    });
+    expect(res.status).toBe(409);
+
+    const { logs } = await logsFor(String(unit.id));
+    expect(logs).toHaveLength(1);
+    expect(String(logs[0]?.note)).toContain("winner");
+  });
+
   test("a unit whose optional fields are all NULL can still commit", async () => {
     // 84 of 178 production units have note = NULL — see docs/003 § Decision B.
     const unit = await createUnit({ note: null, startDate: null });

@@ -9,6 +9,7 @@ import {
 
 const NOW = 1784956591451;
 const TODAY = "2026-07-27";
+const TOKEN = "commit-token-1";
 
 const expected: ExpectedUnitSnapshot = {
   unitCode: "CU01-001",
@@ -32,6 +33,7 @@ function makeInput(over: Partial<BuildCommitInput> = {}): BuildCommitInput {
     operations: [],
     operationDate: TODAY,
     today: TODAY,
+    commitToken: TOKEN,
     now: NOW,
     newId: () => `log-${++n}`,
     ...over,
@@ -173,42 +175,22 @@ describe("buildCommitStatements — CAS guard", () => {
   // its log INSERTs when [0] loses the CAS. The guard therefore asserts the
   // row holds this commit's full post-state, not just a timestamp that two
   // concurrent requests could share.
-  // A note-only commit writes almost nothing, so a guard derived from the SET
-  // list would omit amount_cents — and could then match a row a concurrent
-  // request had just changed, writing logs for a commit that returned 409.
-  test("log guard covers CAS columns this commit did not write", () => {
+  // Guarding on the row's post-state looked equivalent but was not: two requests
+  // making the same edit in the same millisecond leave an identical row, so the
+  // loser's guard matched the winner's write. Only a token unique to this batch
+  // proves the CAS applied.
+  test("log guard matches this commit's token", () => {
     const stmts = buildCommitStatements(makeInput({ commitNote: "只是记一笔" }));
     const log = stmts.find((s) => s.sql.includes("INSERT INTO contribution_logs"));
     const guard = (log?.sql ?? "").split("WHERE EXISTS")[1] ?? "";
-    for (const col of [
-      "unit_code",
-      "amount_cents",
-      "product_id",
-      "currency",
-      "status",
-      "strategy",
-      "tactics",
-      "start_date",
-      "updated_at",
-    ]) {
-      expect(guard).toContain(col);
-    }
-    // Unchanged columns are asserted at the value the client saw.
-    expect(log?.params).toContain(expected.amountCents);
+    expect(guard).toContain("commit_token = ?");
+    expect(log?.params.slice(-3)).toEqual(["unit-a", "u1", TOKEN]);
   });
 
-  test("log guard asserts the full post-state of [0]", () => {
-    const stmts = buildCommitStatements(
-      makeInput({ metadata: { strategy: "短期理财" }, commitNote: "n" }),
-    );
-    const log = stmts.find((s) => s.sql.includes("INSERT INTO contribution_logs"));
-    const guard = (log?.sql ?? "").split("WHERE EXISTS")[1] ?? "";
-    expect(guard).toContain("strategy = ?");
-    expect(guard).toContain("updated_at = ?");
-    // A non-archived unit writes end_date = NULL, and `col = NULL` never
-    // matches — the guard has to use IS NULL for it.
-    expect(guard).toContain("end_date IS NULL");
-    expect(log?.params).toContain("短期理财");
+  test("[0] writes the token so the guards can find it", () => {
+    const [head] = buildCommitStatements(makeInput({ commitNote: "x" }));
+    expect(head?.sql).toContain("commit_token = ?");
+    expect(head?.params).toContain(TOKEN);
   });
 });
 

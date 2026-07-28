@@ -1067,6 +1067,7 @@ app.post("/api/units/:id/commit", async (c) => {
     fromProduct: fromProduct ? { id: fromProduct.id, name: fromProduct.name } : null,
     toProduct,
     now: Date.now(),
+    commitToken: crypto.randomUUID(),
     newId: () => crypto.randomUUID(),
   });
 

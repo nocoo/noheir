@@ -78,10 +78,12 @@ export interface BuildCommitInput {
   fromProduct?: ProductRef | null | undefined;
   /** Product the unit moves into, for the invest log. */
   toProduct?: ProductRef | null | undefined;
-  /** Epoch ms stamped onto created_at / updated_at. Need not be unique: the
-   *  log guards assert every CAS-guarded column, so a shared millisecond alone
-   *  cannot make a losing commit's guard match. */
+  /** Epoch ms stamped onto created_at / updated_at. */
   now: number;
+  /** Random, unique to this request. Written by [0] and matched by every log
+   *  INSERT, which is what proves the CAS applied — a post-state check cannot,
+   *  since two requests making the same edit produce the same post-state. */
+  commitToken: string;
   /** UUID factory (injected so the builder stays pure and testable). */
   newId: () => string;
 }
@@ -165,6 +167,7 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
     operations,
     operationDate,
     today,
+    commitToken,
     commitNote,
     swapTarget,
     fromProduct,
@@ -205,6 +208,7 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
   // Always written: non-archived units must have end_date = NULL.
   const finalStatus = metadata?.status ?? expected.status;
   set("end_date", resolveEndDate(finalStatus, expected.status, expected.endDate, today));
+  set("commit_token", commitToken);
   set("updated_at", now);
 
   const whereParams: unknown[] = [];
@@ -256,46 +260,16 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
     });
   }
 
-  // ── [3..n] logs, each guarded on the unit reaching its post-state ──
+  // ── [3..n] logs, each proving [0] applied ──
   const unitStatementCount = statements.length;
-  // Logs may only exist if [0] applied. Rather than trusting a timestamp to be
-  // unique per batch (two commits can share a millisecond), the guard asserts
-  // the row now holds every value [0] would have written — the post-state of
-  // this specific commit. A losing CAS leaves at least one field at its old
-  // value, so the EXISTS fails and the INSERTs match zero rows.
-  //
-  // Every CAS-guarded column is asserted, not just the ones this commit wrote:
-  // a note-only commit sets almost nothing, so a guard built from the SET list
-  // alone would ignore amount_cents and could match a row another request had
-  // just changed (given a shared updated_at millisecond).
-  const written = new Map<string, unknown>();
-  for (const [i, fragment] of sets.entries()) {
-    written.set(fragment.slice(0, fragment.indexOf(" ")), setParams[i]);
-  }
+  // Matching the token is the only reliable proof of authorship. Guarding on
+  // the row's post-state instead looked equivalent but was not: two requests
+  // making the same edit in the same millisecond leave an identical row, so the
+  // loser's guard matched the winner's write and logged a commit that returned
+  // 409 (reproduced against SQLite: updateChanges=0, logInsertChanges=1).
+  const logGuardSql = `EXISTS (SELECT 1 FROM capital_units WHERE id = ? AND user_id = ? AND commit_token = ?)`;
+  const postStateParams: unknown[] = [unitId, userId, commitToken];
 
-  const postStateCols: string[] = ["id = ?", "user_id = ?"];
-  const postStateParams: unknown[] = [unitId, userId];
-  const assertPostState = (column: string, priorValue: unknown) => {
-    // Columns this commit wrote must equal the new value; the rest must still
-    // equal what the client saw. `col = NULL` is never true in SQL, so nulls
-    // go through IS NULL.
-    const value = written.has(column) ? written.get(column) : priorValue;
-    postStateCols.push(nullSafeEq(column, value, postStateParams));
-  };
-
-  assertPostState("unit_code", expected.unitCode);
-  assertPostState("amount_cents", expected.amountCents);
-  assertPostState("product_id", expected.productId);
-  assertPostState("currency", expected.currency);
-  assertPostState("status", expected.status);
-  assertPostState("strategy", expected.strategy);
-  assertPostState("tactics", expected.tactics);
-  assertPostState("start_date", expected.startDate);
-  assertPostState("end_date", expected.endDate);
-  assertPostState("note", expected.note);
-  assertPostState("updated_at", now);
-
-  const logGuardSql = `EXISTS (SELECT 1 FROM capital_units WHERE ${postStateCols.join(" AND ")})`;
   const pushLog = (log: {
     unitId: string;
     productId: string | null;
