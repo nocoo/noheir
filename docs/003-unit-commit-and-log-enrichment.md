@@ -257,7 +257,7 @@ const expectedUnitSchema = z.object({
 
 客户端从 `GET /api/units/:id` 读到什么就原样回传什么，守卫链的 `[0]` 号语句把**每一个** `expected` 字段都并进 `WHERE`。任意字段被他人改动 → 匹配 0 行 → 整批塌缩 → 409。
 
-**为什么不用 `updated_at` 做版本号**：① 它在生产是可空 `INTEGER`（`0003_add_missing_columns.sql`），在 `worker/tests/setup.ts` 却是 `INTEGER NOT NULL DEFAULT 0`，可空性不一致会让测试与生产分叉；② `repos.units.update()` 压根不写 `updatedAt`（`worker/db/repositories/units.ts:151-163`），版本号不递增就失去意义。全字段值比较无需依赖任何维护得不完整的元数据列。
+**为什么不用 `updated_at` 做版本号**：① 它在生产是可空 `INTEGER`（`0003_add_missing_columns.sql`），在 `worker/tests/setup.ts` 却是 `INTEGER NOT NULL DEFAULT 0`，可空性不一致会让测试与生产分叉；② `repos.units.update()` 压根不写 `updatedAt`（`worker/db/repositories/units.ts:151-163`），版本号不递增就失去意义；③ 毫秒精度不足以区分并发请求。**CAS 判据用全字段值比较**（不依赖维护不全的元数据列），**日志归属判据用 `commit_token`**（`0009` 迁移新增，每请求随机）—— 两者解决的是不同问题，见 Phase 1 落地记录。
 
 **代价**：`note` 或 `startDate` 这类字段被他人改动也会触发 409，即使本次并不打算改它们。对单人使用的个人财务系统而言，误报 409 远优于静默覆盖。
 
@@ -597,7 +597,15 @@ buildCommitPayload({ unit, form, operations, commitNote, operationDate }): Commi
 
 > **落地记录**：14 个 commit 全部完成，生产 migration 已应用并验证（`pnl_cents INTEGER`，可空、无默认值）。worker 测试 **247 → 321**，e2e **154 全过**，覆盖率 **92.06%/78.66%（原未达标）→ 97.49%/94.91%**。
 >
-> **实施中发现并修正的方案缺陷**：日志 INSERT 的守卫最初只比对 `unit_code`，导致"既不改番号也不换产品"的提交在 CAS 落空后**日志仍会写入**（守卫恒真）。已改为以 `updated_at = now` 作判据 —— 只有 `[0]` 号语句会写入这个值。**该缺陷只有 e2e 能捕获**（`better-sqlite3` 无 `d1.batch()`），印证了文档"原子性只在 e2e 可测"的判断。已补单元测试 `log guard keys off updated_at` 防回归。
+> **实施中发现并修正的方案缺陷**：日志 INSERT 的守卫经过三轮才做对，过程值得记录 ——
+>
+> 1. **只比对 `unit_code`** → "既不改番号也不换产品"的提交在 CAS 落空后守卫恒真，日志照写。
+> 2. **改用 `updated_at = now`** → 两个请求可能落在同一毫秒，输家的守卫会匹配赢家写下的时间戳。
+> 3. **改用完整后置状态** → 看似严密，但两个请求做**相同修改**时后置状态一致，输家仍会匹配（用 SQLite 复现：`updateChanges=0, logInsertChanges=1`）。
+>
+> 最终方案是 `0009` 迁移新增的 `capital_units.commit_token`：每次请求生成随机 token，由 `[0]` 写入、由每条日志 INSERT 比对。**只有它能证明"这行是我改的"，而非"这行长得像我要的样子"**。
+>
+> 教训：业务字段的后置状态可以重复，不能用作身份凭证。
 
 
 | # | Commit | 文件 | 门控 |
