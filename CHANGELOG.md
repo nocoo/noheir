@@ -2,6 +2,108 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.6.0] - 2026-07-28
+
+### Features
+
+- **db** — add commit_token to capital_units
+- **ui** — flag cash holdings with a corner marker
+- **ui** — default operation date to today
+- **ui** — pass product category to badges
+- **ui** — color product badges by category
+- **ui** — surface pnl and mcp source in capital logs
+- **ui** — three-column unit editor with staged commit
+- **ui** — add staged operations panel
+- **ui** — add searchable unit swap picker
+- **ui** — add unit log timeline with inline pnl edit
+- **types** — add mcp to contribution source union
+- **actions** — add commitUnit and unit log listing
+- **lib** — add staged commit planning module
+- **client** — add commitUnit, listUnitLogs and pnl params
+- **types** — add pnl, timeline and commit snapshot types
+- **worker** — add mcp to contribution sources
+- **worker** — include totalPnl in summaries
+- **worker** — add unit commit and logs endpoints
+- **worker** — add commitUnitSchema
+- **worker** — unit commit statement builder
+- **worker** — accept pnlCents in log validation
+- **worker** — list unit logs with normalized timestamps
+- **worker** — normalize mixed created_at encodings
+- **schema** — add pnl_cents to contribution_logs
+- **db** — add 0008 pnl_cents migration
+- add 时间视图 sidebar entry for capital logs
+
+### Fixes
+
+- **worker** — guard the swap partner with the token
+- **worker** — prove log authorship with a commit token
+- **ui** — resolve product name alongside the snapshot
+- **worker** — guard logs on every cas column
+- **ui** — resolve archived product and fresh invest date
+- **worker** — normalize legacy dates in sort and filter
+- **worker** — fold product switch into the cas statement
+- **mcp** — mint uuids instead of ulids
+- add legacy tactics values to the enum
+- **ui** — let basic info column set the panel height
+- **ui** — restructure timeline rows and fill column height
+- **ui** — trim legacy iso timestamps in date columns
+- **ui** — use solid buttons and cards for operations
+- **ui** — single-line commit note and aligned columns
+- **ui** — anchor product panel to the cas snapshot
+- **worker** — guard swap partner product in the batch
+- **ui** — default log date to local timezone
+- **ui** — distinguish unpicked product from unlink
+- **ui** — derive form and cas anchor from one snapshot
+- **worker** — return normalized timestamp from log search
+- **worker** — keep swap partner product and archive today
+- **mcp** — correct withdraw sign and date format
+- **worker** — use local date for auto-log operation_date
+- **worker** — apply normalized sort to log search
+- **worker** — tiebreak latest invest log by normalized time
+- use red for all locked units regardless of days remaining
+
+### Refactoring
+
+- **ui** — extract shared unit panel primitives
+
+### Documentation
+
+- record the partner guard gap
+- sync pseudocode with the token guard
+- record the guard's three iterations
+- record second review round
+- record review fixes
+- record phase 3 completion
+- record phase 2 completion
+- record phase 1 completion
+- return expected snapshot from unit logs endpoint
+- allow nullable status in resolveEndDate
+- add mcp to contribution source enum
+- pin totalPnl type contract across layers
+- mirror db nullability in concurrency anchor
+- unbreak phase table and add search sort commit
+- align note terminology across sections
+- cover log search sort and fix migration order
+- reuse endDate invariant in commit builder
+- tighten commit schema guards and concurrency anchor
+- expand mcp defect to sign, source and date
+
+### Tests
+
+- **worker** — pin the same-millisecond commit race
+- guard capital enum copies against drift
+
+### Chores
+
+- **deps** — bump next-auth 5.0.0-beta.31 → 5.0.0-beta.32 (#259)
+- **deps** — bump @cloudflare/workers-types 5.20260721.1 → 5.20260722.1
+- **deps** — bump postcss 8.5.21 → 8.5.22
+- **deps** — bump radix-ui 1.6.4 → 1.6.5
+
+### Style
+
+- **ui** — nudge cash flag icon inward
+
 ## [2.4.2] - 2026-07-23
 
 ### Features
