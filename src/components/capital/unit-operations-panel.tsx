@@ -36,6 +36,9 @@ interface UnitOperationsPanelProps {
   /** From the CAS snapshot, never from a page-level prop: the panel must show
    *  and act on the same product the guard will compare (docs/003 § Decision B). */
   currentProductId: string | null;
+  /** Fallback name for the current product. The pickable list excludes archived
+   *  products, so a unit still sitting in one would otherwise read as 未关联. */
+  currentProductName?: string | null;
   units: SerializedUnit[];
   products: DomainProduct[];
   operations: StagedOperation[];
@@ -46,6 +49,7 @@ interface UnitOperationsPanelProps {
 export function UnitOperationsPanel({
   unitId,
   currentProductId,
+  currentProductName,
   units,
   products,
   operations,
@@ -63,6 +67,9 @@ export function UnitOperationsPanel({
   const stagedSwitch = findStagedOperation(operations, "switch_product");
 
   const currentProduct = products.find((p) => p.id === currentProductId) ?? null;
+  // Archived products are absent from `products`, so fall back to the name the
+  // unit carries rather than claiming the unit has no product at all.
+  const currentLabel = currentProduct?.name ?? (currentProductId ? currentProductName : null);
   const pendingProduct = products.find((p) => p.id === pendingProductId) ?? null;
 
   const confirmSwitch = () => {
@@ -71,7 +78,7 @@ export function UnitOperationsPanel({
     onStage({
       kind: "switch_product",
       fromProductId: currentProductId,
-      fromProductName: currentProduct?.name ?? null,
+      fromProductName: currentLabel ?? null,
       toProductId: pendingProductId,
       toProductName: pendingProduct?.name ?? null,
       pnl: pnl === "" ? null : Number(pnl),

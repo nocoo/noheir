@@ -215,6 +215,12 @@ export function UnitCommitDialog({
   };
 
   const selectedProduct = products.find((p) => p.id === expected?.productId) ?? null;
+  // Derive the invest date from the logs we just fetched rather than the page
+  // prop: the product comes from the fresh snapshot, so pairing it with a stale
+  // date could render a lock window that never existed.
+  const latestInvestDate =
+    logs.find((l) => l.operationType === "invest" && l.productId === expected?.productId)
+      ?.operationDate ?? null;
 
   return (
     <>
@@ -369,6 +375,7 @@ export function UnitCommitDialog({
               <UnitOperationsPanel
                 unitId={unit.id}
                 currentProductId={expected?.productId ?? null}
+                currentProductName={unit.productName}
                 units={units}
                 products={products}
                 operations={operations}
@@ -377,13 +384,13 @@ export function UnitCommitDialog({
               />
 
               {selectedProduct &&
-                unit.latestInvestDate &&
+                latestInvestDate &&
                 selectedProduct.lockPeriodDays != null &&
                 selectedProduct.lockPeriodDays > 0 && (
                   <div className="space-y-2">
                     <SectionTitle icon={<Info className="size-3" />} label="投资时间线" />
                     <InvestmentTimeline
-                      latestInvestDate={unit.latestInvestDate}
+                      latestInvestDate={latestInvestDate}
                       lockPeriodDays={selectedProduct.lockPeriodDays}
                       openDays={selectedProduct.openDays}
                       cycleDays={selectedProduct.cycleDays}
