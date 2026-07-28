@@ -6,7 +6,6 @@
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { ulid } from "ulid";
 import { z } from "zod";
 import { compact, currencyCode, round2, shortId } from "./compact";
 import { resolveProduct } from "./resolver";
@@ -398,7 +397,7 @@ RETURNS:
         return error("Only status '已归档' can have end_date");
       }
 
-      const id = ulid();
+      const id = crypto.randomUUID();
       const now = new Date().toISOString();
 
       await db.execute(
@@ -569,7 +568,7 @@ RETURNS:
 
         // Log withdraw from old product (if any)
         if (existing.product_id) {
-          const withdrawLogId = ulid();
+          const withdrawLogId = crypto.randomUUID();
           // Get product name for the log
           const oldProduct = await db.firstOrNull<{ name: string }>(
             "SELECT name FROM financial_products WHERE id = ?",
@@ -593,7 +592,7 @@ RETURNS:
 
         // Log invest to new product (if any)
         if (args.product_id) {
-          const investLogId = ulid();
+          const investLogId = crypto.randomUUID();
           // Get product name for the log
           const newProduct = await db.firstOrNull<{ name: string }>(
             "SELECT name FROM financial_products WHERE id = ?",

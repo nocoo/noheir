@@ -5,7 +5,6 @@
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { ulid } from "ulid";
 import { z } from "zod";
 import { compact, shortId } from "./compact";
 import type { ToolContext } from "./types";
@@ -265,7 +264,7 @@ RETURNS:
     async (args) => {
       const { db, userId } = ctx;
 
-      const id = ulid();
+      const id = crypto.randomUUID();
       const now = new Date().toISOString();
 
       await db.execute(
