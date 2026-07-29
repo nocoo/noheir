@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.6.1] - 2026-07-29
+
+### Features
+
+- **worker** — auto-log initial invest on unit creation
+
+### Fixes
+
+- **worker** — anchor availability math to shanghai calendar days
+
+### Documentation
+
+- record the invest-log and timezone findings
+- record the legacy data cleanup
+- record how the open questions were settled
+
+### Chores
+
+- **worker** — drop the unused version field
+
 ## [2.6.0] - 2026-07-28
 
 ### Features
