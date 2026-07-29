@@ -5,6 +5,12 @@ import { makeProduct, makeUnit } from "./helpers/seed";
 
 const userId = TEST_USER_A;
 
+/** The worker stamps auto logs in Asia/Shanghai (worker/src/index.ts:49).
+ *  Using toISOString() here would disagree with it between 00:00 and 08:00 CST. */
+function shanghaiToday(): string {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Shanghai" });
+}
+
 describe("E2E: Units", () => {
   beforeEach(async () => {
     await cleanupUser(userId);
@@ -23,6 +29,73 @@ describe("E2E: Units", () => {
     expect(res.unit.id).toBeString();
     expect(res.unit.amountCents).toBe(5000000);
     expect(res.unit.strategy).toBe("短期理财");
+  });
+
+  test("POST /api/units writes an initial invest log when a product is attached", async () => {
+    const { product } = await api<{ product: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/products",
+      userId,
+      body: makeProduct(),
+    });
+
+    const { unit } = await api<{ unit: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit({ productId: product.id, startDate: "2026-05-09" }),
+    });
+
+    const { logs } = await api<{ logs: Array<Record<string, unknown>> }>({
+      method: "GET",
+      path: `/api/units/${unit.id}/logs`,
+      userId,
+    });
+    expect(logs).toHaveLength(1);
+    expect(logs[0]?.operationType).toBe("invest");
+    expect(logs[0]?.amountCents).toBe(5000000);
+    expect(logs[0]?.operationDate).toBe("2026-05-09");
+    expect(logs[0]?.source).toBe("auto");
+    expect(logs[0]?.productId).toBe(product.id);
+  });
+
+  test("POST /api/units writes no log when no product is attached", async () => {
+    const { unit } = await api<{ unit: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit(),
+    });
+
+    const { logs } = await api<{ logs: unknown[] }>({
+      method: "GET",
+      path: `/api/units/${unit.id}/logs`,
+      userId,
+    });
+    expect(logs).toHaveLength(0);
+  });
+
+  test("POST /api/units writes no log for a 计划中 unit even with a product", async () => {
+    const { product } = await api<{ product: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/products",
+      userId,
+      body: makeProduct(),
+    });
+
+    const { unit } = await api<{ unit: Record<string, unknown> }>({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit({ productId: product.id, status: "计划中" }),
+    });
+
+    const { logs } = await api<{ logs: unknown[] }>({
+      method: "GET",
+      path: `/api/units/${unit.id}/logs`,
+      userId,
+    });
+    expect(logs).toHaveLength(0);
   });
 
   // ── Read ──
@@ -226,7 +299,8 @@ describe("E2E: Units", () => {
       body: { productId: productB.id },
     });
 
-    // Check both logs were created
+    // Three auto logs: the initial invest into A on create, then withdraw
+    // from A + invest into B for the switch.
     const logs = await api<{ logs: Array<Record<string, unknown>> }>({
       method: "POST",
       path: "/api/contribution-logs/search",
@@ -234,14 +308,15 @@ describe("E2E: Units", () => {
       body: { source: "auto" },
     });
 
-    expect(logs.logs).toHaveLength(2);
+    expect(logs.logs).toHaveLength(3);
     const withdraw = logs.logs.find((l) => l.operationType === "withdraw");
-    const invest = logs.logs.find((l) => l.operationType === "invest");
+    const invest = logs.logs.find(
+      (l) => l.operationType === "invest" && l.productId === productB.id,
+    );
 
     expect(withdraw).toBeDefined();
     expect(withdraw?.productId).toBe(productA.id);
     expect(invest).toBeDefined();
-    expect(invest?.productId).toBe(productB.id);
   });
 
   test("PUT /api/units/:id rejects productId with other fields", async () => {
@@ -400,7 +475,7 @@ describe("E2E: Units", () => {
     });
 
     // Create invest log
-    const today = new Date().toISOString().slice(0, 10);
+    const today = shanghaiToday();
     await api({
       method: "POST",
       path: "/api/contribution-logs",
@@ -435,11 +510,12 @@ describe("E2E: Units", () => {
       userId,
       body: makeProduct(),
     });
+    // 计划中 so creation writes no initial invest log — the money is not out yet.
     await api({
       method: "POST",
       path: "/api/units",
       userId,
-      body: makeUnit({ productId: product.id }),
+      body: makeUnit({ productId: product.id, status: "计划中" }),
     });
 
     const res = await api<{ units: Array<Record<string, unknown>> }>({
@@ -470,7 +546,7 @@ describe("E2E: Units", () => {
     });
 
     // Create invest log
-    const today = new Date().toISOString().slice(0, 10);
+    const today = shanghaiToday();
     await api({
       method: "POST",
       path: "/api/contribution-logs",
@@ -608,7 +684,7 @@ describe("E2E: Units", () => {
       body: makeUnit({ unitCode: "U1", amountCents: 1000000, productId: product.id }),
     });
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = shanghaiToday();
     await api({
       method: "POST",
       path: "/api/contribution-logs",
@@ -630,12 +706,17 @@ describe("E2E: Units", () => {
       body: makeUnit({ unitCode: "U2", amountCents: 2000000 }),
     });
 
-    // Unit 3: With product but no invest log → unknown availability
+    // Unit 3: With product but no invest log (计划中 skips the auto log) → unknown
     await api({
       method: "POST",
       path: "/api/units",
       userId,
-      body: makeUnit({ unitCode: "U3", amountCents: 3000000, productId: product.id }),
+      body: makeUnit({
+        unitCode: "U3",
+        amountCents: 3000000,
+        productId: product.id,
+        status: "计划中",
+      }),
     });
 
     const res = await api<{
@@ -705,7 +786,7 @@ describe("E2E: Units", () => {
       body: makeUnit({ productId: product.id }),
     });
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = shanghaiToday();
     await api({
       method: "POST",
       path: "/api/contribution-logs",
@@ -856,7 +937,7 @@ describe("E2E: Units", () => {
       body: makeUnit({ unitCode: "U3" }),
     });
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = shanghaiToday();
     // Add invest logs
     await api({
       method: "POST",
@@ -911,7 +992,7 @@ describe("E2E: Units", () => {
       body: makeUnit({ productId: product.id }),
     });
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = shanghaiToday();
     await api({
       method: "POST",
       path: "/api/contribution-logs",

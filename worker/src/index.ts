@@ -762,6 +762,24 @@ app.post("/api/units", async (c) => {
   }
 
   const row = await repos.units.create(userId, createData);
+
+  // Availability is derived from the latest invest log, never from start_date
+  // (worker/lib/availability.ts:23). Without this log a unit created with a
+  // product already attached renders as "状态未知" forever.
+  if (row.status === "已成立" && row.productId) {
+    const product = await repos.products.findById(userId, row.productId);
+    await repos.contributionLogs.create(userId, {
+      unitId: row.id,
+      productId: row.productId,
+      productName: product?.name ?? null,
+      operationType: "invest",
+      amountCents: row.amountCents,
+      operationDate: row.startDate ?? getLocalDateString(),
+      source: "auto",
+      note: "Auto: initial investment on unit creation",
+    });
+  }
+
   return c.json({ unit: row }, 201);
 });
 
