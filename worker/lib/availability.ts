@@ -32,16 +32,14 @@ export function computeAvailability(
   }
 
   const lockDays = product.lockPeriodDays ?? 0;
-  const investDate = new Date(latestInvestLog.operationDate);
+  const investDate = parseCalendarDay(latestInvestLog.operationDate);
 
-  const initialUnlockDate = new Date(investDate);
-  initialUnlockDate.setDate(initialUnlockDate.getDate() + lockDays);
+  const initialUnlockDate = addDays(investDate, lockDays);
   const initialUnlockDateStr = formatDateString(initialUnlockDate);
 
-  const todayStart = startOfDay(today);
-  const initialUnlockStart = startOfDay(initialUnlockDate);
+  const todayStart = parseCalendarDay(shanghaiCalendarDay(today));
   const daysToInitialUnlock = Math.round(
-    (initialUnlockStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24),
+    (initialUnlockDate.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24),
   );
 
   // Still in initial lock period
@@ -72,8 +70,7 @@ export function computeAvailability(
 
   if (positionInCycle < product.openDays) {
     // In open window — availableDate = current window start
-    const windowStart = new Date(todayStart);
-    windowStart.setDate(windowStart.getDate() - positionInCycle);
+    const windowStart = addDays(todayStart, -positionInCycle);
     return {
       availableDate: formatDateString(windowStart),
       isAvailable: true,
@@ -85,8 +82,7 @@ export function computeAvailability(
 
   // In locked window — availableDate = next open window start
   const daysUntilNextOpen = product.cycleDays - positionInCycle;
-  const nextOpenDate = new Date(todayStart);
-  nextOpenDate.setDate(nextOpenDate.getDate() + daysUntilNextOpen);
+  const nextOpenDate = addDays(todayStart, daysUntilNextOpen);
   return {
     availableDate: formatDateString(nextOpenDate),
     isAvailable: false,
@@ -96,15 +92,30 @@ export function computeAvailability(
   };
 }
 
-function formatDateString(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+/**
+ * All date math here runs on calendar days in Asia/Shanghai, anchored to UTC
+ * midnight. The write side stamps operation_date with getLocalDateString()
+ * (worker/src/index.ts:49), which is Shanghai; the Workers runtime is UTC, so
+ * reading "today" via the runtime's local time drifted a day behind the data
+ * between 00:00 and 08:00 CST and inflated every daysUntilAvailable by 1.
+ */
+function parseCalendarDay(day: string): Date {
+  return new Date(`${day}T00:00:00Z`);
 }
 
-function startOfDay(date: Date): Date {
+function shanghaiCalendarDay(date: Date): string {
+  return date.toLocaleDateString("en-CA", { timeZone: "Asia/Shanghai" });
+}
+
+function addDays(date: Date, days: number): Date {
   const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
+  d.setUTCDate(d.getUTCDate() + days);
   return d;
+}
+
+function formatDateString(date: Date): string {
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }

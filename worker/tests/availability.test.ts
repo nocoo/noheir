@@ -291,4 +291,47 @@ describe("computeAvailability", () => {
       expect(result.daysUntilLocked).toBeNull();
     });
   });
+
+  // The Workers runtime is UTC while operation_date is stamped in
+  // Asia/Shanghai, so between 00:00 and 08:00 CST the two disagree on what
+  // "today" is. These pin the Shanghai calendar day as the only reference.
+  describe("timezone boundary", () => {
+    // 2026-07-28T23:52Z is already 2026-07-29 in Shanghai.
+    const earlyMorningCST = new Date("2026-07-28T23:52:00Z");
+
+    it("counts from the Shanghai day, not the UTC day", () => {
+      const result = computeAvailability(
+        { operationDate: "2026-07-29" },
+        { lockPeriodDays: 30, openDays: null, cycleDays: null },
+        earlyMorningCST,
+      );
+      expect(result.daysUntilAvailable).toBe(30);
+      expect(result.availableDate).toBe("2026-08-28");
+    });
+
+    it("unlocks on the Shanghai day the lock expires", () => {
+      const result = computeAvailability(
+        { operationDate: "2026-07-22" },
+        { lockPeriodDays: 7, openDays: null, cycleDays: null },
+        earlyMorningCST,
+      );
+      expect(result.isAvailable).toBe(true);
+      expect(result.daysUntilAvailable).toBe(0);
+    });
+
+    it("agrees across the 08:00 CST boundary", () => {
+      const before = computeAvailability(
+        { operationDate: "2026-07-29" },
+        { lockPeriodDays: 30, openDays: null, cycleDays: null },
+        new Date("2026-07-28T23:52:00Z"),
+      );
+      const after = computeAvailability(
+        { operationDate: "2026-07-29" },
+        { lockPeriodDays: 30, openDays: null, cycleDays: null },
+        new Date("2026-07-29T00:30:00Z"),
+      );
+      expect(before.daysUntilAvailable).toBe(after.daysUntilAvailable);
+      expect(before.availableDate).toBe(after.availableDate);
+    });
+  });
 });
