@@ -36,7 +36,7 @@
     "drizzle-orm": "^0.45.2",
     "esbuild": "^0.28.1",
     "hono": "4.12.32",
-    "lucide-react": "1.25.0",
+    "lucide-react": "1.27.0",
     "next": "16.2.11",
     "next-auth": "5.0.0-beta.32",
     "postcss": "8.5.22",
