@@ -26,7 +26,7 @@
     "release": "bun run scripts/release.ts"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@nivo/sunburst": "0.99.0",
     "@nocoo/base-mcp": "^0.2.0",
     "class-variance-authority": "^0.7.1",
