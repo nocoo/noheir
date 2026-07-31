@@ -222,7 +222,7 @@ describe("createMcpToken", () => {
   it("should throw if token not found after creation", async () => {
     const { db } = createMockDb({ firstOrNullResult: null });
 
-    expect(createMcpToken(db, baseInput)).rejects.toThrow("Failed to retrieve mcp_token");
+    await expect(createMcpToken(db, baseInput)).rejects.toThrow("Failed to retrieve mcp_token");
   });
 });
 
