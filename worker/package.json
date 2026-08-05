@@ -11,12 +11,12 @@
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",
-    "hono": "4.12.33",
+    "hono": "4.12.34",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.6",
-    "@cloudflare/workers-types": "5.20260801.1",
+    "@cloudflare/workers-types": "5.20260804.1",
     "@types/better-sqlite3": "9.6.0",
     "@vitest/coverage-v8": "4.1.10",
     "better-sqlite3": "13.0.2",
@@ -26,12 +26,12 @@
   "overrides": {
     "@hono/node-server": "2.0.11",
     "esbuild": "^0.28.1",
-    "fast-uri": "3.1.4",
-    "hono": "4.12.33",
-    "ip-address": "10.2.0",
+    "fast-uri": "3.1.5",
+    "hono": "4.12.34",
+    "ip-address": "10.3.1",
     "qs": "6.15.2",
     "sharp": "0.35.3",
-    "undici": "7.28.0",
+    "undici": "7.29.0",
     "vite": "8.0.16",
     "ws": "8.21.0"
   },
