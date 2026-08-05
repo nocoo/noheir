@@ -98,3 +98,13 @@ All domain labels (unitCode, strategy, tactics, status, currency, product) MUST 
 - **Availability is derived from the latest invest log, never from `start_date`**: `computeAvailability` (`worker/lib/availability.ts`) short-circuits to all-null when a unit has no `contribution_logs` invest row, which the tooltip renders as "状态未知". `POST /api/units` originally wrote no log, so any unit created with a product already attached was born broken (R29–R32 hit this). Creation now writes an `invest` log when `status = 已成立` and a product is attached; `计划中` deliberately writes none, since the money is not out yet.
 - **Date math must be anchored to Asia/Shanghai, not the runtime's local time**: the Workers runtime is UTC, but `getLocalDateString()` (`worker/src/index.ts:49`) stamps `operation_date` in Shanghai. `computeAvailability` used `new Date()` + `setHours(0,0,0,0)`, so between 00:00 and 08:00 CST it read "today" as the previous day and inflated every `daysUntilAvailable` by 1. Fixed by parsing all calendar days as UTC-midnight and deriving today via `toLocaleDateString("en-CA", { timeZone: "Asia/Shanghai" })`. Two lessons: (1) any new date arithmetic must use the same helpers, and (2) the bug hid for months because the e2e tests built their fixtures with `toISOString().slice(0,10)` (UTC) — two mistakes cancelling out. Tests must use the *same* timezone convention as the write path, or they validate nothing.
 - **Releasing does NOT deploy the Worker**: `release.yml` only rolls the `noheir-app` container. No workflow touches the Worker — it ships solely via a manual `cd worker && bun run deploy`. At v2.6.1 the site reported `2.6.1` while `noheir.worker.hexly.ai/api/live` still reported `2.6.0`, so both Worker-side fixes in that release were live nowhere. "No migration needed" is **not** a reason to skip the Worker deploy — schema and code ship independently. After any release touching `worker/`, curl **both** `/api/live` endpoints and confirm the versions match before calling it done.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
