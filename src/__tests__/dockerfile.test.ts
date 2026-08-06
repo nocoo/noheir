@@ -7,6 +7,8 @@ const stableImageArg =
 const buildImageArg =
   "ARG BUN_BUILD_IMAGE=oven/bun:canary@sha256:dd2479e914bd3ec71f26e6498d84efabd2d13581387c47d76a39814d89f03eb1";
 const canaryCopy = "COPY --from=build-runtime /usr/local/bin/bun /usr/local/bin/bun";
+const frozenInstall = "RUN bun install --frozen-lockfile";
+const stableDependencyCopy = "COPY --from=deps /app/node_modules ./node_modules";
 
 function getStage(name: string): string {
   const stage = dockerfile
@@ -30,6 +32,8 @@ describe("Docker build runtimes", () => {
   });
 
   test("keeps the Bun canary workaround scoped to the Next.js build", () => {
+    const depsStage = getStage("deps");
+    const buildRuntimeStage = getStage("build-runtime");
     const builderStage = getStage("builder");
     const runnerStage = getStage("runner");
 
@@ -37,6 +41,11 @@ describe("Docker build runtimes", () => {
     expect(builderStage).toContain(canaryCopy);
     expect(runnerStage).not.toContain("build-runtime");
     expect(runnerStage).not.toContain("BUN_BUILD_IMAGE");
+    expect(depsStage.match(/RUN bun install --frozen-lockfile/g)).toEqual([frozenInstall]);
+    expect(buildRuntimeStage).not.toMatch(/\bbun install\b/);
+    expect(builderStage.match(/^COPY --from=\S+ \/app\/node_modules \.\/node_modules$/gm)).toEqual([
+      stableDependencyCopy,
+    ]);
 
     const installs = dockerfile.match(/RUN bun install --frozen-lockfile/g);
     const canaryCopyIndex = builderStage.indexOf(canaryCopy);
