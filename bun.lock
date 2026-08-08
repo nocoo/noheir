@@ -14,7 +14,7 @@
         "date-fns": "^4.4.0",
         "drizzle-orm": "^0.45.2",
         "esbuild": "^0.28.1",
-        "hono": "4.13.0",
+        "hono": "4.13.1",
         "lucide-react": "1.30.0",
         "next": "16.3.0",
         "next-auth": "5.0.0-beta.32",
@@ -65,7 +65,7 @@
     "@hono/node-server": "2.0.11",
     "esbuild": "^0.28.1",
     "fast-uri": "3.1.5",
-    "hono": "4.13.0",
+    "hono": "4.13.1",
     "ip-address": "10.3.1",
     "postcss": "8.5.26",
     "qs": "6.15.2",
@@ -871,7 +871,7 @@
 
     "hast-util-whitespace": ["hast-util-whitespace@3.0.0", "", { "dependencies": { "@types/hast": "^3.0.0" } }, "sha512-88JUN06ipLwsnv+dVn+OIYOvAuvBMy/Qoi6O7mQHxdPXpjy+Cd6xRkWwux7DKO+4sYILtLBRIKgsdpS2gQc7qw=="],
 
-    "hono": ["hono@4.13.0", "", {}, "sha512-jhunvfHWxd7J5EFfSgH4xsYJzSe/lfqbUCxiyyeaQasUsXeEHXtzVid+7EOGByc5JnFa23SSFL3Y2RV/z1T+eQ=="],
+    "hono": ["hono@4.13.1", "", {}, "sha512-kdJoFVv2xmayw6cY09H7AbMJMt8Jn5jdlEdXsP7AGBdF2DIptVlKlOLKXP41yPip4/a3yQPv9gVcJYI8YY04dw=="],
 
     "html-encoding-sniffer": ["html-encoding-sniffer@6.0.0", "", { "dependencies": { "@exodus/bytes": "^1.6.0" } }, "sha512-CV9TW3Y3f8/wT0BRFc1/KAVQ3TUHiXmaAb6VW9vtiMFf7SLoMd1PdAc4W3KFOFETBJUb90KatHqlsZMWV+R9Gg=="],
 
