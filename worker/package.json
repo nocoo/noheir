@@ -18,9 +18,9 @@
     "@biomejs/biome": "2.5.9",
     "@cloudflare/workers-types": "5.20260818.1",
     "@types/better-sqlite3": "9.6.0",
-    "@vitest/coverage-v8": "4.1.10",
+    "@vitest/coverage-v8": "4.1.11",
     "better-sqlite3": "13.0.3",
-    "vitest": "4.1.10",
+    "vitest": "4.1.11",
     "wrangler": "4.124.0"
   },
   "overrides": {
