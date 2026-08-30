@@ -1004,6 +1004,7 @@ app.get("/api/units/:id/logs", async (c) => {
       startDate: unit.startDate,
       endDate: unit.endDate,
       note: unit.note,
+      availableDateOverride: unit.availableDateOverride ?? null,
     },
   });
 });

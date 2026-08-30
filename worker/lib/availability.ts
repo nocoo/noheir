@@ -20,67 +20,80 @@ export function computeAvailability(
   latestInvestLog: LatestInvestLog | null,
   product: ProductLockInfo | null,
   today: Date = new Date(),
+  availableDateOverride: string | null = null,
 ): AvailabilityInfo {
+  const latestInvestDate = latestInvestLog?.operationDate ?? null;
+
+  if (availableDateOverride) {
+    return fromUnlockDate(
+      parseCalendarDay(availableDateOverride),
+      product,
+      today,
+      latestInvestDate,
+    );
+  }
+
   if (!product || !latestInvestLog) {
     return {
       availableDate: null,
       isAvailable: false,
       daysUntilAvailable: null,
       daysUntilLocked: null,
-      latestInvestDate: latestInvestLog?.operationDate ?? null,
+      latestInvestDate,
     };
   }
 
   const lockDays = product.lockPeriodDays ?? 0;
   const investDate = parseCalendarDay(latestInvestLog.operationDate);
+  return fromUnlockDate(addDays(investDate, lockDays), product, today, latestInvestDate);
+}
 
-  const initialUnlockDate = addDays(investDate, lockDays);
+function fromUnlockDate(
+  initialUnlockDate: Date,
+  product: ProductLockInfo | null,
+  today: Date,
+  latestInvestDate: string | null,
+): AvailabilityInfo {
   const initialUnlockDateStr = formatDateString(initialUnlockDate);
-
   const todayStart = parseCalendarDay(shanghaiCalendarDay(today));
   const daysToInitialUnlock = Math.round(
     (initialUnlockDate.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24),
   );
 
-  // Still in initial lock period
   if (daysToInitialUnlock > 0) {
     return {
       availableDate: initialUnlockDateStr,
       isAvailable: false,
       daysUntilAvailable: daysToInitialUnlock,
       daysUntilLocked: null,
-      latestInvestDate: latestInvestLog.operationDate,
+      latestInvestDate,
     };
   }
 
-  // No cyclic config — permanently unlocked (backward compatible)
-  if (product.openDays == null || product.cycleDays == null) {
+  if (product?.openDays == null || product.cycleDays == null) {
     return {
       availableDate: initialUnlockDateStr,
       isAvailable: true,
       daysUntilAvailable: daysToInitialUnlock,
       daysUntilLocked: null,
-      latestInvestDate: latestInvestLog.operationDate,
+      latestInvestDate,
     };
   }
 
-  // Cyclic lock logic
-  const daysSinceUnlock = -daysToInitialUnlock; // positive number of days past unlock
+  const daysSinceUnlock = -daysToInitialUnlock;
   const positionInCycle = daysSinceUnlock % product.cycleDays;
 
   if (positionInCycle < product.openDays) {
-    // In open window — availableDate = current window start
     const windowStart = addDays(todayStart, -positionInCycle);
     return {
       availableDate: formatDateString(windowStart),
       isAvailable: true,
       daysUntilAvailable: 0,
       daysUntilLocked: product.openDays - positionInCycle,
-      latestInvestDate: latestInvestLog.operationDate,
+      latestInvestDate,
     };
   }
 
-  // In locked window — availableDate = next open window start
   const daysUntilNextOpen = product.cycleDays - positionInCycle;
   const nextOpenDate = addDays(todayStart, daysUntilNextOpen);
   return {
@@ -88,7 +101,7 @@ export function computeAvailability(
     isAvailable: false,
     daysUntilAvailable: daysUntilNextOpen,
     daysUntilLocked: null,
-    latestInvestDate: latestInvestLog.operationDate,
+    latestInvestDate,
   };
 }
 

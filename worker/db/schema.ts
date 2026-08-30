@@ -67,6 +67,8 @@ export const capitalUnits = sqliteTable("capital_units", {
   startDate: text("start_date"),
   endDate: text("end_date"),
   note: text("note"),
+  /** Manual unlock date; computeAvailability prefers this over invest+lock. */
+  availableDateOverride: text("available_date_override"),
   /** Random per-commit marker; see 0009 migration and worker/lib/unit-commit.ts. */
   commitToken: text("commit_token"),
   createdAt: integer("created_at", { mode: "timestamp" })

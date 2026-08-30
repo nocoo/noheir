@@ -334,4 +334,53 @@ describe("computeAvailability", () => {
       expect(before.availableDate).toBe(after.availableDate);
     });
   });
+
+  describe("availableDateOverride", () => {
+    const product = { lockPeriodDays: 30, openDays: null, cycleDays: null };
+
+    it("uses the override as the unlock date instead of invest+lock", () => {
+      const result = computeAvailability(
+        { operationDate: "2026-04-01" },
+        product,
+        today,
+        "2026-06-01",
+      );
+      expect(result.availableDate).toBe("2026-06-01");
+      expect(result.isAvailable).toBe(false);
+      expect(result.daysUntilAvailable).toBe(57);
+      expect(result.latestInvestDate).toBe("2026-04-01");
+    });
+
+    it("does not require an invest log when an override is set", () => {
+      const result = computeAvailability(null, product, today, "2026-04-05");
+      expect(result.availableDate).toBe("2026-04-05");
+      expect(result.isAvailable).toBe(true);
+      expect(result.daysUntilAvailable).toBe(0);
+      expect(result.latestInvestDate).toBeNull();
+    });
+
+    it("does not require a product when an override is set", () => {
+      const result = computeAvailability(
+        { operationDate: "2026-01-01" },
+        null,
+        today,
+        "2026-04-01",
+      );
+      expect(result.availableDate).toBe("2026-04-01");
+      expect(result.isAvailable).toBe(true);
+      expect(result.daysUntilAvailable).toBe(-4);
+    });
+
+    it("still applies cyclic windows after the override unlock date", () => {
+      const result = computeAvailability(
+        { operationDate: "2026-03-20" },
+        { lockPeriodDays: 90, openDays: 3, cycleDays: 30 },
+        new Date("2026-03-30"),
+        "2026-03-30",
+      );
+      expect(result.availableDate).toBe("2026-03-30");
+      expect(result.isAvailable).toBe(true);
+      expect(result.daysUntilLocked).toBe(3);
+    });
+  });
 });

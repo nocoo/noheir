@@ -189,6 +189,7 @@ export interface ExpectedUnitSnapshot {
   startDate: string | null;
   endDate: string | null;
   note: string | null;
+  availableDateOverride: string | null;
 }
 
 /** A contribution log with its created_at normalized server-side. */

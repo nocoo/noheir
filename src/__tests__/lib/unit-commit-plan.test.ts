@@ -26,6 +26,7 @@ const expected: ExpectedUnitSnapshot = {
   startDate: "2026-01-01",
   endDate: null,
   note: null,
+  availableDateOverride: null,
 };
 
 const form: UnitFormSnapshot = {
@@ -111,6 +112,15 @@ describe("describeStagedOperation", () => {
 
   test("switch shows both product names", () => {
     expect(describeStagedOperation(switchOp)).toBe("切换产品 招行朝朝盈 → 工行添利");
+  });
+
+  test("available date override shows the target date", () => {
+    expect(
+      describeStagedOperation({ kind: "set_available_date", availableDate: "2026-09-15" }),
+    ).toBe("可用日期 → 2026-09-15");
+    expect(describeStagedOperation({ kind: "set_available_date", availableDate: null })).toBe(
+      "可用日期 → 自动计算",
+    );
   });
 
   test("null product names fall back to 未关联", () => {
@@ -233,6 +243,21 @@ describe("buildCommitPayload", () => {
     expect(payload?.operations).toEqual([
       { kind: "switch_product", toProductId: "prod-b", pnlCents: 5000 },
     ]);
+  });
+
+  test("serializes available date override including a clear", () => {
+    expect(
+      buildCommitPayload({
+        ...base,
+        operations: [{ kind: "set_available_date", availableDate: "2026-09-15" }],
+      })?.operations,
+    ).toEqual([{ kind: "set_available_date", availableDate: "2026-09-15" }]);
+    expect(
+      buildCommitPayload({
+        ...base,
+        operations: [{ kind: "set_available_date", availableDate: null }],
+      })?.operations,
+    ).toEqual([{ kind: "set_available_date", availableDate: null }]);
   });
 
   test("omits pnlCents when pnl is null", () => {

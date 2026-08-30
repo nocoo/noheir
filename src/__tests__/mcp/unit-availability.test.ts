@@ -29,6 +29,7 @@ function createUnit(overrides: Partial<UnitWithProduct> = {}): UnitWithProduct {
     updated_at: "2024-01-15T00:00:00Z",
     product_name: "Test Product",
     product_lock_period_days: 30,
+    available_date_override: null,
     ...overrides,
   };
 }
@@ -135,6 +136,19 @@ describe("enrichWithAvailability", () => {
 
       expect(result.days_left).toBeUndefined();
       expect(result.avail).toBeUndefined();
+    });
+
+    it("should use available_date_override instead of invest+lock", () => {
+      mockDate("2026-04-05T12:00:00Z");
+      const unit = createUnit({
+        product_lock_period_days: 30,
+        available_date_override: "2026-06-01",
+      });
+      const log = createInvestLog({ operation_date: "2026-04-01" });
+      const result = enrichWithAvailability(unit, log);
+
+      expect(result.avail).toBe("l");
+      expect(result.days_left).toBeGreaterThan(0);
     });
 
     it("should return available when lock period expired", () => {

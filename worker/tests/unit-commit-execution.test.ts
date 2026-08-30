@@ -17,7 +17,7 @@ const DDL = `
 CREATE TABLE capital_units (
   id TEXT PRIMARY KEY, user_id TEXT, unit_code TEXT, amount_cents INTEGER,
   product_id TEXT, currency TEXT, status TEXT, strategy TEXT, tactics TEXT,
-  start_date TEXT, end_date TEXT, note TEXT, commit_token TEXT, updated_at INTEGER
+  start_date TEXT, end_date TEXT, note TEXT, available_date_override TEXT, commit_token TEXT, updated_at INTEGER
 );
 CREATE TABLE contribution_logs (
   id TEXT PRIMARY KEY, user_id TEXT, unit_id TEXT, product_id TEXT,
@@ -36,6 +36,7 @@ const expected: ExpectedUnitSnapshot = {
   startDate: null,
   endDate: null,
   note: null,
+  availableDateOverride: null,
 };
 
 /** Both requests target the same amount and share `now` — the exact race. */
@@ -80,7 +81,7 @@ describe("commit execution against SQLite", () => {
     db = new Database(":memory:");
     db.exec(DDL);
     db.prepare(
-      `INSERT INTO capital_units VALUES ('unit-a','usr','CU01-001',100000,NULL,'CNY','已成立','长期理财','债券基金',NULL,NULL,NULL,NULL,1)`,
+      `INSERT INTO capital_units VALUES ('unit-a','usr','CU01-001',100000,NULL,'CNY','已成立','长期理财','债券基金',NULL,NULL,NULL,NULL,NULL,1)`,
     ).run();
   });
 
@@ -108,7 +109,7 @@ describe("commit execution against SQLite", () => {
 
   test("a losing swap leaves the partner untouched", () => {
     db.prepare(
-      `INSERT INTO capital_units VALUES ('unit-b','usr','CU01-002',200000,NULL,'CNY','已成立','长期理财','债券基金',NULL,NULL,NULL,NULL,1)`,
+      `INSERT INTO capital_units VALUES ('unit-b','usr','CU01-002',200000,NULL,'CNY','已成立','长期理财','债券基金',NULL,NULL,NULL,NULL,NULL,1)`,
     ).run();
 
     // Another request already renamed A to the swap target's code. unit_code has
@@ -131,7 +132,7 @@ describe("commit execution against SQLite", () => {
 
   test("a winning swap exchanges both codes and logs both units", () => {
     db.prepare(
-      `INSERT INTO capital_units VALUES ('unit-b','usr','CU01-002',200000,NULL,'CNY','已成立','长期理财','债券基金',NULL,NULL,NULL,NULL,1)`,
+      `INSERT INTO capital_units VALUES ('unit-b','usr','CU01-002',200000,NULL,'CNY','已成立','长期理财','债券基金',NULL,NULL,NULL,NULL,NULL,1)`,
     ).run();
 
     const changes = swapCommit("token-ok").map((r) => r.changes);

@@ -27,6 +27,8 @@ export function createUnitsRepo(db: DrizzleD1Database) {
                 cycleDays: unit.product.cycleDays,
               }
             : null,
+          new Date(),
+          unit.availableDateOverride ?? null,
         );
         return {
           ...unit,

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, test, vi } from "vitest";
 import { UnitOperationsPanel } from "@/components/capital/unit-operations-panel";
@@ -197,6 +197,42 @@ describe("UnitOperationsPanel", () => {
     });
     expect(screen.getByRole("button", { name: "资金单元番号对换" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "切换投入产品" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "编辑可用日期" })).toBeEnabled();
+  });
+
+  test("staging an available date override reports the date", async () => {
+    const user = userEvent.setup();
+    const { onStage } = setup({ currentAvailableDate: "2026-05-01" });
+
+    await user.click(screen.getByRole("button", { name: "编辑可用日期" }));
+    fireEvent.change(screen.getByLabelText("可用日期"), { target: { value: "2026-09-15" } });
+    await user.click(screen.getByRole("button", { name: "确认覆盖" }));
+
+    expect(onStage).toHaveBeenCalledWith({
+      kind: "set_available_date",
+      availableDate: "2026-09-15",
+    });
+  });
+
+  test("clearing an override stages a null date", async () => {
+    const user = userEvent.setup();
+    const { onStage } = setup({ currentOverride: "2026-09-15" });
+
+    await user.click(screen.getByRole("button", { name: "编辑可用日期" }));
+    await user.click(screen.getByRole("button", { name: "恢复自动计算" }));
+
+    expect(onStage).toHaveBeenCalledWith({
+      kind: "set_available_date",
+      availableDate: null,
+    });
+  });
+
+  test("does not offer restore when no override is stored", async () => {
+    const user = userEvent.setup();
+    setup({ currentAvailableDate: "2026-05-01" });
+
+    await user.click(screen.getByRole("button", { name: "编辑可用日期" }));
+    expect(screen.queryByRole("button", { name: "恢复自动计算" })).not.toBeInTheDocument();
   });
 
   test("shows the staged pnl on the card", () => {

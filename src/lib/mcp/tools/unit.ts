@@ -35,6 +35,7 @@ interface Unit {
 export interface UnitWithProduct extends Unit {
   product_name: string | null;
   product_lock_period_days: number | null;
+  available_date_override?: string | null;
 }
 
 export interface ContributionLog {
@@ -73,10 +74,16 @@ export function enrichWithAvailability(
   let daysToAvailable: number | null = null;
   let availabilityStatus: "available" | "locked" | "unknown" = "unknown";
 
-  if (unit.product_lock_period_days !== null && latestInvestLog) {
-    const investDate = new Date(latestInvestLog.operation_date);
-    const unlockDate = new Date(investDate);
-    unlockDate.setDate(unlockDate.getDate() + unit.product_lock_period_days);
+  const override = unit.available_date_override;
+  if (override || (unit.product_lock_period_days !== null && latestInvestLog)) {
+    const unlockDate = override
+      ? new Date(override)
+      : (() => {
+          const investDate = new Date(latestInvestLog?.operation_date ?? "");
+          const d = new Date(investDate);
+          d.setDate(d.getDate() + (unit.product_lock_period_days ?? 0));
+          return d;
+        })();
 
     const now = new Date();
     const diffMs = unlockDate.getTime() - now.getTime();
@@ -195,7 +202,7 @@ LIMITATIONS:
       const unitsSql = `
         SELECT u.id, u.unit_code, u.amount_cents, u.currency, u.status,
                u.strategy, u.tactics, u.product_id, u.start_date, u.end_date, u.note,
-               u.created_at, u.updated_at,
+               u.available_date_override, u.created_at, u.updated_at,
                p.name as product_name, p.lock_period_days as product_lock_period_days
         FROM capital_units u
         LEFT JOIN financial_products p ON u.product_id = p.id
@@ -303,7 +310,7 @@ RETURNS:
       const unitSql = `
         SELECT u.id, u.unit_code, u.amount_cents, u.currency, u.status,
                u.strategy, u.tactics, u.product_id, u.start_date, u.end_date, u.note,
-               u.created_at, u.updated_at,
+               u.available_date_override, u.created_at, u.updated_at,
                p.name as product_name, p.lock_period_days as product_lock_period_days
         FROM capital_units u
         LEFT JOIN financial_products p ON u.product_id = p.id
@@ -619,7 +626,7 @@ RETURNS:
       const unitSql = `
         SELECT u.id, u.unit_code, u.amount_cents, u.currency, u.status,
                u.strategy, u.tactics, u.product_id, u.start_date, u.end_date, u.note,
-               u.created_at, u.updated_at,
+               u.available_date_override, u.created_at, u.updated_at,
                p.name as product_name, p.lock_period_days as product_lock_period_days
         FROM capital_units u
         LEFT JOIN financial_products p ON u.product_id = p.id

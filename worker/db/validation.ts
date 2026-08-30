@@ -187,6 +187,7 @@ export const expectedUnitSchema = z.object({
   startDate: z.string().nullable(),
   endDate: z.string().nullable(),
   note: z.string().nullable(),
+  availableDateOverride: z.string().nullable(),
 });
 
 const commitOperationSchema = z.discriminatedUnion("kind", [
@@ -198,6 +199,13 @@ const commitOperationSchema = z.discriminatedUnion("kind", [
     kind: z.literal("switch_product"),
     toProductId: z.string().uuid().nullable(),
     pnlCents: z.number().int().optional().nullable(),
+  }),
+  z.object({
+    kind: z.literal("set_available_date"),
+    availableDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "availableDate must be YYYY-MM-DD")
+      .nullable(),
   }),
 ]);
 
@@ -222,7 +230,7 @@ const commitMetadataSchema = z
 export const commitUnitSchema = z
   .object({
     metadata: commitMetadataSchema.optional(),
-    operations: z.array(commitOperationSchema).max(2).default([]),
+    operations: z.array(commitOperationSchema).max(3).default([]),
     operationDate: z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/, "operationDate must be YYYY-MM-DD")

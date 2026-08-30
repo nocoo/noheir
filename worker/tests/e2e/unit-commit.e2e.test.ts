@@ -46,6 +46,7 @@ function snapshot(u: UnitRow) {
     startDate: u.startDate ?? null,
     endDate: u.endDate ?? null,
     note: u.note ?? null,
+    availableDateOverride: u.availableDateOverride ?? null,
   };
 }
 
@@ -544,6 +545,41 @@ describe("E2E: Unit commit", () => {
       body: { expected: snapshot(makeUnit()), commitNote: "x" },
     });
     expect(res.status).toBe(404);
+  });
+
+  test("set_available_date pins unlock without rewriting invest logs", async () => {
+    const product = await createProduct({ name: "锁定期产品", lockPeriodDays: 30 });
+    const unit = await createUnit({ productId: product.id, status: "已成立" });
+    const current = await api<{ unit: UnitRow }>({
+      method: "GET",
+      path: `/api/units/${unit.id}`,
+      userId,
+    });
+
+    await api({
+      method: "POST",
+      path: `/api/units/${unit.id}/commit`,
+      userId,
+      body: {
+        expected: snapshot(current.unit),
+        operations: [{ kind: "set_available_date", availableDate: "2026-09-15" }],
+        commitNote: "校正解锁日",
+      },
+    });
+
+    const after = await api<{ unit: UnitRow }>({
+      method: "GET",
+      path: `/api/units/${unit.id}?with_products=true`,
+      userId,
+    });
+    expect(after.unit.availableDateOverride).toBe("2026-09-15");
+    expect(after.unit.availableDate).toBe("2026-09-15");
+
+    const { logs } = await logsFor(String(unit.id));
+    const invests = logs.filter((l) => l.operationType === "invest");
+    const adjusts = logs.filter((l) => l.operationType === "adjust");
+    expect(invests.every((l) => l.operationDate !== "2026-09-15")).toBe(true);
+    expect(adjusts.some((l) => String(l.note).includes("可用日期覆盖"))).toBe(true);
   });
 });
 

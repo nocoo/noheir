@@ -37,9 +37,10 @@ import type {
   ExpectedUnitSnapshot,
   SerializedUnit,
 } from "@/domain/types";
-import { getLocalDateString } from "@/lib/local-date";
+import { addCalendarDays, getLocalDateString } from "@/lib/local-date";
 import {
   buildCommitPayload,
+  findStagedOperation,
   formSnapshotFromExpected,
   isAmountLocked,
   isUnitCodeLocked,
@@ -225,6 +226,15 @@ export function UnitCommitDialog({
   const latestInvestDate =
     logs.find((l) => l.operationType === "invest" && l.productId === expected?.productId)
       ?.operationDate ?? null;
+  const stagedAvail = findStagedOperation(operations, "set_available_date");
+  const unlockOverride =
+    stagedAvail !== undefined
+      ? stagedAvail.availableDate
+      : (expected?.availableDateOverride ?? null);
+  const timelineInvestDate =
+    unlockOverride && selectedProduct
+      ? addCalendarDays(unlockOverride, -(selectedProduct.lockPeriodDays ?? 0))
+      : latestInvestDate;
 
   return (
     <>
@@ -385,16 +395,18 @@ export function UnitCommitDialog({
                 operations={operations}
                 onStage={(op) => setOperations((prev) => stageOperation(prev, op))}
                 onUnstage={(kind) => setOperations((prev) => unstageOperation(prev, kind))}
+                currentAvailableDate={unit.availableDate ?? null}
+                currentOverride={expected?.availableDateOverride ?? null}
               />
 
               {selectedProduct &&
-                latestInvestDate &&
+                timelineInvestDate &&
                 selectedProduct.lockPeriodDays != null &&
                 selectedProduct.lockPeriodDays > 0 && (
                   <div className="space-y-2">
                     <SectionTitle icon={<Info className="size-3" />} label="投资时间线" />
                     <InvestmentTimeline
-                      latestInvestDate={latestInvestDate}
+                      latestInvestDate={timelineInvestDate}
                       lockPeriodDays={selectedProduct.lockPeriodDays}
                       openDays={selectedProduct.openDays}
                       cycleDays={selectedProduct.cycleDays}

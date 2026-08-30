@@ -22,6 +22,7 @@ const expected: ExpectedUnitSnapshot = {
   startDate: "2026-01-01",
   endDate: null,
   note: null,
+  availableDateOverride: null,
 };
 
 function makeInput(over: Partial<BuildCommitInput> = {}): BuildCommitInput {
@@ -117,6 +118,7 @@ describe("buildCommitStatements — CAS guard", () => {
     expect(sql).toContain("start_date = ?");
     expect(sql).toContain("end_date IS NULL");
     expect(sql).toContain("note IS NULL");
+    expect(sql).toContain("available_date_override IS NULL");
   });
 
   test("null expected fields become IS NULL, not = ?", () => {
@@ -131,6 +133,7 @@ describe("buildCommitStatements — CAS guard", () => {
       startDate: null,
       endDate: null,
       note: null,
+      availableDateOverride: null,
     };
     const [head] = buildCommitStatements(
       makeInput({ expected: allNull, metadata: { amountCents: 600 } }),
@@ -146,6 +149,7 @@ describe("buildCommitStatements — CAS guard", () => {
       "start_date",
       "end_date",
       "note",
+      "available_date_override",
     ]) {
       expect(whereClause).toContain(`${col} IS NULL`);
       expect(whereClause).not.toContain(`${col} = ?`);
@@ -381,5 +385,33 @@ describe("buildCommitStatements — metadata and note logs", () => {
     const logs = stmts.filter((s) => s.sql.includes("INSERT"));
     expect(logs).toHaveLength(3); // withdraw, invest, adjust
     for (const l of logs) expect(l.params[10]).toContain("共享备注");
+  });
+});
+
+describe("buildCommitStatements — set_available_date", () => {
+  test("writes the override column and an adjust log", () => {
+    const stmts = buildCommitStatements(
+      makeInput({
+        operations: [{ kind: "set_available_date", availableDate: "2026-09-15" }],
+        fromProduct: { id: "prod-a", name: "招行朝朝盈" },
+      }),
+    );
+    expect(stmts[0]?.sql).toContain("available_date_override = ?");
+    expect(stmts[0]?.params).toContain("2026-09-15");
+    expect(stmts).toHaveLength(2);
+    expect(stmts[1]?.params[5]).toBe("adjust");
+    expect(stmts[1]?.params[6]).toBe(0);
+    expect(stmts[1]?.params[10]).toBe("可用日期覆盖: 自动→2026-09-15");
+  });
+
+  test("clearing the override logs 自动 as the target", () => {
+    const stmts = buildCommitStatements(
+      makeInput({
+        expected: { ...expected, availableDateOverride: "2026-09-15" },
+        operations: [{ kind: "set_available_date", availableDate: null }],
+      }),
+    );
+    expect(stmts[0]?.params).toContain(null);
+    expect(stmts[1]?.params[10]).toBe("可用日期覆盖: 2026-09-15→自动");
   });
 });

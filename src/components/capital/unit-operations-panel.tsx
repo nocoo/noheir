@@ -1,14 +1,14 @@
 "use client";
 
 /**
- * Column 2 of the unit editor: product context, the two operation buttons, and
+ * Column 2 of the unit editor: product context, the operation buttons, and
  * the staged (not yet committed) operation cards.
  *
  * Buttons stage rather than execute — nothing is written until the dialog's
  * bottom 保存 (docs/003 § D5). All staging logic lives in unit-commit-plan.ts.
  */
 
-import { ArrowLeftRight, Package, Repeat, X } from "lucide-react";
+import { ArrowLeftRight, Calendar, Package, Repeat, X } from "lucide-react";
 import { useState } from "react";
 import { SectionTitle } from "@/components/capital/unit-panel-primitives";
 import { UnitSwapPicker } from "@/components/capital/unit-swap-picker";
@@ -44,6 +44,10 @@ interface UnitOperationsPanelProps {
   operations: StagedOperation[];
   onStage: (op: StagedOperation) => void;
   onUnstage: (kind: StagedOperation["kind"]) => void;
+  /** Currently computed available date, used as the date picker default. */
+  currentAvailableDate?: string | null;
+  /** Stored override, if any. Distinct from the computed date. */
+  currentOverride?: string | null;
 }
 
 export function UnitOperationsPanel({
@@ -55,16 +59,23 @@ export function UnitOperationsPanel({
   operations,
   onStage,
   onUnstage,
+  currentAvailableDate = null,
+  currentOverride = null,
 }: UnitOperationsPanelProps) {
   const [swapOpen, setSwapOpen] = useState(false);
   const [switchOpen, setSwitchOpen] = useState(false);
+  const [availOpen, setAvailOpen] = useState(false);
   const [productPickerOpen, setProductPickerOpen] = useState(false);
   // undefined = nothing picked yet; null = explicitly chose 取消关联.
   const [pendingProductId, setPendingProductId] = useState<string | null | undefined>(undefined);
   const [pnlInput, setPnlInput] = useState("");
+  const [pendingAvailableDate, setPendingAvailableDate] = useState(
+    currentOverride ?? currentAvailableDate ?? "",
+  );
 
   const stagedSwap = findStagedOperation(operations, "swap_unit_code");
   const stagedSwitch = findStagedOperation(operations, "switch_product");
+  const stagedAvail = findStagedOperation(operations, "set_available_date");
 
   const currentProduct = products.find((p) => p.id === currentProductId) ?? null;
   // Archived products are absent from `products`, so fall back to the name the
@@ -125,6 +136,20 @@ export function UnitOperationsPanel({
           >
             <ArrowLeftRight className="mr-1.5 size-3.5" />
             资金单元番号对换
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="h-9 justify-start text-xs"
+            onClick={() => {
+              setPendingAvailableDate(currentOverride ?? currentAvailableDate ?? "");
+              setAvailOpen((v) => !v);
+            }}
+            disabled={stagedAvail !== undefined}
+          >
+            <Calendar className="mr-1.5 size-3.5" />
+            编辑可用日期
           </Button>
         </div>
 
@@ -232,6 +257,56 @@ export function UnitOperationsPanel({
                 setSwapOpen(false);
               }}
             />
+          </div>
+        )}
+
+        {availOpen && !stagedAvail && (
+          <div className="bg-muted/30 space-y-2 rounded-lg border p-2.5">
+            <p className="text-muted-foreground text-[10px]">
+              覆盖自动计算的解锁日，投入流水不变。
+              {currentOverride
+                ? ` 当前手动：${currentOverride}`
+                : currentAvailableDate
+                  ? ` 当前自动：${currentAvailableDate}`
+                  : " 当前无法自动计算。"}
+            </p>
+            <Label htmlFor="available-date" className="text-xs">
+              可用日期
+            </Label>
+            <Input
+              id="available-date"
+              type="date"
+              value={pendingAvailableDate}
+              onChange={(e) => setPendingAvailableDate(e.target.value)}
+              className="h-9 text-xs"
+            />
+            <Button
+              type="button"
+              size="sm"
+              className="h-9 w-full text-xs"
+              onClick={() => {
+                if (!pendingAvailableDate) return;
+                onStage({ kind: "set_available_date", availableDate: pendingAvailableDate });
+                setAvailOpen(false);
+              }}
+              disabled={!pendingAvailableDate}
+            >
+              确认覆盖
+            </Button>
+            {currentOverride && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 w-full text-xs"
+                onClick={() => {
+                  onStage({ kind: "set_available_date", availableDate: null });
+                  setAvailOpen(false);
+                }}
+              >
+                恢复自动计算
+              </Button>
+            )}
           </div>
         )}
       </div>

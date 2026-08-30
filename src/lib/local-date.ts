@@ -27,3 +27,13 @@ export function formatOperationDate(value: string): string {
   const isoDatePart = value.slice(0, 10);
   return /^\d{4}-\d{2}-\d{2}$/.test(isoDatePart) ? isoDatePart : value;
 }
+
+/** Shift a YYYY-MM-DD calendar day by `days`, anchored to UTC midnight. */
+export function addCalendarDays(day: string, days: number): string {
+  const d = new Date(`${day}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  const year = d.getUTCFullYear();
+  const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const date = String(d.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${date}`;
+}

@@ -506,6 +506,7 @@ describe("commitUnitSchema", () => {
     startDate: "2026-01-01",
     endDate: null,
     note: null,
+    availableDateOverride: null,
   };
   const PROD_B = "223e4567-e89b-12d3-a456-426614174000";
   const UNIT_B = "323e4567-e89b-12d3-a456-426614174000";
@@ -604,6 +605,26 @@ describe("commitUnitSchema", () => {
       ],
     });
     expect(r.success).toBe(true);
+  });
+
+  test("accepts set_available_date and allows it with the other kinds", () => {
+    const r = commitUnitSchema.safeParse({
+      expected,
+      operations: [
+        { kind: "swap_unit_code", targetUnitId: UNIT_B },
+        { kind: "switch_product", toProductId: PROD_B },
+        { kind: "set_available_date", availableDate: "2026-09-15" },
+      ],
+    });
+    expect(r.success).toBe(true);
+  });
+
+  test("rejects a malformed availableDate", () => {
+    const r = commitUnitSchema.safeParse({
+      expected,
+      operations: [{ kind: "set_available_date", availableDate: "2026-9-15" }],
+    });
+    expect(r.success).toBe(false);
   });
 
   test("rejects malformed operationDate", () => {

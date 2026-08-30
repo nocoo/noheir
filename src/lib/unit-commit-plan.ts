@@ -21,7 +21,8 @@ export type StagedOperation =
       toProductId: string | null;
       toProductName: string | null;
       pnl: number | null; // yuan at the UI layer
-    };
+    }
+  | { kind: "set_available_date"; availableDate: string | null };
 
 export type StagedOperationKind = StagedOperation["kind"];
 
@@ -113,6 +114,9 @@ export function describeStagedOperation(op: StagedOperation): string {
   if (op.kind === "swap_unit_code") {
     return `番号对换 → ${op.targetUnitCode}`;
   }
+  if (op.kind === "set_available_date") {
+    return op.availableDate ? `可用日期 → ${op.availableDate}` : "可用日期 → 自动计算";
+  }
   const from = op.fromProductName ?? "未关联";
   const to = op.toProductName ?? "未关联";
   return `切换产品 ${from} → ${to}`;
@@ -166,15 +170,19 @@ export function buildCommitPayload(input: BuildCommitPayloadInput): CommitPayloa
 
   const payload: CommitPayload = {
     expected,
-    operations: operations.map((op) =>
-      op.kind === "swap_unit_code"
-        ? { kind: op.kind, targetUnitId: op.targetUnitId }
-        : {
-            kind: op.kind,
-            toProductId: op.toProductId,
-            ...(op.pnl != null ? { pnlCents: toCents(op.pnl) } : {}),
-          },
-    ),
+    operations: operations.map((op) => {
+      if (op.kind === "swap_unit_code") {
+        return { kind: op.kind, targetUnitId: op.targetUnitId };
+      }
+      if (op.kind === "set_available_date") {
+        return { kind: op.kind, availableDate: op.availableDate };
+      }
+      return {
+        kind: op.kind,
+        toProductId: op.toProductId,
+        ...(op.pnl != null ? { pnlCents: toCents(op.pnl) } : {}),
+      };
+    }),
   };
 
   if (metadata) payload.metadata = metadata;

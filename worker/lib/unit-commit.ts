@@ -30,6 +30,7 @@ export interface ExpectedUnitSnapshot {
   startDate: string | null;
   endDate: string | null;
   note: string | null;
+  availableDateOverride: string | null;
 }
 
 export interface CommitMetadata {
@@ -45,7 +46,8 @@ export interface CommitMetadata {
 
 export type CommitOperation =
   | { kind: "swap_unit_code"; targetUnitId: string }
-  | { kind: "switch_product"; toProductId: string | null; pnlCents?: number | null | undefined };
+  | { kind: "switch_product"; toProductId: string | null; pnlCents?: number | null | undefined }
+  | { kind: "set_available_date"; availableDate: string | null };
 
 export interface SwapTarget {
   id: string;
@@ -178,6 +180,7 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
 
   const swapOp = operations.find((o) => o.kind === "swap_unit_code");
   const switchOp = operations.find((o) => o.kind === "switch_product");
+  const availOp = operations.find((o) => o.kind === "set_available_date");
 
   const statements: Statement[] = [];
 
@@ -204,6 +207,7 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
   // neither of which changes when [0] fails on some other field — the switch
   // would then apply while the endpoint reported 409.
   if (switchOp) set("product_id", switchOp.toProductId);
+  if (availOp) set("available_date_override", availOp.availableDate);
 
   // Always written: non-archived units must have end_date = NULL.
   const finalStatus = metadata?.status ?? expected.status;
@@ -225,6 +229,7 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
   where.push(nullSafeEq("start_date", expected.startDate, whereParams));
   where.push(nullSafeEq("end_date", expected.endDate, whereParams));
   where.push(nullSafeEq("note", expected.note, whereParams));
+  where.push(nullSafeEq("available_date_override", expected.availableDateOverride, whereParams));
 
   if (swapOp && swapTarget) {
     // The partner's product is snapshotted onto its log, so it must also be
@@ -354,6 +359,20 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
         note: composeNote(`切换产品: 投入 ${toProduct?.name ?? "未知产品"}`, commitNote),
       });
     }
+  }
+
+  if (availOp) {
+    const from = expected.availableDateOverride ?? "自动";
+    const to = availOp.availableDate ?? "自动";
+    pushLog({
+      unitId,
+      productId: expected.productId,
+      productName: fromProduct?.name ?? null,
+      operationType: "adjust",
+      amountCents: 0,
+      pnlCents: null,
+      note: composeNote(`可用日期覆盖: ${from}→${to}`, commitNote),
+    });
   }
 
   // Metadata-only edits still leave a trace (docs/003 § D4/D6).
