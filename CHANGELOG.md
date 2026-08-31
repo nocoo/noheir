@@ -2,6 +2,145 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.6.2] - 2026-08-31
+
+### Features
+
+- add available date override
+
+### Fixes
+
+- use shanghai calendar in lock ui
+- parse iso invest dates as calendar days
+- keep availability calc inside next image
+- preview latest invest after backdated switch
+- tooltip cycle with null lock period
+- align switch preview with worker today
+- ignore deleted invest logs in mcp
+- preview switch using operation date
+- narrow available date commit operation
+- preview switch product and snapshot date
+- skip no-op override and log final product
+- tooltip phase uses date override
+- align mcp availability with worker
+- reject impossible available dates
+- **release** — isolate Next build on fixed Bun runtime
+- **deps** — align undici with jsdom constraint
+- **deps** — refresh vulnerable overrides
+- await rejects assertion in mcp-tokens test
+
+### Documentation
+
+- mention override in mcp tool copy
+- qualify remaining availability wording
+- note override in availability retrospective
+- note override in comments and 003 table
+- mention override in remaining specs
+- qualify availability without invest log
+- sync override field counts
+- fix override schema contradictions
+- record available date override
+- note that releases skip the worker deploy
+
+### Tests
+
+- require three mcp invest predicates
+- assert mcp query sites use predicate
+- lock mcp invest predicate to live rows
+- prove override clear and no-op commit
+- **release** — lock install to stable Bun stage
+- **release** — enforce Bun runtime isolation
+
+### Chores
+
+- remove unused autoresearch files
+- remove unused gen1 archive
+- **deps** — bump @types/node 26.2.0 → 26.3.0
+- **deps** — bump hono 4.13.3 → 4.13.4
+- **deps** — bump lucide-react 1.33.0 → 1.34.0
+- **deps** — bump @testing-library/user-event 14.6.5 → 14.6.6
+- **deps** — bump @cloudflare/workers-types 5.20260822.1 → 5.20260823.1
+- **deps** — bump next 16.3.1 → 16.3.2
+- **deps** — bump @cloudflare/workers-types 5.20260821.1 → 5.20260822.1
+- **deps** — bump @biomejs/biome 2.5.9 → 2.5.10
+- **deps** — bump @cloudflare/workers-types 5.20260820.1 → 5.20260821.1
+- **deps** — bump @types/bun 1.3.14 → 1.4.0
+- **deps** — bump wrangler 4.124.0 → 4.125.0
+- **deps** — bump @cloudflare/workers-types 5.20260819.1 → 5.20260820.1
+- **deps** — bump lucide-react 1.32.0 → 1.33.0
+- **deps** — bump @testing-library/user-event 14.6.4 → 14.6.5 (#382)
+- **deps** — bump @cloudflare/workers-types 5.20260818.1 → 5.20260819.1 (#383)
+- **deps** — bump vitest and @vitest/coverage-v8 4.1.10 → 4.1.11
+- **deps** — bump wrangler 4.123.0 → 4.124.0
+- **deps** — bump hono 4.13.2 → 4.13.3
+- **deps** — bump lucide-react 1.31.0 → 1.32.0
+- **deps** — bump @cloudflare/workers-types 5.20260817.1 → 5.20260818.1
+- **deps** — bump @biomejs/biome 2.5.8 → 2.5.9
+- **deps** — bump @cloudflare/workers-types 5.20260814.1 → 5.20260817.1
+- **deps** — bump wrangler 4.122.0 → 4.123.0
+- **deps** — bump next 16.3.0 → 16.3.1
+- **deps** — override root nanoid to 3.3.18 (security)
+- **deps** — bump hono 4.13.1 → 4.13.2
+- **deps** — bump @cloudflare/workers-types 5.20260813.1 → 5.20260814.1
+- **deps** — bump @cloudflare/workers-types 5.20260812.1 → 5.20260813.1
+- **deps** — bump wrangler 4.121.0 → 4.122.0
+- **deps** — bump @testing-library/user-event 14.6.3 → 14.6.4
+- **deps** — bump wrangler 4.120.1 → 4.121.0
+- **deps** — bump @cloudflare/workers-types 5.20260811.1 → 5.20260812.1
+- **deps** — bump @testing-library/user-event 14.6.3 → 14.6.4
+- **deps** — bump @biomejs/biome 2.5.7 → 2.5.8
+- **deps** — bump wrangler 4.120.0 → 4.120.1
+- **deps** — bump wrangler 4.120.0 → 4.120.1
+- **deps** — bump @cloudflare/workers-types 5.20260810.1 → 5.20260811.1
+- **deps** — bump lucide-react to 1.31.0
+- **deps** — bump @testing-library/jest-dom to 7.0.1
+- **deps** — bump sonner 2.0.7 → 2.0.8
+- **deps** — bump cloudflare workers types
+- **deps** — bump cloudflare workers types
+- **deps** — bump esbuild to 0.28.2
+- **deps** — bump hono to 4.13.1
+- **deps** — secure worker nanoid resolution
+- **deps** — bump workers types to 5.20260808.1
+- **deps** — bump @types/node to 26.2.0
+- **deps** — bump lucide-react to 1.30.0
+- **deps** — bump wrangler to 4.120.0
+- **deps** — bump lucide-react to 1.29.0
+- **deps** — bump postcss to 8.5.26
+- **deps** — bump better-sqlite3 to 13.0.3
+- **deps** — bump wrangler to 4.119.0
+- **deps** — patch vulnerable dependencies
+- **deps** — patch vulnerable transitive dependencies
+- **deps** — bump biome to 2.5.7
+- **deps** — bump next to 16.3.0
+- **deps** — bump hono to 4.13.0
+- **deps** — bump workers types to 5.20260804.1
+- **deps** — bump @testing-library/user-event to 14.6.3
+- **deps** — bump @types/better-sqlite3 to 9.6.0
+- **deps** — bump @cloudflare/workers-types to 5.20260801.1
+- **deps** — bump wrangler to 4.118.0
+- **deps** — bump hono to 4.12.33
+- **deps** — bump @cloudflare/workers-types to 5.20260731.1
+- **deps** — bump wrangler to 4.116.0
+- **deps** — bump @playwright/test to 1.62.1
+- **deps** — bump @types/react-dom to 19.2.4
+- **deps** — bump @types/react to 19.2.18
+- **deps** — bump lucide-react to 1.28.0
+- **deps** — sync worker biome schema pin to 2.5.6
+- **deps** — bump wrangler to 4.115.0
+- **deps** — bump recharts to 3.10.1
+- **deps** — bump radix-ui to 1.6.7
+- **deps** — bump postcss to 8.5.25
+- **deps** — bump next to 16.2.12
+- **deps** — bump lucide-react to 1.27.0
+- **deps** — bump jsdom to ^30.0.1
+- **deps** — bump hono to 4.12.32
+- **deps** — bump better-sqlite3 to 13.0.2
+- **deps** — bump @types/node to 26.1.2
+- **deps** — bump @playwright/test to 1.62.0
+- **deps** — bump @modelcontextprotocol/sdk to ^1.30.0
+- **deps** — bump @cloudflare/workers-types to 5.20260730.1
+- **deps** — bump @biomejs/biome to 2.5.6
+
 ## [2.6.1] - 2026-07-29
 
 ### Features
