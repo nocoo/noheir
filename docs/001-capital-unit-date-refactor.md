@@ -28,7 +28,7 @@ Current implementation incorrectly uses `capitalUnits.endDate` as "product matur
 **Interpreting availability state**:
 | `availableDate` | `isAvailable` | `daysUntilAvailable` | Meaning |
 |-----------------|---------------|----------------------|---------|
-| `null` | `false` | `null` | Data insufficient (no product or no invest log) |
+| `null` | `false` | `null` | Data insufficient (no override, and no product or no invest log) |
 | non-null | `false` | positive | Locked, N days until available |
 | non-null | `true` | 0 or negative | Available (negative = available since N days ago) |
 

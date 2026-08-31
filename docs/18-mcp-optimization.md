@@ -143,7 +143,7 @@ Add lightweight aggregation tools that return statistics without raw data.
 **Availability Calculation Logic** (from `worker/lib/availability.ts`):
 1. Fetch all units with product join
 2. Fetch latest invest log per unit from contribution_logs (operationType = 'invest')
-3. For each unit: `availableDate = latestInvestDate + product.lockPeriodDays`
+3. For each unit: `availableDate` from override or `latestInvestDate + product.lockPeriodDays`, then cyclic windows
 4. Categorize: `available_now` (days ≤ 0), `available_30d` (1-30 days), `locked` (> 30 days), `unknown` (no data)
 
 #### 1.2 `get_products_summary`
