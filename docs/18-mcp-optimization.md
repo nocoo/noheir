@@ -111,8 +111,8 @@ Add lightweight aggregation tools that return statistics without raw data.
 **Parameters**: None (returns full summary)
 
 **Implementation Notes**:
-- Availability calculation requires: `latestInvestLog.operationDate` + `product.lockPeriodDays`
-- Units without product or without invest log have `availableDate = null`, counted as "unknown"
+- Availability calculation: `available_date_override` if set, else `latestInvestLog.operationDate` + `product.lockPeriodDays`
+- Units without override and without product or invest log have `availableDate = null`, counted as "unknown"
 - All amounts returned in cents (`amount_cents`) to match DB schema
 
 **Response** (~600B):

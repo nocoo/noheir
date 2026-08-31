@@ -290,7 +290,7 @@ UI 侧同步：`unit-operations-panel` 在当前无关联产品时**不渲染**�
 
 D1 的 `batch()` 是真事务（官方文档："If a statement in the sequence fails ... it aborts or rolls back the entire sequence."）。矛盾在于批次中途无法读 `meta.changes` 做 CAS 判断。解法是**让判据不需要中途读**——用 SQL 表达守卫，CAS 落空时所有语句匹配 0 行，成为一次无害的空提交，事后统一判定。
 
-最坏情况（对换 A↔B + 切换产品 + 改元数据）的语句序与守卫：
+最坏情况（对换 A↔B + 切换产品 + 校正可用日期 + 改元数据）的语句序与守卫：
 
 ```
 [0] UPDATE capital_units
@@ -333,7 +333,7 @@ if (!results[0]?.meta.changes) {
 }
 ```
 
-**为什么不沿用 `PUT /api/units/:id` 的 CAS→batch→补偿模式**：现有补偿路径（`worker/src/index.ts:869-894`）已经有一条"补偿也失败就只 `console.error`"的不可恢复分支。扩展到"两个单元 + 最多 5 条日志"意味着要为每一种部分前缀写逆操作，组合爆炸，且逆操作自身还会失败。守卫链**没有需要补偿的失败态**。
+**为什么不沿用 `PUT /api/units/:id` 的 CAS→batch→补偿模式**：现有补偿路径（`worker/src/index.ts:869-894`）已经有一条"补偿也失败就只 `console.error`"的不可恢复分支。扩展到"两个单元 + 最多 6 条日志"意味着要为每一种部分前缀写逆操作，组合爆炸，且逆操作自身还会失败。守卫链**没有需要补偿的失败态**。
 
 **诚实记录代价**：① SQL 更密（每条带 `EXISTS`，且 `[0]` 带 11 字段比对）；② 409 由 `meta.changes === 0` 推断，"单元在读写之间被删除"也会归到 409 —— 对用户而言这恰好是正确答案；③ SQLite 无 `<=>`，9 个可空字段全部要展开成 `col IS NULL` / `col = ?` 两支，用 `nullSafeEq` 助手统一生成，写法沿袭 `worker/src/index.ts:792-794`。
 

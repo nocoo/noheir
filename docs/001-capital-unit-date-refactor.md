@@ -100,7 +100,8 @@ interface UnitWithAvailability {
 function computeAvailability(
   latestInvestLog: ContributionLog | null,
   product: FinancialProduct | null,
-  today: Date = new Date()
+  today: Date = new Date(),
+  availableDateOverride: string | null = null
 ): { availableDate: string | null; isAvailable: boolean; daysUntilAvailable: number | null }
 ```
 
