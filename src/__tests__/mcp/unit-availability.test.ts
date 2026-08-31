@@ -56,10 +56,10 @@ describe("investLogPredicate", () => {
     const unitSrc = readFileSync("src/lib/mcp/tools/unit.ts", "utf8");
     const portfolioSrc = readFileSync("src/lib/mcp/tools/portfolio.ts", "utf8");
     const call = (alias: string) => `investLogPredicate(${alias})`;
-    expect(unitSrc.split(call("")).length).toBeGreaterThan(2);
-    expect(unitSrc.split(call('"cl"')).length).toBeGreaterThan(1);
-    expect(portfolioSrc.split(call("")).length).toBeGreaterThan(1);
-    expect(portfolioSrc.split(call('"cl"')).length).toBeGreaterThan(1);
+    expect(unitSrc.split(call("")).length - 1).toBe(3);
+    expect(unitSrc.split(call('"cl"')).length - 1).toBe(1);
+    expect(portfolioSrc.split(call("")).length - 1).toBe(1);
+    expect(portfolioSrc.split(call('"cl"')).length - 1).toBe(1);
   });
 });
 
