@@ -55,6 +55,7 @@ async function logsFor(unitId: string) {
     logs: Record<string, unknown>[];
     expected: Record<string, unknown>;
     currentProductName: string | null;
+    availableDate: string | null;
   }>({
     method: "GET",
     path: `/api/units/${unitId}/logs`,
@@ -555,6 +556,10 @@ describe("E2E: Unit commit", () => {
       path: `/api/units/${unit.id}`,
       userId,
     });
+    const beforeLogs = await logsFor(String(unit.id));
+    const investDatesBefore = beforeLogs.logs
+      .filter((l) => l.operationType === "invest")
+      .map((l) => l.operationDate);
 
     await api({
       method: "POST",
@@ -575,11 +580,40 @@ describe("E2E: Unit commit", () => {
     expect(after.unit.availableDateOverride).toBe("2026-09-15");
     expect(after.unit.availableDate).toBe("2026-09-15");
 
-    const { logs } = await logsFor(String(unit.id));
-    const invests = logs.filter((l) => l.operationType === "invest");
-    const adjusts = logs.filter((l) => l.operationType === "adjust");
-    expect(invests.every((l) => l.operationDate !== "2026-09-15")).toBe(true);
-    expect(adjusts.some((l) => String(l.note).includes("可用日期覆盖"))).toBe(true);
+    const afterLogs = await logsFor(String(unit.id));
+    expect(afterLogs.availableDate).toBe("2026-09-15");
+    const investDatesAfter = afterLogs.logs
+      .filter((l) => l.operationType === "invest")
+      .map((l) => l.operationDate);
+    expect(investDatesAfter).toEqual(investDatesBefore);
+    expect(afterLogs.logs.some((l) => String(l.note).includes("可用日期覆盖"))).toBe(true);
+
+    const noop = await rawFetch({
+      method: "POST",
+      path: `/api/units/${unit.id}/commit`,
+      userId,
+      body: {
+        expected: snapshot(after.unit),
+        operations: [{ kind: "set_available_date", availableDate: "2026-09-15" }],
+      },
+    });
+    expect(noop.status).toBe(400);
+
+    await api({
+      method: "POST",
+      path: `/api/units/${unit.id}/commit`,
+      userId,
+      body: {
+        expected: snapshot(after.unit),
+        operations: [{ kind: "set_available_date", availableDate: null }],
+      },
+    });
+    const cleared = await api<{ unit: UnitRow }>({
+      method: "GET",
+      path: `/api/units/${unit.id}?with_products=true`,
+      userId,
+    });
+    expect(cleared.unit.availableDateOverride).toBeNull();
   });
 });
 
