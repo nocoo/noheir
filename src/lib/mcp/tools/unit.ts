@@ -7,7 +7,7 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { computeAvailability } from "../../../../worker/lib/availability";
+import { computeAvailability } from "@/lib/availability";
 import { compact, currencyCode, round2, shortId } from "./compact";
 import { resolveProduct } from "./resolver";
 import type { ToolContext } from "./types";
@@ -140,7 +140,7 @@ export function registerUnitTools(server: McpServer, ctx: ToolContext): void {
 Each unit includes:
 - Basic info: unit_code, amount, currency, status, strategy, tactics
 - Product relation: product_id, product_name (if linked)
-- Availability: days_to_available, availability_status (based on product lock period)
+- Availability: days_to_available, availability_status (override or product lock period)
 
 AVAILABILITY STATUS:
 - "available": Funds can be withdrawn now (days_to_available = 0)
