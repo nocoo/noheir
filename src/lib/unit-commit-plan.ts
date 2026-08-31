@@ -11,7 +11,7 @@
  */
 
 import type { ExpectedUnitSnapshot, SerializedUnit } from "@/domain/types";
-import { addCalendarDays } from "@/lib/local-date";
+import { addCalendarDays, getLocalDateString } from "@/lib/local-date";
 
 export type StagedOperation =
   | { kind: "swap_unit_code"; targetUnitId: string; targetUnitCode: string }
@@ -204,8 +204,16 @@ export function resolveTimelineInvestDate(input: {
   if (input.unlockOverride) {
     return addCalendarDays(input.unlockOverride, -(input.lockPeriodDays ?? 0));
   }
-  if (input.stagedSwitch) return input.operationDate || input.latestInvestDate;
+  if (input.stagedSwitch) return input.operationDate || getLocalDateString();
   return input.latestInvestDate;
+}
+
+export function resolveUnlockOverride(
+  staged: Extract<StagedOperation, { kind: "set_available_date" }> | undefined,
+  currentOverride: string | null,
+): string | null {
+  if (staged !== undefined) return staged.availableDate;
+  return currentOverride;
 }
 
 /** Units eligible as a swap partner: anything but the unit being edited. */

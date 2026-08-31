@@ -45,6 +45,7 @@ import {
   isAmountLocked,
   isUnitCodeLocked,
   resolveTimelineInvestDate,
+  resolveUnlockOverride,
   type StagedOperation,
   stageOperation,
   type UnitFormSnapshot,
@@ -233,14 +234,12 @@ export function UnitCommitDialog({
   // Derive the invest date from the logs we just fetched rather than the page
   // prop: the product comes from the fresh snapshot, so pairing it with a stale
   // date could render a lock window that never existed.
-  const latestInvestDate =
-    logs.find((l) => l.operationType === "invest" && l.productId === expected?.productId)
-      ?.operationDate ?? null;
+  const latestInvestDate = logs.find((l) => l.operationType === "invest")?.operationDate ?? null;
   const stagedAvail = findStagedOperation(operations, "set_available_date");
-  const unlockOverride =
-    stagedAvail !== undefined
-      ? stagedAvail.availableDate
-      : (expected?.availableDateOverride ?? null);
+  const unlockOverride = resolveUnlockOverride(
+    stagedAvail,
+    expected?.availableDateOverride ?? null,
+  );
   const timelineInvestDate = resolveTimelineInvestDate({
     unlockOverride,
     lockPeriodDays: timelineProduct?.lockPeriodDays ?? null,

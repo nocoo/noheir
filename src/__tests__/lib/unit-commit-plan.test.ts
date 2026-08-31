@@ -10,6 +10,7 @@ import {
   isAmountLocked,
   isUnitCodeLocked,
   resolveTimelineInvestDate,
+  resolveUnlockOverride,
   type StagedOperation,
   stageOperation,
   type UnitFormSnapshot,
@@ -314,16 +315,37 @@ describe("resolveTimelineInvestDate", () => {
     ).toBe("2026-08-20");
   });
 
-  test("clearing an override while switching also uses the operation date", () => {
+  test("a staged switch with a blank date falls back to Shanghai today", () => {
     expect(
       resolveTimelineInvestDate({
         unlockOverride: null,
         lockPeriodDays: 90,
         stagedSwitch: true,
-        operationDate: "2026-08-20",
+        operationDate: "",
         latestInvestDate: "2026-01-01",
       }),
-    ).toBe("2026-08-20");
+    ).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(
+      resolveTimelineInvestDate({
+        unlockOverride: null,
+        lockPeriodDays: 90,
+        stagedSwitch: true,
+        operationDate: "",
+        latestInvestDate: "2026-01-01",
+      }),
+    ).not.toBe("2026-01-01");
+  });
+});
+
+describe("resolveUnlockOverride", () => {
+  test("a staged clear wins over the stored override", () => {
+    expect(
+      resolveUnlockOverride({ kind: "set_available_date", availableDate: null }, "2026-09-15"),
+    ).toBeNull();
+  });
+
+  test("uses the stored override when nothing is staged", () => {
+    expect(resolveUnlockOverride(undefined, "2026-09-15")).toBe("2026-09-15");
   });
 });
 
