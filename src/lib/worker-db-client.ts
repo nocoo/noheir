@@ -358,6 +358,7 @@ export class WorkerDbClient {
       expected: ExpectedUnitSnapshot;
       currentProductName: string | null;
       availableDate: string | null;
+      latestInvestDate: string | null;
     }>("GET", `/api/units/${unitId}/logs`, userId);
   }
 

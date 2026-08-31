@@ -999,6 +999,7 @@ app.get("/api/units/:id/logs", async (c) => {
     logs,
     currentProductName: currentProduct?.name ?? null,
     availableDate: enriched?.availableDate ?? null,
+    latestInvestDate: enriched?.latestInvestDate ?? null,
     expected: {
       unitCode: unit.unitCode,
       amountCents: unit.amountCents,

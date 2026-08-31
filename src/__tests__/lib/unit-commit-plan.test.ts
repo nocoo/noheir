@@ -315,7 +315,7 @@ describe("resolveTimelineInvestDate", () => {
     ).toBe("2026-08-20");
   });
 
-  test("a staged switch with a blank date falls back to Shanghai today", () => {
+  test("a staged switch with a blank date uses injected Shanghai today", () => {
     expect(
       resolveTimelineInvestDate({
         unlockOverride: null,
@@ -323,17 +323,21 @@ describe("resolveTimelineInvestDate", () => {
         stagedSwitch: true,
         operationDate: "",
         latestInvestDate: "2026-01-01",
+        today: "2026-07-29",
       }),
-    ).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    ).toBe("2026-07-29");
+  });
+
+  test("a backdated switch keeps a later existing invest date", () => {
     expect(
       resolveTimelineInvestDate({
         unlockOverride: null,
         lockPeriodDays: 90,
         stagedSwitch: true,
-        operationDate: "",
-        latestInvestDate: "2026-01-01",
+        operationDate: "2020-01-01",
+        latestInvestDate: "2026-03-01",
       }),
-    ).not.toBe("2026-01-01");
+    ).toBe("2026-03-01");
   });
 });
 

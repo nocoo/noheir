@@ -115,6 +115,7 @@ export async function listUnitContributionLogs(unitId: string): Promise<
     expected: ExpectedUnitSnapshot;
     currentProductName: string | null;
     availableDate: string | null;
+    latestInvestDate: string | null;
   }>
 > {
   try {
@@ -127,6 +128,7 @@ export async function listUnitContributionLogs(unitId: string): Promise<
         expected: result.expected,
         currentProductName: result.currentProductName,
         availableDate: result.availableDate ?? null,
+        latestInvestDate: result.latestInvestDate ?? null,
       },
     };
   } catch (err) {

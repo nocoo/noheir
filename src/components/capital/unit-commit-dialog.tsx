@@ -101,6 +101,7 @@ export function UnitCommitDialog({
   // product id the guard will compare against.
   const [currentProductName, setCurrentProductName] = useState<string | null>(null);
   const [snapshotAvailableDate, setSnapshotAvailableDate] = useState<string | null>(null);
+  const [snapshotLatestInvestDate, setSnapshotLatestInvestDate] = useState<string | null>(null);
   const [initialForm, setInitialForm] = useState<UnitFormSnapshot | null>(null);
 
   const [unitCode, setUnitCode] = useState("");
@@ -144,6 +145,7 @@ export function UnitCommitDialog({
       setLogs(result.data.logs);
       setCurrentProductName(result.data.currentProductName);
       setSnapshotAvailableDate(result.data.availableDate);
+      setSnapshotLatestInvestDate(result.data.latestInvestDate);
       applySnapshot(result.data.expected);
     } else {
       toast.error(result.error);
@@ -234,7 +236,7 @@ export function UnitCommitDialog({
   // Derive the invest date from the logs we just fetched rather than the page
   // prop: the product comes from the fresh snapshot, so pairing it with a stale
   // date could render a lock window that never existed.
-  const latestInvestDate = logs.find((l) => l.operationType === "invest")?.operationDate ?? null;
+  const latestInvestDate = snapshotLatestInvestDate;
   const stagedAvail = findStagedOperation(operations, "set_available_date");
   const unlockOverride = resolveUnlockOverride(
     stagedAvail,

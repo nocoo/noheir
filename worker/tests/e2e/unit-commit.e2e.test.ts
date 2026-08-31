@@ -56,6 +56,7 @@ async function logsFor(unitId: string) {
     expected: Record<string, unknown>;
     currentProductName: string | null;
     availableDate: string | null;
+    latestInvestDate: string | null;
   }>({
     method: "GET",
     path: `/api/units/${unitId}/logs`,

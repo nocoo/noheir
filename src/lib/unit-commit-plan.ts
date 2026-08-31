@@ -200,12 +200,22 @@ export function resolveTimelineInvestDate(input: {
   stagedSwitch: boolean;
   operationDate: string | null;
   latestInvestDate: string | null;
+  today?: string;
 }): string | null {
   if (input.unlockOverride) {
     return addCalendarDays(input.unlockOverride, -(input.lockPeriodDays ?? 0));
   }
-  if (input.stagedSwitch) return input.operationDate || getLocalDateString();
+  if (input.stagedSwitch) {
+    const switchDate = input.operationDate || input.today || getLocalDateString();
+    return maxDay(switchDate, input.latestInvestDate);
+  }
   return input.latestInvestDate;
+}
+
+function maxDay(a: string | null, b: string | null): string | null {
+  if (!a) return b;
+  if (!b) return a;
+  return a >= b ? a : b;
 }
 
 export function resolveUnlockOverride(
