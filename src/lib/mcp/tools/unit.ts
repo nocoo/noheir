@@ -48,6 +48,12 @@ export interface ContributionLog {
   operation_date: string;
 }
 
+/** Shared so list/get/update/portfolio cannot drop the soft-delete filter. */
+export function investLogPredicate(alias = ""): string {
+  const col = alias ? `${alias}.` : "";
+  return `${col}operation_type = 'invest' AND ${col}deleted_at IS NULL`;
+}
+
 // ---------------------------------------------------------------------------
 // Availability Enrichment
 // ---------------------------------------------------------------------------
@@ -139,7 +145,7 @@ Each unit includes:
 AVAILABILITY STATUS:
 - "available": Funds can be withdrawn now (days_to_available = 0)
 - "locked": Funds are still in lock period (days_to_available > 0)
-- "unknown": No product linked or no invest log
+- "unknown": No override, and no product or no invest log
 
 LIMITATIONS:
 - Max 200 results per call; use offset for pagination`,
@@ -242,10 +248,10 @@ LIMITATIONS:
         INNER JOIN (
           SELECT unit_id, MAX(operation_date) as max_date
           FROM contribution_logs
-          WHERE unit_id IN (${placeholders}) AND operation_type = 'invest' AND deleted_at IS NULL
+          WHERE unit_id IN (${placeholders}) AND ${investLogPredicate()}
           GROUP BY unit_id
         ) latest ON cl.unit_id = latest.unit_id AND cl.operation_date = latest.max_date
-        WHERE cl.operation_type = 'invest' AND cl.deleted_at IS NULL
+        WHERE ${investLogPredicate("cl")}
       `;
 
       const logsResult = await db.query<ContributionLog>(logsSql, unitIds);
@@ -343,7 +349,7 @@ RETURNS:
       const logSql = `
         SELECT id, unit_id, operation_type, operation_date
         FROM contribution_logs
-        WHERE unit_id = ? AND operation_type = 'invest' AND deleted_at IS NULL
+        WHERE unit_id = ? AND ${investLogPredicate()}
         ORDER BY operation_date DESC
         LIMIT 1
       `;
@@ -651,7 +657,7 @@ RETURNS:
       const logSql = `
         SELECT id, unit_id, operation_type, operation_date
         FROM contribution_logs
-        WHERE unit_id = ? AND operation_type = 'invest' AND deleted_at IS NULL
+        WHERE unit_id = ? AND ${investLogPredicate()}
         ORDER BY operation_date DESC
         LIMIT 1
       `;

@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   type ContributionLog,
   enrichWithAvailability,
+  investLogPredicate,
   type UnitWithProduct,
 } from "@/lib/mcp/tools/unit";
 
@@ -43,6 +44,13 @@ function createInvestLog(overrides: Partial<ContributionLog> = {}): Contribution
     ...overrides,
   };
 }
+
+describe("investLogPredicate", () => {
+  it("always excludes soft-deleted invest rows", () => {
+    expect(investLogPredicate()).toBe("operation_type = 'invest' AND deleted_at IS NULL");
+    expect(investLogPredicate("cl")).toBe("cl.operation_type = 'invest' AND cl.deleted_at IS NULL");
+  });
+});
 
 describe("enrichWithAvailability", () => {
   // Save and restore Date constructor for deterministic tests

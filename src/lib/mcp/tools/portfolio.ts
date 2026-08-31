@@ -14,6 +14,7 @@ import { error, okWithCompleteness } from "./types";
 import {
   type ContributionLog,
   enrichWithAvailability,
+  investLogPredicate,
   type UnitEnriched,
   type UnitWithProduct,
 } from "./unit";
@@ -134,10 +135,10 @@ RETURNS:
           INNER JOIN (
             SELECT unit_id, MAX(operation_date) as max_date
             FROM contribution_logs
-            WHERE unit_id IN (${placeholders}) AND operation_type = 'invest' AND deleted_at IS NULL
+            WHERE unit_id IN (${placeholders}) AND ${investLogPredicate()}
             GROUP BY unit_id
           ) latest ON cl.unit_id = latest.unit_id AND cl.operation_date = latest.max_date
-          WHERE cl.operation_type = 'invest' AND cl.deleted_at IS NULL
+          WHERE ${investLogPredicate("cl")}
         `;
 
         const logsResult = await db.query<ContributionLog>(logsSql, unitIds);
