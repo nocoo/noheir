@@ -14,13 +14,14 @@ Current implementation incorrectly uses `capitalUnits.endDate` as "product matur
 
 ### Investment Timeline
 - Each investment is recorded in `contributionLogs` with `operationType: "invest"`
-- Switching products: keeps existing `withdraw` + `invest` logging behavior; availability computation uses the latest `invest` log only
-- **Available Date** = `latestInvest.operationDate + product.lockPeriodDays` (computed, not stored)
+- Switching products: keeps existing `withdraw` + `invest` logging behavior; availability computation uses the latest `invest` log only unless an override is set
+- **Available Date** = `available_date_override` if set, otherwise `latestInvest.operationDate + product.lockPeriodDays` (still computed for display; the override is the only stored exception)
 
 ### Unit Availability
-- If `productId = null`: not deployed, `availableDate = null`, `isAvailable = false`
-- If `productId != null` but no invest log: `availableDate = null`, `isAvailable = false`
-- If has invest log: `availableDate = latestInvest.operationDate + product.lockPeriodDays`
+- If `available_date_override` is set: that calendar day is the initial unlock date (invest logs are not rewritten)
+- If `productId = null` and no override: not deployed, `availableDate = null`, `isAvailable = false`
+- If `productId != null` but no invest log and no override: `availableDate = null`, `isAvailable = false`
+- If has invest log and no override: `availableDate = latestInvest.operationDate + product.lockPeriodDays`
   - `isAvailable = true` if `today >= availableDate` OR `product.lockPeriodDays === 0`
   - `isAvailable = false` if `today < availableDate`
 

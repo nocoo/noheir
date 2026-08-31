@@ -167,6 +167,10 @@ const commitOperationSchema = z.discriminatedUnion("kind", [
     toProductId: z.string().uuid().nullable(),
     pnlCents: z.number().int().optional().nullable(),
   }),
+  z.object({
+    kind: z.literal("set_available_date"),
+    availableDate: z.string().nullable(), // YYYY-MM-DD or null to clear
+  }),
 ]);
 
 // 元数据补丁。刻意【不含 productId】（只能走 switch_product 操作），
@@ -184,7 +188,7 @@ const commitMetadataSchema = z.object({
 
 export const commitUnitSchema = z.object({
   metadata: commitMetadataSchema.optional(),
-  operations: z.array(commitOperationSchema).max(2).default([]),
+  operations: z.array(commitOperationSchema).max(3).default([]),
   operationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   commitNote: z.string().max(1000).optional().nullable(),  // → contribution_logs.note
   expected: expectedUnitSchema,                            // 见 [Decision B]
@@ -234,6 +238,7 @@ const expectedUnitSchema = z.object({
   startDate:   z.string().nullable(),
   endDate:     z.string().nullable(),         // ← 原设计漏掉，生产 178 行全为 NULL
   note:        z.string().nullable(),
+  availableDateOverride: z.string().nullable(), // optional unlock pin; see 0010
 });
 ```
 
