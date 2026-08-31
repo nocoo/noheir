@@ -9,6 +9,7 @@ import {
   formSnapshotFromExpected,
   isAmountLocked,
   isUnitCodeLocked,
+  resolveTimelineInvestDate,
   type StagedOperation,
   stageOperation,
   type UnitFormSnapshot,
@@ -285,6 +286,44 @@ describe("buildCommitPayload", () => {
     expect(
       buildCommitPayload({ ...base, commitNote: "x", operationDate: "2026-07-20" })?.operationDate,
     ).toBe("2026-07-20");
+  });
+});
+
+describe("resolveTimelineInvestDate", () => {
+  test("override wins and inverts lock days", () => {
+    expect(
+      resolveTimelineInvestDate({
+        unlockOverride: "2026-09-15",
+        lockPeriodDays: 30,
+        stagedSwitch: true,
+        operationDate: "2026-08-01",
+        latestInvestDate: "2026-01-01",
+      }),
+    ).toBe("2026-08-16");
+  });
+
+  test("a staged switch without override uses the commit operation date", () => {
+    expect(
+      resolveTimelineInvestDate({
+        unlockOverride: null,
+        lockPeriodDays: 90,
+        stagedSwitch: true,
+        operationDate: "2026-08-20",
+        latestInvestDate: "2026-01-01",
+      }),
+    ).toBe("2026-08-20");
+  });
+
+  test("clearing an override while switching also uses the operation date", () => {
+    expect(
+      resolveTimelineInvestDate({
+        unlockOverride: null,
+        lockPeriodDays: 90,
+        stagedSwitch: true,
+        operationDate: "2026-08-20",
+        latestInvestDate: "2026-01-01",
+      }),
+    ).toBe("2026-08-20");
   });
 });
 

@@ -37,13 +37,14 @@ import type {
   ExpectedUnitSnapshot,
   SerializedUnit,
 } from "@/domain/types";
-import { addCalendarDays, getLocalDateString } from "@/lib/local-date";
+import { getLocalDateString } from "@/lib/local-date";
 import {
   buildCommitPayload,
   findStagedOperation,
   formSnapshotFromExpected,
   isAmountLocked,
   isUnitCodeLocked,
+  resolveTimelineInvestDate,
   type StagedOperation,
   stageOperation,
   type UnitFormSnapshot,
@@ -240,10 +241,13 @@ export function UnitCommitDialog({
     stagedAvail !== undefined
       ? stagedAvail.availableDate
       : (expected?.availableDateOverride ?? null);
-  const timelineInvestDate =
-    unlockOverride && timelineProduct
-      ? addCalendarDays(unlockOverride, -(timelineProduct.lockPeriodDays ?? 0))
-      : latestInvestDate;
+  const timelineInvestDate = resolveTimelineInvestDate({
+    unlockOverride,
+    lockPeriodDays: timelineProduct?.lockPeriodDays ?? null,
+    stagedSwitch: stagedSwitch !== undefined,
+    operationDate,
+    latestInvestDate,
+  });
 
   return (
     <>

@@ -11,6 +11,7 @@
  */
 
 import type { ExpectedUnitSnapshot, SerializedUnit } from "@/domain/types";
+import { addCalendarDays } from "@/lib/local-date";
 
 export type StagedOperation =
   | { kind: "swap_unit_code"; targetUnitId: string; targetUnitCode: string }
@@ -190,6 +191,21 @@ export function buildCommitPayload(input: BuildCommitPayloadInput): CommitPayloa
   if (operationDate) payload.operationDate = operationDate;
 
   return payload;
+}
+
+/** Invest date the lock Gantt should start from, after staged ops. */
+export function resolveTimelineInvestDate(input: {
+  unlockOverride: string | null;
+  lockPeriodDays: number | null;
+  stagedSwitch: boolean;
+  operationDate: string | null;
+  latestInvestDate: string | null;
+}): string | null {
+  if (input.unlockOverride) {
+    return addCalendarDays(input.unlockOverride, -(input.lockPeriodDays ?? 0));
+  }
+  if (input.stagedSwitch) return input.operationDate || input.latestInvestDate;
+  return input.latestInvestDate;
 }
 
 /** Units eligible as a swap partner: anything but the unit being edited. */
