@@ -8,6 +8,7 @@
  */
 
 import type { DomainProduct } from "@/domain/types";
+import { addCalendarDays, getLocalDateString } from "@/lib/local-date";
 
 export interface UnlockPhaseUnit {
   status: string;
@@ -36,18 +37,10 @@ export function isPastInitialUnlock(
   today: Date = new Date(),
   availableDateOverride?: string | null,
 ): boolean {
-  const unlockDay = availableDateOverride || latestInvestDate;
-  if (!unlockDay) return false;
-  const [y, m, d] = unlockDay.split("-").map(Number);
-  if (!y || !m || !d) return false;
-  const unlock = new Date(y, m - 1, d);
-  if (!availableDateOverride) {
-    unlock.setDate(unlock.getDate() + lockPeriodDays);
-  }
-  unlock.setHours(0, 0, 0, 0);
-  const t = new Date(today);
-  t.setHours(0, 0, 0, 0);
-  return t.getTime() >= unlock.getTime();
+  const startDay = (availableDateOverride || latestInvestDate)?.slice(0, 10);
+  if (!startDay || !/^\d{4}-\d{2}-\d{2}$/.test(startDay)) return false;
+  const unlockDay = availableDateOverride ? startDay : addCalendarDays(startDay, lockPeriodDays);
+  return getLocalDateString(today) >= unlockDay;
 }
 
 export function computeUnlockPhase(

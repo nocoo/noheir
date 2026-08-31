@@ -18,13 +18,13 @@ interface InvestmentTimelineProps {
 
 function addDays(date: Date, days: number): Date {
   const result = new Date(date);
-  result.setDate(result.getDate() + days);
+  result.setUTCDate(result.getUTCDate() + days);
   return result;
 }
 
 function formatDate(date: Date): string {
-  const m = date.getMonth() + 1;
-  const d = date.getDate();
+  const m = date.getUTCMonth() + 1;
+  const d = date.getUTCDate();
   return `${m}/${d}`;
 }
 
@@ -37,9 +37,11 @@ export function InvestmentTimeline({
   cycleDays,
 }: InvestmentTimelineProps) {
   const { segments, today, timelineStart, timelineEnd } = useMemo(() => {
-    const investDate = new Date(latestInvestDate);
+    const investDate = new Date(`${latestInvestDate.slice(0, 10)}T00:00:00Z`);
     const unlockDate = addDays(investDate, lockPeriodDays);
-    const now = new Date();
+    const now = new Date(
+      `${new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Shanghai" })}T00:00:00Z`,
+    );
     const segs: Segment[] = [];
 
     segs.push({
