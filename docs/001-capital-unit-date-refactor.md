@@ -79,7 +79,7 @@ async getLatestInvestLogs(userId: string, unitIds: string[]): Promise<Map<string
 // Enhanced list/get methods return:
 interface UnitWithAvailability {
   ...existingFields,
-  availableDate: string | null;      // Computed: latestInvest.operationDate + product.lockPeriodDays
+  availableDate: string | null;      // Override unlock, else latestInvest + lock, then cyclic window
   isAvailable: boolean;              // See truth table below
   daysUntilAvailable: number | null; // Positive = days until available; Negative = days since available; null = no data
   latestInvestDate: string | null;   // For reference
@@ -146,8 +146,8 @@ Frontend receives pre-computed fields from API, no longer derives from `endDate`
 
 **Approach**: New data only. No automatic migration of existing `endDate`.
 
-- New logic computes `availableDate` from `contributionLogs`
-- Units without invest logs will show `availableDate = null`
+- New logic computes `availableDate` from `contributionLogs`, or from `available_date_override` when set
+- Units without invest logs and without an override show `availableDate = null`
 - User manually adds invest logs to populate correct data over time
 
 **Legacy `endDate` handling**:
@@ -193,7 +193,7 @@ Frontend receives pre-computed fields from API, no longer derives from `endDate`
 
 1. **productId nullable**: Yes, units can exist without a product (not deployed).
 2. **Data migration**: New data only. Existing `endDate` preserved but ignored. User adds invest logs manually.
-3. **No invest log**: `availableDate = null`. User will manually add invest logs.
+3. **No invest log**: `availableDate = null` unless `available_date_override` is set. User can pin a date or add invest logs.
 4. **Archive state machine**: 
    - Any → `已归档`: auto-set `endDate` to today, user can override
    - `已归档` → Any: clear `endDate` to null
