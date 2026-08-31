@@ -143,12 +143,12 @@ ALTER TABLE contribution_logs ADD COLUMN pnl_cents INTEGER;
 
 ### 语义
 
-| 列 | 含义 | 番号对换 | 切换产品 | 元数据修改 |
-|---|---|---|---|---|
-| `amount_cents` | 本金流动 | `0` | `-amt` / `+amt` | `0`（D6） |
-| `pnl_cents` | 已实现损益 | `NULL` | 挂在 `withdraw` 行 | `NULL` |
-| `operation_type` | 复用现有枚举 | `adjust` | `withdraw`+`invest` | `adjust` |
-| `operation_date` | 用户指定，默认今天 | 用户选 | 用户选 | 用户选 |
+| 列 | 含义 | 番号对换 | 切换产品 | 校正可用日期 | 元数据修改 |
+|---|---|---|---|---|---|
+| `amount_cents` | 本金流动 | `0` | `-amt` / `+amt` | `0` | `0`（D6） |
+| `pnl_cents` | 已实现损益 | `NULL` | 挂在 `withdraw` 行 | `NULL` | `NULL` |
+| `operation_type` | 复用现有枚举 | `adjust` | `withdraw`+`invest` | `adjust` | `adjust` |
+| `operation_date` | 用户指定，默认今天 | 用户选 | 用户选 | 用户选 | 用户选 |
 
 **不新增 `swap` 枚举值**：`CONTRIBUTION_OPERATION_TYPES`（`worker/db/enums.ts`）被 `createContributionLogSchema`、`searchContributionLogsSchema`、`DomainContributionLog`（`src/domain/types.ts:141`）、`/capital-logs` 筛选器、MCP 工具共用，加值的爆炸半径远大于收益。语义写进 `note`。
 
@@ -295,6 +295,7 @@ D1 的 `batch()` 是真事务（官方文档："If a statement in the sequence f
 ```
 [0] UPDATE capital_units
       SET unit_code='CU-B', <metadata>, product_id=?,      -- 产品切换同属本行
+          available_date_override=?,
           end_date=<resolveEndDate(...)>,
           commit_token=<本次请求的随机 UUID>, updated_at=?
       WHERE id=A AND user_id=?

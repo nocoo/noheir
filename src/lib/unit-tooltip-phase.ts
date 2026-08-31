@@ -26,7 +26,7 @@ export type UnlockPhase =
   | { kind: "unknown"; ratio: null };
 
 /**
- * True iff `today` has passed `latestInvestDate + lockPeriodDays`.
+ * True iff `today` has passed the initial unlock day (override, else invest+lock).
  * Used to tell an initial lock period apart from a subsequent cyclic
  * closed window, which need different denominators for a progress bar.
  */

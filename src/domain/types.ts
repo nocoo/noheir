@@ -126,7 +126,7 @@ export interface DomainUnit {
 }
 
 export interface UnitDisplayInfo extends DomainUnit {
-  /** Computed: latestInvest.operationDate + product.lockPeriodDays, or override */
+  /** Computed unlock/window date: override or invest+lock, then cyclic window */
   availableDate: string | null;
   availableDateOverride: string | null;
   /** Whether the unit is available (today >= availableDate) */

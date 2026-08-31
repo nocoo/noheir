@@ -763,8 +763,8 @@ app.post("/api/units", async (c) => {
 
   const row = await repos.units.create(userId, createData);
 
-  // Availability is derived from the latest invest log, never from start_date
-  // (worker/lib/availability.ts:23). Without this log a unit created with a
+  // Availability is derived from the latest invest log (or an override), never
+  // from start_date. Without an invest log or override, a unit created with a
   // product already attached renders as "状态未知" forever.
   if (row.status === "已成立" && row.productId) {
     const product = await repos.products.findById(userId, row.productId);
