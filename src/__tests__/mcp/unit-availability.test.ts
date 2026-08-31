@@ -4,6 +4,7 @@
  * Tests enrichWithAvailability function which calculates availability status.
  */
 
+import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   type ContributionLog,
@@ -49,6 +50,16 @@ describe("investLogPredicate", () => {
   it("always excludes soft-deleted invest rows", () => {
     expect(investLogPredicate()).toBe("operation_type = 'invest' AND deleted_at IS NULL");
     expect(investLogPredicate("cl")).toBe("cl.operation_type = 'invest' AND cl.deleted_at IS NULL");
+  });
+
+  it("is interpolated at every MCP latest-invest query site", () => {
+    const unitSrc = readFileSync("src/lib/mcp/tools/unit.ts", "utf8");
+    const portfolioSrc = readFileSync("src/lib/mcp/tools/portfolio.ts", "utf8");
+    const call = (alias: string) => `investLogPredicate(${alias})`;
+    expect(unitSrc.split(call("")).length).toBeGreaterThan(2);
+    expect(unitSrc.split(call('"cl"')).length).toBeGreaterThan(1);
+    expect(portfolioSrc.split(call("")).length).toBeGreaterThan(1);
+    expect(portfolioSrc.split(call('"cl"')).length).toBeGreaterThan(1);
   });
 });
 
