@@ -357,6 +357,7 @@ export class WorkerDbClient {
       logs: unknown[];
       expected: ExpectedUnitSnapshot;
       currentProductName: string | null;
+      availableDate: string | null;
     }>("GET", `/api/units/${unitId}/logs`, userId);
   }
 

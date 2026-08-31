@@ -114,6 +114,7 @@ export async function listUnitContributionLogs(unitId: string): Promise<
     logs: DomainContributionLog[];
     expected: ExpectedUnitSnapshot;
     currentProductName: string | null;
+    availableDate: string | null;
   }>
 > {
   try {
@@ -125,6 +126,7 @@ export async function listUnitContributionLogs(unitId: string): Promise<
         logs: result.logs.map((raw) => toDomainContributionLog(raw as Record<string, unknown>)),
         expected: result.expected,
         currentProductName: result.currentProductName,
+        availableDate: result.availableDate ?? null,
       },
     };
   } catch (err) {

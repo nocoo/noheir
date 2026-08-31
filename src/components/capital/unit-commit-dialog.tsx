@@ -98,6 +98,7 @@ export function UnitCommitDialog({
   // Resolved server-side alongside `expected`, so the name always belongs to the
   // product id the guard will compare against.
   const [currentProductName, setCurrentProductName] = useState<string | null>(null);
+  const [snapshotAvailableDate, setSnapshotAvailableDate] = useState<string | null>(null);
   const [initialForm, setInitialForm] = useState<UnitFormSnapshot | null>(null);
 
   const [unitCode, setUnitCode] = useState("");
@@ -140,6 +141,7 @@ export function UnitCommitDialog({
     if (result.success) {
       setLogs(result.data.logs);
       setCurrentProductName(result.data.currentProductName);
+      setSnapshotAvailableDate(result.data.availableDate);
       applySnapshot(result.data.expected);
     } else {
       toast.error(result.error);
@@ -220,6 +222,13 @@ export function UnitCommitDialog({
   };
 
   const selectedProduct = products.find((p) => p.id === expected?.productId) ?? null;
+  const stagedSwitch = findStagedOperation(operations, "switch_product");
+  const timelineProduct =
+    stagedSwitch === undefined
+      ? selectedProduct
+      : stagedSwitch.toProductId
+        ? (products.find((p) => p.id === stagedSwitch.toProductId) ?? null)
+        : null;
   // Derive the invest date from the logs we just fetched rather than the page
   // prop: the product comes from the fresh snapshot, so pairing it with a stale
   // date could render a lock window that never existed.
@@ -232,8 +241,8 @@ export function UnitCommitDialog({
       ? stagedAvail.availableDate
       : (expected?.availableDateOverride ?? null);
   const timelineInvestDate =
-    unlockOverride && selectedProduct
-      ? addCalendarDays(unlockOverride, -(selectedProduct.lockPeriodDays ?? 0))
+    unlockOverride && timelineProduct
+      ? addCalendarDays(unlockOverride, -(timelineProduct.lockPeriodDays ?? 0))
       : latestInvestDate;
 
   return (
@@ -395,21 +404,21 @@ export function UnitCommitDialog({
                 operations={operations}
                 onStage={(op) => setOperations((prev) => stageOperation(prev, op))}
                 onUnstage={(kind) => setOperations((prev) => unstageOperation(prev, kind))}
-                currentAvailableDate={unit.availableDate ?? null}
+                currentAvailableDate={snapshotAvailableDate}
                 currentOverride={expected?.availableDateOverride ?? null}
               />
 
-              {selectedProduct &&
+              {timelineProduct &&
                 timelineInvestDate &&
-                selectedProduct.lockPeriodDays != null &&
-                selectedProduct.lockPeriodDays > 0 && (
+                timelineProduct.lockPeriodDays != null &&
+                timelineProduct.lockPeriodDays > 0 && (
                   <div className="space-y-2">
                     <SectionTitle icon={<Info className="size-3" />} label="投资时间线" />
                     <InvestmentTimeline
                       latestInvestDate={timelineInvestDate}
-                      lockPeriodDays={selectedProduct.lockPeriodDays}
-                      openDays={selectedProduct.openDays}
-                      cycleDays={selectedProduct.cycleDays}
+                      lockPeriodDays={timelineProduct.lockPeriodDays}
+                      openDays={timelineProduct.openDays}
+                      cycleDays={timelineProduct.cycleDays}
                     />
                   </div>
                 )}

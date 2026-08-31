@@ -289,7 +289,7 @@ export function UnitOperationsPanel({
                 onStage({ kind: "set_available_date", availableDate: pendingAvailableDate });
                 setAvailOpen(false);
               }}
-              disabled={!pendingAvailableDate}
+              disabled={!pendingAvailableDate || pendingAvailableDate === (currentOverride ?? "")}
             >
               确认覆盖
             </Button>

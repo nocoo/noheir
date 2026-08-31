@@ -214,6 +214,15 @@ describe("UnitOperationsPanel", () => {
     });
   });
 
+  test("does not confirm an unchanged override", async () => {
+    const user = userEvent.setup();
+    const { onStage } = setup({ currentOverride: "2026-09-15" });
+
+    await user.click(screen.getByRole("button", { name: "编辑可用日期" }));
+    expect(screen.getByRole("button", { name: "确认覆盖" })).toBeDisabled();
+    expect(onStage).not.toHaveBeenCalled();
+  });
+
   test("clearing an override stages a null date", async () => {
     const user = userEvent.setup();
     const { onStage } = setup({ currentOverride: "2026-09-15" });
