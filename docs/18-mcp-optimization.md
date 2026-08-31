@@ -255,7 +255,7 @@ LIMITATIONS:
 - Max 200 results per call; use offset for pagination
 - Availability fields (`availableDate`, `isAvailable`, `daysUntilAvailable`) only available with `fields="standard"` or `"full"`
 - `available_within_days` filter requires availability data; if `fields="minimal"`, it auto-upgrades to `"standard"`
-- Availability calculation requires both: (1) unit linked to product with `lockPeriodDays`, and (2) at least one invest log in contribution_logs
+- Availability calculation uses `available_date_override` when set; otherwise needs a product lock period and an invest log
 
 PARAMETERS:
 - fields: Controls response size and data. "minimal" (~100B/unit) for basic info + productId, "standard" (~180B/unit) adds computed availability, "full" (~450B/unit) includes nested product and all metadata

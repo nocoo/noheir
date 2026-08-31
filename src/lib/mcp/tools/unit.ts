@@ -2,7 +2,7 @@
  * MCP Unit Tools
  *
  * CRUD operations for capital units (理财单元).
- * Includes availability enrichment based on product lock periods.
+ * Includes availability enrichment (override or product lock period).
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -295,7 +295,7 @@ DO NOT USE FOR:
 RETURNS:
 - Full unit details including complete ID
 - Product relation info (name, lock period)
-- Availability status (based on product lock period)`,
+- Availability status (override or product lock period)`,
     {
       id: z.string().describe("Unit ID (full UUID, 8-char prefix) or unit_code (e.g., C01, A10)"),
     },
