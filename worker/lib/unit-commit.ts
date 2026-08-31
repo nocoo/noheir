@@ -181,7 +181,8 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
   const swapOp = operations.find((o) => o.kind === "swap_unit_code");
   const switchOp = operations.find((o) => o.kind === "switch_product");
   const availOp = operations.find(
-    (o) => o.kind === "set_available_date" && o.availableDate !== expected.availableDateOverride,
+    (o): o is Extract<CommitOperation, { kind: "set_available_date" }> =>
+      o.kind === "set_available_date" && o.availableDate !== expected.availableDateOverride,
   );
 
   const statements: Statement[] = [];

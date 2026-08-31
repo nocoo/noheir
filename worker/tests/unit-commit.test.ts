@@ -439,7 +439,11 @@ describe("buildCommitStatements — set_available_date", () => {
         operations: [{ kind: "set_available_date", availableDate: null }],
       }),
     );
-    expect(stmts[0]?.params).toContain(null);
+    const setSql = (stmts[0]?.sql ?? "").split(" WHERE ")[0] ?? "";
+    const setCols = [...setSql.matchAll(/(\w+) = \?/g)].map((m) => m[1]);
+    const overrideIdx = setCols.indexOf("available_date_override");
+    expect(overrideIdx).toBeGreaterThanOrEqual(0);
+    expect(stmts[0]?.params[overrideIdx]).toBeNull();
     expect(stmts[1]?.params[10]).toBe("可用日期覆盖: 2026-09-15→自动");
   });
 });
