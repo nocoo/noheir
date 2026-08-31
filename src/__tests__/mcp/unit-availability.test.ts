@@ -121,13 +121,14 @@ describe("enrichWithAvailability", () => {
   });
 
   describe("availability calculation", () => {
-    it("should return unknown when no product lock period", () => {
+    it("treats a null lock period as 0 days, matching the Worker", () => {
+      mockDate("2026-04-05T12:00:00Z");
       const unit = createUnit({ product_lock_period_days: null });
-      const log = createInvestLog();
+      const log = createInvestLog({ operation_date: "2026-04-01" });
       const result = enrichWithAvailability(unit, log);
 
-      expect(result.days_left).toBeUndefined();
-      expect(result.avail).toBeUndefined();
+      expect(result.days_left).toBe(0);
+      expect(result.avail).toBe("a");
     });
 
     it("should return unknown when no invest log", () => {
@@ -144,11 +145,26 @@ describe("enrichWithAvailability", () => {
         product_lock_period_days: 30,
         available_date_override: "2026-06-01",
       });
-      const log = createInvestLog({ operation_date: "2026-04-01" });
+      // Invest+lock would already be available (unlock 2026-01-31).
+      const log = createInvestLog({ operation_date: "2026-01-01" });
       const result = enrichWithAvailability(unit, log);
 
       expect(result.avail).toBe("l");
-      expect(result.days_left).toBeGreaterThan(0);
+      expect(result.days_left).toBe(57);
+    });
+
+    it("applies cyclic closed windows the same way the Worker does", () => {
+      mockDate("2026-04-15T12:00:00Z");
+      const unit = createUnit({
+        product_lock_period_days: 10,
+        product_open_days: 3,
+        product_cycle_days: 30,
+      });
+      const log = createInvestLog({ operation_date: "2026-03-20" });
+      const result = enrichWithAvailability(unit, log);
+
+      expect(result.avail).toBe("l");
+      expect(result.days_left).toBe(14);
     });
 
     it("should return available when lock period expired", () => {

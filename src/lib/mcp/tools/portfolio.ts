@@ -92,7 +92,8 @@ RETURNS:
         SELECT u.id, u.unit_code, u.amount_cents, u.currency, u.status,
                u.strategy, u.tactics, u.product_id, u.start_date, u.end_date, u.note,
                u.available_date_override, u.created_at, u.updated_at,
-               p.name as product_name, p.lock_period_days as product_lock_period_days
+               p.name as product_name, p.lock_period_days as product_lock_period_days,
+               p.open_days as product_open_days, p.cycle_days as product_cycle_days
         FROM capital_units u
         LEFT JOIN financial_products p ON u.product_id = p.id
         WHERE ${conditions.join(" AND ")}

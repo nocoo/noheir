@@ -7,6 +7,7 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { computeAvailability } from "../../../../worker/lib/availability";
 import { compact, currencyCode, round2, shortId } from "./compact";
 import { resolveProduct } from "./resolver";
 import type { ToolContext } from "./types";
@@ -35,6 +36,8 @@ interface Unit {
 export interface UnitWithProduct extends Unit {
   product_name: string | null;
   product_lock_period_days: number | null;
+  product_open_days?: number | null;
+  product_cycle_days?: number | null;
   available_date_override?: string | null;
 }
 
@@ -74,25 +77,27 @@ export function enrichWithAvailability(
   let daysToAvailable: number | null = null;
   let availabilityStatus: "available" | "locked" | "unknown" = "unknown";
 
-  const override = unit.available_date_override;
-  if (override || (unit.product_lock_period_days !== null && latestInvestLog)) {
-    const unlockDate = override
-      ? new Date(override)
-      : (() => {
-          const investDate = new Date(latestInvestLog?.operation_date ?? "");
-          const d = new Date(investDate);
-          d.setDate(d.getDate() + (unit.product_lock_period_days ?? 0));
-          return d;
-        })();
+  const product = unit.product_id
+    ? {
+        lockPeriodDays: unit.product_lock_period_days,
+        openDays: unit.product_open_days ?? null,
+        cycleDays: unit.product_cycle_days ?? null,
+      }
+    : null;
 
-    const now = new Date();
-    const diffMs = unlockDate.getTime() - now.getTime();
-    daysToAvailable = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  const availability = computeAvailability(
+    latestInvestLog ? { operationDate: latestInvestLog.operation_date } : null,
+    product,
+    new Date(),
+    unit.available_date_override ?? null,
+  );
 
-    if (daysToAvailable <= 0) {
+  if (availability.daysUntilAvailable !== null) {
+    if (availability.isAvailable) {
       daysToAvailable = 0;
       availabilityStatus = "available";
     } else {
+      daysToAvailable = availability.daysUntilAvailable;
       availabilityStatus = "locked";
     }
   }
@@ -203,7 +208,8 @@ LIMITATIONS:
         SELECT u.id, u.unit_code, u.amount_cents, u.currency, u.status,
                u.strategy, u.tactics, u.product_id, u.start_date, u.end_date, u.note,
                u.available_date_override, u.created_at, u.updated_at,
-               p.name as product_name, p.lock_period_days as product_lock_period_days
+               p.name as product_name, p.lock_period_days as product_lock_period_days,
+               p.open_days as product_open_days, p.cycle_days as product_cycle_days
         FROM capital_units u
         LEFT JOIN financial_products p ON u.product_id = p.id
         WHERE ${conditions.join(" AND ")}
@@ -311,7 +317,8 @@ RETURNS:
         SELECT u.id, u.unit_code, u.amount_cents, u.currency, u.status,
                u.strategy, u.tactics, u.product_id, u.start_date, u.end_date, u.note,
                u.available_date_override, u.created_at, u.updated_at,
-               p.name as product_name, p.lock_period_days as product_lock_period_days
+               p.name as product_name, p.lock_period_days as product_lock_period_days,
+               p.open_days as product_open_days, p.cycle_days as product_cycle_days
         FROM capital_units u
         LEFT JOIN financial_products p ON u.product_id = p.id
         WHERE ${idCondition} AND u.user_id = ?
@@ -627,7 +634,8 @@ RETURNS:
         SELECT u.id, u.unit_code, u.amount_cents, u.currency, u.status,
                u.strategy, u.tactics, u.product_id, u.start_date, u.end_date, u.note,
                u.available_date_override, u.created_at, u.updated_at,
-               p.name as product_name, p.lock_period_days as product_lock_period_days
+               p.name as product_name, p.lock_period_days as product_lock_period_days,
+               p.open_days as product_open_days, p.cycle_days as product_cycle_days
         FROM capital_units u
         LEFT JOIN financial_products p ON u.product_id = p.id
         WHERE u.id = ? AND u.user_id = ?
