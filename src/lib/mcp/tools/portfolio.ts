@@ -134,10 +134,10 @@ RETURNS:
           INNER JOIN (
             SELECT unit_id, MAX(operation_date) as max_date
             FROM contribution_logs
-            WHERE unit_id IN (${placeholders}) AND operation_type = 'invest'
+            WHERE unit_id IN (${placeholders}) AND operation_type = 'invest' AND deleted_at IS NULL
             GROUP BY unit_id
           ) latest ON cl.unit_id = latest.unit_id AND cl.operation_date = latest.max_date
-          WHERE cl.operation_type = 'invest'
+          WHERE cl.operation_type = 'invest' AND cl.deleted_at IS NULL
         `;
 
         const logsResult = await db.query<ContributionLog>(logsSql, unitIds);
