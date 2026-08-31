@@ -16,6 +16,22 @@ import {
   UNIT_STATUSES,
 } from "./enums";
 
+/** YYYY-MM-DD that exists on the Gregorian calendar (rejects 2026-02-31). */
+export function isRealCalendarDay(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime())) return false;
+  const yyyy = String(parsed.getUTCFullYear()).padStart(4, "0");
+  const mm = String(parsed.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(parsed.getUTCDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}` === value;
+}
+
+const calendarDay = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "must be YYYY-MM-DD")
+  .refine(isRealCalendarDay, { message: "must be a real calendar day" });
+
 // ── Products ──
 
 export const createProductSchema = z
@@ -202,10 +218,7 @@ const commitOperationSchema = z.discriminatedUnion("kind", [
   }),
   z.object({
     kind: z.literal("set_available_date"),
-    availableDate: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, "availableDate must be YYYY-MM-DD")
-      .nullable(),
+    availableDate: calendarDay.nullable(),
   }),
 ]);
 

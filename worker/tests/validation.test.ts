@@ -627,6 +627,21 @@ describe("commitUnitSchema", () => {
     expect(r.success).toBe(false);
   });
 
+  test("rejects a calendar-impossible availableDate", () => {
+    expect(
+      commitUnitSchema.safeParse({
+        expected,
+        operations: [{ kind: "set_available_date", availableDate: "2026-02-31" }],
+      }).success,
+    ).toBe(false);
+    expect(
+      commitUnitSchema.safeParse({
+        expected,
+        operations: [{ kind: "set_available_date", availableDate: "2026-13-01" }],
+      }).success,
+    ).toBe(false);
+  });
+
   test("rejects malformed operationDate", () => {
     const r = commitUnitSchema.safeParse({
       expected,
