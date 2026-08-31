@@ -14,6 +14,7 @@ export interface UnlockPhaseUnit {
   daysUntilAvailable?: number | null;
   daysUntilLocked?: number | null;
   latestInvestDate?: string | null;
+  availableDateOverride?: string | null;
 }
 
 export type UnlockPhase =
@@ -33,12 +34,16 @@ export function isPastInitialUnlock(
   latestInvestDate: string | null | undefined,
   lockPeriodDays: number,
   today: Date = new Date(),
+  availableDateOverride?: string | null,
 ): boolean {
-  if (!latestInvestDate) return false;
-  const [y, m, d] = latestInvestDate.split("-").map(Number);
+  const unlockDay = availableDateOverride || latestInvestDate;
+  if (!unlockDay) return false;
+  const [y, m, d] = unlockDay.split("-").map(Number);
   if (!y || !m || !d) return false;
   const unlock = new Date(y, m - 1, d);
-  unlock.setDate(unlock.getDate() + lockPeriodDays);
+  if (!availableDateOverride) {
+    unlock.setDate(unlock.getDate() + lockPeriodDays);
+  }
   unlock.setHours(0, 0, 0, 0);
   const t = new Date(today);
   t.setHours(0, 0, 0, 0);
@@ -63,7 +68,8 @@ export function computeUnlockPhase(
     const closedWindow =
       cycleDays != null && openDays != null && cycleDays > openDays ? cycleDays - openDays : null;
     const pastInitial =
-      lockPeriod != null && isPastInitialUnlock(unit.latestInvestDate, lockPeriod, today);
+      lockPeriod != null &&
+      isPastInitialUnlock(unit.latestInvestDate, lockPeriod, today, unit.availableDateOverride);
     const denom = pastInitial && closedWindow != null ? closedWindow : (lockPeriod ?? null);
     const ratio = denom && denom > 0 ? Math.max(0, Math.min(1, 1 - d / denom)) : null;
     return { kind: "locked", daysLeft: d, ratio };

@@ -25,6 +25,7 @@ const makeUnit = (overrides: Partial<UnitDisplayInfo> = {}): UnitDisplayInfo => 
   endDate: null,
   note: null,
   availableDate: null,
+  availableDateOverride: null,
   isAvailable: false,
   daysUntilAvailable: null,
   daysUntilLocked: null,

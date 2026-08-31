@@ -37,6 +37,7 @@ export default async function FundsPage() {
     endDate: u.endDate,
     note: u.note,
     availableDate: u.availableDate,
+    availableDateOverride: u.availableDateOverride,
     daysUntilAvailable: u.daysUntilAvailable,
     daysUntilLocked: u.daysUntilLocked,
     isAvailable: u.isAvailable,

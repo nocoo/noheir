@@ -126,8 +126,9 @@ export interface DomainUnit {
 }
 
 export interface UnitDisplayInfo extends DomainUnit {
-  /** Computed: latestInvest.operationDate + product.lockPeriodDays */
+  /** Computed: latestInvest.operationDate + product.lockPeriodDays, or override */
   availableDate: string | null;
+  availableDateOverride: string | null;
   /** Whether the unit is available (today >= availableDate) */
   isAvailable: boolean;
   /** Days until available (positive = locked, 0 or negative = available since N days) */
@@ -219,6 +220,7 @@ export interface SerializedUnit {
   endDate: string | null;
   note: string | null;
   availableDate?: string | null;
+  availableDateOverride?: string | null;
   daysUntilAvailable?: number | null;
   daysUntilLocked?: number | null;
   isAvailable?: boolean;

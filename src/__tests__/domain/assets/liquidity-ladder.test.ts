@@ -37,6 +37,7 @@ const makeUnit = (overrides: Partial<UnitDisplayInfo> = {}): UnitDisplayInfo => 
   note: null,
   product: makeProduct(),
   availableDate: null,
+  availableDateOverride: null,
   isAvailable: false,
   daysUntilAvailable: null,
   daysUntilLocked: null,

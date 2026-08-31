@@ -59,6 +59,8 @@ export function toUnitDisplayInfo(raw: Record<string, unknown>): UnitDisplayInfo
   return {
     ...unit,
     availableDate: raw.availableDate != null ? String(raw.availableDate) : null,
+    availableDateOverride:
+      raw.availableDateOverride != null ? String(raw.availableDateOverride) : null,
     isAvailable: Boolean(raw.isAvailable),
     daysUntilAvailable: raw.daysUntilAvailable != null ? Number(raw.daysUntilAvailable) : null,
     daysUntilLocked: raw.daysUntilLocked != null ? Number(raw.daysUntilLocked) : null,

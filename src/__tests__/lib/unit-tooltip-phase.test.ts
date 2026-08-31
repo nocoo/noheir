@@ -33,6 +33,15 @@ describe("isPastInitialUnlock", () => {
     expect(isPastInitialUnlock("2026-07-20", 10, fixedDate("2026-08-15"))).toBe(true);
   });
 
+  it("uses the override as the unlock date when set", () => {
+    expect(isPastInitialUnlock("2026-07-20", 365, fixedDate("2026-07-25"), "2026-07-20")).toBe(
+      true,
+    );
+    expect(isPastInitialUnlock("2026-07-20", 365, fixedDate("2026-07-25"), "2026-08-01")).toBe(
+      false,
+    );
+  });
+
   it("returns false for missing or malformed dates", () => {
     expect(isPastInitialUnlock(null, 10, fixedDate("2026-07-30"))).toBe(false);
     expect(isPastInitialUnlock(undefined, 10, fixedDate("2026-07-30"))).toBe(false);
@@ -99,6 +108,23 @@ describe("computeUnlockPhase", () => {
     // 1 - 27/365 ≈ 0.926
     expect(phase.ratio).toBeGreaterThan(0.9);
     expect(phase.ratio).toBeLessThan(0.95);
+  });
+
+  it("uses the closed-window denominator when an override is already unlocked", () => {
+    const p = product({ lockPeriodDays: 365, openDays: 3, cycleDays: 30 });
+    const phase = computeUnlockPhase(
+      {
+        status: "已成立",
+        daysUntilAvailable: 14,
+        latestInvestDate: "2026-06-01",
+        availableDateOverride: "2026-03-30",
+      },
+      p,
+      fixedDate("2026-04-15"),
+    );
+    expect(phase.kind).toBe("locked");
+    if (phase.kind !== "locked") return;
+    expect(phase.ratio).toBeCloseTo(1 - 14 / 27, 5);
   });
 
   it("computes openWindow ratio from openDays", () => {
