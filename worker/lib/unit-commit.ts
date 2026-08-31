@@ -180,7 +180,9 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
 
   const swapOp = operations.find((o) => o.kind === "swap_unit_code");
   const switchOp = operations.find((o) => o.kind === "switch_product");
-  const availOp = operations.find((o) => o.kind === "set_available_date");
+  const availOp = operations.find(
+    (o) => o.kind === "set_available_date" && o.availableDate !== expected.availableDateOverride,
+  );
 
   const statements: Statement[] = [];
 
@@ -364,10 +366,12 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
   if (availOp) {
     const from = expected.availableDateOverride ?? "自动";
     const to = availOp.availableDate ?? "自动";
+    const logProductId = switchOp ? switchOp.toProductId : expected.productId;
+    const logProductName = switchOp ? (toProduct?.name ?? null) : (fromProduct?.name ?? null);
     pushLog({
       unitId,
-      productId: expected.productId,
-      productName: fromProduct?.name ?? null,
+      productId: logProductId,
+      productName: logProductName,
       operationType: "adjust",
       amountCents: 0,
       pnlCents: null,

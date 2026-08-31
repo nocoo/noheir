@@ -989,10 +989,16 @@ app.get("/api/units/:id/logs", async (c) => {
   const currentProduct = unit.productId
     ? await repos.products.findById(userId, unit.productId)
     : null;
+  const latestInvestLogs = await repos.contributionLogs.getLatestInvestLogs(userId, [id]);
+  const [enriched] = repos.units.enrichWithAvailability(
+    [{ ...unit, product: currentProduct }],
+    latestInvestLogs,
+  );
 
   return c.json({
     logs,
     currentProductName: currentProduct?.name ?? null,
+    availableDate: enriched?.availableDate ?? null,
     expected: {
       unitCode: unit.unitCode,
       amountCents: unit.amountCents,
@@ -1026,7 +1032,14 @@ app.post("/api/units/:id/commit", async (c) => {
     return c.json({ error: "Not found" }, 404);
   }
 
-  const { metadata, operations, commitNote, expected } = parsed.data;
+  const { metadata, commitNote, expected } = parsed.data;
+  const operations = parsed.data.operations.filter((o) => {
+    if (o.kind !== "set_available_date") return true;
+    return o.availableDate !== (expected.availableDateOverride ?? null);
+  });
+  if (metadata === undefined && operations.length === 0 && !(commitNote ?? "").trim()) {
+    return c.json({ error: "available date is unchanged" }, 400);
+  }
   const operationDate = parsed.data.operationDate ?? getLocalDateString();
 
   // ── Referential checks (Zod cannot query the DB) ──

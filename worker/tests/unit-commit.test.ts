@@ -404,6 +404,34 @@ describe("buildCommitStatements — set_available_date", () => {
     expect(stmts[1]?.params[10]).toBe("可用日期覆盖: 自动→2026-09-15");
   });
 
+  test("stamps the override log on the product after a switch", () => {
+    const stmts = buildCommitStatements(
+      makeInput({
+        operations: [
+          { kind: "switch_product", toProductId: "prod-b" },
+          { kind: "set_available_date", availableDate: "2026-09-15" },
+        ],
+        fromProduct: { id: "prod-a", name: "招行朝朝盈" },
+        toProduct: { id: "prod-b", name: "工行添利" },
+      }),
+    );
+    const availLog = stmts.find((s) => String(s.params[10]).includes("可用日期覆盖"));
+    expect(availLog?.params[3]).toBe("prod-b");
+    expect(availLog?.params[4]).toBe("工行添利");
+  });
+
+  test("skips a no-op override that matches the current value", () => {
+    const stmts = buildCommitStatements(
+      makeInput({
+        expected: { ...expected, availableDateOverride: "2026-09-15" },
+        operations: [{ kind: "set_available_date", availableDate: "2026-09-15" }],
+      }),
+    );
+    const setClause = (stmts[0]?.sql ?? "").split(" WHERE ")[0] ?? "";
+    expect(setClause).not.toContain("available_date_override");
+    expect(stmts.every((s) => !s.sql.includes("INSERT"))).toBe(true);
+  });
+
   test("clearing the override logs 自动 as the target", () => {
     const stmts = buildCommitStatements(
       makeInput({
