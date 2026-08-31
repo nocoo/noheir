@@ -60,8 +60,8 @@ Current implementation incorrectly uses `capitalUnits.endDate` as "product matur
 
 ## Changes Required
 
-### 1. Schema: No Change
-Keep `capitalUnits.endDate` as-is, just change its semantic usage.
+### 1. Schema
+Keep `capitalUnits.endDate` as archive date. Availability stays computed, except for the optional pin `capital_units.available_date_override` (migration 0010): when set, that calendar day is the initial unlock date.
 
 ### 2. Backend: Add `availableDate` Computation
 

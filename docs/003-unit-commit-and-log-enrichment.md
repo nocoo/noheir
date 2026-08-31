@@ -169,7 +169,7 @@ const commitOperationSchema = z.discriminatedUnion("kind", [
   }),
   z.object({
     kind: z.literal("set_available_date"),
-    availableDate: z.string().nullable(), // YYYY-MM-DD or null to clear
+    availableDate: z.string().nullable(), // real YYYY-MM-DD calendar day, or null to clear
   }),
 ]);
 
