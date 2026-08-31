@@ -110,6 +110,23 @@ describe("computeUnlockPhase", () => {
     expect(phase.ratio).toBeLessThan(0.95);
   });
 
+  it("uses closed-window progress when lockPeriodDays is null but override is past", () => {
+    const p = product({ lockPeriodDays: null, openDays: 3, cycleDays: 30 });
+    const phase = computeUnlockPhase(
+      {
+        status: "已成立",
+        daysUntilAvailable: 14,
+        latestInvestDate: "2026-06-01",
+        availableDateOverride: "2026-03-30",
+      },
+      p,
+      fixedDate("2026-04-15"),
+    );
+    expect(phase.kind).toBe("locked");
+    if (phase.kind !== "locked") return;
+    expect(phase.ratio).toBeCloseTo(1 - 14 / 27, 5);
+  });
+
   it("uses the closed-window denominator when an override is already unlocked", () => {
     const p = product({ lockPeriodDays: 365, openDays: 3, cycleDays: 30 });
     const phase = computeUnlockPhase(

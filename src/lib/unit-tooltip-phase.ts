@@ -68,8 +68,14 @@ export function computeUnlockPhase(
     const closedWindow =
       cycleDays != null && openDays != null && cycleDays > openDays ? cycleDays - openDays : null;
     const pastInitial =
-      lockPeriod != null &&
-      isPastInitialUnlock(unit.latestInvestDate, lockPeriod, today, unit.availableDateOverride);
+      unit.availableDateOverride != null
+        ? isPastInitialUnlock(
+            unit.latestInvestDate,
+            lockPeriod ?? 0,
+            today,
+            unit.availableDateOverride,
+          )
+        : lockPeriod != null && isPastInitialUnlock(unit.latestInvestDate, lockPeriod, today);
     const denom = pastInitial && closedWindow != null ? closedWindow : (lockPeriod ?? null);
     const ratio = denom && denom > 0 ? Math.max(0, Math.min(1, 1 - d / denom)) : null;
     return { kind: "locked", daysLeft: d, ratio };
