@@ -15,7 +15,7 @@ Current implementation incorrectly uses `capitalUnits.endDate` as "product matur
 ### Investment Timeline
 - Each investment is recorded in `contributionLogs` with `operationType: "invest"`
 - Switching products: keeps existing `withdraw` + `invest` logging behavior; availability computation uses the latest `invest` log only unless an override is set
-- **Available Date** = `available_date_override` if set, otherwise `latestInvest.operationDate + product.lockPeriodDays` (still computed for display; the override is the only stored exception)
+- **Initial unlock** = `available_date_override` if set, otherwise `latestInvest.operationDate + product.lockPeriodDays`. Returned `availableDate` is that unlock day during the initial lock, then the current cyclic window once past it.
 
 ### Unit Availability
 - If `available_date_override` is set: that calendar day is the initial unlock date (invest logs are not rewritten)
