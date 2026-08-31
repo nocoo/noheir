@@ -338,6 +338,16 @@ describe("computeAvailability", () => {
   describe("availableDateOverride", () => {
     const product = { lockPeriodDays: 30, openDays: null, cycleDays: null };
 
+    it("trims ISO timestamps in operation_date before adding lock days", () => {
+      const result = computeAvailability(
+        { operationDate: "2026-04-01T05:51:49.226Z" },
+        { lockPeriodDays: 30, openDays: null, cycleDays: null },
+        today,
+      );
+      expect(result.availableDate).toBe("2026-05-01");
+      expect(result.daysUntilAvailable).toBe(26);
+    });
+
     it("uses the override as the unlock date instead of invest+lock", () => {
       const result = computeAvailability(
         { operationDate: "2026-04-01" },
