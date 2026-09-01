@@ -41,7 +41,7 @@
 | DB | Cloudflare D1（SQLite 语义） | `strftime('%Y', date)`，非 `EXTRACT` |
 | Sidebar 分区 | 在 `src/lib/navigation.ts` 的 `NAV_GROUPS` 加一个 group | 现有 `存量资金管理` 等分区先例 |
 | UI 基础 | `@/components/ui/*`（card / button / dialog / input / table / badge / popover） | 复用现有组件库 |
-| 表单校验 | Zod（`zod 4.4.3`） | 与 `unit-editor.tsx` 等一致 |
+| 表单校验 | Zod（`zod 4.5.4`） | 与 `unit-editor.tsx` 等一致 |
 | 日历视图 | 自实现（CSS Grid 7×N），不引第三方日历 | 包体可控、定制空间足 |
 | 颜色选择器 | 自实现（24 个 chart token 色块），不引第三方 | 复用 `popover`，不接受任意 hex |
 | 日期工具 | `date-fns@4.4.0` | 已在依赖中 |
