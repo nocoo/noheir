@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { FEATURE_PLAN_CALENDAR, NAV_GROUPS } from "@/lib/navigation";
+import { FEATURE_PLAN_CALENDAR, isNavItemActive, NAV_GROUPS } from "@/lib/navigation";
 
 describe("navigation (P2-C10 + P3-C11)", () => {
   test("FEATURE_PLAN_CALENDAR is ON (flipped at P3-C11)", () => {
@@ -32,5 +32,13 @@ describe("navigation (P2-C10 + P3-C11)", () => {
     expect(labels).toEqual(
       expect.arrayContaining(["总览", "现金流分析", "账户管理", "存量资金管理", "系统"]),
     );
+  });
+
+  test("isNavItemActive distinguishes similar path prefixes", () => {
+    expect(isNavItemActive("/account-detail", "/account")).toBe(false);
+    expect(isNavItemActive("/account", "/account")).toBe(true);
+    expect(isNavItemActive("/account/123", "/account")).toBe(true);
+    expect(isNavItemActive("/", "/")).toBe(true);
+    expect(isNavItemActive("/flow", "/")).toBe(false);
   });
 });

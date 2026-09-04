@@ -133,3 +133,15 @@ if (FEATURE_PLAN_CALENDAR) {
 }
 
 export const ALL_NAV_ITEMS = NAV_GROUPS.flatMap((g) => g.items);
+
+/**
+ * Check if a route path matches the target navigation item href.
+ * Exact match for root ("/"), and strict path segment prefix match for nested routes
+ * so "/account" does not mistakenly match "/account-detail".
+ */
+export function isNavItemActive(pathname: string, href: string): boolean {
+  if (href === "/") {
+    return pathname === "/";
+  }
+  return pathname === href || pathname.startsWith(`${href}/`);
+}

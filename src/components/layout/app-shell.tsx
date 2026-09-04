@@ -20,7 +20,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ALL_NAV_ITEMS, NAV_GROUPS } from "@/lib/navigation";
+import { ALL_NAV_ITEMS, isNavItemActive, NAV_GROUPS } from "@/lib/navigation";
 import { GlobalYearSelector } from "./global-year-selector";
 import { Sidebar } from "./sidebar";
 import { SidebarProvider, useSidebar } from "./sidebar-context";
@@ -37,9 +37,7 @@ interface AppShellProps {
  */
 function buildBreadcrumbsFromPath(pathname: string): { label: string; href?: string }[] {
   // Find matching nav item
-  const navItem = ALL_NAV_ITEMS.find((item) =>
-    item.href === "/" ? pathname === "/" : pathname.startsWith(item.href),
-  );
+  const navItem = ALL_NAV_ITEMS.find((item) => isNavItemActive(pathname, item.href));
 
   if (!navItem || navItem.href === "/") {
     return []; // Home page, no extra breadcrumbs
@@ -126,36 +124,36 @@ function AppShellInner({
         {/* Header */}
         <AppHeader
           leading={
-            isMobile ? (
-              <button
-                type="button"
-                onClick={() => setMobileOpen(true)}
-                aria-label="打开导航"
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-basalt-muted-foreground hover:text-basalt-foreground hover:bg-basalt-accent transition-colors"
-              >
-                <Menu className="h-5 w-5" aria-hidden="true" strokeWidth={1.5} />
-              </button>
-            ) : null
-          }
-          actions={
-            <div className="flex w-full items-center justify-between gap-3">
-              <Breadcrumbs items={breadcrumbsList} />
-              <div className="flex shrink-0 items-center gap-1">
-                <Suspense>
-                  <GlobalYearSelector />
-                </Suspense>
-                <a
-                  href="https://github.com/nocoo/noheir"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="GitHub repository"
+            <div className="flex min-w-0 items-center gap-3">
+              {isMobile ? (
+                <button
+                  type="button"
+                  onClick={() => setMobileOpen(true)}
+                  aria-label="打开导航"
                   className="flex h-8 w-8 items-center justify-center rounded-lg text-basalt-muted-foreground hover:text-basalt-foreground hover:bg-basalt-accent transition-colors"
                 >
-                  <GithubIcon className="h-[18px] w-[18px]" aria-hidden="true" strokeWidth={1.5} />
-                </a>
-                <ThemeToggle />
-              </div>
+                  <Menu className="h-5 w-5" aria-hidden="true" strokeWidth={1.5} />
+                </button>
+              ) : null}
+              <Breadcrumbs items={breadcrumbsList} />
             </div>
+          }
+          actions={
+            <>
+              <Suspense>
+                <GlobalYearSelector />
+              </Suspense>
+              <a
+                href="https://github.com/nocoo/noheir"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="GitHub repository"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-basalt-muted-foreground hover:text-basalt-foreground hover:bg-basalt-accent transition-colors"
+              >
+                <GithubIcon className="h-[18px] w-[18px]" aria-hidden="true" strokeWidth={1.5} />
+              </a>
+              <ThemeToggle />
+            </>
           }
         />
 

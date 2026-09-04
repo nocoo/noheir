@@ -19,7 +19,7 @@ import { LogOut, PanelLeft } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { ALL_NAV_ITEMS, NAV_GROUPS, type NavGroup } from "@/lib/navigation";
+import { ALL_NAV_ITEMS, isNavItemActive, NAV_GROUPS, type NavGroup } from "@/lib/navigation";
 import pkg from "../../../package.json";
 import { useSidebar } from "./sidebar-context";
 import { useYear, YEAR_ENABLED_PATHS } from "./year-context";
@@ -48,7 +48,7 @@ function NavGroupSection({
   return (
     <SidebarGroup label={group.label} defaultOpen={group.defaultOpen ?? true}>
       {group.items.map((item) => {
-        const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+        const isActive = isNavItemActive(pathname, item.href);
 
         return (
           <Link
@@ -127,8 +127,7 @@ export function Sidebar({ mobile = false }: SidebarProps) {
             {/* Navigation — flat icon list, no groups */}
             <nav className="flex-1 flex flex-col items-center gap-1 overflow-y-auto pt-1">
               {ALL_NAV_ITEMS.map((item) => {
-                const isActive =
-                  item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+                const isActive = isNavItemActive(pathname, item.href);
 
                 return (
                   <Tooltip key={item.href}>
