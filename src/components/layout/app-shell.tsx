@@ -1,5 +1,12 @@
 "use client";
 
+import { ContentIsland } from "@nocoo/basalt";
+import { AppHeader } from "@nocoo/basalt/components/app-header";
+import {
+  AppMain,
+  AppSkipLink,
+  AppShell as BasaltAppShell,
+} from "@nocoo/basalt/components/app-shell";
 import { Menu } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Suspense, useEffect, useMemo } from "react";
@@ -13,7 +20,6 @@ import {
 } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ALL_NAV_ITEMS, NAV_GROUPS } from "@/lib/navigation";
-import { Breadcrumbs } from "./breadcrumbs";
 import { GlobalYearSelector } from "./global-year-selector";
 import { Sidebar } from "./sidebar";
 import { SidebarProvider, useSidebar } from "./sidebar-context";
@@ -87,8 +93,15 @@ function AppShellInner({
     };
   }, [mobileOpen]);
 
+  const breadcrumbsList = useMemo(
+    () => [{ label: "首页", href: "/" }, ...finalBreadcrumbs],
+    [finalBreadcrumbs],
+  );
+
   return (
-    <div className="flex min-h-screen w-full bg-background">
+    <BasaltAppShell>
+      <AppSkipLink>跳到主要内容</AppSkipLink>
+
       {/* Desktop sidebar */}
       {!isMobile && <Sidebar />}
 
@@ -108,47 +121,47 @@ function AppShellInner({
         </Sheet>
       )}
 
-      <main className="flex flex-1 flex-col min-h-screen min-w-0">
+      <AppMain>
         {/* Header */}
-        <header className="flex h-14 shrink-0 items-center justify-between px-4 md:px-6">
-          <div className="flex items-center gap-3">
-            {isMobile && (
+        <AppHeader
+          leading={
+            isMobile ? (
               <button
                 type="button"
                 onClick={() => setMobileOpen(true)}
                 aria-label="打开导航"
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-basalt-muted-foreground hover:text-basalt-foreground hover:bg-basalt-accent transition-colors"
               >
                 <Menu className="h-5 w-5" aria-hidden="true" strokeWidth={1.5} />
               </button>
-            )}
-            <Breadcrumbs items={[{ label: "首页", href: "/" }, ...finalBreadcrumbs]} />
-          </div>
-          <div className="flex items-center gap-1">
-            <Suspense>
-              <GlobalYearSelector />
-            </Suspense>
-            <a
-              href="https://github.com/nocoo/noheir"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="GitHub repository"
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-            >
-              <GithubIcon className="h-[18px] w-[18px]" aria-hidden="true" strokeWidth={1.5} />
-            </a>
-            <ThemeToggle />
-          </div>
-        </header>
+            ) : null
+          }
+          breadcrumbs={breadcrumbsList}
+          actions={
+            <>
+              <Suspense>
+                <GlobalYearSelector />
+              </Suspense>
+              <a
+                href="https://github.com/nocoo/noheir"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="GitHub repository"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-basalt-muted-foreground hover:text-basalt-foreground hover:bg-basalt-accent transition-colors"
+              >
+                <GithubIcon className="h-[18px] w-[18px]" aria-hidden="true" strokeWidth={1.5} />
+              </a>
+              <ThemeToggle />
+            </>
+          }
+        />
 
         {/* Floating island content area */}
-        <div className="flex-1 px-2 pb-2 md:px-3 md:pb-3">
-          <div className="h-full rounded-[var(--radius-card)] md:rounded-[var(--radius-island)] bg-card p-3 md:p-5 overflow-y-auto">
-            {children}
-          </div>
+        <div className="flex-1 min-h-0 px-2 pb-2 md:px-3 md:pb-3 flex flex-col">
+          <ContentIsland className="flex-1 overflow-y-auto">{children}</ContentIsland>
         </div>
-      </main>
-    </div>
+      </AppMain>
+    </BasaltAppShell>
   );
 }
 
