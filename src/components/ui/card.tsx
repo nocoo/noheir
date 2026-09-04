@@ -2,18 +2,30 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-const Card = React.forwardRef<HTMLDivElement, React.ComponentProps<"div">>(
-  ({ className, ...props }, ref) => {
-    // If an explicit background is requested via className, do not set
-    // data-basalt-surface, which would override the utility background
+export interface CardProps extends React.ComponentProps<"div"> {
+  /**
+   * Set to `false` to opt out of Basalt's automatic surface background styling
+   * ([data-basalt-surface]). When not specified, cards automatically opt out if an
+   * explicit background utility class (e.g. `bg-primary/5`, `dark:bg-*`) is provided.
+   */
+  surface?: boolean;
+}
+
+const Card = React.forwardRef<HTMLDivElement, CardProps>(
+  ({ className, surface, ...props }, ref) => {
+    // If an explicit background is requested via className or surface is explicitly false,
+    // do not set data-basalt-surface, which would override the utility background
     // through Basalt's [data-basalt-surface-root] [data-basalt-surface] CSS rule.
-    const hasCustomBg = className ? /(?:^|\s)bg-(?!basalt-card)/.test(className) : false;
+    const hasCustomBg = className
+      ? /(?:^|\s)(?:[a-z0-9_-]+:)*bg-(?!basalt-card(?:\s|$))/.test(className)
+      : false;
+    const enableSurface = surface ?? !hasCustomBg;
 
     return (
       <div
         ref={ref}
         data-slot="card"
-        {...(!hasCustomBg ? { "data-basalt-surface": "" } : {})}
+        {...(enableSurface ? { "data-basalt-surface": "" } : {})}
         className={cn(
           "bg-basalt-card text-basalt-card-foreground flex flex-col rounded-basalt-lg border-0 shadow-none",
           className,
