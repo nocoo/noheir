@@ -18,7 +18,7 @@
         "lucide-react": "1.34.0",
         "next": "16.3.4",
         "next-auth": "5.0.0-beta.32",
-        "postcss": "8.5.26",
+        "postcss": "8.5.28",
         "radix-ui": "1.6.7",
         "react": "19.2.8",
         "react-dom": "19.2.8",
@@ -68,7 +68,7 @@
     "hono": "4.13.5",
     "ip-address": "10.3.1",
     "nanoid": "3.3.18",
-    "postcss": "8.5.26",
+    "postcss": "8.5.28",
     "qs": "6.15.2",
     "sharp": "0.35.3",
     "undici": "8.9.0",
@@ -1120,7 +1120,7 @@
 
     "playwright-core": ["playwright-core@1.62.1", "", { "bin": { "playwright-core": "cli.js" } }, "sha512-wPYSwEBJY9GHraISXqyqtx0na0LpO3XEX7jNDhntbex7tzUS7kLnZsOlFruFJB4Hi/rhDMjXGqHewDZ68nYZVw=="],
 
-    "postcss": ["postcss@8.5.26", "", { "dependencies": { "nanoid": "^3.3.17", "picocolors": "^1.1.1", "source-map-js": "^1.2.1" } }, "sha512-u82N74LFzG8ca+dD8puPnplTXoGH4fTPpVGuIbt36G3qvNlkvfD0lEAZSxaly3KX8TS/L1A1gsCEmvKmBcVbkQ=="],
+    "postcss": ["postcss@8.5.28", "", { "dependencies": { "nanoid": "^3.3.18", "picocolors": "^1.1.1", "source-map-js": "^1.2.1" } }, "sha512-RRuzqDtt5Y9h3quz5hWhK+TPnsmVs6WwSU6LkJMeY4HstUEDuYTG8UJSdawMRzmzAtV+KEoG8N3Qg2qLy5vM/A=="],
 
     "preact": ["preact@10.24.3", "", {}, "sha512-Z2dPnBnMUfyQfSQ+GBdsGa16hz35YmLmtTLhM169uW944hYL6xzTYkJjC07j+Wosz733pMWx0fgON3JNw1jJQA=="],
 
