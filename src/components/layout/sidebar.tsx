@@ -181,7 +181,7 @@ export function Sidebar({ mobile = false }: SidebarProps) {
           <div className="flex h-screen w-[260px] flex-col">
             {/* Header: logo + collapse toggle */}
             <SidebarHeader>
-              <div className="flex w-full items-center justify-between">
+              <div className="flex w-full items-center justify-between px-3">
                 <div className="flex items-center gap-2">
                   {/* biome-ignore lint/performance/noImgElement: small static logo, no optimization needed */}
                   <img
