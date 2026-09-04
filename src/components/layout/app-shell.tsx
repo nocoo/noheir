@@ -93,10 +93,17 @@ function AppShellInner({
     };
   }, [mobileOpen]);
 
-  const breadcrumbsList = useMemo(
-    () => [{ label: "首页", href: "/" }, ...finalBreadcrumbs],
-    [finalBreadcrumbs],
-  );
+  const { crumbs, pageTitle } = useMemo(() => {
+    const list = [{ label: "首页", href: "/" }, ...finalBreadcrumbs];
+    if (list.length <= 1) {
+      return { crumbs: [] as { label: string; href?: string }[], pageTitle: list[0]?.label ?? "首页" };
+    }
+    const last = list[list.length - 1];
+    return {
+      crumbs: list.slice(0, -1),
+      pageTitle: last?.label ?? "",
+    };
+  }, [finalBreadcrumbs]);
 
   return (
     <BasaltAppShell>
@@ -136,7 +143,8 @@ function AppShellInner({
               </button>
             ) : null
           }
-          breadcrumbs={breadcrumbsList}
+          breadcrumbs={crumbs}
+          title={pageTitle}
           actions={
             <>
               <Suspense>

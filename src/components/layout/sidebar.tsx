@@ -8,8 +8,6 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarHeader,
-  SidebarIconItem,
-  SidebarItem,
   SidebarNav,
   SidebarUser,
   Tooltip,
@@ -57,12 +55,15 @@ function NavGroupSection({
             key={item.href}
             href={buildHrefWithYear(item.href, year)}
             onClick={onNavigate}
-            className="w-full"
+            aria-current={isActive ? "page" : undefined}
+            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-normal transition-colors ${
+              isActive
+                ? "bg-basalt-accent text-basalt-foreground"
+                : "text-basalt-muted-foreground hover:bg-basalt-accent hover:text-basalt-foreground"
+            }`}
           >
-            <SidebarItem active={isActive}>
-              <item.icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
-              <span className="flex-1 text-left">{item.label}</span>
-            </SidebarItem>
+            <item.icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+            <span className="flex-1 text-left">{item.label}</span>
           </Link>
         );
       })}
@@ -132,10 +133,18 @@ export function Sidebar({ mobile = false }: SidebarProps) {
                 return (
                   <Tooltip key={item.href}>
                     <TooltipTrigger asChild>
-                      <Link href={buildHrefWithYear(item.href, year)} onClick={handleNavigate}>
-                        <SidebarIconItem active={isActive}>
-                          <item.icon className="h-4 w-4" strokeWidth={1.5} />
-                        </SidebarIconItem>
+                      <Link
+                        href={buildHrefWithYear(item.href, year)}
+                        onClick={handleNavigate}
+                        aria-label={item.label}
+                        aria-current={isActive ? "page" : undefined}
+                        className={`relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors ${
+                          isActive
+                            ? "bg-basalt-accent text-basalt-foreground"
+                            : "text-basalt-muted-foreground hover:bg-basalt-accent hover:text-basalt-foreground"
+                        }`}
+                      >
+                        <item.icon className="h-4 w-4" strokeWidth={1.5} />
                       </Link>
                     </TooltipTrigger>
                     <TooltipContent side="right" sideOffset={8}>
