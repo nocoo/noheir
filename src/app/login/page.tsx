@@ -141,9 +141,10 @@ function LoginContent() {
               <div className="flex-1" />
 
               <Button
-                variant="secondary"
+                variant="outline"
+                size="lg"
                 onClick={handleGoogleLogin}
-                className="w-full rounded-xl py-3 cursor-pointer"
+                className="h-11 w-full rounded-xl cursor-pointer"
               >
                 <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
                   <path
