@@ -1,8 +1,7 @@
 "use client";
 
-import * as SeparatorPrimitive from "radix-ui/separator";
+import { Separator as BasaltSeparator } from "@nocoo/basalt";
 import type * as React from "react";
-
 import { cn } from "@/lib/utils";
 
 function Separator({
@@ -10,17 +9,12 @@ function Separator({
   orientation = "horizontal",
   decorative = true,
   ...props
-}: React.ComponentProps<typeof SeparatorPrimitive.Root>) {
+}: React.ComponentProps<typeof BasaltSeparator>) {
   return (
-    <SeparatorPrimitive.Root
-      data-slot="separator"
+    <BasaltSeparator
       decorative={decorative}
       orientation={orientation}
-      className={cn(
-        "bg-border shrink-0",
-        orientation === "horizontal" ? "h-[1px] w-full" : "h-full w-[1px]",
-        className,
-      )}
+      className={cn(className)}
       {...props}
     />
   );
