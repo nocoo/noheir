@@ -3,18 +3,25 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 const Card = React.forwardRef<HTMLDivElement, React.ComponentProps<"div">>(
-  ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
-      data-slot="card"
-      data-basalt-surface=""
-      className={cn(
-        "bg-basalt-card text-basalt-card-foreground flex flex-col rounded-basalt-lg border-0 shadow-none",
-        className,
-      )}
-      {...props}
-    />
-  ),
+  ({ className, ...props }, ref) => {
+    // If an explicit background is requested via className, do not set
+    // data-basalt-surface, which would override the utility background
+    // through Basalt's [data-basalt-surface-root] [data-basalt-surface] CSS rule.
+    const hasCustomBg = className ? /(?:^|\s)bg-(?!basalt-card)/.test(className) : false;
+
+    return (
+      <div
+        ref={ref}
+        data-slot="card"
+        {...(!hasCustomBg ? { "data-basalt-surface": "" } : {})}
+        className={cn(
+          "bg-basalt-card text-basalt-card-foreground flex flex-col rounded-basalt-lg border-0 shadow-none",
+          className,
+        )}
+        {...props}
+      />
+    );
+  },
 );
 Card.displayName = "Card";
 
