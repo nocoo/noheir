@@ -2,6 +2,51 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.6.3] - 2026-09-04
+
+### Features
+
+- **ui** — map Separator to basalt Separator
+- **ui** — update Card container to use basalt surfaces and tokens
+- **chrome** — migrate AppShell, Sidebar, AppHeader, and layout providers to basalt
+- **login** — migrate login page to basalt primitives and styles
+
+### Fixes
+
+- **sidebar** — align expanded logo padding to prevent layout shift
+- **login** — use outline variant and 44px height for Google login button
+- **ui** — support Tailwind variants and explicit surface opt-out on Card
+- **types** — revert next-env.d.ts build artifact paths to prevent dev churn
+- **ui** — preserve explicit background classes on Card components without basalt surface override
+- **chrome** — place Breadcrumbs in AppHeader leading container and use segment-aware nav matching
+- **chrome** — render Breadcrumbs cleanly in header actions to preserve correct aria-current semantics
+- **chrome** — remove nested interactive controls in sidebar and trailing chevron in header
+- **security** — remediate fast-uri and qs
+- **security** — remediate fast-uri and qs
+- **deps** — align workers types with wrangler peer
+
+### Chores
+
+- **deps** — add @nocoo/basalt@2.0.3
+- **deps** — remediate locked OSV advisories
+- **deps** — remediate lockfile vulnerabilities
+- **security** — update vulnerable transitive deps
+- **deps** — upgrade wrangler to 4.129.0
+- **deps** — bump vitest to 5.0.0
+- **deps** — upgrade postcss to 8.5.28
+- **deps** — upgrade workers types to 5.20260903.1
+- **deps** — upgrade Vitest to 5.0.0 (#451)
+- **deps** — upgrade lucide-react to 1.40.0
+- **deps** — upgrade Biome to 2.5.12
+- **deps** — upgrade Hono to 4.13.5 (#415)
+- **deps** — upgrade Node types to 26.4.0 (#414)
+- **deps** — upgrade Next to 16.3.4 (#430)
+- **deps** — upgrade Workers types to 5.20260831.1 (#428)
+- **deps** — upgrade Zod to 4.5.4 (#426)
+- **deps** — upgrade Wrangler to 4.127.1 (#422)
+- **deps** — upgrade testing-library React to 16.3.3 (#418)
+- **deps** — upgrade Biome to 2.5.11 (#416)
+
 ## [2.6.2] - 2026-08-31
 
 ### Features
