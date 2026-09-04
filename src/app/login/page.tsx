@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@nocoo/basalt";
+import { LoadingScreen } from "@nocoo/basalt/components/loading-screen";
 import { Shield } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
@@ -70,7 +72,8 @@ function LoginContent() {
         <div className="flex flex-col items-center">
           {/* Badge card — bank card flipped vertical: 54/86 */}
           <div
-            className="relative aspect-[54/86] w-72 overflow-hidden rounded-2xl bg-card flex flex-col ring-1 ring-black/[0.08] dark:ring-white/[0.06]"
+            data-basalt-surface-root=""
+            className="relative aspect-[54/86] w-72 overflow-hidden rounded-2xl bg-basalt-card flex flex-col ring-1 ring-black/[0.08] dark:ring-white/[0.06]"
             style={{
               boxShadow: [
                 "0 1px 2px rgba(0,0,0,0.06)",
@@ -86,7 +89,7 @@ function LoginContent() {
             <div className="bg-primary px-5 py-4">
               <div className="flex items-center justify-between">
                 <div
-                  className="h-4 w-8 rounded-full bg-background/80"
+                  className="h-4 w-8 rounded-full bg-basalt-background/80"
                   style={{
                     boxShadow:
                       "inset 0 1.5px 3px rgba(0,0,0,0.35), inset 0 -0.5px 1px rgba(255,255,255,0.1)",
@@ -112,7 +115,7 @@ function LoginContent() {
 
             {/* Badge content */}
             <div className="flex flex-1 flex-col items-center px-6 pt-6 pb-14">
-              <div className="h-24 w-24 overflow-hidden rounded-full bg-secondary dark:bg-[#171717] ring-1 ring-border p-2.5">
+              <div className="h-24 w-24 overflow-hidden rounded-full bg-basalt-secondary ring-1 ring-basalt-border p-2.5">
                 {/* biome-ignore lint/performance/noImgElement: small static logo, no optimization needed */}
                 <img
                   src="/logo-80.png"
@@ -123,24 +126,24 @@ function LoginContent() {
                 />
               </div>
 
-              <p className="mt-5 text-lg font-semibold text-foreground">个人财务管理</p>
-              <p className="mt-1 text-xs text-muted-foreground">登录以管理你的财务数据</p>
+              <p className="mt-5 text-lg font-semibold text-basalt-foreground">个人财务管理</p>
+              <p className="mt-1 text-xs text-basalt-muted-foreground">登录以管理你的财务数据</p>
 
               {error && (
-                <div className="mt-3 w-full rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive text-center">
+                <div className="mt-3 w-full rounded-lg bg-basalt-destructive/10 px-3 py-2 text-xs text-basalt-destructive text-center">
                   {error === "AccessDenied"
                     ? "访问被拒绝，你的账号未获授权。"
                     : "登录失败，请重试。"}
                 </div>
               )}
 
-              <div className="mt-5 h-px w-full bg-border" />
+              <div className="mt-5 h-px w-full bg-basalt-border" />
               <div className="flex-1" />
 
-              <button
-                type="button"
+              <Button
+                variant="secondary"
                 onClick={handleGoogleLogin}
-                className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-secondary px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-accent cursor-pointer"
+                className="w-full rounded-xl py-3 cursor-pointer"
               >
                 <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
                   <path
@@ -161,18 +164,18 @@ function LoginContent() {
                   />
                 </svg>
                 使用 Google 登录
-              </button>
+              </Button>
 
-              <p className="mt-3 text-center text-[10px] leading-relaxed text-muted-foreground/60">
+              <p className="mt-3 text-center text-[10px] leading-relaxed text-basalt-muted-foreground/60">
                 登录即表示你同意我们的服务条款和隐私政策
               </p>
             </div>
 
             {/* Footer strip */}
-            <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center border-t border-border bg-secondary/50 py-2.5">
+            <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center border-t border-basalt-border bg-basalt-secondary/50 py-2.5">
               <div className="flex items-center gap-1.5">
                 <div className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-                <span className="text-[10px] text-muted-foreground">安全认证</span>
+                <span className="text-[10px] text-basalt-muted-foreground">安全认证</span>
               </div>
             </div>
           </div>
@@ -197,11 +200,7 @@ function LoginContent() {
 }
 
 function LoginLoading() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-muted-foreground">加载中...</div>
-    </div>
-  );
+  return <LoadingScreen label="加载中..." />;
 }
 
 export default function LoginPage() {
