@@ -11,6 +11,7 @@ import { Menu } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Suspense, useEffect, useMemo } from "react";
 import { GithubIcon } from "@/components/icons/github-icon";
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import {
   Sheet,
   SheetContent,
@@ -93,17 +94,10 @@ function AppShellInner({
     };
   }, [mobileOpen]);
 
-  const { crumbs, pageTitle } = useMemo(() => {
-    const list = [{ label: "首页", href: "/" }, ...finalBreadcrumbs];
-    if (list.length <= 1) {
-      return { crumbs: [] as { label: string; href?: string }[], pageTitle: list[0]?.label ?? "首页" };
-    }
-    const last = list[list.length - 1];
-    return {
-      crumbs: list.slice(0, -1),
-      pageTitle: last?.label ?? "",
-    };
-  }, [finalBreadcrumbs]);
+  const breadcrumbsList = useMemo(
+    () => [{ label: "首页", href: "/" }, ...finalBreadcrumbs],
+    [finalBreadcrumbs],
+  );
 
   return (
     <BasaltAppShell>
@@ -143,24 +137,25 @@ function AppShellInner({
               </button>
             ) : null
           }
-          breadcrumbs={crumbs}
-          title={pageTitle}
           actions={
-            <>
-              <Suspense>
-                <GlobalYearSelector />
-              </Suspense>
-              <a
-                href="https://github.com/nocoo/noheir"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="GitHub repository"
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-basalt-muted-foreground hover:text-basalt-foreground hover:bg-basalt-accent transition-colors"
-              >
-                <GithubIcon className="h-[18px] w-[18px]" aria-hidden="true" strokeWidth={1.5} />
-              </a>
-              <ThemeToggle />
-            </>
+            <div className="flex w-full items-center justify-between gap-3">
+              <Breadcrumbs items={breadcrumbsList} />
+              <div className="flex shrink-0 items-center gap-1">
+                <Suspense>
+                  <GlobalYearSelector />
+                </Suspense>
+                <a
+                  href="https://github.com/nocoo/noheir"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="GitHub repository"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-basalt-muted-foreground hover:text-basalt-foreground hover:bg-basalt-accent transition-colors"
+                >
+                  <GithubIcon className="h-[18px] w-[18px]" aria-hidden="true" strokeWidth={1.5} />
+                </a>
+                <ThemeToggle />
+              </div>
+            </div>
           }
         />
 
