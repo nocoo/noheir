@@ -1,37 +1,40 @@
 {
-  "study": "noheir/2026-09-07-01",
-  "finishing": "01",
-  "method": "retained-original",
-  "generationCalls": 0,
+  "study": "noheir/2026-09-07-02",
+  "finishing": "02",
+  "model": "gpt-image-2",
+  "method": "generated-framing-repair",
+  "generationCalls": 1,
   "nativeDimensions": [2048, 2048],
-  "original": {
-    "path": "source/original.png",
+  "generation": {
+    "path": "raw/generated.png",
+    "sha256": "61f13d785b85a2aafc37ba1c2667bc15ca8b1b0b8258e947a9ea4440baada60c"
+  },
+  "previous": {
+    "original": "/logos/originals/noheir.png",
+    "sourceUrl": "https://github.com/nocoo/noheir/blob/1041610cf06562bb04911e39f4356690f6256f57/logo.png",
     "sha256": "2ed854204cbc8801a253c10797de0ae73f45dc0b83508bd8cf4e1066eb9595bb",
     "width": 2048,
-    "height": 2048,
-    "bytes": 4210139,
-    "repository": "https://github.com/nocoo/noheir",
-    "repositoryRevision": "2c99001444856d7756589254a52696af2cdfbab9",
-    "sourcePath": "logo.png",
-    "sourceUrl": "https://github.com/nocoo/noheir/blob/2c99001444856d7756589254a52696af2cdfbab9/logo.png"
+    "height": 2048
   },
   "masters": {
     "logo.png": {
-      "sha256": "2ed854204cbc8801a253c10797de0ae73f45dc0b83508bd8cf4e1066eb9595bb",
+      "sha256": "26d9720f81d6233909a9cffd5a791c62d7d3b46cb37da4875009d7ca875eaeff",
       "width": 2048,
       "height": 2048
     },
     "assets/brand/icon.png": {
-      "sha256": "3ecf4b5efe261b8e8e8e1d31756f2289156b6f8572373bc7510b391431d97ebc",
+      "sha256": "19c3326070dd5f9d3ca86d09fed9fd529bb7650f01cca587cd6e77a552defa1e",
       "width": 2048,
       "height": 2048
     },
     "assets/brand/icon-rounded.png": {
-      "sha256": "3e61d21f3a56f015028371120bab361664b8f8a350d6460f755f0f7d39b47f23",
+      "sha256": "dd60283dcedcb379043ba3bc51e891b6b50111bc02f5ed6fdbf8335dce9ba39d",
       "width": 2048,
       "height": 2048
     }
   },
+  "protectedFeatureClearancePx": 148.5,
+  "intentionalEdges": ["bottom", "lower-right"],
   "review": "https://hexly.ai/logos/noheir",
-  "archive": "https://github.com/nocoo/hexly.ai/tree/main/artwork/logo-family/noheir/2026-09-07-01"
+  "archive": "https://github.com/nocoo/hexly.ai/tree/main/artwork/logo-family/noheir/2026-09-07-02"
 }

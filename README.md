@@ -27,6 +27,7 @@ Noheir 是一款个人财务管理 Web 应用，帮助用户从收支到资产�
 - [15-api-naming-reform.md](./docs/15-api-naming-reform.md)
 - [16-old-new-system-comparison.md](./docs/16-old-new-system-comparison.md)
 - [17-contribution-logs.md](./docs/17-contribution-logs.md)
+- [图标与使用规范](./assets/brand/README.md)
 
 ## 🚀 快速运行
 
