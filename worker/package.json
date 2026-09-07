@@ -16,7 +16,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.12",
-    "@cloudflare/workers-types": "5.20260905.1",
+    "@cloudflare/workers-types": "5.20260906.1",
     "@types/better-sqlite3": "9.6.0",
     "@vitest/coverage-v8": "5.0.0",
     "better-sqlite3": "13.0.3",
