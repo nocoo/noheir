@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Resize logo.png -> public/ assets (Vite SPA variant).
+"""Generate Next.js public assets from separate foreground and presentation masters.
 
-Single source: logo.png (project root, 2048x2048 RGBA PNG)
+Transparent source: logo.png (2048x2048 RGBA). Presentation sources: assets/brand/.
 
 Standard outputs (B-3 spec):
     public/logo-24.png          (24x24, sidebar header)
@@ -14,7 +14,8 @@ Extended outputs (PWA / social):
     public/logo-128.png         (128x128)
     public/logo-180.png         (180x180, apple-touch-icon)
     public/logo-192.png         (192x192, PWA manifest)
-    public/logo-256.png         (256x256, loading splash)
+    public/logo-256.png         (256x256, installed app)
+    public/icon-512.png         (512x512, installed app)
     public/opengraph-image.png  (1200x630, OG/Twitter card)
 
 Usage:
@@ -41,6 +42,7 @@ SIZES = {
     "logo-180.png": 180,
     "logo-192.png": 192,
     "logo-256.png": 256,
+    "icon-512.png": 512,
 }
 
 
@@ -50,22 +52,18 @@ def main():
         raise SystemExit(1)
 
     img = Image.open(SRC).convert("RGBA")
+    square = Image.open(ROOT / "assets/brand/icon.png").convert("RGBA")
+    rounded = Image.open(ROOT / "assets/brand/icon-rounded.png").convert("RGBA")
 
     # --- Sized PNGs ---
     for name, size in SIZES.items():
-        out = img.resize((size, size), Image.LANCZOS)
+        source = square if size >= 180 else img
+        out = source.resize((size, size), Image.LANCZOS)
         out.save(PUBLIC / name, "PNG", optimize=True)
         print(f"  {name} ({size}x{size})")
 
     # --- favicon.ico (multi-size: 16+32) ---
-    ico_16 = img.resize((16, 16), Image.LANCZOS)
-    ico_32 = img.resize((32, 32), Image.LANCZOS)
-    ico_16.save(
-        PUBLIC / "favicon.ico",
-        format="ICO",
-        append_images=[ico_32],
-        sizes=[(16, 16), (32, 32)],
-    )
+    img.save(PUBLIC / "favicon.ico", format="ICO", sizes=[(16, 16), (32, 32)])
     print("  favicon.ico (16+32)")
 
     # --- OG Image (1200x630, brand background, centered logo, RGB) ---
@@ -73,7 +71,7 @@ def main():
     canvas = Image.new("RGB", (og_w, og_h), BRAND_BG)
 
     logo_size = int(og_h * 0.55)
-    logo_resized = img.resize((logo_size, logo_size), Image.LANCZOS)
+    logo_resized = rounded.resize((logo_size, logo_size), Image.LANCZOS)
     if logo_resized.mode == "RGBA":
         bg = Image.new("RGBA", logo_resized.size, (*BRAND_BG, 255))
         logo_resized = Image.alpha_composite(bg, logo_resized).convert("RGB")

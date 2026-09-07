@@ -20,10 +20,19 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXTAUTH_URL || "http://localhost:7004"),
   title: "noheir - 个人财务管理",
   description: "隐私优先的个人财务记录与分析",
+  manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", type: "image/x-icon", sizes: "16x16 32x32" },
+      { url: "/logo-32.png", type: "image/png", sizes: "32x32" },
+    ],
+    apple: { url: "/logo-180.png", type: "image/png", sizes: "180x180" },
+  },
   openGraph: {
     title: "noheir - 个人财务管理",
     description: "隐私优先的个人财务记录与分析",
     type: "website",
+    images: [{ url: "/opengraph-image.png", width: 1200, height: 630 }],
   },
 };
 

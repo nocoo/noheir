@@ -115,7 +115,7 @@ function LoginContent() {
 
             {/* Badge content */}
             <div className="flex flex-1 flex-col items-center px-6 pt-6 pb-14">
-              <div className="h-24 w-24 overflow-hidden rounded-full bg-basalt-secondary ring-1 ring-basalt-border p-2.5">
+              <div className="h-24 w-24 p-2.5">
                 {/* biome-ignore lint/performance/noImgElement: small static logo, no optimization needed */}
                 <img
                   src="/logo-80.png"
