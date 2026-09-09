@@ -140,8 +140,8 @@ describe("palette", () => {
     // did. Adding them to TACTICS without a token would have dropped them onto
     // an arbitrary hashed colour.
     it("covers the legacy values that predate the enum", () => {
-      expect(TACTICS_TOKEN_MAP["混债基金"]).toBeDefined();
-      expect(TACTICS_TOKEN_MAP["现金管理"]).toBeDefined();
+      expect(TACTICS_TOKEN_MAP.混债基金).toBeDefined();
+      expect(TACTICS_TOKEN_MAP.现金管理).toBeDefined();
     });
 
     it("gives every tactic a distinct token", () => {
