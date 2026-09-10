@@ -28,7 +28,6 @@ const coverageExclude = [
   "src/lib/capital-mappers.ts",
   "src/lib/category-builders.ts",
   "src/lib/navigation.ts",
-  "src/lib/proxy-logic.ts",
   "src/lib/recurring-payment-detector.ts",
   "src/lib/table-columns.ts",
   "src/lib/worker-db-client.ts",
