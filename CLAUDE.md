@@ -9,6 +9,7 @@ README.md
 - **Runtime env vars** (injected by the host's `.env`, never baked into the image): `WORKER_URL`, `WORKER_TOKEN`, `AUTH_SECRET`, `NEXTAUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ALLOWED_EMAILS`.
 - **GitHub Actions secrets** required by `release.yml`: `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`, `GHCR_PULL_USER`, `GHCR_PULL_TOKEN` (PAT with `read:packages`). Host-side compose file references the same image tag.
 - See [docs/04-run.md](./docs/04-run.md) for the full deploy guide.
+- Public `GET /api/live` executes read-only `SELECT 1` through the existing authenticated Worker SQL gateway, with a five-second timeout. It returns the current top-level version, `database.connected`, and `Cache-Control: no-store`; missing configuration or dependency failure returns HTTP 503 without private diagnostics. Keep the route public and verify the deployed response after each release.
 
 ## Backend (Cloudflare Worker + D1)
 
