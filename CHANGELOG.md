@@ -2,6 +2,51 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.6.4] - 2026-09-11
+
+### Features
+
+- refine noheir logo framing
+- refine logo presentation
+
+### Fixes
+
+- verify database readiness in public live endpoint
+- **worker** — upgrade sharp to 0.35.4
+- **security** — upgrade baseline-browser-mapping
+- **deps** — upgrade sharp to 0.35.4
+
+### Documentation
+
+- refresh bilingual project readmes
+
+### Tests
+
+- satisfy biome literal key rule
+
+### Chores
+
+- upgrade basalt to 2.1.7
+- **worker** — update wrangler to 4.130.0
+- **deps** — upgrade lucide-react to 1.43.0
+- **deps** — upgrade @types/bun to 1.4.2
+- **deps** — bump basalt to 2.1.2
+- **deps** — bump workers types
+- **deps** — update wrangler to 4.129.1
+- **deps** — upgrade workers types to 5.20260907.1
+- **deps** — upgrade basalt to 2.1.0
+- **deps** — upgrade lucide-react to 1.42.0
+- **deps** — upgrade @types/node to 26.5.0
+- **deps** — upgrade workers types to 5.20260906.1
+- **deps** — upgrade workers types to 5.20260905.1
+- **deps** — upgrade hono to 4.13.7
+- **deps** — upgrade @types/bun to 1.4.1
+- **deps** — upgrade lucide-react to 1.41.0
+- **deps** — update playwright test to 1.63.0
+- **deps** — upgrade workers types to 5.20260904.1
+- **deps** — update testing-library user-event
+- **deps** — upgrade @types/node to 26.4.1
+
 ## [2.6.3] - 2026-09-04
 
 ### Features
