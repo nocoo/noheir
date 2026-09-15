@@ -43,13 +43,6 @@ export function shortId(id: string): string {
 }
 
 /**
- * Compact an array of objects, applying compact() to each.
- */
-export function compactArray<T extends Record<string, unknown>>(arr: T[]): Partial<T>[] {
-  return arr.map(compact);
-}
-
-/**
  * Join category path from multiple levels, omitting nulls.
  * e.g., ["日常支出", "小吞金兽", null] → "日常支出/小吞金兽"
  */
