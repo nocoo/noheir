@@ -1,5 +1,7 @@
 "use client";
 
+import { HeaderTooltip, HexlyLink } from "../../components/layout/header-links";
+
 import { Button } from "@nocoo/basalt";
 import { LoadingScreen } from "@nocoo/basalt/components/loading-screen";
 import { Shield } from "lucide-react";
@@ -57,15 +59,18 @@ function LoginContent() {
       />
       {/* Top-right controls */}
       <div className="absolute top-4 right-4 z-10 flex items-center gap-1">
-        <a
-          href="https://github.com/nocoo/noheir"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="GitHub repository"
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-        >
-          <GithubIcon className="h-[18px] w-[18px]" aria-hidden="true" strokeWidth={1.5} />
-        </a>
+        <HeaderTooltip label="GitHub repository">
+          <a
+            href="https://github.com/nocoo/noheir"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="GitHub repository"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          >
+            <GithubIcon className="h-[18px] w-[18px]" aria-hidden="true" strokeWidth={1.5} />
+          </a>
+        </HeaderTooltip>
+        <HexlyLink />
         <ThemeToggle />
       </div>
       <div className="flex flex-1 items-center justify-center p-4">

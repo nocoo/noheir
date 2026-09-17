@@ -1,5 +1,7 @@
 "use client";
 
+import { HeaderTooltip, HexlyLink } from "./header-links";
+
 import { ContentIsland } from "@nocoo/basalt";
 import { AppHeader } from "@nocoo/basalt/components/app-header";
 import {
@@ -126,14 +128,16 @@ function AppShellInner({
           leading={
             <div className="flex min-w-0 items-center gap-3">
               {isMobile ? (
-                <button
-                  type="button"
-                  onClick={() => setMobileOpen(true)}
-                  aria-label="打开导航"
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-basalt-muted-foreground hover:text-basalt-foreground hover:bg-basalt-accent transition-colors"
-                >
-                  <Menu className="h-5 w-5" aria-hidden="true" strokeWidth={1.5} />
-                </button>
+                <HeaderTooltip label="打开导航">
+                  <button
+                    type="button"
+                    onClick={() => setMobileOpen(true)}
+                    aria-label="打开导航"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-basalt-muted-foreground hover:text-basalt-foreground hover:bg-basalt-accent transition-colors"
+                  >
+                    <Menu className="h-5 w-5" aria-hidden="true" strokeWidth={1.5} />
+                  </button>
+                </HeaderTooltip>
               ) : null}
               <Breadcrumbs items={breadcrumbsList} />
             </div>
@@ -143,15 +147,18 @@ function AppShellInner({
               <Suspense>
                 <GlobalYearSelector />
               </Suspense>
-              <a
-                href="https://github.com/nocoo/noheir"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="GitHub repository"
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-basalt-muted-foreground hover:text-basalt-foreground hover:bg-basalt-accent transition-colors"
-              >
-                <GithubIcon className="h-[18px] w-[18px]" aria-hidden="true" strokeWidth={1.5} />
-              </a>
+              <HeaderTooltip label="GitHub repository">
+                <a
+                  href="https://github.com/nocoo/noheir"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="GitHub repository"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-basalt-muted-foreground hover:text-basalt-foreground hover:bg-basalt-accent transition-colors"
+                >
+                  <GithubIcon className="h-[18px] w-[18px]" aria-hidden="true" strokeWidth={1.5} />
+                </a>
+              </HeaderTooltip>
+              <HexlyLink />
               <ThemeToggle />
             </>
           }
