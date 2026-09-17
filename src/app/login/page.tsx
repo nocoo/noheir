@@ -1,7 +1,5 @@
 "use client";
 
-import { HeaderTooltip, HexlyLink } from "../../components/layout/header-links";
-
 import { Button } from "@nocoo/basalt";
 import { LoadingScreen } from "@nocoo/basalt/components/loading-screen";
 import { Shield } from "lucide-react";
@@ -10,6 +8,7 @@ import { signIn } from "next-auth/react";
 import { Suspense } from "react";
 import { GithubIcon } from "@/components/icons/github-icon";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { HeaderTooltip, HexlyLink } from "../../components/layout/header-links";
 
 function Barcode() {
   const bars = [2, 1, 3, 1, 2, 1, 1, 3, 1, 2, 1, 3, 2, 1, 1, 2, 3, 1, 2, 1];

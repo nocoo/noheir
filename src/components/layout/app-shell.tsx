@@ -1,7 +1,5 @@
 "use client";
 
-import { HeaderTooltip, HexlyLink } from "./header-links";
-
 import { ContentIsland } from "@nocoo/basalt";
 import { AppHeader } from "@nocoo/basalt/components/app-header";
 import {
@@ -24,6 +22,7 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ALL_NAV_ITEMS, isNavItemActive, NAV_GROUPS } from "@/lib/navigation";
 import { GlobalYearSelector } from "./global-year-selector";
+import { HeaderTooltip, HexlyLink } from "./header-links";
 import { Sidebar } from "./sidebar";
 import { SidebarProvider, useSidebar } from "./sidebar-context";
 import { ThemeToggle } from "./theme-toggle";
