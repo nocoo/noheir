@@ -1,104 +1,101 @@
-README.md
+# Noheir
 
-## Deployment
+Personal finance application for cash flow, capital units, products and availability planning.
+Profile: ts-worker-web.
+Direction: [README.md](README.md), [runbook](docs/04-run.md), [operations/UI constraints](docs/22-agent-operations.md).
 
-- **Architecture**: Next.js (standalone, port 7004) handles UI + NextAuth + MCP OAuth + API routes; Cloudflare Worker provides SQL API to D1.
-- **Image**: `Dockerfile` (multi-stage, `oven/bun:1`) → published to GHCR as `ghcr.io/<owner>/noheir:latest` and `:<sha>`.
-- **Edge**: Cloudflare in front of an origin VPS (jp2.nocoo.cloud, Azure 日本). A shared `proxy-caddy` at `/opt/proxy/` terminates TLS with a Cloudflare Origin Certificate (`*.hexly.ai`) and enforces **Authenticated Origin Pulls (mTLS)**, so direct-to-IP traffic is rejected. App containers (`noheir-app`, `neo-app`, …) join the shared docker network `edge`; Caddy reverse-proxies to them by container name.
-- **CI/CD**: `.github/workflows/ci.yml` runs lint + unit tests on every push/PR. `.github/workflows/release.yml` is chained via `workflow_run` — on green CI for `main` it builds & pushes the image, then SSHes into the VPS to `docker compose pull && up -d --no-deps app`, runs an in-container health check, and finally smoke-tests via the public URL. Only the app container rolls; `proxy-caddy` is never touched by app deploys.
-- **Runtime env vars** (injected by the host's `.env`, never baked into the image): `WORKER_URL`, `WORKER_TOKEN`, `AUTH_SECRET`, `NEXTAUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ALLOWED_EMAILS`.
-- **GitHub Actions secrets** required by `release.yml`: `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`, `GHCR_PULL_USER`, `GHCR_PULL_TOKEN` (PAT with `read:packages`). Host-side compose file references the same image tag.
-- See [docs/04-run.md](./docs/04-run.md) for the full deploy guide.
-- Public `GET /api/live` executes read-only `SELECT 1` through the existing authenticated Worker SQL gateway, with a five-second timeout. It returns the current top-level version, `database.connected`, and `Cache-Control: no-store`; missing configuration or dependency failure returns HTTP 503 without private diagnostics. Keep the route public and verify the deployed response after each release.
+## Sources of Truth
 
-## Backend (Cloudflare Worker + D1)
+This handbook is the contract; hooks, CI and config enforce it. Raise weaker enforcement to the contract. Preserve the framework-generated footer without allowing it to replace this file.
 
-- **Worker**: `worker/` directory, deployed to `noheir.worker.hexly.ai`
-- **Database**: Cloudflare D1 (SQLite), database ID in `worker/wrangler.toml`
-- **Schema**: Drizzle ORM, schema in `worker/db/schema.ts`
-- **Migrations**: `worker/db/migrations/`
+| Fact | Where |
+| --- | --- |
+| Human docs | [README.md](README.md), [docs/README.md](docs/README.md) |
+| Version | Root `package.json`; verify both app and Worker runtime versions when releasing |
+| Enforcement | `.husky/`, parallel hook scripts, CI, root/Worker Vitest |
+| Environment | Ignored `.env.local` / `worker/.dev.vars`; tracked `.env.example` |
+| Accidents | [Retrospective.md](Retrospective.md) |
 
-### Common Commands
+## Project Invariants
 
-```bash
-# Query D1 (remote)
-npx wrangler d1 execute noheir-db --remote --command "SELECT COUNT(*) FROM transactions"
+- Next.js owns UI, Google login, OAuth/MCP and app APIs; Worker owns business/SQL APIs and D1. Never move MCP back into the Worker.
+- Respect per-user ownership and import scope: CSV replaces the selected year's/type's rows; JSON restore currently replaces only income/expense/transfers, not every exported object. Preserve backup limitations explicitly.
+- Keep OAuth endpoints public in `src/proxy.ts` before the protected-page branch. Public `/api/live` performs read-only `SELECT 1`, returns version/database status with no-store and 200/503, and hides private diagnostics.
+- Availability derives from the latest invest log or explicit override, not `start_date`; missing invest history stays unknown. New established units with a product create the proper invest log; planned units do not.
+- Calendar math uses Asia/Shanghai helpers across write paths and fixtures. SQLite queries retain SQLite syntax; parameterize SQL.
+- Domain labels use the shared colored-badge wrappers, never arbitrary Badge colors. Preserve available/soon/locked color rules and full badge mapping in [operations/UI constraints](docs/22-agent-operations.md).
+- App deployments roll only its VPS container on shared `edge`; never disturb shared Caddy/mTLS. Worker code/schema ships separately; no runtime credentials enter the image.
 
-# Run migrations
-npx wrangler d1 migrations apply noheir-db --remote
+## Stack / Layout
 
-# Local dev
-cd worker && bun run dev
+| Component | Choice |
+| --- | --- |
+| Web | Next.js standalone, React, Auth.js, MCP; `src/app/` |
+| Domain/UI | `src/domain/`, `src/lib/mcp/`, `src/components/`; keep MVVM |
+| Worker/data | Hono/D1, `worker/src/`, `worker/db/schema.ts`, `worker/db/migrations/` |
+| Tooling | Bun, Node 22.12+, TypeScript 7, Biome, Vitest/Playwright |
+
+## Commands
+
+Run from root; root and Worker are separate packages. CI currently pins Bun 1.4.2.
+
+```sh
+bun install --frozen-lockfile
+bun install --cwd worker --frozen-lockfile
+bun run prepare
+bun run --cwd worker dev
+bun run dev
+bun run typecheck
+bun run worker:typecheck
+bun run lint
+bun run build
+bun run test:coverage
+bun run --cwd worker test:coverage
+bun run test:e2e
+bunx playwright install chromium
+bun run test:e2e:bdd
 ```
 
-## Test Architecture
+Configure `WORKER_URL`/`WORKER_TOKEN` with matching Worker token; the example URL targets production, so choose local 37004 before dev writes. Google login needs `AUTH_SECRET`, `NEXTAUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ALLOWED_EMAILS`. Worker unit tests require a working `better-sqlite3` native module. Follow README for local migrations; do not run remote schema commands for tests.
 
-### Test Strategy
+## Verification
 
-| Layer | Files | Runner |
-|-------|-------|--------|
-| Unit | `src/__tests__/` | `bun run test` |
-| Worker Unit | `worker/tests/` (excl. e2e/) | `bun run test:worker` |
-| Worker E2E | `worker/tests/e2e/` | `bun run test:e2e` (boots `wrangler dev --local`) |
+6DQ = L1/L2/L3 + G1/G2 + D1. Status: `enforced`, `planned`, `manual`, `N/A`. L1 statements/branches/functions/lines each ≥95%, no skipped/focused tests.
 
-> E2E runs entirely against a local D1 emulator (`worker/.wrangler/state-e2e/`) — no remote test database. Migrations are applied to that local D1 before each run. The previous `noheir-db-test` database has been retired.
+| Piece | Requirement and current reality | Status | Evidence |
+| --- | --- | --- | --- |
+| L1 Web | Four metrics ≥95% in configured logic | enforced | Root Vitest, pre-commit/pre-push/CI |
+| L1 Worker | Four metrics ≥95%, relevant Worker logic included | planned | Worker config has branch 90% and narrow coverage; current gate omits Worker coverage |
+| L2 | Real HTTP, every endpoint/method, real SQLite | planned | `run-e2e.ts` is enforced in pre-push/CI; full app/MCP surface proof missing |
+| L3 | Authenticated financial/import/backup workflows | planned | Playwright CI currently checks public terms-page smoke only |
+| G1 | Both type lanes and zero-warning/error Biome | planned | Root checks enforced; Worker typecheck not included in root/CI typecheck command |
+| G2 | Required OSV/gitleaks; both locks and pushed commits | planned | Pre-push allows absent tools/skip variables and scans staged secrets; CI scans root lock |
+| D1 | Per-run local state and guard/marker before writes/cleanup | planned | Local HTTP runner rebuilds fixed `worker/.wrangler/state-e2e`; marker/per-run safeguards missing |
+| Build | Next standalone output | enforced | CI `build` preparation |
+| Docs | Schema/operations and evidence remain aligned | manual | Review numbered docs |
 
-### Port allocation
+Hooks run working-tree coverage/lint/types (commit), then coverage/lint/security/HTTP in parallel (push). Required target: check-only index L1/G1 <30s and stdin pushed-ref L2/G2 <3min. Do not use hook bypass or the current `SKIP_SECURITY`/`SKIP_E2E` escape hatches.
 
-Per the personal port plan (`dev → dev + 10000 → dev + 20000` for dev/L2/BDD):
+## Resources / Isolation
 
-| Purpose | Port | Notes |
-|---------|------|-------|
-| Next.js dev server | `7004` | `bun run dev` |
-| L2 / E2E wrangler | `17004` | Owned by `scripts/run-e2e.ts`; override with `E2E_PORT` |
-| BDD | `27004` | (not in use) |
-| Worker dev (manual) | `37004` | `cd worker && bun run dev`; pinned via `[dev] port` in `worker/wrangler.toml` |
+| Purpose | Port / state | Policy |
+| --- | --- | --- |
+| Dev | Next 7004; Worker 37004 | Local configured D1 for development |
+| L2 | 17004 (`E2E_PORT` override), `worker/.wrangler/state-e2e` | Local migrations/Worker; refuses an occupied port |
+| L3 | 27004 | Public smoke only; no verified financial fixtures |
 
-The runner refuses to start if `17004` is busy and tells you to free it or set `E2E_PORT`.
+Required test design uses local Wrangler/Miniflare with per-run SQLite, explicit local context and `_test_marker` checked before seed/reset/cleanup. Never create remote `-test` resources or use production/daily-dev data as fixtures; retired remote test bindings stay retired.
 
-### Git Hooks
+## Operations / Release
 
-| Hook | Runs | Config |
-|------|------|--------|
-| pre-commit | Unit tests only | `.husky/pre-commit` |
-| pre-push | Unit + Lint | `.husky/pre-push` |
-
-## Visual Design Principles
-
-### Unified Badge System
-
-All domain labels (unitCode, strategy, tactics, status, currency, product) MUST use the unified Badge components from `src/components/ui/colored-badge.tsx`:
-
-| Data Type | Component | Color Source |
-|-----------|-----------|--------------|
-| Unit Code (e.g., C10, A01) | `<UnitCodeBadge unitCode={...} />` | Hash by prefix |
-| Strategy (e.g., 远期理财) | `<StrategyBadge strategy={...} />` | `STRATEGY_TOKEN_MAP` |
-| Tactics (e.g., 定期存款) | `<TacticsBadge tactics={...} />` | `TACTICS_TOKEN_MAP` |
-| Status (e.g., 已成立) | `<StatusBadge status={...} />` | `STATUS_TOKEN_MAP` |
-| Currency (e.g., CNY, USD) | `<CurrencyBadge currency={...} />` | `CURRENCY_TOKEN_MAP` |
-| Product Name | `<ProductBadge productName={...} />` | Hash by name |
-
-**Key principle**: The same label (e.g., `C10` or `远期理财`) must display with identical color and style across ALL pages. Never use raw `<Badge>` for domain-specific data.
-
-### Availability Status Colors
-
-| State | Color | Label |
-|-------|-------|-------|
-| Available (≤0 days) | Green | "已可用" / "可用" |
-| Soon (1-30 days) | Amber | "N天" |
-| Locked (>30 days) | Red/Destructive | "锁定中" |
+Authorized releases use `bun run release` and the [runbook](docs/04-run.md). CI success triggers the Docker release workflow; Worker changes additionally need `bun run --cwd worker deploy` after migrations. Verify both public `/api/live` versions, not only the app container. GitHub credentials and VPS runtime variable names are documented in [operations](docs/22-agent-operations.md).
 
 ## Retrospective
 
-- D1 uses SQLite syntax — use `strftime('%Y', date)` instead of `EXTRACT(YEAR FROM date)`.
-- Wrangler D1 queries require `--remote` flag for production database.
-- MCP server moved from Worker to Next.js API routes (`src/app/api/mcp/`). Worker now only provides SQL API.
-- **Local npm links don't work in Docker builds**: `"@nocoo/base-mcp": "link:../base-mcp"` causes `FileNotFound` during Docker builds because the linked package doesn't exist in the build container. Solution: inline needed functions directly into the project (e.g., `src/lib/mcp/pkce.ts`) or publish to npm registry.
-- **Middleware whitelist must include `/api/auth/`**: `src/proxy.ts` redirects unauthenticated requests to `/login`. NextAuth's own endpoints (`/api/auth/session`, `/providers`, `/csrf`, `/callback/*`, …) must be in `PUBLIC_PREFIXES`, otherwise the client receives an HTML login page instead of JSON and breaks with `Unexpected token '<'`. Marking them only as "not protected" inside `isProtectedApiRoute` is **not** enough — they fall through to the protected-page branch.
-- **E2E uses `wrangler dev --local`, not a remote D1**: the previous `X-Target-DB` header + `DB_TEST` binding + `noheir-db-test` remote database is gone. `scripts/run-e2e.ts` boots wrangler locally, applies migrations into `worker/.wrangler/state-e2e/`, and runs the suite over loopback. CI does the same — no remote D1 is required.
-- **Availability is derived from the latest invest log, never from `start_date`**: `computeAvailability` (`worker/lib/availability.ts`) uses `available_date_override` when set; otherwise it short-circuits to all-null when a unit has no `contribution_logs` invest row, which the tooltip renders as "状态未知". `POST /api/units` originally wrote no log, so any unit created with a product already attached was born broken (R29–R32 hit this). Creation now writes an `invest` log when `status = 已成立` and a product is attached; `计划中` deliberately writes none, since the money is not out yet.
-- **Date math must be anchored to Asia/Shanghai, not the runtime's local time**: the Workers runtime is UTC, but `getLocalDateString()` (`worker/src/index.ts:49`) stamps `operation_date` in Shanghai. `computeAvailability` used `new Date()` + `setHours(0,0,0,0)`, so between 00:00 and 08:00 CST it read "today" as the previous day and inflated every `daysUntilAvailable` by 1. Fixed by parsing all calendar days as UTC-midnight and deriving today via `toLocaleDateString("en-CA", { timeZone: "Asia/Shanghai" })`. Two lessons: (1) any new date arithmetic must use the same helpers, and (2) the bug hid for months because the e2e tests built their fixtures with `toISOString().slice(0,10)` (UTC) — two mistakes cancelling out. Tests must use the *same* timezone convention as the write path, or they validate nothing.
-- **Releasing does NOT deploy the Worker**: `release.yml` only rolls the `noheir-app` container. No workflow touches the Worker — it ships solely via a manual `cd worker && bun run deploy`. At v2.6.1 the site reported `2.6.1` while `noheir.worker.hexly.ai/api/live` still reported `2.6.0`, so both Worker-side fixes in that release were live nowhere. "No migration needed" is **not** a reason to skip the Worker deploy — schema and code ship independently. After any release touching `worker/`, curl **both** `/api/live` endpoints and confirm the versions match before calling it done.
+Full narratives live in [Retrospective.md](Retrospective.md). Keep recurring rules short; cross-project lessons belong in nmem/global rules and deterministic checks in hooks/tests.
+
+- Do not use sibling `link:` dependencies for container builds; deployed app and Worker versions must both reflect their changed code.
+
 
 <!-- BEGIN:nextjs-agent-rules -->
 
