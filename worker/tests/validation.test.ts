@@ -11,6 +11,32 @@ import {
 
 describe("Product validation schemas", () => {
   describe("createProductSchema", () => {
+    test.each([
+      { openDays: 2 },
+      { cycleDays: 30 },
+      { openDays: null, cycleDays: 30 },
+      { openDays: 2, cycleDays: null },
+      { openDays: 3, cycleDays: 3 },
+      { openDays: 4, cycleDays: 3 },
+    ])("rejects inconsistent product cycle fields: %j", (cycle) => {
+      const result = createProductSchema.safeParse({ name: "Cycle fixture", ...cycle });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(
+          result.error.issues.some((issue) => issue.message.includes("openDays and cycleDays")),
+        ).toBe(true);
+      }
+    });
+
+    test.each([
+      { openDays: 2, cycleDays: 30 },
+      { openDays: null, cycleDays: null },
+    ])("accepts a complete valid or cleared product cycle: %j", (cycle) => {
+      const result = createProductSchema.safeParse({ name: "Cycle fixture", ...cycle });
+      expect(result.success).toBe(true);
+      if (result.success) expect(result.data).toMatchObject(cycle);
+    });
+
     test("accepts valid product", () => {
       const result = createProductSchema.safeParse({
         name: "招商安心宝",

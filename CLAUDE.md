@@ -65,7 +65,7 @@ Configure `WORKER_URL`/`WORKER_TOKEN` with matching Worker token; the example UR
 | Piece | Requirement and current reality | Status | Evidence |
 | --- | --- | --- | --- |
 | L1 Web | Four metrics ≥95% in configured logic | enforced | Root Vitest, pre-commit/pre-push/CI |
-| L1 Worker | Four metrics ≥95%, relevant Worker logic included | planned | Worker config has branch 90% and narrow coverage; current gate omits Worker coverage |
+| L1 Worker | Four metrics ≥95%, relevant Worker logic included | planned | CI enforces all four ≥95% on configured libraries/validation; broader Worker route coverage remains excluded and planned |
 | L2 | Real HTTP, every endpoint/method, real SQLite | planned | `run-e2e.ts` is enforced in pre-push/CI; full app/MCP surface proof missing |
 | L3 | Authenticated financial/import/backup workflows | planned | Playwright CI currently checks public terms-page smoke only |
 | G1 | Both type lanes and zero-warning/error Biome | planned | Root checks enforced; Worker typecheck not included in root/CI typecheck command |
