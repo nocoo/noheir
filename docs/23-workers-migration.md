@@ -116,9 +116,9 @@ coverage thresholds, production fixture writes or unverified release claims.
 
 - Root unit/component suite passes. Coverage: statements 98.21%, branches 96.20%,
   functions 100%, lines 99.22% in the existing configured scope.
-- Worker unit suite passes. Coverage: statements 99.01%, branches 97.74%,
-  functions 100%, lines 99.77%. No thresholds were lowered or exclusions added.
-- Real HTTP: 178 tests across 18 files pass against native Workerd and local D1.
+- Worker unit suite passes. Coverage: statements 99.03%, branches 97.79%,
+  functions 100%, lines 99.78%. No thresholds were lowered or exclusions added.
+- Real HTTP: 182 tests across 18 files pass against native Workerd and local D1.
   This includes 10,000-row annual import and restore, injected SQL failure after
   an earlier JSON chunk with full rollback, date/cents validation, ownership,
   state races, OAuth/PKCE/single-use code/refresh, wrong-owner callback denial,
@@ -143,6 +143,20 @@ coverage thresholds, production fixture writes or unverified release claims.
   privately. No DNS or Access policy change, deployment or v3 release has occurred.
 - The upstream `a3f2568` change disables old Worker default/preview URLs; the
   replacement `wrangler.jsonc` retains both protections.
+
+Independent review follow-up before cutover:
+
+| Finding | Resolution |
+| --- | --- |
+| P1: settings writes accepted ownership/row fields from JSON | `812daea`: validate writable fields and project repository writes; exercise both insert/update with forged identity |
+| P1: units could link and expose another owner's product | `71dacea`: reject foreign/missing product links, scope REST/MCP/portfolio joins and name lookups by owner; test stale cross-owner relations |
+| P2: browser-only recurrence constraints could be bypassed | `9b2bb63`: validate complete schedules in the Worker, merge patches before validation, reject impossible dates and preserve omitted currency/interval |
+| P2: anonymously served legal HTML depended on protected assets | `6ad48b3`: require Access for legal pages and assets consistently, matching the existing protected root application; retain authenticated legal routes |
+
+The follow-up build, 182 HTTP tests and 40 browser tests passed. Every fix passed
+normal pre-commit type, lint and unit-coverage checks. The owner's exact Access
+configuration sequence is in [the runbook](04-run.md#owner-configuration-before-the-v3-cutover).
+Independent review does not replace the pending live Access/DNS/deployment checks.
 
 The migration branch permits code review and CI without triggering a production
 main-push deployment while the MCP Access decision is pending. After selecting

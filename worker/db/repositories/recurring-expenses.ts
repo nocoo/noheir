@@ -1,9 +1,7 @@
 // Spec: docs/002-recurring-expense-calendar.md § Data Model + API Surface
 //
-// Persistence boundary for recurring spending rules. The `status` and
-// `endedAt` fields are accepted on `update` here at the repository layer
-// — the contract guard (silently drop unless the X-Internal-Action
-// header is present) lives in the HTTP endpoint layer (P1-C6).
+// The HTTP CRUD schema strips lifecycle fields. State transitions use
+// the dedicated authenticated endpoint; client headers confer no authority.
 //
 // `findAll` joins `expense_categories` so the list view can paint
 // category name + colour in one round-trip; deletion of a category is
@@ -16,9 +14,6 @@ import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { expenseCategories, recurringExpenses } from "../schema";
 import type { NewRecurringExpense, RecurringExpense, RecurringExpenseWithCategory } from "../types";
 
-/** Fields the spec allows on create. `endedAt` and `status` are excluded
- *  — they are only ever set by the end-state-machine action via the
- *  internal X-Internal-Action header path. */
 export type RecurringExpenseCreateInput = Omit<
   NewRecurringExpense,
   "id" | "userId" | "createdAt" | "updatedAt" | "endedAt" | "status"

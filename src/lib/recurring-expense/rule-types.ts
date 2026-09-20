@@ -1,7 +1,7 @@
 // Domain types + Zod schema for recurring expense rules.
 // Spec: docs/002-recurring-expense-calendar.md § Data Model
 //
-// This layer is the contract between the Server Actions and the UI.
+// This layer is the contract between browser actions and the UI.
 // It is intentionally stricter than the Worker-side schema in
 // worker/db/validation.ts: colorToken here is bound to the actual
 // CHART_TOKENS palette, while the worker only checks the regex shape
@@ -60,7 +60,7 @@ export type CategoryInput = z.infer<typeof categoryInputSchema>;
 
 // ── Recurring expense Zod ──
 //
-// Form inputs use `amount` in **yuan** (decimal); Server Actions convert
+// Form inputs use `amount` in **yuan** (decimal); browser actions convert
 // to `amountCents` before hitting the worker so cents stays the only
 // unit on the wire and in the DB.
 
@@ -81,7 +81,7 @@ const recurringExpenseBaseShape = {
 } as const;
 
 /** Create input — `status` / `endedAt` are intentionally excluded.
- *  They are only ever set by the pause/resume/end Server Actions. */
+ *  The authenticated state endpoint owns lifecycle changes. */
 export const recurringExpenseInputSchema = z
   .object(recurringExpenseBaseShape)
   .superRefine((data, ctx) => {

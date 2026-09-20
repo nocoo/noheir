@@ -166,7 +166,7 @@ describe("E2E: /api/recurring-expenses (P1-C6)", () => {
     expect(rules[0].colorToken).toBe("chart-9");
   });
 
-  test("PUT without X-Internal-Action header DROPS status + endedAt from body", async () => {
+  test("PUT drops status and endedAt from the body", async () => {
     const { rule } = await api<{ rule: Rule }>({
       method: "POST",
       path: "/api/recurring-expenses",

@@ -113,7 +113,7 @@ describe("recurring_expenses repo (P1-C4)", () => {
     expect(after?.amountCents).toBe(800_000);
   });
 
-  test("update writes status + endedAt (repo layer; route layer guards via header)", async () => {
+  test("repository supports lifecycle fields while HTTP CRUD strips them", async () => {
     const repos = getTestRepos();
     const created = await repos.recurringExpenses.create(userId, baseRule());
     if (!created.ok) throw new Error("seed");
