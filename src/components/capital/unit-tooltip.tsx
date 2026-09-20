@@ -1,5 +1,3 @@
-"use client";
-
 import { Activity, CalendarClock, Package2, Sparkles } from "lucide-react";
 import type { SerializedUnit } from "@/components/capital/unit-editor";
 import { DataRow, SectionTitle } from "@/components/capital/unit-panel-primitives";

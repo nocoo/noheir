@@ -1,8 +1,6 @@
-"use client";
-
 import { AlertCircle, Anchor, Calendar, Plus, Save, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { useRevalidator } from "react-router";
 import { toast } from "sonner";
 import { saveBalanceAnchors } from "@/app/actions/settings-actions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -27,7 +25,7 @@ interface BalanceAnchorsClientProps {
 }
 
 export function BalanceAnchorsClient({ accounts, initialAnchors }: BalanceAnchorsClientProps) {
-  const router = useRouter();
+  const revalidator = useRevalidator();
   const [isPending, startTransition] = useTransition();
 
   const [anchors, setAnchors] = useState<BalanceAnchor[]>(initialAnchors);
@@ -66,7 +64,7 @@ export function BalanceAnchorsClient({ accounts, initialAnchors }: BalanceAnchor
       const result = await saveBalanceAnchors(anchors);
       if (result.success) {
         toast.success("余额锚点已保存");
-        router.refresh();
+        revalidator.revalidate();
       } else {
         toast.error(result.error);
       }

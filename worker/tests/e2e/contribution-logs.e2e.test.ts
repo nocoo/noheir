@@ -29,7 +29,7 @@ describe("E2E: Contribution Logs", () => {
     });
 
     expect(res.log).toBeDefined();
-    expect(res.log.id).toBeString();
+    expect(res.log.id).toBeTypeOf("string");
     expect(res.log.unitId).toBe(unit.id);
     expect(res.log.operationType).toBe("invest");
     expect(res.log.amountCents).toBe(100000);

@@ -4,7 +4,7 @@
  * Common types for MCP tool implementations.
  */
 
-import type { Db } from "@/lib/db";
+import type { Db } from "../../db";
 
 // ---------------------------------------------------------------------------
 // Context passed to all tools

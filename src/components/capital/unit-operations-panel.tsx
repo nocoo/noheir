@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * Column 2 of the unit editor: product context, the operation buttons, and
  * the staged (not yet committed) operation cards.

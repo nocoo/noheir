@@ -5,7 +5,7 @@
  * All tools accepting entity identifiers MUST use these resolvers.
  */
 
-import type { Db } from "@/lib/db";
+import type { Db } from "../../db";
 
 // ---------------------------------------------------------------------------
 // Types

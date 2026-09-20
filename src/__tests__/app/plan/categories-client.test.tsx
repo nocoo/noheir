@@ -13,18 +13,15 @@ const { toastSuccess, toastError } = vi.hoisted(() => ({
   toastError: vi.fn(),
 }));
 
-const { refreshMock } = vi.hoisted(() => ({ refreshMock: vi.fn() }));
+const { revalidateMock } = vi.hoisted(() => ({ revalidateMock: vi.fn() }));
 
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    refresh: refreshMock,
-    push: vi.fn(),
-    replace: vi.fn(),
-    back: vi.fn(),
-    forward: vi.fn(),
-    prefetch: vi.fn(),
-  }),
-}));
+vi.mock("react-router", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react-router")>();
+  return {
+    ...actual,
+    useRevalidator: () => ({ revalidate: revalidateMock }),
+  };
+});
 
 vi.mock("@/app/actions/expense-category-actions", () => ({
   createExpenseCategory: createMock,
@@ -155,7 +152,7 @@ describe("CategoriesClient delete confirm (P3-C9)", () => {
     await user.click(within(dialog).getByRole("button", { name: /确认删除/ }));
     expect(deleteMock).toHaveBeenCalledWith("c1");
     expect(toastSuccess).toHaveBeenCalledWith("分类已删除");
-    expect(refreshMock).toHaveBeenCalled();
+    expect(revalidateMock).toHaveBeenCalled();
   });
 
   test("delete failure surfaces via toast.error and does NOT refresh", async () => {
@@ -171,12 +168,12 @@ describe("CategoriesClient delete confirm (P3-C9)", () => {
     const dialog = await screen.findByRole("dialog");
     await user.click(within(dialog).getByRole("button", { name: /确认删除/ }));
     expect(toastError).toHaveBeenCalledWith("无法删除");
-    expect(refreshMock).not.toHaveBeenCalled();
+    expect(revalidateMock).not.toHaveBeenCalled();
   });
 });
 
-describe("CategoriesClient router.refresh after form success (P3-C9 fix)", () => {
-  test("create form onSuccess triggers router.refresh()", async () => {
+describe("CategoriesClient revalidator.revalidate after form success", () => {
+  test("create form onSuccess triggers revalidator.revalidate()", async () => {
     const user = userEvent.setup();
     createMock.mockResolvedValueOnce({ success: true, data: { id: "new" } });
     render(<CategoriesClient categories={[]} usage={{}} />);
@@ -185,10 +182,10 @@ describe("CategoriesClient router.refresh after form success (P3-C9 fix)", () =>
     await user.type(within(dialog).getByLabelText("分类名"), "新分类");
     await user.click(within(dialog).getByRole("button", { name: "创建" }));
     expect(createMock).toHaveBeenCalled();
-    expect(refreshMock).toHaveBeenCalled();
+    expect(revalidateMock).toHaveBeenCalled();
   });
 
-  test("edit form onSuccess triggers router.refresh()", async () => {
+  test("edit form onSuccess triggers revalidator.revalidate()", async () => {
     const user = userEvent.setup();
     updateMock.mockResolvedValueOnce({ success: true, data: undefined });
     render(
@@ -201,6 +198,6 @@ describe("CategoriesClient router.refresh after form success (P3-C9 fix)", () =>
     const dialog = await screen.findByRole("dialog", { name: "编辑分类" });
     await user.click(within(dialog).getByRole("button", { name: "保存" }));
     expect(updateMock).toHaveBeenCalled();
-    expect(refreshMock).toHaveBeenCalled();
+    expect(revalidateMock).toHaveBeenCalled();
   });
 });

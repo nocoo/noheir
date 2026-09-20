@@ -2,8 +2,7 @@
 // MCP Client data layer — CRUD for dynamic client registration
 // ---------------------------------------------------------------------------
 
-import { ulid } from "ulid";
-import type { Db } from "@/lib/db";
+import type { Db } from "../lib/db";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -30,7 +29,7 @@ export interface CreateMcpClientInput {
 
 /** Generate a unique client ID. */
 export function generateClientId(): string {
-  return `noheir_mcp_${ulid()}`;
+  return `noheir_mcp_${crypto.randomUUID().replace(/-/g, "")}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -38,7 +37,7 @@ export function generateClientId(): string {
 // ---------------------------------------------------------------------------
 
 export async function createMcpClient(db: Db, input: CreateMcpClientInput): Promise<McpClient> {
-  const id = ulid();
+  const id = crypto.randomUUID();
   const clientId = generateClientId();
   const now = new Date().toISOString();
 

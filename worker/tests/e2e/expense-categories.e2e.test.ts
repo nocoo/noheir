@@ -144,7 +144,7 @@ describe("E2E: /api/expense-categories (P1-C5)", () => {
     expect(again.status).toBe(404);
   });
 
-  test("CORS preflight allows the standard headers", async () => {
+  test("cross-origin requests cannot use user-id headers", async () => {
     // OPTIONS preflight from a browser-style request
     const res = await fetch(`${BASE_URL}/api/expense-categories`, {
       method: "OPTIONS",
@@ -154,8 +154,8 @@ describe("E2E: /api/expense-categories (P1-C5)", () => {
         "Access-Control-Request-Headers": "Content-Type, Authorization, X-User-Id",
       },
     });
-    expect(res.status).toBeLessThan(400);
+
     const allowHeaders = (res.headers.get("access-control-allow-headers") ?? "").toLowerCase();
-    expect(allowHeaders).toContain("x-user-id");
+    expect(allowHeaders).not.toContain("x-user-id");
   });
 });

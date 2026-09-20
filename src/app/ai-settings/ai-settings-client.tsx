@@ -1,8 +1,6 @@
-"use client";
-
 import { Bot, Check, Copy, Save, Terminal } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { useRevalidator } from "react-router";
 import { toast } from "sonner";
 import { saveAiSettings } from "@/app/actions/settings-actions";
 import { Button } from "@/components/ui/button";
@@ -33,7 +31,7 @@ interface AiSettingsClientProps {
 }
 
 export function AiSettingsClient({ aiConfig, mcpParams }: AiSettingsClientProps) {
-  const router = useRouter();
+  const revalidator = useRevalidator();
   const [isPending, startTransition] = useTransition();
   const [copied, setCopied] = useState(false);
 
@@ -73,7 +71,7 @@ export function AiSettingsClient({ aiConfig, mcpParams }: AiSettingsClientProps)
       });
       if (result.success) {
         toast.success("AI 设置已保存");
-        router.refresh();
+        revalidator.revalidate();
       } else {
         toast.error(result.error);
       }

@@ -1,7 +1,5 @@
-"use client";
-
 import { CreditCard } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useNavigate, useSearchParams } from "react-router";
 import {
   CartesianGrid,
   Line,
@@ -64,13 +62,13 @@ export function AccountDetailClient({
   displayEntries,
   summary,
 }: AccountDetailClientProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const handleAccountChange = (account: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("account", account);
-    router.push(`/account-detail?${params.toString()}`);
+    navigate(`/account-detail?${params.toString()}`);
   };
 
   return (

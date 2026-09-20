@@ -1,8 +1,6 @@
-"use client";
-
 import { Check, Save, Shield, Tags, TrendingUp } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { useRevalidator } from "react-router";
 import { toast } from "sonner";
 import {
   saveActiveIncomeCategories,
@@ -35,7 +33,7 @@ export function CategorySettingsClient({
   activeIncomeCategories: initialActive,
   fixedExpenseCategories: initialFixed,
 }: CategorySettingsClientProps) {
-  const router = useRouter();
+  const revalidator = useRevalidator();
   const [isPending, startTransition] = useTransition();
 
   const [activeIncome, setActiveIncome] = useState<string[]>(initialActive);
@@ -60,7 +58,7 @@ export function CategorySettingsClient({
 
       if (incomeResult.success && expenseResult.success) {
         toast.success("分类设置已保存");
-        router.refresh();
+        revalidator.revalidate();
       } else {
         const errorMsg = !incomeResult.success
           ? incomeResult.error

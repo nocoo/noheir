@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * Three-column edit dialog for an existing capital unit (docs/003 § UI).
  *

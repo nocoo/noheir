@@ -1,5 +1,3 @@
-"use client";
-
 import { AlertCircle, AlertTriangle, Brain, Calendar, Clock, Info, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

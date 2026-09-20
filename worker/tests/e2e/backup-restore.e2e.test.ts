@@ -32,7 +32,7 @@ describe("E2E: Data Export / Import", () => {
     expect(backup.transfers).toHaveLength(1);
     expect(backup.products).toHaveLength(1);
     expect(backup.units).toHaveLength(1);
-    expect(backup.exported_at).toBeString();
+    expect(backup.exported_at).toBeTypeOf("string");
   });
 
   test("GET /api/data/export returns empty when no data", async () => {
@@ -154,7 +154,7 @@ describe("E2E: Data Export / Import", () => {
 
     expect(backup.transactions).toHaveLength(10);
     expect(backup.transfers).toHaveLength(5);
-    expect(backup.exported_at).toBeString();
+    expect(backup.exported_at).toBeTypeOf("string");
   });
 
   test("POST /api/data/import with empty arrays clears all", async () => {

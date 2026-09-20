@@ -1,5 +1,3 @@
-"use client";
-
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useTransition } from "react";
 import { Button } from "@/components/ui/button";

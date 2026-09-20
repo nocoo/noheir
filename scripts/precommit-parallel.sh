@@ -15,18 +15,19 @@ run_bg() {
 
 cd "$ROOT"
 
-run_bg tests npm run test:coverage
+run_bg tests bun run test:coverage
+run_bg worker bun run --cwd worker test:coverage
 run_bg lint ./node_modules/.bin/biome check --error-on-warnings .
-run_bg typecheck ./node_modules/.bin/tsc --noEmit
+run_bg typecheck bun run typecheck
 
 FAIL=0
-for name in tests lint typecheck; do
+for name in tests worker lint typecheck; do
   pid_var="${name}_PID"
   eval "pid=\$$pid_var"
   wait "$pid"
 done
 
-for name in tests lint typecheck; do
+for name in tests worker lint typecheck; do
   rc=$(cat "$LOGDIR/$name.rc" 2>/dev/null || echo 1)
   if [ "$rc" != "0" ]; then
     echo "❌ $name failed (rc=$rc)"

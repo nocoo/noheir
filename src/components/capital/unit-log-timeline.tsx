@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * Vertical history timeline for one capital unit (column 3 of the unit editor).
  *

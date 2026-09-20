@@ -1,3 +1,4 @@
+import { useLoaderData } from "react-router";
 import { AppShell } from "@/components/layout";
 import {
   buildAverageMonthly,
@@ -8,39 +9,41 @@ import {
   buildTransactionLabels,
 } from "@/domain/dashboard/transaction-analysis";
 import type { DomainTransaction } from "@/domain/types";
-import { getAuthedClient } from "@/lib/api-helpers";
 import { buildAccountData, buildCategoryData } from "@/lib/category-builders";
 import { buildMonthlyData, toDomainTransaction } from "@/lib/transaction-mappers";
+import { workerDbClient } from "@/lib/worker-db-client";
 import { TransactionAnalysisClient } from "../transaction-analysis-client";
 
-export default async function ExpensePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ year?: string }>;
-}) {
-  const params = await searchParams;
-  let transactions: DomainTransaction[] = [];
-  let selectedYear: number | null = null;
+export interface ExpenseLoaderData {
+  transactions: DomainTransaction[];
+  selectedYear: number;
+}
 
-  try {
-    const { userId, client } = await getAuthedClient();
-    const metadata = await client.getMetadata(userId);
+export async function expenseLoader({ request }: { request: Request }): Promise<ExpenseLoaderData> {
+  const url = new URL(request.url);
+  const yearParam = url.searchParams.get("year");
 
-    const availableYears = metadata.years.sort((a, b) => b - a);
-    const yearParam = params.year ? Number(params.year) : null;
-    if (yearParam && availableYears.includes(yearParam)) {
-      selectedYear = yearParam;
-    } else {
-      selectedYear = availableYears[0] ?? new Date().getFullYear();
-    }
+  const metadata = await workerDbClient.getMetadata();
+  const availableYears = metadata.years.sort((a, b) => b - a);
 
-    const result = await client.getAllTransactionsByYear(userId, selectedYear);
-    transactions = result.transactions.map((raw) =>
-      toDomainTransaction(raw as Record<string, unknown>),
-    );
-  } catch {
-    // Not authenticated or Worker unavailable
+  const parsedYear = yearParam ? Number(yearParam) : null;
+  let selectedYear: number;
+  if (parsedYear && availableYears.includes(parsedYear)) {
+    selectedYear = parsedYear;
+  } else {
+    selectedYear = availableYears[0] ?? new Date().getFullYear();
   }
+
+  const result = await workerDbClient.getAllTransactionsByYear(selectedYear);
+  const transactions = result.transactions.map((raw) =>
+    toDomainTransaction(raw as Record<string, unknown>),
+  );
+
+  return { transactions, selectedYear };
+}
+
+export default function ExpensePage() {
+  const { transactions } = useLoaderData<ExpenseLoaderData>();
 
   const type = "expense" as const;
   const filtered = buildFilteredTransactions(transactions, type);

@@ -10,6 +10,7 @@ import type { CreateMcpTokenInput, McpToken } from "../../services/mcp-tokens";
 
 import {
   ACCESS_TOKEN_TTL,
+  consumeRefreshToken,
   createMcpToken,
   generateAccessToken,
   generateRefreshToken,
@@ -315,6 +316,15 @@ describe("revokeToken", () => {
     expect(at(calls, 0).sql).toContain("revoked_at = ?");
     expect(at(calls, 0).sql).toContain("revoked = 0");
   });
+
+  it("revokes the paired refresh tokens for that access token", async () => {
+    const { db, calls } = createMockDb({ executeMeta: { changes: 1 } });
+    await revokeToken(db, "01TEST");
+    expect(calls).toHaveLength(2);
+    expect(at(calls, 1).sql).toContain("UPDATE mcp_refresh_tokens");
+    expect(at(calls, 1).sql).toContain("access_token_id = ?");
+    expect(at(calls, 1).params[1]).toBe("01TEST");
+  });
 });
 
 describe("revokeTokensByClientAndUser", () => {
@@ -335,6 +345,52 @@ describe("revokeTokensByClientAndUser", () => {
     const { db } = createMockDb({ executeMeta: { changes: 0 } });
     const count = await revokeTokensByClientAndUser(db, "client-1", "user-1");
     expect(count).toBe(0);
+  });
+});
+
+describe("consumeRefreshToken", () => {
+  it("consumes atomically with client_id and expiry", async () => {
+    const row = {
+      client_id: "client-1",
+      user_id: "user-1",
+      scope: "mcp:full",
+      access_token_id: "tok-1",
+    };
+    const { db, calls } = createMockDb({ queryResults: [row] });
+    const result = await consumeRefreshToken(db, "refresh_hash", "client-1");
+    expect(result).toEqual(row);
+    expect(at(calls, 0).sql).toContain("client_id = ?");
+    expect(at(calls, 0).sql).toContain("revoked = 0");
+    expect(at(calls, 0).sql).toContain("expires_at > ?");
+    expect(at(calls, 0).sql).toContain("mcp_tokens");
+    expect(at(calls, 0).sql).toContain("revoked = 0");
+    expect(at(calls, 0).sql).toContain("access_token_id IN");
+    expect(at(calls, 0).params).toEqual([
+      expect.any(String),
+      "refresh_hash",
+      "client-1",
+      expect.any(String),
+      "client-1",
+    ]);
+  });
+
+  it("wrong client_id is bound in WHERE so a valid token is not burned", async () => {
+    const { db, calls } = createMockDb({ queryResults: [] });
+    const result = await consumeRefreshToken(db, "refresh_hash", "other-client");
+    expect(result).toBeNull();
+    expect(at(calls, 0).sql).toContain("refresh_token_hash = ? AND client_id = ?");
+    expect(at(calls, 0).params[2]).toBe("other-client");
+  });
+
+  it("does not consume a refresh whose parent access token is revoked", async () => {
+    const { db, calls } = createMockDb({ queryResults: [] });
+    const result = await consumeRefreshToken(db, "refresh_hash", "client-1");
+    expect(result).toBeNull();
+    expect(at(calls, 0).sql).toContain("access_token_id IN");
+    expect(at(calls, 0).sql).toContain(
+      "SELECT id FROM mcp_tokens WHERE revoked = 0 AND client_id = ?",
+    );
+    expect(at(calls, 0).params[4]).toBe("client-1");
   });
 });
 

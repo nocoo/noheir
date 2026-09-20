@@ -1,5 +1,3 @@
-"use client";
-
 import {
   AlertTriangle,
   ArrowRight,
@@ -9,8 +7,8 @@ import {
   Loader2,
   Upload,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useCallback, useRef, useState, useTransition } from "react";
+import { useRevalidator } from "react-router";
 import { toast } from "sonner";
 import { countTransactionsByYear, deleteAndImportTransactions } from "@/app/actions/import-actions";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +20,7 @@ import { type ChineseCSVParseResult, parseChineseCSV } from "@/domain/import/par
 type ImportStep = "idle" | "parsing" | "validating" | "confirming" | "uploading" | "done" | "error";
 
 export function TransactionImport() {
-  const router = useRouter();
+  const revalidator = useRevalidator();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState<ImportStep>("idle");
@@ -141,7 +139,7 @@ export function TransactionImport() {
           setImportedCount(result.data.imported);
           setStep("done");
           toast.success(`成功导入 ${result.data.imported} 条交易记录`);
-          router.refresh();
+          revalidator.revalidate();
         } else {
           setErrorMessage(result.error);
           setStep("error");

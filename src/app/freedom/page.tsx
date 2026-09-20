@@ -1,57 +1,52 @@
+import { useLoaderData } from "react-router";
 import { AppShell } from "@/components/layout";
 import { buildFreedomSummary, buildIncomeBreakdown } from "@/domain/dashboard/financial-freedom";
 import type { DomainTransaction } from "@/domain/types";
-import { getAuthedClient } from "@/lib/api-helpers";
 import { toDomainTransaction } from "@/lib/transaction-mappers";
+import { workerDbClient } from "@/lib/worker-db-client";
 import { FinancialFreedomClient } from "./financial-freedom-client";
 
-export default async function FreedomPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ year?: string }>;
-}) {
-  const params = await searchParams;
-  let transactions: DomainTransaction[] = [];
-  let totalExpenseFromSummary = 0;
+export interface FreedomLoaderData {
+  transactions: DomainTransaction[];
+  totalExpenseFromSummary: number;
+}
 
-  try {
-    const { userId, client } = await getAuthedClient();
-    const metadata = await client.getMetadata(userId);
+export async function freedomLoader({ request }: { request: Request }): Promise<FreedomLoaderData> {
+  const url = new URL(request.url);
+  const yearParam = url.searchParams.get("year");
 
-    const availableYears = metadata.years.sort((a, b) => b - a);
-    const yearParam = params.year ? Number(params.year) : null;
-    let selectedYear: number;
-    if (yearParam && availableYears.includes(yearParam)) {
-      selectedYear = yearParam;
-    } else {
-      selectedYear = availableYears[0] ?? new Date().getFullYear();
-    }
+  const metadata = await workerDbClient.getMetadata();
+  const availableYears = metadata.years.sort((a, b) => b - a);
 
-    // Fetch aggregated totals + raw transactions in parallel
-    // Raw transactions needed for income breakdown by tertiaryCategory + secondaryCategory
-    const [summary, result] = await Promise.all([
-      client.getYearlySummary(userId, selectedYear),
-      client.getAllTransactionsByYear(userId, selectedYear),
-    ]);
-
-    totalExpenseFromSummary = summary.totals.expense / 100;
-
-    transactions = result.transactions.map((raw) =>
-      toDomainTransaction(raw as Record<string, unknown>),
-    );
-  } catch {
-    // Not authenticated or Worker unavailable
+  const parsedYear = yearParam ? Number(yearParam) : null;
+  let selectedYear: number;
+  if (parsedYear && availableYears.includes(parsedYear)) {
+    selectedYear = parsedYear;
+  } else {
+    selectedYear = availableYears[0] ?? new Date().getFullYear();
   }
 
-  // TODO: load active income categories from user settings
-  const activeIncomeCategories: string[] = [];
+  const [summary, result] = await Promise.all([
+    workerDbClient.getYearlySummary(selectedYear),
+    workerDbClient.getAllTransactionsByYear(selectedYear),
+  ]);
 
+  const totalExpenseFromSummary = summary.totals.expense / 100;
+  const transactions = result.transactions.map((raw) =>
+    toDomainTransaction(raw as Record<string, unknown>),
+  );
+
+  return { transactions, totalExpenseFromSummary };
+}
+
+export default function FreedomPage() {
+  const { transactions, totalExpenseFromSummary } = useLoaderData<FreedomLoaderData>();
+
+  const activeIncomeCategories: string[] = [];
   const breakdown = buildIncomeBreakdown(transactions, activeIncomeCategories);
-  // Use accurate total expense from aggregation API
   const totalExpense = totalExpenseFromSummary;
   const summary = buildFreedomSummary(totalExpense, breakdown.passiveIncome);
 
-  // Serialize Maps to arrays for client component
   const activeByCategoryList = Array.from(breakdown.activeByCategory.entries()).map(
     ([name, amount]) => ({ name, amount }),
   );

@@ -1,20 +1,6 @@
-"use server";
-
-// Server Actions for expense categories.
-// Spec: docs/002-recurring-expense-calendar.md § Server Actions
-//
-// All writes return ActionResult<T> so the UI can display errors via
-// the project's standard sonner toast pattern. Zod validation lives
-// next to the schemas in src/lib/recurring-expense/rule-types.ts so
-// the action stays a thin adapter.
-
-import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/lib/action-result";
-import { getAuthedClient } from "@/lib/api-helpers";
 import { categoryInputSchema } from "@/lib/recurring-expense/rule-types";
-import { WorkerDbError } from "@/lib/worker-db-client";
-
-const PLAN_PATH = "/plan";
+import { WorkerDbError, workerDbClient } from "@/lib/worker-db-client";
 
 function actionError(err: unknown, fallback: string): { success: false; error: string } {
   if (err instanceof WorkerDbError) {
@@ -38,9 +24,7 @@ export async function createExpenseCategory(data: unknown): Promise<ActionResult
     };
   }
   try {
-    const { userId, client } = await getAuthedClient();
-    const result = await client.createExpenseCategory(userId, parsed.data);
-    revalidatePath(PLAN_PATH);
+    const result = await workerDbClient.createExpenseCategory(parsed.data);
     return { success: true, data: { id: result.category.id } };
   } catch (err) {
     return actionError(err, "Failed to create category");
@@ -56,9 +40,7 @@ export async function updateExpenseCategory(id: string, data: unknown): Promise<
     };
   }
   try {
-    const { userId, client } = await getAuthedClient();
-    await client.updateExpenseCategory(userId, id, parsed.data);
-    revalidatePath(PLAN_PATH);
+    await workerDbClient.updateExpenseCategory(id, parsed.data);
     return { success: true, data: undefined };
   } catch (err) {
     return actionError(err, "Failed to update category");
@@ -67,9 +49,7 @@ export async function updateExpenseCategory(id: string, data: unknown): Promise<
 
 export async function deleteExpenseCategory(id: string): Promise<ActionResult> {
   try {
-    const { userId, client } = await getAuthedClient();
-    await client.deleteExpenseCategory(userId, id);
-    revalidatePath(PLAN_PATH);
+    await workerDbClient.deleteExpenseCategory(id);
     return { success: true, data: undefined };
   } catch (err) {
     return actionError(err, "Failed to delete category");

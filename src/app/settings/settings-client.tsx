@@ -1,8 +1,6 @@
-"use client";
-
 import { Save, Settings, Target, TrendingUp } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { useRevalidator } from "react-router";
 import { toast } from "sonner";
 import { saveGeneralSettings, saveReturnRateSettings } from "@/app/actions/settings-actions";
 import { Button } from "@/components/ui/button";
@@ -23,7 +21,7 @@ interface SettingsClientProps {
 }
 
 export function SettingsClient({ settingsJson }: SettingsClientProps) {
-  const router = useRouter();
+  const revalidator = useRevalidator();
   const [isPending, startTransition] = useTransition();
 
   // Savings rate settings
@@ -54,7 +52,7 @@ export function SettingsClient({ settingsJson }: SettingsClientProps) {
 
       if (generalResult.success && returnRateResult.success) {
         toast.success("设置已保存");
-        router.refresh();
+        revalidator.revalidate();
       } else {
         const errorMsg = !generalResult.success
           ? generalResult.error

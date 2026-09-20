@@ -1,5 +1,3 @@
-"use client";
-
 import { List, Percent, PiggyBank, TrendingDown, TrendingUp } from "lucide-react";
 import { StatCard } from "@/components/shared/stat-card";
 import type { DomainTransaction, MonthlyData } from "@/domain/types";

@@ -12,6 +12,7 @@ jobs:
     uses: nocoo/base-ci/.github/workflows/quality.yml@ad43150de3a2be2fa464b5cd2f921dc4fa9f8f0f
     with:
       runtime-version: 1.4.2
+      node-version: 26.8.1
       install-policy: trusted
       coverage-path: coverage
       extra-install-dirs: worker
@@ -19,18 +20,20 @@ jobs:
       test-command: bun run test:coverage
       typecheck-command: bun run typecheck
       osv-config: osv-scanner.toml
+      lockfiles: bun.lock,worker/bun.lock
       l2-command: bun run test:e2e
       l3-command: bun run test:e2e:bdd
       l3-browser: chromium
       worker: true
-      worker-command: bun run test:coverage
+      worker-directory: .
+      worker-command: bun run --cwd worker test:coverage
       l2: true
       l3: true
   release-smoke:
     name: Release Workflow Smoke
     uses: nocoo/base-ci/.github/workflows/workflow-lint.yml@ad43150de3a2be2fa464b5cd2f921dc4fa9f8f0f
     with:
-      required-reusable-workflow: nocoo/base-ci/.github/workflows/deploy-docker.yml
+      required-reusable-workflow: nocoo/base-ci/.github/workflows/deploy-worker.yml
       yamllint: true
 permissions:
   contents: read

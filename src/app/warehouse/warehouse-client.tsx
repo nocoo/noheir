@@ -1,5 +1,3 @@
-"use client";
-
 import {
   Building2,
   ChevronDown,
@@ -15,8 +13,8 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useNavigate, useRevalidator, useSearchParams } from "react-router";
 import { type SerializedUnit, UnitEditor } from "@/components/capital/unit-editor";
 import { UnitTooltip } from "@/components/capital/unit-tooltip";
 import { Card, CardContent } from "@/components/ui/card";
@@ -188,8 +186,9 @@ function saveFilters(filters: FilterState) {
 }
 
 export function WarehouseClient({ units, products }: WarehouseClientProps) {
-  const searchParams = useSearchParams();
-  const router = useRouter();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const revalidator = useRevalidator();
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Load initial filters from localStorage (SSR-safe)
@@ -288,7 +287,7 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
       params.delete("q");
     }
     const newUrl = params.toString() ? `?${params.toString()}` : window.location.pathname;
-    router.replace(newUrl, { scroll: false });
+    navigate(newUrl, { replace: true, preventScrollReset: true });
   }, [search]);
 
   const activeFilterCount = [
@@ -865,7 +864,7 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
             setEditorOpen(open);
             if (!open) setSelectedUnit(null);
           }}
-          onSuccess={() => router.refresh()}
+          onSuccess={() => revalidator.revalidate()}
         />
       </div>
     </TooltipProvider>

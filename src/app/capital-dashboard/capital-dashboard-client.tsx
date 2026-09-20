@@ -1,5 +1,3 @@
-"use client";
-
 import { BarChart3, Clock, Percent, PiggyBank, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";

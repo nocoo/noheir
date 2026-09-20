@@ -1,9 +1,7 @@
-"use server";
-
 import type { DomainContributionLog, ExpectedUnitSnapshot } from "@/domain/types";
 import type { ActionResult } from "@/lib/action-result";
-import { getAuthedClient } from "@/lib/api-helpers";
 import { toDomainContributionLog } from "@/lib/capital-mappers";
+import { workerDbClient } from "@/lib/worker-db-client";
 
 export async function createContributionLog(data: {
   unitId: string;
@@ -18,8 +16,7 @@ export async function createContributionLog(data: {
   note?: string | null;
 }): Promise<ActionResult<{ id: string }>> {
   try {
-    const { userId, client } = await getAuthedClient();
-    const payload: Parameters<typeof client.createContributionLog>[1] = {
+    const payload: Parameters<typeof workerDbClient.createContributionLog>[0] = {
       unitId: data.unitId,
       operationType: data.operationType,
       amountCents: Math.round(data.amount * 100),
@@ -34,7 +31,7 @@ export async function createContributionLog(data: {
     if (data.source) payload.source = data.source;
     if (data.note != null) payload.note = data.note;
 
-    const result = await client.createContributionLog(userId, payload);
+    const result = await workerDbClient.createContributionLog(payload);
     const log = result.log as Record<string, unknown>;
     return { success: true, data: { id: String(log.id) } };
   } catch (err) {
@@ -57,8 +54,7 @@ export async function updateContributionLog(
   },
 ): Promise<ActionResult> {
   try {
-    const { userId, client } = await getAuthedClient();
-    const payload: Parameters<typeof client.updateContributionLog>[2] = {};
+    const payload: Parameters<typeof workerDbClient.updateContributionLog>[1] = {};
 
     if (data.operationType !== undefined) payload.operationType = data.operationType;
     if (data.amount !== undefined) payload.amountCents = Math.round(data.amount * 100);
@@ -72,7 +68,7 @@ export async function updateContributionLog(
     if (data.operationDate !== undefined) payload.operationDate = data.operationDate;
     if (data.note !== undefined) payload.note = data.note;
 
-    await client.updateContributionLog(userId, id, payload);
+    await workerDbClient.updateContributionLog(id, payload);
     return { success: true, data: undefined };
   } catch (err) {
     return {
@@ -84,8 +80,7 @@ export async function updateContributionLog(
 
 export async function deleteContributionLog(id: string): Promise<ActionResult> {
   try {
-    const { userId, client } = await getAuthedClient();
-    await client.deleteContributionLog(userId, id);
+    await workerDbClient.deleteContributionLog(id);
     return { success: true, data: undefined };
   } catch (err) {
     return {
@@ -97,8 +92,7 @@ export async function deleteContributionLog(id: string): Promise<ActionResult> {
 
 export async function restoreContributionLog(id: string): Promise<ActionResult> {
   try {
-    const { userId, client } = await getAuthedClient();
-    await client.restoreContributionLog(userId, id);
+    await workerDbClient.restoreContributionLog(id);
     return { success: true, data: undefined };
   } catch (err) {
     return {
@@ -119,8 +113,7 @@ export async function listUnitContributionLogs(unitId: string): Promise<
   }>
 > {
   try {
-    const { userId, client } = await getAuthedClient();
-    const result = await client.listUnitLogs(userId, unitId);
+    const result = await workerDbClient.listUnitLogs(unitId);
     return {
       success: true,
       data: {
@@ -154,8 +147,7 @@ export async function commitUnit(
   },
 ): Promise<ActionResult> {
   try {
-    const { userId, client } = await getAuthedClient();
-    await client.commitUnit(userId, unitId, payload);
+    await workerDbClient.commitUnit(unitId, payload);
     return { success: true, data: undefined };
   } catch (err) {
     return {

@@ -1,6 +1,3 @@
-"use client";
-
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   createContext,
   type ReactNode,
@@ -10,6 +7,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { getAvailableYears } from "@/app/actions/get-available-years";
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -40,9 +38,10 @@ interface YearContextValue {
 const YearContext = createContext<YearContextValue | null>(null);
 
 export function YearProvider({ children }: { children: ReactNode }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const pathname = location.pathname;
+  const [searchParams] = useSearchParams();
 
   const [years, setYears] = useState<number[]>([CURRENT_YEAR]);
 
@@ -73,10 +72,10 @@ export function YearProvider({ children }: { children: ReactNode }) {
       if (YEAR_ENABLED_PATHS.has(pathname)) {
         const params = new URLSearchParams(searchParams.toString());
         params.set("year", newYear.toString());
-        router.push(`${pathname}?${params.toString()}`);
+        navigate(`${pathname}?${params.toString()}`);
       }
     },
-    [pathname, searchParams, router],
+    [pathname, searchParams, navigate],
   );
 
   return (

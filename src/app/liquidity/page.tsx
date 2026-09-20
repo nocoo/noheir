@@ -1,3 +1,4 @@
+import { useLoaderData } from "react-router";
 import { AppShell } from "@/components/layout";
 import {
   buildMonthlyAvailability,
@@ -6,27 +7,31 @@ import {
   buildUpcomingUnits,
 } from "@/domain/assets/liquidity-ladder";
 import type { UnitDisplayInfo } from "@/domain/types";
-import { getAuthedClient } from "@/lib/api-helpers";
 import { toUnitDisplayInfo } from "@/lib/capital-mappers";
+import { workerDbClient } from "@/lib/worker-db-client";
 import { LiquidityClient } from "./liquidity-client";
 
-export default async function LiquidityPage() {
-  let units: UnitDisplayInfo[] = [];
+export interface LiquidityLoaderData {
+  chartData: Array<Record<string, string | number>>;
+  strategies: string[];
+  total12m: number;
+  avgMonth: number;
+  peakMonth: string;
+  peakAmount: number;
+  upcomingUnits: ReturnType<typeof buildUpcomingUnits>;
+}
 
-  try {
-    const { userId, client } = await getAuthedClient();
-    const result = await client.listUnits(userId, { with_products: true });
-    units = result.units.map((raw) => toUnitDisplayInfo(raw as Record<string, unknown>));
-  } catch {
-    // Not authenticated or Worker unavailable
-  }
+export async function liquidityLoader(): Promise<LiquidityLoaderData> {
+  const result = await workerDbClient.listUnits({ with_products: true });
+  const units: UnitDisplayInfo[] = result.units.map((raw) =>
+    toUnitDisplayInfo(raw as Record<string, unknown>),
+  );
 
   const monthlyData = buildMonthlyAvailability(units);
   const series = buildSeries(monthlyData);
   const summaryStats = buildSummaryStats(monthlyData);
   const upcomingUnits = buildUpcomingUnits(units);
 
-  // Transform for Recharts: each month row has a field per strategy
   const chartData = monthlyData.months.map((month, i) => {
     const monthLabel =
       monthlyData.monthlyAvailability.find((m) => m.month === month)?.monthLabel ?? month;
@@ -37,15 +42,30 @@ export default async function LiquidityPage() {
     return row;
   });
 
+  return {
+    chartData,
+    strategies: monthlyData.strategies,
+    total12m: summaryStats.total,
+    avgMonth: summaryStats.avgMonth,
+    peakMonth: summaryStats.peakMonth.month,
+    peakAmount: summaryStats.peakMonth.amount,
+    upcomingUnits,
+  };
+}
+
+export default function LiquidityPage() {
+  const { chartData, strategies, total12m, avgMonth, peakMonth, peakAmount, upcomingUnits } =
+    useLoaderData<LiquidityLoaderData>();
+
   return (
     <AppShell>
       <LiquidityClient
         chartData={chartData}
-        strategies={monthlyData.strategies}
-        total12m={summaryStats.total}
-        avgMonth={summaryStats.avgMonth}
-        peakMonth={summaryStats.peakMonth.month}
-        peakAmount={summaryStats.peakMonth.amount}
+        strategies={strategies}
+        total12m={total12m}
+        avgMonth={avgMonth}
+        peakMonth={peakMonth}
+        peakAmount={peakAmount}
         upcomingUnits={upcomingUnits}
       />
     </AppShell>

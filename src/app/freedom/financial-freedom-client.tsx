@@ -1,5 +1,3 @@
-"use client";
-
 import { Briefcase, Coins, Lightbulb, Target } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";

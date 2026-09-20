@@ -1,21 +1,25 @@
+import { useLoaderData } from "react-router";
 import { AppShell } from "@/components/layout";
 import { buildDeploymentRate } from "@/domain/assets/capital-dashboard";
-import { getAuthedClient } from "@/lib/api-helpers";
 import { toUnitDisplayInfo } from "@/lib/capital-mappers";
+import { workerDbClient } from "@/lib/worker-db-client";
 import { CapitalDashboardClient } from "./capital-dashboard-client";
 
-export default async function CapitalDashboardPage() {
-  let units: ReturnType<typeof toUnitDisplayInfo>[] = [];
+export interface CapitalDashboardLoaderData {
+  units: ReturnType<typeof toUnitDisplayInfo>[];
+  deploymentRate: ReturnType<typeof buildDeploymentRate>;
+}
 
-  try {
-    const { userId, client } = await getAuthedClient();
-    const result = await client.listUnits(userId, { with_products: true });
-    units = result.units.map((raw) => toUnitDisplayInfo(raw as Record<string, unknown>));
-  } catch {
-    // Not authenticated or Worker unavailable
-  }
-
+export async function capitalDashboardLoader(): Promise<CapitalDashboardLoaderData> {
+  const result = await workerDbClient.listUnits({ with_products: true });
+  const units = result.units.map((raw) => toUnitDisplayInfo(raw as Record<string, unknown>));
   const deploymentRate = buildDeploymentRate();
+
+  return { units, deploymentRate };
+}
+
+export default function CapitalDashboardPage() {
+  const { units, deploymentRate } = useLoaderData<CapitalDashboardLoaderData>();
 
   return (
     <AppShell>

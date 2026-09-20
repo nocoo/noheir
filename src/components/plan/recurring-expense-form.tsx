@@ -1,5 +1,3 @@
-"use client";
-
 // RecurringExpenseForm — create / edit form for recurring-expense rules.
 // Spec: docs/002-recurring-expense-calendar.md § Recurring Expenses
 //

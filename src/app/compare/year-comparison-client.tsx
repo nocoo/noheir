@@ -1,5 +1,3 @@
-"use client";
-
 import { GitCompare } from "lucide-react";
 import { useMemo, useState } from "react";
 import {

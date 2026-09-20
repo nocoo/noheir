@@ -389,3 +389,282 @@ export type CreateExpenseCategoryInput = z.infer<typeof createExpenseCategorySch
 export type UpdateExpenseCategoryInput = z.infer<typeof updateExpenseCategorySchema>;
 export type CreateRecurringExpenseInput = z.infer<typeof createRecurringExpenseSchema>;
 export type UpdateRecurringExpenseInput = z.infer<typeof updateRecurringExpenseSchema>;
+
+export const importTransactionRowSchema = z
+  .object({
+    date: calendarDay,
+    year: z.number().int(),
+    month: z.number().int().min(1).max(12),
+    day: z.number().int().min(1).max(31),
+    primaryCategory: z.string().min(1),
+    secondaryCategory: z.string().optional().nullable(),
+    tertiaryCategory: z.string().min(1),
+    amountCents: z.number().int(),
+    type: z.enum(["income", "expense"]),
+    account: z.string().min(1),
+    currency: z.string().min(1).optional(),
+    tags: z.string().optional(),
+    note: z.string().optional().nullable(),
+    rawIndex: z.number().int().optional().nullable(),
+    hasSecondaryMapping: z.boolean().optional(),
+    id: z.string().optional(),
+  })
+  .refine(
+    (d) => {
+      const p = dateParts(d.date);
+      return p.year === d.year && p.month === d.month && p.day === d.day;
+    },
+    { message: "date does not match year/month/day" },
+  );
+
+export const importTransferRowSchema = z
+  .object({
+    date: calendarDay,
+    year: z.number().int(),
+    month: z.number().int().min(1).max(12),
+    day: z.number().int().min(1).max(31),
+    primaryCategory: z.string().optional().nullable(),
+    secondaryCategory: z.string().optional().nullable(),
+    transactionType: z.string().optional().nullable(),
+    inflowAmountCents: z.number().int().optional(),
+    outflowAmountCents: z.number().int().optional(),
+    currency: z.string().min(1).optional(),
+    account: z.string().min(1),
+    tags: z.string().optional(),
+    note: z.string().optional().nullable(),
+    rawIndex: z.number().int().optional().nullable(),
+    id: z.string().optional(),
+  })
+  .refine(
+    (d) => {
+      const p = dateParts(d.date);
+      return p.year === d.year && p.month === d.month && p.day === d.day;
+    },
+    { message: "date does not match year/month/day" },
+  );
+
+export const yearImportBodySchema = z.object({
+  year: z.number().int(),
+  rows: z.array(z.unknown()),
+});
+
+export const recurringStateBodySchema = z.object({
+  transition: z.enum(["pause", "resume", "end"]),
+});
+
+export type ImportTransactionRowInput = z.infer<typeof importTransactionRowSchema>;
+export type ImportTransferRowInput = z.infer<typeof importTransferRowSchema>;
+
+export function dateParts(date: string): { year: number; month: number; day: number } {
+  return {
+    year: Number(date.slice(0, 4)),
+    month: Number(date.slice(5, 7)),
+    day: Number(date.slice(8, 10)),
+  };
+}
+
+function addDatePartIssues(
+  data: {
+    date: string;
+    year?: number | undefined;
+    month?: number | undefined;
+    day?: number | undefined;
+  },
+  ctx: z.RefinementCtx,
+): { year: number; month: number; day: number } {
+  const derived = dateParts(data.date);
+  if (data.year !== undefined && data.year !== derived.year) {
+    ctx.addIssue({ code: "custom", message: "year does not match date", path: ["year"] });
+  }
+  if (data.month !== undefined && data.month !== derived.month) {
+    ctx.addIssue({ code: "custom", message: "month does not match date", path: ["month"] });
+  }
+  if (data.day !== undefined && data.day !== derived.day) {
+    ctx.addIssue({ code: "custom", message: "day does not match date", path: ["day"] });
+  }
+  return derived;
+}
+
+function rejectOrphanDateParts(
+  data: {
+    date?: string | undefined;
+    year?: number | undefined;
+    month?: number | undefined;
+    day?: number | undefined;
+  },
+  ctx: z.RefinementCtx,
+): void {
+  if (data.date) {
+    addDatePartIssues({ date: data.date, year: data.year, month: data.month, day: data.day }, ctx);
+    return;
+  }
+  if (data.year !== undefined || data.month !== undefined || data.day !== undefined) {
+    ctx.addIssue({
+      code: "custom",
+      message: "year, month, and day require date",
+      path: ["date"],
+    });
+  }
+}
+
+const transactionWriteFields = {
+  date: calendarDay,
+  year: z.number().int().optional(),
+  month: z.number().int().min(1).max(12).optional(),
+  day: z.number().int().min(1).max(31).optional(),
+  primaryCategory: z.string().min(1),
+  secondaryCategory: z.string().optional().nullable(),
+  tertiaryCategory: z.string().min(1),
+  amountCents: z.number().int(),
+  type: z.enum(["income", "expense"]),
+  account: z.string().min(1),
+  currency: z.string().min(1).optional(),
+  tags: z.string().optional(),
+  note: z.string().optional().nullable(),
+  rawIndex: z.number().int().optional().nullable(),
+  hasSecondaryMapping: z.boolean().optional(),
+} as const;
+
+export const createTransactionSchema = z
+  .object(transactionWriteFields)
+  .superRefine((data, ctx) => {
+    addDatePartIssues(data, ctx);
+  })
+  .transform((data) => {
+    const derived = dateParts(data.date);
+    return {
+      date: data.date,
+      year: derived.year,
+      month: derived.month,
+      day: derived.day,
+      primaryCategory: data.primaryCategory,
+      secondaryCategory: data.secondaryCategory ?? null,
+      tertiaryCategory: data.tertiaryCategory,
+      amountCents: data.amountCents,
+      type: data.type,
+      account: data.account,
+      currency: data.currency ?? "人民币",
+      tags: data.tags ?? "[]",
+      note: data.note ?? null,
+      rawIndex: data.rawIndex ?? null,
+      ...(data.hasSecondaryMapping === undefined
+        ? {}
+        : { hasSecondaryMapping: data.hasSecondaryMapping }),
+    };
+  });
+
+export const updateTransactionSchema = z
+  .object({
+    date: calendarDay.optional(),
+    year: z.number().int().optional(),
+    month: z.number().int().min(1).max(12).optional(),
+    day: z.number().int().min(1).max(31).optional(),
+    primaryCategory: z.string().min(1).optional(),
+    secondaryCategory: z.string().optional().nullable(),
+    tertiaryCategory: z.string().min(1).optional(),
+    amountCents: z.number().int().optional(),
+    type: z.enum(["income", "expense"]).optional(),
+    account: z.string().min(1).optional(),
+    currency: z.string().min(1).optional(),
+    tags: z.string().optional(),
+    note: z.string().optional().nullable(),
+    rawIndex: z.number().int().optional().nullable(),
+    hasSecondaryMapping: z.boolean().optional(),
+  })
+  .superRefine((data, ctx) => {
+    rejectOrphanDateParts(data, ctx);
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one field must be provided for update",
+  })
+  .transform((data) => {
+    if (!data.date) return data;
+    const derived = dateParts(data.date);
+    return {
+      ...data,
+      year: data.year ?? derived.year,
+      month: data.month ?? derived.month,
+      day: data.day ?? derived.day,
+    };
+  });
+
+const transferWriteFields = {
+  date: calendarDay,
+  year: z.number().int().optional(),
+  month: z.number().int().min(1).max(12).optional(),
+  day: z.number().int().min(1).max(31).optional(),
+  primaryCategory: z.string().optional().nullable(),
+  secondaryCategory: z.string().optional().nullable(),
+  transactionType: z.string().optional().nullable(),
+  inflowAmountCents: z.number().int().optional(),
+  outflowAmountCents: z.number().int().optional(),
+  currency: z.string().min(1).optional(),
+  account: z.string().min(1),
+  tags: z.string().optional(),
+  note: z.string().optional().nullable(),
+  rawIndex: z.number().int().optional().nullable(),
+} as const;
+
+export const createTransferSchema = z
+  .object(transferWriteFields)
+  .superRefine((data, ctx) => {
+    addDatePartIssues(data, ctx);
+  })
+  .transform((data) => {
+    const derived = dateParts(data.date);
+    return {
+      date: data.date,
+      year: derived.year,
+      month: derived.month,
+      day: derived.day,
+      primaryCategory: data.primaryCategory ?? null,
+      secondaryCategory: data.secondaryCategory ?? "转账",
+      transactionType: data.transactionType ?? null,
+      inflowAmountCents: data.inflowAmountCents ?? 0,
+      outflowAmountCents: data.outflowAmountCents ?? 0,
+      currency: data.currency ?? "人民币",
+      account: data.account,
+      tags: data.tags ?? "[]",
+      note: data.note ?? null,
+      rawIndex: data.rawIndex ?? null,
+    };
+  });
+
+export const updateTransferSchema = z
+  .object({
+    date: calendarDay.optional(),
+    year: z.number().int().optional(),
+    month: z.number().int().min(1).max(12).optional(),
+    day: z.number().int().min(1).max(31).optional(),
+    primaryCategory: z.string().optional().nullable(),
+    secondaryCategory: z.string().optional().nullable(),
+    transactionType: z.string().optional().nullable(),
+    inflowAmountCents: z.number().int().optional(),
+    outflowAmountCents: z.number().int().optional(),
+    currency: z.string().min(1).optional(),
+    account: z.string().min(1).optional(),
+    tags: z.string().optional(),
+    note: z.string().optional().nullable(),
+    rawIndex: z.number().int().optional().nullable(),
+  })
+  .superRefine((data, ctx) => {
+    rejectOrphanDateParts(data, ctx);
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one field must be provided for update",
+  })
+  .transform((data) => {
+    if (!data.date) return data;
+    const derived = dateParts(data.date);
+    return {
+      ...data,
+      year: data.year ?? derived.year,
+      month: data.month ?? derived.month,
+      day: data.day ?? derived.day,
+    };
+  });
+
+export type CreateTransactionInput = z.infer<typeof createTransactionSchema>;
+export type UpdateTransactionInput = z.infer<typeof updateTransactionSchema>;
+export type CreateTransferInput = z.infer<typeof createTransferSchema>;
+export type UpdateTransferInput = z.infer<typeof updateTransferSchema>;

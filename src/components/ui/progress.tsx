@@ -1,5 +1,3 @@
-"use client";
-
 import * as ProgressPrimitive from "radix-ui/progress";
 import type * as React from "react";
 

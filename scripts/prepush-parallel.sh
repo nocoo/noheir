@@ -17,28 +17,15 @@ run_bg() {
   JOBS="$JOBS $name:$!"
 }
 
-run_bg tests npm run test:coverage
+run_bg tests bun run test:coverage
+run_bg worker bun run --cwd worker test:coverage
 run_bg lint ./node_modules/.bin/biome check --error-on-warnings .
 
-if [ "${SKIP_SECURITY:-0}" != "1" ]; then
-  if command -v osv-scanner >/dev/null 2>&1; then
-    run_bg osv osv-scanner --lockfile=bun.lock
-  else
-    echo "\033[1;33m⚠  osv-scanner not installed — vulnerability scan SKIPPED\033[0m"
-  fi
-
-  if command -v gitleaks >/dev/null 2>&1; then
-    run_bg gitleaks gitleaks protect --staged --no-banner
-  else
-    echo "\033[1;33m⚠  gitleaks not installed — secret scan SKIPPED\033[0m"
-  fi
-fi
-
-if [ "${SKIP_E2E:-0}" != "1" ]; then
-  # The runner spawns its own `wrangler dev --local` and tears it down
-  # on exit, so pre-push just delegates and lets it own the lifecycle.
-  run_bg e2e bun run test:e2e
-fi
+command -v osv-scanner >/dev/null 2>&1 || { echo "osv-scanner is required"; exit 1; }
+command -v gitleaks >/dev/null 2>&1 || { echo "gitleaks is required"; exit 1; }
+run_bg osv osv-scanner --config=osv-scanner.toml --lockfile=bun.lock --lockfile=worker/bun.lock
+run_bg gitleaks gitleaks git --no-banner --redact --log-opts="origin/main..HEAD"
+run_bg e2e bun run test:e2e
 
 # Wait for all
 for entry in $JOBS; do

@@ -26,7 +26,7 @@ describe("E2E: Units", () => {
       body: makeUnit(),
     });
     expect(res.unit).toBeDefined();
-    expect(res.unit.id).toBeString();
+    expect(res.unit.id).toBeTypeOf("string");
     expect(res.unit.amountCents).toBe(5000000);
     expect(res.unit.strategy).toBe("短期理财");
   });
@@ -363,7 +363,7 @@ describe("E2E: Units", () => {
       body: { status: "已归档" },
     });
     expect(archived.status).toBe("已归档");
-    expect(archived.endDate).toBeString();
+    expect(archived.endDate).toBeTypeOf("string");
     // Should be today's date in Asia/Shanghai timezone
     const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Shanghai" });
     expect(archived.endDate).toBe(today);
@@ -434,7 +434,7 @@ describe("E2E: Units", () => {
       body: makeUnit({ status: "已归档" }),
     });
     expect(unit.status).toBe("已归档");
-    expect(unit.endDate).toBeString();
+    expect(unit.endDate).toBeTypeOf("string");
     const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Shanghai" });
     expect(unit.endDate).toBe(today);
   });
@@ -497,7 +497,7 @@ describe("E2E: Units", () => {
 
     expect(res.units).toHaveLength(1);
     const u = res.units[0]!;
-    expect(u.availableDate).toBeString();
+    expect(u.availableDate).toBeTypeOf("string");
     expect(u.isAvailable).toBe(false); // 30 day lock
     expect(u.daysUntilAvailable).toBe(30);
     expect(u.latestInvestDate).toBe(today);
@@ -758,7 +758,7 @@ describe("E2E: Units", () => {
     expect(res.units).toHaveLength(1);
     const u = res.units[0]!;
     // Should have minimal fields
-    expect(u.id).toBeString();
+    expect(u.id).toBeTypeOf("string");
     expect(u.unitCode).toBe("U1");
     expect(u.amountCents).toBe(5000000);
     expect(u.status).toBe("已成立");
@@ -808,7 +808,7 @@ describe("E2E: Units", () => {
 
     const u = res.units[0]!;
     // Should have availability fields
-    expect(u.availableDate).toBeString();
+    expect(u.availableDate).toBeTypeOf("string");
     expect(u.isAvailable).toBe(false);
     expect(u.daysUntilAvailable).toBe(30);
     expect(u.latestInvestDate).toBe(today);

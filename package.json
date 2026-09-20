@@ -3,27 +3,27 @@
   "version": "2.6.4",
   "private": true,
   "scripts": {
-    "dev": "next dev --port 7004",
-    "build": "next build",
-    "start": "next start --port 7004",
+    "dev": "CLOUDFLARE_ENV=local vite --host 127.0.0.1",
+    "build": "vite build",
     "lint": "biome check --error-on-warnings .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && bun run worker:typecheck",
     "test": "vitest run",
     "test:worker": "cd worker && vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "bun run scripts/run-e2e.ts",
+    "test:e2e": "node scripts/run-e2e.ts",
     "test:e2e:bdd": "bunx playwright test",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio",
-    "worker:dev": "cd worker && wrangler dev",
-    "worker:deploy": "cd worker && wrangler deploy",
+    "db:migrate": "wrangler d1 migrations apply DB --local --env local",
     "worker:typecheck": "cd worker && tsc --noEmit",
     "prepare": "husky",
-    "release": "bun run scripts/release.ts"
+    "release": "bun run scripts/release.ts",
+    "preview": "vite preview --host 127.0.0.1",
+    "deploy": "bun scripts/deploy.ts",
+    "deploy:check": "bun run build && wrangler deploy --dry-run",
+    "verify:production": "bun scripts/verify-deployment.ts",
+    "types": "wrangler types worker/worker-configuration.d.ts --env-interface WorkerBindings --include-runtime=false --strict-vars=false",
+    "db:seed": "wrangler d1 execute DB --local --env local --file worker/db/local-user.sql"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
@@ -38,8 +38,6 @@
     "esbuild": "^0.28.2",
     "hono": "4.13.8",
     "lucide-react": "1.47.0",
-    "next": "16.3.5",
-    "next-auth": "5.0.0-beta.32",
     "postcss": "8.5.28",
     "radix-ui": "1.6.7",
     "react": "19.3.0",
@@ -50,12 +48,15 @@
     "sonner": "^2.0.8",
     "tailwind-merge": "^3.7.0",
     "ulid": "^3.0.2",
-    "zod": "4.6.5"
+    "zod": "4.6.5",
+    "react-router": "8.3.1",
+    "jose": "6.2.12",
+    "@fontsource-variable/inter": "5.3.0",
+    "@fontsource-variable/dm-sans": "5.3.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",
     "@playwright/test": "1.63.0",
-    "@tailwindcss/postcss": "4.3.3",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",
     "@testing-library/user-event": "14.6.7",
@@ -65,21 +66,25 @@
     "@types/react-dom": "19.3.0",
     "@typescript/native-preview": "7.0.0-dev.20260707.2",
     "@vitest/coverage-v8": "5.0.1",
-    "drizzle-kit": "^0.31.10",
     "husky": "^9.1.7",
     "jsdom": "30.1.0",
     "tailwindcss": "4.3.3",
     "tw-animate-css": "^1.4.0",
     "typescript": "^7.0.2",
-    "vitest": "5.0.1"
+    "vitest": "5.0.1",
+    "@cloudflare/vite-plugin": "1.54.8",
+    "@cloudflare/workers-types": "5.20260918.1",
+    "@tailwindcss/vite": "4.3.3",
+    "@vitejs/plugin-react": "6.1.1",
+    "vite": "8.3.0",
+    "wrangler": "4.135.0",
+    "miniflare": "5.20260918.0-alpha"
   },
   "trustedDependencies": [
     "@biomejs/biome",
     "esbuild",
-    "sharp",
-    "unrs-resolver",
     "@tailwindcss/oxide",
-    "next"
+    "workerd"
   ],
   "overrides": {
     "@babel/core": "7.29.6",
@@ -94,7 +99,8 @@
     "qs": "6.16.0",
     "sharp": "0.35.4",
     "undici": "8.9.0",
-    "vite": "8.0.16",
     "zod": "4.6.5"
-  }
+  },
+  "type": "module",
+  "packageManager": "bun@1.4.2"
 }

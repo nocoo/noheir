@@ -1,5 +1,3 @@
-"use client";
-
 import { ChevronDown, ChevronRight, FileText } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

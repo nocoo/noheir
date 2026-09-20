@@ -1,5 +1,3 @@
-"use client";
-
 // CalendarClient — composes the entire /plan/calendar surface.
 // Spec: docs/002-recurring-expense-calendar.md § Calendar page.
 //
@@ -21,8 +19,8 @@
 //     re-hydrates the props (no stale local state).
 
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
 import * as React from "react";
+import { useRevalidator } from "react-router";
 import { DayDetailPopover } from "@/components/plan/day-detail-popover";
 import {
   aggregateOccurrences,
@@ -91,7 +89,7 @@ export function CalendarClient({
   categories,
   todayIso,
 }: CalendarClientProps): React.ReactElement {
-  const router = useRouter();
+  const revalidator = useRevalidator();
   // Default the visible month to whichever month "today" lives in.
   const [viewMonth, setViewMonth] = React.useState<string>(() => monthStartFromIso(todayIso));
   const [selectedDay, setSelectedDay] = React.useState<string | null>(null);
@@ -200,7 +198,7 @@ export function CalendarClient({
           categoryMap={ruleListCategoryMap}
           todayIso={todayIso}
           onEditRule={(id) => setEditingId(id)}
-          onActionSuccess={() => router.refresh()}
+          onActionSuccess={() => revalidator.revalidate()}
         />
       </div>
 
@@ -226,7 +224,7 @@ export function CalendarClient({
             categories={categories.map((c) => ({ id: c.id, name: c.name }))}
             onSuccess={() => {
               setCreateOpen(false);
-              router.refresh();
+              revalidator.revalidate();
             }}
             onCancel={() => setCreateOpen(false)}
           />
@@ -250,7 +248,7 @@ export function CalendarClient({
               categories={categories.map((c) => ({ id: c.id, name: c.name }))}
               onSuccess={() => {
                 setEditingId(null);
-                router.refresh();
+                revalidator.revalidate();
               }}
               onCancel={() => setEditingId(null)}
             />

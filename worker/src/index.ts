@@ -2,7 +2,10 @@ import { sql } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
+import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
+import { HTTPException } from "hono/http-exception";
+import { createD1Db, type Db } from "../../src/lib/db";
 import { type AllRepos, createAllRepos } from "../db/repositories";
 import {
   commitUnitSchema,
@@ -10,16 +13,49 @@ import {
   createExpenseCategorySchema,
   createProductSchema,
   createRecurringExpenseSchema,
+  createTransactionSchema,
+  createTransferSchema,
   createUnitSchema,
+  recurringStateBodySchema,
   searchContributionLogsSchema,
   updateContributionLogSchema,
   updateExpenseCategorySchema,
   updateProductSchema,
   updateRecurringExpenseSchema,
+  updateTransactionSchema,
+  updateTransferSchema,
   updateUnitSchema,
+  yearImportBodySchema,
 } from "../db/validation";
+import type { ExistingUser } from "../lib/identity";
+import { parseTransactionImportRow, parseTransferImportRow } from "../lib/import-parse";
+import { liveHeaders, livePayload, liveStatus, resolveBuildSha } from "../lib/live";
+import { ALLOWED_FROM, isRecurringStatus, patchForTransition } from "../lib/recurring-state";
+import { isApiPath, isPublicRoute, originOf } from "../lib/request-policy";
 import { buildCommitStatements, type SwapTarget } from "../lib/unit-commit";
-import { APP_VERSION, COMPONENT_NAME } from "../lib/version";
+import type { NormalizedTransactionRow, NormalizedTransferRow } from "../lib/year-import";
+import {
+  buildUserReplaceStatements,
+  buildYearReplaceStatements,
+  chunkJsonArrays,
+  MAX_IMPORT_BODY_BYTES,
+  payloadExceedsBodyMax,
+  transactionJsonRow,
+  transferJsonRow,
+  validateImportEnvelope,
+  validateRowList,
+} from "../lib/year-import";
+import { authenticateRequest } from "./access";
+import type { Env } from "./env";
+import {
+  handleMcpAuthorize,
+  handleMcpCallback,
+  handleMcpProtocol,
+  handleMcpRegister,
+  handleMcpRevoke,
+  handleMcpToken,
+  handleWellKnown,
+} from "./mcp";
 
 /** Strip undefined values from an object at runtime.
  *  Returns a clean Record<string, string> that satisfies exactOptionalPropertyTypes. */
@@ -50,246 +86,139 @@ function getLocalDateString(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Shanghai" });
 }
 
-// ── Cloudflare Bindings ──
-
-export interface Env {
-  DB: D1Database;
-  WORKER_TOKEN: string;
-  SITE_URL?: string;
-}
+// Env bindings: worker/src/env.ts (root wrangler.jsonc).
 
 // ── Hono Context Variables ──
 
 type Variables = {
   userId: string;
+  user: ExistingUser;
   repos: AllRepos;
   db: DrizzleD1Database;
-  d1: D1Database; // Raw D1 binding for batch operations
+  d1: D1Database;
+  sqlDb: Db;
 };
 
-const app = new Hono<{ Bindings: Env; Variables: Variables }>();
+export type AppEnv = { Bindings: Env; Variables: Variables };
 
-// ── CORS ──
+const app = new Hono<AppEnv>();
+
+app.use(
+  "*",
+  bodyLimit({
+    maxSize: MAX_IMPORT_BODY_BYTES,
+    onError: (c) => c.json({ error: "Request body too large" }, 413),
+  }),
+);
 
 app.use(
   "*",
   cors({
-    // Only allow requests from the frontend domain
-    origin: (origin) => {
-      if (!origin) return null; // Allow server-to-server requests (no Origin header)
-      const allowedOrigins = [
-        "https://noheir.hexly.ai",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-      ];
-      return allowedOrigins.includes(origin) ? origin : null;
+    origin: (origin, c) => {
+      if (!origin) return origin;
+      const site = originOf(c.env.SITE_URL);
+      return site && origin === site ? origin : "";
     },
-    allowHeaders: ["Content-Type", "Authorization", "X-User-Id", "X-Internal-Action"],
+    allowHeaders: ["Content-Type", "Authorization"],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   }),
 );
 
-// ── Surety-standard live check (no auth) ──
-
-const bootedAt = Date.now();
-
-function sanitizeError(msg: string): string {
-  return msg.replace(/\bok\b/gi, "***");
-}
-
-app.get("/api/live", async (c) => {
-  const db = drizzle(c.env.DB);
-  const uptime = Math.round((Date.now() - bootedAt) / 1000);
-  const base = {
-    version: APP_VERSION,
-    component: COMPONENT_NAME,
-    timestamp: new Date().toISOString(),
-    uptime,
-  };
-
-  try {
-    await db.run(sql`SELECT 1 AS probe`);
-    return c.json({ status: "ok", ...base, database: { connected: true } }, 200);
-  } catch (err) {
-    const message = err instanceof Error ? sanitizeError(err.message) : "unknown";
-    return c.json(
-      { status: "error", ...base, database: { connected: false, error: message } },
-      503,
-    );
-  }
-});
-
-// Legacy alias — kept for backward compatibility
-app.get("/api/health", async (c) => c.redirect("/api/live", 301));
-
-// ── SQL API Endpoints (for Next.js MCP server) ──
-// All authed routes verify a single shared secret: WORKER_TOKEN.
-
-/**
- * /api/v1/query - Execute read-only SQL queries
- * Body: { sql: string, params?: unknown[] }
- * Returns: { results: T[], meta: { changes: number, duration: number } }
- */
-app.post("/api/v1/query", async (c) => {
-  const authHeader = c.req.header("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    return c.json({ error: "Missing Authorization header" }, 401);
-  }
-  const token = authHeader.slice(7);
-  const secret = c.env.WORKER_TOKEN;
-  if (!secret || !timingSafeEqual(token, secret)) {
-    return c.json({ error: "Invalid token" }, 403);
-  }
-
-  try {
-    const body = await c.req.json<{ sql: string; params?: unknown[] }>();
-    if (!body.sql || typeof body.sql !== "string") {
-      return c.json({ error: "sql is required" }, 400);
-    }
-
-    const d1 = c.env.DB;
-    const start = Date.now();
-    const stmt = d1.prepare(body.sql).bind(...(body.params ?? []));
-    const result = await stmt.all();
-    const duration = Date.now() - start;
-
-    return c.json({
-      results: result.results,
-      meta: { changes: result.meta.changes ?? 0, duration },
-    });
-  } catch (err) {
-    return c.json({ error: err instanceof Error ? err.message : "Query failed" }, 500);
-  }
-});
-
-/**
- * /api/v1/execute - Execute write SQL queries (INSERT/UPDATE/DELETE)
- * Body: { sql: string, params?: unknown[] } or { statements: { sql: string, params?: unknown[] }[] }
- * Returns: { meta: { changes: number, duration: number } } or { results: ...[] }
- */
-app.post("/api/v1/execute", async (c) => {
-  const authHeader = c.req.header("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    return c.json({ error: "Missing Authorization header" }, 401);
-  }
-  const token = authHeader.slice(7);
-  const secret = c.env.WORKER_TOKEN;
-  if (!secret || !timingSafeEqual(token, secret)) {
-    return c.json({ error: "Invalid token" }, 403);
-  }
-
-  try {
-    const body = await c.req.json<{
-      sql?: string;
-      params?: unknown[];
-      statements?: { sql: string; params?: unknown[] }[];
-    }>();
-
-    const d1 = c.env.DB;
-    const start = Date.now();
-
-    // Batch mode
-    if (body.statements && Array.isArray(body.statements)) {
-      const stmts = body.statements.map((s) => d1.prepare(s.sql).bind(...(s.params ?? [])));
-      const batchResults = await d1.batch(stmts);
-      const duration = Date.now() - start;
-
-      return c.json({
-        results: batchResults.map((r) => ({
-          results: r.results,
-          meta: { changes: r.meta.changes ?? 0, duration },
-        })),
-      });
-    }
-
-    // Single statement mode
-    if (!body.sql || typeof body.sql !== "string") {
-      return c.json({ error: "sql is required" }, 400);
-    }
-
-    const stmt = d1.prepare(body.sql).bind(...(body.params ?? []));
-    const result = await stmt.run();
-    const duration = Date.now() - start;
-
-    return c.json({
-      results: [],
-      meta: { changes: result.meta.changes ?? 0, duration },
-    });
-  } catch (err) {
-    return c.json({ error: err instanceof Error ? err.message : "Execute failed" }, 500);
-  }
-});
-
-// ── Auth middleware (all routes below require Bearer token + X-User-Id) ──
-
 app.use("*", async (c, next) => {
-  // Skip for already-handled routes (live check, SQL API)
-  if (c.req.path === "/api/live" || c.req.path === "/api/health") return next();
-  if (c.req.path.startsWith("/api/v1/")) return next(); // SQL API
-
-  // 1. Verify Bearer token
-  const authHeader = c.req.header("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    return c.json({ error: "Missing Authorization header" }, 401);
-  }
-
-  const token = authHeader.slice(7);
-  const secret = c.env.WORKER_TOKEN;
-
-  if (!secret || !timingSafeEqual(token, secret)) {
-    return c.json({ error: "Invalid token" }, 403);
-  }
-
-  // 2. Extract X-User-Id
-  const userId = c.req.header("X-User-Id");
-  if (!userId) {
-    return c.json({ error: "Missing X-User-Id header" }, 400);
-  }
-
-  // 3. Resolve DB
-  const d1Binding = c.env.DB;
-  const db = drizzle(d1Binding);
-  const repos = createAllRepos(db);
-
-  // 4. Set context
-  c.set("userId", userId);
-  c.set("repos", repos);
+  const d1 = c.env.DB;
+  const db = drizzle(d1);
+  c.set("d1", d1);
   c.set("db", db);
-  c.set("d1", d1Binding);
-
+  c.set("repos", createAllRepos(db));
+  c.set("sqlDb", createD1Db(d1));
   return next();
 });
 
-// ── Users ──
+app.get("/api/live", async (c) => {
+  const headers = liveHeaders();
+  const buildSha = resolveBuildSha(c.env.BUILD_SHA);
+  try {
+    await drizzle(c.env.DB).run(sql`SELECT 1 AS probe`);
+    return c.json(livePayload({ connected: true, buildSha }), liveStatus(true), headers);
+  } catch {
+    return c.json(livePayload({ connected: false, buildSha }), liveStatus(false), headers);
+  }
+});
 
-async function handleUserSync(
-  c: {
-    get: (key: "userId") => string;
-    req: { json: <T>() => Promise<T> };
-    json: (data: unknown, status?: number) => Response;
-  } & { get(key: "repos"): AllRepos },
-) {
-  const userId = c.get("userId");
-  const repos = c.get("repos");
-  const body = await c.req.json<{
-    email: string;
-    name?: string;
-    image?: string;
-    providerAccountId: string;
-  }>();
-  const user = await repos.users.upsert({
-    id: userId,
-    email: body.email,
-    name: body.name,
-    image: body.image,
-    providerAccountId: body.providerAccountId,
+app.get("/.well-known/oauth-authorization-server", () => handleWellKnown());
+app.post("/api/mcp/register", (c) => handleMcpRegister(c));
+app.post("/api/mcp/token", (c) => handleMcpToken(c));
+app.post("/api/mcp/revoke", (c) => handleMcpRevoke(c));
+app.post("/api/mcp", (c) => handleMcpProtocol(c));
+app.get("/api/mcp", (c) =>
+  c.json({ error: "SSE transport not supported. Use Streamable HTTP (POST)." }, 405),
+);
+app.delete("/api/mcp", (c) =>
+  c.json({ error: "Session termination not supported in stateless mode." }, 405),
+);
+
+app.use("*", async (c, next) => {
+  if (c.req.method === "OPTIONS") return next();
+  const path = new URL(c.req.url).pathname;
+  if (isPublicRoute(c.req.method, path)) return next();
+
+  const result = await authenticateRequest(c.req.raw, c.env, async (email) => {
+    const rows = await c.get("repos").users.findByNormalizedEmail(email);
+    return rows.map((row) => ({
+      id: row.id,
+      email: row.email,
+      name: row.name ?? null,
+      image: row.image ?? null,
+      providerAccountId: row.providerAccountId,
+    }));
   });
-  return c.json({ user }, 201);
-}
 
-app.put("/api/users/me", (c) => handleUserSync(c));
+  if (!result.ok) {
+    const status =
+      result.reason === "misconfigured" ? 503 : result.reason === "unauthenticated" ? 401 : 403;
+    return c.json({ error: "Unauthorized" }, status);
+  }
+
+  c.set("userId", result.user.id);
+  c.set("user", result.user);
+  return next();
+});
+
+app.get("/api/auth/me", (c) => {
+  const user = c.get("user");
+  return c.json({
+    user: { id: user.id, email: user.email, name: user.name, image: user.image },
+  });
+});
+
+app.get("/api/mcp/authorize", (c) => handleMcpAuthorize(c));
+app.get("/api/mcp/callback", (c) => handleMcpCallback(c));
 
 // ── Transactions ──
+
+app.post("/api/transactions/import", async (c) => {
+  const body = yearImportBodySchema.safeParse(await c.req.json());
+  if (!body.success) return c.json({ error: "Invalid import request" }, 400);
+  const parsed = validateImportEnvelope<NormalizedTransactionRow>(
+    body.data.year,
+    body.data.rows,
+    parseTransactionImportRow,
+    (row) => row.year,
+  );
+  if (!parsed.ok) return c.json({ error: parsed.message }, 400);
+  const chunks = chunkJsonArrays(parsed.rows.map(transactionJsonRow));
+  if (!chunks.ok || payloadExceedsBodyMax(chunks.chunks))
+    return c.json({ error: "Import too large" }, 413);
+  const statements = buildYearReplaceStatements({
+    table: "transactions",
+    userId: c.get("userId"),
+    year: body.data.year,
+    chunks: chunks.chunks,
+    createdAt: Math.floor(Date.now() / 1000),
+  });
+  await c.get("sqlDb").batch(statements);
+  return c.json({ imported: parsed.rows.length });
+});
 
 app.post("/api/transactions/search", async (c) => {
   const userId = c.get("userId");
@@ -300,14 +229,20 @@ app.post("/api/transactions/search", async (c) => {
 });
 
 app.post("/api/transactions/bulk", async (c) => {
-  const userId = c.get("userId");
-  const repos = c.get("repos");
-  const body = await c.req.json<{ rows: unknown[] }>();
-  const count = await repos.transactions.createMany(
-    userId,
-    body.rows as Parameters<AllRepos["transactions"]["createMany"]>[1],
-  );
-  return c.json({ inserted: count }, 201);
+  const body = await c.req.json<{ rows?: unknown }>();
+  const parsed = validateRowList(body?.rows, parseTransactionImportRow);
+  if (!parsed.ok) return c.json({ error: parsed.message }, 400);
+  const chunks = chunkJsonArrays(parsed.rows.map(transactionJsonRow));
+  if (!chunks.ok || payloadExceedsBodyMax(chunks.chunks))
+    return c.json({ error: "Import too large" }, 413);
+  const statements = buildUserReplaceStatements({
+    table: "transactions",
+    userId: c.get("userId"),
+    chunks: chunks.chunks,
+    createdAt: Math.floor(Date.now() / 1000),
+  }).slice(1);
+  if (statements.length) await c.get("sqlDb").batch(statements);
+  return c.json({ inserted: parsed.rows.length }, 201);
 });
 
 app.get("/api/transactions/years/:year/count", async (c) => {
@@ -337,7 +272,9 @@ app.delete("/api/transactions/years/:year", async (c) => {
 app.post("/api/transactions", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
-  const body = await c.req.json();
+  const parsed = createTransactionSchema.safeParse(await c.req.json());
+  if (!parsed.success) return c.json({ error: "Invalid transactions record" }, 400);
+  const body = parsed.data;
   const row = await repos.transactions.create(userId, body);
   return c.json({ transaction: row }, 201);
 });
@@ -352,8 +289,11 @@ app.get("/api/transactions/:id", async (c) => {
 app.put("/api/transactions/:id", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
-  const body = await c.req.json();
-  const row = await repos.transactions.update(userId, c.req.param("id"), body);
+  const parsed = updateTransactionSchema.safeParse(await c.req.json());
+  if (!parsed.success || !Object.keys(parsed.data).length)
+    return c.json({ error: "Invalid transactions update" }, 400);
+  const body = parsed.data;
+  const row = await repos.transactions.update(userId, c.req.param("id"), stripUndefined(body));
   return row ? c.json({ transaction: row }) : c.json({ error: "Not found" }, 404);
 });
 
@@ -366,6 +306,30 @@ app.delete("/api/transactions/:id", async (c) => {
 
 // ── Transfers ──
 
+app.post("/api/transfers/import", async (c) => {
+  const body = yearImportBodySchema.safeParse(await c.req.json());
+  if (!body.success) return c.json({ error: "Invalid import request" }, 400);
+  const parsed = validateImportEnvelope<NormalizedTransferRow>(
+    body.data.year,
+    body.data.rows,
+    parseTransferImportRow,
+    (row) => row.year,
+  );
+  if (!parsed.ok) return c.json({ error: parsed.message }, 400);
+  const chunks = chunkJsonArrays(parsed.rows.map(transferJsonRow));
+  if (!chunks.ok || payloadExceedsBodyMax(chunks.chunks))
+    return c.json({ error: "Import too large" }, 413);
+  const statements = buildYearReplaceStatements({
+    table: "transfers",
+    userId: c.get("userId"),
+    year: body.data.year,
+    chunks: chunks.chunks,
+    createdAt: Math.floor(Date.now() / 1000),
+  });
+  await c.get("sqlDb").batch(statements);
+  return c.json({ imported: parsed.rows.length });
+});
+
 app.post("/api/transfers/search", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
@@ -375,14 +339,20 @@ app.post("/api/transfers/search", async (c) => {
 });
 
 app.post("/api/transfers/bulk", async (c) => {
-  const userId = c.get("userId");
-  const repos = c.get("repos");
-  const body = await c.req.json<{ rows: unknown[] }>();
-  const count = await repos.transfers.createMany(
-    userId,
-    body.rows as Parameters<AllRepos["transfers"]["createMany"]>[1],
-  );
-  return c.json({ inserted: count }, 201);
+  const body = await c.req.json<{ rows?: unknown }>();
+  const parsed = validateRowList(body?.rows, parseTransferImportRow);
+  if (!parsed.ok) return c.json({ error: parsed.message }, 400);
+  const chunks = chunkJsonArrays(parsed.rows.map(transferJsonRow));
+  if (!chunks.ok || payloadExceedsBodyMax(chunks.chunks))
+    return c.json({ error: "Import too large" }, 413);
+  const statements = buildUserReplaceStatements({
+    table: "transfers",
+    userId: c.get("userId"),
+    chunks: chunks.chunks,
+    createdAt: Math.floor(Date.now() / 1000),
+  }).slice(1);
+  if (statements.length) await c.get("sqlDb").batch(statements);
+  return c.json({ inserted: parsed.rows.length }, 201);
 });
 
 app.get("/api/transfers/years/:year/count", async (c) => {
@@ -412,7 +382,9 @@ app.delete("/api/transfers/years/:year", async (c) => {
 app.post("/api/transfers", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
-  const body = await c.req.json();
+  const parsed = createTransferSchema.safeParse(await c.req.json());
+  if (!parsed.success) return c.json({ error: "Invalid transfers record" }, 400);
+  const body = parsed.data;
   const row = await repos.transfers.create(userId, body);
   return c.json({ transfer: row }, 201);
 });
@@ -427,8 +399,11 @@ app.get("/api/transfers/:id", async (c) => {
 app.put("/api/transfers/:id", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
-  const body = await c.req.json();
-  const row = await repos.transfers.update(userId, c.req.param("id"), body);
+  const parsed = updateTransferSchema.safeParse(await c.req.json());
+  if (!parsed.success || !Object.keys(parsed.data).length)
+    return c.json({ error: "Invalid transfers update" }, 400);
+  const body = parsed.data;
+  const row = await repos.transfers.update(userId, c.req.param("id"), stripUndefined(body));
   return row ? c.json({ transfer: row }) : c.json({ error: "Not found" }, 404);
 });
 
@@ -1398,23 +1373,7 @@ app.delete("/api/expense-categories/:id", async (c) => {
   return deleted ? c.body(null, 204) : c.json({ error: "Not found" }, 404);
 });
 
-// ── Recurring Expenses (002 spec) ──
-//
-// `status` and `endedAt` are state-machine fields. To prevent the web
-// client from accidentally flipping them through the generic PUT, the
-// endpoint silently drops both unless the caller asserts intent via
-// `X-Internal-Action: 1`. The Server Action layer is the only caller
-// that sets that header (pause / resume / end actions). This is a
-// contract guard, not a security boundary — `WORKER_TOKEN` is the
-// security boundary.
-
-const INTERNAL_ACTION_HEADER = "X-Internal-Action";
-
-function isInternalActionRequest(c: {
-  req: { header: (k: string) => string | undefined };
-}): boolean {
-  return c.req.header(INTERNAL_ACTION_HEADER) === "1";
-}
+// ── Recurring Expenses ──
 
 app.get("/api/recurring-expenses", async (c) => {
   const userId = c.get("userId");
@@ -1446,14 +1405,9 @@ app.put("/api/recurring-expenses/:id", async (c) => {
   if (!parsed.success) {
     return c.json({ error: parsed.error.issues.map((i) => i.message).join("; ") }, 400);
   }
-  // Drop status + endedAt unless the caller proves intent via the
-  // X-Internal-Action header. Note: the keys must be deleted, not just
-  // set to undefined, so they don't reach the DB layer at all.
   const data = stripUndefined(parsed.data) as Record<string, unknown>;
-  if (!isInternalActionRequest(c)) {
-    delete data.status;
-    delete data.endedAt;
-  }
+  delete data.status;
+  delete data.endedAt;
   const result = await repos.recurringExpenses.update(userId, c.req.param("id"), data);
   if (result.ok) {
     return c.json({ rule: result.rule });
@@ -1462,6 +1416,31 @@ app.put("/api/recurring-expenses/:id", async (c) => {
     return c.json({ error: "Not found" }, 404);
   }
   return c.json({ error: "Category not found" }, 400);
+});
+
+app.post("/api/recurring-expenses/:id/state", async (c) => {
+  const body = recurringStateBodySchema.safeParse(await c.req.json());
+  if (!body.success) return c.json({ error: "Invalid transition" }, 400);
+  const id = c.req.param("id");
+  const userId = c.get("userId");
+  const d1 = c.get("d1");
+  const existing = await d1
+    .prepare("SELECT status FROM recurring_expenses WHERE id = ? AND user_id = ?")
+    .bind(id, userId)
+    .first<{ status: string }>();
+  if (!existing) return c.json({ error: "Not found" }, 404);
+  if (!isRecurringStatus(existing.status)) return c.json({ error: "Invalid rule status" }, 409);
+  const patch = patchForTransition(body.data.transition, existing.status);
+  if (!patch.ok) return c.json({ error: "Invalid state transition" }, 409);
+  const allowed = ALLOWED_FROM[body.data.transition];
+  const updated = await d1
+    .prepare(
+      `UPDATE recurring_expenses SET status = ?, ended_at = ?, updated_at = ? WHERE id = ? AND user_id = ? AND status IN (${allowed.map(() => "?").join(",")})`,
+    )
+    .bind(patch.status, patch.endedAt, Math.floor(Date.now() / 1000), id, userId, ...allowed)
+    .run();
+  if (!updated.meta.changes) return c.json({ error: "State changed; reload and retry" }, 409);
+  return c.json({ success: true });
 });
 
 app.delete("/api/recurring-expenses/:id", async (c) => {
@@ -1496,43 +1475,44 @@ app.get("/api/data/export", async (c) => {
 });
 
 app.post("/api/data/import", async (c) => {
+  const body = await c.req.json<{ transactions?: unknown; transfers?: unknown }>();
+  const transactions = validateRowList(body?.transactions, parseTransactionImportRow);
+  const transfers = validateRowList(body?.transfers, parseTransferImportRow);
+  if (!transactions.ok || !transfers.ok) return c.json({ error: "Invalid backup records" }, 400);
+  const txChunks = chunkJsonArrays(transactions.rows.map(transactionJsonRow));
+  const trChunks = chunkJsonArrays(transfers.rows.map(transferJsonRow));
+  if (
+    !txChunks.ok ||
+    !trChunks.ok ||
+    payloadExceedsBodyMax([...txChunks.chunks, ...trChunks.chunks])
+  )
+    return c.json({ error: "Backup too large" }, 413);
   const userId = c.get("userId");
-  const repos = c.get("repos");
-  const body = await c.req.json<{
-    transactions?: unknown[];
-    transfers?: unknown[];
-    products?: unknown[];
-    units?: unknown[];
-    settings?: unknown;
-  }>();
-
-  // Delete existing data first (user-scoped only)
-  await Promise.all([
-    repos.transactions.deleteByUser(userId),
-    repos.transfers.deleteByUser(userId),
+  const createdAt = Math.floor(Date.now() / 1000);
+  await c.get("sqlDb").batch([
+    ...buildUserReplaceStatements({
+      table: "transactions",
+      userId,
+      chunks: txChunks.chunks,
+      createdAt,
+    }),
+    ...buildUserReplaceStatements({
+      table: "transfers",
+      userId,
+      chunks: trChunks.chunks,
+      createdAt,
+    }),
   ]);
+  return c.json(
+    { transactions_imported: transactions.rows.length, transfers_imported: transfers.rows.length },
+    201,
+  );
+});
 
-  // TODO: Phase 1.9 — full restore with products, units, settings
-  const results = {
-    transactions_imported: 0,
-    transfers_imported: 0,
-  };
-
-  if (body.transactions && Array.isArray(body.transactions)) {
-    results.transactions_imported = await repos.transactions.createMany(
-      userId,
-      body.transactions as Parameters<AllRepos["transactions"]["createMany"]>[1],
-    );
-  }
-
-  if (body.transfers && Array.isArray(body.transfers)) {
-    results.transfers_imported = await repos.transfers.createMany(
-      userId,
-      body.transfers as Parameters<AllRepos["transfers"]["createMany"]>[1],
-    );
-  }
-
-  return c.json(results, 201);
+app.get("*", async (c) => {
+  if (isApiPath(c.req.path)) return c.json({ error: "Not found" }, 404);
+  if (!c.env.ASSETS) return c.json({ error: "Assets unavailable" }, 503);
+  return c.env.ASSETS.fetch(c.req.raw);
 });
 
 // ── 404 fallback ──
@@ -1542,23 +1522,11 @@ app.notFound((c) => c.json({ error: "Not found" }, 404));
 // ── Error handler ──
 
 app.onError((err, c) => {
-  console.error(`[Worker Error] ${c.req.method} ${c.req.path}:`, err);
+  if (err instanceof HTTPException) return err.getResponse();
+  if (err instanceof SyntaxError) return c.json({ error: "Invalid JSON" }, 400);
+  console.error(`[Worker Error] ${c.req.method} ${c.req.path}:`, err.name);
   return c.json({ error: "Internal server error" }, 500);
 });
-
-// ── Timing-safe comparison ──
-
-function timingSafeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  const encoder = new TextEncoder();
-  const aBuf = encoder.encode(a);
-  const bBuf = encoder.encode(b);
-  let result = 0;
-  for (let i = 0; i < aBuf.length; i++) {
-    result |= (aBuf[i] ?? 0) ^ (bBuf[i] ?? 0);
-  }
-  return result === 0;
-}
 
 // ── Export ──
 

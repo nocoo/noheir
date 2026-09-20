@@ -1,27 +1,35 @@
+import { useLoaderData } from "react-router";
 import { AppShell } from "@/components/layout";
 import { groupAccountsByType } from "@/domain/settings/account-types";
 import type { AccountTypeConfig } from "@/domain/types";
-import { getAuthedClient } from "@/lib/api-helpers";
+import { workerDbClient } from "@/lib/worker-db-client";
 import { AccountTypesClient } from "./account-types-client";
 
-export default async function AccountTypesPage() {
-  let accounts: string[] = [];
-  let accountTypes: AccountTypeConfig[] = [];
+export interface AccountTypesLoaderData {
+  accounts: string[];
+  accountTypes: AccountTypeConfig[];
+  grouped: ReturnType<typeof groupAccountsByType>;
+}
 
-  try {
-    const { userId, client } = await getAuthedClient();
-    const metadata = await client.getMetadata(userId);
-    accounts = metadata.accounts;
-    const result = await client.getSettings(userId);
-    const row = (result.settings as Record<string, unknown>) ?? {};
-    const rawJson = typeof row.settings === "string" ? row.settings : "{}";
-    const parsed = JSON.parse(rawJson) as Record<string, unknown>;
-    accountTypes = (parsed.account_types as AccountTypeConfig[]) ?? [];
-  } catch {
-    // Not authenticated or Worker unavailable
-  }
+export async function accountTypesLoader(): Promise<AccountTypesLoaderData> {
+  const [metadata, settingsResult] = await Promise.all([
+    workerDbClient.getMetadata(),
+    workerDbClient.getSettings(),
+  ]);
+
+  const accounts = metadata.accounts;
+  const row = (settingsResult.settings as Record<string, unknown>) ?? {};
+  const rawJson = typeof row.settings === "string" ? row.settings : "{}";
+  const parsed = JSON.parse(rawJson) as Record<string, unknown>;
+  const accountTypes = (parsed.account_types as AccountTypeConfig[]) ?? [];
 
   const grouped = groupAccountsByType(accounts, accountTypes);
+
+  return { accounts, accountTypes, grouped };
+}
+
+export default function AccountTypesPage() {
+  const { accounts, accountTypes, grouped } = useLoaderData<AccountTypesLoaderData>();
 
   return (
     <AppShell>

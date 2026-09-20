@@ -1,5 +1,3 @@
-"use client";
-
 // PlanSummaryCards — three KPI cards for the recurring-expense calendar (P3-C6).
 // Spec: docs/002-recurring-expense-calendar.md § 汇总
 //

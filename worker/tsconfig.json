@@ -15,8 +15,11 @@
     "exactOptionalPropertyTypes": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "paths": {
+      "@/*": ["../src/*"]
+    }
   },
-  "include": ["src/**/*.ts", "db/**/*.ts"],
+  "include": ["src/**/*.ts", "db/**/*.ts", "lib/**/*.ts"],
   "exclude": ["node_modules"]
 }

@@ -1,5 +1,3 @@
-"use client";
-
 import {
   Avatar,
   AvatarFallback,
@@ -16,9 +14,8 @@ import {
   TooltipTrigger,
 } from "@nocoo/basalt";
 import { LogOut, PanelLeft } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
+import { Link, useLocation } from "react-router";
+import { useAuth } from "@/lib/auth-context";
 import { ALL_NAV_ITEMS, isNavItemActive, NAV_GROUPS, type NavGroup } from "@/lib/navigation";
 import pkg from "../../../package.json";
 import { useSidebar } from "./sidebar-context";
@@ -53,7 +50,7 @@ function NavGroupSection({
         return (
           <Link
             key={item.href}
-            href={buildHrefWithYear(item.href, year)}
+            to={buildHrefWithYear(item.href, year)}
             onClick={onNavigate}
             aria-current={isActive ? "page" : undefined}
             className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-normal transition-colors ${
@@ -76,18 +73,19 @@ interface SidebarProps {
 }
 
 export function Sidebar({ mobile = false }: SidebarProps) {
-  const pathname = usePathname();
+  const location = useLocation();
+  const pathname = location.pathname;
   const { collapsed, toggle, setMobileOpen } = useSidebar();
   const { year } = useYear();
-  const { data: session } = useSession();
+  const { user, logout } = useAuth();
 
-  const userName = session?.user?.name ?? "用户";
-  const userEmail = session?.user?.email ?? "";
-  const userImage = session?.user?.image;
+  const userName = user?.name ?? "用户";
+  const userEmail = user?.email ?? "";
+  const userImage = user?.image;
   const userInitial = userName[0] ?? "?";
 
   const handleNavigate = () => setMobileOpen(false);
-  const handleSignOut = () => signOut({ callbackUrl: "/login" });
+  const handleSignOut = () => logout();
 
   const isCollapsed = mobile ? false : collapsed;
 
@@ -103,7 +101,6 @@ export function Sidebar({ mobile = false }: SidebarProps) {
           <div className="flex h-screen w-[68px] flex-col items-center">
             {/* Logo */}
             <div className="flex h-14 w-full items-center justify-start pl-6 pr-3">
-              {/* biome-ignore lint/performance/noImgElement: small static logo, no optimization needed */}
               <img src="/logo-24.png" alt="noheir" width={24} height={24} className="shrink-0" />
             </div>
 
@@ -133,7 +130,7 @@ export function Sidebar({ mobile = false }: SidebarProps) {
                   <Tooltip key={item.href}>
                     <TooltipTrigger asChild>
                       <Link
-                        href={buildHrefWithYear(item.href, year)}
+                        to={buildHrefWithYear(item.href, year)}
                         onClick={handleNavigate}
                         aria-label={item.label}
                         aria-current={isActive ? "page" : undefined}
@@ -183,7 +180,6 @@ export function Sidebar({ mobile = false }: SidebarProps) {
             <SidebarHeader>
               <div className="flex w-full items-center justify-between px-3">
                 <div className="flex items-center gap-2">
-                  {/* biome-ignore lint/performance/noImgElement: small static logo, no optimization needed */}
                   <img
                     src="/logo-24.png"
                     alt="noheir"

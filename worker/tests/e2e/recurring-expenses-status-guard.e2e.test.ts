@@ -1,191 +1,88 @@
-// Regression pin for the X-Internal-Action contract. P1-C6 covers the
-// happy paths; this file is the canary that fires if a future refactor
-// accidentally drops the header check or stops stripping the protected
-// fields.
-
-import { beforeEach, describe, expect, test } from "vitest";
-import { ensureTestUser } from "./helpers/cleanup";
-import { api, BASE_URL, rawFetch, TEST_USER_C } from "./helpers/client";
+import { describe, expect, test } from "vitest";
+import { api, rawFetch, TEST_USER_A, TEST_USER_C } from "./helpers/client";
 
 const userId = TEST_USER_C;
-
+const base = {
+  name: "state-regression",
+  amountCents: 100_000,
+  frequency: "monthly",
+  interval: 1,
+  dayOfMonth: 1,
+  startDate: "2026-01-01",
+};
 interface Rule {
   id: string;
   status: "active" | "paused" | "ended";
   endedAt: string | null;
   name: string;
 }
-
-const baseBody = {
-  name: "guard-regression",
-  amountCents: 100_000,
-  frequency: "monthly" as const,
-  interval: 1,
-  dayOfMonth: 1,
-  startDate: "2026-01-01",
-};
-
-async function cleanupRules(uid: string): Promise<void> {
-  const { rules } = await api<{ rules: Rule[] }>({
-    method: "GET",
-    path: "/api/recurring-expenses",
-    userId: uid,
+const create = () =>
+  api<{ rule: Rule }>({ path: "/api/recurring-expenses", method: "POST", userId, body: base });
+const transition = (id: string, action: string, owner = userId) =>
+  rawFetch({
+    path: `/api/recurring-expenses/${id}/state`,
+    method: "POST",
+    userId: owner,
+    body: { transition: action },
   });
-  for (const r of rules) {
-    await rawFetch({
-      method: "DELETE",
-      path: `/api/recurring-expenses/${r.id}`,
-      userId: uid,
-    });
-  }
+async function getRule(id: string) {
+  const { rules } = await api<{ rules: Rule[] }>({ path: "/api/recurring-expenses", userId });
+  const rule = rules.find((r) => r.id === id);
+  if (!rule) throw new Error("Rule missing");
+  return rule;
 }
 
-describe("E2E: recurring-expenses status/endedAt guard regression (P1-C7)", () => {
-  beforeEach(async () => {
-    await ensureTestUser(userId);
-    await cleanupRules(userId);
-  });
-
-  test("simulated web client (no X-Internal-Action) cannot change status across every combination", async () => {
-    const { rule } = await api<{ rule: Rule }>({
-      method: "POST",
-      path: "/api/recurring-expenses",
-      userId,
-      body: baseBody,
-    });
-    expect(rule.status).toBe("active");
-
-    // Try each illegal status value from a "naive" PUT call. None should
-    // alter the DB row.
-    for (const target of ["paused", "ended"] as const) {
-      const res = await api<{ rule: Rule }>({
-        method: "PUT",
+describe("Recurring expense state authority", () => {
+  test("generic updates cannot forge state with any internal header", async () => {
+    const { rule } = await create();
+    for (const value of ["1", "0", "true", ""]) {
+      const response = await rawFetch({
         path: `/api/recurring-expenses/${rule.id}`,
+        method: "PUT",
         userId,
-        body: { status: target, name: `rename-${target}` },
+        headers: { "X-Internal-Action": value },
+        body: { name: "renamed", status: "ended", endedAt: "2099-01-01" },
       });
-      expect(res.rule.status).toBe("active");
-      // Name DID change → drop is scoped to status only, not whole body.
-      expect(res.rule.name).toBe(`rename-${target}`);
+      expect(response.status).toBe(200);
+      expect(await getRule(rule.id)).toMatchObject({
+        status: "active",
+        endedAt: null,
+        name: "renamed",
+      });
     }
   });
-
-  test("simulated web client cannot move endedAt forward, backward, or null it", async () => {
-    const { rule } = await api<{ rule: Rule }>({
-      method: "POST",
-      path: "/api/recurring-expenses",
-      userId,
-      body: baseBody,
-    });
-
-    // Seed endedAt = '2026-03-15' via the internal channel.
-    const seedRes = await fetch(`${BASE_URL}/api/recurring-expenses/${rule.id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.WORKER_TOKEN ?? ""}`,
-        "X-User-Id": userId,
-        "X-Internal-Action": "1",
-      },
-      body: JSON.stringify({ endedAt: "2026-03-15" }),
-    });
-    expect(seedRes.status).toBe(200);
-
-    // 1. forward
-    await api({
-      method: "PUT",
-      path: `/api/recurring-expenses/${rule.id}`,
-      userId,
-      body: { endedAt: "2099-01-01" },
-    });
-    // 2. backward
-    await api({
-      method: "PUT",
-      path: `/api/recurring-expenses/${rule.id}`,
-      userId,
-      body: { endedAt: "2020-01-01" },
-    });
-    // 3. null
-    await api({
-      method: "PUT",
-      path: `/api/recurring-expenses/${rule.id}`,
-      userId,
-      body: { endedAt: null },
-    });
-
-    const { rules } = await api<{ rules: Rule[] }>({
-      method: "GET",
-      path: "/api/recurring-expenses",
-      userId,
-    });
-    expect(rules[0].endedAt).toBe("2026-03-15");
-  });
-
-  test("internal channel can move endedAt forward, backward, and back to null", async () => {
-    const { rule } = await api<{ rule: Rule }>({
-      method: "POST",
-      path: "/api/recurring-expenses",
-      userId,
-      body: baseBody,
-    });
-
-    async function internalPut(payload: Record<string, unknown>): Promise<Rule> {
-      const res = await fetch(`${BASE_URL}/api/recurring-expenses/${rule.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.WORKER_TOKEN ?? ""}`,
-          "X-User-Id": userId,
-          "X-Internal-Action": "1",
-        },
-        body: JSON.stringify(payload),
-      });
-      expect(res.status).toBe(200);
-      const body = (await res.json()) as { rule: Rule };
-      return body.rule;
-    }
-
-    const ended = await internalPut({ status: "ended", endedAt: "2026-06-07" });
+  test("pause, resume and end follow the legal transition matrix", async () => {
+    const { rule } = await create();
+    expect((await transition(rule.id, "resume")).status).toBe(409);
+    expect((await transition(rule.id, "pause")).status).toBe(200);
+    expect(await getRule(rule.id)).toMatchObject({ status: "paused", endedAt: null });
+    expect((await transition(rule.id, "pause")).status).toBe(409);
+    expect((await transition(rule.id, "resume")).status).toBe(200);
+    expect((await transition(rule.id, "end")).status).toBe(200);
+    const ended = await getRule(rule.id);
     expect(ended.status).toBe("ended");
-    expect(ended.endedAt).toBe("2026-06-07");
-
-    const earlier = await internalPut({ endedAt: "2026-03-15" });
-    expect(earlier.endedAt).toBe("2026-03-15");
-
-    const cleared = await internalPut({ status: "active", endedAt: null });
-    expect(cleared.status).toBe("active");
-    expect(cleared.endedAt).toBeNull();
+    expect(ended.endedAt).toBe(new Date().toISOString().slice(0, 10));
+    for (const action of ["pause", "resume", "end"])
+      expect((await transition(rule.id, action)).status).toBe(409);
+    await api({
+      path: `/api/recurring-expenses/${rule.id}`,
+      method: "PUT",
+      userId,
+      headers: { "X-Internal-Action": "1" },
+      body: { endedAt: null, status: "active" },
+    });
+    expect(await getRule(rule.id)).toMatchObject({ status: "ended", endedAt: ended.endedAt });
   });
-
-  test("wrong header value does not unlock the guard", async () => {
-    const { rule } = await api<{ rule: Rule }>({
-      method: "POST",
-      path: "/api/recurring-expenses",
-      userId,
-      body: baseBody,
-    });
-
-    // Send `0`, `true`, empty string — none should be treated as the
-    // sentinel "1". Only the exact string "1" enables the bypass.
-    for (const headerVal of ["0", "true", "", "yes"]) {
-      const res = await fetch(`${BASE_URL}/api/recurring-expenses/${rule.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.WORKER_TOKEN ?? ""}`,
-          "X-User-Id": userId,
-          "X-Internal-Action": headerVal,
-        },
-        body: JSON.stringify({ status: "ended" }),
-      });
-      expect(res.status).toBe(200);
-    }
-
-    const { rules } = await api<{ rules: Rule[] }>({
-      method: "GET",
-      path: "/api/recurring-expenses",
-      userId,
-    });
-    expect(rules[0].status).toBe("active");
+  test("paused rules may end, invalid and cross-user transitions do not write", async () => {
+    const { rule } = await create();
+    expect((await transition(rule.id, "pause", TEST_USER_A)).status).toBe(404);
+    expect((await transition(rule.id, "invalid")).status).toBe(400);
+    expect((await transition(rule.id, "pause")).status).toBe(200);
+    expect((await transition(rule.id, "end")).status).toBe(200);
+  });
+  test("concurrent duplicate transitions have only one winner", async () => {
+    const { rule } = await create();
+    const results = await Promise.all([transition(rule.id, "pause"), transition(rule.id, "pause")]);
+    expect(results.map((r) => r.status).sort()).toEqual([200, 409]);
   });
 });

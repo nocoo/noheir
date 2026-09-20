@@ -1,5 +1,3 @@
-"use client";
-
 import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react";
 import * as DropdownMenuPrimitive from "radix-ui/dropdown-menu";
 import type * as React from "react";

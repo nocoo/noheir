@@ -1,63 +1,47 @@
 import { describe, expect, test } from "vitest";
-import { rawFetch, TEST_USER_A } from "./helpers/client";
+import { api, rawFetch, TEST_USER_A, TEST_USER_B, TOKENS } from "./helpers/client";
 
-describe("E2E: Auth middleware", () => {
-  test("401 when no Authorization header", async () => {
-    const res = await rawFetch({
-      path: "/api/reports/metadata",
-      userId: TEST_USER_A,
-      omitAuth: true,
-    });
-    expect(res.status).toBe(401);
-    const body = (await res.json()) as { error: string };
-    expect(body.error).toContain("Authorization");
+describe("Access authentication over HTTP", () => {
+  test("rejects unauthenticated API and static requests", async () => {
+    for (const path of ["/api/reports/metadata", "/", "/assets/private.js"]) {
+      const response = await rawFetch({ path, omitAuth: true });
+      expect([401, 403]).toContain(response.status);
+    }
   });
-
-  test("403 when invalid Bearer token", async () => {
-    const res = await rawFetch({
-      path: "/api/reports/metadata",
-      userId: TEST_USER_A,
-      token: "wrong-token-value",
-    });
-    expect(res.status).toBe(403);
-    const body = (await res.json()) as { error: string };
-    expect(body.error).toContain("Invalid");
+  test.each(["expired", "audience", "issuer", "unknown"])("rejects %s identity", async (key) => {
+    const response = await rawFetch({ path: "/api/auth/me", token: TOKENS[key] ?? "invalid" });
+    expect([401, 403]).toContain(response.status);
   });
-
-  test("400 when missing X-User-Id header", async () => {
-    const res = await rawFetch({
-      path: "/api/reports/metadata",
-      // userId omitted
-    });
-    expect(res.status).toBe(400);
-    const body = (await res.json()) as { error: string };
-    expect(body.error).toContain("User-Id");
+  test("rejects malformed and forged JWTs", async () => {
+    for (const token of ["", "invalid", `${TOKENS[TEST_USER_A]}tampered`]) {
+      const response = await rawFetch({ path: "/api/auth/me", token });
+      expect([401, 403]).toContain(response.status);
+    }
   });
-
-  test("401 when token is empty string", async () => {
-    const res = await rawFetch({
-      path: "/api/reports/metadata",
+  test("preserves the Google-era owner id and ignores forged user headers", async () => {
+    const result = await api<{ user: { id: string; email: string } }>({
+      path: "/api/auth/me",
       userId: TEST_USER_A,
-      token: "",
+      headers: { "X-User-Id": TEST_USER_B, Authorization: "Bearer old-shared-secret" },
     });
-    // "Bearer " with empty token → Headers trim trailing space → "Bearer" →
-    // does not startsWith("Bearer ") → 401
-    expect(res.status).toBe(401);
+    expect(result.user.id).toBe(TEST_USER_A);
+    expect(result.user.email).toBe(`${TEST_USER_A}@test.local`);
   });
-
-  test("200 when valid auth headers are present", async () => {
-    const res = await rawFetch({
-      path: "/api/reports/metadata",
+  test("rejects cross-origin mutations even with a valid JWT", async () => {
+    const response = await rawFetch({
+      path: "/api/products",
+      method: "POST",
       userId: TEST_USER_A,
+      headers: { Origin: "https://attacker.example" },
+      body: { name: "unexpected" },
     });
-    expect(res.status).toBe(200);
+    expect(response.status).toBe(403);
   });
-
-  test("404 for unknown routes with valid auth", async () => {
-    const res = await rawFetch({
-      path: "/api/nonexistent",
-      userId: TEST_USER_A,
-    });
-    expect(res.status).toBe(404);
+  test("returns JSON 404 for unknown API and removes SQL gateway", async () => {
+    for (const path of ["/api/nonexistent", "/api/v1/query", "/api/v1/execute"]) {
+      const response = await rawFetch({ path, method: "POST", body: { sql: "SELECT 1" } });
+      expect(response.status).toBe(404);
+      expect(response.headers.get("content-type")).toContain("application/json");
+    }
   });
 });

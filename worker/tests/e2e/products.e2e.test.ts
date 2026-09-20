@@ -20,7 +20,7 @@ describe("E2E: Products", () => {
       body: makeProduct(),
     });
     expect(res.product).toBeDefined();
-    expect(res.product.id).toBeString();
+    expect(res.product.id).toBeTypeOf("string");
     expect(res.product.name).toBe("招银理财月度宝");
     expect(res.product.annualReturnRate).toBe(3.2);
   });
@@ -349,7 +349,7 @@ describe("E2E: Products", () => {
     expect(res.products).toHaveLength(1);
     const p = res.products[0]!;
     // Should have minimal fields
-    expect(p.id).toBeString();
+    expect(p.id).toBeTypeOf("string");
     expect(p.name).toBe("Test Product");
     expect(p.channel).toBe("招商银行");
     expect(p.category).toBe("理财产品"); // default from makeProduct()

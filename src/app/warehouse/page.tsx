@@ -1,26 +1,27 @@
+import { useLoaderData } from "react-router";
 import { AppShell } from "@/components/layout";
-import type { DomainProduct, UnitDisplayInfo } from "@/domain/types";
-import { getAuthedClient } from "@/lib/api-helpers";
+import type { DomainProduct, SerializedUnit, UnitDisplayInfo } from "@/domain/types";
 import { toDomainProduct, toUnitDisplayInfo } from "@/lib/capital-mappers";
+import { workerDbClient } from "@/lib/worker-db-client";
 import { WarehouseClient } from "./warehouse-client";
 
-export default async function WarehousePage() {
-  let units: UnitDisplayInfo[] = [];
-  let products: DomainProduct[] = [];
+export interface WarehouseLoaderData {
+  serialized: SerializedUnit[];
+  products: DomainProduct[];
+}
 
-  try {
-    const { userId, client } = await getAuthedClient();
-    const [unitsResult, productsResult] = await Promise.all([
-      client.listUnits(userId, { with_products: true }),
-      client.listProducts(userId),
-    ]);
-    units = unitsResult.units.map((raw) => toUnitDisplayInfo(raw as Record<string, unknown>));
-    products = productsResult.products.map((raw) =>
-      toDomainProduct(raw as Record<string, unknown>),
-    );
-  } catch {
-    // Not authenticated or Worker unavailable
-  }
+export async function warehouseLoader(): Promise<WarehouseLoaderData> {
+  const [unitsResult, productsResult] = await Promise.all([
+    workerDbClient.listUnits({ with_products: true }),
+    workerDbClient.listProducts(),
+  ]);
+
+  const units: UnitDisplayInfo[] = unitsResult.units.map((raw) =>
+    toUnitDisplayInfo(raw as Record<string, unknown>),
+  );
+  const products: DomainProduct[] = productsResult.products.map((raw) =>
+    toDomainProduct(raw as Record<string, unknown>),
+  );
 
   const serialized = units.map((u) => ({
     id: u.id,
@@ -30,7 +31,7 @@ export default async function WarehousePage() {
     status: u.status,
     strategy: u.strategy,
     tactics: u.tactics,
-    productId: u.productId,
+    productId: u.productId ?? null,
     productName: u.product?.name ?? null,
     productChannel: u.product?.channel ?? null,
     productCategory: u.product?.category ?? null,
@@ -44,6 +45,12 @@ export default async function WarehousePage() {
     daysUntilLocked: u.daysUntilLocked,
     isAvailable: u.isAvailable,
   }));
+
+  return { serialized, products };
+}
+
+export default function WarehousePage() {
+  const { serialized, products } = useLoaderData<WarehouseLoaderData>();
 
   return (
     <AppShell>

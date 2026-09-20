@@ -21,7 +21,7 @@ describe("E2E: Transactions", () => {
       body: data,
     });
     expect(res.transaction).toBeDefined();
-    expect(res.transaction.id).toBeString();
+    expect(res.transaction.id).toBeTypeOf("string");
     expect(res.transaction.amountCents).toBe(3500);
     expect(res.transaction.primaryCategory).toBe("餐饮");
   });

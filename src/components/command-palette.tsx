@@ -1,5 +1,3 @@
-"use client";
-
 import {
   CreditCard as AccountTypeIcon,
   ArrowLeftRight,
@@ -25,8 +23,8 @@ import {
   TrendingUp,
   Warehouse,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import {
   CommandDialog,
   CommandEmpty,
@@ -77,7 +75,7 @@ const NAV_ITEMS: NavItem[] = [
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
-  const router = useRouter();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -116,7 +114,7 @@ export function CommandPalette() {
                 <CommandItem
                   key={item.href}
                   value={item.label}
-                  onSelect={() => runCommand(() => router.push(item.href))}
+                  onSelect={() => runCommand(() => navigate(item.href))}
                 >
                   <item.icon className="mr-2 size-4" />
                   {item.label}

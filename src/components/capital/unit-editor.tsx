@@ -1,8 +1,6 @@
-"use client";
-
 import { Check, ChevronsUpDown, ExternalLink, Package, Plus, X } from "lucide-react";
-import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
+import { Link } from "react-router";
 import { toast } from "sonner";
 import { createProduct } from "@/app/actions/product-actions";
 import { createUnit } from "@/app/actions/unit-actions";
@@ -493,7 +491,7 @@ function UnitEditorForm({
             </Popover>
             {selectedProduct && (
               <Link
-                href={`/products?edit=${selectedProduct.id}`}
+                to={`/products?edit=${selectedProduct.id}`}
                 className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs transition-colors"
                 target="_blank"
               >

@@ -1,17 +1,4 @@
-"use server";
-
-// CRUD Server Actions for recurring expense rules.
-// Spec: docs/002-recurring-expense-calendar.md § Server Actions
-//
-// State-machine actions (pause / resume / end) live in P2-C9 — they
-// need the X-Internal-Action channel; CRUD here never does. Zod
-// validation strips `status` / `endedAt` from any user input so a
-// regular update call cannot mutate the lifecycle fields even if the
-// caller forgets the type narrowing.
-
-import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/lib/action-result";
-import { getAuthedClient } from "@/lib/api-helpers";
 import {
   recurringExpenseInputSchema,
   recurringExpenseUpdateSchema,
@@ -20,9 +7,8 @@ import {
   type RecurringExpenseCreatePayload,
   type RecurringExpenseUpdatePayload,
   WorkerDbError,
+  workerDbClient,
 } from "@/lib/worker-db-client";
-
-const PLAN_PATH = "/plan";
 
 function actionError(err: unknown, fallback: string): { success: false; error: string } {
   if (err instanceof WorkerDbError) {
@@ -34,9 +20,6 @@ function actionError(err: unknown, fallback: string): { success: false; error: s
   return { success: false, error: fallback };
 }
 
-/** Convert a Zod-validated input (yuan-denominated `amount`) into the
- *  Worker payload shape (`amountCents`). Defensive: status / endedAt
- *  are not in the Zod schema, but defense-in-depth never hurts. */
 function toCreatePayload(
   data: { amount: number } & Omit<RecurringExpenseCreatePayload, "amountCents">,
 ): RecurringExpenseCreatePayload {
@@ -56,10 +39,8 @@ export async function createRecurringExpense(data: unknown): Promise<ActionResul
     };
   }
   try {
-    const { userId, client } = await getAuthedClient();
     const payload = toCreatePayload(parsed.data);
-    const result = await client.createRecurringExpense(userId, payload);
-    revalidatePath(PLAN_PATH);
+    const result = await workerDbClient.createRecurringExpense(payload);
     return { success: true, data: { id: result.rule.id } };
   } catch (err) {
     return actionError(err, "Failed to create recurring expense");
@@ -74,17 +55,13 @@ export async function updateRecurringExpense(id: string, data: unknown): Promise
       error: parsed.error.issues.map((i) => i.message).join("; "),
     };
   }
-  // Build partial payload, mapping yuan→cents only when amount provided.
   const { amount, ...rest } = parsed.data;
   const payload: RecurringExpenseUpdatePayload = { ...rest };
   if (amount != null) {
     (payload as { amountCents?: number }).amountCents = Math.round(amount * 100);
   }
   try {
-    const { userId, client } = await getAuthedClient();
-    // No `internal: true` here — Worker silently drops status/endedAt.
-    await client.updateRecurringExpense(userId, id, payload);
-    revalidatePath(PLAN_PATH);
+    await workerDbClient.updateRecurringExpense(id, payload);
     return { success: true, data: undefined };
   } catch (err) {
     return actionError(err, "Failed to update recurring expense");
@@ -93,9 +70,7 @@ export async function updateRecurringExpense(id: string, data: unknown): Promise
 
 export async function deleteRecurringExpense(id: string): Promise<ActionResult> {
   try {
-    const { userId, client } = await getAuthedClient();
-    await client.deleteRecurringExpense(userId, id);
-    revalidatePath(PLAN_PATH);
+    await workerDbClient.deleteRecurringExpense(id);
     return { success: true, data: undefined };
   } catch (err) {
     return actionError(err, "Failed to delete recurring expense");

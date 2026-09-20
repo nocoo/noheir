@@ -1,5 +1,3 @@
-"use client";
-
 // CategoriesClient — owns the categories CRUD UI behind /plan/categories.
 //
 // Architecture:
@@ -11,8 +9,8 @@
 //   delete-confirm dialog can warn that N rules will lose their color.
 
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import * as React from "react";
+import { useRevalidator } from "react-router";
 import { toast } from "sonner";
 import { deleteExpenseCategory } from "@/app/actions/expense-category-actions";
 import { CategoryForm } from "@/components/plan/category-form";
@@ -45,7 +43,7 @@ function colorCss(token: string): string {
 }
 
 export function CategoriesClient({ categories, usage }: CategoriesClientProps): React.ReactElement {
-  const router = useRouter();
+  const revalidator = useRevalidator();
   const [createOpen, setCreateOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<CategoryRow | null>(null);
   const [deleting, setDeleting] = React.useState<CategoryRow | null>(null);
@@ -59,10 +57,7 @@ export function CategoriesClient({ categories, usage }: CategoriesClientProps): 
       if (result.success) {
         toast.success("分类已删除");
         setDeleting(null);
-        // revalidatePath() in the action only marks the cache stale;
-        // mounted Client Components need router.refresh() to pull fresh
-        // server-rendered props so the row disappears immediately.
-        router.refresh();
+        revalidator.revalidate();
       } else {
         toast.error(result.error);
       }
@@ -153,7 +148,7 @@ export function CategoriesClient({ categories, usage }: CategoriesClientProps): 
           <CategoryForm
             onSuccess={() => {
               setCreateOpen(false);
-              router.refresh();
+              revalidator.revalidate();
             }}
             onCancel={() => setCreateOpen(false)}
           />
@@ -177,7 +172,7 @@ export function CategoriesClient({ categories, usage }: CategoriesClientProps): 
               initial={editing}
               onSuccess={() => {
                 setEditing(null);
-                router.refresh();
+                revalidator.revalidate();
               }}
               onCancel={() => setEditing(null)}
             />

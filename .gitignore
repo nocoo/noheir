@@ -2,8 +2,6 @@
 node_modules
 
 # Build output
-.next/
-.next-e2e/
 out/
 dist/
 *.tsbuildinfo
@@ -34,7 +32,7 @@ data/
 # Temporary scripts
 scripts/get-schema.ts
 
-# Lock files (bun manages via bun.lockb)
+# Lock files (Bun manages bun.lock)
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
@@ -43,3 +41,8 @@ mcp/bun.lock
 
 # Wrangler local dev secrets
 worker/.dev.vars
+
+.wrangler/
+.dev.vars*
+playwright-report/
+test-results/

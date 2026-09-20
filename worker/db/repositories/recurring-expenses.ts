@@ -11,7 +11,7 @@
 // tests because the foreign-key behaviour has historically varied
 // between local libsql and remote D1.
 
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { expenseCategories, recurringExpenses } from "../schema";
 import type { NewRecurringExpense, RecurringExpense, RecurringExpenseWithCategory } from "../types";
@@ -150,6 +150,35 @@ export function createRecurringExpensesRepo(db: DrizzleD1Database) {
         .where(and(eq(recurringExpenses.id, id), eq(recurringExpenses.userId, userId)))
         .returning({ id: recurringExpenses.id });
       return rows.length > 0;
+    },
+
+    /**
+     * Atomic owner+status CAS. Returns the row only when the source status
+     * matched. Generic update must not call this.
+     */
+    async transitionState(
+      userId: string,
+      id: string,
+      fromStatuses: string[],
+      next: { status: string; endedAt: string | null },
+    ): Promise<RecurringExpense | null> {
+      if (fromStatuses.length === 0) return null;
+      const rows = await db
+        .update(recurringExpenses)
+        .set({
+          status: next.status,
+          endedAt: next.endedAt,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(recurringExpenses.id, id),
+            eq(recurringExpenses.userId, userId),
+            inArray(recurringExpenses.status, fromStatuses),
+          ),
+        )
+        .returning();
+      return rows[0] ?? null;
     },
   };
 }

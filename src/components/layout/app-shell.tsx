@@ -1,5 +1,3 @@
-"use client";
-
 import { ContentIsland } from "@nocoo/basalt";
 import { AppHeader } from "@nocoo/basalt/components/app-header";
 import {
@@ -8,8 +6,8 @@ import {
   AppShell as BasaltAppShell,
 } from "@nocoo/basalt/components/app-shell";
 import { Menu } from "lucide-react";
-import { usePathname } from "next/navigation";
 import { Suspense, useEffect, useMemo } from "react";
+import { useLocation } from "react-router";
 import { GithubIcon } from "@/components/icons/github-icon";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import {
@@ -69,7 +67,8 @@ function AppShellInner({
 }) {
   const isMobile = useIsMobile();
   const { mobileOpen, setMobileOpen } = useSidebar();
-  const pathname = usePathname();
+  const location = useLocation();
+  const pathname = location.pathname;
 
   // Auto-generate breadcrumbs from pathname if not provided
   const autoBreadcrumbs = useMemo(() => buildBreadcrumbsFromPath(pathname), [pathname]);

@@ -1,7 +1,5 @@
-"use server";
-
 import type { ActionResult } from "@/lib/action-result";
-import { getAuthedClient } from "@/lib/api-helpers";
+import { workerDbClient } from "@/lib/worker-db-client";
 
 export async function createProduct(data: {
   name: string;
@@ -16,8 +14,7 @@ export async function createProduct(data: {
   isArchived?: boolean;
 }): Promise<ActionResult<{ id: string }>> {
   try {
-    const { userId, client } = await getAuthedClient();
-    const result = await client.createProduct(userId, {
+    const result = await workerDbClient.createProduct({
       name: data.name,
       code: data.code ?? undefined,
       channel: data.channel ?? undefined,
@@ -55,10 +52,8 @@ export async function updateProduct(
   },
 ): Promise<ActionResult> {
   try {
-    const { userId, client } = await getAuthedClient();
     const payload: Record<string, unknown> = {};
     if (data.name !== undefined) payload.name = data.name;
-    // Allow explicit null to clear the field
     if (data.code !== undefined) payload.code = data.code;
     if (data.channel !== undefined) payload.channel = data.channel;
     if (data.category !== undefined) payload.category = data.category;
@@ -68,7 +63,7 @@ export async function updateProduct(
     if (data.cycleDays !== undefined) payload.cycleDays = data.cycleDays;
     if (data.annualReturnRate !== undefined) payload.annualReturnRate = data.annualReturnRate;
     if (data.isArchived !== undefined) payload.isArchived = data.isArchived;
-    await client.updateProduct(userId, id, payload);
+    await workerDbClient.updateProduct(id, payload);
     return { success: true, data: undefined };
   } catch (err) {
     return {
@@ -80,8 +75,7 @@ export async function updateProduct(
 
 export async function deleteProduct(id: string): Promise<ActionResult> {
   try {
-    const { userId, client } = await getAuthedClient();
-    await client.deleteProduct(userId, id);
+    await workerDbClient.deleteProduct(id);
     return { success: true, data: undefined };
   } catch (err) {
     return {

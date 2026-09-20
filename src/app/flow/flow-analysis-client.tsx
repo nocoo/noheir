@@ -1,5 +1,3 @@
-"use client";
-
 import { ArrowRight, ArrowRightLeft } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";

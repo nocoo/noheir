@@ -1,19 +1,23 @@
+import { useLoaderData } from "react-router";
 import { AppShell } from "@/components/layout";
-import { getAuthedClient } from "@/lib/api-helpers";
+import { workerDbClient } from "@/lib/worker-db-client";
 import { SettingsClient } from "./settings-client";
 
-export default async function SettingsPage() {
-  let settingsJson: Record<string, unknown> = {};
+export interface SettingsLoaderData {
+  settingsJson: Record<string, unknown>;
+}
 
-  try {
-    const { userId, client } = await getAuthedClient();
-    const result = await client.getSettings(userId);
-    const row = (result.settings as Record<string, unknown>) ?? {};
-    const rawJson = typeof row.settings === "string" ? row.settings : "{}";
-    settingsJson = JSON.parse(rawJson) as Record<string, unknown>;
-  } catch {
-    // Not authenticated or Worker unavailable
-  }
+export async function settingsLoader(): Promise<SettingsLoaderData> {
+  const result = await workerDbClient.getSettings();
+  const row = (result.settings as Record<string, unknown>) ?? {};
+  const rawJson = typeof row.settings === "string" ? row.settings : "{}";
+  const settingsJson = JSON.parse(rawJson) as Record<string, unknown>;
+
+  return { settingsJson };
+}
+
+export default function SettingsPage() {
+  const { settingsJson } = useLoaderData<SettingsLoaderData>();
 
   return (
     <AppShell>

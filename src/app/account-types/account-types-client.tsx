@@ -1,8 +1,6 @@
-"use client";
-
 import { CreditCard, Save } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { useRevalidator } from "react-router";
 import { toast } from "sonner";
 import { saveAccountTypes } from "@/app/actions/settings-actions";
 import { Badge } from "@/components/ui/badge";
@@ -33,7 +31,7 @@ interface AccountTypesClientProps {
 }
 
 export function AccountTypesClient({ accounts, accountTypes, grouped }: AccountTypesClientProps) {
-  const router = useRouter();
+  const revalidator = useRevalidator();
   const [isPending, startTransition] = useTransition();
   const [types, setTypes] = useState<AccountTypeConfig[]>(accountTypes);
 
@@ -51,7 +49,7 @@ export function AccountTypesClient({ accounts, accountTypes, grouped }: AccountT
       const result = await saveAccountTypes(types);
       if (result.success) {
         toast.success("账户类型已保存");
-        router.refresh();
+        revalidator.revalidate();
       } else {
         toast.error(result.error);
       }

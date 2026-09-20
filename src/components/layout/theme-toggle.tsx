@@ -1,5 +1,3 @@
-"use client";
-
 import { Button } from "@nocoo/basalt/components/button";
 import { useTheme } from "@nocoo/basalt/providers/theme";
 import { Monitor, Moon, Sun } from "lucide-react";

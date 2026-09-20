@@ -18,8 +18,10 @@
  */
 
 import { spawn } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { resolve as pathResolve } from "node:path";
+import { setTimeout } from "node:timers/promises";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -214,12 +216,14 @@ function updateChangelog(entry: string): void {
 // ---------------------------------------------------------------------------
 
 async function main(): Promise<void> {
-  const args = process.argv.slice(2);
+  const args = process.argv.slice(2).filter((arg) => arg !== "--");
   const dryRun = args.includes("--dry-run");
   const versionArg = args.find((a) => a !== "--dry-run") ?? "patch";
 
   console.log(dryRun ? "🏃 Dry run mode\n" : "");
 
+  if (!dryRun && (await run("git", ["status", "--porcelain"], { capture: true })))
+    throw new Error("Release requires a clean working tree");
   // 1. Read current version
   const pkg = readJson(PACKAGE_JSON) as Record<string, unknown> & {
     version: string;
@@ -240,7 +244,7 @@ async function main(): Promise<void> {
 
   // 3. Sync lockfile
   console.log("\n📦 Syncing lockfile...");
-  await run("bun", ["install"], { dryRun });
+  await run("bun", ["install", "--frozen-lockfile"], { dryRun });
 
   // 4. Generate changelog
   console.log("\n📝 Generating changelog...");
@@ -266,17 +270,69 @@ async function main(): Promise<void> {
 
   console.log("\n🔖 Committing and tagging...");
   await run("git", ["add", "package.json", "bun.lock", "CHANGELOG.md"], { dryRun });
-  await run("git", ["commit", "-m", `release: ${tag}`], { dryRun });
-  await run("git", ["tag", tag, "-m", tag], { dryRun });
+  await run("git", ["commit", "-m", `chore: release ${tag}`], { dryRun });
 
   // 6. Push
   console.log("\n🚀 Pushing...");
   await run("git", ["push"], { dryRun });
-  await run("git", ["push", "--tags"], { dryRun });
+  if (!dryRun) {
+    const sha = await run("git", ["rev-parse", "HEAD"], { capture: true });
+    for (const workflow of ["ci.yml", "release.yml"]) {
+      let complete = false;
+      for (let attempt = 0; attempt < 180; attempt++) {
+        const output = await run(
+          "gh",
+          [
+            "run",
+            "list",
+            "--workflow",
+            workflow,
+            "--commit",
+            sha,
+            "--limit",
+            "10",
+            "--json",
+            "databaseId,status,conclusion,event",
+          ],
+          { capture: true },
+        );
+        const runs = JSON.parse(output) as {
+          databaseId: number;
+          status: string;
+          conclusion: string;
+          event: string;
+        }[];
+        const result = runs.find(
+          (r) => r.event === (workflow === "ci.yml" ? "push" : "workflow_run"),
+        );
+        if (result?.status === "completed") {
+          if (result.conclusion !== "success")
+            throw new Error(`${workflow} failed: ${result.databaseId}`);
+          console.log(`Verified ${workflow}: ${result.databaseId}`);
+          complete = true;
+          break;
+        }
+        await setTimeout(10_000);
+      }
+      if (!complete) throw new Error(`Timed out waiting for ${workflow}`);
+    }
+    await run("bun", ["run", "verify:production"]);
+  }
+  await run("git", ["tag", "-a", tag, "-m", tag], { dryRun });
+  await run("git", ["push", "origin", tag], { dryRun });
 
   // 7. GitHub release
   console.log("\n🎉 Creating GitHub release...");
-  await run("gh", ["release", "create", tag, "--title", tag, "--notes", entry], { dryRun });
+  if (!dryRun) {
+    const directory = mkdtempSync(pathResolve(tmpdir(), "noheir-release-"));
+    const notes = pathResolve(directory, "notes.md");
+    try {
+      writeFileSync(notes, entry);
+      await run("gh", ["release", "create", tag, "--title", tag, "--notes-file", notes]);
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  }
 
   console.log(`\n✅ Released ${tag}`);
 }

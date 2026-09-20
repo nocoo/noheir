@@ -145,94 +145,6 @@ describe("E2E: /api/recurring-expenses (P1-C6)", () => {
     expect(updated.endedAt).toBeNull();
   });
 
-  test("PUT with X-Internal-Action: 1 allows status + endedAt writes", async () => {
-    const { rule } = await api<{ rule: Rule }>({
-      method: "POST",
-      path: "/api/recurring-expenses",
-      userId,
-      body: yearlyRule,
-    });
-
-    const res = await fetch(`${BASE_URL}/api/recurring-expenses/${rule.id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.WORKER_TOKEN ?? ""}`,
-        "X-User-Id": userId,
-        "X-Internal-Action": "1",
-      },
-      body: JSON.stringify({
-        status: "ended",
-        endedAt: "2026-06-07",
-      }),
-    });
-    expect(res.status).toBe(200);
-    const { rule: updated } = (await res.json()) as { rule: Rule };
-    expect(updated.status).toBe("ended");
-    expect(updated.endedAt).toBe("2026-06-07");
-  });
-
-  test("PUT with X-Internal-Action: 1 can also write endedAt independently", async () => {
-    // Positive endedAt path requested by reviewer follow-up.
-    const { rule } = await api<{ rule: Rule }>({
-      method: "POST",
-      path: "/api/recurring-expenses",
-      userId,
-      body: yearlyRule,
-    });
-
-    const res = await fetch(`${BASE_URL}/api/recurring-expenses/${rule.id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.WORKER_TOKEN ?? ""}`,
-        "X-User-Id": userId,
-        "X-Internal-Action": "1",
-      },
-      body: JSON.stringify({ endedAt: "2026-03-15" }),
-    });
-    expect(res.status).toBe(200);
-    const { rule: updated } = (await res.json()) as { rule: Rule };
-    expect(updated.endedAt).toBe("2026-03-15");
-  });
-
-  test("PUT without header keeps endedAt unchanged (negative path)", async () => {
-    // Reviewer follow-up: pin the "no header → endedAt does not move".
-    // First seed an endedAt via internal header, then attempt to overwrite
-    // it without the header and confirm it stays.
-    const { rule } = await api<{ rule: Rule }>({
-      method: "POST",
-      path: "/api/recurring-expenses",
-      userId,
-      body: yearlyRule,
-    });
-
-    await fetch(`${BASE_URL}/api/recurring-expenses/${rule.id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.WORKER_TOKEN ?? ""}`,
-        "X-User-Id": userId,
-        "X-Internal-Action": "1",
-      },
-      body: JSON.stringify({ endedAt: "2026-03-15" }),
-    });
-
-    await api({
-      method: "PUT",
-      path: `/api/recurring-expenses/${rule.id}`,
-      userId,
-      body: { endedAt: "2099-12-31" }, // attempt overwrite without header
-    });
-
-    const { rules } = await api<{ rules: Rule[] }>({
-      method: "GET",
-      path: "/api/recurring-expenses",
-      userId,
-    });
-    expect(rules[0].endedAt).toBe("2026-03-15");
-  });
-
   test("DELETE returns 204 then 404", async () => {
     const { rule } = await api<{ rule: Rule }>({
       method: "POST",
@@ -254,18 +166,15 @@ describe("E2E: /api/recurring-expenses (P1-C6)", () => {
     expect(again.status).toBe(404);
   });
 
-  test("CORS preflight reflects X-Internal-Action header", async () => {
+  test("does not allow cross-origin internal-action requests", async () => {
     const res = await fetch(`${BASE_URL}/api/recurring-expenses/anything`, {
       method: "OPTIONS",
       headers: {
         Origin: "https://noheir.app",
         "Access-Control-Request-Method": "PUT",
-        "Access-Control-Request-Headers":
-          "Content-Type, Authorization, X-User-Id, X-Internal-Action",
+        "Access-Control-Request-Headers": "X-Internal-Action",
       },
     });
-    expect(res.status).toBeLessThan(400);
-    const allowed = (res.headers.get("access-control-allow-headers") ?? "").toLowerCase();
-    expect(allowed).toContain("x-internal-action");
+    expect(res.headers.get("access-control-allow-origin")).not.toBe("https://noheir.app");
   });
 });

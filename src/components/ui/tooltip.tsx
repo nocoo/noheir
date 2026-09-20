@@ -1,5 +1,3 @@
-"use client";
-
 import * as TooltipPrimitive from "radix-ui/tooltip";
 import type * as React from "react";
 

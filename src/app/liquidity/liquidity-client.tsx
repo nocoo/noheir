@@ -1,5 +1,3 @@
-"use client";
-
 import {
   BarChart3,
   Calendar,
@@ -9,8 +7,8 @@ import {
   TrendingUp,
   Warehouse,
 } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
+import { Link } from "react-router";
 import {
   Bar,
   BarChart,
@@ -203,7 +201,7 @@ export function LiquidityClient({
               </CardDescription>
             </div>
             <Link
-              href="/warehouse?availability=soon"
+              to="/warehouse?availability=soon"
               className="text-primary hover:text-primary/80 flex items-center gap-1 text-sm"
             >
               <Warehouse className="size-4" />
@@ -260,7 +258,7 @@ export function LiquidityClient({
                           {monthData.units.map((unit) => (
                             <TableRow key={unit.id}>
                               <TableCell>
-                                <Link href={`/warehouse?q=${unit.unitCode}`}>
+                                <Link to={`/warehouse?q=${unit.unitCode}`}>
                                   <UnitCodeBadge unitCode={unit.unitCode} />
                                 </Link>
                               </TableCell>
@@ -272,9 +270,7 @@ export function LiquidityClient({
                               </TableCell>
                               <TableCell>
                                 {unit.productName ? (
-                                  <Link
-                                    href={`/products?q=${encodeURIComponent(unit.productName)}`}
-                                  >
+                                  <Link to={`/products?q=${encodeURIComponent(unit.productName)}`}>
                                     <ProductBadge
                                       productName={unit.productName}
                                       category={unit.productCategory}

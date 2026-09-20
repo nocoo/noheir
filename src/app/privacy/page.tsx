@@ -1,7 +1,7 @@
 import { ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/layout";
 
-export default async function PrivacyPage() {
+export default function PrivacyPage() {
   return (
     <AppShell>
       <div className="space-y-6">
@@ -26,7 +26,7 @@ export default async function PrivacyPage() {
             <h2 className="text-lg font-semibold">2. 数据存储</h2>
             <p className="text-muted-foreground">
               用户数据存储在 Cloudflare D1 数据库中，数据位于用户选择的区域。
-              数据库访问仅通过经过身份验证的 Worker API，使用 Bearer Token 验证。
+              数据库访问仅通过经过身份验证的 Worker API，由 Cloudflare Access 进行统一保护。
             </p>
           </section>
 

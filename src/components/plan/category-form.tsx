@@ -1,5 +1,3 @@
-"use client";
-
 // CategoryForm — create / edit form for an expense category.
 // Spec: docs/002-recurring-expense-calendar.md § Categories
 //

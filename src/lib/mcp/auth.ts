@@ -2,9 +2,9 @@
 // MCP token validation middleware
 // ---------------------------------------------------------------------------
 
-import type { Db } from "@/lib/db";
-import type { McpToken } from "@/services/mcp-tokens";
-import { getValidTokenByHash, sha256, updateLastUsed } from "@/services/mcp-tokens";
+import type { McpToken } from "../../services/mcp-tokens";
+import { getValidTokenByHash, sha256, updateLastUsed } from "../../services/mcp-tokens";
+import type { Db } from "../db";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -61,10 +61,11 @@ export async function validateMcpToken(db: Db, authHeader: string | null): Promi
     };
   }
 
-  // Fire-and-forget: update last_used_at
-  updateLastUsed(db, token.id).catch(() => {
-    // Intentionally swallow — usage tracking is non-critical
-  });
+  try {
+    await updateLastUsed(db, token.id);
+  } catch {
+    // Usage tracking must not fail the request.
+  }
 
   return { valid: true, token };
 }

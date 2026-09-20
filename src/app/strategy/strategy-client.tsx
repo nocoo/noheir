@@ -1,5 +1,3 @@
-"use client";
-
 import { ResponsiveSunburst } from "@nivo/sunburst";
 import { Layers } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

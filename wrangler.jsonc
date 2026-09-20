@@ -1,0 +1,80 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "noheir-web",
+  "account_id": "d51a8fde361e4be31db17d8c56737c1f",
+  "main": "worker/src/index.ts",
+  "compatibility_date": "2026-09-18",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [
+    {
+      "pattern": "noheir.hexly.ai",
+      "custom_domain": true
+    }
+  ],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "./dist/client",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": true
+  },
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "ENVIRONMENT": "production",
+    "CF_ACCESS_TEAM_DOMAIN": "nocoo",
+    "CF_ACCESS_AUD": "19d100ea22080f644154aad7b35785c1381874d27dec7fd238a2cb8fd7d640ee",
+    "SITE_URL": "https://noheir.hexly.ai",
+    "LOCAL_USER_EMAIL": ""
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "noheir-db",
+      "database_id": "586c101d-df19-4e1f-a946-42151c1e199d",
+      "migrations_dir": "worker/db/migrations"
+    }
+  ],
+  "env": {
+    "local": {
+      "name": "noheir-local",
+      "routes": [],
+      "vars": {
+        "ENVIRONMENT": "local",
+        "CF_ACCESS_TEAM_DOMAIN": "nocoo",
+        "CF_ACCESS_AUD": "19d100ea22080f644154aad7b35785c1381874d27dec7fd238a2cb8fd7d640ee",
+        "SITE_URL": "http://127.0.0.1:7004",
+        "LOCAL_USER_EMAIL": "developer@example.test"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "noheir-local",
+          "database_id": "local-noheir",
+          "migrations_dir": "worker/db/migrations"
+        }
+      ]
+    },
+    "test": {
+      "name": "noheir-test",
+      "routes": [],
+      "vars": {
+        "ENVIRONMENT": "test",
+        "CF_ACCESS_TEAM_DOMAIN": "nocoo",
+        "CF_ACCESS_AUD": "19d100ea22080f644154aad7b35785c1381874d27dec7fd238a2cb8fd7d640ee",
+        "SITE_URL": "http://127.0.0.1:27004",
+        "LOCAL_USER_EMAIL": "e2e-user-alpha@test.local"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "noheir-test",
+          "database_id": "test-noheir",
+          "migrations_dir": "worker/db/migrations"
+        }
+      ]
+    }
+  }
+}

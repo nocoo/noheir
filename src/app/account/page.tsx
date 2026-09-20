@@ -1,3 +1,4 @@
+import { useLoaderData } from "react-router";
 import { AppShell } from "@/components/layout";
 import type { AccountSummary } from "@/domain/dashboard/account-analysis";
 import {
@@ -5,70 +6,93 @@ import {
   buildChartData,
   buildPieData,
 } from "@/domain/dashboard/account-analysis";
-import { getAuthedClient } from "@/lib/api-helpers";
+import { workerDbClient } from "@/lib/worker-db-client";
 import { AccountAnalysisClient } from "./account-analysis-client";
 
-export default async function AccountPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ year?: string }>;
-}) {
-  const params = await searchParams;
-  let accountData: AccountSummary[] = [];
+export interface AccountLoaderData {
+  serializedAccounts: Array<{
+    name: string;
+    income: number;
+    expense: number;
+    balance: number;
+    transactionCount: number;
+  }>;
+  serializedGroups: Array<{
+    prefix: string;
+    totalIncome: number;
+    totalExpense: number;
+    totalBalance: number;
+    totalTransactions: number;
+    accountType?: import("@/domain/types").AccountType | undefined;
+    accounts: Array<{
+      name: string;
+      income: number;
+      expense: number;
+      balance: number;
+      transactionCount: number;
+    }>;
+  }>;
+  chartData: ReturnType<typeof buildChartData>;
+  pieData: ReturnType<typeof buildPieData>;
+  summaryStats: {
+    accountCount: number;
+    totalTransactions: number;
+    totalFlow: number;
+    totalIncome: number;
+    totalExpense: number;
+  };
+}
+
+export async function accountLoader({ request }: { request: Request }): Promise<AccountLoaderData> {
+  const url = new URL(request.url);
+  const yearParam = url.searchParams.get("year");
+
+  const metadata = await workerDbClient.getMetadata();
+  const availableYears = metadata.years.sort((a, b) => b - a);
+  const parsedYear = yearParam ? Number(yearParam) : null;
+  let selectedYear: number;
+  if (parsedYear && availableYears.includes(parsedYear)) {
+    selectedYear = parsedYear;
+  } else {
+    selectedYear = availableYears[0] ?? new Date().getFullYear();
+  }
+
+  const accountSummary = await workerDbClient.getAccountSummary(selectedYear);
+
   let totalTransactions = 0;
   let totalFlow = 0;
+  const accountMap = new Map<string, AccountSummary>();
 
-  try {
-    const { userId, client } = await getAuthedClient();
-    const metadata = await client.getMetadata(userId);
+  for (const row of accountSummary.accounts) {
+    if (!accountMap.has(row.account)) {
+      accountMap.set(row.account, {
+        name: row.account,
+        income: 0,
+        expense: 0,
+        balance: 0,
+        transactionCount: 0,
+        categories: new Map(),
+      });
+    }
+    const acc = accountMap.get(row.account);
+    if (!acc) continue;
+    const amount = row.total / 100;
 
-    const availableYears = metadata.years.sort((a, b) => b - a);
-    const yearParam = params.year ? Number(params.year) : null;
-    let selectedYear: number;
-    if (yearParam && availableYears.includes(yearParam)) {
-      selectedYear = yearParam;
+    if (row.type === "income") {
+      acc.income += amount;
     } else {
-      selectedYear = availableYears[0] ?? new Date().getFullYear();
+      acc.expense += amount;
     }
+    acc.balance = acc.income - acc.expense;
+    acc.transactionCount += row.count;
 
-    const accountSummary = await client.getAccountSummary(userId, selectedYear);
-
-    // Build AccountSummary[] from server-side aggregation
-    const accountMap = new Map<string, AccountSummary>();
-
-    for (const row of accountSummary.accounts) {
-      if (!accountMap.has(row.account)) {
-        accountMap.set(row.account, {
-          name: row.account,
-          income: 0,
-          expense: 0,
-          balance: 0,
-          transactionCount: 0,
-          categories: new Map(),
-        });
-      }
-      const acc = accountMap.get(row.account);
-      if (!acc) continue;
-      const amount = row.total / 100;
-
-      if (row.type === "income") {
-        acc.income += amount;
-      } else {
-        acc.expense += amount;
-      }
-      acc.balance = acc.income - acc.expense;
-      acc.transactionCount += row.count;
-
-      totalTransactions += row.count;
-      totalFlow += amount;
-    }
-
-    accountData = Array.from(accountMap.values()).sort(
-      (a, b) => b.income + b.expense - (a.income + a.expense),
-    );
-  } catch {
-    // Not authenticated or Worker unavailable
+    totalTransactions += row.count;
+    totalFlow += amount;
   }
+
+  const accountData = Array.from(accountMap.values()).sort(
+    (a, b) => b.income + b.expense - (a.income + a.expense),
+  );
 
   const accountGroups = buildAccountGroups(accountData, "prefix");
   const chartData = buildChartData(accountData);
@@ -85,7 +109,6 @@ export default async function AccountPage({
     totalExpense,
   };
 
-  // Serialize AccountSummary (strip Map fields for client)
   const serializedAccounts = accountData.map((a) => ({
     name: a.name,
     income: a.income,
@@ -109,6 +132,19 @@ export default async function AccountPage({
       transactionCount: a.transactionCount,
     })),
   }));
+
+  return {
+    serializedAccounts,
+    serializedGroups,
+    chartData,
+    pieData,
+    summaryStats,
+  };
+}
+
+export default function AccountPage() {
+  const { serializedAccounts, serializedGroups, chartData, pieData, summaryStats } =
+    useLoaderData<AccountLoaderData>();
 
   return (
     <AppShell>

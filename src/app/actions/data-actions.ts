@@ -1,7 +1,5 @@
-"use server";
-
 import type { ActionResult } from "@/lib/action-result";
-import { getAuthedClient } from "@/lib/api-helpers";
+import { workerDbClient } from "@/lib/worker-db-client";
 
 interface BackupData {
   transactions: unknown[];
@@ -14,8 +12,7 @@ interface BackupData {
 
 export async function exportBackup(): Promise<ActionResult<BackupData>> {
   try {
-    const { userId, client } = await getAuthedClient();
-    const data = await client.exportData(userId);
+    const data = await workerDbClient.exportData();
     return { success: true, data };
   } catch (err) {
     return {
@@ -30,8 +27,7 @@ export async function restoreBackup(data: {
   transfers: unknown[];
 }): Promise<ActionResult<{ transactions: number; transfers: number }>> {
   try {
-    const { userId, client } = await getAuthedClient();
-    const result = await client.importData(userId, {
+    const result = await workerDbClient.importData({
       transactions: data.transactions,
       transfers: data.transfers,
     });
@@ -52,27 +48,25 @@ export async function restoreBackup(data: {
 
 export async function clearAllData(): Promise<ActionResult> {
   try {
-    const { userId, client } = await getAuthedClient();
-
     // Clear transactions and transfers via restore with empty arrays
-    await client.importData(userId, { transactions: [], transfers: [] });
+    await workerDbClient.importData({ transactions: [], transfers: [] });
 
     // Delete all products
-    const { products } = await client.listProducts(userId);
+    const { products } = await workerDbClient.listProducts();
     for (const raw of products) {
       const p = raw as Record<string, unknown>;
-      await client.deleteProduct(userId, String(p.id));
+      await workerDbClient.deleteProduct(String(p.id));
     }
 
     // Delete all units
-    const { units } = await client.listUnits(userId);
+    const { units } = await workerDbClient.listUnits();
     for (const raw of units) {
       const u = raw as Record<string, unknown>;
-      await client.deleteUnit(userId, String(u.id));
+      await workerDbClient.deleteUnit(String(u.id));
     }
 
     // Reset settings
-    await client.saveSettings(userId, { siteName: "", settings: "{}" });
+    await workerDbClient.saveSettings({ siteName: "", settings: "{}" });
 
     return { success: true, data: undefined };
   } catch (err) {

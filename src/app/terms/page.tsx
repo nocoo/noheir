@@ -1,7 +1,7 @@
 import { FileText } from "lucide-react";
 import { AppShell } from "@/components/layout";
 
-export default async function TermsPage() {
+export default function TermsPage() {
   return (
     <AppShell>
       <div className="space-y-6">

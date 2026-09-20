@@ -1,5 +1,3 @@
-"use client";
-
 import { Calendar, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import type {
   AccountChartData,

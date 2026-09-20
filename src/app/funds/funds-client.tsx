@@ -1,5 +1,3 @@
-"use client";
-
 import {
   ArrowDown,
   ArrowUp,
@@ -12,8 +10,8 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
+import { useRevalidator } from "react-router";
 import { toast } from "sonner";
 import { deleteUnit } from "@/app/actions/unit-actions";
 import { type SerializedUnit, UnitEditor } from "@/components/capital/unit-editor";
@@ -88,7 +86,7 @@ type SortField = "unitCode" | "amount" | "availableDate" | "status" | "strategy"
 type SortDir = "asc" | "desc";
 
 export function FundsClient({ units, products }: FundsClientProps) {
-  const router = useRouter();
+  const revalidator = useRevalidator();
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUnit, setEditingUnit] = useState<SerializedUnit | null>(null);
@@ -201,7 +199,7 @@ export function FundsClient({ units, products }: FundsClientProps) {
       const result = await deleteUnit(deleteTarget.id);
       if (result.success) {
         toast.success("资本单位已删除");
-        router.refresh();
+        revalidator.revalidate();
       } else {
         toast.error(result.error);
       }
@@ -261,7 +259,7 @@ export function FundsClient({ units, products }: FundsClientProps) {
         units={units}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        onSuccess={() => router.refresh()}
+        onSuccess={() => revalidator.revalidate()}
       />
 
       {/* Filter Panel */}

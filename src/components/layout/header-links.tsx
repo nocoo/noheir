@@ -1,5 +1,3 @@
-"use client";
-
 import { Button } from "@nocoo/basalt/components/button";
 import {
   Tooltip,

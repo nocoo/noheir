@@ -1,13 +1,11 @@
-"use client";
-
 import { AccentProvider } from "@nocoo/basalt/providers/accent";
 import { LinkProvider } from "@nocoo/basalt/providers/link";
 import { ThemeProvider } from "@nocoo/basalt/providers/theme";
-import Link from "next/link";
-import { SessionProvider } from "next-auth/react";
 import type { ReactNode } from "react";
+import { Link } from "react-router";
+import { AuthProvider } from "@/lib/auth-context";
 
-function NextLinkAdapter({
+function RouterLinkAdapter({
   href,
   className,
   children,
@@ -17,7 +15,7 @@ function NextLinkAdapter({
   children?: ReactNode;
 }) {
   return (
-    <Link href={href} className={className}>
+    <Link to={href} className={className}>
       {children}
     </Link>
   );
@@ -25,12 +23,12 @@ function NextLinkAdapter({
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <SessionProvider>
+    <AuthProvider>
       <ThemeProvider>
         <AccentProvider>
-          <LinkProvider render={NextLinkAdapter}>{children}</LinkProvider>
+          <LinkProvider render={RouterLinkAdapter}>{children}</LinkProvider>
         </AccentProvider>
       </ThemeProvider>
-    </SessionProvider>
+    </AuthProvider>
   );
 }

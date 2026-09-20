@@ -1,5 +1,3 @@
-"use client";
-
 import { Breadcrumbs as BasaltBreadcrumbs } from "@nocoo/basalt/components/breadcrumbs";
 import type { ReactNode } from "react";
 

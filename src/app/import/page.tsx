@@ -1,7 +1,7 @@
 import { AppShell } from "@/components/layout";
 import { ImportClient } from "./import-client";
 
-export default async function ImportPage() {
+export default function ImportPage() {
   return (
     <AppShell>
       <ImportClient />

@@ -2,8 +2,7 @@
 // MCP Auth Code data layer — OAuth authorization sessions & codes
 // ---------------------------------------------------------------------------
 
-import { ulid } from "ulid";
-import type { Db } from "@/lib/db";
+import type { Db } from "../lib/db";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -31,6 +30,7 @@ export interface CreateMcpAuthCodeInput {
   code_challenge_method?: string;
   scope?: string;
   expires_at: number;
+  user_id: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -55,13 +55,13 @@ export const AUTH_CODE_TTL = 10 * 60;
 
 /** Create an authorization session (stores authorize request params keyed by state). */
 export async function createAuthSession(db: Db, input: CreateMcpAuthCodeInput): Promise<void> {
-  const id = ulid();
+  const id = crypto.randomUUID();
   const now = new Date().toISOString();
 
   const sql = `
     INSERT INTO mcp_auth_sessions
-      (id, state, client_id, redirect_uri, code_challenge, code_challenge_method, scope, expires_at, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (id, state, client_id, redirect_uri, code_challenge, code_challenge_method, scope, user_id, expires_at, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   await db.execute(sql, [
@@ -72,6 +72,7 @@ export async function createAuthSession(db: Db, input: CreateMcpAuthCodeInput): 
     input.code_challenge,
     input.code_challenge_method ?? "S256",
     input.scope ?? "mcp:full",
+    input.user_id,
     input.expires_at,
     now,
   ]);
@@ -91,9 +92,9 @@ export async function upgradeAuthSession(
   const now = nowEpoch();
   const meta = await db.execute(
     `UPDATE mcp_auth_sessions
-     SET code = ?, user_id = ?, expires_at = ?
-     WHERE state = ? AND code IS NULL AND expires_at > ?`,
-    [code, userId, now + AUTH_CODE_TTL, state, now],
+     SET code = ?, expires_at = ?
+     WHERE state = ? AND code IS NULL AND expires_at > ? AND user_id = ?`,
+    [code, now + AUTH_CODE_TTL, state, now, userId],
   );
   return meta.changes > 0;
 }
@@ -132,12 +133,16 @@ export async function getAuthSessionByState(db: Db, state: string): Promise<McpA
 // consumeAuthCode
 // ---------------------------------------------------------------------------
 
-/** Atomically consume an auth code (set consumed = 1). Returns true if consumed. */
-export async function consumeAuthCode(db: Db, code: string): Promise<boolean> {
+/**
+ * Atomically consume an auth code. Wrong client_id or expiry must not burn it.
+ * Signature: consumeAuthCode(db, code, clientId)
+ */
+export async function consumeAuthCode(db: Db, code: string, clientId: string): Promise<boolean> {
+  const now = nowEpoch();
   const meta = await db.execute(
     `UPDATE mcp_auth_sessions SET consumed = 1
-     WHERE code = ? AND consumed = 0`,
-    [code],
+     WHERE code = ? AND client_id = ? AND consumed = 0 AND expires_at > ?`,
+    [code, clientId, now],
   );
   return meta.changes > 0;
 }

@@ -1,14 +1,9 @@
 /**
- * WorkerDbClient — Typed HTTP client for the noheir Cloudflare Worker.
+ * Browser API client for the noheir backend.
  *
- * Used by Next.js Server Components and Server Actions to query D1 via
- * the Worker's REST API. The Worker runs Drizzle internally — this client
- * sends structured JSON requests, not raw SQL.
- *
- * Architecture: Browser → Next.js (auth) → WorkerDbClient → Worker → D1
- *
- * IMPORTANT: This module must NEVER be imported in client-side code.
- * WORKER_URL and WORKER_TOKEN are server-only env vars.
+ * Same-origin browser API: requests go directly to /api/* with standard cookies/credentials.
+ * No secret/baseURL/userId parameters or X-User-Id/internal authority headers.
+ * Authentication is provided by Cloudflare Access session cookies / assertion.
  */
 
 import type { ExpectedUnitSnapshot } from "@/domain/types";
@@ -25,49 +20,24 @@ export class WorkerDbError extends Error {
 }
 
 export class WorkerDbClient {
-  private readonly baseUrl: string;
-  private readonly secret: string;
-
-  constructor(baseUrl: string, secret: string) {
-    this.baseUrl = baseUrl.replace(/\/$/, "");
-    this.secret = secret;
-  }
-
-  private headers(userId: string): HeadersInit {
-    return {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${this.secret}`,
-      "X-User-Id": userId,
-    };
-  }
-
-  private async request<T>(
-    method: string,
-    path: string,
-    userId: string,
-    body?: unknown,
-    extraHeaders?: Record<string, string>,
-  ): Promise<T> {
-    const url = `${this.baseUrl}${path}`;
-    const headers: Record<string, string> = {
-      ...(this.headers(userId) as Record<string, string>),
-      ...(extraHeaders ?? {}),
-    };
+  private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
     const init: RequestInit = {
       method,
-      headers,
+      headers: {
+        "Content-Type": "application/json",
+      },
     };
     if (body !== undefined) {
       init.body = JSON.stringify(body);
     }
-    const res = await fetch(url, init);
+    const res = await fetch(path, init);
 
     if (!res.ok) {
       const text = await res.text().catch(() => "Unknown error");
       throw new WorkerDbError(text, res.status, `${method} ${path}`);
     }
 
-    // Some endpoints (DELETE) return 204 with no body. Tolerate that.
+    // Some endpoints (DELETE) return 204 with no body.
     if (res.status === 204) {
       return undefined as T;
     }
@@ -75,11 +45,19 @@ export class WorkerDbClient {
     return (await res.json()) as T;
   }
 
-  // ── Health (no auth) ──
+  // ── Auth (Access Session) ──
+
+  async getMe(): Promise<{
+    user: { id: string; email: string; name?: string | null; image?: string | null };
+  }> {
+    return this.request("GET", "/api/auth/me");
+  }
+
+  // ── Health ──
 
   async health(): Promise<boolean> {
     try {
-      const res = await fetch(`${this.baseUrl}/api/health`);
+      const res = await fetch("/api/live");
       return res.ok;
     } catch {
       return false;
@@ -88,112 +66,121 @@ export class WorkerDbClient {
 
   // ── Users ──
 
-  async syncUser(
-    userId: string,
-    data: {
-      email: string;
-      name?: string | null;
-      image?: string | null;
-      providerAccountId: string;
-    },
-  ) {
-    return this.request<{ user: unknown }>("PUT", "/api/users/me", userId, data);
+  async syncUser(data: {
+    email: string;
+    name?: string | null;
+    image?: string | null;
+    providerAccountId: string;
+  }) {
+    return this.request<{ user: unknown }>("PUT", "/api/users/me", data);
   }
 
   // ── Transactions ──
 
-  async searchTransactions(userId: string, params: Record<string, unknown> = {}) {
+  async searchTransactions(params: Record<string, unknown> = {}) {
     return this.request<{
       transactions: unknown[];
       total_returned: number;
-    }>("POST", "/api/transactions/search", userId, params);
+    }>("POST", "/api/transactions/search", params);
   }
 
-  async getTransaction(userId: string, id: string) {
-    return this.request<{ transaction: unknown }>("GET", `/api/transactions/${id}`, userId);
+  async getTransaction(id: string) {
+    return this.request<{ transaction: unknown }>("GET", `/api/transactions/${id}`);
   }
 
-  async createTransaction(userId: string, data: Record<string, unknown>) {
-    return this.request<{ transaction: unknown }>("POST", "/api/transactions", userId, data);
+  async createTransaction(data: Record<string, unknown>) {
+    return this.request<{ transaction: unknown }>("POST", "/api/transactions", data);
   }
 
-  async bulkCreateTransactions(userId: string, rows: Record<string, unknown>[]) {
-    return this.request<{ inserted: number }>("POST", "/api/transactions/bulk", userId, { rows });
+  async bulkCreateTransactions(rows: Record<string, unknown>[]) {
+    return this.request<{ inserted: number }>("POST", "/api/transactions/bulk", { rows });
   }
 
-  async updateTransaction(userId: string, id: string, data: Record<string, unknown>) {
-    return this.request<{ transaction: unknown }>("PUT", `/api/transactions/${id}`, userId, data);
+  async updateTransaction(id: string, data: Record<string, unknown>) {
+    return this.request<{ transaction: unknown }>("PUT", `/api/transactions/${id}`, data);
   }
 
-  async deleteTransaction(userId: string, id: string) {
-    return this.request<{ success: boolean }>("DELETE", `/api/transactions/${id}`, userId);
+  async deleteTransaction(id: string) {
+    return this.request<{ success: boolean }>("DELETE", `/api/transactions/${id}`);
   }
 
-  async countTransactionsByYear(userId: string, year: number) {
-    return this.request<{ count: number }>("GET", `/api/transactions/years/${year}/count`, userId);
+  async countTransactionsByYear(year: number) {
+    return this.request<{ count: number }>("GET", `/api/transactions/years/${year}/count`);
   }
 
-  async getAllTransactionsByYear(userId: string, year: number) {
+  async getAllTransactionsByYear(year: number) {
     return this.request<{
       transactions: unknown[];
       total_returned: number;
-    }>("GET", `/api/transactions/years/${year}`, userId);
+    }>("GET", `/api/transactions/years/${year}`);
   }
 
-  async deleteTransactionsByYear(userId: string, year: number) {
-    return this.request<{ deleted: number }>("DELETE", `/api/transactions/years/${year}`, userId);
+  async deleteTransactionsByYear(year: number) {
+    return this.request<{ deleted: number }>("DELETE", `/api/transactions/years/${year}`);
+  }
+
+  /** Atomic import replacing all transactions for the given year */
+  async importTransactions(year: number, rows: Record<string, unknown>[]) {
+    return this.request<{ imported: number }>("POST", "/api/transactions/import", { year, rows });
   }
 
   // ── Transfers ──
 
-  async searchTransfers(userId: string, params: Record<string, unknown> = {}) {
+  async searchTransfers(params: Record<string, unknown> = {}) {
     return this.request<{
       transfers: unknown[];
       total_returned: number;
-    }>("POST", "/api/transfers/search", userId, params);
+    }>("POST", "/api/transfers/search", params);
   }
 
-  async getTransfer(userId: string, id: string) {
-    return this.request<{ transfer: unknown }>("GET", `/api/transfers/${id}`, userId);
+  async getTransfer(id: string) {
+    return this.request<{ transfer: unknown }>("GET", `/api/transfers/${id}`);
   }
 
-  async createTransfer(userId: string, data: Record<string, unknown>) {
-    return this.request<{ transfer: unknown }>("POST", "/api/transfers", userId, data);
+  async createTransfer(data: Record<string, unknown>) {
+    return this.request<{ transfer: unknown }>("POST", "/api/transfers", data);
   }
 
-  async bulkCreateTransfers(userId: string, rows: Record<string, unknown>[]) {
-    return this.request<{ inserted: number }>("POST", "/api/transfers/bulk", userId, { rows });
+  async bulkCreateTransfers(rows: Record<string, unknown>[]) {
+    return this.request<{ inserted: number }>("POST", "/api/transfers/bulk", { rows });
   }
 
-  async updateTransfer(userId: string, id: string, data: Record<string, unknown>) {
-    return this.request<{ transfer: unknown }>("PUT", `/api/transfers/${id}`, userId, data);
+  async updateTransfer(id: string, data: Record<string, unknown>) {
+    return this.request<{ transfer: unknown }>("PUT", `/api/transfers/${id}`, data);
   }
 
-  async deleteTransfer(userId: string, id: string) {
-    return this.request<{ success: boolean }>("DELETE", `/api/transfers/${id}`, userId);
+  async deleteTransfer(id: string) {
+    return this.request<{ success: boolean }>("DELETE", `/api/transfers/${id}`);
   }
 
-  async countTransfersByYear(userId: string, year: number) {
-    return this.request<{ count: number }>("GET", `/api/transfers/years/${year}/count`, userId);
+  async countTransfersByYear(year: number) {
+    return this.request<{ count: number }>("GET", `/api/transfers/years/${year}/count`);
   }
 
-  async getAllTransfersByYear(userId: string, year: number) {
+  async getAllTransfersByYear(year: number) {
     return this.request<{
       transfers: unknown[];
       total_returned: number;
-    }>("GET", `/api/transfers/years/${year}`, userId);
+    }>("GET", `/api/transfers/years/${year}`);
   }
 
-  async deleteTransfersByYear(userId: string, year: number) {
-    return this.request<{ deleted: number }>("DELETE", `/api/transfers/years/${year}`, userId);
+  async deleteTransfersByYear(year: number) {
+    return this.request<{ deleted: number }>("DELETE", `/api/transfers/years/${year}`);
+  }
+
+  /** Atomic import replacing all transfers for the given year */
+  async importTransfers(year: number, rows: Record<string, unknown>[]) {
+    return this.request<{ imported: number }>("POST", "/api/transfers/import", { year, rows });
   }
 
   // ── Products ──
 
-  async listProducts(
-    userId: string,
-    filters?: { channel?: string; category?: string; currency?: string; includeArchived?: boolean },
-  ) {
+  async listProducts(filters?: {
+    channel?: string;
+    category?: string;
+    currency?: string;
+    includeArchived?: boolean;
+  }) {
     const params = new URLSearchParams();
     if (filters?.channel) params.set("channel", filters.channel);
     if (filters?.category) params.set("category", filters.category);
@@ -203,37 +190,34 @@ export class WorkerDbClient {
     return this.request<{
       products: unknown[];
       total_returned: number;
-    }>("GET", `/api/products${qs ? `?${qs}` : ""}`, userId);
+    }>("GET", `/api/products${qs ? `?${qs}` : ""}`);
   }
 
-  async getProduct(userId: string, id: string) {
-    return this.request<{ product: unknown }>("GET", `/api/products/${id}`, userId);
+  async getProduct(id: string) {
+    return this.request<{ product: unknown }>("GET", `/api/products/${id}`);
   }
 
-  async createProduct(userId: string, data: Record<string, unknown>) {
-    return this.request<{ product: unknown }>("POST", "/api/products", userId, data);
+  async createProduct(data: Record<string, unknown>) {
+    return this.request<{ product: unknown }>("POST", "/api/products", data);
   }
 
-  async updateProduct(userId: string, id: string, data: Record<string, unknown>) {
-    return this.request<{ product: unknown }>("PUT", `/api/products/${id}`, userId, data);
+  async updateProduct(id: string, data: Record<string, unknown>) {
+    return this.request<{ product: unknown }>("PUT", `/api/products/${id}`, data);
   }
 
-  async deleteProduct(userId: string, id: string) {
-    return this.request<{ success: boolean }>("DELETE", `/api/products/${id}`, userId);
+  async deleteProduct(id: string) {
+    return this.request<{ success: boolean }>("DELETE", `/api/products/${id}`);
   }
 
   // ── Units ──
 
-  async listUnits(
-    userId: string,
-    filters?: {
-      status?: string;
-      strategy?: string;
-      tactics?: string;
-      currency?: string;
-      with_products?: boolean;
-    },
-  ) {
+  async listUnits(filters?: {
+    status?: string;
+    strategy?: string;
+    tactics?: string;
+    currency?: string;
+    with_products?: boolean;
+  }) {
     const params = new URLSearchParams();
     if (filters?.status) params.set("status", filters.status);
     if (filters?.strategy) params.set("strategy", filters.strategy);
@@ -244,29 +228,28 @@ export class WorkerDbClient {
     return this.request<{
       units: unknown[];
       total_returned: number;
-    }>("GET", `/api/units${qs ? `?${qs}` : ""}`, userId);
+    }>("GET", `/api/units${qs ? `?${qs}` : ""}`);
   }
 
-  async getUnit(userId: string, id: string) {
-    return this.request<{ unit: unknown }>("GET", `/api/units/${id}`, userId);
+  async getUnit(id: string) {
+    return this.request<{ unit: unknown }>("GET", `/api/units/${id}`);
   }
 
-  async createUnit(userId: string, data: Record<string, unknown>) {
-    return this.request<{ unit: unknown }>("POST", "/api/units", userId, data);
+  async createUnit(data: Record<string, unknown>) {
+    return this.request<{ unit: unknown }>("POST", "/api/units", data);
   }
 
-  async updateUnit(userId: string, id: string, data: Record<string, unknown>) {
-    return this.request<{ unit: unknown }>("PUT", `/api/units/${id}`, userId, data);
+  async updateUnit(id: string, data: Record<string, unknown>) {
+    return this.request<{ unit: unknown }>("PUT", `/api/units/${id}`, data);
   }
 
-  async deleteUnit(userId: string, id: string) {
-    return this.request<{ success: boolean }>("DELETE", `/api/units/${id}`, userId);
+  async deleteUnit(id: string) {
+    return this.request<{ success: boolean }>("DELETE", `/api/units/${id}`);
   }
 
   // ── Contribution Logs ──
 
   async searchContributionLogs(
-    userId: string,
     params: {
       unitId?: string;
       productId?: string;
@@ -282,10 +265,10 @@ export class WorkerDbClient {
     return this.request<{
       logs: unknown[];
       total: number;
-    }>("POST", "/api/contribution-logs/search", userId, params);
+    }>("POST", "/api/contribution-logs/search", params);
   }
 
-  async getContributionLogsSummaryByUnit(userId: string, unitId: string) {
+  async getContributionLogsSummaryByUnit(unitId: string) {
     return this.request<{
       summary: {
         totalInvested: number;
@@ -294,10 +277,10 @@ export class WorkerDbClient {
         totalPnl: number;
         logCount: number;
       };
-    }>("GET", `/api/contribution-logs/summary/unit/${unitId}`, userId);
+    }>("GET", `/api/contribution-logs/summary/unit/${unitId}`);
   }
 
-  async getContributionLogsSummaryByProduct(userId: string, productId: string) {
+  async getContributionLogsSummaryByProduct(productId: string) {
     return this.request<{
       summary: {
         totalInvested: number;
@@ -307,33 +290,29 @@ export class WorkerDbClient {
         logCount: number;
         unitCount: number;
       };
-    }>("GET", `/api/contribution-logs/summary/product/${productId}`, userId);
+    }>("GET", `/api/contribution-logs/summary/product/${productId}`);
   }
 
-  async getContributionLog(userId: string, id: string) {
-    return this.request<{ log: unknown }>("GET", `/api/contribution-logs/${id}`, userId);
+  async getContributionLog(id: string) {
+    return this.request<{ log: unknown }>("GET", `/api/contribution-logs/${id}`);
   }
 
-  async createContributionLog(
-    userId: string,
-    data: {
-      unitId: string;
-      productId?: string | null;
-      productName?: string | null;
-      operationType: string;
-      amountCents: number;
-      balanceAfterCents?: number | null;
-      pnlCents?: number | null;
-      operationDate: string;
-      source?: string;
-      note?: string | null;
-    },
-  ) {
-    return this.request<{ log: unknown }>("POST", "/api/contribution-logs", userId, data);
+  async createContributionLog(data: {
+    unitId: string;
+    productId?: string | null;
+    productName?: string | null;
+    operationType: string;
+    amountCents: number;
+    balanceAfterCents?: number | null;
+    pnlCents?: number | null;
+    operationDate: string;
+    source?: string;
+    note?: string | null;
+  }) {
+    return this.request<{ log: unknown }>("POST", "/api/contribution-logs", data);
   }
 
   async updateContributionLog(
-    userId: string,
     id: string,
     data: {
       operationType?: string;
@@ -344,27 +323,20 @@ export class WorkerDbClient {
       note?: string | null;
     },
   ) {
-    return this.request<{ log: unknown }>("PUT", `/api/contribution-logs/${id}`, userId, data);
+    return this.request<{ log: unknown }>("PUT", `/api/contribution-logs/${id}`, data);
   }
 
-  /**
-   * Unit timeline + the raw snapshot for optimistic concurrency. Both come from
-   * one request so they cannot drift, and so `expected` is never built from a
-   * mapped shape. See docs/003 § Decision B.
-   */
-  async listUnitLogs(userId: string, unitId: string) {
+  async listUnitLogs(unitId: string) {
     return this.request<{
       logs: unknown[];
       expected: ExpectedUnitSnapshot;
       currentProductName: string | null;
       availableDate: string | null;
       latestInvestDate: string | null;
-    }>("GET", `/api/units/${unitId}/logs`, userId);
+    }>("GET", `/api/units/${unitId}/logs`);
   }
 
-  /** Atomic multi-change commit: metadata + staged operations + audit note. */
   async commitUnit(
-    userId: string,
     unitId: string,
     data: {
       expected: ExpectedUnitSnapshot;
@@ -374,43 +346,43 @@ export class WorkerDbClient {
       commitNote?: string | null;
     },
   ) {
-    return this.request<{ unit: unknown }>("POST", `/api/units/${unitId}/commit`, userId, data);
+    return this.request<{ unit: unknown }>("POST", `/api/units/${unitId}/commit`, data);
   }
 
-  async deleteContributionLog(userId: string, id: string) {
-    return this.request<{ success: boolean }>("DELETE", `/api/contribution-logs/${id}`, userId);
+  async deleteContributionLog(id: string) {
+    return this.request<{ success: boolean }>("DELETE", `/api/contribution-logs/${id}`);
   }
 
-  async restoreContributionLog(userId: string, id: string) {
-    return this.request<{ log: unknown }>("POST", `/api/contribution-logs/${id}/restore`, userId);
+  async restoreContributionLog(id: string) {
+    return this.request<{ log: unknown }>("POST", `/api/contribution-logs/${id}/restore`);
   }
 
-  async seedContributionLogs(userId: string) {
+  async seedContributionLogs() {
     return this.request<{
       success: boolean;
       created: number;
       skipped: number;
       message: string;
-    }>("POST", "/api/contribution-logs/seed", userId);
+    }>("POST", "/api/contribution-logs/seed");
   }
 
   // ── Settings ──
 
-  async getSettings(userId: string) {
-    return this.request<{ settings: unknown | null }>("GET", "/api/settings", userId);
+  async getSettings() {
+    return this.request<{ settings: unknown | null }>("GET", "/api/settings");
   }
 
-  async saveSettings(userId: string, data: Record<string, unknown>) {
-    return this.request<{ settings: unknown }>("PUT", "/api/settings", userId, data);
+  async saveSettings(data: Record<string, unknown>) {
+    return this.request<{ settings: unknown }>("PUT", "/api/settings", data);
   }
 
-  async deleteSettings(userId: string) {
-    return this.request<{ success: boolean }>("DELETE", "/api/settings", userId);
+  async deleteSettings() {
+    return this.request<{ success: boolean }>("DELETE", "/api/settings");
   }
 
   // ── Metadata ──
 
-  async getMetadata(userId: string) {
+  async getMetadata() {
     return this.request<{
       years: number[];
       accounts: string[];
@@ -421,19 +393,19 @@ export class WorkerDbClient {
       tags: string[];
       transaction_count: number;
       transfer_count: number;
-    }>("GET", "/api/reports/metadata", userId);
+    }>("GET", "/api/reports/metadata");
   }
 
   // ── Reports ──
 
-  async getYearlySummary(userId: string, year: number) {
+  async getYearlySummary(year: number) {
     return this.request<{
       months: Array<{ month: number; income: number; expense: number; count: number }>;
       totals: { income: number; expense: number; count: number };
-    }>("GET", `/api/reports/yearly-summary?year=${year}`, userId);
+    }>("GET", `/api/reports/yearly-summary?year=${year}`);
   }
 
-  async getCategorySummary(userId: string, year: number, month?: number, type?: string) {
+  async getCategorySummary(year: number, month?: number, type?: string) {
     const params = new URLSearchParams({ year: year.toString() });
     if (month) params.set("month", month.toString());
     if (type) params.set("type", type);
@@ -445,10 +417,10 @@ export class WorkerDbClient {
         total: number;
         count: number;
       }>;
-    }>("GET", `/api/reports/category-summary?${params}`, userId);
+    }>("GET", `/api/reports/category-summary?${params}`);
   }
 
-  async getAccountSummary(userId: string, year: number) {
+  async getAccountSummary(year: number) {
     return this.request<{
       accounts: Array<{
         account: string;
@@ -456,10 +428,10 @@ export class WorkerDbClient {
         total: number;
         count: number;
       }>;
-    }>("GET", `/api/reports/account-summary?year=${year}`, userId);
+    }>("GET", `/api/reports/account-summary?year=${year}`);
   }
 
-  async getFlowSummary(userId: string, year: number) {
+  async getFlowSummary(year: number) {
     return this.request<{
       account_to_category: Array<{
         type: string;
@@ -473,10 +445,10 @@ export class WorkerDbClient {
         secondary_category: string | null;
         total: number;
       }>;
-    }>("GET", `/api/reports/flow-summary?year=${year}`, userId);
+    }>("GET", `/api/reports/flow-summary?year=${year}`);
   }
 
-  async getMonthlyReport(userId: string, year: number, month: number, currency?: string) {
+  async getMonthlyReport(year: number, month: number, currency?: string) {
     const params = new URLSearchParams({
       year: year.toString(),
       month: month.toString(),
@@ -493,12 +465,12 @@ export class WorkerDbClient {
       expense_by_category: Array<{ category: string; total: number; count: number }>;
       income_by_category: Array<{ category: string; total: number; count: number }>;
       currencies: string[];
-    }>("GET", `/api/reports/monthly-summary?${params}`, userId);
+    }>("GET", `/api/reports/monthly-summary?${params}`);
   }
 
   // ── Backup / Restore ──
 
-  async exportData(userId: string) {
+  async exportData() {
     return this.request<{
       transactions: unknown[];
       transfers: unknown[];
@@ -506,40 +478,35 @@ export class WorkerDbClient {
       units: unknown[];
       settings: unknown | null;
       exported_at: string;
-    }>("GET", "/api/data/export", userId);
+    }>("GET", "/api/data/export");
   }
 
-  async importData(userId: string, data: Record<string, unknown>) {
+  async importData(data: Record<string, unknown>) {
     return this.request<{
       transactions_imported: number;
       transfers_imported: number;
-    }>("POST", "/api/data/import", userId, data);
+    }>("POST", "/api/data/import", data);
   }
 
   // ── Expense Categories (002 spec) ──
 
-  async listExpenseCategories(userId: string) {
-    return this.request<{ categories: RawExpenseCategory[] }>(
-      "GET",
-      "/api/expense-categories",
-      userId,
-    );
+  async listExpenseCategories() {
+    return this.request<{ categories: RawExpenseCategory[] }>("GET", "/api/expense-categories");
   }
 
-  async createExpenseCategory(
-    userId: string,
-    payload: { name: string; colorToken: string; sortOrder?: number | undefined },
-  ) {
+  async createExpenseCategory(payload: {
+    name: string;
+    colorToken: string;
+    sortOrder?: number | undefined;
+  }) {
     return this.request<{ category: RawExpenseCategory }>(
       "POST",
       "/api/expense-categories",
-      userId,
       payload,
     );
   }
 
   async updateExpenseCategory(
-    userId: string,
     id: string,
     payload: {
       name?: string | undefined;
@@ -550,58 +517,50 @@ export class WorkerDbClient {
     return this.request<{ category: RawExpenseCategory }>(
       "PUT",
       `/api/expense-categories/${id}`,
-      userId,
       payload,
     );
   }
 
-  async deleteExpenseCategory(userId: string, id: string): Promise<void> {
-    await this.request<unknown>("DELETE", `/api/expense-categories/${id}`, userId);
+  async deleteExpenseCategory(id: string): Promise<void> {
+    await this.request<unknown>("DELETE", `/api/expense-categories/${id}`);
   }
 
   // ── Recurring Expenses (002 spec) ──
 
-  async listRecurringExpenses(userId: string) {
-    return this.request<{ rules: RawRecurringExpense[] }>("GET", "/api/recurring-expenses", userId);
+  async listRecurringExpenses() {
+    return this.request<{ rules: RawRecurringExpense[] }>("GET", "/api/recurring-expenses");
   }
 
-  async createRecurringExpense(userId: string, payload: RecurringExpenseCreatePayload) {
-    return this.request<{ rule: RawRecurringExpense }>(
-      "POST",
-      "/api/recurring-expenses",
-      userId,
-      payload,
-    );
+  async createRecurringExpense(payload: RecurringExpenseCreatePayload) {
+    return this.request<{ rule: RawRecurringExpense }>("POST", "/api/recurring-expenses", payload);
   }
 
-  /** PUT /api/recurring-expenses/:id.
-   *
-   *  By default the request omits the `X-Internal-Action: 1` header so
-   *  the Worker silently drops `status` and `endedAt` from the body
-   *  (P1-C6 contract). The state-machine actions pass `internal: true`
-   *  to unlock those fields; CRUD actions never set this flag. */
-  async updateRecurringExpense(
-    userId: string,
-    id: string,
-    payload: RecurringExpenseUpdatePayload,
-    opts?: { internal?: boolean },
-  ) {
-    const headers = opts?.internal ? { "X-Internal-Action": "1" } : undefined;
+  async updateRecurringExpense(id: string, payload: RecurringExpenseUpdatePayload) {
     return this.request<{ rule: RawRecurringExpense }>(
       "PUT",
       `/api/recurring-expenses/${id}`,
-      userId,
       payload,
-      headers,
     );
   }
 
-  async deleteRecurringExpense(userId: string, id: string): Promise<void> {
-    await this.request<unknown>("DELETE", `/api/recurring-expenses/${id}`, userId);
+  /**
+   * Transition recurring expense state via backend endpoint.
+   * Browser sends transition intent; backend validates ownership and state machine.
+   */
+  async transitionRecurringExpense(id: string, transition: "pause" | "resume" | "end") {
+    return this.request<{ success: boolean }>("POST", `/api/recurring-expenses/${id}/state`, {
+      transition,
+    });
+  }
+
+  async deleteRecurringExpense(id: string): Promise<void> {
+    await this.request<unknown>("DELETE", `/api/recurring-expenses/${id}`);
   }
 }
 
-// ── 002-spec wire shapes (exported for action / mapper consumption) ──
+export const workerDbClient = new WorkerDbClient();
+
+// ── Wire shapes ──
 
 export interface RawExpenseCategory {
   id: string;
@@ -637,8 +596,6 @@ export interface RawRecurringExpense {
   updatedAt?: string | number | Date;
 }
 
-/** POST body for recurring-expenses. `status` / `endedAt` deliberately
- *  excluded — only the state-machine internal channel writes them. */
 export interface RecurringExpenseCreatePayload {
   name: string;
   categoryId?: string | null | undefined;
@@ -655,10 +612,7 @@ export interface RecurringExpenseCreatePayload {
   note?: string | null | undefined;
 }
 
-/** PUT body for recurring-expenses. Every CRUD field is optional and
- *  may be explicitly undefined; status/endedAt go through the
- *  separate state-update payload below. */
-export interface RecurringExpenseUpdateBodyPayload {
+export interface RecurringExpenseUpdatePayload {
   name?: string | undefined;
   categoryId?: string | null | undefined;
   amountCents?: number | undefined;
@@ -672,15 +626,4 @@ export interface RecurringExpenseUpdateBodyPayload {
   startDate?: string | undefined;
   endDate?: string | null | undefined;
   note?: string | null | undefined;
-}
-
-export type RecurringExpenseUpdatePayload =
-  | RecurringExpenseUpdateBodyPayload
-  | RecurringExpenseStateUpdatePayload;
-
-/** State-machine PUT body — only used with `internal: true` so the
- *  Worker accepts these fields. */
-export interface RecurringExpenseStateUpdatePayload {
-  status?: "active" | "paused" | "ended";
-  endedAt?: string | null;
 }

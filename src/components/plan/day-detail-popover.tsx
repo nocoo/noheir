@@ -1,5 +1,3 @@
-"use client";
-
 // DayDetailPopover — modal panel listing every occurrence of a single
 // day (P3-C7).
 //

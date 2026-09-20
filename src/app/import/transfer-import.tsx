@@ -1,5 +1,3 @@
-"use client";
-
 import {
   AlertTriangle,
   ArrowRight,
@@ -9,8 +7,8 @@ import {
   Loader2,
   Upload,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useCallback, useRef, useState, useTransition } from "react";
+import { useRevalidator } from "react-router";
 import { toast } from "sonner";
 import { countTransfersByYear, deleteAndImportTransfers } from "@/app/actions/import-actions";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +23,7 @@ import {
 type ImportStep = "idle" | "parsing" | "validating" | "confirming" | "uploading" | "done" | "error";
 
 export function TransferImport() {
-  const router = useRouter();
+  const revalidator = useRevalidator();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState<ImportStep>("idle");
@@ -142,7 +140,7 @@ export function TransferImport() {
           setImportedCount(result.data.imported);
           setStep("done");
           toast.success(`成功导入 ${result.data.imported} 条转账记录`);
-          router.refresh();
+          revalidator.revalidate();
         } else {
           setErrorMessage(result.error);
           setStep("error");

@@ -1,24 +1,29 @@
+import { useLoaderData } from "react-router";
 import { AppShell } from "@/components/layout";
-import { getAuthedClient } from "@/lib/api-helpers";
+import { workerDbClient } from "@/lib/worker-db-client";
 import { AiSettingsClient } from "./ai-settings-client";
 
-export default async function AiSettingsPage() {
-  let aiConfig: Record<string, unknown> = {};
+export interface AiSettingsLoaderData {
+  aiConfig: Record<string, unknown>;
+  mcpParams: { workerUrl: string };
+}
+
+export async function aiSettingsLoader(): Promise<AiSettingsLoaderData> {
+  const result = await workerDbClient.getSettings();
+  const row = (result.settings as Record<string, unknown>) ?? {};
+  const rawJson = typeof row.settings === "string" ? row.settings : "{}";
+  const parsed = JSON.parse(rawJson) as Record<string, unknown>;
+  const aiConfig = (parsed.ai_config as Record<string, unknown>) ?? {};
+
   const mcpParams = {
-    workerUrl: `${process.env.WORKER_URL ?? ""}/mcp`,
+    workerUrl: `${window.location.origin}/api/mcp`,
   };
 
-  try {
-    const { userId, client } = await getAuthedClient();
+  return { aiConfig, mcpParams };
+}
 
-    const result = await client.getSettings(userId);
-    const row = (result.settings as Record<string, unknown>) ?? {};
-    const rawJson = typeof row.settings === "string" ? row.settings : "{}";
-    const parsed = JSON.parse(rawJson) as Record<string, unknown>;
-    aiConfig = (parsed.ai_config as Record<string, unknown>) ?? {};
-  } catch {
-    // Not authenticated or Worker unavailable
-  }
+export default function AiSettingsPage() {
+  const { aiConfig, mcpParams } = useLoaderData<AiSettingsLoaderData>();
 
   return (
     <AppShell>

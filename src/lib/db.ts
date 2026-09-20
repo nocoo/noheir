@@ -1,16 +1,9 @@
 /**
- * Database client for noheir MCP server.
+ * Portable SQL adapter used by MCP OAuth and tools.
  *
- * Communicates with the Cloudflare Worker which proxies
- * to D1 via native binding. All SQL goes through HTTP.
- *
- * Read queries → POST /api/v1/query (write-guarded by Worker)
- * Write queries → POST /api/v1/execute (single + batch)
+ * Request-scoped: construct with createD1Db(env.DB) per request.
+ * There is no process-global singleton and no HTTP SQL bridge.
  */
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
 
 export interface DbQueryResult<T = Record<string, unknown>> {
   results: T[];
@@ -27,79 +20,29 @@ export interface DbBatchStatement {
   params?: unknown[];
 }
 
-// ---------------------------------------------------------------------------
-// Interface
-// ---------------------------------------------------------------------------
-
 export interface Db {
-  /** Execute a read-only query and return typed results. */
   query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<DbQueryResult<T>>;
-
-  /** Convenience: return the first row or null. */
   firstOrNull<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T | null>;
-
-  /** Execute a write query (INSERT/UPDATE/DELETE) and return meta. */
   execute(sql: string, params?: unknown[]): Promise<DbMeta>;
-
-  /** Execute multiple write queries in a batch (atomic via D1.batch). */
   batch(statements: DbBatchStatement[]): Promise<DbQueryResult[]>;
 }
 
-// ---------------------------------------------------------------------------
-// Error
-// ---------------------------------------------------------------------------
-
-export class DbError extends Error {
-  constructor(
-    message: string,
-    public readonly status?: number,
-  ) {
-    super(message);
-    this.name = "DbError";
-  }
+function bindAll(d1: D1Database, sql: string, params?: unknown[]): D1PreparedStatement {
+  const stmt = d1.prepare(sql);
+  if (!params || params.length === 0) return stmt;
+  return stmt.bind(...params);
 }
 
-// ---------------------------------------------------------------------------
-// Implementation
-// ---------------------------------------------------------------------------
-
-export function createDb(workerUrl: string, workerSecret: string): Db {
-  if (!workerUrl) throw new Error("workerUrl is required");
-  if (!workerSecret) throw new Error("workerSecret is required");
-
-  const headers = {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${workerSecret}`,
-  };
-
-  async function post<T>(path: string, body: unknown): Promise<T> {
-    const url = `${workerUrl}${path}`;
-
-    let res: Response;
-    try {
-      res = await fetch(url, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(body),
-      });
-    } catch (err) {
-      throw new DbError(`Network error: ${err instanceof Error ? err.message : String(err)}`);
-    }
-
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      throw new DbError((data as { error?: string }).error ?? `HTTP ${res.status}`, res.status);
-    }
-
-    return res.json() as Promise<T>;
-  }
-
+/** Per-request D1 adapter. Do not cache across requests. */
+export function createD1Db(d1: D1Database): Db {
   const db: Db = {
     async query<T>(sql: string, params?: unknown[]): Promise<DbQueryResult<T>> {
-      return post<DbQueryResult<T>>("/api/v1/query", {
-        sql,
-        params: params ?? [],
-      });
+      const start = Date.now();
+      const result = await bindAll(d1, sql, params).all();
+      return {
+        results: (result.results ?? []) as T[],
+        meta: { changes: result.meta.changes ?? 0, duration: Date.now() - start },
+      };
     },
 
     async firstOrNull<T>(sql: string, params?: unknown[]): Promise<T | null> {
@@ -108,44 +51,21 @@ export function createDb(workerUrl: string, workerSecret: string): Db {
     },
 
     async execute(sql: string, params?: unknown[]): Promise<DbMeta> {
-      const result = await post<DbQueryResult>("/api/v1/execute", {
-        sql,
-        params: params ?? [],
-      });
-      return result.meta;
+      const start = Date.now();
+      const result = await bindAll(d1, sql, params).run();
+      return { changes: result.meta.changes ?? 0, duration: Date.now() - start };
     },
 
     async batch(statements: DbBatchStatement[]): Promise<DbQueryResult[]> {
-      const result = await post<{ results: DbQueryResult[] }>("/api/v1/execute", { statements });
-      return result.results;
+      const start = Date.now();
+      const prepared = statements.map((s) => bindAll(d1, s.sql, s.params));
+      const batchResults = await d1.batch(prepared);
+      const duration = Date.now() - start;
+      return batchResults.map((r) => ({
+        results: (r.results ?? []) as Record<string, unknown>[],
+        meta: { changes: r.meta?.changes ?? 0, duration },
+      }));
     },
   };
-
   return db;
-}
-
-// ---------------------------------------------------------------------------
-// Singleton
-// ---------------------------------------------------------------------------
-
-let _db: Db | undefined;
-
-/** Get or create the database client singleton for MCP server. */
-export function getDb(): Db {
-  if (!_db) {
-    const url = process.env.WORKER_URL;
-    const secret = process.env.WORKER_TOKEN;
-
-    if (!url || !secret) {
-      throw new Error("WORKER_URL and WORKER_TOKEN are required");
-    }
-
-    _db = createDb(url, secret);
-  }
-  return _db;
-}
-
-/** Reset singleton (for testing). */
-export function resetDb(): void {
-  _db = undefined;
 }

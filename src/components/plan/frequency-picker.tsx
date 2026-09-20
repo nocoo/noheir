@@ -1,5 +1,3 @@
-"use client";
-
 // FrequencyPicker — controlled multi-field picker for a recurring
 // expense rule's recurrence shape. Spec: docs/002-recurring-expense-calendar.md.
 //

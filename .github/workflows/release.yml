@@ -1,61 +1,38 @@
 name: Release
-'on':
+on:
   workflow_run:
-    workflows:
-      - CI
-    types:
-      - completed
-    branches:
-      - main
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
     inputs:
       ci-run-id:
-        description: Successful main push CI run ID for the exact current main commit
+        description: Successful main push CI run for the current main commit
         required: true
         type: string
-jobs:
-  deploy:
-    if: |
-      github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' &&
-       github.event.workflow_run.head_branch == 'main')
-    uses: nocoo/base-ci/.github/workflows/deploy-docker.yml@ad43150de3a2be2fa464b5cd2f921dc4fa9f8f0f
-    with:
-      environment: noheir / production
-      source-run-id: ${{ github.event_name == 'workflow_run' && format('{0}', github.event.workflow_run.id) || inputs.ci-run-id }}
-      images: '[{"image":"ghcr.io/nocoo/noheir","service":"app"}]'
-      deploy-directory: /opt/noheir
-      remote-verify-command: |
-        for i in 1 2 3 4 5 6 7 8 9 10; do
-          if docker exec noheir-app bun -e 'fetch("http://127.0.0.1:7004/").then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))' 2>/dev/null; then
-            echo "✅ app responding on :7004"
-            break
-          fi
-          echo "attempt $i: app not ready yet"
-          sleep 3
-          if [ "$i" = "10" ]; then
-            echo "❌ app failed to come up"
-            docker logs --tail 80 noheir-app
-            exit 1
-          fi
-        done
-      verify-command: |
-        (
-        set -e
-        for i in 1 2 3 4 5; do
-          CODE=$(curl -sS -o /dev/null -w "%{http_code}" https://noheir.hexly.ai/ || true)
-          echo "attempt $i: HTTP $CODE"
-          if [ "$CODE" = "200" ] || [ "$CODE" = "302" ] || [ "$CODE" = "307" ]; then
-            echo "✅ edge serving deployed build"
-            exit 0
-          fi
-          sleep 5
-        done
-        echo "❌ edge smoke test failed"
-        exit 1
-        )
-      timeout-minutes: 25
-    secrets: inherit
+
 permissions:
   contents: read
   actions: read
-  packages: write
+
+jobs:
+  deploy:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    uses: nocoo/base-ci/.github/workflows/deploy-worker.yml@ad43150de3a2be2fa464b5cd2f921dc4fa9f8f0f
+    with:
+      source-run-id: ${{ github.event_name == 'workflow_run' && format('{0}', github.event.workflow_run.id) || inputs.ci-run-id }}
+      runtime-version: '1.4.2'
+      node-version: '26.8.1'
+      install-policy: trusted
+      wrangler-version: '4.135.0'
+      deploy-script: bun run deploy
+      environment: noheir / production
+      concurrency-group: deploy-noheir-production
+      verify-command: bun run verify:production
+    secrets:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

@@ -1,22 +1,11 @@
-import { notFound } from "next/navigation";
+import { data, useLoaderData } from "react-router";
 import { AppShell } from "@/components/layout";
-import { getAuthedClient } from "@/lib/api-helpers";
 import { FEATURE_PLAN_CALENDAR } from "@/lib/navigation";
 import type { RecurringExpenseRow } from "@/lib/recurring-expense/mappers";
 import { toRecurrenceRule } from "@/lib/recurring-expense/mappers";
-import { CalendarClient } from "./calendar-client";
-
-// /plan/calendar — the recurring-expense calendar feature surface.
-//
-// Gated behind FEATURE_PLAN_CALENDAR. Mirrors /plan/categories: the
-// route, the sidebar entry, and the dialog flow all share the same
-// flag, so when the flag is false this returns 404 even on direct
-// URL hits.
-//
-// Today's ISO is computed at request time (UTC) and threaded through
-// to the calendar + summary cards so they stay in lock-step.
-
-export const dynamic = "force-dynamic";
+import type { RecurrenceRule } from "@/lib/recurring-expense/rule-types";
+import { workerDbClient } from "@/lib/worker-db-client";
+import { CalendarClient, type CalendarClientCategory } from "./calendar-client";
 
 function todayIsoUtc(): string {
   const now = new Date();
@@ -26,15 +15,20 @@ function todayIsoUtc(): string {
   return `${y}-${m}-${d}`;
 }
 
-export default async function PlanCalendarPage() {
+export interface PlanCalendarLoaderData {
+  categories: CalendarClientCategory[];
+  rules: RecurrenceRule[];
+  today: string;
+}
+
+export async function planCalendarLoader(): Promise<PlanCalendarLoaderData> {
   if (!FEATURE_PLAN_CALENDAR) {
-    notFound();
+    throw data({ message: "Page not found" }, { status: 404, statusText: "Not Found" });
   }
 
-  const { userId, client } = await getAuthedClient();
   const [categoriesRes, rulesRes] = await Promise.all([
-    client.listExpenseCategories(userId),
-    client.listRecurringExpenses(userId),
+    workerDbClient.listExpenseCategories(),
+    workerDbClient.listRecurringExpenses(),
   ]);
 
   const categories = categoriesRes.categories.map((c) => ({
@@ -45,8 +39,13 @@ export default async function PlanCalendarPage() {
   }));
 
   const rules = rulesRes.rules.map((r) => toRecurrenceRule(r as RecurringExpenseRow));
-
   const today = todayIsoUtc();
+
+  return { categories, rules, today };
+}
+
+export default function PlanCalendarPage() {
+  const { rules, categories, today } = useLoaderData<PlanCalendarLoaderData>();
 
   return (
     <AppShell>

@@ -1,5 +1,3 @@
-"use client";
-
 // ColorTokenPicker — 24-token closed-set color picker for the
 // 002-spec recurring expense calendar.
 //

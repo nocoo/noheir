@@ -118,7 +118,7 @@ describe("validateMcpToken", () => {
     }
   });
 
-  it("calls updateLastUsed on success (fire-and-forget)", async () => {
+  it("awaits updateLastUsed on success", async () => {
     mockGetValidTokenByHash.mockResolvedValueOnce(fakeToken);
     mockUpdateLastUsed.mockClear();
     await validateMcpToken(fakeDb, "Bearer abc123");

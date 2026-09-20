@@ -1,8 +1,6 @@
-"use server";
-
 import type { AccountTypeConfig, BalanceAnchor } from "@/domain/types";
 import type { ActionResult } from "@/lib/action-result";
-import { getAuthedClient } from "@/lib/api-helpers";
+import { workerDbClient } from "@/lib/worker-db-client";
 
 // ── Helper: read-modify-write the settings JSON column ──
 
@@ -10,8 +8,7 @@ async function patchSettingsJson(
   patchFn: (parsed: Record<string, unknown>) => Record<string, unknown>,
 ): Promise<ActionResult> {
   try {
-    const { userId, client } = await getAuthedClient();
-    const result = await client.getSettings(userId);
+    const result = await workerDbClient.getSettings();
     const row = (result.settings as Record<string, unknown>) ?? {};
     const rawJson = typeof row.settings === "string" ? row.settings : "{}";
     const parsed = JSON.parse(rawJson) as Record<string, unknown>;
@@ -22,7 +19,7 @@ async function patchSettingsJson(
       settings: JSON.stringify(patched),
     };
 
-    await client.saveSettings(userId, payload);
+    await workerDbClient.saveSettings(payload);
     return { success: true, data: undefined };
   } catch (err) {
     return {

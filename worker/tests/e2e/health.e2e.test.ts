@@ -10,14 +10,12 @@ describe("E2E: /api/live (surety-standard live check)", () => {
       version: string;
       component: string;
       timestamp: string;
-      uptime: number;
       database: { connected: boolean };
     };
     expect(body.status).toBe("ok");
     expect(typeof body.version).toBe("string");
-    expect(body.component).toBe("noheir-worker");
+    expect(body.component).toBe("noheir");
     expect(new Date(body.timestamp).toISOString()).toBe(body.timestamp);
-    expect(body.uptime).toBeGreaterThanOrEqual(0);
     expect(body.database.connected).toBe(true);
   });
 
@@ -34,13 +32,10 @@ describe("E2E: /api/live (surety-standard live check)", () => {
     expect(res.status).toBe(200);
   });
 
-  test("/api/health redirects to /api/live", async () => {
-    const res = await rawFetch({
-      path: "/api/health",
-      omitAuth: true,
-      redirect: "manual",
-    });
-    expect(res.status).toBe(301);
-    expect(res.headers.get("Location")).toContain("/api/live");
+  test("live response cannot be cached", async () => {
+    const res = await rawFetch({ path: "/api/live", omitAuth: true });
+    expect(res.headers.get("cache-control")).toContain("no-store");
+    const body = await res.json();
+    expect(body.build_sha).toBe("test-build");
   });
 });

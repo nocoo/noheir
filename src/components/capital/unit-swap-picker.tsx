@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * Searchable unit picker for 番号对换. Modeled on the product combobox in
  * unit-editor.tsx; the unit being edited is never offered as a target.

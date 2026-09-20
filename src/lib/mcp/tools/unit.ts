@@ -7,7 +7,7 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { computeAvailability } from "@/lib/availability";
+import { computeAvailability } from "../../availability";
 import { compact, currencyCode, round2, shortId } from "./compact";
 import { resolveProduct } from "./resolver";
 import type { ToolContext } from "./types";

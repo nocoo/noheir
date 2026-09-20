@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * Small presentational pieces shared by the unit tooltip and the unit editor's
  * three-column layout. Extracted verbatim from unit-tooltip.tsx.

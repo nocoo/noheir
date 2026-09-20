@@ -1,5 +1,3 @@
-"use client";
-
 import { PiggyBank, Target, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import {
   Bar,

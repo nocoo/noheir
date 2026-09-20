@@ -16,16 +16,8 @@ import { api } from "./client";
  * This is required before creating products/units due to FK constraints.
  */
 export async function ensureTestUser(userId: string): Promise<void> {
-  await api({
-    method: "PUT",
-    path: "/api/users/me",
-    userId,
-    body: {
-      email: `${userId}@test.local`,
-      name: userId,
-      providerAccountId: userId,
-    },
-  });
+  const { user } = await api<{ user: { id: string } }>({ path: "/api/auth/me", userId });
+  if (user.id !== userId) throw new Error("Seeded test identity mismatch");
 }
 
 export async function cleanupUser(userId: string): Promise<void> {

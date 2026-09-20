@@ -1,5 +1,3 @@
-"use client";
-
 import { Separator as BasaltSeparator } from "@nocoo/basalt";
 import type * as React from "react";
 import { cn } from "@/lib/utils";

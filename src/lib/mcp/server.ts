@@ -3,8 +3,8 @@
 // ---------------------------------------------------------------------------
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Db } from "@/lib/db";
-import { APP_VERSION } from "@/lib/version";
+import type { Db } from "../db";
+import { APP_VERSION } from "../version";
 import {
   registerDeleteTools,
   registerPortfolioTools,

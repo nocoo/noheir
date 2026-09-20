@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate Next.js public assets from separate foreground and presentation masters.
+"""Generate web public assets from separate foreground and presentation masters.
 
 Transparent source: logo.png (2048x2048 RGBA). Presentation sources: assets/brand/.
 

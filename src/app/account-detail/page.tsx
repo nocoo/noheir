@@ -1,12 +1,15 @@
+import { useLoaderData } from "react-router";
 import { AppShell } from "@/components/layout";
 import {
   buildAccountDetailData,
   buildBalanceEntries,
   buildUniqueAccounts,
+  type DailyBalance,
+  type DisplayEntry,
 } from "@/domain/dashboard/account-detail";
-import type { DomainTransaction, DomainTransfer } from "@/domain/types";
-import { getAuthedClient } from "@/lib/api-helpers";
+import type { DomainTransfer } from "@/domain/types";
 import { parseTags, toDomainTransaction } from "@/lib/transaction-mappers";
+import { workerDbClient } from "@/lib/worker-db-client";
 import { AccountDetailClient } from "./account-detail-client";
 
 function toDomainTransfer(raw: Record<string, unknown>): DomainTransfer {
@@ -28,68 +31,64 @@ function toDomainTransfer(raw: Record<string, unknown>): DomainTransfer {
   };
 }
 
-export default async function AccountDetailPage({
-  searchParams,
+export interface AccountDetailLoaderData {
+  uniqueAccounts: string[];
+  selectedAccount: string;
+  dailyBalances: DailyBalance[];
+  displayEntries: DisplayEntry[];
+  summary: {
+    totalIncome: number;
+    totalExpense: number;
+    initialBalance: number;
+    finalBalance: number;
+    hasAnchor: boolean;
+    transactionCount: number;
+  };
+}
+
+export async function accountDetailLoader({
+  request,
 }: {
-  searchParams: Promise<{ year?: string; account?: string }>;
-}) {
-  const params = await searchParams;
-  let transactions: DomainTransaction[] = [];
-  let transfers: DomainTransfer[] = [];
-  let selectedYear: number | null = null;
+  request: Request;
+}): Promise<AccountDetailLoaderData> {
+  const url = new URL(request.url);
+  const yearParam = url.searchParams.get("year");
+  const accountParam = url.searchParams.get("account");
 
-  try {
-    const { userId, client } = await getAuthedClient();
-    const metadata = await client.getMetadata(userId);
-
-    const availableYears = metadata.years.sort((a, b) => b - a);
-    const yearParam = params.year ? Number(params.year) : null;
-    if (yearParam && availableYears.includes(yearParam)) {
-      selectedYear = yearParam;
-    } else {
-      selectedYear = availableYears[0] ?? new Date().getFullYear();
-    }
-
-    const [txResult, trResult] = await Promise.all([
-      client.getAllTransactionsByYear(userId, selectedYear),
-      client.getAllTransfersByYear(userId, selectedYear),
-    ]);
-
-    transactions = txResult.transactions.map((raw) =>
-      toDomainTransaction(raw as Record<string, unknown>),
-    );
-    transfers = trResult.transfers.map((raw: unknown) =>
-      toDomainTransfer(raw as Record<string, unknown>),
-    );
-  } catch {
-    // Not authenticated or Worker unavailable
+  const metadata = await workerDbClient.getMetadata();
+  const availableYears = metadata.years.sort((a, b) => b - a);
+  const parsedYear = yearParam ? Number(yearParam) : null;
+  let selectedYear: number;
+  if (parsedYear && availableYears.includes(parsedYear)) {
+    selectedYear = parsedYear;
+  } else {
+    selectedYear = availableYears[0] ?? new Date().getFullYear();
   }
+
+  const [txResult, trResult] = await Promise.all([
+    workerDbClient.getAllTransactionsByYear(selectedYear),
+    workerDbClient.getAllTransfersByYear(selectedYear),
+  ]);
+
+  const transactions = txResult.transactions.map((raw) =>
+    toDomainTransaction(raw as Record<string, unknown>),
+  );
+  const transfers = trResult.transfers.map((raw: unknown) =>
+    toDomainTransfer(raw as Record<string, unknown>),
+  );
 
   const entries = buildBalanceEntries(transactions, transfers);
   const uniqueAccounts = buildUniqueAccounts(entries);
-  const selectedAccount = params.account ?? uniqueAccounts[0] ?? "";
+  const selectedAccount = accountParam ?? uniqueAccounts[0] ?? "";
 
   const detailData =
     selectedAccount && selectedYear
       ? buildAccountDetailData(entries, selectedAccount, selectedYear)
       : null;
 
-  // Serialize for client
-  const serializedDailyBalances = detailData?.dailyBalances ?? [];
-  const serializedEntries = (detailData?.displayEntries ?? []).map((e) => ({
-    id: e.id,
-    date: e.date,
-    primaryCategory: e.primaryCategory,
-    secondaryCategory: e.secondaryCategory,
-    tertiaryCategory: e.tertiaryCategory,
-    type: e.type,
-    amount: e.amount,
-    balance: e.balance,
-    balanceAfter: e.balanceAfter,
-    note: e.note,
-    isAnchor: e.isAnchor,
-  }));
-  const serializedSummary = detailData?.summary ?? {
+  const dailyBalances = detailData?.dailyBalances ?? [];
+  const displayEntries = detailData?.displayEntries ?? [];
+  const summary = detailData?.summary ?? {
     totalIncome: 0,
     totalExpense: 0,
     initialBalance: 0,
@@ -98,14 +97,27 @@ export default async function AccountDetailPage({
     transactionCount: 0,
   };
 
+  return {
+    uniqueAccounts,
+    selectedAccount,
+    dailyBalances,
+    displayEntries,
+    summary,
+  };
+}
+
+export default function AccountDetailPage() {
+  const { uniqueAccounts, selectedAccount, dailyBalances, displayEntries, summary } =
+    useLoaderData<AccountDetailLoaderData>();
+
   return (
     <AppShell>
       <AccountDetailClient
         uniqueAccounts={uniqueAccounts}
         selectedAccount={selectedAccount}
-        dailyBalances={serializedDailyBalances}
-        displayEntries={serializedEntries}
-        summary={serializedSummary}
+        dailyBalances={dailyBalances}
+        displayEntries={displayEntries}
+        summary={summary}
       />
     </AppShell>
   );

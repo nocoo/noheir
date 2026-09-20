@@ -21,7 +21,7 @@ describe("E2E: Transfers", () => {
       body: data,
     });
     expect(res.transfer).toBeDefined();
-    expect(res.transfer.id).toBeString();
+    expect(res.transfer.id).toBeTypeOf("string");
     expect(res.transfer.outflowAmountCents).toBe(100000);
   });
 

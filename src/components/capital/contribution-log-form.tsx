@@ -1,5 +1,3 @@
-"use client";
-
 import { Check, ChevronsUpDown } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";

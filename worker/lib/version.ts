@@ -4,4 +4,4 @@ import pkg from "../../package.json";
 export const APP_VERSION: string = pkg.version;
 
 /** Component name for surety-standard /api/live */
-export const COMPONENT_NAME = "noheir-worker";
+export const COMPONENT_NAME = "noheir";

@@ -2,18 +2,15 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-const { refreshMock } = vi.hoisted(() => ({ refreshMock: vi.fn() }));
+const { revalidateMock } = vi.hoisted(() => ({ revalidateMock: vi.fn() }));
 
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    refresh: refreshMock,
-    push: vi.fn(),
-    replace: vi.fn(),
-    back: vi.fn(),
-    forward: vi.fn(),
-    prefetch: vi.fn(),
-  }),
-}));
+vi.mock("react-router", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react-router")>();
+  return {
+    ...actual,
+    useRevalidator: () => ({ revalidate: revalidateMock }),
+  };
+});
 
 const { createMock, updateMock, deleteMock, pauseMock, resumeMock, endMock } = vi.hoisted(() => ({
   createMock: vi.fn(),
@@ -261,7 +258,7 @@ describe("CalendarClient router.refresh on mutation success (P3-C10 fix)", () =>
     await user.type(within(dialog).getByLabelText("日"), "1");
     await user.click(within(dialog).getByRole("button", { name: "创建" }));
     expect(createMock).toHaveBeenCalled();
-    expect(refreshMock).toHaveBeenCalled();
+    expect(revalidateMock).toHaveBeenCalled();
   });
 
   test("edit rule success → refresh()", async () => {
@@ -279,7 +276,7 @@ describe("CalendarClient router.refresh on mutation success (P3-C10 fix)", () =>
     const dialog = await screen.findByRole("dialog", { name: "编辑周期支出" });
     await user.click(within(dialog).getByRole("button", { name: "保存" }));
     expect(updateMock).toHaveBeenCalled();
-    expect(refreshMock).toHaveBeenCalled();
+    expect(revalidateMock).toHaveBeenCalled();
   });
 
   test("RuleList pause success → refresh(); failure does NOT refresh", async () => {
@@ -291,14 +288,14 @@ describe("CalendarClient router.refresh on mutation success (P3-C10 fix)", () =>
     await user.click(screen.getByRole("button", { name: "A 操作菜单" }));
     await user.click(await screen.findByRole("menuitem", { name: "暂停" }));
     expect(pauseMock).toHaveBeenCalled();
-    expect(refreshMock).toHaveBeenCalledTimes(1);
+    expect(revalidateMock).toHaveBeenCalledTimes(1);
 
     // Failure path: action returns success: false → no refresh
-    refreshMock.mockClear();
+    revalidateMock.mockClear();
     pauseMock.mockResolvedValueOnce({ success: false, error: "no" });
     await user.click(screen.getByRole("button", { name: "A 操作菜单" }));
     await user.click(await screen.findByRole("menuitem", { name: "暂停" }));
-    expect(refreshMock).not.toHaveBeenCalled();
+    expect(revalidateMock).not.toHaveBeenCalled();
   });
 
   test("RuleList delete success → refresh()", async () => {
@@ -310,6 +307,6 @@ describe("CalendarClient router.refresh on mutation success (P3-C10 fix)", () =>
     await user.click(screen.getByRole("button", { name: "A 操作菜单" }));
     await user.click(await screen.findByRole("menuitem", { name: "删除" }));
     expect(deleteMock).toHaveBeenCalled();
-    expect(refreshMock).toHaveBeenCalled();
+    expect(revalidateMock).toHaveBeenCalled();
   });
 });

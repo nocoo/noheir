@@ -1,5 +1,3 @@
-"use client";
-
 // RuleList — interactive list of recurring expense rules (P3-C8).
 // Spec: docs/002-recurring-expense-calendar.md § Rule list
 //

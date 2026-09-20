@@ -1,5 +1,3 @@
-"use client";
-
 import { CreditCard, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import {
   Bar,

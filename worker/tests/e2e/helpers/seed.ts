@@ -6,11 +6,13 @@
  */
 
 export function makeTransaction(overrides: Record<string, unknown> = {}) {
+  const date = typeof overrides.date === "string" ? overrides.date : "2025-06-15";
+  const [year, month, day] = date.split("-").map(Number);
   return {
-    date: "2025-06-15",
-    year: 2025,
-    month: 6,
-    day: 15,
+    date,
+    year,
+    month,
+    day,
     primaryCategory: "餐饮",
     secondaryCategory: "外卖",
     tertiaryCategory: "午餐",
@@ -25,11 +27,13 @@ export function makeTransaction(overrides: Record<string, unknown> = {}) {
 }
 
 export function makeTransfer(overrides: Record<string, unknown> = {}) {
+  const date = typeof overrides.date === "string" ? overrides.date : "2025-06-15";
+  const [year, month, day] = date.split("-").map(Number);
   return {
-    date: "2025-06-15",
-    year: 2025,
-    month: 6,
-    day: 15,
+    date,
+    year,
+    month,
+    day,
     primaryCategory: "转账",
     secondaryCategory: "转账",
     transactionType: "转出",

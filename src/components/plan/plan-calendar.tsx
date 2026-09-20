@@ -1,5 +1,3 @@
-"use client";
-
 // PlanCalendar — month view for the recurring-expense calendar (P3-C5).
 // Spec: docs/002-recurring-expense-calendar.md § Calendar
 //

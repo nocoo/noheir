@@ -2,8 +2,7 @@
 // MCP Token data layer — access & refresh token management
 // ---------------------------------------------------------------------------
 
-import { ulid } from "ulid";
-import type { Db } from "@/lib/db";
+import type { Db } from "../lib/db";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -92,7 +91,7 @@ export function generateRefreshToken(): string {
 // ---------------------------------------------------------------------------
 
 export async function createMcpToken(db: Db, input: CreateMcpTokenInput): Promise<McpToken> {
-  const id = ulid();
+  const id = crypto.randomUUID();
   const now = new Date();
   const issuedAt = now.toISOString();
   const expiresAt = new Date(now.getTime() + ACCESS_TOKEN_TTL * 1000).toISOString();
@@ -118,7 +117,7 @@ export async function createMcpToken(db: Db, input: CreateMcpTokenInput): Promis
   ]);
 
   // Insert refresh token
-  const refreshId = ulid();
+  const refreshId = crypto.randomUUID();
   const refreshSql = `
     INSERT INTO mcp_refresh_tokens
       (id, refresh_token_hash, access_token_id, client_id, user_id, scope, issued_at, expires_at)
@@ -186,6 +185,39 @@ export async function getValidTokenByRefreshHash(
   return result;
 }
 
+/**
+ * Atomically consume a refresh token (single-use). Wrong client_id must not
+ * burn a valid token. Signature: consumeRefreshToken(db, refreshTokenHash, clientId)
+ */
+export async function consumeRefreshToken(
+  db: Db,
+  refreshTokenHash: string,
+  clientId: string,
+): Promise<{
+  client_id: string;
+  user_id: string;
+  scope: string;
+  access_token_id: string;
+} | null> {
+  const now = new Date().toISOString();
+  const result = await db.query<{
+    client_id: string;
+    user_id: string;
+    scope: string;
+    access_token_id: string;
+  }>(
+    `UPDATE mcp_refresh_tokens
+     SET revoked = 1, revoked_at = ?
+     WHERE refresh_token_hash = ? AND client_id = ? AND revoked = 0 AND expires_at > ?
+       AND access_token_id IN (
+         SELECT id FROM mcp_tokens WHERE revoked = 0 AND client_id = ?
+       )
+     RETURNING client_id, user_id, scope, access_token_id`,
+    [now, refreshTokenHash, clientId, now, clientId],
+  );
+  return result.results[0] ?? null;
+}
+
 // ---------------------------------------------------------------------------
 // updateLastUsed
 // ---------------------------------------------------------------------------
@@ -200,11 +232,15 @@ export async function updateLastUsed(db: Db, id: string): Promise<void> {
 // revokeToken
 // ---------------------------------------------------------------------------
 
-/** Revoke a token by ID. */
+/** Revoke an access token and its paired refresh tokens. */
 export async function revokeToken(db: Db, id: string): Promise<boolean> {
   const now = new Date().toISOString();
   const meta = await db.execute(
     "UPDATE mcp_tokens SET revoked = 1, revoked_at = ? WHERE id = ? AND revoked = 0",
+    [now, id],
+  );
+  await db.execute(
+    "UPDATE mcp_refresh_tokens SET revoked = 1, revoked_at = ? WHERE access_token_id = ? AND revoked = 0",
     [now, id],
   );
   return meta.changes > 0;

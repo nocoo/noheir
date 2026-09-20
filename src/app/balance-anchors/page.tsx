@@ -1,31 +1,32 @@
+import { useLoaderData } from "react-router";
 import { AppShell } from "@/components/layout";
 import type { BalanceAnchor } from "@/domain/types";
-import { getAuthedClient } from "@/lib/api-helpers";
+import { workerDbClient } from "@/lib/worker-db-client";
 import { BalanceAnchorsClient } from "./balance-anchors-client";
 
-export default async function BalanceAnchorsPage() {
-  let accounts: string[] = [];
-  let anchors: BalanceAnchor[] = [];
+export interface BalanceAnchorsLoaderData {
+  accounts: string[];
+  anchors: BalanceAnchor[];
+}
 
-  try {
-    const { userId, client } = await getAuthedClient();
+export async function balanceAnchorsLoader(): Promise<BalanceAnchorsLoaderData> {
+  const [metadata, settingsResult] = await Promise.all([
+    workerDbClient.getMetadata(),
+    workerDbClient.getSettings(),
+  ]);
 
-    const [metadata, settingsResult] = await Promise.all([
-      client.getMetadata(userId),
-      client.getSettings(userId),
-    ]);
+  const accounts = metadata.accounts.sort();
+  const row = (settingsResult.settings as Record<string, unknown>) ?? {};
+  const rawJson = typeof row.settings === "string" ? row.settings : "{}";
+  const parsed = JSON.parse(rawJson) as Record<string, unknown>;
 
-    accounts = metadata.accounts.sort();
+  const anchors = Array.isArray(parsed.balance_anchors) ? parsed.balance_anchors : [];
 
-    // Get saved anchors
-    const row = (settingsResult.settings as Record<string, unknown>) ?? {};
-    const rawJson = typeof row.settings === "string" ? row.settings : "{}";
-    const parsed = JSON.parse(rawJson) as Record<string, unknown>;
+  return { accounts, anchors };
+}
 
-    anchors = Array.isArray(parsed.balance_anchors) ? parsed.balance_anchors : [];
-  } catch {
-    // Not authenticated or error
-  }
+export default function BalanceAnchorsPage() {
+  const { accounts, anchors } = useLoaderData<BalanceAnchorsLoaderData>();
 
   return (
     <AppShell>

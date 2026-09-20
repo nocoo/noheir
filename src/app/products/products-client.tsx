@@ -1,5 +1,3 @@
-"use client";
-
 import {
   Archive,
   ArchiveRestore,
@@ -15,9 +13,8 @@ import {
   Warehouse,
   X,
 } from "lucide-react";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
+import { Link, useNavigate, useRevalidator, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { createProduct, deleteProduct, updateProduct } from "@/app/actions/product-actions";
 import { Badge } from "@/components/ui/badge";
@@ -97,8 +94,9 @@ const CATEGORIES = [
 ];
 
 export function ProductsClient({ products, units }: ProductsClientProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const revalidator = useRevalidator();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [search, setSearch] = useState("");
 
   const editFromParam = useMemo(() => {
@@ -252,7 +250,7 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
       const result = await deleteProduct(deleteTarget.id);
       if (result.success) {
         toast.success("产品已删除");
-        router.refresh();
+        revalidator.revalidate();
       } else {
         toast.error(result.error);
       }
@@ -265,7 +263,7 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
       const result = await updateProduct(product.id, { isArchived: !product.isArchived });
       if (result.success) {
         toast.success(product.isArchived ? "已取消存档" : "已存档");
-        router.refresh();
+        revalidator.revalidate();
       } else {
         toast.error(result.error);
       }
@@ -317,7 +315,7 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
             open={dialogOpen}
             onOpenChange={(open) => {
               setDialogOpen(open);
-              if (searchParams.has("edit")) router.replace("/products");
+              if (searchParams.has("edit")) navigate("/products", { replace: true });
             }}
           >
             <DialogTrigger asChild>
@@ -338,7 +336,7 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
                 onClose={() => setDialogOpen(false)}
                 onSuccess={() => {
                   setDialogOpen(false);
-                  router.refresh();
+                  revalidator.revalidate();
                 }}
               />
             </DialogContent>
@@ -542,7 +540,7 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button variant="ghost" size="icon" className="size-7" asChild>
-                                <Link href={`/warehouse?q=${encodeURIComponent(product.name)}`}>
+                                <Link to={`/warehouse?q=${encodeURIComponent(product.name)}`}>
                                   <Warehouse className="size-3.5" />
                                 </Link>
                               </Button>

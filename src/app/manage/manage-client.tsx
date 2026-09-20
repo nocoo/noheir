@@ -1,5 +1,3 @@
-"use client";
-
 import {
   Activity,
   AlertTriangle,
@@ -17,8 +15,8 @@ import {
   Wallet,
   XCircle,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
+import { useNavigate, useRevalidator } from "react-router";
 import { toast } from "sonner";
 import { clearAllData, exportBackup, restoreBackup } from "@/app/actions/data-actions";
 import { Badge } from "@/components/ui/badge";
@@ -42,7 +40,8 @@ interface ManageClientProps {
 }
 
 export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) {
-  const router = useRouter();
+  const revalidator = useRevalidator();
+  const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -107,7 +106,7 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
         toast.success(
           `导入完成: ${result.data.transactions}条交易, ${result.data.transfers}条转账`,
         );
-        router.refresh();
+        revalidator.revalidate();
       } else {
         toast.error(result.error);
       }
@@ -128,7 +127,7 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
       const result = await clearAllData();
       if (result.success) {
         toast.success("所有数据已清除");
-        router.refresh();
+        revalidator.revalidate();
       } else {
         toast.error(result.error);
       }
@@ -508,7 +507,7 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
               onChange={handleFileSelected}
               className="hidden"
             />
-            <Button variant="outline" onClick={() => router.push("/import")} className="w-full">
+            <Button variant="outline" onClick={() => navigate("/import")} className="w-full">
               <TrendingUp className="mr-2 size-4" />
               导入交易/转账
             </Button>

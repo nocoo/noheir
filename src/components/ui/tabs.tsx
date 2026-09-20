@@ -1,5 +1,3 @@
-"use client";
-
 import * as TabsPrimitive from "radix-ui/tabs";
 import type * as React from "react";
 
