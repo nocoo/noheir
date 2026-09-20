@@ -31,6 +31,8 @@ if (
 }
 for (const path of [
   "/",
+  "/terms",
+  "/privacy",
   "/api/auth/me",
   "/api/reports/metadata",
   "/api/mcp/authorize",

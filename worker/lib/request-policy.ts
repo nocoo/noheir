@@ -56,7 +56,7 @@ export function isSameOriginRequest(input: {
   return false;
 }
 
-export type PublicRouteKind = "live" | "legal" | "mcp-machine" | "well-known" | "none";
+export type PublicRouteKind = "live" | "mcp-machine" | "well-known" | "none";
 
 /**
  * Exact public paths. Never treat `/api/mcp/*` as a prefix bypass.
@@ -67,7 +67,6 @@ export function publicRouteKind(method: string, path: string): PublicRouteKind {
   const normalized = path.replace(/\/+$/, "") || "/";
 
   if (m === "GET" && normalized === "/api/live") return "live";
-  if (m === "GET" && (normalized === "/terms" || normalized === "/privacy")) return "legal";
   if (m === "GET" && normalized === "/.well-known/oauth-authorization-server") return "well-known";
 
   if (m === "POST" && normalized === "/api/mcp") return "mcp-machine";

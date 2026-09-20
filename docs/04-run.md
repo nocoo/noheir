@@ -27,6 +27,9 @@ No Google OAuth, shared Worker secret or production credentials are needed.
 Production requires a verified Access email matching exactly one existing user.
 An unknown email is denied; granting Access alone does not provision a financial
 account. Existing Google-era user IDs remain the canonical ownership keys.
+All SPA pages, including `/terms` and `/privacy`, and their assets require the
+same Access session. This matches the existing protected root application; do
+not add anonymous exceptions for HTML that depends on protected assets.
 
 ## Configuration
 

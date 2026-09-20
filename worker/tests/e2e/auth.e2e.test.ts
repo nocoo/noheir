@@ -3,7 +3,7 @@ import { api, rawFetch, TEST_USER_A, TEST_USER_B, TOKENS } from "./helpers/clien
 
 describe("Access authentication over HTTP", () => {
   test("rejects unauthenticated API and static requests", async () => {
-    for (const path of ["/api/reports/metadata", "/", "/assets/private.js"]) {
+    for (const path of ["/api/reports/metadata", "/", "/terms", "/privacy", "/assets/private.js"]) {
       const response = await rawFetch({ path, omitAuth: true });
       expect([401, 403]).toContain(response.status);
     }

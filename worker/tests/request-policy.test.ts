@@ -60,10 +60,10 @@ describe("local bypass", () => {
 });
 
 describe("public routes", () => {
-  test("live, legal, well-known, and exact MCP machine paths only", () => {
+  test("live, well-known, and exact MCP machine paths only", () => {
     expect(publicRouteKind("GET", "/api/live")).toBe("live");
-    expect(publicRouteKind("GET", "/terms")).toBe("legal");
-    expect(publicRouteKind("GET", "/privacy")).toBe("legal");
+    expect(publicRouteKind("GET", "/terms")).toBe("none");
+    expect(publicRouteKind("GET", "/privacy")).toBe("none");
     expect(publicRouteKind("GET", "/.well-known/oauth-authorization-server")).toBe("well-known");
     expect(publicRouteKind("POST", "/api/mcp")).toBe("mcp-machine");
     expect(publicRouteKind("POST", "/api/mcp/register")).toBe("mcp-machine");
