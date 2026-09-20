@@ -723,6 +723,9 @@ app.post("/api/units", async (c) => {
   if (!parsed.success) {
     return c.json({ error: parsed.error.issues.map((i) => i.message).join("; ") }, 400);
   }
+  if (parsed.data.productId && !(await repos.products.findById(userId, parsed.data.productId))) {
+    return c.json({ error: "Product not found" }, 404);
+  }
 
   // Enforce endDate invariant:
   // - status = 已归档: auto-set endDate if not provided
@@ -776,6 +779,9 @@ app.put("/api/units/:id", async (c) => {
   const original = await repos.units.findById(userId, id);
   if (!original) {
     return c.json({ error: "Not found" }, 404);
+  }
+  if (parsed.data.productId && !(await repos.products.findById(userId, parsed.data.productId))) {
+    return c.json({ error: "Product not found" }, 404);
   }
 
   const productIdChanging =

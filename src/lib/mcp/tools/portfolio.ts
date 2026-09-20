@@ -96,7 +96,7 @@ RETURNS:
                p.name as product_name, p.lock_period_days as product_lock_period_days,
                p.open_days as product_open_days, p.cycle_days as product_cycle_days
         FROM capital_units u
-        LEFT JOIN financial_products p ON u.product_id = p.id
+        LEFT JOIN financial_products p ON u.product_id = p.id AND u.user_id = p.user_id
         WHERE ${conditions.join(" AND ")}
         ORDER BY u.created_at DESC
         LIMIT ?

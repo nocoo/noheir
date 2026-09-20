@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { cleanupUser } from "./helpers/cleanup";
-import { api, rawFetch, TEST_USER_A } from "./helpers/client";
+import { api, rawFetch, TEST_USER_A, TEST_USER_B } from "./helpers/client";
 import { makeProduct, makeUnit } from "./helpers/seed";
 
 const userId = TEST_USER_A;
@@ -29,6 +29,48 @@ describe("E2E: Units", () => {
     expect(res.unit.id).toBeTypeOf("string");
     expect(res.unit.amountCents).toBe(5000000);
     expect(res.unit.strategy).toBe("短期理财");
+  });
+
+  test("foreign products cannot be linked by creating or updating a unit", async () => {
+    await cleanupUser(TEST_USER_B);
+    const { product } = await api<{ product: { id: string } }>({
+      method: "POST",
+      path: "/api/products",
+      userId: TEST_USER_B,
+      body: makeProduct({ name: "Private product" }),
+    });
+    for (const productId of [product.id, crypto.randomUUID()]) {
+      const create = await rawFetch({
+        method: "POST",
+        path: "/api/units",
+        userId,
+        body: makeUnit({ productId }),
+      });
+      expect(create.status).toBe(404);
+    }
+    expect((await api<{ units: unknown[] }>({ path: "/api/units", userId })).units).toEqual([]);
+    const { unit } = await api<{ unit: { id: string } }>({
+      method: "POST",
+      path: "/api/units",
+      userId,
+      body: makeUnit(),
+    });
+    expect(
+      (
+        await rawFetch({
+          method: "PUT",
+          path: `/api/units/${unit.id}`,
+          userId,
+          body: { productId: product.id },
+        })
+      ).status,
+    ).toBe(404);
+    const saved = await api<{ unit: { productId: string | null } }>({
+      path: `/api/units/${unit.id}`,
+      userId,
+    });
+    expect(saved.unit.productId).toBeNull();
+    expect(await api({ path: `/api/units/${unit.id}/logs`, userId })).toMatchObject({ logs: [] });
   });
 
   test("POST /api/units writes an initial invest log when a product is attached", async () => {

@@ -217,7 +217,7 @@ LIMITATIONS:
                p.name as product_name, p.lock_period_days as product_lock_period_days,
                p.open_days as product_open_days, p.cycle_days as product_cycle_days
         FROM capital_units u
-        LEFT JOIN financial_products p ON u.product_id = p.id
+        LEFT JOIN financial_products p ON u.product_id = p.id AND u.user_id = p.user_id
         WHERE ${conditions.join(" AND ")}
         ORDER BY u.created_at DESC
         LIMIT ? OFFSET ?
@@ -226,7 +226,7 @@ LIMITATIONS:
       const [unitsResult, countResult] = await Promise.all([
         db.query<UnitWithProduct>(unitsSql, [...values, limit, offset]),
         db.firstOrNull<{ total: number }>(
-          `SELECT COUNT(*) as total FROM capital_units u LEFT JOIN financial_products p ON u.product_id = p.id WHERE ${conditions.join(" AND ")}`,
+          `SELECT COUNT(*) as total FROM capital_units u LEFT JOIN financial_products p ON u.product_id = p.id AND u.user_id = p.user_id WHERE ${conditions.join(" AND ")}`,
           values,
         ),
       ]);
@@ -326,7 +326,7 @@ RETURNS:
                p.name as product_name, p.lock_period_days as product_lock_period_days,
                p.open_days as product_open_days, p.cycle_days as product_cycle_days
         FROM capital_units u
-        LEFT JOIN financial_products p ON u.product_id = p.id
+        LEFT JOIN financial_products p ON u.product_id = p.id AND u.user_id = p.user_id
         WHERE ${idCondition} AND u.user_id = ?
         LIMIT 2
       `;
@@ -591,8 +591,8 @@ RETURNS:
           const withdrawLogId = crypto.randomUUID();
           // Get product name for the log
           const oldProduct = await db.firstOrNull<{ name: string }>(
-            "SELECT name FROM financial_products WHERE id = ?",
-            [existing.product_id],
+            "SELECT name FROM financial_products WHERE id = ? AND user_id = ?",
+            [existing.product_id, userId],
           );
           await db.execute(
             `INSERT INTO contribution_logs (id, user_id, unit_id, product_id, product_name, operation_type, amount_cents, balance_after_cents, operation_date, source, created_at, updated_at)
@@ -615,8 +615,8 @@ RETURNS:
           const investLogId = crypto.randomUUID();
           // Get product name for the log
           const newProduct = await db.firstOrNull<{ name: string }>(
-            "SELECT name FROM financial_products WHERE id = ?",
-            [args.product_id],
+            "SELECT name FROM financial_products WHERE id = ? AND user_id = ?",
+            [args.product_id, userId],
           );
           await db.execute(
             `INSERT INTO contribution_logs (id, user_id, unit_id, product_id, product_name, operation_type, amount_cents, balance_after_cents, operation_date, source, created_at, updated_at)
@@ -643,7 +643,7 @@ RETURNS:
                p.name as product_name, p.lock_period_days as product_lock_period_days,
                p.open_days as product_open_days, p.cycle_days as product_cycle_days
         FROM capital_units u
-        LEFT JOIN financial_products p ON u.product_id = p.id
+        LEFT JOIN financial_products p ON u.product_id = p.id AND u.user_id = p.user_id
         WHERE u.id = ? AND u.user_id = ?
       `;
 

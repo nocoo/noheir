@@ -105,6 +105,15 @@ describe("units repo", () => {
     expect(withoutProduct?.product).toBeNull();
   });
 
+  test("product joins hide a cross-owner relation already in the database", async () => {
+    const repos = getTestRepos();
+    seedUser("other-user", "other@example.com");
+    const product = await repos.products.create("other-user", { name: "Private product" });
+    const unit = await repos.units.create(userId, { ...baseUnit, productId: product.id });
+    expect((await repos.units.findByIdWithProduct(userId, unit.id))?.product).toBeNull();
+    expect((await repos.units.findAllWithProducts(userId))[0]?.product).toBeNull();
+  });
+
   test("findAllWithProducts filters by status", async () => {
     const repos = getTestRepos();
     await repos.units.create(userId, baseUnit);

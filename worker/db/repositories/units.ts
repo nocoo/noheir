@@ -102,7 +102,13 @@ export function createUnitsRepo(db: DrizzleD1Database) {
           product: financialProducts,
         })
         .from(capitalUnits)
-        .leftJoin(financialProducts, eq(capitalUnits.productId, financialProducts.id))
+        .leftJoin(
+          financialProducts,
+          and(
+            eq(capitalUnits.productId, financialProducts.id),
+            eq(capitalUnits.userId, financialProducts.userId),
+          ),
+        )
         .where(and(...conditions))
         .orderBy(desc(capitalUnits.createdAt))
         .all();
@@ -129,7 +135,13 @@ export function createUnitsRepo(db: DrizzleD1Database) {
           product: financialProducts,
         })
         .from(capitalUnits)
-        .leftJoin(financialProducts, eq(capitalUnits.productId, financialProducts.id))
+        .leftJoin(
+          financialProducts,
+          and(
+            eq(capitalUnits.productId, financialProducts.id),
+            eq(capitalUnits.userId, financialProducts.userId),
+          ),
+        )
         .where(and(eq(capitalUnits.id, id), eq(capitalUnits.userId, userId)))
         .get();
       if (!row) return null;
