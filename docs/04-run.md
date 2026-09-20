@@ -95,6 +95,62 @@ metadata and registration remain OAuth protocol endpoints. `/api/live` must be
 reachable for read-only health verification. See the migration checklist for
 the pending external policy decision and actual deployment evidence.
 
+### Owner configuration before the v3 cutover
+
+The following checklist keeps the implemented OAuth flow. In the Cloudflare
+dashboard, open **Zero Trust > Access controls > Applications**. Apply these
+changes in order; keep production on v2 until review and configuration checks pass.
+
+1. Edit the existing `noheir-auth` application
+   (`0305f64b-b1b4-451a-ae13-0ce17771fd34`). Keep its Allow policy, identity provider
+   and root hostname. Add two public hostnames with the paths shown below to the
+   **same application**, then save. Do not recreate it: its audience must remain
+   `19d100ea22080f644154aad7b35785c1381874d27dec7fd238a2cb8fd7d640ee`.
+
+   | Public hostname | Path | Policy |
+   | --- | --- | --- |
+   | `noheir.hexly.ai` | Empty (existing) | Existing authorized-user Allow |
+   | `noheir.hexly.ai` | `/api/mcp/authorize` | Same Allow |
+   | `noheir.hexly.ai` | `/api/mcp/callback` | Same Allow |
+
+2. Create a **Self-hosted and private** application named `noheir-mcp-machine`.
+   Add the two public destinations below. Add a policy with action **Bypass**,
+   rule **Include**, selector **Everyone**. Do not add this policy to
+   `noheir-auth`; doing so would also bypass the financial UI and APIs.
+
+   | Public hostname | Path | Purpose |
+   | --- | --- | --- |
+   | `noheir.hexly.ai` | `/.well-known/oauth-authorization-server` | OAuth discovery |
+   | `noheir.hexly.ai` | `/api/mcp` | MCP plus register/token/revoke descendants |
+
+   The protected authorize/callback destinations from step 1 take precedence
+   over this parent path. The new bypass application's audience is not used by
+   Noheir. No Access service token or replacement Google OAuth client is needed.
+
+3. Leave the existing `shared-bypass` health rule for
+   `noheir.hexly.ai/api/live` unchanged. Preserve all other projects' destinations.
+   Keep the Allow email aligned with the original Noheir account: a different
+   Access identity cannot create or take over that account.
+
+4. Check from a browser without an Access session: the root, `/api/auth/me`,
+   `/api/reports/metadata`, `/api/mcp/authorize` and `/api/mcp/callback` must
+   redirect to `nocoo.cloudflareaccess.com`; OAuth discovery must return JSON
+   with status 200; an unauthenticated `POST /api/mcp` must return 401. After
+   cutover, `bun run verify:production` repeats these checks and also verifies
+   the deployed version, commit and D1 connectivity. Complete one browser login
+   and an MCP OAuth/PKCE authorization using the existing account.
+
+Read-only inspection on 2026-09-20 confirmed the original protected application
+and health bypass above. The two protected child destinations and MCP bypass
+were still absent. GitHub environment `noheir / production` already contains
+`CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`; no credential setup is pending.
+DNS/custom-domain cutover remains part of deployment, after these checks. Retain
+the existing origin until acceptance; the retirement list below is for afterward.
+
+References: [public applications](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/self-hosted-public-app/),
+[Bypass policies](https://developers.cloudflare.com/cloudflare-one/access-controls/policies/#bypass),
+[path precedence](https://developers.cloudflare.com/cloudflare-one/access-controls/policies/app-paths/).
+
 ## CI/CD and release
 
 CI runs frozen installs, build, both type lanes, lint, unit coverage, real-HTTP
