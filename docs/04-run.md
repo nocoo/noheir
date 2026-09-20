@@ -1,6 +1,6 @@
 # Development and deployment
 
-The v3 target is one native Cloudflare Worker (`noheir-web`) serving Vite assets,
+Production runs one native Cloudflare Worker (`noheir-web`) serving Vite assets,
 Hono APIs and MCP. The migration checklist and cutover status are in
 [23-workers-migration.md](23-workers-migration.md). The existing D1 database is
 retained; no financial ownership keys are rewritten.
@@ -98,11 +98,12 @@ metadata and registration remain OAuth protocol endpoints. `/api/live` must be
 reachable for read-only health verification. See the migration checklist for
 the verified external policy and actual deployment evidence.
 
-### Owner configuration before the v3 cutover
+### Verified Access configuration
 
 The following checklist keeps the implemented OAuth flow. In the Cloudflare
 dashboard, open **Zero Trust > Access controls > Applications**. Apply these
-changes in order; keep production on v2 until review and configuration checks pass.
+changes in this order when reconstructing the configuration. Production already
+runs v3.0.0; the verified destinations below are active.
 
 1. Edit the existing `noheir-auth` application
    (`0305f64b-b1b4-451a-ae13-0ce17771fd34`). Keep its Allow policy, identity provider
@@ -149,8 +150,8 @@ the machine/health destinations in `shared-bypass`. Protected paths redirect to
 Access, OAuth discovery returns 200 and tokenless MCP returns 401. GitHub
 environment `noheir / production` already contains
 `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`; no credential setup is pending.
-DNS/custom-domain cutover remains part of deployment, after these checks. Retain
-the existing origin until acceptance; the retirement list below is for afterward.
+The custom-domain cutover is complete. The old origin remains available for
+rollback; the retirement list below is for owner cleanup after acceptance.
 
 References: [public applications](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/self-hosted-public-app/),
 [Bypass policies](https://developers.cloudflare.com/cloudflare-one/access-controls/policies/#bypass),
@@ -169,13 +170,17 @@ Set `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` in GitHub environment
 permissions required by the configured account and zone. Do not commit tokens.
 
 ```sh
-bun run release -- major
+bun run release -- patch
 ```
 
 The release script updates the root version and changelog, commits and pushes,
 waits for CI and deployment of that commit, verifies the live `build_sha`, then
 publishes only that version's tag and GitHub release. A failed gate stops before
-tag publication. `bun run verify:production` checks version/revision, database
+tag publication. If deployment fails after the version commit, fix the external
+condition and rerun the failed workflow for the same SHA. Verify its successful
+CI/deployment and live checks before completing the annotated tag and GitHub
+release; do not bump the version again merely to resume a failed gate.
+`bun run verify:production` checks version/revision, database
 connectivity, no-store, protected browser/API paths and MCP discovery/auth.
 
 ## Cutover and retirement
@@ -183,6 +188,13 @@ connectivity, no-store, protected browser/API paths and MCP discovery/auth.
 Before cutover, record DNS/routes and take a private D1 export. Compare read-only
 user/row fingerprints before and after deployment. The custom domain replaces
 the VPS origin. Preserve the old runtime until live checks and owner acceptance.
+
+The initial v3 deployment uploaded the Worker but could not replace the existing
+CNAME (Cloudflare error 100117), even with Wrangler's noninteractive override.
+For such a cutover, verify the uploaded Worker first, save the exact DNS record,
+remove only the conflicting record and immediately attach the custom domain.
+Restore the saved record if attachment fails, then rerun the deployment workflow.
+Subsequent deployments update the existing custom domain without this step.
 
 Legacy resources for owner cleanup after migration:
 
@@ -193,6 +205,8 @@ Legacy resources for owner cleanup after migration:
 - Local obsolete `.env.local` and `worker/.dev.vars` credentials after confirming
   no remaining consumers.
 
-Never delete `noheir-db`. Rollback restores the saved DNS/origin and previous
-runtime; data/schema are unchanged by this migration. No remote schema migration
+Never delete `noheir-db`. To roll back, detach `noheir.hexly.ai` from `noheir-web`,
+then restore the saved proxied CNAME to `jp2.nocoo.cloud` and the retained previous
+runtime. Do not edit the Cloudflare-managed Worker DNS record independently;
+data/schema are unchanged by this migration. No remote schema migration
 is applied automatically during deployment.

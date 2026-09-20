@@ -16,10 +16,10 @@ money is invested, returns and availability. Recurring expenses have a planning
 calendar. Data is imported or maintained by the owner; there is no automatic bank
 synchronization. The current insights use rules, not language-model inference.
 
-The v3 architecture uses Vite/React Router and a native Cloudflare Worker with
+Production uses Vite/React Router and a native Cloudflare Worker with
 Hono, Workers Static Assets and D1. Cloudflare Access handles browser login.
-MCP retains OAuth/PKCE and its existing per-user data access. Migration progress
-and release evidence are recorded in the [migration plan](docs/23-workers-migration.md).
+MCP retains OAuth/PKCE and its existing per-user data access. Cutover and release
+evidence are recorded in the [migration plan](docs/23-workers-migration.md).
 
 ## Use
 

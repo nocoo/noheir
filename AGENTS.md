@@ -110,8 +110,8 @@ test dependency.
 
 ## Operations / Release
 
-Use `bun run release -- major` for the v3 migration. Subsequent releases choose
-an appropriate semantic bump. The script requires a clean tree, updates the root
+The v3.0.0 migration is released. Use `bun run release -- patch`, `-- minor` or
+`-- major` according to the change. The script requires a clean tree, updates the root
 version/changelog, commits and pushes, waits for successful CI and native Worker
 deployment of that revision, verifies live version/build SHA and boundaries, then
 publishes the exact tag and GitHub release. Never publish a tag after a failed gate.

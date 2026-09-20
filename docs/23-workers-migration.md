@@ -1,7 +1,8 @@
 # Native Workers migration (v3)
 
-Status: implementation, independent review and Access boundary checks complete.
-Production remains v2.6.4 until the verified v3.0.0 deployment and domain cutover.
+Status: v3.0.0 is released and serving production on `noheir-web`.
+CI, deployment, live Access/browser checks and data preservation checks pass.
+Legacy infrastructure remains available until owner retirement.
 
 ## Baseline and decision
 
@@ -103,11 +104,10 @@ checking actual agent state. Lifecycle waits have a separate time-based monitor.
 6. [x] Browser acceptance: all routes render, year filtering, financial overview,
    unit commit, recurring rules, import preview/commit, backup and error states.
 7. [x] Implement native deployment workflow with successful-CI source verification,
-   immutable build revision and live checks. Workflow execution remains pending;
-   local/CI tests cannot bind production resources.
-8. [ ] Read-only production identity/count fingerprint, D1 backup, Access path
+   immutable build revision and live checks. The production workflow passed.
+8. [x] Read-only production identity/count fingerprint, D1 backup, Access path
    policy inspection, deploy and domain cutover; repeat live/data checks.
-9. [ ] Publish v3.0.0 only after successful CI and deployment; update all active
+9. [x] Publish v3.0.0 only after successful CI and deployment; update all active
    documentation, push atomic commits and record exact release evidence.
 
 Keep commits buildable and grouped by logical boundary. No hook bypasses, lowered
@@ -141,7 +141,7 @@ coverage thresholds, production fixture writes or unverified release claims.
   for cutover comparison. No remote fixture writes or schema changes occurred.
 - GitHub production deployment credentials were provisioned. The existing DNS,
   Access applications/policies and old Worker configuration were backed up
-  privately. No DNS or Access policy change, deployment or v3 release has occurred.
+  privately before deployment. The later production cutover is recorded below.
 - The upstream `a3f2568` change disables old Worker default/preview URLs; the
   replacement `wrangler.jsonc` retains both protections.
 
@@ -158,22 +158,47 @@ Independent review follow-up before cutover:
 The follow-up build and 183 HTTP tests passed; the browser acceptance suite has
 40 passing scenarios. Every fix passed
 normal pre-commit type, lint and unit-coverage checks. The owner's exact Access
-configuration sequence is in [the runbook](04-run.md#owner-configuration-before-the-v3-cutover).
-Independent review does not replace the pending live Access/DNS/deployment checks.
+configuration sequence is in [the runbook](04-run.md#verified-access-configuration).
+Independent review signed off `3e365fa` with no remaining findings. The later
+live Access/DNS/deployment checks are recorded below.
 
-The migration branch permits code review and CI without triggering a production
-main-push deployment before the approved production cutover. With Access verified,
-integrate main, run the major release entrypoint, verify the exact
-production SHA/version and repeat the private data fingerprint comparison. The
-existing v2 runtime and D1 remain available for rollback.
+## Production acceptance (2026-09-20)
+
+- Release: [v3.0.0](https://github.com/nocoo/noheir/releases/tag/v3.0.0), tagged at
+  `1e3a1a497138f51af58ca216a1a1df12c2c63388`. [PR #577](https://github.com/nocoo/noheir/pull/577)
+  is merged. The release commit passed [CI 35508195820](https://github.com/nocoo/noheir/actions/runs/35508195820).
+- [Deployment 35508249724](https://github.com/nocoo/noheir/actions/runs/35508249724),
+  attempt 2, passed. The first attempt uploaded the Worker but Cloudflare rejected
+  the existing externally managed CNAME with code 100117. After saving the exact
+  record, the coordinator removed that CNAME and immediately attached the already
+  uploaded Worker. No code or version change was needed for the successful retry.
+- `noheir.hexly.ai` is a custom domain on `noheir-web`; Cloudflare manages its
+  proxied `AAAA 100::` record. workers.dev and preview URLs are disabled.
+- `bun run verify:production` passed against the released SHA: v3.0.0, connected
+  D1, no-store health, protected SPA/API/authorize/callback paths, public OAuth
+  discovery and tokenless MCP 401. The existing Access audience is unchanged.
+- A real browser with an existing Access session loaded the Vite assets and
+  displayed v3.0.0. `/api/auth/me` returned the original pre-cutover user ID/email;
+  report metadata, product summary and unit summary returned 200. No production
+  financial writes were used for acceptance. Fresh interactive login and a new
+  external MCP OAuth grant were not repeated; the existing session and public
+  boundaries were checked, with OAuth lifecycle coverage in isolated HTTP tests.
+- Private D1 exports immediately before and after cutover restore successfully
+  into in-memory SQLite. Sorted-row hashes match for all 14 tables, including
+  identities, financial data, OAuth registrations and token hashes: 2 users and
+  8,158 transactions. No remote schema migration or ownership rewrite occurred.
+- Old `noheir`, its hostname, and the VPS runtime remain for rollback and owner
+  cleanup. GitHub production deployment credentials are configured. No additional
+  Access application, service token or Google client is required.
 
 ## Rollout and rollback
 
-Deploy `noheir-web` against the existing D1, then switch `noheir.hexly.ai` from the
-VPS origin to the Worker custom domain. Keep the existing Worker, VPS container,
+The cutover deployed `noheir-web` against the existing D1 and switched
+`noheir.hexly.ai` from the VPS origin to the Worker custom domain. Keep the existing Worker, VPS container,
 Caddy entry and credentials until owner cleanup. Do not delete D1 or its data.
-No schema/ownership conversion is planned. Rollback restores the prior domain
-origin and v2.6.4 application; record DNS/route state before cutover. Once stable,
+No schema/ownership conversion occurred. Rollback first removes the Worker
+custom-domain association, then restores the saved proxied CNAME to
+`jp2.nocoo.cloud` and the retained v2.6.4 runtime. Preserve D1 throughout. Once stable,
 remind the owner to delete the old Noheir container/image, Caddy route, old Worker
 route and obsolete Google/shared-secret/deploy credentials without touching other
 services on the shared VPS.

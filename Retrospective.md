@@ -27,3 +27,19 @@ The local log was redacted and restricted to mode 0600. The backup is mode 0600
 inside a mode 0700 private directory outside the repository. Future export checks
 must inspect process exit status and destination file metadata, never raw export
 logs. No credential or signed URL belongs in migration evidence.
+
+## 2026-09-20 — Existing CNAME blocked the Worker custom domain
+
+The first v3 production workflow uploaded `noheir-web` successfully, but its
+custom-domain update failed with Cloudflare error 100117. Wrangler's current
+noninteractive implementation set DNS override flags; the service still required
+removing the externally managed CNAME first, as the public documentation stated.
+The old VPS continued serving the domain and no version tag was published.
+
+After verifying the uploaded revision and binding, the coordinator saved the exact
+DNS record, removed that one CNAME and immediately attached the Worker custom
+domain, with restoration of the saved record prepared if attachment failed. The
+same deployment workflow passed on attempt 2. Browser/account and public-boundary
+checks passed, and all 14 D1 table fingerprints matched the pre-cutover backup.
+Treat a first custom-domain cutover as an explicit infrastructure step; Wrangler
+implementation flags are not evidence that an existing CNAME can be replaced.
