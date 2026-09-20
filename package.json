@@ -1,6 +1,6 @@
 {
   "name": "noheir",
-  "version": "2.6.4",
+  "version": "3.0.0",
   "private": true,
   "scripts": {
     "dev": "CLOUDFLARE_ENV=local vite --host 127.0.0.1",

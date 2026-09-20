@@ -2,6 +2,74 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.0] - 2026-09-20
+
+### ⚠ Breaking Changes
+
+- migrate to native workers and access (477ff24)
+
+### Features
+
+- migrate to native workers and access
+- **web** — add Hexly project link and header tooltips
+
+### Fixes
+
+- reject stale recurring rule updates
+- protect legal pages with their spa assets
+- validate recurring schedules on the server
+- isolate unit product ownership
+- enforce settings write ownership
+- disable worker default and preview urls
+- **a11y** — restore accessible header and lint gates (#559)
+
+### Documentation
+
+- record verified access configuration
+- record migration review resolutions
+- detail owner access configuration
+- document workers operations and validation
+- plan native workers migration
+- standardize agent handbook and retrospective
+
+### Tests
+
+- enforce worker coverage floor (#574)
+
+### Chores
+
+- **deps** — update wrangler
+- **deps** — update node
+- **deps** — update workers-types
+- **deps** — update lucide-react
+- pin @nocoo/basalt 2.1.8
+- **deps** — update wrangler
+- **deps** — upgrade jsdom with isolated focus cleanup
+- **deps** — update workers-types
+- **deps** — update biome
+- **deps** — update hono
+- **deps** — align vitest 5.0.1
+- **deps** — upgrade @cloudflare/workers-types to 5.20260914.1
+- **deps** — upgrade wrangler to 4.131.2
+- **deps** — upgrade lucide-react to 1.46.0
+- **deps** — upgrade wrangler to 4.131.1
+- **deps** — upgrade lucide-react to 1.45.0
+- **deps** — upgrade next to 16.3.5
+- **deps** — upgrade @cloudflare/workers-types to 5.20260911.1
+- **deps** — upgrade @biomejs/biome to 2.5.13
+- **deps** — upgrade @types/node to 26.5.1
+- **deps** — upgrade zod to 4.6.5
+- **deps** — upgrade zod to 4.6.4
+- **deps** — update tailwind-merge to 3.7.0
+- **deps** — update @types/react-dom to 19.3.0
+- **deps** — upgrade @types/react to 19.3.0
+- **deps** — upgrade react packages to 19.3.0
+- inherit base-ci checks and docker release
+
+### CI
+
+- pin verified base-ci release contracts
+
 ## [2.6.4] - 2026-09-11
 
 ### Features
