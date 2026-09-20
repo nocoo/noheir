@@ -118,22 +118,30 @@ describe("recurring_expenses repo (P1-C4)", () => {
     const created = await repos.recurringExpenses.create(userId, baseRule());
     if (!created.ok) throw new Error("seed");
 
-    const res = await repos.recurringExpenses.update(userId, created.rule.id, {
-      status: "ended",
-      endedAt: "2026-06-07",
-    });
+    const res = await repos.recurringExpenses.update(
+      userId,
+      created.rule.id,
+      { status: "ended", endedAt: "2026-06-07" },
+      created.rule,
+    );
     expect(res.ok).toBe(true);
     if (!res.ok) return;
     expect(res.rule.status).toBe("ended");
     expect(res.rule.endedAt).toBe("2026-06-07");
   });
 
-  test("update on unknown id returns not_found", async () => {
+  test("update with a deleted snapshot returns conflict", async () => {
     const repos = getTestRepos();
-    const res = await repos.recurringExpenses.update(userId, "missing", {
-      name: "x",
-    });
-    expect(res).toEqual({ ok: false, reason: "not_found" });
+    const created = await repos.recurringExpenses.create(userId, baseRule());
+    if (!created.ok) throw new Error("seed");
+    await repos.recurringExpenses.delete(userId, created.rule.id);
+    const res = await repos.recurringExpenses.update(
+      userId,
+      created.rule.id,
+      { name: "x" },
+      created.rule,
+    );
+    expect(res).toEqual({ ok: false, reason: "conflict" });
   });
 
   test("update cannot reassign to another user's category", async () => {
@@ -146,10 +154,47 @@ describe("recurring_expenses repo (P1-C4)", () => {
     const rule = await repos.recurringExpenses.create(userId, baseRule());
     if (!rule.ok) throw new Error("seed");
 
-    const res = await repos.recurringExpenses.update(userId, rule.rule.id, {
-      categoryId: owned.category.id,
-    });
+    const res = await repos.recurringExpenses.update(
+      userId,
+      rule.rule.id,
+      { categoryId: owned.category.id },
+      rule.rule,
+    );
     expect(res).toEqual({ ok: false, reason: "category_not_found" });
+  });
+
+  test("stale snapshots cannot overwrite a concurrent amount or schedule change", async () => {
+    const repos = getTestRepos();
+    const created = await repos.recurringExpenses.create(userId, baseRule());
+    if (!created.ok) throw new Error("seed");
+    const snapshot = created.rule;
+    const first = await repos.recurringExpenses.update(
+      userId,
+      snapshot.id,
+      { amountCents: 100, weekday: 3 },
+      snapshot,
+    );
+    expect(first.ok).toBe(true);
+    const stale = await repos.recurringExpenses.update(
+      userId,
+      snapshot.id,
+      { name: "Renamed", amountCents: snapshot.amountCents, weekday: snapshot.weekday },
+      snapshot,
+    );
+    expect(stale).toEqual({ ok: false, reason: "conflict" });
+    expect(await repos.recurringExpenses.findById(userId, snapshot.id)).toMatchObject({
+      name: snapshot.name,
+      amountCents: 100,
+      weekday: 3,
+    });
+    if (!first.ok) throw new Error("first update failed");
+    const retry = await repos.recurringExpenses.update(
+      userId,
+      snapshot.id,
+      { name: "Renamed" },
+      first.rule,
+    );
+    expect(retry.ok && retry.rule).toMatchObject({ name: "Renamed", amountCents: 100, weekday: 3 });
   });
 
   test("delete is userId-scoped", async () => {

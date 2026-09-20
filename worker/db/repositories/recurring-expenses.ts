@@ -9,7 +9,7 @@
 // tests because the foreign-key behaviour has historically varied
 // between local libsql and remote D1.
 
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, getTableColumns, inArray, isNull } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { expenseCategories, recurringExpenses } from "../schema";
 import type { NewRecurringExpense, RecurringExpense, RecurringExpenseWithCategory } from "../types";
@@ -32,7 +32,7 @@ export type CreateRecurringExpenseResult =
 
 export type UpdateRecurringExpenseResult =
   | { ok: true; rule: RecurringExpense }
-  | { ok: false; reason: "not_found" }
+  | { ok: false; reason: "conflict" }
   | { ok: false; reason: "category_not_found" };
 
 async function categoryBelongsToUser(
@@ -115,6 +115,7 @@ export function createRecurringExpensesRepo(db: DrizzleD1Database) {
       userId: string,
       id: string,
       data: RecurringExpenseUpdateInput,
+      expected: RecurringExpense,
     ): Promise<UpdateRecurringExpenseResult> {
       if (data.categoryId) {
         const ok = await categoryBelongsToUser(db, userId, data.categoryId);
@@ -127,14 +128,18 @@ export function createRecurringExpensesRepo(db: DrizzleD1Database) {
         ...data,
         updatedAt: new Date(),
       };
+      const snapshot = Object.entries(getTableColumns(recurringExpenses)).map(([key, column]) => {
+        const value = expected[key as keyof RecurringExpense];
+        return value === null ? isNull(column) : eq(column, value);
+      });
       const rows = await db
         .update(recurringExpenses)
         .set(patch)
-        .where(and(eq(recurringExpenses.id, id), eq(recurringExpenses.userId, userId)))
+        .where(and(eq(recurringExpenses.id, id), eq(recurringExpenses.userId, userId), ...snapshot))
         .returning();
       const rule = rows[0];
       if (!rule) {
-        return { ok: false, reason: "not_found" };
+        return { ok: false, reason: "conflict" };
       }
       return { ok: true, rule };
     },

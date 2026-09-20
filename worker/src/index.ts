@@ -1429,12 +1429,13 @@ app.put("/api/recurring-expenses/:id", async (c) => {
     userId,
     c.req.param("id"),
     stripUndefined(merged.data),
+    existing,
   );
   if (result.ok) {
     return c.json({ rule: result.rule });
   }
-  if (result.reason === "not_found") {
-    return c.json({ error: "Not found" }, 404);
+  if (result.reason === "conflict") {
+    return c.json({ error: "Rule changed; reload and retry" }, 409);
   }
   return c.json({ error: "Category not found" }, 400);
 });

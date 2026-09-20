@@ -192,6 +192,28 @@ describe("E2E: /api/recurring-expenses (P1-C6)", () => {
     expect(updated.endedAt).toBeNull();
   });
 
+  test("concurrent edits preserve every acknowledged change", async () => {
+    const { rule } = await api<{ rule: Rule }>({
+      method: "POST",
+      path: "/api/recurring-expenses",
+      userId,
+      body: yearlyRule,
+    });
+    const edits = [{ name: "Concurrent rename" }, { amountCents: 123_456 }];
+    const responses = await Promise.all(
+      edits.map((body) =>
+        rawFetch({ method: "PUT", path: `/api/recurring-expenses/${rule.id}`, userId, body }),
+      ),
+    );
+    const { rules } = await api<{ rules: Rule[] }>({ path: "/api/recurring-expenses", userId });
+    const saved = rules.find((item) => item.id === rule.id);
+    expect(responses.some((response) => response.status === 200)).toBe(true);
+    for (const [index, response] of responses.entries()) {
+      expect([200, 409]).toContain(response.status);
+      if (response.status === 200) expect(saved).toMatchObject(edits[index] ?? {});
+    }
+  });
+
   test("DELETE returns 204 then 404", async () => {
     const { rule } = await api<{ rule: Rule }>({
       method: "POST",
