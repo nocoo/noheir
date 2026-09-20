@@ -1,7 +1,7 @@
 # Native Workers migration (v3)
 
-Status: implementation and local acceptance complete; production remains v2.6.4.
-External Access policy selection and production cutover are pending.
+Status: implementation, independent review and Access boundary checks complete.
+Production remains v2.6.4 until the verified v3.0.0 deployment and domain cutover.
 
 ## Baseline and decision
 
@@ -35,12 +35,13 @@ Preserve MCP OAuth/PKCE, client registrations, token hashes, issuer and existing
 user IDs. Native Web Standard MCP transport already exists. Replace SQL-over-HTTP
 with a per-request D1 adapter; no process-global database or request state.
 Authorization requires Access. Machine endpoints retain their own OAuth/MCP
-validation. A pending owner decision concerns Access exceptions versus changing
-MCP clients to service tokens. No external Access policy mutation happens until
-that decision is resolved. Current live Access redirects MCP discovery and POST
-requests to interactive login; this must be resolved before cutover.
+validation. The owner retained OAuth and configured Access exceptions. Read-only
+inspection on 2026-09-20 confirmed that the existing protected application keeps
+its audience and the authorize/callback destinations. The existing `shared-bypass`
+application includes OAuth discovery and `/api/mcp`; no service token is required.
+Live probes confirm protected redirects, public discovery and tokenless MCP 401.
 
-If OAuth is retained, machine metadata, MCP protocol, register, token and revoke
+Machine metadata, MCP protocol, register, token and revoke
 paths bypass Access. Access path matching inherits to descendants even without a
 wildcard. First add more-specific authorize/callback destinations to the existing
 protected app, retaining its audience, then add machine-path bypasses. Verify the
@@ -161,8 +162,8 @@ configuration sequence is in [the runbook](04-run.md#owner-configuration-before-
 Independent review does not replace the pending live Access/DNS/deployment checks.
 
 The migration branch permits code review and CI without triggering a production
-main-push deployment while the MCP Access decision is pending. After selecting
-the policy, integrate main, run the major release entrypoint, verify the exact
+main-push deployment before the approved production cutover. With Access verified,
+integrate main, run the major release entrypoint, verify the exact
 production SHA/version and repeat the private data fingerprint comparison. The
 existing v2 runtime and D1 remain available for rollback.
 

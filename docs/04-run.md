@@ -96,7 +96,7 @@ redirect to Access and verify the audience remains unchanged. Do not leave an
 unqualified bypass over the MCP subtree. See [Cloudflare path precedence](https://developers.cloudflare.com/cloudflare-one/access-controls/policies/app-paths/). The MCP endpoint requires its own bearer token;
 metadata and registration remain OAuth protocol endpoints. `/api/live` must be
 reachable for read-only health verification. See the migration checklist for
-the pending external policy decision and actual deployment evidence.
+the verified external policy and actual deployment evidence.
 
 ### Owner configuration before the v3 cutover
 
@@ -116,9 +116,9 @@ changes in order; keep production on v2 until review and configuration checks pa
    | `noheir.hexly.ai` | `/api/mcp/authorize` | Same Allow |
    | `noheir.hexly.ai` | `/api/mcp/callback` | Same Allow |
 
-2. Create a **Self-hosted and private** application named `noheir-mcp-machine`.
-   Add the two public destinations below. Add a policy with action **Bypass**,
-   rule **Include**, selector **Everyone**. Do not add this policy to
+2. The existing `shared-bypass` application contains the two public destinations
+   below, with policy action **Bypass**, rule **Include**, selector **Everyone**.
+   Preserve its other projects' destinations. Do not add this policy to
    `noheir-auth`; doing so would also bypass the financial UI and APIs.
 
    | Public hostname | Path | Purpose |
@@ -127,7 +127,7 @@ changes in order; keep production on v2 until review and configuration checks pa
    | `noheir.hexly.ai` | `/api/mcp` | MCP plus register/token/revoke descendants |
 
    The protected authorize/callback destinations from step 1 take precedence
-   over this parent path. The new bypass application's audience is not used by
+   over this parent path. The bypass application's audience is not used by
    Noheir. No Access service token or replacement Google OAuth client is needed.
 
 3. Leave the existing `shared-bypass` health rule for
@@ -143,9 +143,11 @@ changes in order; keep production on v2 until review and configuration checks pa
    the deployed version, commit and D1 connectivity. Complete one browser login
    and an MCP OAuth/PKCE authorization using the existing account.
 
-Read-only inspection on 2026-09-20 confirmed the original protected application
-and health bypass above. The two protected child destinations and MCP bypass
-were still absent. GitHub environment `noheir / production` already contains
+Read-only inspection and live probes on 2026-09-20 confirmed the original
+protected application, unchanged audience, both protected child destinations and
+the machine/health destinations in `shared-bypass`. Protected paths redirect to
+Access, OAuth discovery returns 200 and tokenless MCP returns 401. GitHub
+environment `noheir / production` already contains
 `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`; no credential setup is pending.
 DNS/custom-domain cutover remains part of deployment, after these checks. Retain
 the existing origin until acceptance; the retirement list below is for afterward.
