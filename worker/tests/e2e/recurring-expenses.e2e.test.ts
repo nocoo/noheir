@@ -95,6 +95,53 @@ describe("E2E: /api/recurring-expenses (P1-C6)", () => {
     });
   });
 
+  test("invalid schedules are rejected before creation or update", async () => {
+    for (const body of [
+      { ...yearlyRule, monthOfYear: null },
+      { ...yearlyRule, frequency: "monthly", dayOfMonth: null },
+      { ...yearlyRule, frequency: "weekly" },
+      { ...yearlyRule, startDate: "2026-02-30" },
+      { ...yearlyRule, endDate: "2026-01-01" },
+    ]) {
+      expect(
+        (await rawFetch({ method: "POST", path: "/api/recurring-expenses", userId, body })).status,
+      ).toBe(400);
+    }
+    expect(await api({ path: "/api/recurring-expenses", userId })).toEqual({ rules: [] });
+    const { rule } = await api<{ rule: Rule }>({
+      method: "POST",
+      path: "/api/recurring-expenses",
+      userId,
+      body: { ...yearlyRule, interval: 2, currency: "USD" },
+    });
+    for (const body of [{ dayOfMonth: null }, { frequency: "weekly" }, { endDate: "2025-12-31" }]) {
+      expect(
+        (
+          await rawFetch({
+            method: "PUT",
+            path: `/api/recurring-expenses/${rule.id}`,
+            userId,
+            body,
+          })
+        ).status,
+      ).toBe(400);
+    }
+    const updated = await api<{ rule: Rule }>({
+      method: "PUT",
+      path: `/api/recurring-expenses/${rule.id}`,
+      userId,
+      body: { name: "Renamed" },
+    });
+    expect(updated.rule).toMatchObject({
+      name: "Renamed",
+      interval: 2,
+      currency: "USD",
+      frequency: "yearly",
+      dayOfMonth: 5,
+      endDate: null,
+    });
+  });
+
   test("POST with categoryId joins category on list", async () => {
     const { category } = await api<{ category: Category }>({
       method: "POST",

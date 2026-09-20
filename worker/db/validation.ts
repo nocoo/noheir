@@ -361,7 +361,6 @@ export const createExpenseCategorySchema = z.object({
 export const updateExpenseCategorySchema = createExpenseCategorySchema.partial();
 
 // ── Recurring expenses (002 spec) ──
-const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const FREQUENCIES = ["daily", "weekly", "monthly", "yearly"] as const;
 
 const recurringExpenseShape = {
@@ -375,22 +374,36 @@ const recurringExpenseShape = {
   dayOfMonth: z.number().int().min(1).max(31).optional().nullable(),
   monthOfYear: z.number().int().min(1).max(12).optional().nullable(),
   weekday: z.number().int().min(0).max(6).optional().nullable(),
-  startDate: z.string().regex(ISO_DATE_RE, "startDate must be YYYY-MM-DD"),
-  endDate: z.string().regex(ISO_DATE_RE).optional().nullable(),
+  startDate: calendarDay,
+  endDate: calendarDay.optional().nullable(),
   note: z.string().max(1000).optional().nullable(),
 } as const;
 
-export const createRecurringExpenseSchema = z.object(recurringExpenseShape);
+export const createRecurringExpenseSchema = z
+  .object(recurringExpenseShape)
+  .superRefine((data, ctx) => {
+    if (data.frequency === "weekly" && data.weekday == null) {
+      ctx.addIssue({ code: "custom", message: "weekday is required for weekly rules" });
+    }
+    if (data.frequency === "monthly" && data.dayOfMonth == null) {
+      ctx.addIssue({ code: "custom", message: "dayOfMonth is required for monthly rules" });
+    }
+    if (data.frequency === "yearly" && (data.monthOfYear == null || data.dayOfMonth == null)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "monthOfYear and dayOfMonth are required for yearly rules",
+      });
+    }
+    if (data.endDate && data.endDate < data.startDate) {
+      ctx.addIssue({ code: "custom", message: "endDate must be >= startDate" });
+    }
+  });
 
-// `status` + `endedAt` are accepted on update for the state-machine
-// actions; the endpoint layer (P1-C6) gates them with the
-// X-Internal-Action header. The Server Action layer (P2-C8) strips
-// them from public CRUD.
 export const updateRecurringExpenseSchema = z
   .object({
     ...recurringExpenseShape,
-    status: z.enum(["active", "paused", "ended"]).optional(),
-    endedAt: z.string().regex(ISO_DATE_RE).optional().nullable(),
+    currency: recurringExpenseShape.currency.removeDefault(),
+    interval: recurringExpenseShape.interval.removeDefault(),
   })
   .partial();
 

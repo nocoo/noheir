@@ -1416,10 +1416,20 @@ app.put("/api/recurring-expenses/:id", async (c) => {
   if (!parsed.success) {
     return c.json({ error: parsed.error.issues.map((i) => i.message).join("; ") }, 400);
   }
-  const data = stripUndefined(parsed.data) as Record<string, unknown>;
-  delete data.status;
-  delete data.endedAt;
-  const result = await repos.recurringExpenses.update(userId, c.req.param("id"), data);
+  const existing = await repos.recurringExpenses.findById(userId, c.req.param("id"));
+  if (!existing) return c.json({ error: "Not found" }, 404);
+  const merged = createRecurringExpenseSchema.safeParse({
+    ...existing,
+    ...stripUndefined(parsed.data),
+  });
+  if (!merged.success) {
+    return c.json({ error: merged.error.issues.map((i) => i.message).join("; ") }, 400);
+  }
+  const result = await repos.recurringExpenses.update(
+    userId,
+    c.req.param("id"),
+    stripUndefined(merged.data),
+  );
   if (result.ok) {
     return c.json({ rule: result.rule });
   }
