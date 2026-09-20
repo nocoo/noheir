@@ -6,7 +6,7 @@ Direction: [README.md](README.md), [runbook](docs/04-run.md), [operations/UI con
 
 ## Sources of Truth
 
-This handbook is the contract; hooks, CI and config enforce it. Raise weaker enforcement to the contract. Preserve the framework-generated footer without allowing it to replace this file.
+This handbook is the contract; hooks, CI and config enforce it. Raise weaker enforcement to the contract. Project rules are maintained only in this AGENTS.md.
 
 | Fact | Where |
 | --- | --- |
@@ -18,7 +18,8 @@ This handbook is the contract; hooks, CI and config enforce it. Raise weaker enf
 
 ## Project Invariants
 
-- Next.js owns UI, Google login, OAuth/MCP and app APIs; Worker owns business/SQL APIs and D1. Never move MCP back into the Worker.
+- Migration target: Vite/React Router with one native Hono Worker owning assets, business APIs, Access verification and MCP OAuth; direct D1 bindings only. See [migration plan](docs/23-workers-migration.md). Until cutover, the current deployed runtime remains Next.js plus the existing API Worker.
+- Access email resolves an existing users.id; never replace financial or MCP ownership keys with Access sub. Unknown/ambiguous users fail closed.
 - Respect per-user ownership and import scope: CSV replaces the selected year's/type's rows; JSON restore currently replaces only income/expense/transfers, not every exported object. Preserve backup limitations explicitly.
 - Keep OAuth endpoints public in `src/proxy.ts` before the protected-page branch. Public `/api/live` performs read-only `SELECT 1`, returns version/database status with no-store and 200/503, and hides private diagnostics.
 - Availability derives from the latest invest log or explicit override, not `start_date`; missing invest history stays unknown. New established units with a product create the proper invest log; planned units do not.
@@ -95,14 +96,3 @@ Authorized releases use `bun run release` and the [runbook](docs/04-run.md). CI 
 Full narratives live in [Retrospective.md](Retrospective.md). Keep recurring rules short; cross-project lessons belong in nmem/global rules and deterministic checks in hooks/tests.
 
 - Do not use sibling `link:` dependencies for container builds; deployed app and Worker versions must both reflect their changed code.
-
-
-<!-- BEGIN:nextjs-agent-rules -->
-
-# This is NOT the Next.js you know
-
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
-
-This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
-
-<!-- END:nextjs-agent-rules -->
