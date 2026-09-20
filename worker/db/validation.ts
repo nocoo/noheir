@@ -32,6 +32,15 @@ const calendarDay = z
   .regex(/^\d{4}-\d{2}-\d{2}$/, "must be YYYY-MM-DD")
   .refine(isRealCalendarDay, { message: "must be a real calendar day" });
 
+export const updateSettingsSchema = z
+  .object({
+    siteName: z.string().optional(),
+    settings: z.string().optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one settings field must be provided",
+  });
+
 // ── Products ──
 
 export const createProductSchema = z

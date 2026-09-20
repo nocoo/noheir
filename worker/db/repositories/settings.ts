@@ -19,12 +19,16 @@ export function createSettingsRepo(db: DrizzleD1Database) {
       userId: string,
       data: Partial<Pick<NewSetting, "siteName" | "settings">>,
     ): Promise<Setting> {
+      const fields = {
+        ...(data.siteName !== undefined ? { siteName: data.siteName } : {}),
+        ...(data.settings !== undefined ? { settings: data.settings } : {}),
+      };
       const existing = await db.select().from(settings).where(eq(settings.ownerId, userId)).get();
 
       if (existing) {
         const updated = await db
           .update(settings)
-          .set(data)
+          .set(fields)
           .where(and(eq(settings.id, existing.id), eq(settings.ownerId, userId)))
           .returning()
           .get();
@@ -33,7 +37,7 @@ export function createSettingsRepo(db: DrizzleD1Database) {
 
       const inserted = await db
         .insert(settings)
-        .values({ ownerId: userId, ...data })
+        .values({ ...fields, ownerId: userId })
         .returning()
         .get();
       return inserted;

@@ -22,6 +22,7 @@ import {
   updateExpenseCategorySchema,
   updateProductSchema,
   updateRecurringExpenseSchema,
+  updateSettingsSchema,
   updateTransactionSchema,
   updateTransferSchema,
   updateUnitSchema,
@@ -1223,7 +1224,11 @@ app.put("/api/settings", async (c) => {
   const userId = c.get("userId");
   const repos = c.get("repos");
   const body = await c.req.json();
-  const row = await repos.settings.upsert(userId, body);
+  const parsed = updateSettingsSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: parsed.error.issues.map((i) => i.message).join("; ") }, 400);
+  }
+  const row = await repos.settings.upsert(userId, stripUndefined(parsed.data));
   return c.json({ settings: row });
 });
 
