@@ -6,48 +6,54 @@ Direction: [README.md](README.md), [runbook](docs/04-run.md), [operations/UI con
 
 ## Sources of Truth
 
-This handbook is the contract; hooks, CI and config enforce it. Raise weaker enforcement to the contract. Project rules are maintained only in this AGENTS.md.
+This handbook is the project contract; hooks, CI and configuration enforce it.
+Raise weaker enforcement to the contract. Maintain project rules only here.
 
 | Fact | Where |
 | --- | --- |
 | Human docs | [README.md](README.md), [docs/README.md](docs/README.md) |
-| Version | Root `package.json`; verify both app and Worker runtime versions when releasing |
+| Version | Root `package.json`, imported by UI and Worker |
 | Enforcement | `.husky/`, parallel hook scripts, CI, root/Worker Vitest |
-| Environment | Ignored `.env.local` / `worker/.dev.vars`; tracked `.env.example` |
+| Runtime configuration | `wrangler.jsonc`, `vite.config.ts`, `.env.example` |
+| Migration and cutover evidence | [Migration plan](docs/23-workers-migration.md) |
 | Accidents | [Retrospective.md](Retrospective.md) |
 
 ## Project Invariants
 
-- Migration target: Vite/React Router with one native Hono Worker owning assets, business APIs, Access verification and MCP OAuth; direct D1 bindings only. See [migration plan](docs/23-workers-migration.md). Until cutover, the current deployed runtime remains Next.js plus the existing API Worker.
-- Access email resolves an existing users.id; never replace financial or MCP ownership keys with Access sub. Unknown/ambiguous users fail closed.
-- Respect per-user ownership and import scope: CSV replaces the selected year's/type's rows; JSON restore currently replaces only income/expense/transfers, not every exported object. Preserve backup limitations explicitly.
-- Keep OAuth endpoints public in `src/proxy.ts` before the protected-page branch. Public `/api/live` performs read-only `SELECT 1`, returns version/database status with no-store and 200/503, and hides private diagnostics.
-- Availability derives from the latest invest log or explicit override, not `start_date`; missing invest history stays unknown. New established units with a product create the proper invest log; planned units do not.
-- Calendar math uses Asia/Shanghai helpers across write paths and fixtures. SQLite queries retain SQLite syntax; parameterize SQL.
-- Domain labels use the shared colored-badge wrappers, never arbitrary Badge colors. Preserve available/soon/locked color rules and full badge mapping in [operations/UI constraints](docs/22-agent-operations.md).
-- App deployments roll only its VPS container on shared `edge`; never disturb shared Caddy/mTLS. Worker code/schema ships separately; no runtime credentials enter the image.
+- One native Hono Worker serves Vite assets, business APIs and OAuth/MCP using the existing D1 binding. No Next.js runtime, Docker deployment, SQL-over-HTTP gateway or shared Worker secret remains in v3.
+- Verify Access signature, issuer, audience and expiry. Normalize verified email and resolve exactly one existing `users.id`; never replace Google-era financial/MCP ownership keys with Access `sub`. Unknown or ambiguous users fail closed.
+- Run the Worker before static assets. Disable workers.dev and preview URLs. Local identity requires an explicit local/test environment and loopback host; production never bypasses verification.
+- Browser mutations require same origin. Derive ownership on the server, ignoring user-id and internal-action headers and ownership fields in JSON.
+- Preserve OAuth issuer, client registrations and token hashes. Machine endpoints perform OAuth/MCP validation; authorize/callback require Access and the same original owner. Preserve single-use PKCE codes and refresh rotation. External Access path precedence is documented in the runbook.
+- CSV transaction import replaces the selected user's whole year of income and expense; transfer import is separate. Validate all rows before a single atomic D1 batch. Keep JSON parameters below D1 limits using chunks; never delete before validation or in a separate request.
+- JSON export includes more than restore. Restore replaces only transactions/transfers across all years. Never claim a complete disaster-recovery backup; use a private D1 export for that purpose.
+- Currency is integer cents. Calendar math uses Asia/Shanghai helpers across writes and fixtures; recurring state end timestamps retain the existing UTC convention. Parameterize SQLite syntax.
+- Availability derives from the latest invest log or explicit override, not `start_date`; missing invest history stays unknown. Established units with a product create the proper invest log; planned units do not.
+- Domain labels use shared colored-badge wrappers. Preserve available/soon/locked colors and the full mapping in [operations/UI constraints](docs/22-agent-operations.md).
+- Retain the existing D1 database. Retiring old Noheir infrastructure must not disturb shared Caddy/mTLS, the shared `edge` network or other VPS applications.
 
 ## Stack / Layout
 
 | Component | Choice |
 | --- | --- |
-| Web | Next.js standalone, React, Auth.js, MCP; `src/app/` |
-| Domain/UI | `src/domain/`, `src/lib/mcp/`, `src/components/`; keep MVVM |
-| Worker/data | Hono/D1, `worker/src/`, `worker/db/schema.ts`, `worker/db/migrations/` |
-| Tooling | Bun, Node 22.12+, TypeScript 7, Biome, Vitest/Playwright |
+| Web | Vite, React, React Router data loaders; `src/app/`, `src/routes.tsx` |
+| Domain/UI | `src/domain/`, `src/components/`; preserve MVVM and Basalt controls |
+| API/auth/MCP | Hono, jose, native MCP Web Standard transport; `worker/src/`, `src/lib/mcp/` |
+| Data | Direct request-scoped D1, Drizzle; `worker/db/`, canonical `worker/db/migrations/` |
+| Tooling | Bun 1.4.2 / Node 26.8.1 in CI, TypeScript 7, Biome, Vitest/Playwright |
 
 ## Commands
 
-Run from root; root and Worker are separate packages. CI currently pins Bun 1.4.2.
+Run from root. Root and Worker remain separate dependency packages for tests.
 
 ```sh
 bun install --frozen-lockfile
 bun install --cwd worker --frozen-lockfile
 bun run prepare
-bun run --cwd worker dev
+bun run db:migrate
+bun run db:seed
 bun run dev
 bun run typecheck
-bun run worker:typecheck
 bun run lint
 bun run build
 bun run test:coverage
@@ -55,44 +61,67 @@ bun run --cwd worker test:coverage
 bun run test:e2e
 bunx playwright install chromium
 bun run test:e2e:bdd
+bun run deploy:check
 ```
 
-Configure `WORKER_URL`/`WORKER_TOKEN` with matching Worker token; the example URL targets production, so choose local 37004 before dev writes. Google login needs `AUTH_SECRET`, `NEXTAUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ALLOWED_EMAILS`. Worker unit tests require a working `better-sqlite3` native module. Follow README for local migrations; do not run remote schema commands for tests.
+Development uses local D1 and `developer@example.test` on port 7004. No production
+credentials or Google client is needed. Worker unit tests need a working
+`better-sqlite3` native module. Root typecheck includes the Worker lane. Keep
+Workers global types out of the browser compiler: DOM and Worker element types
+conflict; use the scoped D1 aliases in `src/worker-types.d.ts`.
 
 ## Verification
 
-6DQ = L1/L2/L3 + G1/G2 + D1. Status: `enforced`, `planned`, `manual`, `N/A`. L1 statements/branches/functions/lines each ≥95%, no skipped/focused tests.
+6DQ = L1/L2/L3 + G1/G2 + D1. Status describes enforcement, not a claim of complete
+coverage. Both L1 suites require statements/branches/functions/lines each >=95%
+in their configured scope. Do not lower thresholds, add exclusions to hide new
+logic, skip/focus tests or bypass hooks.
 
-| Piece | Requirement and current reality | Status | Evidence |
+| Piece | Requirement and scope | Status | Evidence |
 | --- | --- | --- | --- |
-| L1 Web | Four metrics ≥95% in configured logic | enforced | Root Vitest, pre-commit/pre-push/CI |
-| L1 Worker | Four metrics ≥95%, relevant Worker logic included | planned | CI enforces all four ≥95% on configured libraries/validation; broader Worker route coverage remains excluded and planned |
-| L2 | Real HTTP, every endpoint/method, real SQLite | planned | `run-e2e.ts` is enforced in pre-push/CI; full app/MCP surface proof missing |
-| L3 | Authenticated financial/import/backup workflows | planned | Playwright CI currently checks public terms-page smoke only |
-| G1 | Both type lanes and zero-warning/error Biome | planned | Root checks enforced; Worker typecheck not included in root/CI typecheck command |
-| G2 | Required OSV/gitleaks; both locks and pushed commits | planned | Pre-push allows absent tools/skip variables and scans staged secrets; CI scans root lock |
-| D1 | Per-run local state and guard/marker before writes/cleanup | planned | Local HTTP runner rebuilds fixed `worker/.wrangler/state-e2e`; marker/per-run safeguards missing |
-| Build | Next standalone output | enforced | CI `build` preparation |
-| Docs | Schema/operations and evidence remain aligned | manual | Review numbered docs |
+| L1 App | Four metrics >=95% in configured TypeScript logic; UI, wiring and listed domain/service exclusions are outside the coverage denominator | enforced | Root Vitest; pre-commit/pre-push/CI |
+| L1 Worker | Four metrics >=95% for `worker/lib/**/*.ts` and `db/validation.ts`; HTTP entrypoints/repositories outside this unit denominator | enforced | Worker Vitest; pre-commit/pre-push/CI |
+| L2 | Native Worker real HTTP with SQLite, signed JWT failures, ownership, CRUD, OAuth/PKCE/replay/refresh, state races, annual import rollback and backup scope | enforced | `scripts/run-e2e.ts`; pre-push/CI; not a complete endpoint/method coverage claim |
+| L3 | Authenticated route rendering and financial/import/backup/error workflows on built assets | enforced | Playwright CI; acceptance evidence in migration plan |
+| G1 | Both type lanes; zero-warning/error Biome | enforced | Root typecheck and lint; pre-commit/CI |
+| G2 | Required OSV on both locks; redacted gitleaks | enforced | Pre-push and reusable CI security gates |
+| D1 | Per-run local state, marker validation before fixture writes/cleanup, reserved ports, controlled JWKS | enforced | `scripts/test-fixture.ts`, HTTP/browser runners |
+| Build | Vite client/Worker bundles and deployment dry-run | enforced/manual | Build in CI preparation; dry-run during release validation |
+| Docs | Operations, limitations and release evidence aligned | manual | README, handbook and numbered docs |
 
-Hooks run working-tree coverage/lint/types (commit), then coverage/lint/security/HTTP in parallel (push). Required target: check-only index L1/G1 <30s and stdin pushed-ref L2/G2 <3min. Do not use hook bypass or the current `SKIP_SECURITY`/`SKIP_E2E` escape hatches.
+Current hooks check the working tree, not an isolated index. Pre-push secrets scan
+`origin/main..HEAD`, not arbitrary pushed refs from stdin. Index-only L1/G1 under
+30 seconds and pushed-ref L2/G2 under three minutes remain workflow targets;
+never describe them as implemented. Explicitly stage logical commits only.
 
 ## Resources / Isolation
 
 | Purpose | Port / state | Policy |
 | --- | --- | --- |
-| Dev | Next 7004; Worker 37004 | Local configured D1 for development |
-| L2 | 17004 (`E2E_PORT` override), `worker/.wrangler/state-e2e` | Local migrations/Worker; refuses an occupied port |
-| L3 | 27004 | Public smoke only; no verified financial fixtures |
+| Dev | 7004 / `.wrangler/state` | Explicit local binding and local user |
+| L2 | 17004 / per-run temporary SQLite | Real Worker HTTP; signed synthetic identities |
+| L3 | 27004 / independent temporary SQLite | Built client, real Worker and browser fixtures |
 
-Required test design uses local Wrangler/Miniflare with per-run SQLite, explicit local context and `_test_marker` checked before seed/reset/cleanup. Never create remote `-test` resources or use production/daily-dev data as fixtures; retired remote test bindings stay retired.
+Never create remote test resources, seed production, or reuse daily-development
+data. A `_test_marker` and matching private directory marker guard fixture writes
+and cleanup. HTTP/browser runners refuse occupied ports; Playwright does not reuse
+an existing server. Test JWKS is intercepted locally; production Access is not a
+test dependency.
 
 ## Operations / Release
 
-Authorized releases use `bun run release` and the [runbook](docs/04-run.md). CI success triggers the Docker release workflow; Worker changes additionally need `bun run --cwd worker deploy` after migrations. Verify both public `/api/live` versions, not only the app container. GitHub credentials and VPS runtime variable names are documented in [operations](docs/22-agent-operations.md).
+Use `bun run release -- major` for the v3 migration. Subsequent releases choose
+an appropriate semantic bump. The script requires a clean tree, updates the root
+version/changelog, commits and pushes, waits for successful CI and native Worker
+deployment of that revision, verifies live version/build SHA and boundaries, then
+publishes the exact tag and GitHub release. Never publish a tag after a failed gate.
+
+Public `/api/live` performs read-only `SELECT 1`, returns version/build SHA and
+database status with no-store and 200/503, and hides private diagnostics. There is
+no meaningful process uptime contract in the Worker runtime. Follow the runbook
+for Access path policy precedence, DNS cutover, backup, rollback and owner cleanup.
 
 ## Retrospective
 
-Full narratives live in [Retrospective.md](Retrospective.md). Keep recurring rules short; cross-project lessons belong in nmem/global rules and deterministic checks in hooks/tests.
-
-- Do not use sibling `link:` dependencies for container builds; deployed app and Worker versions must both reflect their changed code.
+Full narratives live in [Retrospective.md](Retrospective.md). Cross-project lessons
+belong in global rules/nmem; deterministic protections belong in hooks/tests.

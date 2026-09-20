@@ -1,6 +1,7 @@
 # Native Workers migration (v3)
 
-Status: implementation planned; production remains v2.6.4.
+Status: implementation and local acceptance complete; production remains v2.6.4.
+External Access policy selection and production cutover are pending.
 
 ## Baseline and decision
 
@@ -39,9 +40,12 @@ MCP clients to service tokens. No external Access policy mutation happens until
 that decision is resolved. Current live Access redirects MCP discovery and POST
 requests to interactive login; this must be resolved before cutover.
 
-If OAuth is retained, only the exact metadata, MCP protocol, register, token and
-revoke paths may bypass Access. Authorize and callback stay protected. Never
-bypass `/api/mcp/*` as a whole.
+If OAuth is retained, machine metadata, MCP protocol, register, token and revoke
+paths bypass Access. Access path matching inherits to descendants even without a
+wildcard. First add more-specific authorize/callback destinations to the existing
+protected app, retaining its audience, then add machine-path bypasses. Verify the
+more-specific protected application wins for both human paths; see the runbook.
+The Worker independently verifies the Access JWT on authorize/callback.
 
 ## Frontend and API contract
 
@@ -80,8 +84,8 @@ pushes, changes deployment configuration or touches production.
 | Owner | Files |
 | --- | --- |
 | Pi | Frontend `src/app` pages/actions/client views, components/hooks, router/main, browser API client; relevant frontend tests. Excludes all API/metadata routes and backend MCP/service/db files. |
-| Grok | `worker/src`, `worker/lib`, `worker/db` if needed, backend tests; MCP HTTP routes moved out of `src/app/api`/metadata; `src/lib/db.ts`, `src/lib/mcp`, `src/services/mcp-*`; backend-specific root tests. |
-| Coordinator | Root/Worker package and build config, dependency locks, local test harness, CI/hooks, docs/handbook, release/deployment; integration review. |
+| Grok | Worker libraries, validation, Access middleware, backend unit tests, direct D1 adapter and MCP services. |
+| Coordinator | Worker HTTP/MCP entrypoints; root/Worker config and locks; local test harness and HTTP tests; CI/hooks, docs, release/deployment and integration review. |
 
 Pi provider failures, including `Provider finish_reason: error`, are retried after
 checking actual agent state. Lifecycle waits have a separate time-based monitor.
@@ -89,16 +93,17 @@ checking actual agent state. Lifecycle waits have a separate time-based monitor.
 ## Delivery and acceptance
 
 1. [x] Pull, inventory, baseline tests and architecture audit.
-2. [ ] Commit this plan, canonical project handbook and implementation contract.
-3. [ ] Native Worker auth/MCP/business boundary and Vite routes/client integration.
-4. [ ] Build/type/lint/unit checks; retain all existing coverage floors.
-5. [ ] Isolated local real-HTTP tests with per-run SQLite and a verified test
+2. [x] Commit this plan, canonical project handbook and implementation contract.
+3. [x] Native Worker auth/MCP/business boundary and Vite routes/client integration.
+4. [x] Build/type/lint/unit checks; retain all existing coverage floors.
+5. [x] Isolated local real-HTTP tests with per-run SQLite and a verified test
    marker, signed JWT failures, ownership isolation, OAuth/PKCE/replay/refresh,
    state transitions, import rollback and backup scope.
-6. [ ] Browser acceptance: all routes render, year filtering, financial overview,
+6. [x] Browser acceptance: all routes render, year filtering, financial overview,
    unit commit, recurring rules, import preview/commit, backup and error states.
-7. [ ] Native deployment workflow verifies the successful CI SHA, immutable build
-   revision and live version. Local/CI tests cannot bind production resources.
+7. [x] Implement native deployment workflow with successful-CI source verification,
+   immutable build revision and live checks. Workflow execution remains pending;
+   local/CI tests cannot bind production resources.
 8. [ ] Read-only production identity/count fingerprint, D1 backup, Access path
    policy inspection, deploy and domain cutover; repeat live/data checks.
 9. [ ] Publish v3.0.0 only after successful CI and deployment; update all active
@@ -106,6 +111,44 @@ checking actual agent state. Lifecycle waits have a separate time-based monitor.
 
 Keep commits buildable and grouped by logical boundary. No hook bypasses, lowered
 coverage thresholds, production fixture writes or unverified release claims.
+
+## Local acceptance evidence (2026-09-20)
+
+- Root unit/component suite passes. Coverage: statements 98.21%, branches 96.20%,
+  functions 100%, lines 99.22% in the existing configured scope.
+- Worker unit suite passes. Coverage: statements 99.01%, branches 97.74%,
+  functions 100%, lines 99.77%. No thresholds were lowered or exclusions added.
+- Real HTTP: 178 tests across 18 files pass against native Workerd and local D1.
+  This includes 10,000-row annual import and restore, injected SQL failure after
+  an earlier JSON chunk with full rollback, date/cents validation, ownership,
+  state races, OAuth/PKCE/single-use code/refresh, wrong-owner callback denial,
+  wrong-client refresh rejection without consumption, paired-token revocation
+  and an actual MCP financial query isolated to its original owner.
+- Browser: 40 tests pass against the built client and an independent local
+  Worker. All 33 routes render; year navigation, product/recurring expense
+  creation, CSV preview/commit, backup download, failed reads and capital-unit
+  commit with persisted audit log are covered.
+- Both TypeScript lanes, zero-warning Biome, frozen installs for both locks,
+  OSV for both locks, actionlint and YAML style checks pass. Gitleaks runs again
+  on push. Normal pre-commit hooks passed for the runtime migration commit.
+- Production build and Wrangler dry-run pass; the Worker bundle is approximately
+  292 KiB gzipped. Routes are lazy-loaded. The documented local migrate/seed/dev
+  flow was exercised on an independent temporary D1; `/api/auth/me` and health
+  succeeded. The temporary development database was removed afterward.
+- The private D1 export was restored into in-memory SQLite: 14 tables, 2 users,
+  8,158 transactions. Identity and table-count fingerprints are stored privately
+  for cutover comparison. No remote fixture writes or schema changes occurred.
+- GitHub production deployment credentials were provisioned. The existing DNS,
+  Access applications/policies and old Worker configuration were backed up
+  privately. No DNS or Access policy change, deployment or v3 release has occurred.
+- The upstream `a3f2568` change disables old Worker default/preview URLs; the
+  replacement `wrangler.jsonc` retains both protections.
+
+The migration branch permits code review and CI without triggering a production
+main-push deployment while the MCP Access decision is pending. After selecting
+the policy, integrate main, run the major release entrypoint, verify the exact
+production SHA/version and repeat the private data fingerprint comparison. The
+existing v2 runtime and D1 remain available for rollback.
 
 ## Rollout and rollback
 

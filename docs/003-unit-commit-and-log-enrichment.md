@@ -534,7 +534,7 @@ B2b 指出生产有 132 行 `source='mcp'`，而 `CONTRIBUTION_SOURCES`（`worke
 
 `investment-timeline.tsx` 是**未来预测**的横向甘特条（按产品参数推演锁定/开放周期），与历史无关，**不复用**，原地留在栏2。
 
-操作类型与来源标签必须走 `src/components/ui/colored-badge.tsx`（`CLAUDE.md` 徽章规范）。
+操作类型与来源标签必须走 `src/components/ui/colored-badge.tsx`（`AGENTS.md` 徽章规范）。
 
 **把 `SerializedUnit` 从 `unit-editor.tsx:90` 移到 `src/domain/types.ts`**（它是 `src/app/warehouse/page.tsx:25-44` 和 `funds/page.tsx` 都在构造的领域形状），在 `unit-editor.tsx` 保留 re-export 兼容，避免 `unit-tooltip.tsx:4` 和 4 个新组件都从组件文件 import 类型。
 

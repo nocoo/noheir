@@ -487,7 +487,7 @@ This is more reliable than relying on Agent to read `linked_units_count` and inf
 
 #### 5.3 Coverage Target
 
-Per project standard (CLAUDE.md): **90% line coverage** for MCP tools.
+Current coverage enforcement is defined in [AGENTS.md](../AGENTS.md): all four configured metrics must meet 95%. This document retains the original feature plan; it is not evidence of complete MCP route coverage.
 
 Commands:
 ```bash
@@ -562,5 +562,5 @@ Each commit should be independently deployable and testable. Test files are orga
 1. Agent no longer treats first page as complete result (verifiable by testing with Claude)
 2. "Which units are under product X?" answerable in one MCP call
 3. All paginated tools return `total` and `has_more`
-4. 90% test coverage for new/modified code
+4. Meet the current coverage thresholds and HTTP behavior checks in AGENTS.md
 5. Each commit passes CI independently
