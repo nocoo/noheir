@@ -7,7 +7,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "drizzle-orm": "^0.45.2",
+    "drizzle-orm": "0.45.3",
     "hono": "4.13.8",
     "zod": "4.6.5"
   },
