@@ -72,27 +72,29 @@ conflict; use the scoped D1 aliases in `src/worker-types.d.ts`.
 
 ## Verification
 
-6DQ = L1/L2/L3 + G1/G2 + D1. Status describes enforcement, not a claim of complete
+6DQ = unified L1 (absorbing former G1) + L2/L3 + G2 + D1. Status describes enforcement, not a claim of complete
 coverage. Both L1 suites require statements/branches/functions/lines each >=95%
 in their configured scope. Do not lower thresholds, add exclusions to hide new
 logic, skip/focus tests or bypass hooks.
 
 | Piece | Requirement and scope | Status | Evidence |
 | --- | --- | --- | --- |
-| L1 App | Four metrics >=95% in configured TypeScript logic; UI, wiring and listed domain/service exclusions are outside the coverage denominator | enforced | Root Vitest; pre-commit/pre-push/CI |
-| L1 Worker | Four metrics >=95% for `worker/lib/**/*.ts` and `db/validation.ts`; HTTP entrypoints/repositories outside this unit denominator | enforced | Worker Vitest; pre-commit/pre-push/CI |
+| L1 — complete unified contract | All four coverage metrics >=95% plus strict static lanes on an installed index-snapshot hook with proven rejection, under 30s | planned | Hooks check the working tree, not an isolated index; snapshot scope, rejection proof and timing are unverified. The subcheck rows below describe what is configured today |
+| L1 subcheck — App coverage | Four metrics >=95% in configured TypeScript logic; UI, wiring and listed domain/service exclusions are outside the coverage denominator | enforced | Root Vitest; pre-commit/pre-push/CI |
+| L1 subcheck — Worker coverage | Four metrics >=95% for `worker/lib/**/*.ts` and `db/validation.ts`; HTTP entrypoints/repositories outside this unit denominator | enforced | Worker Vitest; pre-commit/pre-push/CI |
 | L2 | Native Worker real HTTP with SQLite, signed JWT failures, ownership, CRUD, OAuth/PKCE/replay/refresh, state races, annual import rollback and backup scope | enforced | `scripts/run-e2e.ts`; pre-push/CI; not a complete endpoint/method coverage claim |
 | L3 | Authenticated route rendering and financial/import/backup/error workflows on built assets | enforced | Playwright CI; acceptance evidence in migration plan |
-| G1 | Both type lanes; zero-warning/error Biome | enforced | Root typecheck and lint; pre-commit/CI |
+| L1 subcheck — static lanes (former G1) | Both type lanes; zero-warning/error Biome | enforced | Root typecheck and lint; pre-commit/CI; these lanes run on the working tree |
 | G2 | Required OSV on both locks; redacted gitleaks | enforced | Pre-push and reusable CI security gates |
 | D1 | Per-run local state, marker validation before fixture writes/cleanup, reserved ports, controlled JWKS | enforced | `scripts/test-fixture.ts`, HTTP/browser runners |
 | Build | Vite client/Worker bundles and deployment dry-run | enforced/manual | Build in CI preparation; dry-run during release validation |
 | Docs | Operations, limitations and release evidence aligned | manual | README, handbook and numbered docs |
 
 Current hooks check the working tree, not an isolated index. Pre-push secrets scan
-`origin/main..HEAD`, not arbitrary pushed refs from stdin. Index-only L1/G1 under
+`origin/main..HEAD`, not arbitrary pushed refs from stdin. Index-only unified L1 under
 30 seconds and pushed-ref L2/G2 under three minutes remain workflow targets;
-never describe them as implemented. Explicitly stage logical commits only.
+never describe them as implemented. Explicitly stage logical commits only. The owner
+merged former G1 into L1 on 2026-09-21; the framework keeps the 6DQ name.
 
 ## Resources / Isolation
 
