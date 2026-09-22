@@ -1,3 +1,4 @@
+import { Button } from "@nocoo/basalt";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -5,7 +6,6 @@ import {
   createContributionLog,
   updateContributionLog,
 } from "@/app/actions/contribution-log-actions";
-import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,

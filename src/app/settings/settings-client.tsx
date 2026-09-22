@@ -1,9 +1,9 @@
+import { Button } from "@nocoo/basalt";
 import { Save, Settings, Target, TrendingUp } from "lucide-react";
 import { useState, useTransition } from "react";
 import { useRevalidator } from "react-router";
 import { toast } from "sonner";
 import { saveGeneralSettings, saveReturnRateSettings } from "@/app/actions/settings-actions";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";

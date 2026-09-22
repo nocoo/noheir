@@ -20,6 +20,7 @@
 // only talks to Server Actions, surfaces errors inline AND via
 // sonner toast, uses React.useTransition for the pending state.
 
+import { Button } from "@nocoo/basalt";
 import * as React from "react";
 import { toast } from "sonner";
 import {
@@ -31,7 +32,6 @@ import {
   type FrequencyPickerErrors,
   type FrequencyValue,
 } from "@/components/plan/frequency-picker";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";

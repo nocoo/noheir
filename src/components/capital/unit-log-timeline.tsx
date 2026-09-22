@@ -8,13 +8,13 @@
  * they amend history, they are not part of the pending change (docs/003 § 待确认 3).
  */
 
+import { Button } from "@nocoo/basalt";
 import { ArrowDownLeft, ArrowUpRight, Check, History, Pencil, Settings2, X } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { updateContributionLog } from "@/app/actions/contribution-log-actions";
 import { SectionTitle } from "@/components/capital/unit-panel-primitives";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { ProductBadge } from "@/components/ui/colored-badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";

@@ -1,7 +1,7 @@
+import { Button } from "@nocoo/basalt";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { isRouteErrorResponse, useRouteError } from "react-router";
 import { AppShell } from "@/components/layout";
-import { Button } from "@/components/ui/button";
 
 export function RouteErrorBoundary() {
   const error = useRouteError();

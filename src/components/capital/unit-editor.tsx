@@ -1,3 +1,4 @@
+import { Button } from "@nocoo/basalt";
 import { Check, ChevronsUpDown, ExternalLink, Package, Plus, X } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 import { Link } from "react-router";
@@ -5,7 +6,6 @@ import { toast } from "sonner";
 import { createProduct } from "@/app/actions/product-actions";
 import { createUnit } from "@/app/actions/unit-actions";
 import { UnitCommitDialog } from "@/components/capital/unit-commit-dialog";
-import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -404,6 +404,7 @@ function UnitEditorForm({
             <Popover open={productSearchOpen} onOpenChange={setProductSearchOpen}>
               <PopoverTrigger asChild>
                 <Button
+                  type="button"
                   variant="outline"
                   role="combobox"
                   aria-expanded={productSearchOpen}

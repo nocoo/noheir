@@ -1,3 +1,4 @@
+import { Button } from "@nocoo/basalt";
 import { Check, Save, Shield, Tags, TrendingUp } from "lucide-react";
 import { useState, useTransition } from "react";
 import { useRevalidator } from "react-router";
@@ -7,7 +8,6 @@ import {
   saveFixedExpenseCategories,
 } from "@/app/actions/settings-actions";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {

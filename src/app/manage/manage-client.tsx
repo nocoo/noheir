@@ -1,3 +1,4 @@
+import { Button } from "@nocoo/basalt";
 import {
   Activity,
   AlertTriangle,
@@ -20,7 +21,6 @@ import { useNavigate, useRevalidator } from "react-router";
 import { toast } from "sonner";
 import { clearAllData, exportBackup, restoreBackup } from "@/app/actions/data-actions";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";

@@ -6,11 +6,11 @@
  * bottom 保存 (docs/003 § D5). All staging logic lives in unit-commit-plan.ts.
  */
 
+import { Button } from "@nocoo/basalt";
 import { ArrowLeftRight, Calendar, Package, Repeat, X } from "lucide-react";
 import { useState } from "react";
 import { SectionTitle } from "@/components/capital/unit-panel-primitives";
 import { UnitSwapPicker } from "@/components/capital/unit-swap-picker";
-import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,

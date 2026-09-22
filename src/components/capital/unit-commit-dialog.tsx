@@ -8,6 +8,7 @@
  * Creation still uses the single-column UnitEditorForm.
  */
 
+import { Button } from "@nocoo/basalt";
 import { Info } from "lucide-react";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -16,7 +17,6 @@ import { InvestmentTimeline } from "@/components/capital/investment-timeline";
 import { UnitLogTimeline } from "@/components/capital/unit-log-timeline";
 import { UnitOperationsPanel } from "@/components/capital/unit-operations-panel";
 import { SectionTitle } from "@/components/capital/unit-panel-primitives";
-import { Button } from "@/components/ui/button";
 import { DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

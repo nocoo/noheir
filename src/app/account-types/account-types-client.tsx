@@ -1,10 +1,10 @@
+import { Button } from "@nocoo/basalt";
 import { CreditCard, Save } from "lucide-react";
 import { useState, useTransition } from "react";
 import { useRevalidator } from "react-router";
 import { toast } from "sonner";
 import { saveAccountTypes } from "@/app/actions/settings-actions";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,

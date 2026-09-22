@@ -16,6 +16,7 @@
 // - On success the parent `onSuccess` callback runs after the
 //   sonner toast so the parent can close a dialog / navigate.
 
+import { Button } from "@nocoo/basalt";
 import * as React from "react";
 import { toast } from "sonner";
 import {
@@ -23,7 +24,6 @@ import {
   updateExpenseCategory,
 } from "@/app/actions/expense-category-actions";
 import { ColorTokenPicker } from "@/components/plan/color-token-picker";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CHART_TOKENS } from "@/lib/palette";

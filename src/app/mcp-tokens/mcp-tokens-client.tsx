@@ -1,6 +1,6 @@
+import { Button } from "@nocoo/basalt";
 import { Check, Copy, ExternalLink, KeyRound, Terminal } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 

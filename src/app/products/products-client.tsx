@@ -1,3 +1,4 @@
+import { Button } from "@nocoo/basalt";
 import {
   Archive,
   ArchiveRestore,
@@ -18,7 +19,6 @@ import { Link, useNavigate, useRevalidator, useSearchParams } from "react-router
 import { toast } from "sonner";
 import { createProduct, deleteProduct, updateProduct } from "@/app/actions/product-actions";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CategoryBadge, ChannelBadge, CurrencyBadge } from "@/components/ui/colored-badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";

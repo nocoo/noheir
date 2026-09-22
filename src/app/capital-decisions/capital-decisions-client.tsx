@@ -1,3 +1,4 @@
+import { Button } from "@nocoo/basalt";
 import {
   AlertTriangle,
   ArrowDown,
@@ -9,7 +10,6 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CurrencyBadge, StrategyBadge, UnitCodeBadge } from "@/components/ui/colored-badge";
 import {

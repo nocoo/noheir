@@ -25,8 +25,8 @@
 //   - Mutate state. Pause/resume/end actions live on the rule list
 //     (P3-C8), not here.
 
+import { Button } from "@nocoo/basalt";
 import * as React from "react";
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,

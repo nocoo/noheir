@@ -1,3 +1,4 @@
+import { Button } from "@nocoo/basalt";
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -19,7 +20,6 @@ import {
 import { ContributionLogForm } from "@/components/capital/contribution-log-form";
 import { StatCard } from "@/components/shared/stat-card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProductBadge, UnitCodeBadge } from "@/components/ui/colored-badge";
 import {

@@ -1,3 +1,4 @@
+import { Button } from "@nocoo/basalt";
 import {
   ArrowDown,
   ArrowUp,
@@ -16,7 +17,6 @@ import { toast } from "sonner";
 import { deleteUnit } from "@/app/actions/unit-actions";
 import { type SerializedUnit, UnitEditor } from "@/components/capital/unit-editor";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   CurrencyBadge,

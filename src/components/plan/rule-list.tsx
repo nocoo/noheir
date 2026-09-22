@@ -26,6 +26,7 @@
 //     `categoryMap`, `todayIso`. Display status comes from
 //     deriveDisplayStatus (P2-C4) so we don't duplicate the rule.
 
+import { Button } from "@nocoo/basalt";
 import { MoreHorizontal } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
@@ -36,7 +37,6 @@ import {
   resumeRecurringExpense,
 } from "@/app/actions/recurring-expense-state-actions";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,

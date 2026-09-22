@@ -1,6 +1,6 @@
+import { Button } from "@nocoo/basalt";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useTransition } from "react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useYear } from "./year-context";
 
