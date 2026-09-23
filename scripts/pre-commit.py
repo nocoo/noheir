@@ -172,12 +172,14 @@ def main():
         snapshot = temp / "snapshot"
         snapshot.mkdir()
         paths = run(("git", "ls-files", "-z"), root, capture=True).split("\0")[:-1]
-        selected = [
+        private = [
             path for path in paths
-            if not any(part.startswith(".env") and part not in (".env.example", ".env.test") for part in Path(path).parts)
-            and path != "worker/.dev.vars"
+            if any(part.startswith(".env") and part not in (".env.example", ".env.test") for part in Path(path).parts)
+            or path == "worker/.dev.vars"
         ]
-        run(("git", "checkout-index", "--force", "--stdin", "-z", f"--prefix={snapshot}/"), root, input_data="\0".join(selected) + "\0")
+        if private:
+            raise RuntimeError(f"Refusing tracked private environment files: {', '.join(private)}")
+        run(("git", "checkout-index", "--all", "--force", f"--prefix={snapshot}/"), root)
         for relative in DEPENDENCIES:
             link_dependencies(root / relative, snapshot / relative, root, snapshot)
         env = {key: os.environ[key] for key in ("PATH", "HOME", "LANG", "LC_ALL", "DEVELOPER_DIR", "SDKROOT") if key in os.environ}
