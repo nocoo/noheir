@@ -48,7 +48,7 @@ run_phase() {
 
 # ---- pre-commit phases ----
 PC_START="$(ts)"
-bash scripts/precommit-parallel.sh >/tmp/bench-pc-$$.log 2>&1
+sh .husky/pre-commit >/tmp/bench-pc-$$.log 2>&1
 PC_RC=$?
 PC_END="$(ts)"
 if [ $PC_RC -ne 0 ]; then
