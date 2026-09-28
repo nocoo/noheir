@@ -17,7 +17,12 @@ bun run db:seed
 bun run dev
 ```
 
-The Vite development server listens on `http://127.0.0.1:7004`. The Cloudflare
+Open `https://noheir.dev.hexly.ai` in Chrome. Caddy proxies this origin to the
+Vite development server at `http://127.0.0.1:7004`, forwarding the upstream Host
+as `127.0.0.1:7004` for local identity resolution. Local `SITE_URL` must match
+the HTTPS browser origin so POST queries and mutations pass same-origin checks.
+Verify an authenticated POST query when checking this setup; `/api/live` is
+public and cannot prove that browser data loading works. The Cloudflare
 Vite plugin runs the actual Worker with local D1 under `.wrangler/state`.
 `CLOUDFLARE_ENV=local` is set by the development command. Local identity is the
 seeded `developer@example.test` row; it is allowed only on a loopback hostname

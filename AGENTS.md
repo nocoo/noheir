@@ -70,6 +70,10 @@ credentials or Google client is needed. After starting `bun run dev`, open
 verification. Caddy proxies this HTTPS origin to port 7004; loopback HTTP URLs
 are internal upstreams and isolated automated-test endpoints, not the browser
 entrypoint. Verify the existing Caddy mapping before changing local routing.
+Keep local `SITE_URL` set to `https://noheir.dev.hexly.ai` so browser POST
+requests pass the same-origin check. Caddy forwards the loopback upstream Host
+for local identity resolution. Verify an authenticated POST query as well as
+`/api/live` when checking the development origin.
 
 Worker unit tests need a working
 `better-sqlite3` native module. Root typecheck includes the Worker lane. Keep

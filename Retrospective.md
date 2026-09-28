@@ -61,3 +61,14 @@ The active Caddy mapping and HTTPS health endpoint confirmed that
 requires that origin for normal development and manual browser verification.
 Check the project's browser entrypoint before treating a server's listen address
 as the URL to open.
+
+## 2026-09-28 — Health check missed the development origin mismatch
+
+After switching Chrome to the Caddy HTTPS origin, the agent checked only the
+public `/api/live` endpoint and reported success. The local `SITE_URL` still
+pointed to the HTTP upstream. Identity resolution succeeded, but POST-based
+data queries failed the same-origin check with 403 and the UI showed
+`Unauthorized`. Reproducing the same query with each Origin header isolated
+the mismatch. Local `SITE_URL` now matches the Caddy browser origin. Verify
+authenticated data loading and rejection of foreign origins before declaring
+a browser-origin change complete.

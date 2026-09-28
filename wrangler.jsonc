@@ -45,7 +45,7 @@
         "ENVIRONMENT": "local",
         "CF_ACCESS_TEAM_DOMAIN": "nocoo",
         "CF_ACCESS_AUD": "19d100ea22080f644154aad7b35785c1381874d27dec7fd238a2cb8fd7d640ee",
-        "SITE_URL": "http://127.0.0.1:7004",
+        "SITE_URL": "https://noheir.dev.hexly.ai",
         "LOCAL_USER_EMAIL": "developer@example.test"
       },
       "d1_databases": [
