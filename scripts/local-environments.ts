@@ -6,6 +6,19 @@ import { createNativeFixture, TEST_USERS } from "./test-fixture.ts";
 
 export const LOCAL_ORIGIN = "https://noheir.dev.hexly.ai";
 export const PROD_ORIGIN = "https://noheir.hexly.ai";
+const LOGIN_REQUIRED =
+  "Prod 尚未登录或登录已过期。请在终端运行 bun run prod:login，完成浏览器认证后重新选择 Prod。";
+class ProductionAccessError extends Error {}
+
+export function productionHeaders(credential: string, source?: HeadersInit) {
+  const headers = new Headers(source);
+  headers.delete("cookie");
+  headers.delete("Cf-Access-Token");
+  headers.set("Cookie", `CF_Authorization=${credential}`);
+  headers.set("Cf-Access-Jwt-Assertion", credential);
+  return headers;
+}
+
 export type Mode = "demo" | "e2e" | "prod";
 export const isMode = (value: unknown): value is Mode =>
   typeof value === "string" && ["demo", "e2e", "prod"].includes(value);
@@ -55,19 +68,20 @@ export async function createEnvironmentController(options: {
         "cloudflared",
         ["access", "token", "--app", PROD_ORIGIN],
         { timeout: 15_000 },
-      );
+      ).catch(() => {
+        throw new ProductionAccessError(LOGIN_REQUIRED);
+      });
       const credential = stdout.trim();
-      if (credential.split(".").length !== 3)
-        throw new Error("Run bun run prod:login before selecting Prod");
+      if (credential.split(".").length !== 3) throw new ProductionAccessError(LOGIN_REQUIRED);
       const response = await fetch(`${PROD_ORIGIN}/api/auth/me`, {
-        headers: { "Cf-Access-Jwt-Assertion": credential },
+        headers: productionHeaders(credential),
         redirect: "manual",
       });
       if (!response.ok || !response.headers.get("content-type")?.includes("application/json"))
-        throw new Error("Production Access session unavailable; run bun run prod:login");
+        throw new ProductionAccessError(LOGIN_REQUIRED);
       instance.credential = credential;
       const live = await fetch(`${PROD_ORIGIN}/api/live`, {
-        headers: { "Cf-Access-Jwt-Assertion": credential },
+        headers: productionHeaders(credential),
         redirect: "manual",
       });
       console.log("Production backend revision:", await live.text());
@@ -154,7 +168,9 @@ export async function createEnvironmentController(options: {
         return json(
           {
             error:
-              "Environment unavailable. Check launcher output; Prod requires bun run prod:login.",
+              error instanceof ProductionAccessError
+                ? error.message
+                : "Environment unavailable. Check launcher output.",
           },
           503,
         );
@@ -177,13 +193,12 @@ export async function createEnvironmentController(options: {
       headers.delete("host");
       headers.delete("cookie");
       if (instance.mode === "prod") {
-        headers.set("Cf-Access-Jwt-Assertion", instance.credential ?? "");
         if (headers.has("origin")) headers.set("origin", PROD_ORIGIN);
         headers.delete("referer");
         const target = new URL(url.pathname + url.search, PROD_ORIGIN);
         return fetch(target, {
           method: request.method,
-          headers,
+          headers: productionHeaders(instance.credential ?? "", headers),
           body: request.body,
           duplex: "half",
           redirect: "manual",
@@ -224,6 +239,10 @@ export async function createEnvironmentController(options: {
       const response = await pending;
       const headers = new Headers(response.headers);
       headers.delete("set-cookie");
+      if (instance.mode === "prod") {
+        headers.delete("content-encoding");
+        headers.delete("content-length");
+      }
       headers.set("cache-control", "no-store");
       return new Response(response.body, { status: response.status, headers });
     } finally {

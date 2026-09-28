@@ -99,3 +99,18 @@ The regression verifies disabled storage, the selected E2E mode after reload,
 and removal of the one-time fragment. A hosted fixture check also preserves the
 original request method/body; static-only forwarding would falsely report a
 business API failure in the test harness.
+
+
+## 2026-09-28 — Local Prod authentication prerequisite
+
+The initial local Prod proxy was delivered without exercising real Access login.
+Selecting Prod failed because this machine had no cached application token, while
+the UI only showed a generic startup failure. The proxy also supplied only the
+origin assertion header rather than the documented Access authorization cookie.
+
+The proxy now supplies the application cookie server-side, replaces browser
+identity headers, strips upstream compression metadata after Node fetch decoding,
+and gives an explicit login command when credentials are unavailable. Header
+regression tests cover credential replacement. Real login was attempted but the
+Access transfer service timed out; live acceptance remains pending. Fixture tests
+prove isolation, not the availability of a real identity provider or login session.

@@ -2,7 +2,11 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { test } from "node:test";
 import { seedDemo } from "./demo-catalog.ts";
-import { createEnvironmentController, LOCAL_ORIGIN } from "./local-environments.ts";
+import {
+  createEnvironmentController,
+  LOCAL_ORIGIN,
+  productionHeaders,
+} from "./local-environments.ts";
 import { createNativeFixture, TEST_USERS } from "./test-fixture.ts";
 
 const request = (path: string, body?: unknown, id?: string, origin = LOCAL_ORIGIN) =>
@@ -190,4 +194,17 @@ test("Demo catalog persists edits across native restart; cleanup refuses foreign
     createNativeFixture({ resume: { state: "/tmp/foreign", marker: "foreign" } }),
     /foreign/,
   );
+});
+
+test("production edge credentials replace browser identity and cookies", () => {
+  const headers = productionHeaders("server-token", {
+    cookie: "CF_Authorization=browser-token; private=local",
+    "Cf-Access-Jwt-Assertion": "untrusted",
+    "Cf-Access-Token": "untrusted",
+    "Content-Type": "application/json",
+  });
+  assert.equal(headers.get("cookie"), "CF_Authorization=server-token");
+  assert.equal(headers.get("Cf-Access-Jwt-Assertion"), "server-token");
+  assert.equal(headers.has("Cf-Access-Token"), false);
+  assert.equal(headers.get("Content-Type"), "application/json");
 });

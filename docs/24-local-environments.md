@@ -101,11 +101,16 @@ preserving drafts over silently discarding an untracked form. Startup and target
 failures are visible, with a manual selection/reload path.
 
 Prod activation uses `cloudflared access token --app https://noheir.hexly.ai`, then
-verifies `/api/auth/me`. Tokens and cookies are never returned to the local UI.
+verifies `/api/auth/me`. The server supplies the Access `CF_Authorization` cookie
+and the Worker JWT assertion; browser credentials cannot replace them. Missing or
+expired credentials show an actionable `bun run prod:login` message without
+changing the active environment. Tokens and cookies are never returned to the local UI.
 The proxy has one fixed deployed target, validates the local origin, and translates
 Origin for the deployed same-origin check. Frontend SHA and deployed `/api/live`
 revision are logged on activation. Real login, MFA and live Prod proxy behavior
-were **not exercised** in this task; no production data was modified. Automated
+remain **unverified**: the September 28 follow-up found no cached application
+token, and browser login timed out waiting for the Access transfer service. No
+production data was modified. Automated
 entrypoints reject Prod before credentials or network access. The interactive
 browser test harness also explicitly disables the Prod boundary.
 
