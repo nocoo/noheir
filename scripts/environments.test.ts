@@ -23,6 +23,7 @@ test("manual E2E is switchable, fresh on reentry; stale requests never retarget"
     origin: LOCAL_ORIGIN,
     initial: "e2e",
     demoFixture: demo,
+    production: false,
   });
   try {
     const started = await (await controller.handle(
@@ -41,10 +42,33 @@ test("manual E2E is switchable, fresh on reentry; stale requests never retarget"
       request("/api/products", undefined, other.id),
     ))!.json();
     assert.equal(otherRows.products.length, 0);
+    const pendingWrite = controller.handle(
+      request("/api/products", { name: "In-flight old write" }, started.id),
+    );
     const switched = await (await controller.handle(
       control({ action: "switch", instance: started.id, mode: "demo" }),
     ))!.json();
     assert.equal(switched.mode, "demo");
+    assert.equal((await pendingWrite)?.status, 201);
+    const demoProducts = await (await controller.handle(
+      request("/api/products", undefined, switched.id),
+    ))!.json();
+    assert.equal(
+      demoProducts.products.some(
+        (product: { name: string }) => product.name === "In-flight old write",
+      ),
+      false,
+    );
+    assert.equal(
+      (await controller.handle(control({ action: "switch", instance: switched.id, mode: "prod" })))
+        ?.status,
+      503,
+    );
+    assert.equal(
+      (await controller.handle(request("/api/products", undefined, switched.id)))?.status,
+      200,
+    );
+
     assert.equal(
       (await controller.handle(request("/api/products", { name: "Stale write" }, started.id)))
         ?.status,

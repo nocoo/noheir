@@ -88,7 +88,11 @@ export async function switchEnvironment(mode: EnvironmentMode) {
   if (!response.ok) throw new Error(next.error);
   write("localStorage", preferenceKey, next.mode);
   const saved = write("sessionStorage", instanceKey, next.id);
-  window.location.assign(saved ? "/" : `/#noheir-instance=${encodeURIComponent(next.id)}`);
+  if (saved) window.location.assign("/");
+  else {
+    window.history.replaceState(null, "", `/#noheir-instance=${encodeURIComponent(next.id)}`);
+    window.location.reload();
+  }
 }
 
 export async function selectInitialEnvironment(mode: EnvironmentMode) {
@@ -102,5 +106,9 @@ export async function selectInitialEnvironment(mode: EnvironmentMode) {
   if (!response.ok) throw new Error(next.error);
   write("localStorage", preferenceKey, next.mode);
   const saved = write("sessionStorage", instanceKey, next.id);
-  window.location.assign(saved ? "/" : `/#noheir-instance=${encodeURIComponent(next.id)}`);
+  if (saved) window.location.assign("/");
+  else {
+    window.history.replaceState(null, "", `/#noheir-instance=${encodeURIComponent(next.id)}`);
+    window.location.reload();
+  }
 }

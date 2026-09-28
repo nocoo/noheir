@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { chromium, expect } from "@playwright/test";
 import { CATALOG_VERSION, DEMO_ANCHOR } from "./demo-catalog.ts";
@@ -22,8 +22,16 @@ let hosted = false;
 const server = createServer((req, res) => {
   const serveAssets = () => {
     void (async () => {
+      const chunks: Buffer[] = [];
+      for await (const chunk of req) chunks.push(chunk);
       const response = await fixture.mf.dispatchFetch(new URL(req.url ?? "/", origin), {
-        headers: { "Cf-Access-Jwt-Assertion": fixture.tokens[TEST_USERS[0] ?? ""] ?? "" },
+        method: req.method ?? "GET",
+        headers: {
+          "Cf-Access-Jwt-Assertion": fixture.tokens[TEST_USERS[0] ?? ""] ?? "",
+          Origin: origin,
+          "Content-Type": "application/json",
+        },
+        body: chunks.length ? Buffer.concat(chunks) : null,
       });
       res.writeHead(response.status, Object.fromEntries(response.headers));
       res.end(Buffer.from(await response.arrayBuffer()));
@@ -74,6 +82,7 @@ try {
       original,
     );
     assert.equal(await page.evaluate(() => localStorage.getItem("noheir:environment-mode")), "e2e");
+    await expect(input).toHaveValue("synthetic-unsaved-key");
     page.once("dialog", (dialog) => dialog.accept());
     await page.getByRole("radio", { name: "Demo", exact: true }).click();
     await expect(page.getByRole("radio", { name: "Demo", exact: true })).toHaveAttribute(
@@ -125,40 +134,10 @@ try {
       "prod",
     );
   }
-  const routes = [
-    "/",
-    "/income",
-    "/expense",
-    "/flow",
-    "/savings",
-    "/compare",
-    "/account",
-    "/account-detail",
-    "/financial-health",
-    "/capital-dashboard",
-    "/capital-decisions",
-    "/capital-logs",
-    "/liquidity",
-    "/products",
-    "/strategy",
-    "/warehouse",
-    "/plan/calendar",
-    "/plan/categories",
-    "/settings",
-    "/category-settings",
-    "/account-types",
-    "/balance-anchors",
-    "/ai-insight",
-    "/ai-settings",
-    "/mcp-tokens",
-    "/manage",
-    "/quality",
-    "/import",
-    "/freedom",
-    "/terms",
-    "/privacy",
-    "/login",
-  ];
+  const routes = [...readFileSync("src/routes.tsx", "utf8").matchAll(/path: "([^"]+)"/g)].flatMap(
+    (match) => (match[1] ? [match[1]] : []),
+  );
+  assert.equal(routes.length, 33);
   const directory = `test-results/environments-${new Date().toISOString().replace(/[:.]/g, "-")}`;
   mkdirSync(directory, { recursive: true });
   const failed: string[] = [];
@@ -243,7 +222,7 @@ try {
       2,
     ),
   );
-  console.log(`32 条页面加载及媒体验证通过；证据：${directory}`);
+  console.log(`33 条页面加载及媒体验证通过；证据：${directory}`);
   await context.close();
 } finally {
   await browser.close();

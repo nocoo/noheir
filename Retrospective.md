@@ -91,3 +91,11 @@ later probes passed. The server now returns 503 during initialization and only
 exposes the fixture after setup. The capture harness also caught duplicate
 cleanup of one owned fixture; controller ownership now performs that cleanup
 once. Successful page captures alone are not successful runner lifecycle evidence.
+
+The storage-disabled browser scenario exposed another lifecycle issue: navigating
+from `/` to a fragment only changes browser history and does not rerun bootstrap.
+The accepted instance handoff now replaces the fragment and explicitly reloads.
+The regression verifies disabled storage, the selected E2E mode after reload,
+and removal of the one-time fragment. A hosted fixture check also preserves the
+original request method/body; static-only forwarding would falsely report a
+business API failure in the test harness.

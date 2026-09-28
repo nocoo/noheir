@@ -13,7 +13,7 @@ bun run build
 bun run dev:built                  # local built client, same switch
 bun run demo:reset                 # stop port 7004 first; resets owned Demo only
 bun run test:environments          # native lifecycle, auth and isolation checks
-bun run test:environments:browser  # disposable interactive harness + 32 routes
+bun run test:environments:browser  # disposable interactive harness + 33 routes
 bun run test:e2e                   # existing signed-identity HTTP suite
 bun run test:e2e:bdd               # dedicated locked browser E2E
 bun run demo:capture               # rich catalog in disposable, hidden-control E2E
@@ -144,7 +144,7 @@ reviewed. A static screenshot does not prove all controls on that page were used
 | `/`, `/income`, `/expense`, `/savings` | Three years, meaningful categories/tags, coherent totals and trends | L; A: year revalidation, search and CRUD in HTTP suite | V: overview and trend surfaces |
 | `/flow`, `/compare`, `/financial-health`, `/freedom` | Income, spending, category mix, savings targets and annual comparison | L; A: report HTTP suite | V: flow, comparison, radar and projections |
 | `/account`, `/account-detail`, `/account-types`, `/balance-anchors` | Four accounts, paired transfers, debit/credit/prepaid/financial types and opening anchors | L; A: settings and transfer HTTP checks | V: account chart, details and configuration |
-| `/capital-dashboard`, `/capital-decisions`, `/warehouse`, `/liquidity`, `/strategy` | All unit statuses, CNY/USD/HKD, strategies/tactics, available/soon/locked/unknown, cyclic product and explicit override | L; A: unit commit/CAS, ownership and availability HTTP/unit scenarios | V: dashboard, badges, warehouse, liquidity and sunburst |
+| `/capital-dashboard`, `/capital-decisions`, `/funds`, `/warehouse`, `/liquidity`, `/strategy` | All unit statuses, CNY/USD/HKD, strategies/tactics, available/soon/locked/unknown, cyclic product and explicit override | L; A: unit commit/CAS, ownership and availability HTTP/unit scenarios | V: dashboard, badges, warehouse, liquidity and sunburst |
 | `/products`, `/capital-logs` | Active/archived products, investment logs, deleted withdraw/adjust with P&L | L; A: browser product create and capital commit; HTTP log restore/delete | V: products table and timeline |
 | `/plan/calendar`, `/plan/categories` | Daily/weekly/monthly/yearly, active/paused/ended, four color tokens | L; A: browser creation and HTTP recurrence transitions/category CRUD | V: populated calendar and colored categories |
 | `/settings`, `/category-settings` | Savings/return targets, active income and fixed expense classifications | L; A: settings HTTP write/read | V: sliders and category surfaces |
@@ -158,6 +158,6 @@ reviewed. A static screenshot does not prove all controls on that page were used
 Captures and `manifest.json` are written to ignored
 `test-results/environments-<timestamp>/`. The manifest records revision, fixture
 version, all routes, viewport, locale, timezone, anchor and media/API failures.
-The 2026-09-28 review covered the 32-route contact sheet plus the detailed local
+The 2026-09-28 review covered the 33-route contact sheet plus the detailed local
 switch/overview and selected financial/planning pages. These are synthetic-only
 local artifacts, not published screenshots.
