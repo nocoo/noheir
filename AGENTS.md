@@ -22,7 +22,7 @@ Raise weaker enforcement to the contract. Maintain project rules only here.
 
 - One native Hono Worker serves Vite assets, business APIs and OAuth/MCP using the existing D1 binding. No Next.js runtime, Docker deployment, SQL-over-HTTP gateway or shared Worker secret remains in v3.
 - Verify Access signature, issuer, audience and expiry. Normalize verified email and resolve exactly one existing `users.id`; never replace Google-era financial/MCP ownership keys with Access `sub`. Unknown or ambiguous users fail closed.
-- Run the Worker before static assets. Disable workers.dev and preview URLs. Local identity requires an explicit local/test environment and loopback host; production never bypasses verification.
+- Run the Worker before static assets. Disable workers.dev and preview URLs. Demo/E2E use launcher-issued signed fixture identities with controlled JWKS; no environment or loopback host bypasses verification.
 - Browser mutations require same origin. Derive ownership on the server, ignoring user-id and internal-action headers and ownership fields in JSON.
 - Preserve OAuth issuer, client registrations and token hashes. Machine endpoints perform OAuth/MCP validation; authorize/callback require Access and the same original owner. Preserve single-use PKCE codes and refresh rotation. External Access path precedence is documented in the runbook.
 - CSV transaction import replaces the selected user's whole year of income and expense; transfer import is separate. Validate all rows before a single atomic D1 batch. Keep JSON parameters below D1 limits using chunks; never delete before validation or in a separate request.
@@ -50,9 +50,14 @@ Run from root. Root and Worker remain separate dependency packages for tests.
 bun install --frozen-lockfile
 bun install --cwd worker --frozen-lockfile
 bun run prepare
-bun run db:migrate
-bun run db:seed
 bun run dev
+bun run dev --mode e2e
+bun run build
+bun run dev:built
+bun run demo:reset
+bun run test:environments
+bun run test:environments:browser
+bun run demo:capture
 bun run typecheck
 bun run lint
 bun run build
@@ -64,16 +69,22 @@ bun run test:e2e:bdd
 bun run deploy:check
 ```
 
-Development uses local D1 and `developer@example.test` on port 7004. No production
-credentials or Google client is needed. After starting `bun run dev`, open
-`https://noheir.dev.hexly.ai` in Chrome for normal development and manual browser
-verification. Caddy proxies this HTTPS origin to port 7004; loopback HTTP URLs
-are internal upstreams and isolated automated-test endpoints, not the browser
-entrypoint. Verify the existing Caddy mapping before changing local routing.
-Keep local `SITE_URL` set to `https://noheir.dev.hexly.ai` so browser POST
-requests pass the same-origin check. Caddy forwards the loopback upstream Host
-for local identity resolution. Verify an authenticated POST query as well as
-`/api/live` when checking the development origin.
+Development uses native local D1 and signed synthetic identities. Open
+`https://noheir.dev.hexly.ai` in Chrome after `bun run dev`. The local-only
+`Demo | E2E | Prod` control uses app-specific preferences; manual E2E remains
+switchable, while dedicated automated entrypoints enforce a separate server lock.
+Demo persists in `.wrangler/environments/demo`; E2E uses owned temporary state.
+The old `.wrangler/state` remains untouched and is not an active entrypoint.
+Stop port 7004 before `bun run demo:reset`; reset validates ownership and never
+imports or deletes old development data. Build before standalone HTTP/browser tests.
+Browser checks and captures share reserved port 27004 and run sequentially.
+
+See [environment architecture and feature matrix](docs/24-local-environments.md)
+for exact startup, reset, capture, authentication and verification details.
+`bun run prod:login` and `bun run dev --mode prod` are explicit real operations;
+automated tests never load production credentials. Local proxy targets are fixed,
+all business requests are instance-bound, and stale instances return 410.
+Do not replace signed auth with local email, mode or client-header bypasses.
 
 Worker unit tests need a working
 `better-sqlite3` native module. Root typecheck includes the Worker lane. Keep
@@ -111,7 +122,7 @@ merged former G1 into L1 on 2026-09-21; the framework keeps the 6DQ name.
 
 | Purpose | Port / state | Policy |
 | --- | --- | --- |
-| Dev | 7004 / `.wrangler/state` | Explicit local binding and local user |
+| Demo / manual E2E | 7004 / persistent Demo or owned temporary D1 | Caddy HTTPS; signed fixture identity; switchable |
 | L2 | 17004 / per-run temporary SQLite | Real Worker HTTP; signed synthetic identities |
 | L3 | 27004 / independent temporary SQLite | Built client, real Worker and browser fixtures |
 

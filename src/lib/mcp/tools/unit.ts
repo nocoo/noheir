@@ -94,7 +94,7 @@ export function enrichWithAvailability(
   const availability = computeAvailability(
     latestInvestLog ? { operationDate: latestInvestLog.operation_date } : null,
     product,
-    new Date(),
+    undefined,
     unit.available_date_override ?? null,
   );
 

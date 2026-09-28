@@ -1,3 +1,5 @@
+declare const __PRESENTATION_DATE__: string | null;
+
 export interface AvailabilityInfo {
   availableDate: string | null;
   isAvailable: boolean;
@@ -19,7 +21,9 @@ export interface ProductLockInfo {
 export function computeAvailability(
   latestInvestLog: LatestInvestLog | null,
   product: ProductLockInfo | null,
-  today: Date = new Date(),
+  today: Date = new Date(
+    typeof __PRESENTATION_DATE__ === "string" ? __PRESENTATION_DATE__ : Date.now(),
+  ),
   availableDateOverride: string | null = null,
 ): AvailabilityInfo {
   const latestInvestDate = latestInvestLog?.operationDate ?? null;

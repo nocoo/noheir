@@ -68,22 +68,24 @@ protection when allowing machine endpoints. See the [runbook](docs/04-run.md#mcp
 ## Development
 
 CI pins Bun 1.4.2 and Node 26.8.1. Install the root application and Worker test
-package, initialize local D1, then run the integrated Worker/Vite server:
+package, then start the native local Demo runtime:
 
 ```sh
 git clone https://github.com/nocoo/noheir.git
 cd noheir
 bun install --frozen-lockfile
 bun install --cwd worker --frozen-lockfile
-bun run db:migrate
-bun run db:seed
 bun run dev
 ```
 
-Open `http://127.0.0.1:7004`. Development uses local D1 and a seeded local user.
-It needs no Google client, shared Worker secret or production database access.
-`wrangler.jsonc` defines distinct production/local/test bindings. Never use a
-production database as a test fixture.
+Open `https://noheir.dev.hexly.ai`. Local `Demo | E2E | Prod` switching uses
+real APIs with persistent synthetic Demo or disposable native D1 fixtures.
+Authentication stays active through signed fixture identities. Existing local
+data is preserved; production is never an automated test target.
+See [environment commands and feature matrix](docs/24-local-environments.md).
+
+本地默认进入持久化 Demo，可切换到每次新建的 E2E。右上角环境切换仅本地显示；
+自动化 E2E 由启动器锁定。演示数据全部合成，原本地数据保留，测试不连接生产。
 
 ```text
 src/app/             Financial pages and typed browser operations

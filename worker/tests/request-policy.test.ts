@@ -2,62 +2,11 @@ import { describe, expect, test } from "vitest";
 import {
   extractAccessJwt,
   isApiPath,
-  isLocalBypassAllowed,
-  isLocalOrTestEnvironment,
-  isLoopbackHostname,
   isMutatingMethod,
   isPublicRoute,
   isSameOriginRequest,
   publicRouteKind,
 } from "../lib/request-policy";
-
-describe("local bypass", () => {
-  test("production never bypasses, even on loopback with LOCAL_USER_EMAIL", () => {
-    expect(
-      isLocalBypassAllowed({
-        environment: "production",
-        hostname: "localhost",
-        localUserEmail: "owner@example.com",
-      }),
-    ).toBe(false);
-    expect(isLocalOrTestEnvironment("production")).toBe(false);
-  });
-
-  test("requires local/test + loopback + configured email", () => {
-    expect(
-      isLocalBypassAllowed({
-        environment: "local",
-        hostname: "localhost",
-        localUserEmail: "owner@example.com",
-      }),
-    ).toBe(true);
-    expect(
-      isLocalBypassAllowed({
-        environment: "test",
-        hostname: "127.0.0.1",
-        localUserEmail: "owner@example.com",
-      }),
-    ).toBe(true);
-    expect(
-      isLocalBypassAllowed({
-        environment: "local",
-        hostname: "noheir.hexly.ai",
-        localUserEmail: "owner@example.com",
-      }),
-    ).toBe(false);
-    expect(
-      isLocalBypassAllowed({ environment: "local", hostname: "localhost", localUserEmail: "  " }),
-    ).toBe(false);
-  });
-
-  test("loopback hostnames", () => {
-    expect(isLoopbackHostname("localhost")).toBe(true);
-    expect(isLoopbackHostname("127.0.0.1")).toBe(true);
-    expect(isLoopbackHostname("[::1]")).toBe(true);
-    expect(isLoopbackHostname("::1")).toBe(true);
-    expect(isLoopbackHostname("example.com")).toBe(false);
-  });
-});
 
 describe("public routes", () => {
   test("live, well-known, and exact MCP machine paths only", () => {

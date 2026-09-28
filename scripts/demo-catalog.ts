@@ -1,7 +1,7 @@
 import type { createNativeFixture } from "./test-fixture.ts";
 import { TEST_USERS } from "./test-fixture.ts";
 
-export const CATALOG_VERSION = 1;
+export const CATALOG_VERSION = 2;
 export const DEMO_ANCHOR = "2026-09-28T12:00:00+08:00";
 export const fixtureId = (n: number) => `d0000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 
@@ -67,7 +67,8 @@ export async function seedDemo(fixture: Awaited<ReturnType<typeof createNativeFi
           day: 15,
           type,
           primary_category: primary,
-          secondary_category: secondary,
+          secondary_category: year === 2026 && month === 9 && index === 6 ? null : secondary,
+          has_secondary_mapping: year === 2026 && month === 9 && index === 6 ? 0 : 1,
           tertiary_category: tertiary,
           amount_cents: amount,
           account,
@@ -260,8 +261,18 @@ export async function seedDemo(fixture: Awaited<ReturnType<typeof createNativeFi
       max_return_rate: 6,
       active_income_categories: ["职业收入"],
       fixed_expense_categories: ["居住", "医疗"],
-      account_types: [{ accountName: "工资账户", accountType: "cash" }],
-      balance_anchors: [],
+      account_types: [
+        { accountName: "工资账户", type: "debit" },
+        { accountName: "日常钱包", type: "prepaid" },
+        { accountName: "储蓄账户", type: "financial" },
+        { accountName: "旅行账户", type: "credit" },
+      ],
+      balance_anchors: [
+        { accountName: "工资账户", date: "2024-01-01", balance: 80000 },
+        { accountName: "日常钱包", date: "2024-01-01", balance: 6000 },
+        { accountName: "储蓄账户", date: "2024-01-01", balance: 250000 },
+        { accountName: "旅行账户", date: "2024-01-01", balance: 0 },
+      ],
       ai_config: {
         enabled: false,
         baseURL: "https://example.invalid/v1",
@@ -269,6 +280,42 @@ export async function seedDemo(fixture: Awaited<ReturnType<typeof createNativeFi
         apiKey: "",
       },
     }),
+  });
+  insert("mcp_clients", {
+    id: fixtureId(6000),
+    client_id: "noheir-demo-client",
+    client_name: "演示财务助手",
+    client_uri: "https://example.invalid",
+    redirect_uris: '["https://example.invalid/callback"]',
+    grant_types: '["authorization_code","refresh_token"]',
+    response_types: '["code"]',
+    token_endpoint_auth_method: "none",
+    scope: "noheir:read noheir:write",
+  });
+  for (const [i, scope] of ["noheir:read", "noheir:read noheir:write", "noheir:read"].entries()) {
+    const hash = await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode(`noheir-synthetic-display-token-${i}`),
+    );
+    insert("mcp_tokens", {
+      id: fixtureId(6100 + i),
+      access_token_hash: Buffer.from(hash).toString("hex"),
+      access_token_preview: `demo_${i}_synthetic`,
+      client_id: "noheir-demo-client",
+      user_id: owner,
+      scope,
+      client_name: ["只读分析助手", "已撤销的编辑助手", "已过期的历史会话"][i],
+      issued_at: "2026-09-01T00:00:00.000Z",
+      expires_at: i === 2 ? "2026-09-02T00:00:00.000Z" : "2099-01-01T00:00:00.000Z",
+      revoked: i === 1 ? 1 : 0,
+      revoked_at: i === 1 ? "2026-09-20T00:00:00.000Z" : null,
+    });
+  }
+  insert("financial_products", {
+    id: fixtureId(7000),
+    user_id: TEST_USERS[1],
+    name: "另一合成账户的私有资产",
+    currency: "CNY",
   });
   insert("_demo_catalog", { version: CATALOG_VERSION, anchor: DEMO_ANCHOR });
   await fixture.assertMarker();

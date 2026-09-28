@@ -8,6 +8,7 @@ import {
 import { Menu } from "lucide-react";
 import { Suspense, useEffect, useMemo } from "react";
 import { useLocation } from "react-router";
+import { EnvironmentSwitch } from "@/components/environment-switch";
 import { GithubIcon } from "@/components/icons/github-icon";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import {
@@ -157,6 +158,7 @@ function AppShellInner({
                 </a>
               </HeaderTooltip>
               <HexlyLink />
+              <EnvironmentSwitch />
               <ThemeToggle />
             </>
           }

@@ -1,3 +1,4 @@
+import { environmentFetch } from "@/components/environment-runtime";
 /**
  * Browser API client for the noheir backend.
  *
@@ -30,7 +31,7 @@ export class WorkerDbClient {
     if (body !== undefined) {
       init.body = JSON.stringify(body);
     }
-    const res = await fetch(path, init);
+    const res = await environmentFetch(path, init);
 
     if (!res.ok) {
       const text = await res.text().catch(() => "Unknown error");
@@ -57,7 +58,7 @@ export class WorkerDbClient {
 
   async health(): Promise<boolean> {
     try {
-      const res = await fetch("/api/live");
+      const res = await environmentFetch("/api/live");
       return res.ok;
     } catch {
       return false;

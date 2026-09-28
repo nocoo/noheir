@@ -26,16 +26,31 @@ export async function createTestFixture(port: number) {
 export const DEMO_STATE = resolve(".wrangler/environments/demo");
 
 export async function createNativeFixture(
-  options: { port?: number; siteOrigin?: string; persistentDemo?: boolean } = {},
+  options: {
+    port?: number;
+    siteOrigin?: string;
+    persistentDemo?: boolean;
+    presentationDate?: string;
+    resume?: { state: string; marker: string };
+  } = {},
 ) {
   const port = options.port ?? 0;
-  const state = options.persistentDemo ? DEMO_STATE : mkdtempSync(join(tmpdir(), "noheir-test-"));
-  const fresh = !options.persistentDemo || !existsSync(state);
+  if (
+    options.resume &&
+    (options.persistentDemo || !options.resume.state.startsWith(join(tmpdir(), "noheir-test-")))
+  )
+    throw new Error("Refusing foreign fixture resume");
+  const state =
+    options.resume?.state ??
+    (options.persistentDemo ? DEMO_STATE : mkdtempSync(join(tmpdir(), "noheir-test-")));
+  const fresh = !options.resume && (!options.persistentDemo || !existsSync(state));
   if (fresh) mkdirSync(state, { recursive: true, mode: 0o700 });
   if (realpathSync(state) !== state && realpathSync(state) !== resolve("/private", state.slice(1)))
     throw new Error("Refusing symlinked fixture state");
   const markerPath = join(state, "marker");
   const marker = fresh ? crypto.randomUUID() : readFileSync(markerPath, "utf8");
+  if (options.resume && marker !== options.resume.marker)
+    throw new Error("Fixture resume marker mismatch");
   if (fresh) writeFileSync(markerPath, marker, { mode: 0o600 });
   const pair = await generateKeyPair("RS256");
   const jwk = { ...(await exportJWK(pair.publicKey)), kid: "local-test", alg: "RS256", use: "sig" };
@@ -66,7 +81,10 @@ export async function createNativeFixture(
     target: "es2022",
     conditions: ["workerd", "worker", "browser"],
     external: ["node:*"],
-    define: { __BUILD_SHA__: JSON.stringify("test-build") },
+    define: {
+      __BUILD_SHA__: JSON.stringify("test-build"),
+      __PRESENTATION_DATE__: JSON.stringify(options.presentationDate ?? null),
+    },
   });
   const script = bundle.outputFiles[0]?.text;
   if (!script) throw new Error("Worker bundle missing");
@@ -79,13 +97,12 @@ export async function createNativeFixture(
       script,
       compatibilityDate: runtime.compatibility_date,
       compatibilityFlags: runtime.compatibility_flags,
-      isolatedResourcePersistencePath: state,
+      resourcePersistencePath: state,
       d1Databases: ["DB"],
       bindings: {
         ENVIRONMENT: "production",
         CF_ACCESS_TEAM_DOMAIN: "nocoo",
         CF_ACCESS_AUD: TEST_AUD,
-        LOCAL_USER_EMAIL: "",
         SITE_URL: origin,
         BUILD_SHA: "test-build",
       },

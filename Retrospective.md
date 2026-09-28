@@ -72,3 +72,22 @@ data queries failed the same-origin check with 403 and the UI showed
 the mismatch. Local `SITE_URL` now matches the Caddy browser origin. Verify
 authenticated data loading and rejection of foreign origins before declaring
 a browser-origin change complete.
+
+## 2026-09-28 — Persistence verification caught a Miniflare option mismatch
+
+The inherited test fixture set `isolatedResourcePersistencePath`. With the
+installed Miniflare 5 converter and shared storage disabled, the effective root
+comes from `resourcePersistencePath`; a same-process CRUD check did not prove
+persistence. The new close/reopen test caught the missing marker table before
+acceptance. The native fixture now uses the correct option, and the test checks
+that both the catalog and an edited product survive a new runtime. The initial
+Demo marker directory was preserved separately; the original `.wrangler/state`
+was never changed. Test state ownership must be checked in both the filesystem
+and the database, and persistence must be proved across runtime destruction.
+
+A second check caught the browser server reserving its port before installing a
+request handler. An early Playwright readiness request could hang even though
+later probes passed. The server now returns 503 during initialization and only
+exposes the fixture after setup. The capture harness also caught duplicate
+cleanup of one owned fixture; controller ownership now performs that cleanup
+once. Successful page captures alone are not successful runner lifecycle evidence.

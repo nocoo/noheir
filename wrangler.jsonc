@@ -26,8 +26,7 @@
     "ENVIRONMENT": "production",
     "CF_ACCESS_TEAM_DOMAIN": "nocoo",
     "CF_ACCESS_AUD": "19d100ea22080f644154aad7b35785c1381874d27dec7fd238a2cb8fd7d640ee",
-    "SITE_URL": "https://noheir.hexly.ai",
-    "LOCAL_USER_EMAIL": ""
+    "SITE_URL": "https://noheir.hexly.ai"
   },
   "d1_databases": [
     {
@@ -36,45 +35,5 @@
       "database_id": "586c101d-df19-4e1f-a946-42151c1e199d",
       "migrations_dir": "worker/db/migrations"
     }
-  ],
-  "env": {
-    "local": {
-      "name": "noheir-local",
-      "routes": [],
-      "vars": {
-        "ENVIRONMENT": "local",
-        "CF_ACCESS_TEAM_DOMAIN": "nocoo",
-        "CF_ACCESS_AUD": "19d100ea22080f644154aad7b35785c1381874d27dec7fd238a2cb8fd7d640ee",
-        "SITE_URL": "https://noheir.dev.hexly.ai",
-        "LOCAL_USER_EMAIL": "developer@example.test"
-      },
-      "d1_databases": [
-        {
-          "binding": "DB",
-          "database_name": "noheir-local",
-          "database_id": "local-noheir",
-          "migrations_dir": "worker/db/migrations"
-        }
-      ]
-    },
-    "test": {
-      "name": "noheir-test",
-      "routes": [],
-      "vars": {
-        "ENVIRONMENT": "test",
-        "CF_ACCESS_TEAM_DOMAIN": "nocoo",
-        "CF_ACCESS_AUD": "19d100ea22080f644154aad7b35785c1381874d27dec7fd238a2cb8fd7d640ee",
-        "SITE_URL": "http://127.0.0.1:27004",
-        "LOCAL_USER_EMAIL": "e2e-user-alpha@test.local"
-      },
-      "d1_databases": [
-        {
-          "binding": "DB",
-          "database_name": "noheir-test",
-          "database_id": "test-noheir",
-          "migrations_dir": "worker/db/migrations"
-        }
-      ]
-    }
-  }
+  ]
 }

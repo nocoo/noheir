@@ -1,31 +1,4 @@
-const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]", "::1"]);
-
 export const MCP_ISSUER = "https://noheir.hexly.ai";
-
-export type EnvironmentName = "production" | "local" | "test" | string;
-
-export function isLoopbackHostname(hostname: string): boolean {
-  const host = hostname.trim().toLowerCase().replace(/\.$/, "");
-  return LOOPBACK_HOSTS.has(host);
-}
-
-export function isLocalOrTestEnvironment(environment: string | undefined): boolean {
-  return environment === "local" || environment === "test";
-}
-
-/**
- * Local identity bypass: explicit local/test env AND loopback request host
- * AND a configured LOCAL_USER_EMAIL. Production never qualifies.
- */
-export function isLocalBypassAllowed(input: {
-  environment: string | undefined;
-  hostname: string;
-  localUserEmail: string | undefined;
-}): boolean {
-  if (!isLocalOrTestEnvironment(input.environment)) return false;
-  if (!isLoopbackHostname(input.hostname)) return false;
-  return Boolean(input.localUserEmail?.trim());
-}
 
 export function isMutatingMethod(method: string): boolean {
   const m = method.toUpperCase();

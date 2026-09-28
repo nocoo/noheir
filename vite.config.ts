@@ -9,13 +9,17 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    cloudflare({
-      remoteBindings: false,
-      inspectorPort: false,
-      persistState: { path: process.env.NOHEIR_TEST_STATE ?? ".wrangler/state" },
-    }),
+    ...(process.env.NOHEIR_INTERACTIVE === "1"
+      ? []
+      : [
+          cloudflare({
+            remoteBindings: false,
+            inspectorPort: false,
+          }),
+        ]),
   ],
   define: {
+    __PRESENTATION_DATE__: "null",
     __BUILD_SHA__: JSON.stringify(
       execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
     ),

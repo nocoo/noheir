@@ -12,22 +12,17 @@ Use Bun 1.4.2 and Node 26.8.1 (the CI versions). Install both test packages:
 ```sh
 bun install --frozen-lockfile
 bun install --cwd worker --frozen-lockfile
-bun run db:migrate
-bun run db:seed
 bun run dev
 ```
 
-Open `https://noheir.dev.hexly.ai` in Chrome. Caddy proxies this origin to the
-Vite development server at `http://127.0.0.1:7004`, forwarding the upstream Host
-as `127.0.0.1:7004` for local identity resolution. Local `SITE_URL` must match
-the HTTPS browser origin so POST queries and mutations pass same-origin checks.
-Verify an authenticated POST query when checking this setup; `/api/live` is
-public and cannot prove that browser data loading works. The Cloudflare
-Vite plugin runs the actual Worker with local D1 under `.wrangler/state`.
-`CLOUDFLARE_ENV=local` is set by the development command. Local identity is the
-seeded `developer@example.test` row; it is allowed only on a loopback hostname
-with an explicit local environment. Do not substitute a production binding.
-No Google OAuth, shared Worker secret or production credentials are needed.
+Open `https://noheir.dev.hexly.ai` in Chrome. Caddy proxies to the local launcher
+on 127.0.0.1:7004. Demo and manual E2E execute the production Worker, migrations,
+D1 API and signed identity verification against isolated native local resources.
+The local control switches Demo/E2E/Prod; automated E2E has a separate server lock.
+See [24-local-environments](24-local-environments.md) for storage ownership, exact
+commands, explicit reset, screenshots, feature coverage and current limitations.
+The original `.wrangler/state` is preserved and unused. No production data is
+seeded into Demo and no Google client or production credentials are needed.
 
 Production requires a verified Access email matching exactly one existing user.
 An unknown email is denied; granting Access alone does not provision a financial

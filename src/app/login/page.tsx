@@ -3,6 +3,7 @@ import { LoadingScreen } from "@nocoo/basalt/components/loading-screen";
 import { Shield } from "lucide-react";
 import { Suspense } from "react";
 import { useSearchParams } from "react-router";
+import { EnvironmentSwitch } from "@/components/environment-switch";
 import { GithubIcon } from "@/components/icons/github-icon";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { HeaderTooltip, HexlyLink } from "../../components/layout/header-links";
@@ -67,6 +68,7 @@ function LoginContent() {
           </a>
         </HeaderTooltip>
         <HexlyLink />
+        <EnvironmentSwitch />
         <ThemeToggle />
       </div>
       <div className="flex flex-1 items-center justify-center p-4">

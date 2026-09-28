@@ -3,13 +3,12 @@ import { readFileSync } from "node:fs";
 
 const config = JSON.parse(readFileSync("wrangler.jsonc", "utf8"));
 const { version } = JSON.parse(readFileSync("package.json", "utf8"));
-if (process.env.CLOUDFLARE_ENV || process.env.NOHEIR_TEST_STATE) {
+if (process.env.CLOUDFLARE_ENV || process.env.NOHEIR_INTERACTIVE) {
   throw new Error("Deployment requires production configuration");
 }
 if (
   config.name !== "noheir-web" ||
   config.vars.ENVIRONMENT !== "production" ||
-  config.vars.LOCAL_USER_EMAIL ||
   config.vars.CF_ACCESS_TEAM_DOMAIN !== "nocoo" ||
   config.vars.CF_ACCESS_AUD !==
     "19d100ea22080f644154aad7b35785c1381874d27dec7fd238a2cb8fd7d640ee" ||

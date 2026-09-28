@@ -5,6 +5,5 @@ export interface Env {
   CF_ACCESS_AUD: string;
   SITE_URL: string;
   ENVIRONMENT: string;
-  LOCAL_USER_EMAIL: string;
   BUILD_SHA: string;
 }

@@ -29,7 +29,6 @@ function env(overrides: Partial<Env> = {}): Env {
     CF_ACCESS_AUD: "19d100ea22080f644154aad7b35785c1381874d27dec7fd238a2cb8fd7d640ee",
     SITE_URL: "https://noheir.hexly.ai",
     ENVIRONMENT: "production",
-    LOCAL_USER_EMAIL: "owner@example.com",
     BUILD_SHA: "",
     ...overrides,
   };
@@ -47,32 +46,17 @@ describe("authenticateRequest", () => {
     expect(mockVerify).not.toHaveBeenCalled();
   });
 
-  test("local bypass requires local env, loopback, and a unique existing user", async () => {
-    const local = env({ ENVIRONMENT: "local" });
-    const ok = await authenticateRequest(
-      new Request("http://127.0.0.1/api/live"),
-      local,
-      async (email) => {
-        expect(email).toBe("owner@example.com");
-        return [owner];
-      },
-    );
-    expect(ok).toEqual({ ok: true, user: owner });
-
-    const unknown = await authenticateRequest(
-      new Request("http://localhost/api/live"),
-      local,
-      async () => [],
-    );
-    expect(unknown).toEqual({ ok: false, reason: "forbidden" });
-
-    const ambiguous = await authenticateRequest(
-      new Request("http://localhost/api/live"),
-      local,
-      async () => [owner, { ...owner, id: "other" }],
-    );
-    expect(ambiguous).toEqual({ ok: false, reason: "forbidden" });
-  });
+  test.each(["local", "test", "production"])(
+    "%s always requires a signed identity",
+    async (ENVIRONMENT) => {
+      const result = await authenticateRequest(
+        new Request("http://127.0.0.1/api/products"),
+        env({ ENVIRONMENT }),
+        async () => [owner],
+      );
+      expect(result).toEqual({ ok: false, reason: "unauthenticated" });
+    },
+  );
 
   test("missing Access config is misconfigured", async () => {
     const result = await authenticateRequest(
@@ -155,26 +139,5 @@ describe("authenticateRequest", () => {
       async () => [owner],
     );
     expect(ok).toEqual({ ok: true, user: owner });
-  });
-
-  test("local bypass also enforces CSRF on mutations", async () => {
-    const result = await authenticateRequest(
-      new Request("http://localhost/api/transactions", {
-        method: "POST",
-        headers: { Origin: "https://evil.example" },
-      }),
-      env({ ENVIRONMENT: "local" }),
-      async () => [owner],
-    );
-    expect(result).toEqual({ ok: false, reason: "csrf" });
-  });
-
-  test("empty local email is unauthenticated", async () => {
-    const result = await authenticateRequest(
-      new Request("http://localhost/"),
-      env({ ENVIRONMENT: "local", LOCAL_USER_EMAIL: "  " }),
-      async () => [owner],
-    );
-    expect(result.ok).toBe(false);
   });
 });
