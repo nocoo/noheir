@@ -65,7 +65,13 @@ bun run deploy:check
 ```
 
 Development uses local D1 and `developer@example.test` on port 7004. No production
-credentials or Google client is needed. Worker unit tests need a working
+credentials or Google client is needed. After starting `bun run dev`, open
+`https://noheir.dev.hexly.ai` in Chrome for normal development and manual browser
+verification. Caddy proxies this HTTPS origin to port 7004; loopback HTTP URLs
+are internal upstreams and isolated automated-test endpoints, not the browser
+entrypoint. Verify the existing Caddy mapping before changing local routing.
+
+Worker unit tests need a working
 `better-sqlite3` native module. Root typecheck includes the Worker lane. Keep
 Workers global types out of the browser compiler: DOM and Worker element types
 conflict; use the scoped D1 aliases in `src/worker-types.d.ts`.

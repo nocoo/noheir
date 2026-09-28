@@ -51,3 +51,13 @@ A dependency-duty invocation set VITEST_MAX_WORKERS=4 globally. Vitest applies t
 ## 2026-10-08 — Verify hook registration before the first commit
 
 The dependency-duty run omitted the explicit `bun run prepare` step after a frozen install in its isolated clone. Its first local commit therefore did not invoke the repository hook. Nothing had been pushed or submitted as a PR. After installing the normal Husky hooks, the same source tree was recommitted through the complete index-snapshot gate: both test suites, all four coverage thresholds, lint and types passed. The original local commit and both command logs were retained in the run evidence. Verify `core.hooksPath` and the executable pre-commit entrypoint before the first commit; a successful dependency install alone does not prove hooks are registered. Never bypass a hook to recover from this omission.
+
+## 2026-09-28 — Opened the upstream URL for manual development
+
+After starting Vite, the agent opened its printed loopback URL in Chrome without
+checking the existing Caddy development origin. The owner corrected the choice.
+The active Caddy mapping and HTTPS health endpoint confirmed that
+`https://noheir.dev.hexly.ai` already worked. The project handbook now explicitly
+requires that origin for normal development and manual browser verification.
+Check the project's browser entrypoint before treating a server's listen address
+as the URL to open.
