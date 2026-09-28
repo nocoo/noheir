@@ -56,6 +56,7 @@ function LoginContent() {
       />
       {/* Top-right controls */}
       <div className="absolute top-4 right-4 z-10 flex items-center gap-1">
+        <EnvironmentSwitch />
         <HeaderTooltip label="GitHub repository">
           <a
             href="https://github.com/nocoo/noheir"
@@ -68,7 +69,6 @@ function LoginContent() {
           </a>
         </HeaderTooltip>
         <HexlyLink />
-        <EnvironmentSwitch />
         <ThemeToggle />
       </div>
       <div className="flex flex-1 items-center justify-center p-4">

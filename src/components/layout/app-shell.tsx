@@ -143,6 +143,7 @@ function AppShellInner({
           }
           actions={
             <>
+              <EnvironmentSwitch />
               <Suspense>
                 <GlobalYearSelector />
               </Suspense>
@@ -158,7 +159,6 @@ function AppShellInner({
                 </a>
               </HeaderTooltip>
               <HexlyLink />
-              <EnvironmentSwitch />
               <ThemeToggle />
             </>
           }
