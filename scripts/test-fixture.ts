@@ -1,6 +1,15 @@
-import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
-import { extname, join, resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { build } from "esbuild";
 import { exportJWK, generateKeyPair, SignJWT } from "jose";
 import { convertV4MiniflareOptions, Miniflare } from "miniflare";
@@ -11,13 +20,27 @@ export const TEST_ISSUER = "https://nocoo.cloudflareaccess.com";
 
 export async function createTestFixture(port: number) {
   if (![17004, 27004].includes(port)) throw new Error("Test server requires a reserved local port");
-  const state = mkdtempSync(join(tmpdir(), "noheir-test-"));
-  const marker = crypto.randomUUID();
+  return createNativeFixture({ port });
+}
+
+export const DEMO_STATE = resolve(".wrangler/environments/demo");
+
+export async function createNativeFixture(
+  options: { port?: number; siteOrigin?: string; persistentDemo?: boolean } = {},
+) {
+  const port = options.port ?? 0;
+  const state = options.persistentDemo ? DEMO_STATE : mkdtempSync(join(tmpdir(), "noheir-test-"));
+  const fresh = !options.persistentDemo || !existsSync(state);
+  if (fresh) mkdirSync(state, { recursive: true, mode: 0o700 });
+  if (realpathSync(state) !== state && realpathSync(state) !== resolve("/private", state.slice(1)))
+    throw new Error("Refusing symlinked fixture state");
   const markerPath = join(state, "marker");
-  writeFileSync(markerPath, marker, { mode: 0o600 });
+  const marker = fresh ? crypto.randomUUID() : readFileSync(markerPath, "utf8");
+  if (fresh) writeFileSync(markerPath, marker, { mode: 0o600 });
   const pair = await generateKeyPair("RS256");
   const jwk = { ...(await exportJWK(pair.publicKey)), kid: "local-test", alg: "RS256", use: "sig" };
-  const origin = `http://127.0.0.1:${port}`;
+  const origin = options.siteOrigin ?? `http://127.0.0.1:${port}`;
+  const runtime = JSON.parse(readFileSync("wrangler.jsonc", "utf8"));
   const token = (email: string, audience = TEST_AUD, issuer = TEST_ISSUER, expiry = "30m") =>
     new SignJWT({ email })
       .setProtectedHeader({ alg: "RS256", kid: "local-test" })
@@ -54,8 +77,8 @@ export async function createTestFixture(port: number) {
       port,
       modules: true,
       script,
-      compatibilityDate: "2026-09-18",
-      compatibilityFlags: ["nodejs_compat"],
+      compatibilityDate: runtime.compatibility_date,
+      compatibilityFlags: runtime.compatibility_flags,
       isolatedResourcePersistencePath: state,
       d1Databases: ["DB"],
       bindings: {
@@ -66,31 +89,12 @@ export async function createTestFixture(port: number) {
         SITE_URL: origin,
         BUILD_SHA: "test-build",
       },
-      serviceBindings: {
-        ASSETS: async (request) => {
-          const pathname = decodeURIComponent(new URL(request.url).pathname);
-          const file = resolve(assets, `.${pathname}`);
-          if (!file.startsWith(`${assets}/`) && file !== assets)
-            return new Response(null, { status: 400 });
-          const types: Record<string, string> = {
-            ".js": "text/javascript",
-            ".css": "text/css",
-            ".svg": "image/svg+xml",
-            ".png": "image/png",
-            ".ico": "image/x-icon",
-            ".woff2": "font/woff2",
-            ".html": "text/html",
-          };
-          try {
-            return new Response(readFileSync(file), {
-              headers: { "content-type": types[extname(file)] ?? "application/octet-stream" },
-            });
-          } catch {
-            return new Response(readFileSync(join(assets, "index.html")), {
-              headers: { "content-type": "text/html" },
-            });
-          }
-        },
+      assets: {
+        directory: assets,
+        binding: "ASSETS",
+        routerConfig: { has_user_worker: true, invoke_user_worker_ahead_of_assets: true },
+        run_worker_first: runtime.assets.run_worker_first,
+        assetConfig: { not_found_handling: runtime.assets.not_found_handling },
       },
       outboundService: async (request) =>
         new URL(request.url).href === `${TEST_ISSUER}/cdn-cgi/access/certs`
@@ -106,12 +110,20 @@ export async function createTestFixture(port: number) {
     if (row?.id !== marker) throw new Error("Test database marker mismatch");
   };
   try {
-    await db.exec("CREATE TABLE _test_marker (id TEXT NOT NULL)");
-    await db.prepare("INSERT INTO _test_marker VALUES (?)").bind(marker).run();
+    if (fresh) {
+      await db.exec("CREATE TABLE _test_marker (id TEXT NOT NULL)");
+      await db.prepare("INSERT INTO _test_marker VALUES (?)").bind(marker).run();
+    }
+    await assertMarker();
+    await db.exec("CREATE TABLE IF NOT EXISTS _fixture_migrations (name TEXT PRIMARY KEY)");
     for (const file of readdirSync("worker/db/migrations")
       .filter((f) => f.endsWith(".sql"))
       .sort()) {
       await assertMarker();
+      if (
+        await db.prepare("SELECT name FROM _fixture_migrations WHERE name = ?").bind(file).first()
+      )
+        continue;
       const sql = readFileSync(join("worker/db/migrations", file), "utf8");
       for (const statement of sql
         .replace(/--[^\n]*/g, "")
@@ -119,18 +131,19 @@ export async function createTestFixture(port: number) {
         .filter((s) => s.trim())) {
         await db.exec(statement.replace(/\s+/g, " ").trim());
       }
+      await db.prepare("INSERT INTO _fixture_migrations VALUES (?)").bind(file).run();
     }
     await assertMarker();
     for (const id of TEST_USERS) {
       await db
-        .prepare("INSERT INTO users (id,email,name,provider_account_id) VALUES (?,?,?,?)")
+        .prepare("INSERT OR IGNORE INTO users (id,email,name,provider_account_id) VALUES (?,?,?,?)")
         .bind(id, `${id}@test.local`, id, id)
         .run();
     }
     for (const table of ["transactions", "transfers"]) {
       await assertMarker();
       await db
-        .prepare(`CREATE TRIGGER injected_${table}_failure BEFORE INSERT ON ${table}
+        .prepare(`CREATE TRIGGER IF NOT EXISTS injected_${table}_failure BEFORE INSERT ON ${table}
         WHEN NEW.note = 'test-injected-write-failure'
         BEGIN SELECT RAISE(ABORT, 'injected test write failure'); END;`)
         .run();
@@ -142,12 +155,15 @@ export async function createTestFixture(port: number) {
   }
   return {
     origin,
+    state,
+    mf,
+    token,
     tokens,
     db,
     marker,
     markerPath,
     assertMarker,
-    async close() {
+    async close(remove = !options.persistentDemo) {
       try {
         await assertMarker();
       } finally {
@@ -155,7 +171,7 @@ export async function createTestFixture(port: number) {
       }
       if (readFileSync(markerPath, "utf8") !== marker)
         throw new Error("Refusing test state cleanup");
-      rmSync(state, { recursive: true });
+      if (remove) rmSync(state, { recursive: true });
     },
   };
 }
