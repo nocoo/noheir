@@ -43,3 +43,7 @@ same deployment workflow passed on attempt 2. Browser/account and public-boundar
 checks passed, and all 14 D1 table fingerprints matched the pre-cutover backup.
 Treat a first custom-domain cutover as an explicit infrastructure step; Wrangler
 implementation flags are not evidence that an existing CNAME can be replaced.
+
+## 2026-10-04 — Preserve HTTP suite serialization in task environments
+
+A dependency-duty invocation set VITEST_MAX_WORKERS=4 globally. Vitest applies that environment setting after resolving fileParallelism=false, so the normally serial HTTP files ran concurrently against shared synthetic users and 74 of 183 tests failed through competing cleanup. Removing only the invocation override restored the repository configuration; all 183 HTTP tests then passed. No assertions, timeouts, thresholds or test configuration were relaxed. Keep unit resource controls scoped to their explicit command arguments and do not let them override integration-suite serialization. The original failed output and corrected run were retained with the duty evidence.
