@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "drizzle-orm": "0.45.3",
-    "hono": "4.13.8",
+    "hono": "4.13.12",
     "zod": "4.6.5"
   },
   "devDependencies": {
@@ -23,7 +23,7 @@
     "@hono/node-server": "2.0.11",
     "esbuild": "^0.28.2",
     "fast-uri": "3.1.6",
-    "hono": "4.13.8",
+    "hono": "4.13.12",
     "ip-address": "10.3.1",
     "postcss": "8.5.28",
     "qs": "6.16.0",

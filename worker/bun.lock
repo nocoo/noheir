@@ -6,7 +6,7 @@
       "name": "noheir-worker",
       "dependencies": {
         "drizzle-orm": "0.45.3",
-        "hono": "4.13.8",
+        "hono": "4.13.12",
         "zod": "4.6.5",
       },
       "devDependencies": {
@@ -27,7 +27,7 @@
     "@hono/node-server": "2.0.11",
     "esbuild": "^0.28.2",
     "fast-uri": "3.1.6",
-    "hono": "4.13.8",
+    "hono": "4.13.12",
     "ip-address": "10.3.1",
     "postcss": "8.5.28",
     "qs": "6.16.0",
@@ -159,7 +159,7 @@
 
     "fsevents": ["fsevents@2.3.3", "", { "os": "darwin" }, "sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw=="],
 
-    "hono": ["hono@4.13.8", "", {}, "sha512-/Gng7NfoykZl2pjukW5Z6+8Yxm3BPRf86GTbQnt0SbySkvax4fyL4H3HhY1cCpBGmiW9XDRFzRV+CXK2W8QudQ=="],
+    "hono": ["hono@4.13.12", "", {}, "sha512-6E2QDAc9Ick9Sq77ZrGS/dk2WUYni91aufTw6LJKpV7w8kW5/GxVUc650FOADOmlwg3K+f7Pun6XlV+pYmW6gw=="],
 
     "js-tokens": ["js-tokens@10.0.0", "", {}, "sha512-lM/UBzQmfJRo9ABXbPWemivdCW8V2G8FHaHdypQaIy523snUjog0W71ayWXTjiR+ixeMyVHN2XcpnTd/liPg/Q=="],
 
