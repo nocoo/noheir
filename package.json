@@ -97,9 +97,11 @@
     "nanoid": "3.3.18",
     "postcss": "8.5.28",
     "qs": "6.16.0",
-    "sharp": "0.35.4",
+    "sharp": "0.35.5",
     "undici": "8.10.2",
-    "zod": "4.6.5"
+    "zod": "4.6.5",
+    "proxy-addr": "2.0.8",
+    "source-map-js": "1.2.2"
   },
   "type": "module",
   "packageManager": "bun@1.4.2"
