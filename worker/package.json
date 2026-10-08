@@ -30,7 +30,8 @@
     "sharp": "0.35.5",
     "undici": "7.29.0",
     "vite": "8.0.16",
-    "ws": "8.21.0"
+    "ws": "8.21.0",
+    "source-map-js": "1.2.2"
   },
   "trustedDependencies": [
     "@biomejs/biome",
