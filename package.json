@@ -42,7 +42,7 @@
     "jose": "6.2.12",
     "lucide-react": "1.49.0",
     "postcss": "8.5.28",
-    "radix-ui": "1.6.7",
+    "radix-ui": "1.8.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-markdown": "^10.1.0",
