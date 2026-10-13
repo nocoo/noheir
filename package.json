@@ -40,7 +40,7 @@
     "esbuild": "^0.28.2",
     "hono": "4.13.12",
     "jose": "6.2.12",
-    "lucide-react": "1.49.0",
+    "lucide-react": "1.55.0",
     "postcss": "8.5.30",
     "radix-ui": "1.8.1",
     "react": "19.3.0",
