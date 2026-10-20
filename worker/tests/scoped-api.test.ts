@@ -1,9 +1,9 @@
 import { readdirSync, readFileSync } from "node:fs";
 import Database from "better-sqlite3";
 import { Hono } from "hono";
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import workerApp, { type AppEnv } from "../src/index";
-import { createHumanApi, createMachineApi } from "../src/scoped-api";
+import { beginApiRequest, createHumanApi, createMachineApi, problem } from "../src/scoped-api";
 
 let sqlite: Database.Database;
 let app: Hono<AppEnv>;
@@ -461,7 +461,7 @@ test("migration preserves existing financial settings and rejects ambiguous anch
   const historical = new Database(":memory:");
   const directory = new URL("../db/migrations/", import.meta.url);
   for (const name of readdirSync(directory)
-    .filter((n) => n.endsWith(".sql") && !n.startsWith("0011"))
+    .filter((n) => n.endsWith(".sql") && !n.startsWith("0011") && !n.startsWith("0013"))
     .sort())
     historical.exec(readFileSync(new URL(name, directory), "utf8"));
   historical.exec(
@@ -1263,4 +1263,126 @@ test("oversized machine requests use the scoped problem contract before authenti
   );
   expect(human.status).toBe(413);
   expect(await human.json()).toEqual({ error: "Request body too large" });
+});
+
+describe("legacy MCP timestamp encodings", () => {
+  const legacyIso = "2026-04-07T08:00:00.000Z";
+
+  function seedLegacyRows(
+    productId = "11111111-1111-4111-8111-111111111111",
+    unitId = "22222222-2222-4222-8222-222222222222",
+  ) {
+    sqlite
+      .prepare(
+        `INSERT INTO financial_products (
+        id, user_id, name, currency, version, is_archived, created_at, updated_at
+      ) VALUES (?, 'owner', 'Legacy Fund', 'CNY', 1, 0, ?, ?)`,
+      )
+      .run(productId, legacyIso, legacyIso);
+    sqlite
+      .prepare(
+        `INSERT INTO capital_units (
+        id, user_id, unit_code, amount_cents, currency, status, version, product_id, created_at, updated_at
+      ) VALUES (?, 'owner', 'LEG1', 100000, 'CNY', '已成立', 1, ?, ?, ?)`,
+      )
+      .run(unitId, productId, legacyIso, legacyIso);
+  }
+
+  test("lists, portfolio, detail, preflight and product patch survive ISO-text timestamps", async () => {
+    const productId = "11111111-1111-4111-8111-111111111111";
+    const unitId = "22222222-2222-4222-8222-222222222222";
+    seedLegacyRows(productId, unitId);
+    const issued = await key([
+      "products:read",
+      "products:write",
+      "units:read",
+      "units:commit",
+      "contribution-logs:read",
+    ]);
+
+    const products = await (
+      await request("/api/v1/products", "GET", undefined, issued.token)
+    ).json();
+    expect(products.data).toHaveLength(1);
+    expect(products.data[0].createdAt).toBe(legacyIso);
+    expect(products.data[0].updatedAt).toBe(legacyIso);
+
+    const unitsLimited = await (
+      await request("/api/v1/units?limit=2", "GET", undefined, issued.token)
+    ).json();
+    expect(unitsLimited.data).toHaveLength(1);
+    expect(unitsLimited.data[0].createdAt).toBe(legacyIso);
+
+    const unitsTotal = await (
+      await request("/api/v1/units?limit=500&total=true", "GET", undefined, issued.token)
+    ).json();
+    expect(unitsTotal.meta.total).toBe(1);
+    expect(unitsTotal.data[0].createdAt).toBe(legacyIso);
+
+    const portfolio = await (
+      await request("/api/v1/summaries/portfolio?currency=CNY", "GET", undefined, issued.token)
+    ).json();
+    expect(portfolio.data).toHaveLength(1);
+    expect(portfolio.data[0].createdAt).toBe(legacyIso);
+
+    const detail = await (
+      await request(`/api/v1/units/${unitId}`, "GET", undefined, issued.token)
+    ).json();
+    expect(detail.data.createdAt).toBe(legacyIso);
+
+    const preflight = await (
+      await request(`/api/v1/units/${unitId}/preflight`, "GET", undefined, issued.token)
+    ).json();
+    expect(preflight.data.unit.createdAt).toBe(legacyIso);
+    expect(preflight.data.expected.unitCode).toBe("LEG1");
+
+    const patch = await request(
+      `/api/v1/products/${productId}`,
+      "PATCH",
+      { name: "Legacy Fund Renamed" },
+      issued.token,
+      { "Idempotency-Key": "legacy-product-patch", "If-Match": '"1"' },
+    );
+    expect(patch.status).toBe(200);
+    const patched = (await patch.json()).data;
+    expect(patched.affected).toBe(1);
+    const productAfter = await (
+      await request(`/api/v1/products/${productId}`, "GET", undefined, issued.token)
+    ).json();
+    expect(productAfter.data.name).toBe("Legacy Fund Renamed");
+    expect(productAfter.data.createdAt).toBe(legacyIso);
+  });
+});
+
+describe("problem()", () => {
+  test("logs unexpected errors without changing the response contract", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const c = {
+      req: { method: "GET", path: "/api/v1/products" },
+      header: () => {},
+      json: (body: unknown, status: number) =>
+        new Response(JSON.stringify(body), {
+          status,
+          headers: { "Content-Type": "application/json" },
+        }),
+    };
+    beginApiRequest(c as Parameters<typeof problem>[0]);
+    const response = problem(
+      c as Parameters<typeof problem>[0],
+      new RangeError("Invalid time value"),
+    );
+    expect(response.status).toBe(500);
+    const body = await response.json();
+    expect(body.code).toBe("internal_error");
+    expect(body.requestId).toBeTruthy();
+    expect(errorSpy).toHaveBeenCalledOnce();
+    const logged = JSON.parse(String(errorSpy.mock.calls[0]?.[0]));
+    expect(logged.requestId).toBe(body.requestId);
+    expect(logged.method).toBe("GET");
+    expect(logged.path).toBe("/api/v1/products");
+    expect(logged.name).toBe("RangeError");
+    expect(logged.message).toBe("Invalid time value");
+    expect(logged.stack).toContain("RangeError");
+    errorSpy.mockRestore();
+  });
 });

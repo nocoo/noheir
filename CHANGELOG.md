@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Fixes
+
+- Normalize legacy ISO-text `created_at`/`updated_at` values when wiring financial rows for scoped Bearer REST lists and portfolio summaries, instead of throwing `Invalid Date` and returning opaque 500s; log unexpected scoped API failures with request metadata for operations.
+- Add D1 migration `0013_normalize_legacy_timestamps.sql` to rewrite parseable Gen2 MCP text timestamps on `financial_products`, `capital_units` and `contribution_logs` to integer seconds (or log-native ms where applicable) without bumping row versions or writing audit events; apply with `bunx wrangler d1 migrations apply noheir-db --remote` (and `--local` for dev) **before** deploying a Worker that depends on it — release/deploy does not run migrations automatically (see `docs/04-run.md`).
+
 ## [3.1.0] - 2026-10-20
 
 ### Breaking Changes
