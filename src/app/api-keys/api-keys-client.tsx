@@ -1,25 +1,94 @@
-import { Badge, Button, Checkbox, ConfirmDialog, Field, Input, LayerCard } from "@nocoo/basalt";
+import {
+  Badge,
+  Button,
+  Checkbox,
+  ConfirmDialog,
+  Field,
+  Input,
+  LayerCard,
+  Separator,
+} from "@nocoo/basalt";
 import { PageHeader } from "@nocoo/basalt/components/page-header";
-import { useEffect, useState } from "react";
+import {
+  ArrowLeftRight,
+  BookOpen,
+  CalendarClock,
+  ChartNoAxesCombined,
+  Check,
+  Copy,
+  FileJson2,
+  FilePenLine,
+  FileText,
+  Fingerprint,
+  History,
+  KeyRound,
+  Landmark,
+  Layers3,
+  type LucideIcon,
+  MapPinned,
+  PlugZap,
+  Plus,
+  ReceiptText,
+  ScanEye,
+  ShieldAlert,
+  ShieldCheck,
+  SlidersHorizontal,
+  Tags,
+  Trash2,
+  WalletCards,
+} from "lucide-react";
+import { Fragment, useEffect, useState } from "react";
 import { currentEnvironment } from "@/components/environment-runtime";
-import { API_RESOURCES, API_SCOPES, type ApiKeyInfo, type ApiScope } from "@/domain/api-contract";
+import type { ApiKeyInfo, ApiResource, ApiScope } from "@/domain/api-contract";
 import { buildKeyInput, getKeyStatus, KEY_PRESETS, toggleScope } from "@/domain/settings/api-keys";
 import { financeApi } from "@/lib/finance-api";
 
 const statusLabels = { active: "有效", expired: "已过期", revoked: "已撤销" };
-const resourceLabels: Record<(typeof API_RESOURCES)[number], string> = {
-  transactions: "收支",
-  transfers: "转账",
-  products: "产品",
-  units: "资金单位",
-  "contribution-logs": "资金记录",
-  "expense-categories": "支出分类",
-  "recurring-expenses": "周期支出",
-  "account-classifications": "账户分类",
-  "balance-anchors": "余额锚点",
-  "financial-preferences": "财务假设",
-  analyses: "分析报告",
+const iconTones = {
+  blue: "bg-basalt-info-tint text-basalt-info",
+  green: "bg-basalt-chart-3/20 text-basalt-foreground",
+  amber: "bg-basalt-warning-tint text-basalt-warning",
+  pink: "bg-basalt-chart-9/20 text-basalt-foreground",
 };
+const resourcePresentation = {
+  transactions: ["收支", ReceiptText, "green"],
+  transfers: ["转账", ArrowLeftRight, "blue"],
+  products: ["产品", Landmark, "amber"],
+  units: ["资金单位", Layers3, "blue"],
+  "contribution-logs": ["资金记录", History, "pink"],
+  "expense-categories": ["支出分类", Tags, "amber"],
+  "recurring-expenses": ["周期支出", CalendarClock, "blue"],
+  "account-classifications": ["账户分类", WalletCards, "green"],
+  "balance-anchors": ["余额锚点", MapPinned, "blue"],
+  "financial-preferences": ["财务假设", SlidersHorizontal, "amber"],
+  analyses: ["分析报告", FileText, "pink"],
+} as const satisfies Record<ApiResource, readonly [string, LucideIcon, keyof typeof iconTones]>;
+const resourceGroups = [
+  {
+    title: "财务记录",
+    icon: WalletCards,
+    tone: "blue",
+    resources: ["transactions", "transfers", "products", "units", "contribution-logs"],
+  },
+  {
+    title: "规划与分析",
+    icon: ChartNoAxesCombined,
+    tone: "green",
+    resources: [
+      "expense-categories",
+      "recurring-expenses",
+      "account-classifications",
+      "balance-anchors",
+      "financial-preferences",
+      "analyses",
+    ],
+  },
+] as const;
+const extraScopes = [
+  ["units:commit", "执行资金操作", Layers3, "text-basalt-warning"],
+  ["audit:read", "读取操作审计", ScanEye, "text-basalt-info"],
+  ["data:replace", "替换账本（破坏性）", ShieldAlert, "text-basalt-danger"],
+] as const;
 
 export function ApiKeysClient({ initialKeys }: { initialKeys: ApiKeyInfo[] }) {
   const [keys, setKeys] = useState(initialKeys);
@@ -90,7 +159,14 @@ export function ApiKeysClient({ initialKeys }: { initialKeys: ApiKeyInfo[] }) {
   return (
     <div className="space-y-4">
       <PageHeader
-        title="API 密钥"
+        title={
+          <span className="flex items-center gap-3">
+            <span className="rounded-lg bg-basalt-warning-tint p-2 text-basalt-warning">
+              <KeyRound aria-hidden="true" className="size-5" strokeWidth={1.5} />
+            </span>
+            API 密钥
+          </span>
+        }
         description="仅当前用户可管理。密钥只获得明确勾选的权限；不允许管理密钥或站点设置。"
       />
       {error && !revoke && (
@@ -100,14 +176,26 @@ export function ApiKeysClient({ initialKeys }: { initialKeys: ApiKeyInfo[] }) {
       )}
       {secret && (
         <LayerCard>
-          <LayerCard.Header>请立即保存密钥：只显示一次</LayerCard.Header>
+          <LayerCard.Header>
+            <span className="flex items-center gap-2 text-basalt-warning">
+              <ShieldAlert aria-hidden="true" className="size-4" strokeWidth={1.5} />
+              请立即保存密钥：只显示一次
+            </span>
+          </LayerCard.Header>
           <LayerCard.Body className="space-y-3">
             <p className="text-muted-foreground text-sm">
               关闭或离开页面后无法再次查看。请勿将密钥放入网址、日志或共享报告。
             </p>
             <code className="block break-all select-all text-sm">{secret}</code>
             <div className="flex flex-wrap gap-2">
-              <Button onClick={copy}>{copied ? "已复制" : "复制密钥"}</Button>
+              <Button onClick={copy}>
+                {copied ? (
+                  <Check aria-hidden="true" strokeWidth={1.5} />
+                ) : (
+                  <Copy aria-hidden="true" strokeWidth={1.5} />
+                )}
+                {copied ? "已复制" : "复制密钥"}
+              </Button>
               <Button
                 variant="outline"
                 onClick={() => {
@@ -122,7 +210,12 @@ export function ApiKeysClient({ initialKeys }: { initialKeys: ApiKeyInfo[] }) {
         </LayerCard>
       )}
       <LayerCard>
-        <LayerCard.Header>连接方式</LayerCard.Header>
+        <LayerCard.Header>
+          <span className="flex items-center gap-2">
+            <PlugZap aria-hidden="true" className="size-4 text-basalt-info" strokeWidth={1.5} />
+            连接方式
+          </span>
+        </LayerCard.Header>
         <LayerCard.Body className="space-y-2 text-sm">
           <p>
             API 地址：<code className="break-all">{window.location.origin}/api/v1</code>
@@ -142,26 +235,33 @@ export function ApiKeysClient({ initialKeys }: { initialKeys: ApiKeyInfo[] }) {
           )}
           <div className="flex flex-wrap gap-4">
             <a
-              className="text-primary underline"
+              className="inline-flex items-center gap-1.5 text-basalt-info underline underline-offset-4"
               href="/api/v1/openapi.json"
               target="_blank"
               rel="noopener noreferrer"
             >
+              <FileJson2 aria-hidden="true" className="size-4" strokeWidth={1.5} />
               OpenAPI 契约
             </a>
             <a
-              className="text-primary underline"
+              className="inline-flex items-center gap-1.5 text-basalt-info underline underline-offset-4"
               href="/api/v1/instructions"
               target="_blank"
               rel="noopener noreferrer"
             >
+              <BookOpen aria-hidden="true" className="size-4" strokeWidth={1.5} />
               使用说明
             </a>
           </div>
         </LayerCard.Body>
       </LayerCard>
       <LayerCard>
-        <LayerCard.Header>创建密钥</LayerCard.Header>
+        <LayerCard.Header>
+          <span className="flex items-center gap-2">
+            <KeyRound aria-hidden="true" className="size-4 text-basalt-warning" strokeWidth={1.5} />
+            创建密钥
+          </span>
+        </LayerCard.Header>
         <LayerCard.Body>
           <form onSubmit={create} className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-2">
@@ -193,11 +293,11 @@ export function ApiKeysClient({ initialKeys }: { initialKeys: ApiKeyInfo[] }) {
               <span className="text-muted-foreground text-sm">权限预设</span>
               {(
                 [
-                  ["analyst", "财务只读"],
-                  ["reports", "报告撰写"],
-                  ["bookkeeper", "日常记账"],
+                  ["analyst", "财务只读", ScanEye, "text-basalt-info"],
+                  ["reports", "报告撰写", FilePenLine, "text-basalt-warning"],
+                  ["bookkeeper", "日常记账", ReceiptText, "text-basalt-badge-teal"],
                 ] as const
-              ).map(([preset, title]) => (
+              ).map(([preset, title, Icon, color]) => (
                 <Button
                   key={preset}
                   type="button"
@@ -206,6 +306,7 @@ export function ApiKeysClient({ initialKeys }: { initialKeys: ApiKeyInfo[] }) {
                   disabled={busy || !!secret}
                   onClick={() => setScopes([...KEY_PRESETS[preset]])}
                 >
+                  <Icon aria-hidden="true" className={color} strokeWidth={1.5} />
                   {title}
                 </Button>
               ))}
@@ -219,74 +320,118 @@ export function ApiKeysClient({ initialKeys }: { initialKeys: ApiKeyInfo[] }) {
                 清空选择
               </Button>
             </div>
-            <fieldset disabled={busy || !!secret} className="space-y-2">
-              <legend className="mb-2 text-sm font-medium">明确授权（{scopes.length} 项）</legend>
-              <div className="grid gap-2 md:grid-cols-2">
-                {API_RESOURCES.map((resource) => (
-                  <div
-                    key={resource}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-basalt-secondary p-2 text-sm"
-                  >
-                    <span>{resourceLabels[resource]}</span>
-                    <div className="flex gap-3">
-                      {(
-                        [
-                          ["read", "读取"],
-                          ["write", "写入"],
-                          ["delete", "删除"],
-                        ] as const
-                      ).map(([action, title]) => {
-                        const scope: ApiScope = `${resource}:${action}`;
-                        return (
-                          <label
-                            key={scope}
-                            htmlFor={`key-scope-${scope}`}
-                            className="flex items-center gap-1.5"
-                          >
-                            <Checkbox
-                              id={`key-scope-${scope}`}
-                              checked={scopes.includes(scope)}
-                              onCheckedChange={() =>
-                                setScopes((current) => toggleScope(current, scope))
-                              }
-                              aria-label={`${resourceLabels[resource]}：${title}`}
-                            />
-                            {title}
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
+            <fieldset disabled={busy || !!secret} className="space-y-4">
+              <legend className="mb-3 text-sm font-medium">
+                <span className="inline-flex items-center gap-2">
+                  <ShieldCheck
+                    aria-hidden="true"
+                    className="size-4 text-basalt-info"
+                    strokeWidth={1.5}
+                  />
+                  明确授权（{scopes.length} 项）
+                </span>
+              </legend>
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)]">
+                {resourceGroups.map((group, index) => (
+                  <Fragment key={group.title}>
+                    {index > 0 && <Separator orientation="vertical" className="hidden xl:block" />}
+                    <LayerCard role="group" aria-label={group.title} className="min-w-0">
+                      <LayerCard.Header className="items-center px-3">
+                        <span className="flex items-center gap-2 font-medium text-basalt-foreground">
+                          <span className={`rounded-md p-1.5 ${iconTones[group.tone]}`}>
+                            <group.icon aria-hidden="true" className="size-4" strokeWidth={1.5} />
+                          </span>
+                          {group.title}
+                        </span>
+                        <Badge variant="outline">{group.resources.length} 类资源</Badge>
+                      </LayerCard.Header>
+                      <LayerCard.Body className="divide-y divide-basalt-border/60 px-3 py-1">
+                        {group.resources.map((resource) => {
+                          const [label, Icon, tone] = resourcePresentation[resource];
+                          return (
+                            <div
+                              key={resource}
+                              className="flex flex-wrap items-center justify-between gap-x-3 py-1 text-sm"
+                            >
+                              <span className="flex items-center gap-2 py-1">
+                                <span className={`rounded-md p-1.5 ${iconTones[tone]}`}>
+                                  <Icon aria-hidden="true" className="size-4" strokeWidth={1.5} />
+                                </span>
+                                {label}
+                              </span>
+                              <div className="flex gap-3">
+                                {(
+                                  [
+                                    ["read", "读取", "text-basalt-info"],
+                                    ["write", "写入", "text-basalt-warning"],
+                                    ["delete", "删除", "text-basalt-danger"],
+                                  ] as const
+                                ).map(([action, title, color]) => {
+                                  const scope: ApiScope = `${resource}:${action}`;
+                                  return (
+                                    <label
+                                      key={scope}
+                                      htmlFor={`key-scope-${scope}`}
+                                      className={`flex min-h-11 items-center gap-1.5 ${color}`}
+                                    >
+                                      <Checkbox
+                                        id={`key-scope-${scope}`}
+                                        checked={scopes.includes(scope)}
+                                        onCheckedChange={() =>
+                                          setScopes((current) => toggleScope(current, scope))
+                                        }
+                                        aria-label={`${label}：${title}`}
+                                      />
+                                      {title}
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </LayerCard.Body>
+                    </LayerCard>
+                  </Fragment>
                 ))}
               </div>
-              <div className="flex flex-wrap gap-4 text-sm">
-                {API_SCOPES.filter(
-                  (scope) =>
-                    !API_RESOURCES.some(
-                      (resource) => scope.startsWith(`${resource}:`) && scope !== "units:commit",
-                    ),
-                ).map((scope) => (
-                  <label
-                    key={scope}
-                    htmlFor={`key-scope-${scope}`}
-                    className="flex items-center gap-2"
-                  >
-                    <Checkbox
-                      id={`key-scope-${scope}`}
-                      checked={scopes.includes(scope)}
-                      onCheckedChange={() => setScopes((current) => toggleScope(current, scope))}
-                    />
-                    {scope === "data:replace"
-                      ? "替换账本（破坏性）"
-                      : scope === "units:commit"
-                        ? "执行资金操作"
-                        : "读取操作审计"}
-                  </label>
-                ))}
-              </div>
+              <fieldset aria-label="额外操作" className="space-y-2">
+                <p className="text-xs font-medium text-basalt-muted-foreground">
+                  额外操作 · 单独授权
+                </p>
+                <div className="grid gap-2 md:grid-cols-3">
+                  {extraScopes.map(([scope, label, Icon, color]) => (
+                    <LayerCard.Well key={scope} className="rounded-md px-3 py-0">
+                      <label
+                        htmlFor={`key-scope-${scope}`}
+                        className="flex min-h-11 items-center gap-2 text-sm"
+                      >
+                        <Checkbox
+                          id={`key-scope-${scope}`}
+                          checked={scopes.includes(scope)}
+                          onCheckedChange={() =>
+                            setScopes((current) => toggleScope(current, scope))
+                          }
+                        />
+                        <Icon
+                          aria-hidden="true"
+                          className={`size-4 shrink-0 ${color}`}
+                          strokeWidth={1.5}
+                        />
+                        {label}
+                      </label>
+                    </LayerCard.Well>
+                  ))}
+                </div>
+              </fieldset>
             </fieldset>
             {destructive && (
-              <p className="text-destructive text-sm">
+              <p className="flex items-start gap-2 text-basalt-danger text-sm">
+                <ShieldAlert
+                  aria-hidden="true"
+                  className="mt-0.5 size-4 shrink-0"
+                  strokeWidth={1.5}
+                />
                 已选择破坏性权限。删除和账本替换不可撤回，请仅向可信工具授予。
               </p>
             )}
@@ -294,13 +439,19 @@ export function ApiKeysClient({ initialKeys }: { initialKeys: ApiKeyInfo[] }) {
               {scopes.join(", ") || "未选择权限"}
             </p>
             <Button type="submit" disabled={busy || !!secret}>
+              <Plus aria-hidden="true" strokeWidth={1.5} />
               {busy ? "处理中…" : "创建密钥"}
             </Button>
           </form>
         </LayerCard.Body>
       </LayerCard>
       <LayerCard>
-        <LayerCard.Header>已签发密钥（{keys.length}）</LayerCard.Header>
+        <LayerCard.Header>
+          <span className="flex items-center gap-2">
+            <Fingerprint aria-hidden="true" className="size-4 text-basalt-info" strokeWidth={1.5} />
+            已签发密钥（{keys.length}）
+          </span>
+        </LayerCard.Header>
         <LayerCard.Body>
           {keys.length === 0 ? (
             <p className="text-muted-foreground text-sm">
@@ -314,8 +465,22 @@ export function ApiKeysClient({ initialKeys }: { initialKeys: ApiKeyInfo[] }) {
                   <li key={key.id} className="space-y-2 rounded-md bg-basalt-secondary p-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex flex-wrap items-center gap-2">
+                        <KeyRound
+                          aria-hidden="true"
+                          className="size-4 text-basalt-warning"
+                          strokeWidth={1.5}
+                        />
                         <span className="font-medium">{key.label}</span>
-                        <Badge variant={status === "active" ? "success" : "secondary"}>
+                        <Badge
+                          dot
+                          variant={
+                            status === "active"
+                              ? "success"
+                              : status === "expired"
+                                ? "warning"
+                                : "secondary"
+                          }
+                        >
                           {statusLabels[status]}
                         </Badge>
                         <code className="text-xs">{key.prefix}</code>
@@ -330,6 +495,11 @@ export function ApiKeysClient({ initialKeys }: { initialKeys: ApiKeyInfo[] }) {
                             setRevoke(key);
                           }}
                         >
+                          <Trash2
+                            aria-hidden="true"
+                            className="text-basalt-danger"
+                            strokeWidth={1.5}
+                          />
                           撤销
                         </Button>
                       )}

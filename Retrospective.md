@@ -138,3 +138,11 @@ Retiring MCP tests also removed incidental availability coverage, exposing a
 94.58% branch result. Direct domain boundary tests restored the unchanged 95%
 gate. Always distinguish a complete dataset from one page, and replace accidental
 coverage with focused behavior checks when deleting an old integration.
+
+## 2026-10-20 — Check the repository's commit vocabulary
+
+The permission-layout change initially invoked a commit with `style:`, which is
+not in this repository's allowed type list. Git was interrupted before creating
+the commit; the staged changes remained intact. The corrected `fix:` commit ran
+the normal hook again without amending history or bypassing checks. Read the
+local commit rules before choosing a conventional prefix, even for UI-only work.

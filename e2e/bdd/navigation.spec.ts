@@ -262,6 +262,34 @@ test("capital unit commit persists updated fields and writes contribution log", 
   expect(commitLog?.operationType).toBe("adjust");
 });
 
+test("permission groups have a visible desktop divider and stack without mobile overflow", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/api-keys");
+  const permissions = page.getByRole("group", { name: /明确授权/ });
+  const financial = page.getByRole("group", { name: "财务记录", exact: true });
+  const planning = page.getByRole("group", { name: "规划与分析", exact: true });
+  const divider = permissions.locator('[data-orientation="vertical"]');
+  await expect(financial).toBeVisible();
+  await expect(planning).toBeVisible();
+  await expect(divider).toBeVisible();
+  const left = await financial.boundingBox();
+  const right = await planning.boundingBox();
+  if (!left || !right) throw new Error("Permission groups are missing");
+  expect(Math.abs(left.y - right.y)).toBeLessThan(2);
+  expect(right.x - left.x - left.width).toBeGreaterThanOrEqual(24);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(divider).toBeHidden();
+  const upper = await financial.boundingBox();
+  const lower = await planning.boundingBox();
+  if (!upper || !lower) throw new Error("Mobile permission groups are missing");
+  expect(lower.y).toBeGreaterThanOrEqual(upper.y + upper.height);
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+    .toBe(true);
+});
+
 test("a scoped key writes an external report, safe UI edits it, and revocation takes effect", async ({
   page,
   playwright,

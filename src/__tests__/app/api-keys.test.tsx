@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiKeysClient } from "@/app/api-keys/api-keys-client";
-import type { ApiKeyInfo } from "@/domain/api-contract";
+import { API_SCOPES, type ApiKeyInfo } from "@/domain/api-contract";
 import { financeApi } from "@/lib/finance-api";
 
 vi.mock("@/lib/finance-api", () => ({ financeApi: { createKey: vi.fn(), revokeKey: vi.fn() } }));
@@ -18,6 +18,33 @@ const key: ApiKeyInfo = {
 };
 beforeEach(() => vi.resetAllMocks());
 describe("human API key management", () => {
+  it("separates resource columns and preserves every independently selectable grant", async () => {
+    const user = userEvent.setup();
+    render(<ApiKeysClient initialKeys={[]} />);
+    const financial = screen.getByRole("group", { name: "财务记录" });
+    const planning = screen.getByRole("group", { name: "规划与分析" });
+    const operations = screen.getByRole("group", { name: "额外操作" });
+    expect(within(financial).getAllByRole("checkbox")).toHaveLength(15);
+    expect(within(planning).getAllByRole("checkbox")).toHaveLength(18);
+    expect(within(operations).getAllByRole("checkbox")).toHaveLength(3);
+    expect(
+      screen
+        .getAllByRole("checkbox")
+        .map((input) => input.id)
+        .sort(),
+    ).toEqual(API_SCOPES.map((scope) => `key-scope-${scope}`).sort());
+    await user.click(screen.getByRole("button", { name: "清空选择" }));
+    const deletion = within(financial).getByRole("checkbox", { name: "资金单位：删除" });
+    deletion.focus();
+    await user.keyboard(" ");
+    expect(deletion).toBeChecked();
+    expect(within(financial).getByRole("checkbox", { name: "资金单位：读取" })).not.toBeChecked();
+    expect(screen.getByText(/已选择破坏性权限/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "报告撰写" }));
+    expect(deletion).not.toBeChecked();
+    expect(within(planning).getByRole("checkbox", { name: "分析报告：写入" })).toBeChecked();
+  });
+
   it("shows a secret once, copies only on demand and never persists it", async () => {
     const user = userEvent.setup();
     const copy = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
