@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.0] - 2026-10-20
+
+### Breaking Changes
+
+- Retire internal AI inference, stored model credentials, MCP and the OAuth server. Existing MCP/OAuth credentials no longer work; there is no compatibility endpoint or credential conversion. This release uses the explicitly requested minor version despite these breaking changes.
+- Replace machine access with scoped Bearer REST at `/api/v1`. Create new expiring keys in the Access-protected API Keys page; key and site administration remain human-only.
+- Require snapshot `If-Match` for financial updates/deletes and `Idempotency-Key` for machine mutations. Callers must use the published OpenAPI contract rather than legacy browser request shapes.
+- Apply canonical D1 migrations `0011` and `0012` before the new Worker. Preserve the existing database and owner IDs, convert validated financial settings to typed tables, normalize supported currencies, and remove retired credentials. Ambiguous or invalid financial settings stop migration atomically. Historical private backups may still contain old credentials.
+
+### Features
+
+- Add independently scoped financial CRUD, filters, aggregates, portfolio and balance queries, audit pagination, discovery and OpenAPI documentation with durable per-key/owner rate limits.
+- Store externally authored Markdown reports with period, currencies, financial revision, evidence and optional provenance. Keep report HTML/images inert, validate evidence ownership/read grants, and retain durable external-identity receipts after deletion.
+- Share atomic financial operations between browser and REST callers, with explicit snapshot versions, revision-bound cursors, audit records and safe retry semantics.
+- Add isolated Demo/E2E environments and an explicit authenticated production proxy for local development, with signed identities and instance-bound requests.
+
+### Fixes
+
+- Separate API key scope groups into clear responsive columns with colored Lucide icons; restore mobile navigation focus after dismissal.
+- Keep financial drafts bound to their original version when loaders refresh, and reload log snapshots after mutations instead of guessing versions.
+- Prevent mixed-currency totals; legacy browser summaries explicitly use CNY while retaining other-currency records and editing.
+- Harden concurrent unit swaps, deletion retries, report deduplication, Unicode cursors, calendar validation, evidence boundaries and HTTP error/method contracts.
+
+### Maintenance
+
+- Upgrade Basalt to 3.1.0, React Router to 8.5.0, Lucide to 1.59.0, PostCSS to 8.5.31, Wrangler to 4.151.2 and Workers types to 5.20261019.1. Resolve dependency issues #618, #649, #650, #651, #652 and #653.
+- Include intervening dependency/security maintenance since the last published GitHub release v3.0.0, remove unused AI/MCP dependencies and obsolete overrides, and align both package lockfiles.
+- Expand native HTTP/browser regression coverage and index-snapshot quality gates without lowering the configured four-metric 95% coverage floors.
+
 ## [3.0.0] - 2026-09-20
 
 ### ⚠ Breaking Changes

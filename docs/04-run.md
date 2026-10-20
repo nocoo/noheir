@@ -74,9 +74,9 @@ a daily development server or a remote database.
 
 ## Scoped REST and Access
 
-This source tree replaces internal AI/MCP/OAuth with `/api/v1`. The refactor is
-local-only until separately authorized for deployment; do not infer current
-production policy or schema from this document.
+Version 3.1.0 replaces internal AI/MCP/OAuth with `/api/v1`. A production cutover
+requires the schema and Access policy steps below; verify live configuration
+rather than inferring deployed state from this document.
 
 Humans use the Access-protected `/api-keys` page to issue a finite set of read,
 write, delete and domain-operation grants with a 1-365 day expiry. Plaintext is
@@ -96,7 +96,7 @@ the key page. An originless CLI request is allowed only under `/api/v1`; a prese
 foreign Origin is rejected. The header selects an existing isolated runtime and
 never replaces Bearer authentication. Local keys do not authorize production.
 
-### Separately authorized production policy work
+### Production cutover prerequisites
 
 Preserve the existing protected root Access application, audience, user identity
 mapping and other projects' shared policies. When publishing this refactor, only
@@ -109,13 +109,15 @@ compatibility or credential conversion is supported. Do not create a bypass on
 The canonical migrations retire credentials and validate/convert legacy financial
 preferences and anchors into typed business tables. Ambiguous currency or invalid
 financial data stops migration rather than dropping data. Use a private D1 export
-and inspect the separately approved deployment procedure before remote migration;
-no production migration or policy change is part of the local implementation.
+and rehearse the canonical migrations on a private backup copy before remote
+migration. Keep production backups outside the repository and automated fixtures.
+Production migration and policy changes require explicit publication approval.
 
 After authorized publication, `bun run verify:production` verifies the exact
 revision, D1 health, protected human paths, public OpenAPI and tokenless REST401.
 Complete a human login and a newly issued minimal-scope key request separately.
-This task does not execute that command against production.
+Revoke a temporary verification key afterwards; do not use financial writes as
+production smoke tests.
 
 ## CI/CD and release
 
@@ -142,6 +144,16 @@ CI/deployment and live checks before completing the annotated tag and GitHub
 release; do not bump the version again merely to resume a failed gate.
 `bun run verify:production` checks version/revision, database
 connectivity, no-store, protected browser/API paths and scoped REST discovery/auth.
+
+The release/deploy scripts do not apply remote D1 migrations or change Access
+policies. For a schema cutover, first create a private D1 export and verify the
+pending migration list. Apply the approved migrations to the existing database
+immediately before deploying their dependent Worker, then verify preservation
+and health. Coordinate this window because retiring OAuth tables/settings is not
+compatible with the old Worker. Do not restore an old Worker alone as a rollback;
+database recovery must be coordinated with any writes since the backup.
+When existing commit subjects omit breaking markers, prepare explicit release
+notes manually and follow the same hook, CI, deployment and tag ordering.
 
 ## Data safety and historical infrastructure
 
