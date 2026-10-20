@@ -11,6 +11,7 @@ import type { RecurrenceFrequency, RecurrenceRule, RecurringExpenseStatus } from
 /** Wire shape sent by the Worker for a recurring expense rule
  *  (joined with category metadata on /api/recurring-expenses GET). */
 export interface RecurringExpenseRow {
+  version: number;
   id: string;
   userId: string;
   name: string;
@@ -54,6 +55,7 @@ function asStatus(value: string): RecurringExpenseStatus {
 export function toRecurrenceRule(row: RecurringExpenseRow): RecurrenceRule {
   return {
     id: row.id,
+    version: row.version,
     userId: row.userId,
     name: row.name,
     categoryId: row.categoryId,
@@ -74,6 +76,7 @@ export function toRecurrenceRule(row: RecurringExpenseRow): RecurrenceRule {
 }
 
 export interface CategoryRow {
+  version: number;
   id: string;
   userId: string;
   name: string;
@@ -84,6 +87,7 @@ export interface CategoryRow {
 }
 
 export interface ExpenseCategory {
+  version: number;
   id: string;
   userId: string;
   name: string;
@@ -94,6 +98,7 @@ export interface ExpenseCategory {
 export function toCategory(row: CategoryRow): ExpenseCategory {
   return {
     id: row.id,
+    version: row.version,
     userId: row.userId,
     name: row.name,
     colorToken: row.colorToken,

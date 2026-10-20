@@ -19,7 +19,7 @@ describe("reports repo", () => {
     amountCents: 5000,
     type: "expense" as const,
     account: "招商银行",
-    currency: "人民币",
+    currency: "CNY",
     ...overrides,
   });
 
@@ -29,7 +29,7 @@ describe("reports repo", () => {
     month: 3,
     day: 15,
     account: "招商银行",
-    currency: "人民币",
+    currency: "CNY",
     inflowAmountCents: 0,
     outflowAmountCents: 0,
     ...overrides,
@@ -136,25 +136,25 @@ describe("reports repo", () => {
 
   test("monthly: optional currency filter", async () => {
     const repos = getTestRepos();
-    await repos.transactions.create(userId, makeTx({ currency: "人民币", amountCents: 5000 }));
+    await repos.transactions.create(userId, makeTx({ currency: "CNY", amountCents: 5000 }));
     await repos.transactions.create(userId, makeTx({ currency: "USD", amountCents: 3000 }));
 
-    const cnyReport = await repos.reports.monthly(userId, 2026, 3, "人民币");
+    const cnyReport = await repos.reports.monthly(userId, 2026, 3, "CNY");
     expect(cnyReport.transaction_count).toBe(1);
     expect(cnyReport.total_expense).toBe(5000);
 
-    const allReport = await repos.reports.monthly(userId, 2026, 3);
-    expect(allReport.transaction_count).toBe(2);
-    expect(allReport.total_expense).toBe(8000);
+    const defaultCnyReport = await repos.reports.monthly(userId, 2026, 3);
+    expect(defaultCnyReport.transaction_count).toBe(1);
+    expect(defaultCnyReport.total_expense).toBe(5000);
   });
 
   test("monthly: currencies from both tables", async () => {
     const repos = getTestRepos();
-    await repos.transactions.create(userId, makeTx({ currency: "人民币" }));
+    await repos.transactions.create(userId, makeTx({ currency: "CNY" }));
     await repos.transfers.create(userId, makeTr({ currency: "USD" }));
 
     const report = await repos.reports.monthly(userId, 2026, 3);
-    expect(report.currencies).toContain("人民币");
+    expect(report.currencies).toContain("CNY");
     expect(report.currencies).toContain("USD");
   });
 

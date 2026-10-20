@@ -1,18 +1,19 @@
 import { Button } from "@nocoo/basalt";
-import { CreditCard, Save } from "lucide-react";
-import { useState, useTransition } from "react";
-import { useRevalidator } from "react-router";
-import { toast } from "sonner";
-import { saveAccountTypes } from "@/app/actions/settings-actions";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@nocoo/basalt/components/select";
+import { CreditCard, Save } from "lucide-react";
+import { useState, useTransition } from "react";
+import { useRevalidator } from "react-router";
+import { toast } from "sonner";
+import { saveAccountTypes } from "@/app/actions/settings-actions";
+import { FinancialSnapshotNotice } from "@/components/shared/financial-snapshot-notice";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { buildAccountTypesUpdate } from "@/domain/settings/account-types";
 import type { AccountType, AccountTypeConfig } from "@/domain/types";
 
@@ -26,14 +27,21 @@ const TYPE_LABELS: Record<AccountType, { label: string; color: string }> = {
 
 interface AccountTypesClientProps {
   accounts: string[];
+  revision: number;
   accountTypes: AccountTypeConfig[];
   grouped: Record<AccountType, string[]>;
 }
 
-export function AccountTypesClient({ accounts, accountTypes, grouped }: AccountTypesClientProps) {
+export function AccountTypesClient({
+  accounts,
+  accountTypes,
+  grouped,
+  revision,
+}: AccountTypesClientProps) {
   const revalidator = useRevalidator();
   const [isPending, startTransition] = useTransition();
   const [types, setTypes] = useState<AccountTypeConfig[]>(accountTypes);
+  const [baseRevision, setBaseRevision] = useState(revision);
 
   const getType = (accountName: string): AccountType => {
     const entry = types.find((t) => t.accountName === accountName);
@@ -46,7 +54,7 @@ export function AccountTypesClient({ accounts, accountTypes, grouped }: AccountT
 
   const handleSave = () => {
     startTransition(async () => {
-      const result = await saveAccountTypes(types);
+      const result = await saveAccountTypes(types, baseRevision);
       if (result.success) {
         toast.success("账户类型已保存");
         revalidator.revalidate();
@@ -58,6 +66,13 @@ export function AccountTypesClient({ accounts, accountTypes, grouped }: AccountT
 
   return (
     <div className="space-y-6">
+      <FinancialSnapshotNotice
+        changed={baseRevision !== revision}
+        onReset={() => {
+          setTypes(accountTypes);
+          setBaseRevision(revision);
+        }}
+      />
       {/* Header */}
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold">

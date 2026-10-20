@@ -6,6 +6,7 @@ const userId = TEST_USER_B;
 
 interface Rule {
   id: string;
+  version: number;
   userId: string;
   name: string;
   amountCents: number;
@@ -22,6 +23,7 @@ interface Rule {
 
 interface Category {
   id: string;
+  version: number;
   name: string;
 }
 
@@ -35,6 +37,7 @@ async function cleanupRulesAndCategories(uid: string): Promise<void> {
     await rawFetch({
       method: "DELETE",
       path: `/api/recurring-expenses/${r.id}`,
+      version: r.version,
       userId: uid,
     });
   }
@@ -47,6 +50,7 @@ async function cleanupRulesAndCategories(uid: string): Promise<void> {
     await rawFetch({
       method: "DELETE",
       path: `/api/expense-categories/${c.id}`,
+      version: c.version,
       userId: uid,
     });
   }
@@ -120,6 +124,7 @@ describe("E2E: /api/recurring-expenses (P1-C6)", () => {
           await rawFetch({
             method: "PUT",
             path: `/api/recurring-expenses/${rule.id}`,
+            version: rule.version,
             userId,
             body,
           })
@@ -129,6 +134,7 @@ describe("E2E: /api/recurring-expenses (P1-C6)", () => {
     const updated = await api<{ rule: Rule }>({
       method: "PUT",
       path: `/api/recurring-expenses/${rule.id}`,
+      version: rule.version,
       userId,
       body: { name: "Renamed" },
     });
@@ -166,7 +172,7 @@ describe("E2E: /api/recurring-expenses (P1-C6)", () => {
     expect(rules[0].colorToken).toBe("chart-9");
   });
 
-  test("PUT drops status and endedAt from the body", async () => {
+  test("PUT rejects attempts to forge status and endedAt", async () => {
     const { rule } = await api<{ rule: Rule }>({
       method: "POST",
       path: "/api/recurring-expenses",
@@ -177,6 +183,7 @@ describe("E2E: /api/recurring-expenses (P1-C6)", () => {
     const updateRes = await rawFetch({
       method: "PUT",
       path: `/api/recurring-expenses/${rule.id}`,
+      version: rule.version,
       userId,
       body: {
         name: "updated-name",
@@ -184,12 +191,12 @@ describe("E2E: /api/recurring-expenses (P1-C6)", () => {
         endedAt: "2026-06-07",
       },
     });
-    expect(updateRes.status).toBe(200);
-    const { rule: updated } = (await updateRes.json()) as { rule: Rule };
-    // name advanced; status/endedAt silently dropped
-    expect(updated.name).toBe("updated-name");
-    expect(updated.status).toBe("active");
-    expect(updated.endedAt).toBeNull();
+    expect(updateRes.status).toBe(400);
+    const { rules } = await api<{ rules: Rule[] }>({ path: "/api/recurring-expenses", userId });
+    const updated = rules.find((item) => item.id === rule.id);
+    expect(updated?.name).toBe(yearlyRule.name);
+    expect(updated?.status).toBe("active");
+    expect(updated?.endedAt).toBeNull();
   });
 
   test("concurrent edits preserve every acknowledged change", async () => {
@@ -202,14 +209,20 @@ describe("E2E: /api/recurring-expenses (P1-C6)", () => {
     const edits = [{ name: "Concurrent rename" }, { amountCents: 123_456 }];
     const responses = await Promise.all(
       edits.map((body) =>
-        rawFetch({ method: "PUT", path: `/api/recurring-expenses/${rule.id}`, userId, body }),
+        rawFetch({
+          method: "PUT",
+          path: `/api/recurring-expenses/${rule.id}`,
+          version: rule.version,
+          userId,
+          body,
+        }),
       ),
     );
     const { rules } = await api<{ rules: Rule[] }>({ path: "/api/recurring-expenses", userId });
     const saved = rules.find((item) => item.id === rule.id);
     expect(responses.some((response) => response.status === 200)).toBe(true);
     for (const [index, response] of responses.entries()) {
-      expect([200, 409]).toContain(response.status);
+      expect([200, 412]).toContain(response.status);
       if (response.status === 200) expect(saved).toMatchObject(edits[index] ?? {});
     }
   });
@@ -224,12 +237,14 @@ describe("E2E: /api/recurring-expenses (P1-C6)", () => {
     const ok = await rawFetch({
       method: "DELETE",
       path: `/api/recurring-expenses/${rule.id}`,
+      version: rule.version,
       userId,
     });
     expect(ok.status).toBe(204);
     const again = await rawFetch({
       method: "DELETE",
       path: `/api/recurring-expenses/${rule.id}`,
+      version: rule.version,
       userId,
     });
     expect(again.status).toBe(404);

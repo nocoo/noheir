@@ -1,5 +1,7 @@
 # 19 — base-mcp 设计与 noheir MCP 重写
 
+> Historical only. MCP/OAuth and their credentials are retired by [25-scoped-api](25-scoped-api.md). Do not use this document for current connections or deployment.
+
 > 创建独立的 `@nocoo/base-mcp` NPM 包，提供 MCP Server 开发的通用基础设施。
 > 基于此重写 noheir MCP，迁移到 Streamable HTTP 传输，实现无缝 OAuth 登录。
 

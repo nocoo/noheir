@@ -13,9 +13,9 @@ export interface StrategyLoaderData {
 
 export async function strategyLoader(): Promise<StrategyLoaderData> {
   const result = await workerDbClient.listUnits({ with_products: true });
-  const units: UnitDisplayInfo[] = result.units.map((raw) =>
-    toUnitDisplayInfo(raw as Record<string, unknown>),
-  );
+  const units: UnitDisplayInfo[] = result.units
+    .map((raw) => toUnitDisplayInfo(raw as Record<string, unknown>))
+    .filter((unit) => unit.currency === "CNY");
 
   const hierarchy = buildStrategyHierarchy(units, "全部资产");
   const totalAmount = buildTotalAmount(units);

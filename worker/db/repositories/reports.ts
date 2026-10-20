@@ -28,7 +28,7 @@ export function createReportsRepo(db: DrizzleD1Database) {
       userId: string,
       year: number,
       month: number,
-      currency?: string,
+      currency = "CNY",
     ): Promise<MonthlyReport> {
       // Build common conditions
       const txBaseConditions = [
@@ -42,6 +42,8 @@ export function createReportsRepo(db: DrizzleD1Database) {
         eq(transfers.month, month),
       ];
 
+      const txCurrencyWhere = and(...txBaseConditions);
+      const trCurrencyWhere = and(...trBaseConditions);
       if (currency) {
         txBaseConditions.push(eq(transactions.currency, currency));
         trBaseConditions.push(eq(transfers.currency, currency));
@@ -123,10 +125,18 @@ export function createReportsRepo(db: DrizzleD1Database) {
           .all(),
 
         // currencies from transactions
-        db.selectDistinct({ value: transactions.currency }).from(transactions).where(txWhere).all(),
+        db
+          .selectDistinct({ value: transactions.currency })
+          .from(transactions)
+          .where(txCurrencyWhere)
+          .all(),
 
         // currencies from transfers
-        db.selectDistinct({ value: transfers.currency }).from(transfers).where(trWhere).all(),
+        db
+          .selectDistinct({ value: transfers.currency })
+          .from(transfers)
+          .where(trCurrencyWhere)
+          .all(),
       ]);
 
       const totalIncome = incomeTotals?.total ?? 0;
@@ -168,7 +178,7 @@ export function createReportsRepo(db: DrizzleD1Database) {
      * Yearly summary: monthly income/expense/count + year totals.
      * Single SQL using CASE expressions for income/expense split.
      */
-    async yearlySummary(userId: string, year: number): Promise<YearlySummary> {
+    async yearlySummary(userId: string, year: number, currency = "CNY"): Promise<YearlySummary> {
       const rows = await db
         .select({
           month: transactions.month,
@@ -177,7 +187,13 @@ export function createReportsRepo(db: DrizzleD1Database) {
           count: sql<number>`count(*)`,
         })
         .from(transactions)
-        .where(and(eq(transactions.userId, userId), eq(transactions.year, year)))
+        .where(
+          and(
+            eq(transactions.userId, userId),
+            eq(transactions.year, year),
+            eq(transactions.currency, currency),
+          ),
+        )
         .groupBy(transactions.month)
         .orderBy(transactions.month)
         .all();
@@ -221,8 +237,13 @@ export function createReportsRepo(db: DrizzleD1Database) {
       year: number,
       month?: number,
       type?: string,
+      currency = "CNY",
     ): Promise<CategorySummaryResponse> {
-      const conditions = [eq(transactions.userId, userId), eq(transactions.year, year)];
+      const conditions = [
+        eq(transactions.userId, userId),
+        eq(transactions.year, year),
+        eq(transactions.currency, currency),
+      ];
       if (month) {
         conditions.push(eq(transactions.month, month));
       }
@@ -262,7 +283,11 @@ export function createReportsRepo(db: DrizzleD1Database) {
     /**
      * Account summary: SUM/COUNT grouped by (account, type).
      */
-    async accountSummary(userId: string, year: number): Promise<AccountSummaryResponse> {
+    async accountSummary(
+      userId: string,
+      year: number,
+      currency = "CNY",
+    ): Promise<AccountSummaryResponse> {
       const rows = await db
         .select({
           account: transactions.account,
@@ -271,7 +296,13 @@ export function createReportsRepo(db: DrizzleD1Database) {
           count: sql<number>`count(*)`,
         })
         .from(transactions)
-        .where(and(eq(transactions.userId, userId), eq(transactions.year, year)))
+        .where(
+          and(
+            eq(transactions.userId, userId),
+            eq(transactions.year, year),
+            eq(transactions.currency, currency),
+          ),
+        )
         .groupBy(transactions.account, transactions.type)
         .orderBy(desc(sql`SUM(${transactions.amountCents})`))
         .all();
@@ -291,8 +322,16 @@ export function createReportsRepo(db: DrizzleD1Database) {
      * 1. account → primaryCategory (grouped by type, account, primary_category)
      * 2. primaryCategory → secondaryCategory (grouped by type, primary_category, secondary_category)
      */
-    async flowSummary(userId: string, year: number): Promise<FlowSummaryResponse> {
-      const baseConditions = and(eq(transactions.userId, userId), eq(transactions.year, year));
+    async flowSummary(
+      userId: string,
+      year: number,
+      currency = "CNY",
+    ): Promise<FlowSummaryResponse> {
+      const baseConditions = and(
+        eq(transactions.userId, userId),
+        eq(transactions.year, year),
+        eq(transactions.currency, currency),
+      );
 
       const [accountToCategoryRows, categoryToSubRows] = await Promise.all([
         db

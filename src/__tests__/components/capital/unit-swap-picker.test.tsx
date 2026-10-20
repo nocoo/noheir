@@ -6,6 +6,7 @@ import type { SerializedUnit } from "@/domain/types";
 
 function makeUnit(over: Partial<SerializedUnit> = {}): SerializedUnit {
   return {
+    version: 1,
     id: "unit-a",
     unitCode: "CU01-001",
     amount: 10000,

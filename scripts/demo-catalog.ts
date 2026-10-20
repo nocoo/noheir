@@ -1,7 +1,7 @@
 import type { createNativeFixture } from "./test-fixture.ts";
 import { TEST_USERS } from "./test-fixture.ts";
 
-export const CATALOG_VERSION = 2;
+export const CATALOG_VERSION = 3;
 export const DEMO_ANCHOR = "2026-09-28T12:00:00+08:00";
 export const fixtureId = (n: number) => `d0000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 
@@ -72,7 +72,7 @@ export async function seedDemo(fixture: Awaited<ReturnType<typeof createNativeFi
           tertiary_category: tertiary,
           amount_cents: amount,
           account,
-          currency: "人民币",
+          currency: "CNY",
           tags: JSON.stringify([tag, "合成演示"]),
           note: `${tertiary} · 合成数据，不对应真实财务记录`,
         });
@@ -91,7 +91,7 @@ export async function seedDemo(fixture: Awaited<ReturnType<typeof createNativeFi
           transaction_type: i ? "转入" : "转出",
           inflow_amount_cents: i ? 250000 : 0,
           outflow_amount_cents: i ? 0 : 250000,
-          currency: "人民币",
+          currency: "CNY",
           tags: '["合成演示"]',
           note: "日常预算调拨",
         });
@@ -254,61 +254,44 @@ export async function seedDemo(fixture: Awaited<ReturnType<typeof createNativeFi
   insert("settings", {
     owner_id: owner,
     site_name: "山海生活账本",
-    settings: JSON.stringify({
-      savings_rate_target: 55,
-      expected_return_rate: 3,
-      min_return_rate: 1.5,
-      max_return_rate: 6,
-      active_income_categories: ["职业收入"],
-      fixed_expense_categories: ["居住", "医疗"],
-      account_types: [
-        { accountName: "工资账户", type: "debit" },
-        { accountName: "日常钱包", type: "prepaid" },
-        { accountName: "储蓄账户", type: "financial" },
-        { accountName: "旅行账户", type: "credit" },
-      ],
-      balance_anchors: [
-        { accountName: "工资账户", date: "2024-01-01", balance: 80000 },
-        { accountName: "日常钱包", date: "2024-01-01", balance: 6000 },
-        { accountName: "储蓄账户", date: "2024-01-01", balance: 250000 },
-        { accountName: "旅行账户", date: "2024-01-01", balance: 0 },
-      ],
-      ai_config: {
-        enabled: false,
-        baseURL: "https://example.invalid/v1",
-        modelName: "synthetic-preview",
-        apiKey: "",
-      },
-    }),
+    settings: "{}",
   });
-  insert("mcp_clients", {
+  const timestamps = {
+    created_at: new Date(DEMO_ANCHOR).getTime(),
+    updated_at: new Date(DEMO_ANCHOR).getTime(),
+  };
+  insert("financial_preferences", {
     id: fixtureId(6000),
-    client_id: "noheir-demo-client",
-    client_name: "演示财务助手",
-    client_uri: "https://example.invalid",
-    redirect_uris: '["https://example.invalid/callback"]',
-    grant_types: '["authorization_code","refresh_token"]',
-    response_types: '["code"]',
-    token_endpoint_auth_method: "none",
-    scope: "noheir:read noheir:write",
+    user_id: owner,
+    savings_rate_target: 55,
+    expected_return_rate: 3,
+    min_return_rate: 1.5,
+    max_return_rate: 6,
+    active_income_categories: JSON.stringify(["职业收入"]),
+    fixed_expense_categories: JSON.stringify(["居住", "医疗"]),
+    ...timestamps,
   });
-  for (const [i, scope] of ["noheir:read", "noheir:read noheir:write", "noheir:read"].entries()) {
-    const hash = await crypto.subtle.digest(
-      "SHA-256",
-      new TextEncoder().encode(`noheir-synthetic-display-token-${i}`),
-    );
-    insert("mcp_tokens", {
-      id: fixtureId(6100 + i),
-      access_token_hash: Buffer.from(hash).toString("hex"),
-      access_token_preview: `demo_${i}_synthetic`,
-      client_id: "noheir-demo-client",
+  for (const [index, [account, type, cents]] of [
+    ["工资账户", "debit", 8000000],
+    ["日常钱包", "prepaid", 600000],
+    ["储蓄账户", "financial", 25000000],
+    ["旅行账户", "credit", 0],
+  ].entries()) {
+    insert("account_classifications", {
+      id: fixtureId(6100 + index),
       user_id: owner,
-      scope,
-      client_name: ["只读分析助手", "已撤销的编辑助手", "已过期的历史会话"][i],
-      issued_at: "2026-09-01T00:00:00.000Z",
-      expires_at: i === 2 ? "2026-09-02T00:00:00.000Z" : "2099-01-01T00:00:00.000Z",
-      revoked: i === 1 ? 1 : 0,
-      revoked_at: i === 1 ? "2026-09-20T00:00:00.000Z" : null,
+      account_name: account,
+      type,
+      ...timestamps,
+    });
+    insert("balance_anchors", {
+      id: fixtureId(6200 + index),
+      user_id: owner,
+      account_name: account,
+      currency: "CNY",
+      date: "2024-01-01",
+      balance_cents: cents,
+      ...timestamps,
     });
   }
   insert("financial_products", {
@@ -317,6 +300,29 @@ export async function seedDemo(fixture: Awaited<ReturnType<typeof createNativeFi
     name: "另一合成账户的私有资产",
     currency: "CNY",
   });
+  statements.push(
+    db
+      .prepare(`
+    INSERT INTO analyses (id,user_id,title,markdown,external_id,period_start,period_end,
+      currencies,data_revision,evidence,created_by,created_at,updated_at)
+    SELECT ?,?,?,?,?,?,?,?,coalesce((SELECT revision FROM owner_revisions WHERE owner_id=?),0),?,?,?,?
+  `)
+      .bind(
+        fixtureId(6300),
+        owner,
+        "九月现金流复盘",
+        "## 数据说明\n\n这是一份基于合成演示账本编写的外部分析报告。\n\n- 收支与转账分开统计。\n- 现金流与投资可用性分别评估。\n- 金额按币种独立分析，不合并计算。\n\n报告由外部工具撰写，Noheir 只存储和展示，不调用模型。",
+        "demo-cash-flow-2026-09",
+        "2026-09-01",
+        "2026-09-30",
+        '["CNY"]',
+        owner,
+        "[]",
+        JSON.stringify({ kind: "human", keyId: null }),
+        timestamps.created_at,
+        timestamps.updated_at,
+      ),
+  );
   insert("_demo_catalog", { version: CATALOG_VERSION, anchor: DEMO_ANCHOR });
   await fixture.assertMarker();
   await db.batch(statements);

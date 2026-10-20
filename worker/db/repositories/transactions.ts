@@ -1,6 +1,13 @@
-import type { SQL } from "drizzle-orm";
 import { and, desc, eq, gte, inArray, like, lte, or, sql } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
+import { parseTransactionImportRow } from "../../lib/import-parse";
+import {
+  JSON_CHUNK_BYTES,
+  transactionInsertFromJsonSql,
+  transactionJsonRow,
+  utf8ByteLength,
+  validateRowList,
+} from "../../lib/year-import";
 import { transactions } from "../schema";
 import type { NewTransaction, Transaction } from "../types";
 
@@ -51,27 +58,6 @@ function computeMatchedField(row: Transaction, keyword: string | undefined): str
   if (row.tertiaryCategory.toLowerCase().includes(kw)) return "tertiary_category";
   if (row.account.toLowerCase().includes(kw)) return "account";
   return null;
-}
-
-/**
- * Build SQL condition for tags overlap.
- * Uses LIKE patterns to match JSON array elements.
- * Handles both normal JSON (["tag"]) and double-encoded ("[\\"tag\\"]").
- */
-function buildTagsCondition(filterTags: string[]): SQL {
-  // For each tag, we check if the tags column contains the tag as a JSON string element
-  // This handles both normal JSON: ["tag1","tag2"]
-  // and double-encoded: "[\"tag1\",\"tag2\"]" stored as: ["\"tag1\",\"tag2\"]
-  const conditions = filterTags.map((tag) => {
-    // Escape single quotes for SQL string literal
-    const escaped = tag.replace(/'/g, "''");
-    // Match patterns:
-    // 1. "tag" - normal JSON array element
-    // 2. \"tag\" - double-encoded (backslash-quote around the tag)
-    return `(tags LIKE '%"${escaped}"%' OR tags LIKE '%\\"${escaped}\\"%')`;
-  });
-
-  return sql.raw(`(${conditions.join(" OR ")})`);
 }
 
 export function createTransactionsRepo(db: DrizzleD1Database) {
@@ -159,7 +145,12 @@ export function createTransactionsRepo(db: DrizzleD1Database) {
       // Tags filter: use SQL json_each for proper pagination
       // (post-filtering after LIMIT would miss matching rows)
       if (params.tags && params.tags.length > 0) {
-        conditions.push(buildTagsCondition(params.tags));
+        conditions.push(
+          sql`EXISTS(SELECT 1 FROM json_each(${transactions.tags}) WHERE value IN (${sql.join(
+            params.tags.map((tag) => sql`${tag}`),
+            sql`,`,
+          )}))`,
+        );
       }
 
       const limit = clampLimit(params.limit);
@@ -169,7 +160,7 @@ export function createTransactionsRepo(db: DrizzleD1Database) {
         .select()
         .from(transactions)
         .where(and(...conditions))
-        .orderBy(desc(transactions.date), desc(transactions.createdAt))
+        .orderBy(desc(transactions.date), desc(transactions.createdAt), desc(transactions.id))
         .limit(limit)
         .offset(offset)
         .all();
@@ -211,20 +202,22 @@ export function createTransactionsRepo(db: DrizzleD1Database) {
       rows: Omit<NewTransaction, "id" | "userId" | "createdAt">[],
     ): Promise<number> {
       if (rows.length === 0) return 0;
-      // D1 limit: 100 bound parameters per query. transactions has 18 columns,
-      // so max 5 rows per INSERT (5 × 18 = 90 < 100).
-      const BATCH_SIZE = 5;
-      let inserted = 0;
-      for (let i = 0; i < rows.length; i += BATCH_SIZE) {
-        const chunk = rows.slice(i, i + BATCH_SIZE);
-        const result = await db
-          .insert(transactions)
-          .values(chunk.map((r) => ({ ...r, userId })))
-          .returning()
-          .all();
-        inserted += result.length;
-      }
-      return inserted;
+      if (rows.length > 100) throw new Error("Batch exceeds 100 rows");
+      const parsed = validateRowList(rows, parseTransactionImportRow);
+      if (!parsed.ok) throw new Error(parsed.message);
+      const payload = JSON.stringify(parsed.rows.map(transactionJsonRow));
+      if (utf8ByteLength(payload) > JSON_CHUNK_BYTES) throw new Error("Batch too large");
+      const params = [userId, Math.floor(Date.now() / 1000), payload];
+      const parts = transactionInsertFromJsonSql().split("?");
+      const query = sql.join(
+        parts.flatMap((part, i) => [
+          sql.raw(part),
+          ...(i < params.length ? [sql`${params[i]}`] : []),
+        ]),
+        sql.raw(""),
+      );
+      await db.run(query);
+      return rows.length;
     },
 
     async update(
@@ -295,7 +288,7 @@ export function createTransactionsRepo(db: DrizzleD1Database) {
         .select()
         .from(transactions)
         .where(eq(transactions.userId, userId))
-        .orderBy(desc(transactions.date), desc(transactions.createdAt))
+        .orderBy(desc(transactions.date), desc(transactions.createdAt), desc(transactions.id))
         .all();
     },
 
@@ -308,7 +301,7 @@ export function createTransactionsRepo(db: DrizzleD1Database) {
         .select()
         .from(transactions)
         .where(and(eq(transactions.userId, userId), eq(transactions.year, year)))
-        .orderBy(desc(transactions.date), desc(transactions.createdAt))
+        .orderBy(desc(transactions.date), desc(transactions.createdAt), desc(transactions.id))
         .all();
     },
   };

@@ -58,7 +58,7 @@ describe("parseTransactionImportRow", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.row.secondaryCategory).toBeNull();
-    expect(result.row.currency).toBe("人民币");
+    expect(result.row.currency).toBe("CNY");
     expect(result.row.tags).toBe("[]");
     expect(result.row.note).toBeNull();
     expect(result.row.rawIndex).toBeNull();
@@ -83,7 +83,7 @@ describe("parseTransferImportRow", () => {
     expect(result.row.primaryCategory).toBeNull();
     expect(result.row.inflowAmountCents).toBe(0);
     expect(result.row.outflowAmountCents).toBe(0);
-    expect(result.row.currency).toBe("人民币");
+    expect(result.row.currency).toBe("CNY");
   });
 
   test("always assigns a server id", () => {
@@ -101,4 +101,21 @@ describe("parseTransferImportRow", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.message).toContain("row 9");
   });
+});
+
+test("normalizes known file-format currency labels and rejects unknown currencies", () => {
+  for (const [currency, expected] of [
+    ["人民币", "CNY"],
+    ["美元", "USD"],
+    ["港币", "HKD"],
+    ["CNY", "CNY"],
+  ]) {
+    const result = parseTransactionImportRow({ ...tx, currency }, 0);
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.row.currency).toBe(expected);
+  }
+  expect(parseTransactionImportRow({ ...tx, currency: "unknown" }, 0).ok).toBe(false);
+  const result = parseTransferImportRow({ ...tr, currency: "美元" }, 0);
+  expect(result.ok).toBe(true);
+  if (result.ok) expect(result.row.currency).toBe("USD");
 });

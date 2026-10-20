@@ -303,3 +303,29 @@ describe("transfers repo", () => {
     expect(result[2]?.date).toBe("2026-03-01");
   });
 });
+
+test("bulk creation validates every row before inserting and tag filters are exact", async () => {
+  resetTestDb();
+  const owner = seedUser();
+  const repos = getTestRepos();
+  const row = {
+    date: "2026-01-01",
+    year: 2026,
+    month: 1,
+    day: 1,
+    inflowAmountCents: 100,
+    outflowAmountCents: 0,
+    account: "Bank",
+    currency: "CNY",
+    tags: '["aXb"]',
+  };
+  await expect(
+    repos.transfers.createMany(owner, [
+      ...Array.from({ length: 6 }, () => row),
+      { ...row, currency: "ZZZ" },
+    ]),
+  ).rejects.toThrow();
+  expect(await repos.transfers.count(owner)).toBe(0);
+  await repos.transfers.create(owner, row);
+  expect((await repos.transfers.search(owner, { tags: ["a%b"] })).total_returned).toBe(0);
+});

@@ -14,12 +14,14 @@ Noheir imports income, expense and transfer records, then analyzes them by year,
 account and category. Products, capital units and contribution logs track where
 money is invested, returns and availability. Recurring expenses have a planning
 calendar. Data is imported or maintained by the owner; there is no automatic bank
-synchronization. The current insights use rules, not language-model inference.
+synchronization. External tools perform analysis and can write private Markdown
+reports back through a scoped REST API. Noheir has no internal model integration.
 
 Production uses Vite/React Router and a native Cloudflare Worker with
 Hono, Workers Static Assets and D1. Cloudflare Access handles browser login.
-MCP retains OAuth/PKCE and its existing per-user data access. Cutover and release
-evidence are recorded in the [migration plan](docs/23-workers-migration.md).
+The current source replaces MCP/OAuth with scoped Bearer keys. This refactor is
+under local acceptance, not yet published. Historical runtime migration evidence
+is recorded in the [migration plan](docs/23-workers-migration.md).
 
 ## Use
 
@@ -34,8 +36,8 @@ parsed records before confirming. Replacement is validated server-side and uses
 one atomic D1 batch. Export a backup before intentional replacement.
 
 **Backup scope:** JSON export includes transactions, transfers, products, units
-and settings. Restore replaces only transactions and transfers across all years.
-It does not restore products, units or settings. Contribution logs and recurring
+only, without raw settings or credentials. Restore replaces only transactions
+and transfers across all years. It does not restore products, units or settings. Contribution logs and recurring
 expenses are not included in the export. It is not a complete disaster-recovery
 backup; operators should also retain a D1 export.
 
@@ -43,27 +45,27 @@ Availability uses the latest investment log or explicit override. Missing
 investment history remains unknown. Amounts are stored as integer cents, and
 calendar calculations use the established Asia/Shanghai helpers.
 
-## MCP
+## Scoped API and Reports
 
-```json
-{
-  "mcpServers": {
-    "noheir": {
-      "type": "http",
-      "url": "https://noheir.hexly.ai/api/mcp"
-    }
-  }
-}
-```
+Create an expiring key on **API Keys**, choose only the required scopes and save
+its one-time secret in your tool's secure storage. Read/write/delete grants are
+independent. Key administration and site settings remain human-only.
 
-Use a client supporting OAuth browser authorization and Streamable HTTP.
-Authorization uses Access; machine requests use Noheir bearer tokens. The server
-returns JSON over POST, without SSE sessions. Existing OAuth registrations and
-token hashes are retained. Tools can query transactions and summaries and manage
-products and capital units under the authorized user's identity.
+- Base path: `/api/v1`; authentication: `Authorization: Bearer <key>`.
+- Discover exact schemas and scopes at `/api/v1/openapi.json` and
+  `/api/v1/instructions`.
+- Page through financial records using `nextCursor`; restart if the dataset
+  changes. Currency totals stay separate, with no implicit exchange conversion.
+- Mutations require `Idempotency-Key`; updates/deletes also require the version
+  read earlier as `If-Match: "version"`. Review conflicts instead of overwriting.
+- Write external Markdown analyses with period, currencies, source revision,
+  same-owner evidence and optional unverified author/model labels. Reports do not
+  execute HTML, load remote images or invoke models.
+- Local calls additionally use the active `x-noheir-instance` shown in the key
+  page. Local fixture keys are not production keys.
 
-Access path policies must preserve the more-specific authorization and callback
-protection when allowing machine endpoints. See the [runbook](docs/04-run.md#mcp-and-access).
+See the [API design and acceptance record](docs/25-scoped-api.md) and
+[Access deployment boundary](docs/04-run.md#scoped-rest-and-access).
 
 ## Development
 
@@ -92,8 +94,7 @@ src/app/             Financial pages and typed browser operations
 src/routes.tsx       React Router data routes
 src/domain/          Financial calculations and view models
 src/components/      Basalt controls, charts and tables
-src/lib/mcp/         Portable MCP tools
-worker/src/          Hono business APIs, Access and OAuth/MCP HTTP
+worker/src/          Hono financial services, Access and scoped Bearer REST
 worker/db/           Schema, repositories and D1 migrations
 scripts/             Isolated test fixtures and release/deployment tools
 ```
@@ -122,7 +123,7 @@ in [AGENTS.md](AGENTS.md).
 ## Deployment
 
 Successful main CI triggers the pinned native Worker release workflow. The
-workflow verifies the CI source commit and deploys UI/API/MCP together. Production
+workflow verifies the CI source commit and deploys UI/API together. Production
 verification checks the exact `build_sha`, root package version, D1 connectivity
 and authentication boundaries before release tagging.
 
@@ -137,7 +138,7 @@ The existing `noheir-db` must not be deleted when retiring the old VPS and Worke
 | --- | --- |
 | Web | Vite, React, React Router, Tailwind CSS, Basalt |
 | Charts | Recharts, Nivo Sunburst |
-| Identity / MCP | Cloudflare Access, jose, OAuth/PKCE, MCP SDK |
+| Identity / API | Cloudflare Access, jose, scoped Bearer keys |
 | API / storage | Cloudflare Workers, Hono, D1, Drizzle ORM |
 | Delivery | Bun, GitHub Actions, Workers Static Assets |
 | Tests | Vitest, Testing Library, Playwright, local Miniflare/SQLite |
@@ -147,7 +148,7 @@ The existing `noheir-db` must not be deleted when retiring the old VPS and Worke
 - [Runbook](docs/04-run.md) and [migration plan](docs/23-workers-migration.md)
 - [Project rules and validation scope](AGENTS.md)
 - [Contribution logs](docs/17-contribution-logs.md)
-- [MCP tool design](docs/21-mcp-agent-friendly-improvement.md)
+- [Scoped API and external reports](docs/25-scoped-api.md)
 - [Recurring expense calendar](docs/002-recurring-expense-calendar.md)
 - [Logo provenance](assets/brand/README.md)
 

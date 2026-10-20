@@ -16,7 +16,10 @@ import { api } from "./client";
  * This is required before creating products/units due to FK constraints.
  */
 export async function ensureTestUser(userId: string): Promise<void> {
-  const { user } = await api<{ user: { id: string } }>({ path: "/api/auth/me", userId });
+  const { user } = await api<{ user: { id: string; version: number } }>({
+    path: "/api/auth/me",
+    userId,
+  });
   if (user.id !== userId) throw new Error("Seeded test identity mismatch");
 }
 
@@ -33,23 +36,23 @@ export async function cleanupUser(userId: string): Promise<void> {
   });
 
   // 2. Delete all units (must go before products due to FK)
-  const { units } = await api<{ units: Array<{ id: string }> }>({
+  const { units } = await api<{ units: Array<{ id: string; version: number }> }>({
     method: "GET",
     path: "/api/units",
     userId,
   });
   for (const u of units) {
-    await api({ method: "DELETE", path: `/api/units/${u.id}`, userId });
+    await api({ method: "DELETE", path: `/api/units/${u.id}`, version: u.version, userId });
   }
 
   // 3. Delete all products (including archived)
-  const { products } = await api<{ products: Array<{ id: string }> }>({
+  const { products } = await api<{ products: Array<{ id: string; version: number }> }>({
     method: "GET",
     path: "/api/products?includeArchived=true",
     userId,
   });
   for (const p of products) {
-    await api({ method: "DELETE", path: `/api/products/${p.id}`, userId });
+    await api({ method: "DELETE", path: `/api/products/${p.id}`, version: p.version, userId });
   }
 
   // 4. Delete settings

@@ -75,17 +75,21 @@ describe("expense-category actions", () => {
 
   test("update: calls worker with partial payload", async () => {
     mockWorkerDbClient.updateExpenseCategory.mockResolvedValueOnce({});
-    const res = await updateExpenseCategory("cat-1", { name: "新名称" });
+    const res = await updateExpenseCategory("cat-1", { name: "新名称" }, 1);
     expect(res).toEqual({ success: true, data: undefined });
-    expect(mockWorkerDbClient.updateExpenseCategory).toHaveBeenCalledWith("cat-1", {
-      name: "新名称",
-    });
+    expect(mockWorkerDbClient.updateExpenseCategory).toHaveBeenCalledWith(
+      "cat-1",
+      {
+        name: "新名称",
+      },
+      1,
+    );
   });
 
   test("delete: calls worker with id", async () => {
     mockWorkerDbClient.deleteExpenseCategory.mockResolvedValueOnce(undefined);
-    const res = await deleteExpenseCategory("cat-1");
+    const res = await deleteExpenseCategory("cat-1", 1);
     expect(res).toEqual({ success: true, data: undefined });
-    expect(mockWorkerDbClient.deleteExpenseCategory).toHaveBeenCalledWith("cat-1");
+    expect(mockWorkerDbClient.deleteExpenseCategory).toHaveBeenCalledWith("cat-1", 1);
   });
 });

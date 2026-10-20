@@ -3,6 +3,7 @@ import { AppShell } from "@/components/layout";
 import { buildSavingsRate } from "@/domain/dashboard/overview";
 import type { DomainTransaction, MonthlyData } from "@/domain/types";
 import { MONTH_NAMES } from "@/lib/constants";
+import { financeApi } from "@/lib/finance-api";
 import { toDomainTransaction } from "@/lib/transaction-mappers";
 import { workerDbClient } from "@/lib/worker-db-client";
 import { OverviewClient } from "./overview-client";
@@ -38,18 +39,12 @@ export async function overviewLoader({
   }
 
   const [summary, recentResult, settingsResult] = await Promise.all([
-    workerDbClient.getYearlySummary(selectedYear),
-    workerDbClient.searchTransactions({ year: selectedYear, limit: 10 }),
-    workerDbClient.getSettings(),
+    workerDbClient.getYearlySummary(selectedYear, "CNY"),
+    workerDbClient.searchTransactions({ year: selectedYear, limit: 10, currency: "CNY" }),
+    financeApi.getFinancialPreferences(),
   ]);
 
-  let targetSavingsRate = 30;
-  const settingsRow = (settingsResult.settings as Record<string, unknown>) ?? {};
-  const rawJson = typeof settingsRow.settings === "string" ? settingsRow.settings : "{}";
-  const settingsJson = JSON.parse(rawJson) as Record<string, unknown>;
-  if (typeof settingsJson.savings_rate_target === "number") {
-    targetSavingsRate = settingsJson.savings_rate_target;
-  }
+  const targetSavingsRate = settingsResult.data.savingsRateTarget;
 
   const monthlyData: MonthlyData[] = summary.months.map((m) => ({
     month: MONTH_NAMES[m.month - 1] ?? `${m.month}月`,
@@ -63,9 +58,9 @@ export async function overviewLoader({
   const balance = totalIncome - totalExpense;
   const savingsRate = buildSavingsRate(totalIncome, totalExpense);
 
-  const transactions = recentResult.transactions.map((raw) =>
-    toDomainTransaction(raw as Record<string, unknown>),
-  );
+  const transactions = recentResult.transactions
+    .map((raw) => toDomainTransaction(raw as Record<string, unknown>))
+    .filter((row) => row.currency === "CNY");
 
   return {
     transactions,

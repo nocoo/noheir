@@ -35,9 +35,9 @@ export async function expenseLoader({ request }: { request: Request }): Promise<
   }
 
   const result = await workerDbClient.getAllTransactionsByYear(selectedYear);
-  const transactions = result.transactions.map((raw) =>
-    toDomainTransaction(raw as Record<string, unknown>),
-  );
+  const transactions = result.transactions
+    .map((raw) => toDomainTransaction(raw as Record<string, unknown>))
+    .filter((row) => row.currency === "CNY");
 
   return { transactions, selectedYear };
 }

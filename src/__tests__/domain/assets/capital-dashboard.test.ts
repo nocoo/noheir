@@ -13,6 +13,7 @@ import {
 import type { UnitDisplayInfo } from "@/domain/types";
 
 const makeUnit = (overrides: Partial<UnitDisplayInfo> = {}): UnitDisplayInfo => ({
+  version: 1,
   id: "1",
   unitCode: "A01",
   amount: 100,
@@ -58,6 +59,7 @@ describe("capital-dashboard domain", () => {
       makeUnit(),
       makeUnit({
         product: {
+          version: 1,
           id: "p1",
           name: "X",
           code: null,

@@ -1,5 +1,3 @@
-export const MCP_ISSUER = "https://noheir.hexly.ai";
-
 export function isMutatingMethod(method: string): boolean {
   const m = method.toUpperCase();
   return m === "POST" || m === "PUT" || m === "PATCH" || m === "DELETE";
@@ -29,24 +27,13 @@ export function isSameOriginRequest(input: {
   return false;
 }
 
-export type PublicRouteKind = "live" | "mcp-machine" | "well-known" | "none";
+export type PublicRouteKind = "live" | "none";
 
-/**
- * Exact public paths. Never treat `/api/mcp/*` as a prefix bypass.
- * authorize/callback are NOT public.
- */
 export function publicRouteKind(method: string, path: string): PublicRouteKind {
   const m = method.toUpperCase();
   const normalized = path.replace(/\/+$/, "") || "/";
 
   if (m === "GET" && normalized === "/api/live") return "live";
-  if (m === "GET" && normalized === "/.well-known/oauth-authorization-server") return "well-known";
-
-  if (m === "POST" && normalized === "/api/mcp") return "mcp-machine";
-  if (m === "POST" && normalized === "/api/mcp/register") return "mcp-machine";
-  if (m === "POST" && normalized === "/api/mcp/token") return "mcp-machine";
-  if (m === "POST" && normalized === "/api/mcp/revoke") return "mcp-machine";
-
   return "none";
 }
 

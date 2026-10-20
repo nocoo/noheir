@@ -1,52 +1,62 @@
-import { Button } from "@nocoo/basalt";
-import { AlertCircle, Anchor, Calendar, Plus, Save, Trash2 } from "lucide-react";
-import { useState, useTransition } from "react";
-import { useRevalidator } from "react-router";
-import { toast } from "sonner";
-import { saveBalanceAnchors } from "@/app/actions/settings-actions";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button, Input, Label } from "@nocoo/basalt";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@nocoo/basalt/components/select";
+import { AlertCircle, Anchor, Calendar, Plus, Save, Trash2 } from "lucide-react";
+import { useState, useTransition } from "react";
+import { useRevalidator } from "react-router";
+import { toast } from "sonner";
+import { saveBalanceAnchors } from "@/app/actions/settings-actions";
+import { FinancialSnapshotNotice } from "@/components/shared/financial-snapshot-notice";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { groupAnchorsByAccount } from "@/domain/settings/balance-anchors";
 import type { BalanceAnchor } from "@/domain/types";
+import { getLocalDateString } from "@/lib/local-date";
 
 interface BalanceAnchorsClientProps {
   accounts: string[];
+  revision: number;
   initialAnchors: BalanceAnchor[];
 }
 
-export function BalanceAnchorsClient({ accounts, initialAnchors }: BalanceAnchorsClientProps) {
+export function BalanceAnchorsClient({
+  accounts,
+  initialAnchors,
+  revision,
+}: BalanceAnchorsClientProps) {
   const revalidator = useRevalidator();
   const [isPending, startTransition] = useTransition();
 
   const [anchors, setAnchors] = useState<BalanceAnchor[]>(initialAnchors);
+  const [baseRevision, setBaseRevision] = useState(revision);
   const [selectedAccount, setSelectedAccount] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [balance, setBalance] = useState("");
+  const [currency, setCurrency] = useState("CNY");
 
   const anchorsByAccount = groupAnchorsByAccount(anchors);
 
   const handleAddAnchor = () => {
-    if (!selectedAccount || !selectedDate || balance === "") return;
+    if (!selectedAccount || !selectedDate || balance === "" || !Number.isFinite(Number(balance)))
+      return;
 
     const newAnchor: BalanceAnchor = {
       accountName: selectedAccount,
       date: selectedDate,
       balance: parseFloat(balance),
+      currency,
     };
 
     // Remove existing anchor for same account + date if exists
     const filtered = anchors.filter(
-      (a) => !(a.accountName === selectedAccount && a.date === selectedDate),
+      (a) =>
+        !(a.accountName === selectedAccount && a.date === selectedDate && a.currency === currency),
     );
 
     setAnchors([...filtered, newAnchor]);
@@ -55,13 +65,17 @@ export function BalanceAnchorsClient({ accounts, initialAnchors }: BalanceAnchor
     setBalance("");
   };
 
-  const handleRemoveAnchor = (accountName: string, date: string) => {
-    setAnchors((prev) => prev.filter((a) => !(a.accountName === accountName && a.date === date)));
+  const handleRemoveAnchor = (accountName: string, date: string, currency: string | undefined) => {
+    setAnchors((prev) =>
+      prev.filter(
+        (a) => !(a.accountName === accountName && a.date === date && a.currency === currency),
+      ),
+    );
   };
 
   const handleSave = () => {
     startTransition(async () => {
-      const result = await saveBalanceAnchors(anchors);
+      const result = await saveBalanceAnchors(anchors, baseRevision);
       if (result.success) {
         toast.success("余额锚点已保存");
         revalidator.revalidate();
@@ -73,6 +87,13 @@ export function BalanceAnchorsClient({ accounts, initialAnchors }: BalanceAnchor
 
   return (
     <div className="space-y-6">
+      <FinancialSnapshotNotice
+        changed={baseRevision !== revision}
+        onReset={() => {
+          setAnchors(initialAnchors);
+          setBaseRevision(revision);
+        }}
+      />
       {/* Header */}
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold">
@@ -98,7 +119,7 @@ export function BalanceAnchorsClient({ accounts, initialAnchors }: BalanceAnchor
           <CardDescription>为指定账户设置某日期的已知余额</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
             <div className="space-y-2">
               <Label>账户</Label>
               <Select value={selectedAccount} onValueChange={setSelectedAccount}>
@@ -121,7 +142,7 @@ export function BalanceAnchorsClient({ accounts, initialAnchors }: BalanceAnchor
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                max={new Date().toISOString().split("T")[0]}
+                max={getLocalDateString()}
               />
             </div>
 
@@ -136,6 +157,21 @@ export function BalanceAnchorsClient({ accounts, initialAnchors }: BalanceAnchor
               />
             </div>
 
+            <div className="space-y-2">
+              <Label>币种</Label>
+              <Select value={currency} onValueChange={setCurrency}>
+                <SelectTrigger aria-label="币种">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {["CNY", "USD", "HKD"].map((item) => (
+                    <SelectItem key={item} value={item}>
+                      {item}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="flex items-end">
               <Button
                 onClick={handleAddAnchor}
@@ -170,7 +206,7 @@ export function BalanceAnchorsClient({ accounts, initialAnchors }: BalanceAnchor
                   <div className="grid grid-cols-1 gap-2">
                     {acctAnchors.map((anchor) => (
                       <div
-                        key={`${anchor.accountName}-${anchor.date}`}
+                        key={`${anchor.accountName}-${anchor.date}-${anchor.currency}`}
                         className="bg-secondary flex items-center justify-between rounded-lg p-3"
                       >
                         <div className="flex flex-1 items-center gap-4">
@@ -180,13 +216,18 @@ export function BalanceAnchorsClient({ accounts, initialAnchors }: BalanceAnchor
                           </div>
                           <div className="text-sm">
                             <span className="text-muted-foreground">余额: </span>
-                            <span className="font-semibold">¥{anchor.balance.toFixed(2)}</span>
+                            <span className="font-semibold">
+                              {anchor.currency ?? "CNY"} {anchor.balance.toFixed(2)}
+                            </span>
                           </div>
                         </div>
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleRemoveAnchor(anchor.accountName, anchor.date)}
+                          aria-label={`移除 ${anchor.accountName} ${anchor.date} ${anchor.currency ?? "CNY"} 锚点`}
+                          onClick={() =>
+                            handleRemoveAnchor(anchor.accountName, anchor.date, anchor.currency)
+                          }
                           className="text-muted-foreground hover:text-destructive size-8"
                         >
                           <Trash2 className="size-4" />

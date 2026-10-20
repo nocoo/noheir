@@ -57,7 +57,7 @@ export async function accountLoader({ request }: { request: Request }): Promise<
     selectedYear = availableYears[0] ?? new Date().getFullYear();
   }
 
-  const accountSummary = await workerDbClient.getAccountSummary(selectedYear);
+  const accountSummary = await workerDbClient.getAccountSummary(selectedYear, "CNY");
 
   let totalTransactions = 0;
   let totalFlow = 0;

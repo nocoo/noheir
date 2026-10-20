@@ -117,7 +117,7 @@ describe("WorkerDbClient — browser client methods", () => {
         },
       },
     ]);
-    await client.updateExpenseCategory("c1", { name: "新房租" });
+    await client.updateExpenseCategory("c1", { name: "新房租" }, 1);
     const req = call(0);
     expect(req.method).toBe("PUT");
     expect(req.url).toBe("/api/expense-categories/c1");
@@ -126,7 +126,7 @@ describe("WorkerDbClient — browser client methods", () => {
 
   test("deleteExpenseCategory sends DELETE to /api/expense-categories/:id", async () => {
     const { call } = setupFetch([{ status: 204 }]);
-    await client.deleteExpenseCategory("c1");
+    await client.deleteExpenseCategory("c1", 1);
     const req = call(0);
     expect(req.method).toBe("DELETE");
     expect(req.url).toBe("/api/expense-categories/c1");
@@ -159,7 +159,7 @@ describe("WorkerDbClient — browser client methods", () => {
 
   test("updateRecurringExpense sends PUT without internal authority header", async () => {
     const { call } = setupFetch([{ status: 200, body: { rule: { id: "r1", name: "改名" } } }]);
-    await client.updateRecurringExpense("r1", { name: "改名" });
+    await client.updateRecurringExpense("r1", { name: "改名" }, 1);
     const req = call(0);
     expect(req.method).toBe("PUT");
     expect(req.url).toBe("/api/recurring-expenses/r1");
@@ -169,7 +169,7 @@ describe("WorkerDbClient — browser client methods", () => {
 
   test("transitionRecurringExpense sends POST to /api/recurring-expenses/:id/state", async () => {
     const { call } = setupFetch([{ status: 200, body: { success: true } }]);
-    await client.transitionRecurringExpense("r1", "pause");
+    await client.transitionRecurringExpense("r1", "pause", 1);
     const req = call(0);
     expect(req.method).toBe("POST");
     expect(req.url).toBe("/api/recurring-expenses/r1/state");
@@ -178,7 +178,7 @@ describe("WorkerDbClient — browser client methods", () => {
 
   test("deleteRecurringExpense sends DELETE to /api/recurring-expenses/:id", async () => {
     const { call } = setupFetch([{ status: 204 }]);
-    await client.deleteRecurringExpense("r1");
+    await client.deleteRecurringExpense("r1", 1);
     const req = call(0);
     expect(req.method).toBe("DELETE");
     expect(req.url).toBe("/api/recurring-expenses/r1");

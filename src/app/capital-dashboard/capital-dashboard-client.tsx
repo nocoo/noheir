@@ -183,20 +183,21 @@ export function CapitalDashboardClient({ units, deploymentRate }: CapitalDashboa
       return true;
     });
 
+    const cnyUnits = filtered.filter((unit) => unit.currency === "CNY");
     const totals = buildTotalAssetsByCurrency(filtered);
-    const total = buildTotalAssetsAll(totals);
-    const idle = buildIdleUnits(filtered);
-    const currDist = buildCurrencyDistribution(filtered, total).map((d) => ({
+    const total = buildTotalAssetsAll(buildTotalAssetsByCurrency(cnyUnits));
+    const idle = buildIdleUnits(cnyUnits);
+    const currDist = buildCurrencyDistribution(cnyUnits, total).map((d) => ({
       name: d.currency,
       value: d.amount,
       percentage: d.percentage,
     }));
-    const statusDist = buildStatusDistribution(filtered, total).map((d) => ({
+    const statusDist = buildStatusDistribution(cnyUnits, total).map((d) => ({
       name: d.status,
       value: d.amount,
       percentage: d.percentage,
     }));
-    const availabilityDist = buildAvailabilityDistribution(filtered, total).map((d) => ({
+    const availabilityDist = buildAvailabilityDistribution(cnyUnits, total).map((d) => ({
       name: d.period,
       value: d.amount,
       percentage: d.percentage,
@@ -305,7 +306,7 @@ export function CapitalDashboardClient({ units, deploymentRate }: CapitalDashboa
       {/* Summary Stats */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard
-          title="总资产"
+          title="CNY 总资产"
           value={formatCurrencyFull(totalAll)}
           icon={BarChart3}
           variant="primary"
@@ -317,7 +318,7 @@ export function CapitalDashboardClient({ units, deploymentRate }: CapitalDashboa
           variant="income"
         />
         <StatCard
-          title="闲置资金"
+          title="CNY 闲置资金"
           value={formatCurrencyFull(idleFunds)}
           icon={PiggyBank}
           variant="expense"
@@ -332,7 +333,13 @@ export function CapitalDashboardClient({ units, deploymentRate }: CapitalDashboa
             <Card key={currency} className="border-l-4 border-l-primary">
               <CardContent className="flex items-center justify-between p-3">
                 <span className="text-muted-foreground text-sm">{currency}</span>
-                <span className="text-primary font-bold">{formatCurrencyFull(amount)}</span>
+                <span className="text-primary font-bold">
+                  {currency}{" "}
+                  {amount.toLocaleString("zh-CN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </span>
               </CardContent>
             </Card>
           ))}
@@ -343,17 +350,17 @@ export function CapitalDashboardClient({ units, deploymentRate }: CapitalDashboa
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <DistributionPie
           title="币种分布"
-          description="按币种的资产配置"
+          description="CNY 资产配置；其他币种金额单独列示"
           data={currencyDistribution}
         />
         <DistributionPie
           title="状态分布"
-          description="按单位状态的配置"
+          description="CNY 按单位状态的配置"
           data={statusDistribution}
         />
         <DistributionPie
           title="可用性分布"
-          description="按可用时间的配置"
+          description="CNY 按可用时间的配置"
           data={availabilityDistribution}
         />
       </div>

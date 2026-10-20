@@ -22,6 +22,7 @@ export interface FetchOptions {
   omitAuth?: boolean;
   redirect?: RequestRedirect;
   headers?: Record<string, string>;
+  version?: unknown;
 }
 
 export async function rawFetch(opts: FetchOptions): Promise<Response> {
@@ -30,6 +31,11 @@ export async function rawFetch(opts: FetchOptions): Promise<Response> {
     Origin: BASE_URL,
     ...opts.headers,
   };
+  if (opts.version !== undefined) {
+    if (typeof opts.version !== "number" || !Number.isSafeInteger(opts.version))
+      throw new Error("Expected an explicit numeric snapshot version");
+    headers["If-Match"] = `"${opts.version}"`;
+  }
   if (!opts.omitAuth)
     headers["Cf-Access-Jwt-Assertion"] =
       opts.token ?? TOKENS[opts.userId ?? TEST_USER_A] ?? TOKENS.unknown ?? "";

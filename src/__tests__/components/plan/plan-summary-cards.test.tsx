@@ -6,6 +6,7 @@ import type { RecurrenceRule } from "@/lib/recurring-expense/rule-types";
 
 function rule(overrides: Partial<RecurrenceRule>): RecurrenceRule {
   return {
+    version: 1,
     id: "r",
     userId: "u",
     name: "rule",
@@ -28,6 +29,13 @@ function rule(overrides: Partial<RecurrenceRule>): RecurrenceRule {
 }
 
 describe("buildSummaries (P3-C6)", () => {
+  test("never adds foreign-currency occurrences to CNY summaries", () => {
+    const cny = rule({ id: "cny", currency: "CNY" });
+    const usd = rule({ id: "usd", currency: "USD", amountCents: 990000 });
+    expect(buildSummaries([cny, usd], "2026-06-01", "2026-06-07")).toEqual(
+      buildSummaries([cny], "2026-06-01", "2026-06-07"),
+    );
+  });
   test("empty rules → all three sums are 0", () => {
     const items = buildSummaries([], "2026-06-01", "2026-06-07");
     expect(items.map((i) => i.amount)).toEqual([0, 0, 0]);

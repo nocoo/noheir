@@ -29,6 +29,7 @@ import { Label } from "@/components/ui/label";
 import { CHART_TOKENS } from "@/lib/palette";
 
 export interface CategoryFormInitial {
+  version?: number;
   id?: string;
   name?: string;
   colorToken?: string;
@@ -98,7 +99,7 @@ export function CategoryForm({
       };
       const result =
         isEdit && initial?.id
-          ? await updateExpenseCategory(initial.id, payload)
+          ? await updateExpenseCategory(initial.id, payload, initial.version)
           : await createExpenseCategory(payload);
 
       if (result.success) {

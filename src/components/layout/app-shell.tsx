@@ -166,7 +166,33 @@ function AppShellInner({
 
         {/* Floating island content area */}
         <div className="flex-1 min-h-0 px-2 pb-2 md:px-3 md:pb-3 flex flex-col">
-          <ContentIsland className="flex-1 overflow-y-auto">{children}</ContentIsland>
+          <ContentIsland className="flex-1 overflow-y-auto">
+            {[
+              "/",
+              "/income",
+              "/expense",
+              "/savings",
+              "/compare",
+              "/freedom",
+              "/financial-health",
+              "/account",
+              "/account-detail",
+              "/flow",
+              "/funds",
+              "/warehouse",
+              "/capital-logs",
+              "/capital-decisions",
+              "/liquidity",
+              "/strategy",
+              "/plan/calendar",
+              "/manage",
+            ].includes(pathname) && (
+              <p className="mb-3 text-sm text-muted-foreground">
+                金额汇总币种：CNY（人民币）。不折算或合计其他币种；其他币种记录与编辑操作保留。
+              </p>
+            )}
+            {children}
+          </ContentIsland>
         </div>
       </AppMain>
     </BasaltAppShell>

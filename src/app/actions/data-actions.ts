@@ -1,4 +1,5 @@
 import type { ActionResult } from "@/lib/action-result";
+import { financeApi } from "@/lib/finance-api";
 import { workerDbClient } from "@/lib/worker-db-client";
 
 interface BackupData {
@@ -55,18 +56,25 @@ export async function clearAllData(): Promise<ActionResult> {
     const { products } = await workerDbClient.listProducts();
     for (const raw of products) {
       const p = raw as Record<string, unknown>;
-      await workerDbClient.deleteProduct(String(p.id));
+      await workerDbClient.deleteProduct(String(p.id), Number(p.version));
     }
 
     // Delete all units
     const { units } = await workerDbClient.listUnits();
     for (const raw of units) {
       const u = raw as Record<string, unknown>;
-      await workerDbClient.deleteUnit(String(u.id));
+      await workerDbClient.deleteUnit(String(u.id), Number(u.version));
     }
 
-    // Reset settings
-    await workerDbClient.saveSettings({ siteName: "", settings: "{}" });
+    const classifications = await financeApi.listAccountClassifications();
+    if (classifications.meta.dataRevision === undefined)
+      throw new Error("Missing financial data revision");
+    await financeApi.replaceAccountClassifications([], classifications.meta.dataRevision);
+    const anchors = await financeApi.listBalanceAnchors();
+    if (anchors.meta.dataRevision === undefined) throw new Error("Missing financial data revision");
+    await financeApi.replaceBalanceAnchors([], anchors.meta.dataRevision);
+    const preferences = await financeApi.getFinancialPreferences();
+    await financeApi.resetFinancialPreferences(preferences.data.version);
 
     return { success: true, data: undefined };
   } catch (err) {

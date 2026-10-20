@@ -8,6 +8,7 @@ function fixedDate(iso: string): Date {
 
 function product(overrides: Partial<DomainProduct> = {}): DomainProduct {
   return {
+    version: 1,
     id: "p1",
     name: "prod",
     code: null,

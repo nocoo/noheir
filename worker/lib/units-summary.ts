@@ -33,7 +33,7 @@ export interface UnitsSummary {
  *
  * @param units - Units with computed availability info
  */
-export function buildUnitsSummary(units: UnitWithAvailability[]): UnitsSummary {
+export function buildUnitsSummary(units: UnitWithAvailability[], currency = "CNY"): UnitsSummary {
   const summary: UnitsSummary = {
     total_count: 0,
     total_amount_cents: 0,
@@ -49,6 +49,7 @@ export function buildUnitsSummary(units: UnitWithAvailability[]): UnitsSummary {
   };
 
   for (const unit of units) {
+    if (unit.currency !== currency) continue;
     const amount = unit.amountCents;
 
     // Total

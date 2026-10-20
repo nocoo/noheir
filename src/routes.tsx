@@ -169,24 +169,24 @@ export const routes: RouteObject[] = [
         },
       },
       {
-        path: "/ai-insight",
+        path: "/api-keys",
         lazy: async () => {
-          const mod = await import("@/app/ai-insight/page");
-          return { Component: mod.default, loader: mod.aiInsightLoader };
+          const mod = await import("@/app/api-keys/page");
+          return { Component: mod.default, loader: mod.apiKeysLoader };
         },
       },
       {
-        path: "/ai-settings",
+        path: "/analyses",
         lazy: async () => {
-          const mod = await import("@/app/ai-settings/page");
-          return { Component: mod.default, loader: mod.aiSettingsLoader };
+          const mod = await import("@/app/analyses/page");
+          return { Component: mod.default, loader: mod.analysesLoader };
         },
       },
       {
-        path: "/mcp-tokens",
+        path: "/analyses/:id",
         lazy: async () => {
-          const mod = await import("@/app/mcp-tokens/page");
-          return { Component: mod.default };
+          const mod = await import("@/app/analyses/detail-page");
+          return { Component: mod.default, loader: mod.analysisLoader };
         },
       },
       {

@@ -40,6 +40,7 @@ import type { RecurrenceRule } from "@/lib/recurring-expense/rule-types";
 
 function rule(overrides: Partial<RecurrenceRule>): RecurrenceRule {
   return {
+    version: 1,
     id: "r1",
     userId: "u",
     name: "Netflix",
@@ -76,6 +77,7 @@ describe("ruleToFormInitial (P3-C10)", () => {
   test("converts amountCents to yuan and forwards every field", () => {
     const r = rule({
       id: "r9",
+      version: 1,
       name: "x",
       amountCents: 12345,
       categoryId: "cat-a",
@@ -89,6 +91,7 @@ describe("ruleToFormInitial (P3-C10)", () => {
     });
     expect(ruleToFormInitial(r)).toEqual({
       id: "r9",
+      version: 1,
       name: "x",
       amount: 123.45,
       categoryId: "cat-a",
@@ -277,6 +280,30 @@ describe("CalendarClient router.refresh on mutation success (P3-C10 fix)", () =>
     await user.click(within(dialog).getByRole("button", { name: "保存" }));
     expect(updateMock).toHaveBeenCalled();
     expect(revalidateMock).toHaveBeenCalled();
+  });
+
+  test("keeps the opened rule snapshot when loader props change", async () => {
+    const user = userEvent.setup();
+    updateMock.mockResolvedValueOnce({ success: true, data: undefined });
+    const { rerender } = render(
+      <CalendarClient
+        rules={[rule({ name: "old", version: 3 })]}
+        categories={CATS}
+        todayIso={TODAY}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: "old 操作菜单" }));
+    await user.click(await screen.findByRole("menuitem", { name: "编辑" }));
+    rerender(
+      <CalendarClient
+        rules={[rule({ name: "new", version: 4 })]}
+        categories={CATS}
+        todayIso={TODAY}
+      />,
+    );
+    const dialog = await screen.findByRole("dialog", { name: "编辑周期支出" });
+    await user.click(within(dialog).getByRole("button", { name: "保存" }));
+    expect(updateMock).toHaveBeenCalledWith("r1", expect.objectContaining({ name: "old" }), 3);
   });
 
   test("RuleList pause success → refresh(); failure does NOT refresh", async () => {

@@ -50,21 +50,22 @@ export function buildSummaries(
   viewMonth: string,
   todayIso: string,
 ): SummaryItem[] {
+  const cnyRules = rules.filter((rule) => rule.currency === "CNY");
   return [
     {
       key: "month",
       label: "当月",
-      amount: sumMonth(rules, viewMonth),
+      amount: sumMonth(cnyRules, viewMonth),
     },
     {
       key: "next30",
       label: "自今日起 30 天",
-      amount: sumNextDays(rules, todayIso, NEXT_DAYS_WINDOW),
+      amount: sumNextDays(cnyRules, todayIso, NEXT_DAYS_WINDOW),
     },
     {
       key: "next365",
       label: "自今日起 12 个月",
-      amount: sumNextDays(rules, todayIso, NEXT_YEAR_WINDOW),
+      amount: sumNextDays(cnyRules, todayIso, NEXT_YEAR_WINDOW),
     },
   ];
 }

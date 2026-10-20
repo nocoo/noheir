@@ -43,6 +43,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { sumCurrency } from "@/domain/currency-summary";
 import type { DomainProduct } from "@/domain/types";
 import { formatCurrencyFull } from "@/lib/chart-config";
 import { CAPITAL_TABLE_COLUMNS } from "@/lib/table-columns";
@@ -177,7 +178,7 @@ export function FundsClient({ units, products }: FundsClientProps) {
     return result;
   }, [units, search, filterStatus, filterStrategy, filterTactics, sortField, sortDir]);
 
-  const totalAmount = filteredAndSorted.reduce((sum, u) => sum + u.amount, 0);
+  const totalAmount = sumCurrency(filteredAndSorted);
 
   const handleEdit = (unit: SerializedUnit) => {
     setEditingUnit(unit);
@@ -196,7 +197,7 @@ export function FundsClient({ units, products }: FundsClientProps) {
   const confirmDelete = () => {
     if (!deleteTarget) return;
     startTransition(async () => {
-      const result = await deleteUnit(deleteTarget.id);
+      const result = await deleteUnit(deleteTarget.id, deleteTarget.version);
       if (result.success) {
         toast.success("资本单位已删除");
         revalidator.revalidate();
@@ -217,7 +218,7 @@ export function FundsClient({ units, products }: FundsClientProps) {
             资本单位管理
           </h1>
           <p className="text-muted-foreground text-sm">
-            ({filteredAndSorted.length} / {units.length} 个单位) · 总计{" "}
+            ({filteredAndSorted.length} / {units.length} 个单位) · CNY 总计{" "}
             {formatCurrencyFull(totalAmount)}
           </p>
         </div>

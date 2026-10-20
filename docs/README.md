@@ -4,12 +4,11 @@ Start with the [project README](../README.md) and [project rules](../AGENTS.md).
 
 | Document | Scope |
 | --- | --- |
-| [25-scoped-api](25-scoped-api.md) | Approved implementation: scoped REST API, external analysis writeback and AI/MCP retirement; in progress |
+| [25-scoped-api](25-scoped-api.md) | Scoped REST API, external reports, limits, client example and local verification; not yet published |
 | [24-local-environments](24-local-environments.md) | Demo/E2E/Prod launch, switching, ownership, catalog and verification |
-| [04-run](04-run.md) | Native Workers development, Access/MCP, CI/CD, rollback and cleanup |
+| [04-run](04-run.md) | Native Workers development, Access/scoped REST, CI/CD and data safety |
 | [23-workers-migration](23-workers-migration.md) | Architecture, identity invariants, work ownership, acceptance and deployment evidence |
 | [17-contribution-logs](17-contribution-logs.md) | Investment/redemption records |
-| [21-mcp-agent-friendly-improvement](21-mcp-agent-friendly-improvement.md) | Tool querying, product links and pagination |
 | [22-agent-operations](22-agent-operations.md) | Financial/UI constraints and operational guidance |
 | [001-capital-unit-date-refactor](001-capital-unit-date-refactor.md) | Capital dates |
 | [002-recurring-expense-calendar](002-recurring-expense-calendar.md) | Recurring expenses and planning calendar |
@@ -18,7 +17,7 @@ Start with the [project README](../README.md) and [project rules](../AGENTS.md).
 
 ## Historical architecture
 
-Documents 01–03, 05–16, 18–20 record earlier Supabase, Next.js, Docker and split
+Documents 01–03, 05–16, 18–21 record earlier Supabase, Next.js, Docker and split
 Worker designs. In particular, [20-mcp-oauth-nextjs-architecture](20-mcp-oauth-nextjs-architecture.md)
 describes the former move into Next.js; its runtime/deployment commands are
 superseded by the native Worker migration. Financial semantics and incident

@@ -6,6 +6,7 @@ const userId = TEST_USER_A;
 
 interface Category {
   id: string;
+  version: number;
   userId: string;
   name: string;
   colorToken: string;
@@ -22,6 +23,7 @@ async function cleanupCategories(uid: string): Promise<void> {
     await rawFetch({
       method: "DELETE",
       path: `/api/expense-categories/${c.id}`,
+      version: c.version,
       userId: uid,
     });
   }
@@ -103,6 +105,7 @@ describe("E2E: /api/expense-categories (P1-C5)", () => {
     const updated = await api<{ category: Category }>({
       method: "PUT",
       path: `/api/expense-categories/${category.id}`,
+      version: category.version,
       userId,
       body: { name: "renamed", colorToken: "chart-9" },
     });
@@ -115,6 +118,7 @@ describe("E2E: /api/expense-categories (P1-C5)", () => {
     const missing = await rawFetch({
       method: "PUT",
       path: "/api/expense-categories/00000000-0000-0000-0000-000000000000",
+      version: 1,
       userId,
       body: { name: "x" },
     });
@@ -132,6 +136,7 @@ describe("E2E: /api/expense-categories (P1-C5)", () => {
     const ok = await rawFetch({
       method: "DELETE",
       path: `/api/expense-categories/${category.id}`,
+      version: category.version,
       userId,
     });
     expect(ok.status).toBe(204);
@@ -139,6 +144,7 @@ describe("E2E: /api/expense-categories (P1-C5)", () => {
     const again = await rawFetch({
       method: "DELETE",
       path: `/api/expense-categories/${category.id}`,
+      version: category.version,
       userId,
     });
     expect(again.status).toBe(404);

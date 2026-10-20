@@ -50,6 +50,7 @@ export async function updateProduct(
     annualReturnRate?: number | null;
     isArchived?: boolean;
   },
+  version: number | undefined,
 ): Promise<ActionResult> {
   try {
     const payload: Record<string, unknown> = {};
@@ -63,7 +64,7 @@ export async function updateProduct(
     if (data.cycleDays !== undefined) payload.cycleDays = data.cycleDays;
     if (data.annualReturnRate !== undefined) payload.annualReturnRate = data.annualReturnRate;
     if (data.isArchived !== undefined) payload.isArchived = data.isArchived;
-    await workerDbClient.updateProduct(id, payload);
+    await workerDbClient.updateProduct(id, payload, version);
     return { success: true, data: undefined };
   } catch (err) {
     return {
@@ -73,9 +74,12 @@ export async function updateProduct(
   }
 }
 
-export async function deleteProduct(id: string): Promise<ActionResult> {
+export async function deleteProduct(
+  id: string,
+  version: number | undefined,
+): Promise<ActionResult> {
   try {
-    await workerDbClient.deleteProduct(id);
+    await workerDbClient.deleteProduct(id, version);
     return { success: true, data: undefined };
   } catch (err) {
     return {

@@ -1,27 +1,24 @@
 import { useLoaderData } from "react-router";
 import { AppShell } from "@/components/layout";
-import { workerDbClient } from "@/lib/worker-db-client";
+import type { FinancialPreferences } from "@/domain/api-contract";
+import { financeApi } from "@/lib/finance-api";
 import { SettingsClient } from "./settings-client";
 
 export interface SettingsLoaderData {
-  settingsJson: Record<string, unknown>;
+  preferences: FinancialPreferences;
 }
 
 export async function settingsLoader(): Promise<SettingsLoaderData> {
-  const result = await workerDbClient.getSettings();
-  const row = (result.settings as Record<string, unknown>) ?? {};
-  const rawJson = typeof row.settings === "string" ? row.settings : "{}";
-  const settingsJson = JSON.parse(rawJson) as Record<string, unknown>;
-
-  return { settingsJson };
+  const { data: preferences } = await financeApi.getFinancialPreferences();
+  return { preferences };
 }
 
 export default function SettingsPage() {
-  const { settingsJson } = useLoaderData<SettingsLoaderData>();
+  const { preferences } = useLoaderData<SettingsLoaderData>();
 
   return (
     <AppShell>
-      <SettingsClient settingsJson={settingsJson} />
+      <SettingsClient preferences={preferences} />
     </AppShell>
   );
 }

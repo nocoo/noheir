@@ -21,11 +21,17 @@ export class WorkerDbError extends Error {
 }
 
 export class WorkerDbClient {
-  private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  private async request<T>(
+    method: string,
+    path: string,
+    body?: unknown,
+    headers?: Record<string, string>,
+  ): Promise<T> {
     const init: RequestInit = {
       method,
       headers: {
         "Content-Type": "application/json",
+        ...headers,
       },
     };
     if (body !== undefined) {
@@ -34,7 +40,10 @@ export class WorkerDbClient {
     const res = await environmentFetch(path, init);
 
     if (!res.ok) {
-      const text = await res.text().catch(() => "Unknown error");
+      const text =
+        res.status === 412
+          ? "数据版本已变化，请刷新并核对后重新编辑；未自动重试。"
+          : await res.text().catch(() => "Unknown error");
       throw new WorkerDbError(text, res.status, `${method} ${path}`);
     }
 
@@ -44,6 +53,12 @@ export class WorkerDbClient {
     }
 
     return (await res.json()) as T;
+  }
+
+  private precondition(version: number | undefined): Record<string, string> {
+    if (typeof version !== "number" || !Number.isSafeInteger(version) || version < 0)
+      throw new Error("缺少有效版本，请刷新并核对后重新编辑。");
+    return { "If-Match": `"${version}"` };
   }
 
   // ── Auth (Access Session) ──
@@ -97,12 +112,22 @@ export class WorkerDbClient {
     return this.request<{ inserted: number }>("POST", "/api/transactions/bulk", { rows });
   }
 
-  async updateTransaction(id: string, data: Record<string, unknown>) {
-    return this.request<{ transaction: unknown }>("PUT", `/api/transactions/${id}`, data);
+  async updateTransaction(id: string, data: Record<string, unknown>, version: number | undefined) {
+    return this.request<{ transaction: unknown }>(
+      "PUT",
+      `/api/transactions/${id}`,
+      data,
+      this.precondition(version),
+    );
   }
 
-  async deleteTransaction(id: string) {
-    return this.request<{ success: boolean }>("DELETE", `/api/transactions/${id}`);
+  async deleteTransaction(id: string, version: number | undefined) {
+    return this.request<{ success: boolean }>(
+      "DELETE",
+      `/api/transactions/${id}`,
+      undefined,
+      this.precondition(version),
+    );
   }
 
   async countTransactionsByYear(year: number) {
@@ -146,12 +171,22 @@ export class WorkerDbClient {
     return this.request<{ inserted: number }>("POST", "/api/transfers/bulk", { rows });
   }
 
-  async updateTransfer(id: string, data: Record<string, unknown>) {
-    return this.request<{ transfer: unknown }>("PUT", `/api/transfers/${id}`, data);
+  async updateTransfer(id: string, data: Record<string, unknown>, version: number | undefined) {
+    return this.request<{ transfer: unknown }>(
+      "PUT",
+      `/api/transfers/${id}`,
+      data,
+      this.precondition(version),
+    );
   }
 
-  async deleteTransfer(id: string) {
-    return this.request<{ success: boolean }>("DELETE", `/api/transfers/${id}`);
+  async deleteTransfer(id: string, version: number | undefined) {
+    return this.request<{ success: boolean }>(
+      "DELETE",
+      `/api/transfers/${id}`,
+      undefined,
+      this.precondition(version),
+    );
   }
 
   async countTransfersByYear(year: number) {
@@ -202,12 +237,22 @@ export class WorkerDbClient {
     return this.request<{ product: unknown }>("POST", "/api/products", data);
   }
 
-  async updateProduct(id: string, data: Record<string, unknown>) {
-    return this.request<{ product: unknown }>("PUT", `/api/products/${id}`, data);
+  async updateProduct(id: string, data: Record<string, unknown>, version: number | undefined) {
+    return this.request<{ product: unknown }>(
+      "PUT",
+      `/api/products/${id}`,
+      data,
+      this.precondition(version),
+    );
   }
 
-  async deleteProduct(id: string) {
-    return this.request<{ success: boolean }>("DELETE", `/api/products/${id}`);
+  async deleteProduct(id: string, version: number | undefined) {
+    return this.request<{ success: boolean }>(
+      "DELETE",
+      `/api/products/${id}`,
+      undefined,
+      this.precondition(version),
+    );
   }
 
   // ── Units ──
@@ -240,12 +285,22 @@ export class WorkerDbClient {
     return this.request<{ unit: unknown }>("POST", "/api/units", data);
   }
 
-  async updateUnit(id: string, data: Record<string, unknown>) {
-    return this.request<{ unit: unknown }>("PUT", `/api/units/${id}`, data);
+  async updateUnit(id: string, data: Record<string, unknown>, version: number | undefined) {
+    return this.request<{ unit: unknown }>(
+      "PUT",
+      `/api/units/${id}`,
+      data,
+      this.precondition(version),
+    );
   }
 
-  async deleteUnit(id: string) {
-    return this.request<{ success: boolean }>("DELETE", `/api/units/${id}`);
+  async deleteUnit(id: string, version: number | undefined) {
+    return this.request<{ success: boolean }>(
+      "DELETE",
+      `/api/units/${id}`,
+      undefined,
+      this.precondition(version),
+    );
   }
 
   // ── Contribution Logs ──
@@ -323,13 +378,20 @@ export class WorkerDbClient {
       operationDate?: string;
       note?: string | null;
     },
+    version: number | undefined,
   ) {
-    return this.request<{ log: unknown }>("PUT", `/api/contribution-logs/${id}`, data);
+    return this.request<{ log: unknown }>(
+      "PUT",
+      `/api/contribution-logs/${id}`,
+      data,
+      this.precondition(version),
+    );
   }
 
   async listUnitLogs(unitId: string) {
     return this.request<{
       logs: unknown[];
+      version: number;
       expected: ExpectedUnitSnapshot;
       currentProductName: string | null;
       availableDate: string | null;
@@ -346,16 +408,32 @@ export class WorkerDbClient {
       operationDate?: string;
       commitNote?: string | null;
     },
+    version: number | undefined,
   ) {
-    return this.request<{ unit: unknown }>("POST", `/api/units/${unitId}/commit`, data);
+    return this.request<{ unit: unknown }>(
+      "POST",
+      `/api/units/${unitId}/commit`,
+      data,
+      this.precondition(version),
+    );
   }
 
-  async deleteContributionLog(id: string) {
-    return this.request<{ success: boolean }>("DELETE", `/api/contribution-logs/${id}`);
+  async deleteContributionLog(id: string, version: number | undefined) {
+    return this.request<{ success: boolean }>(
+      "DELETE",
+      `/api/contribution-logs/${id}`,
+      undefined,
+      this.precondition(version),
+    );
   }
 
-  async restoreContributionLog(id: string) {
-    return this.request<{ log: unknown }>("POST", `/api/contribution-logs/${id}/restore`);
+  async restoreContributionLog(id: string, version: number | undefined) {
+    return this.request<{ log: unknown }>(
+      "POST",
+      `/api/contribution-logs/${id}/restore`,
+      undefined,
+      this.precondition(version),
+    );
   }
 
   async seedContributionLogs() {
@@ -399,15 +477,18 @@ export class WorkerDbClient {
 
   // ── Reports ──
 
-  async getYearlySummary(year: number) {
+  async getYearlySummary(year: number, currency = "CNY") {
     return this.request<{
       months: Array<{ month: number; income: number; expense: number; count: number }>;
       totals: { income: number; expense: number; count: number };
-    }>("GET", `/api/reports/yearly-summary?year=${year}`);
+    }>(
+      "GET",
+      `/api/reports/yearly-summary?${new URLSearchParams({ year: String(year), currency })}`,
+    );
   }
 
-  async getCategorySummary(year: number, month?: number, type?: string) {
-    const params = new URLSearchParams({ year: year.toString() });
+  async getCategorySummary(year: number, month?: number, type?: string, currency = "CNY") {
+    const params = new URLSearchParams({ year: year.toString(), currency });
     if (month) params.set("month", month.toString());
     if (type) params.set("type", type);
     return this.request<{
@@ -421,7 +502,7 @@ export class WorkerDbClient {
     }>("GET", `/api/reports/category-summary?${params}`);
   }
 
-  async getAccountSummary(year: number) {
+  async getAccountSummary(year: number, currency = "CNY") {
     return this.request<{
       accounts: Array<{
         account: string;
@@ -429,10 +510,13 @@ export class WorkerDbClient {
         total: number;
         count: number;
       }>;
-    }>("GET", `/api/reports/account-summary?year=${year}`);
+    }>(
+      "GET",
+      `/api/reports/account-summary?${new URLSearchParams({ year: String(year), currency })}`,
+    );
   }
 
-  async getFlowSummary(year: number) {
+  async getFlowSummary(year: number, currency = "CNY") {
     return this.request<{
       account_to_category: Array<{
         type: string;
@@ -446,10 +530,10 @@ export class WorkerDbClient {
         secondary_category: string | null;
         total: number;
       }>;
-    }>("GET", `/api/reports/flow-summary?year=${year}`);
+    }>("GET", `/api/reports/flow-summary?${new URLSearchParams({ year: String(year), currency })}`);
   }
 
-  async getMonthlyReport(year: number, month: number, currency?: string) {
+  async getMonthlyReport(year: number, month: number, currency = "CNY") {
     const params = new URLSearchParams({
       year: year.toString(),
       month: month.toString(),
@@ -514,16 +598,23 @@ export class WorkerDbClient {
       colorToken?: string | undefined;
       sortOrder?: number | undefined;
     },
+    version: number | undefined,
   ) {
     return this.request<{ category: RawExpenseCategory }>(
       "PUT",
       `/api/expense-categories/${id}`,
       payload,
+      this.precondition(version),
     );
   }
 
-  async deleteExpenseCategory(id: string): Promise<void> {
-    await this.request<unknown>("DELETE", `/api/expense-categories/${id}`);
+  async deleteExpenseCategory(id: string, version: number | undefined): Promise<void> {
+    await this.request<unknown>(
+      "DELETE",
+      `/api/expense-categories/${id}`,
+      undefined,
+      this.precondition(version),
+    );
   }
 
   // ── Recurring Expenses (002 spec) ──
@@ -536,11 +627,16 @@ export class WorkerDbClient {
     return this.request<{ rule: RawRecurringExpense }>("POST", "/api/recurring-expenses", payload);
   }
 
-  async updateRecurringExpense(id: string, payload: RecurringExpenseUpdatePayload) {
+  async updateRecurringExpense(
+    id: string,
+    payload: RecurringExpenseUpdatePayload,
+    version: number | undefined,
+  ) {
     return this.request<{ rule: RawRecurringExpense }>(
       "PUT",
       `/api/recurring-expenses/${id}`,
       payload,
+      this.precondition(version),
     );
   }
 
@@ -548,14 +644,28 @@ export class WorkerDbClient {
    * Transition recurring expense state via backend endpoint.
    * Browser sends transition intent; backend validates ownership and state machine.
    */
-  async transitionRecurringExpense(id: string, transition: "pause" | "resume" | "end") {
-    return this.request<{ success: boolean }>("POST", `/api/recurring-expenses/${id}/state`, {
-      transition,
-    });
+  async transitionRecurringExpense(
+    id: string,
+    transition: "pause" | "resume" | "end",
+    version: number | undefined,
+  ) {
+    return this.request<{ success: boolean }>(
+      "POST",
+      `/api/recurring-expenses/${id}/state`,
+      {
+        transition,
+      },
+      this.precondition(version),
+    );
   }
 
-  async deleteRecurringExpense(id: string): Promise<void> {
-    await this.request<unknown>("DELETE", `/api/recurring-expenses/${id}`);
+  async deleteRecurringExpense(id: string, version: number | undefined): Promise<void> {
+    await this.request<unknown>(
+      "DELETE",
+      `/api/recurring-expenses/${id}`,
+      undefined,
+      this.precondition(version),
+    );
   }
 }
 
@@ -564,6 +674,7 @@ export const workerDbClient = new WorkerDbClient();
 // ── Wire shapes ──
 
 export interface RawExpenseCategory {
+  version: number;
   id: string;
   userId: string;
   name: string;
@@ -574,6 +685,7 @@ export interface RawExpenseCategory {
 }
 
 export interface RawRecurringExpense {
+  version: number;
   id: string;
   userId: string;
   name: string;

@@ -116,15 +116,17 @@ browser test harness also explicitly disables the Prod boundary.
 
 ## Catalog and provenance
 
-`demo-catalog.ts`, version 2, is authored synthetic data with stable UUIDs, integer
+`demo-catalog.ts`, version 3, is authored synthetic data with stable UUIDs, integer
 cents and Asia/Shanghai dates. It includes 264 transactions, 66 balanced transfer
 legs across 2024–2026, 12 owner products, one inaccessible second-owner product,
 12 capital units, investment and reversible deleted logs, four colored planning
-categories, six recurrence rules, settings, anchors and synthetic MCP sessions.
+categories, six recurrence rules, typed financial preferences/classifications/anchors
+and an externally authored synthetic report. API keys are issued through the real
+human UI/API during acceptance, never seeded as legacy OAuth sessions.
 `public/demo/avatar.svg` is original geometric artwork created in this repository;
 no external image license or private data is required. Existing Noheir brand art
-retains its existing provenance. AI insight is the application's real local
-recurrence analysis; AI settings do not currently invoke an AI provider.
+retains its existing provenance. Internal AI/provider settings and MCP surfaces are
+removed; private report storage does not invoke an AI provider.
 
 Demo seeding runs once; catalog upgrades never overwrite edits. Stop the launcher
 and explicitly reset to load a newer catalog. Focused E2E remains empty apart from
@@ -135,7 +137,7 @@ Capture browser presentation time and native availability calculations are fixed
 at `2026-09-28T12:00:00+08:00`. The native fixture build defines the presentation
 clock used by the existing availability function; production builds define it as
 null. Explicit dates supplied by ordinary unit tests still take precedence. JWT,
-OAuth expiry and financial write timestamps retain real time; no global Date shim
+API key expiry and financial write timestamps retain real time; no global Date shim
 is installed in the Worker. Interactive Demo calendars use the user's current
 browser date; the capture command fixes browser presentation time separately.
 
@@ -153,8 +155,8 @@ reviewed. A static screenshot does not prove all controls on that page were used
 | `/products`, `/capital-logs` | Active/archived products, investment logs, deleted withdraw/adjust with P&L | L; A: browser product create and capital commit; HTTP log restore/delete | V: products table and timeline |
 | `/plan/calendar`, `/plan/categories` | Daily/weekly/monthly/yearly, active/paused/ended, four color tokens | L; A: browser creation and HTTP recurrence transitions/category CRUD | V: populated calendar and colored categories |
 | `/settings`, `/category-settings` | Savings/return targets, active income and fixed expense classifications | L; A: settings HTTP write/read | V: sliders and category surfaces |
-| `/ai-insight`, `/ai-settings` | Repeated subscriptions, varied expenses, disabled synthetic provider config | L; A: cancelled/accepted unsaved settings discard | V: insight cards and provider form; live AI N/A |
-| `/mcp-tokens` | Synthetic client and active/read-only/revoked/expired sessions | L; A: signed OAuth/PKCE/replay/refresh/revoke and MCP HTTP suite | V: actual connection instructions; real third-party consent unverified |
+| `/api-keys` | Real scoped key issuance, one-time secret, revoke | New browser/API acceptance; environment draft-discard uses key label | Verification evidence recorded in scoped API plan |
+| `/analyses`, `/analyses/:id` | Synthetic external report, period/revision/provenance | New report CRUD, Markdown safety, evidence and API writeback scenarios | Verification evidence recorded in scoped API plan |
 | `/manage`, `/import`, `/quality` | Importable financial records and one intentionally unmapped transaction | L; A: CSV preview/import, export download, annual rollback and restore scope | V: management, import and quality surfaces |
 | `/login`, `/terms`, `/privacy`, user avatar | Real login composition and legal pages, original synthetic avatar | L; loaded-image assertion | V: all three pages; real Access login/MFA unverified |
 | Switch / draft / lifecycle | Manual E2E plus disposable Demo fixtures | A: explicit/saved E2E, cancel, accepted switch, stale 410, fresh reentry, persistence and marker rejection | V: local control; CI captures omit it |

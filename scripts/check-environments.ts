@@ -72,9 +72,9 @@ try {
     const original = await page.evaluate(() =>
       sessionStorage.getItem("noheir:environment-instance"),
     );
-    await page.goto(`${origin}/ai-settings`);
-    const input = page.getByLabel("API 密钥");
-    await input.fill("synthetic-unsaved-key");
+    await page.goto(`${origin}/api-keys`);
+    const input = page.getByLabel("密钥名称", { exact: true });
+    await input.fill("synthetic-unsaved-label");
     page.once("dialog", (dialog) => dialog.dismiss());
     await page.getByRole("radio", { name: "Demo", exact: true }).click();
     assert.equal(
@@ -82,7 +82,7 @@ try {
       original,
     );
     assert.equal(await page.evaluate(() => localStorage.getItem("noheir:environment-mode")), "e2e");
-    await expect(input).toHaveValue("synthetic-unsaved-key");
+    await expect(input).toHaveValue("synthetic-unsaved-label");
     page.once("dialog", (dialog) => dialog.accept());
     await page.getByRole("radio", { name: "Demo", exact: true }).click();
     await expect(page.getByRole("radio", { name: "Demo", exact: true })).toHaveAttribute(
@@ -135,9 +135,16 @@ try {
     );
   }
   const routes = [...readFileSync("src/routes.tsx", "utf8").matchAll(/path: "([^"]+)"/g)].flatMap(
-    (match) => (match[1] ? [match[1]] : []),
+    (match) => (match[1] && !match[1].includes(":") ? [match[1]] : []),
   );
-  assert.equal(routes.length, 33);
+  assert.ok(routes.includes("/api-keys") && routes.includes("/analyses"));
+  assert.ok(
+    !routes.some((route) => ["/ai-settings", "/ai-insight", "/mcp-tokens"].includes(route)),
+  );
+  await page.goto(`${origin}/analyses`);
+  const detailPath = await page.locator('a[href^="/analyses/"]').first().getAttribute("href");
+  assert.ok(detailPath, "Seeded report must have a reachable detail page");
+  routes.push(detailPath);
   const directory = `test-results/environments-${new Date().toISOString().replace(/[:.]/g, "-")}`;
   mkdirSync(directory, { recursive: true });
   const failed: string[] = [];
@@ -222,7 +229,7 @@ try {
       2,
     ),
   );
-  console.log(`33 条页面加载及媒体验证通过；证据：${directory}`);
+  console.log(`${routes.length} 条页面加载及媒体验证通过；证据：${directory}`);
   await context.close();
 } finally {
   await browser.close();

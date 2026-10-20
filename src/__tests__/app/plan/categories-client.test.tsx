@@ -49,8 +49,8 @@ describe("CategoriesClient render (P3-C9)", () => {
     render(
       <CategoriesClient
         categories={[
-          { id: "c1", name: "房贷", colorToken: "chart-9", sortOrder: 0 },
-          { id: "c2", name: "订阅", colorToken: "chart-1", sortOrder: 1 },
+          { version: 1, id: "c1", name: "房贷", colorToken: "chart-9", sortOrder: 0 },
+          { version: 1, id: "c2", name: "订阅", colorToken: "chart-1", sortOrder: 1 },
         ]}
         usage={{ c1: 3 }}
       />,
@@ -70,7 +70,9 @@ describe("CategoriesClient render (P3-C9)", () => {
   test("category with off-palette colorToken renders fallback color", () => {
     render(
       <CategoriesClient
-        categories={[{ id: "c1", name: "bad", colorToken: "rebeccapurple", sortOrder: 0 }]}
+        categories={[
+          { version: 1, id: "c1", name: "bad", colorToken: "rebeccapurple", sortOrder: 0 },
+        ]}
         usage={{}}
       />,
     );
@@ -99,7 +101,7 @@ describe("CategoriesClient edit dialog (P3-C9)", () => {
     const user = userEvent.setup();
     render(
       <CategoriesClient
-        categories={[{ id: "c1", name: "房贷", colorToken: "chart-9", sortOrder: 3 }]}
+        categories={[{ version: 1, id: "c1", name: "房贷", colorToken: "chart-9", sortOrder: 3 }]}
         usage={{}}
       />,
     );
@@ -115,7 +117,7 @@ describe("CategoriesClient delete confirm (P3-C9)", () => {
     const user = userEvent.setup();
     render(
       <CategoriesClient
-        categories={[{ id: "c1", name: "房贷", colorToken: "chart-9", sortOrder: 0 }]}
+        categories={[{ version: 1, id: "c1", name: "房贷", colorToken: "chart-9", sortOrder: 0 }]}
         usage={{ c1: 5 }}
       />,
     );
@@ -129,7 +131,7 @@ describe("CategoriesClient delete confirm (P3-C9)", () => {
     const user = userEvent.setup();
     render(
       <CategoriesClient
-        categories={[{ id: "c1", name: "空分类", colorToken: "chart-1", sortOrder: 0 }]}
+        categories={[{ version: 1, id: "c1", name: "空分类", colorToken: "chart-1", sortOrder: 0 }]}
         usage={{}}
       />,
     );
@@ -143,14 +145,14 @@ describe("CategoriesClient delete confirm (P3-C9)", () => {
     deleteMock.mockResolvedValueOnce({ success: true, data: undefined });
     render(
       <CategoriesClient
-        categories={[{ id: "c1", name: "x", colorToken: "chart-1", sortOrder: 0 }]}
+        categories={[{ version: 1, id: "c1", name: "x", colorToken: "chart-1", sortOrder: 0 }]}
         usage={{}}
       />,
     );
     await user.click(screen.getByRole("button", { name: "删除 x" }));
     const dialog = await screen.findByRole("dialog");
     await user.click(within(dialog).getByRole("button", { name: /确认删除/ }));
-    expect(deleteMock).toHaveBeenCalledWith("c1");
+    expect(deleteMock).toHaveBeenCalledWith("c1", 1);
     expect(toastSuccess).toHaveBeenCalledWith("分类已删除");
     expect(revalidateMock).toHaveBeenCalled();
   });
@@ -160,7 +162,7 @@ describe("CategoriesClient delete confirm (P3-C9)", () => {
     deleteMock.mockResolvedValueOnce({ success: false, error: "无法删除" });
     render(
       <CategoriesClient
-        categories={[{ id: "c1", name: "x", colorToken: "chart-1", sortOrder: 0 }]}
+        categories={[{ version: 1, id: "c1", name: "x", colorToken: "chart-1", sortOrder: 0 }]}
         usage={{}}
       />,
     );
@@ -190,7 +192,7 @@ describe("CategoriesClient revalidator.revalidate after form success", () => {
     updateMock.mockResolvedValueOnce({ success: true, data: undefined });
     render(
       <CategoriesClient
-        categories={[{ id: "c1", name: "old", colorToken: "chart-1", sortOrder: 0 }]}
+        categories={[{ version: 1, id: "c1", name: "old", colorToken: "chart-1", sortOrder: 0 }]}
         usage={{}}
       />,
     );

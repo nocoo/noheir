@@ -26,6 +26,7 @@ import {
 import { CHART_TOKENS } from "@/lib/palette";
 
 export interface CategoryRow {
+  version: number;
   id: string;
   name: string;
   colorToken: string;
@@ -53,7 +54,7 @@ export function CategoriesClient({ categories, usage }: CategoriesClientProps): 
     if (!deleting) return;
     setDeletePending(true);
     try {
-      const result = await deleteExpenseCategory(deleting.id);
+      const result = await deleteExpenseCategory(deleting.id, deleting.version);
       if (result.success) {
         toast.success("分类已删除");
         setDeleting(null);

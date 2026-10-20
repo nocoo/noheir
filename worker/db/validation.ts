@@ -231,7 +231,7 @@ const commitOperationSchema = z.discriminatedUnion("kind", [
   }),
 ]);
 
-/** Excludes productId (only expressible as an operation) and endDate (derived). */
+/** Product changes are expressed as domain operations. */
 const commitMetadataSchema = z
   .object({
     unitCode: z.string().min(1).optional(),
@@ -240,11 +240,8 @@ const commitMetadataSchema = z
     status: z.enum(UNIT_STATUSES).optional(),
     strategy: z.enum(STRATEGIES).optional(),
     tactics: z.enum(TACTICS).optional(),
-    startDate: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, "startDate must be YYYY-MM-DD")
-      .optional()
-      .nullable(),
+    startDate: calendarDay.optional().nullable(),
+    endDate: calendarDay.optional().nullable(),
     unitNote: z.string().optional().nullable(),
   })
   .refine((m) => Object.keys(m).length > 0, { message: "metadata must not be empty" });
@@ -253,10 +250,7 @@ export const commitUnitSchema = z
   .object({
     metadata: commitMetadataSchema.optional(),
     operations: z.array(commitOperationSchema).max(3).default([]),
-    operationDate: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, "operationDate must be YYYY-MM-DD")
-      .optional(),
+    operationDate: calendarDay.optional(),
     commitNote: z.string().max(1000).optional().nullable(),
     expected: expectedUnitSchema,
   })
@@ -412,6 +406,17 @@ export type UpdateExpenseCategoryInput = z.infer<typeof updateExpenseCategorySch
 export type CreateRecurringExpenseInput = z.infer<typeof createRecurringExpenseSchema>;
 export type UpdateRecurringExpenseInput = z.infer<typeof updateRecurringExpenseSchema>;
 
+const importCurrencySchema = z
+  .enum([...CURRENCIES, "人民币", "美元", "港币"])
+  .transform((value) => {
+    const aliases: Record<string, "CNY" | "USD" | "HKD"> = {
+      人民币: "CNY",
+      美元: "USD",
+      港币: "HKD",
+    };
+    return aliases[value] ?? (value as "CNY" | "USD" | "HKD");
+  });
+
 export const importTransactionRowSchema = z
   .object({
     date: calendarDay,
@@ -424,7 +429,7 @@ export const importTransactionRowSchema = z
     amountCents: z.number().int(),
     type: z.enum(["income", "expense"]),
     account: z.string().min(1),
-    currency: z.string().min(1).optional(),
+    currency: importCurrencySchema.optional(),
     tags: z.string().optional(),
     note: z.string().optional().nullable(),
     rawIndex: z.number().int().optional().nullable(),
@@ -450,7 +455,7 @@ export const importTransferRowSchema = z
     transactionType: z.string().optional().nullable(),
     inflowAmountCents: z.number().int().optional(),
     outflowAmountCents: z.number().int().optional(),
-    currency: z.string().min(1).optional(),
+    currency: importCurrencySchema.optional(),
     account: z.string().min(1),
     tags: z.string().optional(),
     note: z.string().optional().nullable(),
@@ -540,7 +545,7 @@ const transactionWriteFields = {
   amountCents: z.number().int(),
   type: z.enum(["income", "expense"]),
   account: z.string().min(1),
-  currency: z.string().min(1).optional(),
+  currency: z.enum(CURRENCIES).optional(),
   tags: z.string().optional(),
   note: z.string().optional().nullable(),
   rawIndex: z.number().int().optional().nullable(),
@@ -565,7 +570,7 @@ export const createTransactionSchema = z
       amountCents: data.amountCents,
       type: data.type,
       account: data.account,
-      currency: data.currency ?? "人民币",
+      currency: data.currency ?? "CNY",
       tags: data.tags ?? "[]",
       note: data.note ?? null,
       rawIndex: data.rawIndex ?? null,
@@ -587,7 +592,7 @@ export const updateTransactionSchema = z
     amountCents: z.number().int().optional(),
     type: z.enum(["income", "expense"]).optional(),
     account: z.string().min(1).optional(),
-    currency: z.string().min(1).optional(),
+    currency: z.enum(CURRENCIES).optional(),
     tags: z.string().optional(),
     note: z.string().optional().nullable(),
     rawIndex: z.number().int().optional().nullable(),
@@ -620,7 +625,7 @@ const transferWriteFields = {
   transactionType: z.string().optional().nullable(),
   inflowAmountCents: z.number().int().optional(),
   outflowAmountCents: z.number().int().optional(),
-  currency: z.string().min(1).optional(),
+  currency: z.enum(CURRENCIES).optional(),
   account: z.string().min(1),
   tags: z.string().optional(),
   note: z.string().optional().nullable(),
@@ -644,7 +649,7 @@ export const createTransferSchema = z
       transactionType: data.transactionType ?? null,
       inflowAmountCents: data.inflowAmountCents ?? 0,
       outflowAmountCents: data.outflowAmountCents ?? 0,
-      currency: data.currency ?? "人民币",
+      currency: data.currency ?? "CNY",
       account: data.account,
       tags: data.tags ?? "[]",
       note: data.note ?? null,
@@ -663,7 +668,7 @@ export const updateTransferSchema = z
     transactionType: z.string().optional().nullable(),
     inflowAmountCents: z.number().int().optional(),
     outflowAmountCents: z.number().int().optional(),
-    currency: z.string().min(1).optional(),
+    currency: z.enum(CURRENCIES).optional(),
     account: z.string().min(1).optional(),
     tags: z.string().optional(),
     note: z.string().optional().nullable(),

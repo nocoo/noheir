@@ -1,13 +1,12 @@
 import {
   ArrowRightLeft,
   BarChart3,
-  Brain,
   CalendarClock,
   Coins,
-  Cpu,
   CreditCard,
   Database,
   Droplets,
+  FileText,
   FileUp,
   GitCompare,
   HeartPulse,
@@ -68,7 +67,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/", label: "总览", icon: LayoutDashboard },
       { href: "/financial-health", label: "财务健康", icon: HeartPulse },
-      { href: "/ai-insight", label: "AI洞察", icon: Brain },
+      { href: "/analyses", label: "分析报告", icon: FileText },
     ],
   },
   {
@@ -109,9 +108,8 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "系统",
     defaultOpen: true,
     items: [
-      { href: "/settings", label: "通用设置", icon: Settings },
-      { href: "/ai-settings", label: "AI设置", icon: Cpu },
-      { href: "/mcp-tokens", label: "MCP配置", icon: KeyRound },
+      { href: "/settings", label: "财务假设", icon: Settings },
+      { href: "/api-keys", label: "API 密钥", icon: KeyRound },
       { href: "/account-types", label: "账户设置", icon: Tags },
       { href: "/import", label: "数据导入", icon: FileUp },
       { href: "/manage", label: "数据管理", icon: Database },

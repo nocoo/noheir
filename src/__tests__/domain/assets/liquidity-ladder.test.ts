@@ -10,6 +10,7 @@ import {
 import type { DomainProduct, UnitDisplayInfo } from "@/domain/types";
 
 const makeProduct = (): DomainProduct => ({
+  version: 1,
   id: "p1",
   name: "招行季季宝",
   code: null,
@@ -24,6 +25,7 @@ const makeProduct = (): DomainProduct => ({
 });
 
 const makeUnit = (overrides: Partial<UnitDisplayInfo> = {}): UnitDisplayInfo => ({
+  version: 1,
   id: "1",
   unitCode: "A01",
   amount: 10000,

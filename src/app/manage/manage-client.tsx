@@ -537,7 +537,7 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
         open={clearOpen}
         onOpenChange={setClearOpen}
         title="清除所有数据"
-        description="确定要删除所有交易记录、转账记录、产品和资本单位吗？此操作不可撤销！"
+        description="确定要删除所有交易记录、转账记录、产品和资本单位，并重置账户分类、余额锚点与财务假设吗？站点设置、API 密钥与报告不会删除。此操作不可撤销；发生冲突或失败时会停止，部分步骤可能已完成。"
         onConfirm={confirmClear}
         loading={isPending}
       />

@@ -6,6 +6,7 @@ import {
 } from "@/lib/recurring-expense/mappers";
 
 const baseRow = {
+  version: 1,
   id: "r1",
   userId: "u1",
   name: "中行车险",
@@ -29,6 +30,7 @@ describe("toRecurrenceRule", () => {
   test("maps a happy-path row to the canonical domain shape", () => {
     const rule = toRecurrenceRule(baseRow);
     expect(rule).toEqual({
+      version: 1,
       id: "r1",
       userId: "u1",
       name: "中行车险",
@@ -90,6 +92,7 @@ describe("toCategory", () => {
   test("maps category row", () => {
     expect(
       toCategory({
+        version: 1,
         id: "c1",
         userId: "u1",
         name: "保险",
@@ -97,6 +100,7 @@ describe("toCategory", () => {
         sortOrder: 3,
       }),
     ).toEqual({
+      version: 1,
       id: "c1",
       userId: "u1",
       name: "保险",

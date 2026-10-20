@@ -118,7 +118,12 @@ export async function createEnvironmentController(options: {
   const handle = async (request: Request): Promise<Response | null> => {
     const url = new URL(request.url);
     if (url.origin !== origin) return json({ error: "Untrusted local origin" }, 403);
-    if (!["GET", "HEAD"].includes(request.method) && request.headers.get("origin") !== origin)
+    const machineRequest = url.pathname === "/api/v1" || url.pathname.startsWith("/api/v1/");
+    if (
+      !["GET", "HEAD"].includes(request.method) &&
+      request.headers.get("origin") !== origin &&
+      !(machineRequest && !request.headers.has("origin"))
+    )
       return json({ error: "Cross-origin request rejected" }, 403);
     if (url.pathname === "/__local/environment") {
       if (request.method === "GET")

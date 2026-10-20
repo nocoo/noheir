@@ -75,6 +75,7 @@ describe("E2E: Unit commit", () => {
     const res = await api<{ unit: UnitRow }>({
       method: "POST",
       path: `/api/units/${unit.id}/commit`,
+      version: unit.version,
       userId,
       body: {
         expected: snapshot(unit),
@@ -103,6 +104,7 @@ describe("E2E: Unit commit", () => {
     await api({
       method: "PUT",
       path: `/api/units/${unit.id}`,
+      version: unit.version,
       userId,
       body: { amountCents: 9999999 },
     });
@@ -110,6 +112,7 @@ describe("E2E: Unit commit", () => {
     const res = await rawFetch({
       method: "POST",
       path: `/api/units/${unit.id}/commit`,
+      version: unit.version,
       userId,
       body: { expected: stale, metadata: { strategy: "长期理财" }, commitNote: "x" },
     });
@@ -124,7 +127,8 @@ describe("E2E: Unit commit", () => {
     expect(after.unit.strategy).toBe("短期理财"); // untouched
 
     const { logs } = await logsFor(String(unit.id));
-    expect(logs).toHaveLength(0); // all-or-nothing
+    expect(logs).toHaveLength(1);
+    expect(logs.some((log) => log.note === "x")).toBe(false);
   });
 
   test("a stale expected blocks a staged product switch too", async () => {
@@ -135,6 +139,7 @@ describe("E2E: Unit commit", () => {
     await api({
       method: "PUT",
       path: `/api/units/${unit.id}`,
+      version: unit.version,
       userId,
       body: { productId: from.id },
     });
@@ -149,6 +154,7 @@ describe("E2E: Unit commit", () => {
     await api({
       method: "PUT",
       path: `/api/units/${unit.id}`,
+      version: current.unit.version,
       userId,
       body: { amountCents: 7777777 },
     });
@@ -156,6 +162,7 @@ describe("E2E: Unit commit", () => {
     const res = await rawFetch({
       method: "POST",
       path: `/api/units/${unit.id}/commit`,
+      version: current.unit.version,
       userId,
       body: {
         expected: snapshot(current.unit),
@@ -189,6 +196,7 @@ describe("E2E: Unit commit", () => {
     await api({
       method: "PUT",
       path: `/api/units/${unit.id}`,
+      version: unit.version,
       userId,
       body: { amountCents: 4242424 },
     });
@@ -196,13 +204,15 @@ describe("E2E: Unit commit", () => {
     const res = await rawFetch({
       method: "POST",
       path: `/api/units/${unit.id}/commit`,
+      version: unit.version,
       userId,
       body: { expected: stale, commitNote: "should not be written" },
     });
     expect(res.status).toBe(409);
 
     const { logs } = await logsFor(String(unit.id));
-    expect(logs).toHaveLength(0);
+    expect(logs).toHaveLength(1);
+    expect(logs.some((log) => log.note === "should not be written")).toBe(false);
   });
 
   // Note: this covers the API contract (stale expected → 409, no extra log), not
@@ -217,6 +227,7 @@ describe("E2E: Unit commit", () => {
     await api({
       method: "POST",
       path: `/api/units/${unit.id}/commit`,
+      version: unit.version,
       userId,
       body: { expected: stale, metadata: { amountCents: 200000 }, commitNote: "winner" },
     });
@@ -224,6 +235,7 @@ describe("E2E: Unit commit", () => {
     const res = await rawFetch({
       method: "POST",
       path: `/api/units/${unit.id}/commit`,
+      version: unit.version,
       userId,
       body: { expected: stale, metadata: { amountCents: 200000 }, commitNote: "loser" },
     });
@@ -244,6 +256,7 @@ describe("E2E: Unit commit", () => {
     const res = await rawFetch({
       method: "POST",
       path: `/api/units/${unit.id}/commit`,
+      version: unit.version,
       userId,
       body: { expected: snapshot(unit), metadata: { tactics: "货币基金" } },
     });
@@ -257,6 +270,7 @@ describe("E2E: Unit commit", () => {
     await api({
       method: "POST",
       path: `/api/units/${a.id}/commit`,
+      version: a.version,
       userId,
       body: {
         expected: snapshot(a),
@@ -300,6 +314,7 @@ describe("E2E: Unit commit", () => {
       await api({
         method: "PUT",
         path: `/api/units/${unit.id}`,
+        version: unit.version,
         userId,
         body: { productId: product.id },
       });
@@ -314,6 +329,7 @@ describe("E2E: Unit commit", () => {
     await api({
       method: "POST",
       path: `/api/units/${a.id}/commit`,
+      version: current.unit.version,
       userId,
       body: {
         expected: snapshot(current.unit),
@@ -336,7 +352,13 @@ describe("E2E: Unit commit", () => {
     const a = await createUnit({ unitCode: "CC-001" });
     const b = await createUnit({ unitCode: "CC-002" });
 
-    await api({ method: "PUT", path: `/api/units/${b.id}`, userId, body: { productId: pa.id } });
+    const switched = await api<{ unit: UnitRow }>({
+      method: "PUT",
+      path: `/api/units/${b.id}`,
+      version: b.version,
+      userId,
+      body: { productId: pa.id },
+    });
 
     const current = await api<{ unit: UnitRow }>({
       method: "GET",
@@ -345,11 +367,18 @@ describe("E2E: Unit commit", () => {
     });
 
     // The partner moves to another product before the commit is issued.
-    await api({ method: "PUT", path: `/api/units/${b.id}`, userId, body: { productId: pb.id } });
+    await api({
+      method: "PUT",
+      path: `/api/units/${b.id}`,
+      version: switched.unit.version,
+      userId,
+      body: { productId: pb.id },
+    });
 
     await api({
       method: "POST",
       path: `/api/units/${a.id}/commit`,
+      version: current.unit.version,
       userId,
       body: {
         expected: snapshot(current.unit),
@@ -373,6 +402,7 @@ describe("E2E: Unit commit", () => {
     await api({
       method: "POST",
       path: `/api/units/${unit.id}/commit`,
+      version: unit.version,
       userId,
       body: {
         expected: snapshot(unit),
@@ -401,6 +431,7 @@ describe("E2E: Unit commit", () => {
     await api({
       method: "PUT",
       path: `/api/units/${unit.id}`,
+      version: unit.version,
       userId,
       body: { productId: from.id },
     });
@@ -413,6 +444,7 @@ describe("E2E: Unit commit", () => {
     await api({
       method: "POST",
       path: `/api/units/${unit.id}/commit`,
+      version: current.unit.version,
       userId,
       body: {
         expected: snapshot(current.unit),
@@ -446,6 +478,7 @@ describe("E2E: Unit commit", () => {
     const res = await rawFetch({
       method: "POST",
       path: `/api/units/${unit.id}/commit`,
+      version: unit.version,
       userId,
       body: {
         expected: snapshot(unit),
@@ -453,8 +486,7 @@ describe("E2E: Unit commit", () => {
       },
     });
     expect(res.status).toBe(400);
-    const body = (await res.json()) as { error: string };
-    expect(body.error).toContain("pnl requires an existing product");
+    expect(await res.json()).toMatchObject({ code: "pnl_requires_product" });
   });
 
   test("endDate invariant is enforced through /commit", async () => {
@@ -463,6 +495,7 @@ describe("E2E: Unit commit", () => {
     await api({
       method: "POST",
       path: `/api/units/${unit.id}/commit`,
+      version: unit.version,
       userId,
       body: { expected: snapshot(unit), metadata: { status: "已归档" } },
     });
@@ -476,6 +509,7 @@ describe("E2E: Unit commit", () => {
     await api({
       method: "POST",
       path: `/api/units/${unit.id}/commit`,
+      version: archived.unit.version,
       userId,
       body: { expected: snapshot(archived.unit), metadata: { status: "已成立" } },
     });
@@ -492,6 +526,7 @@ describe("E2E: Unit commit", () => {
     await api({
       method: "POST",
       path: `/api/units/${unit.id}/commit`,
+      version: unit.version,
       userId,
       body: { expected: snapshot(unit), commitNote: "只是记一笔" },
     });
@@ -506,6 +541,7 @@ describe("E2E: Unit commit", () => {
     const selfSwap = await rawFetch({
       method: "POST",
       path: `/api/units/${unit.id}/commit`,
+      version: unit.version,
       userId,
       body: {
         expected: snapshot(unit),
@@ -517,6 +553,7 @@ describe("E2E: Unit commit", () => {
     const missing = await rawFetch({
       method: "POST",
       path: `/api/units/${unit.id}/commit`,
+      version: unit.version,
       userId,
       body: {
         expected: snapshot(unit),
@@ -533,6 +570,7 @@ describe("E2E: Unit commit", () => {
     const res = await rawFetch({
       method: "POST",
       path: `/api/units/${unit.id}/commit`,
+      version: unit.version,
       userId,
       body: { expected: snapshot(unit) },
     });
@@ -543,6 +581,7 @@ describe("E2E: Unit commit", () => {
     const res = await rawFetch({
       method: "POST",
       path: "/api/units/123e4567-e89b-12d3-a456-426614174000/commit",
+      version: 1,
       userId,
       body: { expected: snapshot(makeUnit()), commitNote: "x" },
     });
@@ -565,6 +604,7 @@ describe("E2E: Unit commit", () => {
     await api({
       method: "POST",
       path: `/api/units/${unit.id}/commit`,
+      version: current.unit.version,
       userId,
       body: {
         expected: snapshot(current.unit),
@@ -592,6 +632,7 @@ describe("E2E: Unit commit", () => {
     const noop = await rawFetch({
       method: "POST",
       path: `/api/units/${unit.id}/commit`,
+      version: after.unit.version,
       userId,
       body: {
         expected: snapshot(after.unit),
@@ -603,6 +644,7 @@ describe("E2E: Unit commit", () => {
     await api({
       method: "POST",
       path: `/api/units/${unit.id}/commit`,
+      version: after.unit.version,
       userId,
       body: {
         expected: snapshot(after.unit),
@@ -644,6 +686,7 @@ describe("E2E: Unit logs endpoint", () => {
     await api({
       method: "PUT",
       path: `/api/units/${unit.id}`,
+      version: unit.version,
       userId,
       body: { productId: product.id },
     });

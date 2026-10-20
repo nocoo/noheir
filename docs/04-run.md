@@ -1,7 +1,7 @@
 # Development and deployment
 
 Production runs one native Cloudflare Worker (`noheir-web`) serving Vite assets,
-Hono APIs and MCP. The migration checklist and cutover status are in
+Hono APIs and scoped REST. The migration checklist and cutover status are in
 [23-workers-migration.md](23-workers-migration.md). The existing D1 database is
 retained; no financial ownership keys are rewritten.
 
@@ -43,7 +43,7 @@ not add anonymous exceptions for HTML that depends on protected assets.
 | D1 ID | `586c101d-df19-4e1f-a946-42151c1e199d` |
 | Access team | `nocoo` |
 | Access audience | `19d100ea22080f644154aad7b35785c1381874d27dec7fd238a2cb8fd7d640ee` |
-| OAuth issuer | `https://noheir.hexly.ai` |
+| REST base URL | `https://noheir.hexly.ai/api/v1` |
 | Preview endpoints | `workers.dev` and preview URLs disabled |
 | Asset access | `run_worker_first: true` |
 
@@ -72,90 +72,50 @@ database, seed marker, controlled JWKS and signed test identities. Browser tests
 use a separate fixture on 27004 and the production Vite build. They never reuse
 a daily development server or a remote database.
 
-## MCP and Access
+## Scoped REST and Access
 
-MCP clients use `https://noheir.hexly.ai/api/mcp`, OAuth/PKCE S256 and JSON
-Streamable HTTP. Existing client registrations and token hashes remain valid.
-Browser authorization resolves the Access principal to the original D1 owner.
+This source tree replaces internal AI/MCP/OAuth with `/api/v1`. The refactor is
+local-only until separately authorized for deployment; do not infer current
+production policy or schema from this document.
 
-When retaining OAuth, allow these machine paths through Access:
+Humans use the Access-protected `/api-keys` page to issue a finite set of read,
+write, delete and domain-operation grants with a 1-365 day expiry. Plaintext is
+shown only once. Revoke compromised or unused keys in that page; issue a new key
+instead of editing or extending an existing grant. Keys cannot administer other
+keys, site settings or Access. Noheir stores reports, not model credentials, and
+makes no model calls.
 
-- `/.well-known/oauth-authorization-server`
-- `/api/mcp`
-- `/api/mcp/register`
-- `/api/mcp/token`
-- `/api/mcp/revoke`
+An external tool uses `Authorization: Bearer <key>` and discovers schemas and
+operations at `/api/v1/openapi.json` and `/api/v1/instructions`. See
+[scoped API contract](25-scoped-api.md) for money, revision, pagination, retry,
+report evidence and replacement semantics. Human Access sessions do not authorize
+machine routes. Invalid Bearer headers never fall back to browser identity.
 
-Access path matching inherits to descendants even without a wildcard. Therefore
-an application for `/api/mcp` also matches authorize and callback. Add explicit,
-more-specific `/api/mcp/authorize` and `/api/mcp/callback` destinations to the
-existing protected application, preserving its audience and allow policy, before
-adding the machine-path bypass application. A more-specific application takes
-precedence without inheriting its parent's policy. Verify both human paths still
-redirect to Access and verify the audience remains unchanged. Do not leave an
-unqualified bypass over the MCP subtree. See [Cloudflare path precedence](https://developers.cloudflare.com/cloudflare-one/access-controls/policies/app-paths/). The MCP endpoint requires its own bearer token;
-metadata and registration remain OAuth protocol endpoints. `/api/live` must be
-reachable for read-only health verification. See the migration checklist for
-the verified external policy and actual deployment evidence.
+Local Demo/E2E calls also require the current `x-noheir-instance` header shown in
+the key page. An originless CLI request is allowed only under `/api/v1`; a present
+foreign Origin is rejected. The header selects an existing isolated runtime and
+never replaces Bearer authentication. Local keys do not authorize production.
 
-### Verified Access configuration
+### Separately authorized production policy work
 
-The following checklist keeps the implemented OAuth flow. In the Cloudflare
-dashboard, open **Zero Trust > Access controls > Applications**. Apply these
-changes in this order when reconstructing the configuration. Production already
-runs v3.0.0; the verified destinations below are active.
+Preserve the existing protected root Access application, audience, user identity
+mapping and other projects' shared policies. When publishing this refactor, only
+`/api/v1`, `/.well-known/api-catalog` and public read-only `/api/live` may bypass
+Access to reach their own Worker boundaries. Keep `/api/api-keys`, `/api/settings`, human business APIs and
+all pages/assets protected. Remove obsolete OAuth/MCP policy destinations; no
+compatibility or credential conversion is supported. Do not create a bypass on
+`/api` or the entire hostname.
 
-1. Edit the existing `noheir-auth` application
-   (`0305f64b-b1b4-451a-ae13-0ce17771fd34`). Keep its Allow policy, identity provider
-   and root hostname. Add two public hostnames with the paths shown below to the
-   **same application**, then save. Do not recreate it: its audience must remain
-   `19d100ea22080f644154aad7b35785c1381874d27dec7fd238a2cb8fd7d640ee`.
+The canonical migrations retire credentials and validate/convert legacy financial
+preferences and anchors into typed business tables. Ambiguous currency or invalid
+financial data stops migration rather than dropping data. Use a private D1 export
+and inspect the separately approved deployment procedure before remote migration;
+no production migration or policy change is part of the local implementation.
 
-   | Public hostname | Path | Policy |
-   | --- | --- | --- |
-   | `noheir.hexly.ai` | Empty (existing) | Existing authorized-user Allow |
-   | `noheir.hexly.ai` | `/api/mcp/authorize` | Same Allow |
-   | `noheir.hexly.ai` | `/api/mcp/callback` | Same Allow |
-
-2. The existing `shared-bypass` application contains the two public destinations
-   below, with policy action **Bypass**, rule **Include**, selector **Everyone**.
-   Preserve its other projects' destinations. Do not add this policy to
-   `noheir-auth`; doing so would also bypass the financial UI and APIs.
-
-   | Public hostname | Path | Purpose |
-   | --- | --- | --- |
-   | `noheir.hexly.ai` | `/.well-known/oauth-authorization-server` | OAuth discovery |
-   | `noheir.hexly.ai` | `/api/mcp` | MCP plus register/token/revoke descendants |
-
-   The protected authorize/callback destinations from step 1 take precedence
-   over this parent path. The bypass application's audience is not used by
-   Noheir. No Access service token or replacement Google OAuth client is needed.
-
-3. Leave the existing `shared-bypass` health rule for
-   `noheir.hexly.ai/api/live` unchanged. Preserve all other projects' destinations.
-   Keep the Allow email aligned with the original Noheir account: a different
-   Access identity cannot create or take over that account.
-
-4. Check from a browser without an Access session: the root, `/api/auth/me`,
-   `/api/reports/metadata`, `/api/mcp/authorize` and `/api/mcp/callback` must
-   redirect to `nocoo.cloudflareaccess.com`; OAuth discovery must return JSON
-   with status 200; an unauthenticated `POST /api/mcp` must return 401. After
-   cutover, `bun run verify:production` repeats these checks and also verifies
-   the deployed version, commit and D1 connectivity. Complete one browser login
-   and an MCP OAuth/PKCE authorization using the existing account.
-
-Read-only inspection and live probes on 2026-09-20 confirmed the original
-protected application, unchanged audience, both protected child destinations and
-the machine/health destinations in `shared-bypass`. Protected paths redirect to
-Access, OAuth discovery returns 200 and tokenless MCP returns 401. GitHub
-environment `noheir / production` already contains
-`CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`; no credential setup is pending.
-The custom-domain cutover is complete. The old origin remains available for
-rollback; the retirement list below is for owner cleanup after acceptance.
-
-References: [public applications](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/self-hosted-public-app/),
-[Bypass policies](https://developers.cloudflare.com/cloudflare-one/access-controls/policies/#bypass),
-[path precedence](https://developers.cloudflare.com/cloudflare-one/access-controls/policies/app-paths/).
+After authorized publication, `bun run verify:production` verifies the exact
+revision, D1 health, protected human paths, public OpenAPI and tokenless REST401.
+Complete a human login and a newly issued minimal-scope key request separately.
+This task does not execute that command against production.
 
 ## CI/CD and release
 
@@ -181,32 +141,20 @@ condition and rerun the failed workflow for the same SHA. Verify its successful
 CI/deployment and live checks before completing the annotated tag and GitHub
 release; do not bump the version again merely to resume a failed gate.
 `bun run verify:production` checks version/revision, database
-connectivity, no-store, protected browser/API paths and MCP discovery/auth.
+connectivity, no-store, protected browser/API paths and scoped REST discovery/auth.
 
-## Cutover and retirement
+## Data safety and historical infrastructure
 
-Before cutover, record DNS/routes and take a private D1 export. Compare read-only
-user/row fingerprints before and after deployment. The custom domain replaces
-the VPS origin. Preserve the old runtime until live checks and owner acceptance.
+The previous native Worker migration and its exact deployment evidence remain in
+[23-workers-migration](23-workers-migration.md). Do not reuse its assertion that
+schema is unchanged for the scoped API refactor, which has new canonical SQL
+migrations. Keep the original D1 database and financial owner IDs.
 
-The initial v3 deployment uploaded the Worker but could not replace the existing
-CNAME (Cloudflare error 100117), even with Wrangler's noninteractive override.
-For such a cutover, verify the uploaded Worker first, save the exact DNS record,
-remove only the conflicting record and immediately attach the custom domain.
-Restore the saved record if attachment fails, then rerun the deployment workflow.
-Subsequent deployments update the existing custom domain without this step.
+JSON export is a financial convenience export, not a disaster-recovery backup.
+It includes transactions/transfers/products/units but no raw settings, keys or
+credentials. Restore replaces transactions/transfers only. Use a private D1 export
+for full database recovery; historical private backups may still contain retired
+credentials. Do not claim to erase them from every backup.
 
-Legacy resources for owner cleanup after migration:
-
-- VPS `jp2.nocoo.cloud`: `/opt/noheir`, `noheir-app` container/image and its Caddy
-  site entry. Preserve shared Caddy/mTLS, the shared `edge` network and all other apps.
-- Old Worker `noheir` and `noheir.worker.hexly.ai` route.
-- Old Google OAuth client, Auth.js/shared Worker secrets, VPS/GHCR deployment secrets.
-- Local obsolete `.env.local` and `worker/.dev.vars` credentials after confirming
-  no remaining consumers.
-
-Never delete `noheir-db`. To roll back, detach `noheir.hexly.ai` from `noheir-web`,
-then restore the saved proxied CNAME to `jp2.nocoo.cloud` and the retained previous
-runtime. Do not edit the Cloudflare-managed Worker DNS record independently;
-data/schema are unchanged by this migration. No remote schema migration
-is applied automatically during deployment.
+Retiring old VPS containers, DNS, shared Caddy/mTLS or another Worker's routes is
+outside this local task. Preserve shared infrastructure and other applications.

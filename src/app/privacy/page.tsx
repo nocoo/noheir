@@ -31,10 +31,11 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold">3. AI 分析</h2>
+            <h2 className="text-lg font-semibold">3. 外部访问与报告</h2>
             <p className="text-muted-foreground">
-              AI 分析功能需要用户自行配置 API 密钥和服务地址。分析请求直接发送至用户 指定的 AI
-              服务，不经过我们的服务器。用户可以随时关闭 AI 功能。
+              外部工具只能通过用户授予范围且未过期的 API
+              密钥访问财务数据。报告内容由用户或外部工具提交，
+              本应用不调用模型服务。密钥可随时撤销。
             </p>
           </section>
 

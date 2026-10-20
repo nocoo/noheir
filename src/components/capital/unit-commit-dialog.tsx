@@ -94,6 +94,7 @@ export function UnitCommitDialog({
 }: UnitCommitDialogProps) {
   // Form values and the CAS anchor are derived from ONE snapshot, so the user
   // can never edit stale values that then pass the guard (docs/003 § Decision B).
+  const [version, setVersion] = useState<number | undefined>(undefined);
   const [expected, setExpected] = useState<ExpectedUnitSnapshot | null>(null);
   // Resolved server-side alongside `expected`, so the name always belongs to the
   // product id the guard will compare against.
@@ -145,6 +146,7 @@ export function UnitCommitDialog({
       setSnapshotAvailableDate(result.data.availableDate);
       setSnapshotLatestInvestDate(result.data.latestInvestDate);
       applySnapshot(result.data.expected);
+      setVersion(result.data.version);
     } else {
       toast.error(result.error);
     }
@@ -212,7 +214,7 @@ export function UnitCommitDialog({
     }
 
     startTransition(async () => {
-      const result = await commitUnit(unit.id, payload);
+      const result = await commitUnit(unit.id, payload, version);
       if (result.success) {
         toast.success("已保存");
         onSuccess();

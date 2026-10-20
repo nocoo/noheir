@@ -18,11 +18,6 @@ export {
   buildUniqueAccounts,
   sortDisplayEntries,
 } from "./account-detail";
-export {
-  buildInsightSummaryData,
-  sortInsightsByPriority,
-  sortRecurringPaymentsByNextDate,
-} from "./ai-insight";
 export { buildBalanceWaterfallData } from "./balance-waterfall";
 export {
   buildFreedomSummary,

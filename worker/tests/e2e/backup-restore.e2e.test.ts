@@ -86,6 +86,7 @@ describe("E2E: Data Export / Import", () => {
     const search = await api<{ transactions: Array<Record<string, unknown>> }>({
       method: "POST",
       path: "/api/transactions/search",
+      version: 1,
       userId,
       body: {},
     });
@@ -170,6 +171,7 @@ describe("E2E: Data Export / Import", () => {
     const search = await api<{ total_returned: number }>({
       method: "POST",
       path: "/api/transactions/search",
+      version: 1,
       userId,
       body: {},
     });

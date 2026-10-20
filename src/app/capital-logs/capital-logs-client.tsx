@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
+import { useRevalidator } from "react-router";
 import { toast } from "sonner";
 import {
   deleteContributionLog,
@@ -63,7 +64,8 @@ const SOURCES = [
   { value: "manual", label: "手动录入" },
   { value: "auto", label: "自动记录" },
   { value: "import", label: "数据迁移" },
-  { value: "mcp", label: "AI 助手" },
+  { value: "mcp", label: "历史外部记录" },
+  { value: "api", label: "外部 API" },
 ] as const;
 
 function getOperationDisplay(type: ContributionOperationType) {
@@ -74,8 +76,8 @@ function getSourceLabel(source: string) {
   return SOURCES.find((s) => s.value === source)?.label ?? source;
 }
 
-export function CapitalLogsClient({ logs: initialLogs, units, products }: CapitalLogsClientProps) {
-  const [logs, setLogs] = useState(initialLogs);
+export function CapitalLogsClient({ logs, units, products }: CapitalLogsClientProps) {
+  const revalidator = useRevalidator();
   const [isPending, startTransition] = useTransition();
 
   // Filter state
@@ -113,7 +115,11 @@ export function CapitalLogsClient({ logs: initialLogs, units, products }: Capita
     });
 
     // Compute stats from non-deleted logs only
-    const activeLogs = filtered.filter((l) => !l.isDeleted);
+    const activeLogs = filtered.filter(
+      (l) =>
+        !l.isDeleted &&
+        (l.unit?.currency ?? units.find((unit) => unit.id === l.unitId)?.currency) === "CNY",
+    );
     const totalInvested = activeLogs
       .filter((l) => l.amount > 0)
       .reduce((sum, l) => sum + l.amount, 0);
@@ -133,7 +139,7 @@ export function CapitalLogsClient({ logs: initialLogs, units, products }: Capita
         logCount: activeLogs.length,
       },
     };
-  }, [logs, filterUnit, filterProduct, filterType, filterSource, showDeleted]);
+  }, [logs, units, filterUnit, filterProduct, filterType, filterSource, showDeleted]);
 
   const handleRefresh = () => {
     window.location.reload();
@@ -151,9 +157,9 @@ export function CapitalLogsClient({ logs: initialLogs, units, products }: Capita
 
   const handleDelete = (id: string) => {
     startTransition(async () => {
-      const result = await deleteContributionLog(id);
+      const result = await deleteContributionLog(id, logs.find((log) => log.id === id)?.version);
       if (result.success) {
-        setLogs((prev) => prev.map((l) => (l.id === id ? { ...l, isDeleted: true } : l)));
+        await revalidator.revalidate();
         toast.success("已删除");
       } else {
         toast.error(result.error);
@@ -163,9 +169,9 @@ export function CapitalLogsClient({ logs: initialLogs, units, products }: Capita
 
   const handleRestore = (id: string) => {
     startTransition(async () => {
-      const result = await restoreContributionLog(id);
+      const result = await restoreContributionLog(id, logs.find((log) => log.id === id)?.version);
       if (result.success) {
-        setLogs((prev) => prev.map((l) => (l.id === id ? { ...l, isDeleted: false } : l)));
+        await revalidator.revalidate();
         toast.success("已恢复");
       } else {
         toast.error(result.error);
@@ -397,6 +403,7 @@ export function CapitalLogsClient({ logs: initialLogs, units, products }: Capita
                               variant="ghost"
                               size="icon"
                               className="size-7"
+                              aria-label="恢复记录"
                               onClick={() => handleRestore(log.id)}
                               disabled={isPending}
                             >
@@ -408,6 +415,7 @@ export function CapitalLogsClient({ logs: initialLogs, units, products }: Capita
                                 variant="ghost"
                                 size="icon"
                                 className="size-7"
+                                aria-label="编辑记录"
                                 onClick={() => handleEdit(log)}
                                 disabled={isPending}
                               >
@@ -417,6 +425,7 @@ export function CapitalLogsClient({ logs: initialLogs, units, products }: Capita
                                 variant="ghost"
                                 size="icon"
                                 className="text-destructive size-7"
+                                aria-label="删除记录"
                                 onClick={() => handleDelete(log.id)}
                                 disabled={isPending}
                               >

@@ -208,3 +208,12 @@ describe("buildUnitsSummary", () => {
     expect(Object.keys(summary.by_tactics)).toHaveLength(0);
   });
 });
+
+test("unit summary explicitly selects one currency and never adds mixed holdings", () => {
+  const units = [
+    mockUnit({ currency: "CNY", amountCents: 100 }),
+    mockUnit({ currency: "USD", amountCents: 200 }),
+  ];
+  expect(buildUnitsSummary(units).total_amount_cents).toBe(100);
+  expect(buildUnitsSummary(units, "USD").total_amount_cents).toBe(200);
+});

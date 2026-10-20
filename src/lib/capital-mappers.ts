@@ -18,6 +18,7 @@ import type {
 export function toDomainProduct(raw: Record<string, unknown>): DomainProduct {
   return {
     id: String(raw.id ?? ""),
+    version: Number(raw.version),
     name: String(raw.name ?? ""),
     code: raw.code != null ? String(raw.code) : null,
     channel: raw.channel != null ? String(raw.channel) : null,
@@ -35,6 +36,7 @@ export function toDomainUnit(raw: Record<string, unknown>): DomainUnit {
   const product = raw.product as Record<string, unknown> | null | undefined;
   return {
     id: String(raw.id ?? ""),
+    version: Number(raw.version),
     unitCode: String(raw.unitCode ?? ""),
     amount: Number(raw.amountCents ?? 0) / 100,
     currency: String(raw.currency ?? "CNY") as Currency,
@@ -74,6 +76,7 @@ export function toDomainContributionLog(raw: Record<string, unknown>): DomainCon
 
   return {
     id: String(raw.id ?? ""),
+    version: Number(raw.version),
     unitId: String(raw.unitId ?? ""),
     productId: raw.productId != null ? String(raw.productId) : null,
     productName: raw.productName != null ? String(raw.productName) : null,

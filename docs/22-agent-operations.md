@@ -4,9 +4,11 @@ Current commands and validation scope are maintained in [AGENTS.md](../AGENTS.md
 
 ## Runtime
 
-Vite assets, Hono business APIs and MCP/OAuth run in one native Worker with a
+Vite assets, Hono business APIs and scoped Bearer REST run in one native Worker with a
 D1 binding. Access authenticates humans; verified email resolves the existing
-financial user ID. Machine MCP endpoints authenticate their own tokens.
+financial user ID. Machine `/api/v1` endpoints authenticate their own scoped keys;
+key and site administration remain human-only. Internal model inference and MCP
+have been removed; external tools write ordinary private analysis reports.
 Never trust browser-supplied user IDs or internal-action headers.
 
 The [runbook](04-run.md) owns deployment, rollback and old-resource cleanup.

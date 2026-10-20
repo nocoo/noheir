@@ -91,8 +91,12 @@ export function buildYearlyStats(
   const expense = yearTxs.filter((t) => t.type === "expense");
 
   // amount is in display units (cents/100), convert back to cents for consistency
-  const totalIncome = Math.round(income.reduce((sum, t) => sum + t.amount, 0) * 100);
-  const totalExpense = Math.round(expense.reduce((sum, t) => sum + t.amount, 0) * 100);
+  const totalIncome = Math.round(
+    income.filter((row) => row.currency === "CNY").reduce((sum, t) => sum + t.amount, 0) * 100,
+  );
+  const totalExpense = Math.round(
+    expense.filter((row) => row.currency === "CNY").reduce((sum, t) => sum + t.amount, 0) * 100,
+  );
 
   const accounts = new Set<string>();
   const categories = new Set<string>();

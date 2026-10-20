@@ -7,6 +7,7 @@ import {
 } from "@/domain/dashboard/financial-health";
 import type { DomainTransaction, MonthlyData } from "@/domain/types";
 import { MONTH_NAMES } from "@/lib/constants";
+import { financeApi } from "@/lib/finance-api";
 import { toDomainTransaction } from "@/lib/transaction-mappers";
 import { workerDbClient } from "@/lib/worker-db-client";
 import { FinancialHealthClient } from "./financial-health-client";
@@ -34,9 +35,10 @@ export async function financialHealthLoader({
     selectedYear = availableYears[0] ?? new Date().getFullYear();
   }
 
-  const [summary, txResult] = await Promise.all([
-    workerDbClient.getYearlySummary(selectedYear),
+  const [summary, txResult, preferences] = await Promise.all([
+    workerDbClient.getYearlySummary(selectedYear, "CNY"),
     workerDbClient.getAllTransactionsByYear(selectedYear),
+    financeApi.getFinancialPreferences(),
   ]);
 
   const monthlyData: MonthlyData[] = summary.months.map((m) => ({
@@ -47,13 +49,13 @@ export async function financialHealthLoader({
   }));
 
   const totalIncome = summary.totals.income / 100;
-  const transactions: DomainTransaction[] = txResult.transactions.map((raw) =>
-    toDomainTransaction(raw as Record<string, unknown>),
-  );
+  const transactions: DomainTransaction[] = txResult.transactions
+    .map((raw) => toDomainTransaction(raw as Record<string, unknown>))
+    .filter((row) => row.currency === "CNY");
 
   const safeMonthly = buildSafeMonthlyData(monthlyData);
   const safeTotalIncome = buildSafeTotalIncome(totalIncome);
-  const fixedExpenseCategories: string[] = [];
+  const fixedExpenseCategories = preferences.data.fixedExpenseCategories;
 
   const healthResult = buildFinancialHealthResult(
     transactions,

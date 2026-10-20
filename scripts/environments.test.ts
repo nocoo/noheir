@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { DatabaseSync } from "node:sqlite";
 import { test } from "node:test";
 import { seedDemo } from "./demo-catalog.ts";
 import {
@@ -7,7 +8,33 @@ import {
   LOCAL_ORIGIN,
   productionHeaders,
 } from "./local-environments.ts";
-import { createNativeFixture, TEST_USERS } from "./test-fixture.ts";
+import { createNativeFixture, splitFixtureMigration, TEST_USERS } from "./test-fixture.ts";
+
+test("fixture migrations preserve trigger bodies and SQL text", () => {
+  const database = new DatabaseSync(":memory:");
+  try {
+    const statements = splitFixtureMigration(`
+      CREATE TABLE records (id INTEGER, note TEXT);
+      CREATE TABLE audit (record_id INTEGER, note TEXT);
+      CREATE TRIGGER record_audit AFTER INSERT ON records BEGIN
+        INSERT INTO audit VALUES (NEW.id, 'first;  value');
+        INSERT INTO audit VALUES (NEW.id, 'second -- value');
+      END;
+      INSERT INTO records VALUES (1, 'original');
+    `);
+    assert.equal(statements.length, 4);
+    for (const statement of statements) database.exec(statement);
+    assert.deepEqual(
+      database
+        .prepare("SELECT note FROM audit ORDER BY rowid")
+        .all()
+        .map((row) => row.note),
+      ["first;  value", "second -- value"],
+    );
+  } finally {
+    database.close();
+  }
+});
 
 const request = (path: string, body?: unknown, id?: string, origin = LOCAL_ORIGIN) =>
   new Request(`${LOCAL_ORIGIN}${path}`, {
@@ -20,6 +47,29 @@ const request = (path: string, body?: unknown, id?: string, origin = LOCAL_ORIGI
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
 const control = (body: unknown) => request("/__local/environment", body);
+
+test("originless API requests still require a bound local instance", async () => {
+  const controller = await createEnvironmentController({ origin: LOCAL_ORIGIN, production: false });
+  try {
+    for (const [path, origin, expected] of [
+      ["/api/v1/transactions", undefined, 410],
+      ["/api/v1/transactions", "https://other.test", 403],
+      ["/api/v10/transactions", undefined, 403],
+      ["/api/api-keys", undefined, 403],
+      ["/__local/environment", undefined, 403],
+    ] as const) {
+      const response = await controller.handle(
+        new Request(`${LOCAL_ORIGIN}${path}`, {
+          method: "POST",
+          headers: origin ? { Origin: origin } : {},
+        }),
+      );
+      assert.equal(response?.status, expected, path);
+    }
+  } finally {
+    await controller.close();
+  }
+});
 
 test("manual E2E is switchable, fresh on reentry; stale requests never retarget", async () => {
   const demo = await createNativeFixture({ siteOrigin: LOCAL_ORIGIN });

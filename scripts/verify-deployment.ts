@@ -35,8 +35,9 @@ for (const path of [
   "/privacy",
   "/api/auth/me",
   "/api/reports/metadata",
-  "/api/mcp/authorize",
-  "/api/mcp/callback",
+  "/api/api-keys",
+  "/api/settings",
+  "/analyses",
 ]) {
   const result = await request(path);
   const location = result.headers.get("location");
@@ -48,9 +49,12 @@ for (const path of [
     throw new Error(`Access protection failed: ${path} (${result.status})`);
   }
 }
-const metadata = await request("/.well-known/oauth-authorization-server");
-if (metadata.status !== 200 || ((await metadata.json()) as { issuer: string }).issuer !== origin)
-  throw new Error("OAuth discovery failed");
-const mcp = await request("/api/mcp", "POST");
-if (mcp.status !== 401) throw new Error(`MCP must require its own bearer token: ${mcp.status}`);
-console.log(`Verified Noheir ${version} at ${sha}: D1, Access and MCP boundaries.`);
+const metadata = await request("/api/v1/openapi.json");
+if (metadata.status !== 200 || ((await metadata.json()) as { openapi: string }).openapi !== "3.1.0")
+  throw new Error("REST discovery failed");
+for (const path of ["/api/v1/me", "/api/v1/transactions"]) {
+  const result = await request(path);
+  if (result.status !== 401 || !result.headers.get("www-authenticate")?.includes("Bearer"))
+    throw new Error(`REST must require its own Bearer key: ${path} (${result.status})`);
+}
+console.log(`Verified Noheir ${version} at ${sha}: D1, Access and scoped REST boundaries.`);

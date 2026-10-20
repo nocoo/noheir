@@ -1,36 +1,41 @@
 import { useLoaderData } from "react-router";
 import { AppShell } from "@/components/layout";
 import type { BalanceAnchor } from "@/domain/types";
+import { financeApi } from "@/lib/finance-api";
 import { workerDbClient } from "@/lib/worker-db-client";
 import { BalanceAnchorsClient } from "./balance-anchors-client";
 
 export interface BalanceAnchorsLoaderData {
   accounts: string[];
+  revision: number;
   anchors: BalanceAnchor[];
 }
 
 export async function balanceAnchorsLoader(): Promise<BalanceAnchorsLoaderData> {
   const [metadata, settingsResult] = await Promise.all([
     workerDbClient.getMetadata(),
-    workerDbClient.getSettings(),
+    financeApi.listBalanceAnchors(),
   ]);
 
   const accounts = metadata.accounts.sort();
-  const row = (settingsResult.settings as Record<string, unknown>) ?? {};
-  const rawJson = typeof row.settings === "string" ? row.settings : "{}";
-  const parsed = JSON.parse(rawJson) as Record<string, unknown>;
+  const anchors = settingsResult.data.map(({ accountName, date, balanceCents, currency }) => ({
+    accountName,
+    date,
+    balance: balanceCents / 100,
+    currency,
+  }));
+  const revision = settingsResult.meta.dataRevision;
+  if (revision === undefined) throw new Error("Missing financial data revision");
 
-  const anchors = Array.isArray(parsed.balance_anchors) ? parsed.balance_anchors : [];
-
-  return { accounts, anchors };
+  return { accounts, anchors, revision };
 }
 
 export default function BalanceAnchorsPage() {
-  const { accounts, anchors } = useLoaderData<BalanceAnchorsLoaderData>();
+  const { accounts, anchors, revision } = useLoaderData<BalanceAnchorsLoaderData>();
 
   return (
     <AppShell>
-      <BalanceAnchorsClient accounts={accounts} initialAnchors={anchors} />
+      <BalanceAnchorsClient revision={revision} accounts={accounts} initialAnchors={anchors} />
     </AppShell>
   );
 }

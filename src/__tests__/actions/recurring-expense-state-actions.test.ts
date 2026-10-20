@@ -28,30 +28,30 @@ describe("recurring-expense state transition actions", () => {
 
   test("pause sends transition=pause to backend", async () => {
     mockWorkerDbClient.transitionRecurringExpense.mockResolvedValueOnce({ success: true });
-    const res = await pauseRecurringExpense("r1");
+    const res = await pauseRecurringExpense("r1", 1);
     expect(res).toEqual({ success: true, data: undefined });
-    expect(mockWorkerDbClient.transitionRecurringExpense).toHaveBeenCalledWith("r1", "pause");
+    expect(mockWorkerDbClient.transitionRecurringExpense).toHaveBeenCalledWith("r1", "pause", 1);
   });
 
   test("resume sends transition=resume to backend", async () => {
     mockWorkerDbClient.transitionRecurringExpense.mockResolvedValueOnce({ success: true });
-    const res = await resumeRecurringExpense("r1");
+    const res = await resumeRecurringExpense("r1", 1);
     expect(res).toEqual({ success: true, data: undefined });
-    expect(mockWorkerDbClient.transitionRecurringExpense).toHaveBeenCalledWith("r1", "resume");
+    expect(mockWorkerDbClient.transitionRecurringExpense).toHaveBeenCalledWith("r1", "resume", 1);
   });
 
   test("end sends transition=end to backend", async () => {
     mockWorkerDbClient.transitionRecurringExpense.mockResolvedValueOnce({ success: true });
-    const res = await endRecurringExpense("r1");
+    const res = await endRecurringExpense("r1", 1);
     expect(res).toEqual({ success: true, data: undefined });
-    expect(mockWorkerDbClient.transitionRecurringExpense).toHaveBeenCalledWith("r1", "end");
+    expect(mockWorkerDbClient.transitionRecurringExpense).toHaveBeenCalledWith("r1", "end", 1);
   });
 
   test("returns error when worker fails", async () => {
     mockWorkerDbClient.transitionRecurringExpense.mockRejectedValueOnce(
       new WorkerDbError("Illegal state transition", 400, "POST /api/recurring-expenses/r1/state"),
     );
-    const res = await pauseRecurringExpense("r1");
+    const res = await pauseRecurringExpense("r1", 1);
     expect(res.success).toBe(false);
     if (!res.success) {
       expect(res.error).toBe("Illegal state transition");

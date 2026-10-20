@@ -36,8 +36,6 @@ scripts/get-schema.ts
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
-mcp/node_modules
-mcp/bun.lock
 
 # Wrangler local dev secrets
 worker/.dev.vars

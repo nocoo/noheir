@@ -1,6 +1,13 @@
-import type { SQL } from "drizzle-orm";
 import { and, desc, eq, gte, inArray, like, lte, or, sql } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
+import { parseTransferImportRow } from "../../lib/import-parse";
+import {
+  JSON_CHUNK_BYTES,
+  transferInsertFromJsonSql,
+  transferJsonRow,
+  utf8ByteLength,
+  validateRowList,
+} from "../../lib/year-import";
 import { transfers } from "../schema";
 import type { NewTransfer, Transfer } from "../types";
 
@@ -48,27 +55,6 @@ function computeMatchedField(row: Transfer, keyword: string | undefined): string
   if (row.secondaryCategory?.toLowerCase().includes(kw)) return "category";
   if (row.account.toLowerCase().includes(kw)) return "account";
   return null;
-}
-
-/**
- * Build SQL condition for tags overlap.
- * Uses LIKE patterns to match JSON array elements.
- * Handles both normal JSON (["tag"]) and double-encoded ("[\\"tag\\"]").
- */
-function buildTagsCondition(filterTags: string[]): SQL {
-  // For each tag, we check if the tags column contains the tag as a JSON string element
-  // This handles both normal JSON: ["tag1","tag2"]
-  // and double-encoded: "[\"tag1\",\"tag2\"]" stored as: ["\"tag1\",\"tag2\"]
-  const conditions = filterTags.map((tag) => {
-    // Escape single quotes for SQL string literal
-    const escaped = tag.replace(/'/g, "''");
-    // Match patterns:
-    // 1. "tag" - normal JSON array element
-    // 2. \"tag\" - double-encoded (backslash-quote around the tag)
-    return `(tags LIKE '%"${escaped}"%' OR tags LIKE '%\\"${escaped}\\"%')`;
-  });
-
-  return sql.raw(`(${conditions.join(" OR ")})`);
 }
 
 export function createTransfersRepo(db: DrizzleD1Database) {
@@ -143,7 +129,12 @@ export function createTransfersRepo(db: DrizzleD1Database) {
       // Tags filter: use SQL json_each for proper pagination
       // (post-filtering after LIMIT would miss matching rows)
       if (params.tags && params.tags.length > 0) {
-        conditions.push(buildTagsCondition(params.tags));
+        conditions.push(
+          sql`EXISTS(SELECT 1 FROM json_each(${transfers.tags}) WHERE value IN (${sql.join(
+            params.tags.map((tag) => sql`${tag}`),
+            sql`,`,
+          )}))`,
+        );
       }
 
       const limit = clampLimit(params.limit);
@@ -153,7 +144,7 @@ export function createTransfersRepo(db: DrizzleD1Database) {
         .select()
         .from(transfers)
         .where(and(...conditions))
-        .orderBy(desc(transfers.date), desc(transfers.createdAt))
+        .orderBy(desc(transfers.date), desc(transfers.createdAt), desc(transfers.id))
         .limit(limit)
         .offset(offset)
         .all();
@@ -195,20 +186,22 @@ export function createTransfersRepo(db: DrizzleD1Database) {
       rows: Omit<NewTransfer, "id" | "userId" | "createdAt">[],
     ): Promise<number> {
       if (rows.length === 0) return 0;
-      // D1 limit: 100 bound parameters per query. transfers has 14 columns,
-      // so max 7 rows per INSERT, use 5 for safety margin.
-      const BATCH_SIZE = 5;
-      let inserted = 0;
-      for (let i = 0; i < rows.length; i += BATCH_SIZE) {
-        const chunk = rows.slice(i, i + BATCH_SIZE);
-        const result = await db
-          .insert(transfers)
-          .values(chunk.map((r) => ({ ...r, userId })))
-          .returning()
-          .all();
-        inserted += result.length;
-      }
-      return inserted;
+      if (rows.length > 100) throw new Error("Batch exceeds 100 rows");
+      const parsed = validateRowList(rows, parseTransferImportRow);
+      if (!parsed.ok) throw new Error(parsed.message);
+      const payload = JSON.stringify(parsed.rows.map(transferJsonRow));
+      if (utf8ByteLength(payload) > JSON_CHUNK_BYTES) throw new Error("Batch too large");
+      const params = [userId, Math.floor(Date.now() / 1000), payload];
+      const parts = transferInsertFromJsonSql().split("?");
+      const query = sql.join(
+        parts.flatMap((part, i) => [
+          sql.raw(part),
+          ...(i < params.length ? [sql`${params[i]}`] : []),
+        ]),
+        sql.raw(""),
+      );
+      await db.run(query);
+      return rows.length;
     },
 
     async update(
@@ -275,7 +268,7 @@ export function createTransfersRepo(db: DrizzleD1Database) {
         .select()
         .from(transfers)
         .where(eq(transfers.userId, userId))
-        .orderBy(desc(transfers.date), desc(transfers.createdAt))
+        .orderBy(desc(transfers.date), desc(transfers.createdAt), desc(transfers.id))
         .all();
     },
 
@@ -288,7 +281,7 @@ export function createTransfersRepo(db: DrizzleD1Database) {
         .select()
         .from(transfers)
         .where(and(eq(transfers.userId, userId), eq(transfers.year, year)))
-        .orderBy(desc(transfers.date), desc(transfers.createdAt))
+        .orderBy(desc(transfers.date), desc(transfers.createdAt), desc(transfers.id))
         .all();
     },
   };

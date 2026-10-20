@@ -29,7 +29,7 @@ export async function flowLoader({ request }: { request: Request }): Promise<Flo
     selectedYear = availableYears[0] ?? new Date().getFullYear();
   }
 
-  const flowData = await workerDbClient.getFlowSummary(selectedYear);
+  const flowData = await workerDbClient.getFlowSummary(selectedYear, "CNY");
 
   const buildFlows = (type: "income" | "expense"): FlowNode[] => {
     const flowMap = new Map<string, number>();

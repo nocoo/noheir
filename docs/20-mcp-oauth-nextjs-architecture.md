@@ -1,4 +1,4 @@
-> Historical architecture. The native Worker runtime in [23-workers-migration.md](23-workers-migration.md) supersedes the Next.js ownership and deployment sections. OAuth/PKCE behavior and existing token ownership are preserved.
+> Historical architecture. [23-workers-migration](23-workers-migration.md) superseded the Next.js runtime. [25-scoped-api](25-scoped-api.md) now retires MCP/OAuth and their credentials; its REST contract is authoritative.
 
 # 20 — MCP OAuth Next.js 架构
 

@@ -22,10 +22,18 @@ describe("Access authentication over HTTP", () => {
     const result = await api<{ user: { id: string; email: string } }>({
       path: "/api/auth/me",
       userId: TEST_USER_A,
-      headers: { "X-User-Id": TEST_USER_B, Authorization: "Bearer old-shared-secret" },
+      headers: { "X-User-Id": TEST_USER_B },
     });
     expect(result.user.id).toBe(TEST_USER_A);
     expect(result.user.email).toBe(`${TEST_USER_A}@test.local`);
+    expect(
+      (
+        await rawFetch({
+          path: "/api/auth/me",
+          headers: { Authorization: "Bearer old-shared-secret" },
+        })
+      ).status,
+    ).toBe(401);
   });
   test("rejects cross-origin mutations even with a valid JWT", async () => {
     const response = await rawFetch({
@@ -38,10 +46,14 @@ describe("Access authentication over HTTP", () => {
     expect(response.status).toBe(403);
   });
   test("returns JSON 404 for unknown API and removes SQL gateway", async () => {
-    for (const path of ["/api/nonexistent", "/api/v1/query", "/api/v1/execute"]) {
+    for (const path of ["/api/nonexistent", "/api/mcp", "/api/mcp/token"]) {
       const response = await rawFetch({ path, method: "POST", body: { sql: "SELECT 1" } });
       expect(response.status).toBe(404);
       expect(response.headers.get("content-type")).toContain("application/json");
     }
+    for (const path of ["/api/v1/query", "/api/v1/execute"])
+      expect((await rawFetch({ path, method: "POST", body: { sql: "SELECT 1" } })).status).toBe(
+        401,
+      );
   });
 });

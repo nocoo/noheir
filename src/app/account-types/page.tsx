@@ -2,11 +2,13 @@ import { useLoaderData } from "react-router";
 import { AppShell } from "@/components/layout";
 import { groupAccountsByType } from "@/domain/settings/account-types";
 import type { AccountTypeConfig } from "@/domain/types";
+import { financeApi } from "@/lib/finance-api";
 import { workerDbClient } from "@/lib/worker-db-client";
 import { AccountTypesClient } from "./account-types-client";
 
 export interface AccountTypesLoaderData {
   accounts: string[];
+  revision: number;
   accountTypes: AccountTypeConfig[];
   grouped: ReturnType<typeof groupAccountsByType>;
 }
@@ -14,26 +16,30 @@ export interface AccountTypesLoaderData {
 export async function accountTypesLoader(): Promise<AccountTypesLoaderData> {
   const [metadata, settingsResult] = await Promise.all([
     workerDbClient.getMetadata(),
-    workerDbClient.getSettings(),
+    financeApi.listAccountClassifications(),
   ]);
 
   const accounts = metadata.accounts;
-  const row = (settingsResult.settings as Record<string, unknown>) ?? {};
-  const rawJson = typeof row.settings === "string" ? row.settings : "{}";
-  const parsed = JSON.parse(rawJson) as Record<string, unknown>;
-  const accountTypes = (parsed.account_types as AccountTypeConfig[]) ?? [];
+  const accountTypes = settingsResult.data.map(({ accountName, type }) => ({ accountName, type }));
+  const revision = settingsResult.meta.dataRevision;
+  if (revision === undefined) throw new Error("Missing financial data revision");
 
   const grouped = groupAccountsByType(accounts, accountTypes);
 
-  return { accounts, accountTypes, grouped };
+  return { accounts, accountTypes, grouped, revision };
 }
 
 export default function AccountTypesPage() {
-  const { accounts, accountTypes, grouped } = useLoaderData<AccountTypesLoaderData>();
+  const { accounts, accountTypes, grouped, revision } = useLoaderData<AccountTypesLoaderData>();
 
   return (
     <AppShell>
-      <AccountTypesClient accounts={accounts} accountTypes={accountTypes} grouped={grouped} />
+      <AccountTypesClient
+        revision={revision}
+        accounts={accounts}
+        accountTypes={accountTypes}
+        grouped={grouped}
+      />
     </AppShell>
   );
 }

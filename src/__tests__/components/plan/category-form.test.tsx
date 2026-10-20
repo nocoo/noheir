@@ -47,7 +47,9 @@ describe("CategoryForm rendering (P3-C3)", () => {
 
   test("edit mode: prefilled from initial, button reads 保存", () => {
     render(
-      <CategoryForm initial={{ id: "cat-1", name: "房贷", colorToken: "chart-9", sortOrder: 3 }} />,
+      <CategoryForm
+        initial={{ version: 1, id: "cat-1", name: "房贷", colorToken: "chart-9", sortOrder: 3 }}
+      />,
     );
     expect(screen.getByRole("form", { name: "编辑分类" })).toBeInTheDocument();
     expect(screen.getByLabelText("分类名")).toHaveValue("房贷");
@@ -57,7 +59,11 @@ describe("CategoryForm rendering (P3-C3)", () => {
   });
 
   test("edit mode with illegal initial colorToken falls back to default", () => {
-    render(<CategoryForm initial={{ id: "cat-1", name: "x", colorToken: "rebeccapurple" }} />);
+    render(
+      <CategoryForm
+        initial={{ version: 1, id: "cat-1", name: "x", colorToken: "rebeccapurple" }}
+      />,
+    );
     // Default = chart-1 = Sky.
     expect(screen.getByRole("radio", { name: "Sky" })).toHaveAttribute("aria-checked", "true");
   });
@@ -113,7 +119,7 @@ describe("CategoryForm submit — edit (P3-C3)", () => {
     updateMock.mockResolvedValueOnce({ success: true, data: undefined });
     render(
       <CategoryForm
-        initial={{ id: "cat-9", name: "old", colorToken: "chart-9", sortOrder: 0 }}
+        initial={{ version: 1, id: "cat-9", name: "old", colorToken: "chart-9", sortOrder: 0 }}
         onSuccess={onSuccess}
       />,
     );
@@ -122,11 +128,15 @@ describe("CategoryForm submit — edit (P3-C3)", () => {
     await user.type(nameInput, "new");
     await user.click(screen.getByRole("button", { name: "保存" }));
     expect(updateMock).toHaveBeenCalledTimes(1);
-    expect(updateMock).toHaveBeenCalledWith("cat-9", {
-      name: "new",
-      colorToken: "chart-9",
-      sortOrder: 0,
-    });
+    expect(updateMock).toHaveBeenCalledWith(
+      "cat-9",
+      {
+        name: "new",
+        colorToken: "chart-9",
+        sortOrder: 0,
+      },
+      1,
+    );
     expect(toastSuccess).toHaveBeenCalledWith("分类已更新");
     // onSuccess receives the existing id in edit mode.
     expect(onSuccess).toHaveBeenCalledWith({ id: "cat-9" });
@@ -135,7 +145,9 @@ describe("CategoryForm submit — edit (P3-C3)", () => {
   test("createExpenseCategory is NOT called in edit mode", async () => {
     const user = userEvent.setup();
     updateMock.mockResolvedValueOnce({ success: true, data: undefined });
-    render(<CategoryForm initial={{ id: "cat-1", name: "x", colorToken: "chart-1" }} />);
+    render(
+      <CategoryForm initial={{ version: 1, id: "cat-1", name: "x", colorToken: "chart-1" }} />,
+    );
     await user.click(screen.getByRole("button", { name: "保存" }));
     expect(updateMock).toHaveBeenCalled();
     expect(createMock).not.toHaveBeenCalled();

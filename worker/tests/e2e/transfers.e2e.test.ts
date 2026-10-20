@@ -78,6 +78,7 @@ describe("E2E: Transfers", () => {
     const { transfer: updated } = await api<{ transfer: Record<string, unknown> }>({
       method: "PUT",
       path: `/api/transfers/${created.id}`,
+      version: created.version,
       userId,
       body: { note: "已修改", outflowAmountCents: 200000 },
     });
@@ -98,6 +99,7 @@ describe("E2E: Transfers", () => {
     const res = await api<{ success: boolean }>({
       method: "DELETE",
       path: `/api/transfers/${created.id}`,
+      version: created.version,
       userId,
     });
     expect(res.success).toBe(true);
@@ -129,6 +131,7 @@ describe("E2E: Transfers", () => {
     const res = await api<{ transfers: unknown[]; total_returned: number }>({
       method: "POST",
       path: "/api/transfers/search",
+      version: 1,
       userId,
       body: { keyword: "搜索目标" },
     });
@@ -152,6 +155,7 @@ describe("E2E: Transfers", () => {
     const res = await api<{ transfers: unknown[]; total_returned: number }>({
       method: "POST",
       path: "/api/transfers/search",
+      version: 1,
       userId,
       body: { year: 2025 },
     });
@@ -280,6 +284,7 @@ describe("E2E: Transfers", () => {
     const res = await api<{ inserted: number }>({
       method: "POST",
       path: "/api/transfers/bulk",
+      version: 1,
       userId,
       body: { rows },
     });
@@ -288,6 +293,7 @@ describe("E2E: Transfers", () => {
     const search = await api<{ total_returned: number }>({
       method: "POST",
       path: "/api/transfers/search",
+      version: 1,
       userId,
       body: {},
     });

@@ -7,6 +7,7 @@ import type { StagedOperation } from "@/lib/unit-commit-plan";
 
 function makeUnit(over: Partial<SerializedUnit> = {}): SerializedUnit {
   return {
+    version: 1,
     id: "unit-a",
     unitCode: "CU01-001",
     amount: 10000,
@@ -25,6 +26,7 @@ function makeUnit(over: Partial<SerializedUnit> = {}): SerializedUnit {
 
 const products: DomainProduct[] = [
   {
+    version: 1,
     id: "prod-a",
     name: "招行朝朝盈",
     code: null,
@@ -38,6 +40,7 @@ const products: DomainProduct[] = [
     isArchived: false,
   },
   {
+    version: 1,
     id: "prod-b",
     name: "工行添利",
     code: null,

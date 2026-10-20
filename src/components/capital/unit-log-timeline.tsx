@@ -51,7 +51,8 @@ const SOURCE_LABELS: Record<string, string> = {
   manual: "手动",
   auto: "自动",
   import: "迁移",
-  mcp: "AI 助手",
+  mcp: "历史外部记录",
+  api: "外部 API",
 };
 
 interface UnitLogTimelineProps {
@@ -63,14 +64,14 @@ interface UnitLogTimelineProps {
 }
 
 export function UnitLogTimeline({ logs, loading, onRefresh, limit = 500 }: UnitLogTimelineProps) {
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<DomainContributionLog | null>(null);
   const [draftPnl, setDraftPnl] = useState("");
   const [isPending, startTransition] = useTransition();
 
   const totalPnl = logs.reduce((sum, l) => sum + (l.pnl ?? 0), 0);
 
   const startEdit = (log: DomainContributionLog) => {
-    setEditingId(log.id);
+    setEditing(log);
     setDraftPnl(log.pnl != null ? String(log.pnl) : "");
   };
 
@@ -81,12 +82,16 @@ export function UnitLogTimeline({ logs, loading, onRefresh, limit = 500 }: UnitL
       return;
     }
     startTransition(async () => {
-      const result = await updateContributionLog(log.id, {
-        pnl: trimmed === "" ? null : Number(trimmed),
-      });
+      const result = await updateContributionLog(
+        log.id,
+        {
+          pnl: trimmed === "" ? null : Number(trimmed),
+        },
+        editing?.version,
+      );
       if (result.success) {
         toast.success("损益已更新");
-        setEditingId(null);
+        setEditing(null);
         onRefresh();
       } else {
         toast.error(result.error);
@@ -133,7 +138,7 @@ export function UnitLogTimeline({ logs, loading, onRefresh, limit = 500 }: UnitL
           {logs.map((log) => {
             const meta = OPERATION_META[log.operationType] ?? OPERATION_META.adjust;
             const Icon = meta.icon;
-            const isEditing = editingId === log.id;
+            const isEditing = editing?.id === log.id;
 
             return (
               <li key={log.id} className={cn("space-y-1.5 py-3", log.isDeleted && "opacity-50")}>
@@ -198,7 +203,7 @@ export function UnitLogTimeline({ logs, loading, onRefresh, limit = 500 }: UnitL
                         size="icon"
                         variant="ghost"
                         className="size-7"
-                        onClick={() => setEditingId(null)}
+                        onClick={() => setEditing(null)}
                         disabled={isPending}
                         aria-label="取消"
                       >

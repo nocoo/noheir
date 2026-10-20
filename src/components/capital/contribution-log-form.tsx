@@ -142,13 +142,17 @@ function ContributionLogFormInner({
 
     startTransition(async () => {
       if (isEditing) {
-        const result = await updateContributionLog(log.id, {
-          operationType,
-          amount: signedAmount,
-          pnl: pnl.trim() === "" ? null : Number(pnl),
-          operationDate,
-          note: note || null,
-        });
+        const result = await updateContributionLog(
+          log.id,
+          {
+            operationType,
+            amount: signedAmount,
+            pnl: pnl.trim() === "" ? null : Number(pnl),
+            operationDate,
+            note: note || null,
+          },
+          log.version,
+        );
         if (result.success) {
           toast.success("更新成功");
           onSuccess();

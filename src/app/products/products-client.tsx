@@ -247,7 +247,7 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
   const confirmDelete = () => {
     if (!deleteTarget) return;
     startTransition(async () => {
-      const result = await deleteProduct(deleteTarget.id);
+      const result = await deleteProduct(deleteTarget.id, deleteTarget.version);
       if (result.success) {
         toast.success("产品已删除");
         revalidator.revalidate();
@@ -260,7 +260,11 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
 
   const handleToggleArchive = (product: DomainProduct) => {
     startTransition(async () => {
-      const result = await updateProduct(product.id, { isArchived: !product.isArchived });
+      const result = await updateProduct(
+        product.id,
+        { isArchived: !product.isArchived },
+        product.version,
+      );
       if (result.success) {
         toast.success(product.isArchived ? "已取消存档" : "已存档");
         revalidator.revalidate();
@@ -668,7 +672,7 @@ function ProductForm({
         data.cycleDays = cycleDays ? Number(cycleDays) : null;
         data.annualReturnRate = rate ? Number(rate) / 100 : null;
 
-        const result = await updateProduct(product.id, data);
+        const result = await updateProduct(product.id, data, product.version);
         if (result.success) {
           toast.success("产品已更新");
           onSuccess();

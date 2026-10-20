@@ -89,7 +89,10 @@ export function buildDayDetailRows(
     return {
       ruleId: rule.id,
       name: rule.name,
-      amountYuan: formatAmountYuan(rule.amountCents),
+      amountYuan:
+        rule.currency === "CNY"
+          ? formatAmountYuan(rule.amountCents)
+          : `${rule.currency} ${(rule.amountCents / 100).toLocaleString("zh-CN")}`,
       frequencyText: describeFrequency(rule),
       categoryName: cat?.name ?? null,
       colorCss: tokenColor(cat?.colorToken),
@@ -104,7 +107,7 @@ export function sumDay(
 ): number {
   if (!isoDate) return 0;
   const rules = occurrencesByDay.get(isoDate) ?? [];
-  return rules.reduce((acc, r) => acc + r.amountCents, 0);
+  return rules.reduce((acc, r) => acc + (r.currency === "CNY" ? r.amountCents : 0), 0);
 }
 
 export function DayDetailPopover({
@@ -140,7 +143,7 @@ export function DayDetailPopover({
           <DialogDescription data-testid="day-detail-description">
             {rows.length === 0
               ? "当天无周期支出"
-              : `共 ${rows.length} 项 · ${formatAmountYuan(totalCents)}`}
+              : `共 ${rows.length} 项 · CNY ${formatAmountYuan(totalCents)}`}
           </DialogDescription>
         </DialogHeader>
 

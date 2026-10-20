@@ -20,6 +20,7 @@ describe("E2E: Cross-user isolation", () => {
     const res = await api<{ transactions: unknown[]; total_returned: number }>({
       method: "POST",
       path: "/api/transactions/search",
+      version: 1,
       userId: TEST_USER_B,
       body: {},
     });
@@ -37,6 +38,7 @@ describe("E2E: Cross-user isolation", () => {
     const res = await api<{ transfers: unknown[]; total_returned: number }>({
       method: "POST",
       path: "/api/transfers/search",
+      version: 1,
       userId: TEST_USER_B,
       body: {},
     });

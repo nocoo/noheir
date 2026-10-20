@@ -79,6 +79,7 @@ describe("E2E: Transactions", () => {
     const { transaction: updated } = await api<{ transaction: Record<string, unknown> }>({
       method: "PUT",
       path: `/api/transactions/${created.id}`,
+      version: created.version,
       userId,
       body: { note: "已修改备注", amountCents: 9900 },
     });
@@ -90,6 +91,7 @@ describe("E2E: Transactions", () => {
     const res = await rawFetch({
       method: "PUT",
       path: "/api/transactions/non-existent-id",
+      version: 1,
       userId,
       body: { note: "nope" },
     });
@@ -109,6 +111,7 @@ describe("E2E: Transactions", () => {
     const res = await api<{ success: boolean }>({
       method: "DELETE",
       path: `/api/transactions/${created.id}`,
+      version: created.version,
       userId,
     });
     expect(res.success).toBe(true);
@@ -126,6 +129,7 @@ describe("E2E: Transactions", () => {
     const res = await rawFetch({
       method: "DELETE",
       path: "/api/transactions/non-existent-id",
+      version: 1,
       userId,
     });
     expect(res.status).toBe(404);
@@ -150,6 +154,7 @@ describe("E2E: Transactions", () => {
     const res = await api<{ transactions: unknown[]; total_returned: number }>({
       method: "POST",
       path: "/api/transactions/search",
+      version: 1,
       userId,
       body: { keyword: "搜索目标" },
     });
@@ -174,6 +179,7 @@ describe("E2E: Transactions", () => {
     const res = await api<{ transactions: unknown[]; total_returned: number }>({
       method: "POST",
       path: "/api/transactions/search",
+      version: 1,
       userId,
       body: { year: 2025 },
     });
@@ -197,6 +203,7 @@ describe("E2E: Transactions", () => {
     const res = await api<{ transactions: unknown[]; total_returned: number }>({
       method: "POST",
       path: "/api/transactions/search",
+      version: 1,
       userId,
       body: { type: "income" },
     });
@@ -207,6 +214,7 @@ describe("E2E: Transactions", () => {
     const res = await api<{ transactions: unknown[]; total_returned: number }>({
       method: "POST",
       path: "/api/transactions/search",
+      version: 1,
       userId,
       body: {},
     });
@@ -340,6 +348,7 @@ describe("E2E: Transactions", () => {
     const res = await api<{ inserted: number }>({
       method: "POST",
       path: "/api/transactions/bulk",
+      version: 1,
       userId,
       body: { rows },
     });
@@ -349,6 +358,7 @@ describe("E2E: Transactions", () => {
     const search = await api<{ total_returned: number }>({
       method: "POST",
       path: "/api/transactions/search",
+      version: 1,
       userId,
       body: {},
     });

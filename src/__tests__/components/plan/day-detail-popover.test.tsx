@@ -12,6 +12,7 @@ import type { RecurrenceRule } from "@/lib/recurring-expense/rule-types";
 
 function rule(overrides: Partial<RecurrenceRule>): RecurrenceRule {
   return {
+    version: 1,
     id: "r",
     userId: "u",
     name: "rule",
@@ -42,6 +43,20 @@ function occMap(entries: Array<[string, RecurrenceRule[]]>): Map<string, Recurre
 }
 
 describe("buildDayDetailRows / sumDay (P3-C7)", () => {
+  test("shows foreign-currency rows but excludes them from CNY totals", () => {
+    const day = "2026-06-07";
+    const occurrences = occMap([
+      [
+        day,
+        [
+          rule({ currency: "CNY", amountCents: 100 }),
+          rule({ id: "usd", currency: "USD", amountCents: 990000 }),
+        ],
+      ],
+    ]);
+    expect(sumDay(day, occurrences)).toBe(100);
+    expect(buildDayDetailRows(day, occurrences, catMap([]))[1]?.amountYuan).toBe("USD 9,900");
+  });
   test("isoDate=null → empty rows, sum 0", () => {
     expect(buildDayDetailRows(null, occMap([]), catMap([]))).toEqual([]);
     expect(sumDay(null, occMap([]))).toBe(0);
@@ -177,7 +192,7 @@ describe("DayDetailPopover render (P3-C7)", () => {
     const dialog = screen.getByRole("dialog");
     const items = within(dialog).getAllByRole("listitem");
     expect(items).toHaveLength(5);
-    expect(within(dialog).getByText("共 5 项 · ¥15")).toBeInTheDocument();
+    expect(within(dialog).getByText("共 5 项 · CNY ¥15")).toBeInTheDocument();
   });
 
   test("each item shows name, frequency, category, amount, color chip", () => {

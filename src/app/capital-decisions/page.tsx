@@ -43,6 +43,9 @@ export async function capitalDecisionsLoader(): Promise<CapitalDecisionsLoaderDa
 
   const decisions = classifyDecisions(units);
   const stats = buildDecisionStats(decisions);
+  const cnyStats = buildDecisionStats(
+    decisions.filter((decision) => decision.unit.currency === "CNY"),
+  );
   const filterCounts = buildFilterCounts(decisions);
 
   const serializedDecisions = decisions.map((d) => ({
@@ -67,10 +70,10 @@ export async function capitalDecisionsLoader(): Promise<CapitalDecisionsLoaderDa
       urgentCount: stats.high,
       soonCount: stats.medium,
       normalCount: stats.low,
-      totalAmount: stats.totalAmount,
-      urgentAmount: stats.highAmount,
-      soonAmount: stats.mediumAmount,
-      normalAmount: stats.lowAmount,
+      totalAmount: cnyStats.totalAmount,
+      urgentAmount: cnyStats.highAmount,
+      soonAmount: cnyStats.mediumAmount,
+      normalAmount: cnyStats.lowAmount,
     },
     filterCounts,
   };

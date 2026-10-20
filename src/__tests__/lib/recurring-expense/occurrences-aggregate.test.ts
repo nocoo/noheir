@@ -9,6 +9,7 @@ import type { RecurrenceRule } from "@/lib/recurring-expense/rule-types";
 
 function rule(overrides: Partial<RecurrenceRule>): RecurrenceRule {
   return {
+    version: 1,
     id: "r",
     userId: "u",
     name: "test",

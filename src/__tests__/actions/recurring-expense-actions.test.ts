@@ -62,17 +62,21 @@ describe("recurring-expense CRUD actions", () => {
 
   test("update: converts amount (yuan) to amountCents when provided", async () => {
     mockWorkerDbClient.updateRecurringExpense.mockResolvedValueOnce({});
-    const res = await updateRecurringExpense("rule-1", { amount: 9000 });
+    const res = await updateRecurringExpense("rule-1", { amount: 9000 }, 1);
     expect(res).toEqual({ success: true, data: undefined });
-    expect(mockWorkerDbClient.updateRecurringExpense).toHaveBeenCalledWith("rule-1", {
-      amountCents: 900000,
-    });
+    expect(mockWorkerDbClient.updateRecurringExpense).toHaveBeenCalledWith(
+      "rule-1",
+      {
+        amountCents: 900000,
+      },
+      1,
+    );
   });
 
   test("delete: calls worker delete endpoint", async () => {
     mockWorkerDbClient.deleteRecurringExpense.mockResolvedValueOnce(undefined);
-    const res = await deleteRecurringExpense("rule-1");
+    const res = await deleteRecurringExpense("rule-1", 1);
     expect(res).toEqual({ success: true, data: undefined });
-    expect(mockWorkerDbClient.deleteRecurringExpense).toHaveBeenCalledWith("rule-1");
+    expect(mockWorkerDbClient.deleteRecurringExpense).toHaveBeenCalledWith("rule-1", 1);
   });
 });

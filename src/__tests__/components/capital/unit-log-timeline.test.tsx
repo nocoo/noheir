@@ -21,6 +21,7 @@ import type { DomainContributionLog } from "@/domain/types";
 
 function makeLog(over: Partial<DomainContributionLog> = {}): DomainContributionLog {
   return {
+    version: 1,
     id: "log-1",
     unitId: "unit-1",
     productId: "prod-1",
@@ -92,7 +93,7 @@ describe("UnitLogTimeline", () => {
       />,
     );
     expect(screen.getByText("番号对换: A ⇄ B")).toBeInTheDocument();
-    expect(screen.getByText("AI 助手")).toBeInTheDocument();
+    expect(screen.getByText("历史外部记录")).toBeInTheDocument();
   });
 
   test("aggregates total pnl across rows", () => {
@@ -115,7 +116,7 @@ describe("UnitLogTimeline", () => {
     await user.type(screen.getByLabelText("损益"), "42.5");
     await user.click(screen.getByRole("button", { name: "保存损益" }));
 
-    expect(updateMock).toHaveBeenCalledWith("log-1", { pnl: 42.5 });
+    expect(updateMock).toHaveBeenCalledWith("log-1", { pnl: 42.5 }, 1);
     expect(toastSuccess).toHaveBeenCalled();
     expect(onRefresh).toHaveBeenCalled();
   });
@@ -128,7 +129,25 @@ describe("UnitLogTimeline", () => {
     await user.clear(screen.getByLabelText("损益"));
     await user.click(screen.getByRole("button", { name: "保存损益" }));
 
-    expect(updateMock).toHaveBeenCalledWith("log-1", { pnl: null });
+    expect(updateMock).toHaveBeenCalledWith("log-1", { pnl: null }, 1);
+  });
+
+  test("keeps the opened pnl edit version when refreshed props contain a newer log", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <UnitLogTimeline logs={[makeLog({ version: 3 })]} loading={false} onRefresh={vi.fn()} />,
+    );
+    await user.click(screen.getByRole("button", { name: "记录损益" }));
+    await user.type(screen.getByLabelText("损益"), "5");
+    rerender(
+      <UnitLogTimeline
+        logs={[makeLog({ version: 4, pnl: 9 })]}
+        loading={false}
+        onRefresh={vi.fn()}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: "保存损益" }));
+    expect(updateMock).toHaveBeenCalledWith("log-1", { pnl: 5 }, 3);
   });
 
   test("a number input discards non-numeric text, so it reads as a clear", async () => {
@@ -144,7 +163,7 @@ describe("UnitLogTimeline", () => {
 
     // type="number" leaves the value empty rather than "abc" — clearing the pnl
     // is the honest interpretation, not an error.
-    expect(updateMock).toHaveBeenCalledWith("log-1", { pnl: null });
+    expect(updateMock).toHaveBeenCalledWith("log-1", { pnl: null }, 1);
   });
 
   test("cancel leaves the value untouched", async () => {

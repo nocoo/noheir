@@ -3,10 +3,8 @@ import { Check, Save, Shield, Tags, TrendingUp } from "lucide-react";
 import { useState, useTransition } from "react";
 import { useRevalidator } from "react-router";
 import { toast } from "sonner";
-import {
-  saveActiveIncomeCategories,
-  saveFixedExpenseCategories,
-} from "@/app/actions/settings-actions";
+import { saveFinancialPreferences } from "@/app/actions/settings-actions";
+import { FinancialSnapshotNotice } from "@/components/shared/financial-snapshot-notice";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -22,6 +20,7 @@ import { cn } from "@/lib/utils";
 
 interface CategorySettingsClientProps {
   incomeCategories: string[];
+  version: number;
   expenseCategories: string[];
   activeIncomeCategories: string[];
   fixedExpenseCategories: string[];
@@ -29,12 +28,14 @@ interface CategorySettingsClientProps {
 
 export function CategorySettingsClient({
   incomeCategories,
+  version,
   expenseCategories,
   activeIncomeCategories: initialActive,
   fixedExpenseCategories: initialFixed,
 }: CategorySettingsClientProps) {
   const revalidator = useRevalidator();
   const [isPending, startTransition] = useTransition();
+  const [baseVersion, setBaseVersion] = useState(version);
 
   const [activeIncome, setActiveIncome] = useState<string[]>(initialActive);
   const [fixedExpense, setFixedExpense] = useState<string[]>(initialFixed);
@@ -51,27 +52,27 @@ export function CategorySettingsClient({
 
   const handleSave = () => {
     startTransition(async () => {
-      const [incomeResult, expenseResult] = await Promise.all([
-        saveActiveIncomeCategories(activeIncome),
-        saveFixedExpenseCategories(fixedExpense),
-      ]);
-
-      if (incomeResult.success && expenseResult.success) {
+      const result = await saveFinancialPreferences(
+        { activeIncomeCategories: activeIncome, fixedExpenseCategories: fixedExpense },
+        baseVersion,
+      );
+      if (result.success) {
         toast.success("分类设置已保存");
         revalidator.revalidate();
-      } else {
-        const errorMsg = !incomeResult.success
-          ? incomeResult.error
-          : !expenseResult.success
-            ? expenseResult.error
-            : "未知错误";
-        toast.error(errorMsg);
-      }
+      } else toast.error(result.error);
     });
   };
 
   return (
     <div className="space-y-6">
+      <FinancialSnapshotNotice
+        changed={baseVersion !== version}
+        onReset={() => {
+          setActiveIncome(initialActive);
+          setFixedExpense(initialFixed);
+          setBaseVersion(version);
+        }}
+      />
       {/* Header */}
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold">

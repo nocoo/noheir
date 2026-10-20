@@ -31,7 +31,11 @@ export async function createExpenseCategory(data: unknown): Promise<ActionResult
   }
 }
 
-export async function updateExpenseCategory(id: string, data: unknown): Promise<ActionResult> {
+export async function updateExpenseCategory(
+  id: string,
+  data: unknown,
+  version: number | undefined,
+): Promise<ActionResult> {
   const parsed = categoryInputSchema.partial().safeParse(data);
   if (!parsed.success) {
     return {
@@ -40,16 +44,19 @@ export async function updateExpenseCategory(id: string, data: unknown): Promise<
     };
   }
   try {
-    await workerDbClient.updateExpenseCategory(id, parsed.data);
+    await workerDbClient.updateExpenseCategory(id, parsed.data, version);
     return { success: true, data: undefined };
   } catch (err) {
     return actionError(err, "Failed to update category");
   }
 }
 
-export async function deleteExpenseCategory(id: string): Promise<ActionResult> {
+export async function deleteExpenseCategory(
+  id: string,
+  version: number | undefined,
+): Promise<ActionResult> {
   try {
-    await workerDbClient.deleteExpenseCategory(id);
+    await workerDbClient.deleteExpenseCategory(id, version);
     return { success: true, data: undefined };
   } catch (err) {
     return actionError(err, "Failed to delete category");

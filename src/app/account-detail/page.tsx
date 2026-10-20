@@ -8,6 +8,7 @@ import {
   type DisplayEntry,
 } from "@/domain/dashboard/account-detail";
 import type { DomainTransfer } from "@/domain/types";
+import { financeApi } from "@/lib/finance-api";
 import { parseTags, toDomainTransaction } from "@/lib/transaction-mappers";
 import { workerDbClient } from "@/lib/worker-db-client";
 import { AccountDetailClient } from "./account-detail-client";
@@ -65,17 +66,26 @@ export async function accountDetailLoader({
     selectedYear = availableYears[0] ?? new Date().getFullYear();
   }
 
-  const [txResult, trResult] = await Promise.all([
+  const [txResult, trResult, anchorsResult] = await Promise.all([
     workerDbClient.getAllTransactionsByYear(selectedYear),
     workerDbClient.getAllTransfersByYear(selectedYear),
+    financeApi.listBalanceAnchors(),
   ]);
 
-  const transactions = txResult.transactions.map((raw) =>
-    toDomainTransaction(raw as Record<string, unknown>),
-  );
-  const transfers = trResult.transfers.map((raw: unknown) =>
-    toDomainTransfer(raw as Record<string, unknown>),
-  );
+  const transactions = txResult.transactions
+    .map((raw) => toDomainTransaction(raw as Record<string, unknown>))
+    .filter((row) => row.currency === "CNY");
+  const transfers = trResult.transfers
+    .map((raw: unknown) => toDomainTransfer(raw as Record<string, unknown>))
+    .filter((row) => row.currency === "CNY");
+  const anchors = anchorsResult.data
+    .filter((row) => row.currency === "CNY")
+    .map((row) => ({
+      accountName: row.accountName,
+      date: row.date,
+      balance: row.balanceCents / 100,
+      currency: row.currency,
+    }));
 
   const entries = buildBalanceEntries(transactions, transfers);
   const uniqueAccounts = buildUniqueAccounts(entries);
@@ -83,7 +93,7 @@ export async function accountDetailLoader({
 
   const detailData =
     selectedAccount && selectedYear
-      ? buildAccountDetailData(entries, selectedAccount, selectedYear)
+      ? buildAccountDetailData(entries, selectedAccount, selectedYear, anchors)
       : null;
 
   const dailyBalances = detailData?.dailyBalances ?? [];

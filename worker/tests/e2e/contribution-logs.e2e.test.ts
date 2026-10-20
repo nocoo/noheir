@@ -47,7 +47,7 @@ describe("E2E: Contribution Logs", () => {
 
     expect(res.status).toBe(404);
     const body = await res.json();
-    expect(body.error).toBe("Unit not found");
+    expect(body.code).toBe("not_found");
   });
 
   test("POST /api/contribution-logs validates required fields", async () => {
@@ -213,6 +213,7 @@ describe("E2E: Contribution Logs", () => {
     const deleted = await api<{ success: boolean }>({
       method: "DELETE",
       path: `/api/contribution-logs/${log.id}`,
+      version: log.version,
       userId,
     });
     expect(deleted.success).toBe(true);
@@ -227,7 +228,7 @@ describe("E2E: Contribution Logs", () => {
     expect(hidden.logs).toHaveLength(0);
 
     // Search with includeDeleted
-    const found = await api<{ logs: unknown[] }>({
+    const found = await api<{ logs: { version: number }[] }>({
       method: "POST",
       path: "/api/contribution-logs/search",
       userId,
@@ -239,6 +240,7 @@ describe("E2E: Contribution Logs", () => {
     const restored = await api<{ log: Record<string, unknown> }>({
       method: "POST",
       path: `/api/contribution-logs/${log.id}/restore`,
+      version: found.logs[0]?.version,
       userId,
     });
     expect(restored.log).toBeDefined();
@@ -273,6 +275,7 @@ describe("E2E: Contribution Logs", () => {
     const updated = await api<{ log: Record<string, unknown> }>({
       method: "PUT",
       path: `/api/contribution-logs/${log.id}`,
+      version: log.version,
       userId,
       body: { amountCents: 150000, note: "Updated" },
     });

@@ -41,7 +41,7 @@ for (const [kind, makeRow] of [
       }
     });
     test("rolls back the delete and earlier chunks when a database write fails", async () => {
-      const original = await api<Record<string, { id: string }>>({
+      const original = await api<Record<string, { id: string; version: number }>>({
         path: `/api/${kind}`,
         method: "POST",
         userId: TEST_USER_A,
@@ -109,7 +109,7 @@ describe("Browser financial write ownership", () => {
     async (kind) => {
       const body = kind === "transactions" ? makeTransaction() : makeTransfer();
       const key = kind === "transactions" ? "transaction" : "transfer";
-      const created = await api<Record<string, { id: string }>>({
+      const created = await api<Record<string, { id: string; version: number }>>({
         path: `/api/${kind}`,
         method: "POST",
         userId: TEST_USER_A,
@@ -127,6 +127,7 @@ describe("Browser financial write ownership", () => {
             await rawFetch({
               path: `/api/${kind}/${id}`,
               method: "PUT",
+              version: created[key]?.version,
               userId: TEST_USER_A,
               body,
             })
@@ -136,10 +137,11 @@ describe("Browser financial write ownership", () => {
       await api({
         path: `/api/${kind}/${id}`,
         method: "PUT",
+        version: created[key]?.version,
         userId: TEST_USER_A,
         body: { date: "2024-02-29" },
       });
-      const dated = await api<Record<string, unknown>>({
+      const dated = await api<Record<string, { version: number }>>({
         path: `/api/${kind}/${id}`,
         userId: TEST_USER_A,
       });
@@ -147,6 +149,7 @@ describe("Browser financial write ownership", () => {
       const update = await rawFetch({
         path: `/api/${kind}/${id}`,
         method: "PUT",
+        version: dated[key]?.version,
         userId: TEST_USER_A,
         body: { note: "safe update", id: "forged-id", userId: TEST_USER_B, user_id: TEST_USER_B },
       });

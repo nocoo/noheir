@@ -42,6 +42,7 @@ export interface CategoryOption {
 }
 
 export interface RecurringExpenseFormInitial {
+  version?: number;
   id?: string;
   name?: string;
   /** Yuan decimal; the form converts to cents only at the action call site. */
@@ -177,7 +178,7 @@ export function RecurringExpenseForm({
 
       const result =
         isEdit && initial?.id
-          ? await updateRecurringExpense(initial.id, payload)
+          ? await updateRecurringExpense(initial.id, payload, initial.version)
           : await createRecurringExpense(payload);
 
       if (result.success) {

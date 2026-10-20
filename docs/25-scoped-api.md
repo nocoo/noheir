@@ -1,6 +1,6 @@
 # Scoped API and AI/MCP Retirement
 
-Status: **Approved for implementation on 2026-10-20. In progress.**
+Status: **Implemented and locally verified on 2026-10-20. Not published.**
 
 Date: 2026-10-20. The owner approved implementation with TDD and Herdr panes,
 followed by local Chrome acceptance. Public API paths and identifiers must not
@@ -24,9 +24,9 @@ Noheir and write authorized results back through a documented REST API.
   configuration human-only through the Access-protected UI.
 - Reuse the existing Hono Worker, D1 database, original owner IDs, domain logic
   and Basalt UI. Do not introduce another backend, gateway, agent runtime or SDK.
-- Recommend storing externally authored analysis as ordinary private reports.
-  Report storage/rendering is not an inference feature; this boundary needs owner
-  approval in section 12.
+- Store externally authored analysis as ordinary private reports.
+  Report storage/rendering is not an inference feature; the owner approved this
+  boundary in section 12.
 
 Non-goals: raw SQL access, arbitrary server execution, model billing, chat,
 prompts, scheduled agent jobs, embeddings, token delegation, webhooks, a generic
@@ -34,8 +34,9 @@ workflow engine, or a public multi-tenant developer platform.
 
 ## 2. Investigation Baseline
 
-Source inspection only for this proposal; no new runtime/security test results
-are claimed. All three worktrees were clean at inspection time.
+This section records the pre-implementation source inspection. Paths and line
+numbers are historical, not current connection instructions. All three worktrees
+were clean at inspection time. Fresh implementation results appear in section 13.
 
 | Repository | Inspected revision |
 | --- | --- |
@@ -43,7 +44,7 @@ are claimed. All three worktrees were clean at inspection time.
 | xray | `433095a02e732c54711571d2cf2c652cff230051` |
 | his.fm | `4c81209bc28b52337075b80f011835cefe2647e1` |
 
-### Current Noheir
+### Noheir Before This Refactor
 
 | Finding | Source evidence | Consequence |
 | --- | --- | --- |
@@ -82,7 +83,7 @@ External agent -- scoped Bearer key -- /api/v1/* ---------------+--> shared serv
                                                       schema / ownership / financial rules
 ```
 
-Recommended machine prefix: `/api/v1`. Keep the existing human API paths
+Machine prefix: `/api/v1`. Keep the existing human API paths
 for browser use; this is separation of principals, not a legacy API adapter.
 
 1. Register a dedicated machine router that authenticates every non-discovery
@@ -120,7 +121,7 @@ demo-only keys, never production credentials.
   appropriate here because the secret is high-entropy, not a user password.
 - Show plaintext once in the human UI, with `no-store` and no analytics/logging
   of the value. Never put tokens in query strings, URLs or stored browser state.
-- Propose 90-day default expiry, maximum 365 days; expiry is mandatory. A key's
+- Default expiry is 90 days, minimum 1 day, maximum 365 days. A key's
   grants and expiry are immutable after creation. Rotation means issuing a new
   key and explicitly revoking the old one, not automatic privilege expansion.
 - Authenticate against current database state on every request. No positive
@@ -135,7 +136,7 @@ demo-only keys, never production credentials.
 
 ### Finite Scope Catalog
 
-This is the proposed complete scope family list, not wildcard syntax. For each
+This is the complete scope family list, not wildcard syntax. For each
 `read / write / delete` cell, define three literal enum values such as
 `transactions:read`, `transactions:write`, `transactions:delete`.
 
@@ -148,10 +149,10 @@ This is the proposed complete scope family list, not wildcard syntax. For each
 | `contribution-logs` / `/contribution-logs` | read / write / delete | Versioned correction, soft deletion and restoration; distinct from immutable API audit |
 | `expense-categories` / `/expense-categories` | read / write / delete | Existing recurring-expense category records, not a new transaction taxonomy |
 | `recurring-expenses` / `/recurring-expenses` | read / write / delete | State transitions under write; bounded calendar occurrences under read |
-| `account-classifications` / `/account-classifications` | read / write / delete | Financial data, subject to section 12 approval |
-| `balance-anchors` / `/balance-anchors` | read / write / delete | Financial data, subject to section 12 approval |
-| `financial-preferences` / `/financial-preferences` | read / write / delete | Typed financial assumptions/classifications only; delete resets documented defaults; section 12 approval required |
-| `analyses` / `/analyses` | read / write / delete | Externally authored reports; section 12 approval required |
+| `account-classifications` / `/account-classifications` | read / write / delete | Versioned financial data |
+| `balance-anchors` / `/balance-anchors` | read / write / delete | Versioned financial data, cents and explicit currency |
+| `financial-preferences` / `/financial-preferences` | read / write / delete | Singleton; GET/PUT/PATCH/DELETE; delete resets defaults |
+| `analyses` / `/analyses` | read / write / delete | Externally authored private reports |
 | `audit` / `/audit-events` | read only | Allowlisted operation metadata; never credentials, settings values or copied financial payloads |
 | Destructive ledger replacement | separate `data:replace` | Also requires read/write/delete on every affected transaction/transfer resource |
 
@@ -176,7 +177,7 @@ Permission rules:
 - Scopes cover resource families within one owner. No per-account/year/amount
   ACL or rule language in v1. UI presets expand into displayed, finite grants at
   issuance and never gain newly introduced scopes automatically.
-- Suggested presets: Analyst (financial reads), Report Writer (selected financial
+- UI presets: Analyst (financial reads), Report Writer (selected financial
   reads plus analyses read/write), Bookkeeper (selected reads/writes), and Custom.
   None includes delete, `data:replace` or key/site administration by default.
 
@@ -206,7 +207,7 @@ cannot submit contradictory date components or modify ownership/audit columns.
   Statuses: 400 invalid input, 401 invalid credentials, 403 insufficient scope,
   404 absent/off-owner resource, 405 unsupported method with `Allow`, 409 business
   conflict or changed dataset, 412 stale `If-Match`, 413 body limit, 428 missing
-  required precondition, 429 throttling with `Retry-After`.
+  required precondition, 415 unsupported media type, 429 throttling with `Retry-After`.
 - Authenticate/scope-check first, then validate resource-specific input. Reject
   unknown mutation fields, invalid dates, invalid enums, excessive nesting,
   pagination/filter bounds and unsupported media types explicitly.
@@ -235,8 +236,8 @@ or generated client SDK is needed for the first release.
 
 ### Bounded, Complete Reads
 
-Default page size 100, maximum 500, with stable keyset order including a unique
-ID; for example `(date DESC, createdAt DESC, id DESC)`. Apply all owner, scope,
+Default page size 100, maximum 500, with stable keyset order `id DESC`. IDs are
+not chronological; do not infer recency from this order. Apply all owner, scope,
 filter and soft-deletion predicates before pagination. Use limit-plus-one to
 detect continuation, not a silent fixed cap.
 
@@ -246,18 +247,20 @@ token. A cursor from another key/query is rejected. Signing is optional only if
 all fields are validated and independently re-authorized; do not add another
 secret/service solely to make pagination work.
 
-Recommend a monotonic per-owner financial `dataRevision`, incremented in the
+A monotonic per-owner financial `dataRevision` is incremented in the
 same atomic batch as every financial mutation through both browser and machine
 paths. A page/query either reads a consistent revision or returns
 `409 dataset_changed`. A later page with an old revision also fails rather than
 claiming a snapshot. Clients restart traversal; this intentionally favors
 correctness over keeping a long read alive during concurrent editing.
 
-Verify D1 read/batch/session behavior before selecting the concrete SQL sequence.
+Checked reads execute the revision and data statements together in a D1 batch.
 Sequential HTTP reads or `Promise.all` alone do not establish snapshot
-consistency. No historical row-version store or change-feed service is proposed.
+consistency. There is no historical row-version store or change-feed service.
 Analysis collections have their own pagination/version checks; saving a report
 does not change the underlying financial revision.
+Audit uses a separate owner append-count `auditRevision`; financial, report and
+key audit additions invalidate its cursors. Its cursor also binds key and limit.
 
 ### Query Surface
 
@@ -316,7 +319,7 @@ behavior and tests, not two alternative public commit paths.
   one atomic D1 batch with database uniqueness/conditional-write guards. Never
   reserve a key and then perform an unguarded second write. Concurrent duplicate
   requests must produce exactly one financial effect.
-- Propose a documented seven-day replay window. After expiry, do not promise
+- The replay window is seven days. After expiry, do not promise
   deduplication or instruct clients to blindly retry uncertain writes. A stable
   `externalId` gives analysis creation longer-lived deduplication where needed.
 - Reject oversized batches before writing; validate every row and same-owner
@@ -330,7 +333,7 @@ behavior and tests, not two alternative public commit paths.
 
 Do not expose unbounded delete-by-filter. A separate replacement workflow covers
 transaction-year replacement, transfer-year replacement and existing ledger-only
-restore. Propose `POST /ledger-replacements/preview` and
+restore. Use `POST /ledger-replacements/preview` and
 `POST /ledger-replacements` with exact resource/year selection, validated rows,
 affected counts, payload digest and expected financial revision. Preview writes
 nothing; commit repeats validation and atomically checks the preview precondition.
@@ -339,9 +342,8 @@ affected resource read/write/delete grants. Empty replacement is explicitly
 identified as deletion, not silently inferred from missing fields.
 
 Agent export is complete traversal of explicitly selected authorized resource
-collections, under one checked financial revision. It never returns the current
-raw settings export. Include financial preferences only if their proposed
-business-data classification is approved and scoped. Keys, credentials, site
+collections, under one checked financial revision. It never returns raw
+settings. Financial preferences are explicitly scoped business data. Keys, credentials, site
 settings and private infrastructure metadata are always excluded. This is not a
 private D1 disaster-recovery backup; ledger restore still does not restore all
 products, units or application configuration.
@@ -356,25 +358,26 @@ audit. Audit read is an allowlisted metadata projection, not a side channel for
 financial payloads, site preferences or token material.
 
 Record key issuance/revocation via the human path. Do not log Bearer headers,
-full bodies or report contents. Show useful key last-use metadata and mutation
-history in the human UI. Apply per-key/owner request and body/query/batch limits,
-with a lower budget for expensive aggregation/replacement; use native available
-Worker controls rather than an in-memory isolate-global limiter. Concrete rate
-budgets must be measured on local fixtures and recorded before release.
+full bodies or report contents. The human UI shows key last-use metadata; detailed
+mutation history is available through `audit:read`, not a separate audit dashboard.
+Durable D1 counters enforce fixed 60-second windows: 120 requests per key and 600
+per owner; expensive aggregation, portfolio, balances, occurrences, metadata and
+replacement additionally allow 20 per key and 60 per owner. A rejection returns
+429 with `Retry-After: 60`. These are tested limits, not throughput benchmarks.
 
 ## 8. External Analysis Writeback
 
-Recommended neutral resource: `/analyses`, with a private Reports UI replacing
-the old AI insight page, subject to owner approval.
+Resource: `/analyses`, with a private Reports UI replacing the old AI insight page.
 
 Minimal fields: full ID, title, Markdown body, period start/end, currencies,
 optional stable `externalId`, structured evidence metadata, version and server
 timestamps. No model key, prompt runner, inference state or background task.
 
-- Evidence records the producer's query filters, source resource families,
-  observed data revision and retrieval time. Optionally include referenced
-  financial resource IDs; validating/resolving those references requires the
-  corresponding read scopes and same-owner checks.
+- Evidence is an array of `{resource, ids, dataRevision}`. Query filters and
+  retrieval time can be described in the Markdown; they are not additional
+  structured fields. Explicitly submitted evidence requires corresponding read
+  scopes, with each referenced ID checked for existence and same-owner access.
+  Title-only updates do not resolve old references or reveal their current state.
 - Server-stamp authenticated creator/key and later editor identities. An optional
   model/author label supplied by an agent is unverified descriptive metadata,
   never trusted provenance. The server cannot attest that prose is accurate or
@@ -385,7 +388,8 @@ timestamps. No model key, prompt runner, inference state or background task.
 - A create with the same owner/external ID and identical initial content can
   return the existing minimal receipt; different content conflicts and must use
   an explicit versioned update. Retain the creation fingerprint separately from
-  later edits. Preserve external ID uniqueness after deletion so a delayed retry
+  later edits. `externalId` is immutable after creation, including null-to-value
+  changes. Preserve external ID uniqueness after deletion so a delayed retry
   cannot resurrect a deleted report.
 - Scoped agents may edit/delete authorized reports, not just their own. Do not
   inherit Xray's creator-only immutable ingestion rule; retain actor attribution
@@ -393,7 +397,8 @@ timestamps. No model key, prompt runner, inference state or background task.
 - Render Markdown with raw HTML disabled and safe URL handling. Disable remote
   image loading by default to prevent external tracking/data leakage. Use an
   existing maintained renderer if available; otherwise select one small mature
-  library rather than implementing a Markdown parser or sanitizer.
+  library rather than implementing a Markdown parser or sanitizer. The UI uses
+  `react-markdown` 10.1.0 with HTML/images disabled and allowlisted URLs.
 - Reports are untrusted content, not instructions to the product or agents.
   The API guide must distinguish report/note text from operational guidance.
 
@@ -403,13 +408,13 @@ with evidence -> return its private UI link. Noheir never calls the model.
 
 ## 9. Data and Code Change Map
 
-| Area | Planned change |
+| Area | Implemented change |
 | --- | --- |
 | `worker/src/index.ts`, `worker/src/access.ts`, `worker/lib/request-policy.ts` | Separate router/auth boundaries; factor shared business use cases without replacing the Worker |
-| `worker/db/schema.ts`, canonical `worker/db/migrations/` | Keys, idempotency receipts, operation audit, financial revision and resource versions; reports/financial metadata if approved |
+| `worker/db/schema.ts`, canonical `worker/db/migrations/` | Keys, idempotency receipts, operation audit, financial revision, versions, reports and typed financial metadata |
 | `worker/db/repositories/`, `worker/lib/unit-commit.ts`, import helpers | Stable queries, currency-safe aggregates, shared owner checks, atomic mutations and version guards |
 | `src/lib/mcp/tools/` | Extract useful query/portfolio/availability behavior into shared services, then delete protocol handlers and compaction conventions |
-| `src/app/actions/settings-actions.ts`, financial settings pages | If approved, move finance-only fields to typed versioned resources; no arbitrary settings-JSON route for keys |
+| `src/app/actions/settings-actions.ts`, financial settings pages | Finance-only fields use typed versioned resources; no arbitrary settings-JSON route for keys |
 | `src/app/ai-settings/`, `src/app/ai-insight/`, AI-only domain/detector/types/tests | Remove; retain legitimate recurring-expense calendar and non-AI financial calculations |
 | `src/app/mcp-tokens/`, `src/services/mcp-*`, `worker/src/mcp.ts`, `src/lib/mcp/` | Remove MCP/OAuth clients, authorization sessions, token management, discovery and protocol routes |
 | Root dependencies/locks, `worker/src/env.ts`, Wrangler configuration | Remove MCP-only packages/configuration after reference checks; retain Hono, jose, Zod and D1 |
@@ -522,36 +527,154 @@ bun run test:e2e:bdd
 bun run deploy:check
 ```
 
-Authorized edge acceptance follows local gates. Actual results belong in
-implementation/release evidence, not this draft.
+Remote edge acceptance requires separate authorization. Local results follow.
 
 ## 12. Approved Product Boundaries
 
 1. **What does writing analysis mean?** Approved: store private externally
    authored Markdown reports in Noheir with CRUD, evidence and provenance, but no
-   inference/chat. Alternative: remove analysis UI/storage entirely and have
-   agents return their analysis only in their own client. The current request
-   suggests writeback, but the presentation/storage scope is not yet confirmed.
+   inference/chat.
 2. **Which current settings are financial data?** Approved: account types,
    balance anchors, savings/return assumptions and active-income/fixed-expense
    classifications become scoped business resources. Site name/theme/auth and
-   key administration remain human-only. Alternative: leave all current settings
-   human-only; agents must then explicitly report unavailable balance/assumption
-   inputs rather than claim full financial-data coverage. No mixed settings JSON
-   is exposed in either option.
+   key administration remain human-only. No mixed settings JSON is exposed.
 
 The owner approved both recommended boundaries. The public namespace is
 `/api/v1` and UI terminology is API Keys / Reports, without an agent product
 interface. Old credentials require neither preservation nor a transition plan.
 
-## 13. Implementation Progress
+## 13. Local Implementation Evidence
 
 | Workstream | Owner | Status / evidence |
 | --- | --- | --- |
-| REST backend, schema, auth, scopes, safe financial operations | Backend pane | Pending TDD implementation |
-| Human key/report UI and finance configuration | UI pane | Pending TDD implementation |
-| AI/MCP retirement, dependency cleanup, integration and docs | Coordinator | In progress |
-| Independent correctness review | Review pane | Pending |
-| Full local gates and Chrome acceptance | Coordinator | Pending |
+| REST backend, schema, auth, scopes, safe financial operations | Backend pane | TDD complete; 501 Worker tests pass |
+| Human key/report UI and finance configuration | UI pane | TDD complete; 918 root tests pass |
+| AI/MCP retirement, dependency cleanup, integration and docs | Coordinator | Old runtime, credentials, dependencies and active connection instructions removed |
+| Independent correctness review | Review pane | Reported findings fixed with regressions; final limited source recheck has no unresolved P1/P2 |
+| Full local gates and Chrome acceptance | Coordinator | Passed against isolated native fixtures and the existing persistent Demo; no reset or production writes |
+
+Results on 2026-10-20, before publication:
+
+| Command / check | Result |
+| --- | --- |
+| `bun run typecheck` | Browser and Worker lanes pass |
+| `bun run lint` | 414 files, zero warnings/errors |
+| `bun run test:coverage` | 84 files / 918 tests; statements 98.44%, branches 96.44%, functions 100%, lines 99.51% |
+| `bun run --cwd worker test:coverage` | 31 files / 501 tests; statements 99.00%, branches 97.71%, functions 100%, lines 99.77% |
+| `bun run test:e2e` | 190 real-HTTP tests plus 6 environment lifecycle tests pass |
+| `bun run test:e2e:bdd` | 41 browser scenarios pass, including scoped report writeback, safe rendering, versioned human edits and revocation |
+| `bun run test:environments:browser` | Installed Chrome: 33 routes, no API/image failures; mode isolation and disabled-storage checks pass |
+| `bun run deploy:check` | Vite bundles and Wrangler dry-run pass; nothing uploaded |
+| Persistent Demo at `https://noheir.dev.hexly.ai` | Headed installed Chrome: issue one-time key, Bearer-only cash-flow query, external report write, human edit/delete, revoked-key 401; 1440px desktop and 390px mobile inspected |
+
+Coverage describes the existing configured scopes, not the whole runtime. The
+HTTP service/entrypoint is outside the Worker unit coverage denominator and is
+additionally tested through SQLite router tests and native HTTP. No thresholds
+were lowered or new exclusions added. These results are representative security
+and business regressions, not an exhaustive endpoint/input proof or a throughput
+benchmark. No production Access, migration, deployment, tag or release is claimed.
+
+TDD caught and fixed swap-target CAS false success, replay races, CJK cursors,
+permanent report creation deduplication, invalid dates, reference/scope oracles,
+audit cursor invalidation, unsupported methods and stale UI draft versions.
+The native audit test itself was corrected to traverse all pages: immutable
+audit history exceeds 500 events, and a first page is not a complete collection.
+
+### Concrete v1 Limits and Conventions
+
+- Currencies: `CNY`, `USD`, `HKD`; signed safe integer cents; no implicit FX.
+  Existing browser financial totals explicitly select CNY and label it. Other
+  currency rows remain available for CRUD and currency-specific REST queries.
+- Request body: 8 MiB. Lists: default 100 / maximum 500 per page. Batch create:
+  100 rows. Replacement: 500 rows per selected ledger, with digest/revision and
+  explicit `allowEmpty`. Larger jobs must not be silently truncated.
+- Aggregation: at most 500 groups; portfolio/preflight at most 500 units/logs;
+  metadata at most 500 distinct values per facet. Exceeding these limits returns
+  an explicit error, not a partial success. Narrow supported filters or traverse
+  the underlying resource collections; metadata has no paging in v1.
+- Occurrences: maximum 366 inclusive calendar days. Financial date logic uses
+  Asia/Shanghai. New typed table timestamps are milliseconds; old financial
+  table storage retains seconds, with ISO timestamps on the wire.
+- Financial preferences reset to savings 30%, expected return 4%, minimum 2%,
+  maximum 8%, empty active-income and fixed-expense categories. Return assumptions
+  permit -100..100 percentage points; minimum must not exceed maximum.
+- Human financial collections use atomic `PUT {items}` with the listed
+  `meta.dataRevision` as `If-Match`. Draft data and its base revision remain paired
+  across revalidation. An explicit reload discards a stale draft.
+- Unit timeline returns top-level `version`, alongside the business `expected`
+  snapshot. Human metadata edits use the shared commit path and add adjustment
+  history. No client predicts a post-write version or fetches latest before save.
+- Canonical migrations `0011` and `0012` preserve financial data, reject ambiguous
+  conversions atomically and retire credential tables. API audit is intentionally
+  immutable; ordinary test/user cleanup does not purge it. Old private backups
+  may still contain retired secrets and are outside this cleanup.
+
+## 14. External Client Walkthrough
+
+In `/api-keys`, choose Report Writer or explicitly grant `transactions:read`,
+`transfers:read`, `analyses:write` (plus `analyses:read` to inspect saved reports).
+Store the once-shown token outside Noheir. Supply `NOHEIR_TOKEN` through your
+tool's secure environment, not a URL or a command argument. For local Demo/E2E,
+also set `NOHEIR_INSTANCE` to the current value displayed on the key page.
+
+This Node example performs deterministic arithmetic outside the product. A model
+can replace the Markdown composition in its own process; Noheir receives only
+the report. Set `NOHEIR_ORIGIN` to the intended origin, and never point local
+acceptance at production. It logs a report link, never the secret or financial
+response body.
+
+```js
+// Run with Node's --input-type=module, or save as an external .mjs client.
+const origin = process.env.NOHEIR_ORIGIN;
+const token = process.env.NOHEIR_TOKEN;
+if (!origin || !token) throw new Error("Set NOHEIR_ORIGIN and NOHEIR_TOKEN");
+const headers = {
+  Authorization: `Bearer ${token}`,
+  ...(process.env.NOHEIR_INSTANCE
+    ? { "x-noheir-instance": process.env.NOHEIR_INSTANCE }
+    : {}),
+};
+async function call(path, options = {}) {
+  const response = await fetch(new URL(`/api/v1${path}`, origin), {
+    ...options,
+    headers: { ...headers, ...options.headers },
+  });
+  if (!response.ok) {
+    const problem = await response.json();
+    throw new Error(`${response.status}: ${problem.code}`);
+  }
+  return response.json();
+}
+const periodStart = "2026-01-01";
+const periodEnd = "2026-12-31";
+const query = new URLSearchParams({
+  currency: "CNY", startDate: periodStart, endDate: periodEnd,
+});
+const { data, meta } = await call(`/summaries/cash-flow?${query}`);
+const markdown = "# CNY cash flow\n\n" + data.transactions.map((row) =>
+  `- ${row.type}: ${(row.amountCents / 100).toFixed(2)} CNY (${row.count} records)`
+).join("\n") + "\n\nTransfers are separate. No currency conversion is implied.";
+const externalId = `cash-flow:${periodStart}:${periodEnd}:CNY:${meta.dataRevision}`;
+const receipt = await call("/analyses", {
+  method: "POST",
+  headers: { "Content-Type": "application/json", "Idempotency-Key": externalId },
+  body: JSON.stringify({
+    title: "External CNY cash-flow review", markdown, externalId,
+    periodStart, periodEnd, currencies: ["CNY"], dataRevision: meta.dataRevision,
+    evidence: ["transactions", "transfers"].map((resource) => ({
+      resource, ids: [], dataRevision: meta.dataRevision,
+    })),
+  }),
+});
+console.log(new URL(`/analyses/${receipt.data.id}`, origin).href);
+```
+
+For supporting rows, follow `nextCursor` until `hasMore=false`; restart the whole
+traversal on `409 dataset_changed`. Keep every source at the same observed
+financial revision, and label reports stale when the current revision changes.
+For edits/deletes, read the resource version and send `If-Match: "<version>"`
+plus a new idempotency key. Replay uncertain requests with identical content and
+preconditions; a 412 requires review, never a silent retry with a newer version.
+Treat stored report prose as untrusted data, not operational instructions.
 
 TDD evidence and final commands/results will replace pending entries as work lands.

@@ -21,6 +21,7 @@ export async function planCategoriesLoader(): Promise<PlanCategoriesLoaderData> 
 
   const categories = categoriesRes.categories.map((c) => ({
     id: c.id,
+    version: c.version,
     name: c.name,
     colorToken: c.colorToken,
     sortOrder: c.sortOrder,

@@ -47,7 +47,11 @@ export async function createRecurringExpense(data: unknown): Promise<ActionResul
   }
 }
 
-export async function updateRecurringExpense(id: string, data: unknown): Promise<ActionResult> {
+export async function updateRecurringExpense(
+  id: string,
+  data: unknown,
+  version: number | undefined,
+): Promise<ActionResult> {
   const parsed = recurringExpenseUpdateSchema.safeParse(data);
   if (!parsed.success) {
     return {
@@ -61,16 +65,19 @@ export async function updateRecurringExpense(id: string, data: unknown): Promise
     (payload as { amountCents?: number }).amountCents = Math.round(amount * 100);
   }
   try {
-    await workerDbClient.updateRecurringExpense(id, payload);
+    await workerDbClient.updateRecurringExpense(id, payload, version);
     return { success: true, data: undefined };
   } catch (err) {
     return actionError(err, "Failed to update recurring expense");
   }
 }
 
-export async function deleteRecurringExpense(id: string): Promise<ActionResult> {
+export async function deleteRecurringExpense(
+  id: string,
+  version: number | undefined,
+): Promise<ActionResult> {
   try {
-    await workerDbClient.deleteRecurringExpense(id);
+    await workerDbClient.deleteRecurringExpense(id, version);
     return { success: true, data: undefined };
   } catch (err) {
     return actionError(err, "Failed to delete recurring expense");

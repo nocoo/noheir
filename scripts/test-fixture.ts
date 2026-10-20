@@ -13,6 +13,7 @@ import { join, resolve } from "node:path";
 import { build } from "esbuild";
 import { exportJWK, generateKeyPair, SignJWT } from "jose";
 import { convertV4MiniflareOptions, Miniflare } from "miniflare";
+import { unstable_splitSqlQuery } from "wrangler";
 
 export const TEST_USERS = ["e2e-user-alpha", "e2e-user-beta", "e2e-user-gamma"];
 export const TEST_AUD = "noheir-local-test-audience";
@@ -24,6 +25,10 @@ export async function createTestFixture(port: number) {
 }
 
 export const DEMO_STATE = resolve(".wrangler/environments/demo");
+
+export function splitFixtureMigration(sql: string): string[] {
+  return unstable_splitSqlQuery(sql);
+}
 
 export async function createNativeFixture(
   options: {
@@ -142,13 +147,10 @@ export async function createNativeFixture(
       )
         continue;
       const sql = readFileSync(join("worker/db/migrations", file), "utf8");
-      for (const statement of sql
-        .replace(/--[^\n]*/g, "")
-        .split(";")
-        .filter((s) => s.trim())) {
-        await db.exec(statement.replace(/\s+/g, " ").trim());
-      }
-      await db.prepare("INSERT INTO _fixture_migrations VALUES (?)").bind(file).run();
+      await db.batch([
+        ...splitFixtureMigration(sql).map((statement) => db.prepare(statement)),
+        db.prepare("INSERT INTO _fixture_migrations VALUES (?)").bind(file),
+      ]);
     }
     await assertMarker();
     for (const id of TEST_USERS) {

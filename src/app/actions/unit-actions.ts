@@ -49,6 +49,7 @@ export async function updateUnit(
     startDate?: string | null;
     note?: string | null;
   },
+  version: number | undefined,
 ): Promise<ActionResult> {
   try {
     const payload: Record<string, unknown> = {};
@@ -62,7 +63,7 @@ export async function updateUnit(
     if (data.startDate !== undefined) payload.startDate = data.startDate;
     if (data.note !== undefined) payload.note = data.note;
 
-    await workerDbClient.updateUnit(id, payload);
+    await workerDbClient.updateUnit(id, payload, version);
     return { success: true, data: undefined };
   } catch (err) {
     return {
@@ -72,9 +73,9 @@ export async function updateUnit(
   }
 }
 
-export async function deleteUnit(id: string): Promise<ActionResult> {
+export async function deleteUnit(id: string, version: number | undefined): Promise<ActionResult> {
   try {
-    await workerDbClient.deleteUnit(id);
+    await workerDbClient.deleteUnit(id, version);
     return { success: true, data: undefined };
   } catch (err) {
     return {

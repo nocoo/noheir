@@ -20,7 +20,7 @@ describe("reports repo — yearly aggregation", () => {
     amountCents: 5000,
     type: "expense" as const,
     account: "招商银行",
-    currency: "人民币",
+    currency: "CNY",
     ...overrides,
   });
 
@@ -455,4 +455,35 @@ describe("reports repo — yearly aggregation", () => {
       expect(result.account_to_category[0]?.total).toBe(5000);
     });
   });
+});
+
+test("browser summaries never add different currencies and allow explicit ISO selection", async () => {
+  resetTestDb();
+  seedUser("currency-owner");
+  const repos = getTestRepos();
+  for (const currency of ["CNY", "USD"])
+    await repos.transactions.create("currency-owner", {
+      date: "2026-01-01",
+      year: 2026,
+      month: 1,
+      day: 1,
+      primaryCategory: "Work",
+      tertiaryCategory: "Pay",
+      type: "income",
+      amountCents: 100,
+      account: "Bank",
+      currency,
+    });
+  expect((await repos.reports.yearlySummary("currency-owner", 2026)).totals.income).toBe(100);
+  expect((await repos.reports.yearlySummary("currency-owner", 2026, "USD")).totals.income).toBe(
+    100,
+  );
+  expect((await repos.reports.monthly("currency-owner", 2026, 1)).total_income).toBe(100);
+  expect((await repos.reports.categorySummary("currency-owner", 2026)).categories[0]?.total).toBe(
+    100,
+  );
+  expect((await repos.reports.accountSummary("currency-owner", 2026)).accounts[0]?.total).toBe(100);
+  expect(
+    (await repos.reports.flowSummary("currency-owner", 2026)).account_to_category[0]?.total,
+  ).toBe(100);
 });

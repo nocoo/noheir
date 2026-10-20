@@ -2,6 +2,7 @@ import { useLoaderData } from "react-router";
 import { AppShell } from "@/components/layout";
 import type { MonthlyData } from "@/domain/types";
 import { MONTH_NAMES } from "@/lib/constants";
+import { financeApi } from "@/lib/finance-api";
 import { workerDbClient } from "@/lib/worker-db-client";
 import { YearComparisonClient } from "./year-comparison-client";
 
@@ -14,22 +15,16 @@ export interface CompareLoaderData {
 export async function compareLoader(): Promise<CompareLoaderData> {
   const [metadata, settingsResult] = await Promise.all([
     workerDbClient.getMetadata(),
-    workerDbClient.getSettings(),
+    financeApi.getFinancialPreferences(),
   ]);
 
-  let targetSavingsRate = 30;
-  const settingsRow = (settingsResult.settings as Record<string, unknown>) ?? {};
-  const rawJson = typeof settingsRow.settings === "string" ? settingsRow.settings : "{}";
-  const settingsJson = JSON.parse(rawJson) as Record<string, unknown>;
-  if (typeof settingsJson.savings_rate_target === "number") {
-    targetSavingsRate = settingsJson.savings_rate_target;
-  }
+  const targetSavingsRate = settingsResult.data.savingsRateTarget;
 
   const availableYears = metadata.years.sort((a, b) => a - b);
 
   const summaries = await Promise.all(
     availableYears.map(async (year) => {
-      const summary = await workerDbClient.getYearlySummary(year);
+      const summary = await workerDbClient.getYearlySummary(year, "CNY");
       return { year, summary };
     }),
   );

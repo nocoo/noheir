@@ -23,7 +23,6 @@ export const YEAR_ENABLED_PATHS = new Set([
   "/expense",
   "/flow",
   "/financial-health",
-  "/ai-insight",
   "/account",
   "/account-detail",
 ]);

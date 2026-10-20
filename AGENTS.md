@@ -20,14 +20,17 @@ Raise weaker enforcement to the contract. Maintain project rules only here.
 
 ## Project Invariants
 
-- One native Hono Worker serves Vite assets, business APIs and OAuth/MCP using the existing D1 binding. No Next.js runtime, Docker deployment, SQL-over-HTTP gateway or shared Worker secret remains in v3.
-- Verify Access signature, issuer, audience and expiry. Normalize verified email and resolve exactly one existing `users.id`; never replace Google-era financial/MCP ownership keys with Access `sub`. Unknown or ambiguous users fail closed.
+- One native Hono Worker serves Vite assets, human business APIs and scoped Bearer REST at `/api/v1` using the existing D1 binding. No internal model inference, model credentials, MCP/OAuth server, Next.js runtime or SQL-over-HTTP gateway remains.
+- Verify Access signature, issuer, audience and expiry. Normalize verified email and resolve exactly one existing `users.id`; never replace financial ownership keys with Access `sub`. Unknown or ambiguous users fail closed.
 - Run the Worker before static assets. Disable workers.dev and preview URLs. Demo/E2E use launcher-issued signed fixture identities with controlled JWKS; no environment or loopback host bypasses verification.
 - Browser mutations require same origin. Derive ownership on the server, ignoring user-id and internal-action headers and ownership fields in JSON.
-- Preserve OAuth issuer, client registrations and token hashes. Machine endpoints perform OAuth/MCP validation; authorize/callback require Access and the same original owner. Preserve single-use PKCE codes and refresh rotation. External Access path precedence is documented in the runbook.
+- Human-only API key/site administration never accepts Bearer credentials. Machine routes never fall back to Access. Keys are hash-only, expiring, revocable and explicitly scoped; read/write/delete grants are independent. No public interface contains `agent` terminology.
+- Shared financial mutations require snapshot `If-Match`; machine mutations additionally require `Idempotency-Key`. Preserve atomic financial writes, actor audit and financial revisions. Reports have separate revisions, immutable creator/external identity and durable creation receipts after deletion.
+- Keep report Markdown inert: no raw HTML or remote images. Evidence references require source read grants and same-owner IDs; author/model labels are unverified text. Only external tools perform inference.
 - CSV transaction import replaces the selected user's whole year of income and expense; transfer import is separate. Validate all rows before a single atomic D1 batch. Keep JSON parameters below D1 limits using chunks; never delete before validation or in a separate request.
 - JSON export includes more than restore. Restore replaces only transactions/transfers across all years. Never claim a complete disaster-recovery backup; use a private D1 export for that purpose.
 - Currency is integer cents. Calendar math uses Asia/Shanghai helpers across writes and fixtures; recurring state end timestamps retain the existing UTC convention. Parameterize SQLite syntax.
+- New writes use ISO CNY/USD/HKD. Aggregates never mix currencies or perform implicit FX; legacy browser summaries explicitly use CNY. Missing investment history and balance anchors remain unknown, not zero.
 - Availability derives from the latest invest log or explicit override, not `start_date`; missing invest history stays unknown. Established units with a product create the proper invest log; planned units do not.
 - Domain labels use shared colored-badge wrappers. Preserve available/soon/locked colors and the full mapping in [operations/UI constraints](docs/22-agent-operations.md).
 - Retain the existing D1 database. Retiring old Noheir infrastructure must not disturb shared Caddy/mTLS, the shared `edge` network or other VPS applications.
@@ -38,7 +41,7 @@ Raise weaker enforcement to the contract. Maintain project rules only here.
 | --- | --- |
 | Web | Vite, React, React Router data loaders; `src/app/`, `src/routes.tsx` |
 | Domain/UI | `src/domain/`, `src/components/`; preserve MVVM and Basalt controls |
-| API/auth/MCP | Hono, jose, native MCP Web Standard transport; `worker/src/`, `src/lib/mcp/` |
+| API/auth | Hono, jose/Access, scoped Bearer REST; `worker/src/`, shared `src/domain/api-contract.ts` |
 | Data | Direct request-scoped D1, Drizzle; `worker/db/`, canonical `worker/db/migrations/` |
 | Tooling | Bun 1.4.2 / Node 26.8.1 in CI, TypeScript 7, Biome, Vitest/Playwright |
 
@@ -103,7 +106,7 @@ logic, skip/focus tests or bypass hooks.
 | L1 — complete unified contract | All four coverage metrics >=95% plus strict static lanes on an installed index-snapshot hook with proven rejection, under 30s | planned | `.husky/pre-commit` runs `scripts/pre-commit.py` against a temporary export of the Git index and fails closed on missing/empty/failed/skipped test reports, missing/invalid/below-95% coverage reports, static failures and timeout. Installed-hook fixture rejection and full timing remain to be verified. The subcheck rows below describe the configured lanes |
 | L1 subcheck — App coverage | Four metrics >=95% in configured TypeScript logic; UI, wiring and listed domain/service exclusions are outside the coverage denominator | enforced | Root Vitest; pre-commit/pre-push/CI |
 | L1 subcheck — Worker coverage | Four metrics >=95% for `worker/lib/**/*.ts` and `db/validation.ts`; HTTP entrypoints/repositories outside this unit denominator | enforced | Worker Vitest; pre-commit/pre-push/CI |
-| L2 | Native Worker real HTTP with SQLite, signed JWT failures, ownership, CRUD, OAuth/PKCE/replay/refresh, state races, annual import rollback and backup scope | enforced | `scripts/run-e2e.ts`; pre-push/CI; not a complete endpoint/method coverage claim |
+| L2 | Native Worker real HTTP with SQLite, signed JWT failures, scoped Bearer isolation, CRUD, idempotency/CAS, state races, annual import rollback and backup scope | enforced | `scripts/run-e2e.ts`; pre-push/CI; not a complete endpoint/method coverage claim |
 | L3 | Authenticated route rendering and financial/import/backup/error workflows on built assets | enforced | Playwright CI; acceptance evidence in migration plan |
 | L1 subcheck — static lanes (former G1) | Both type lanes; zero-warning/error Biome | enforced | Root typecheck and lint; pre-commit/CI; pre-commit runs these lanes from the index snapshot |
 | G2 | Required OSV on both locks; redacted gitleaks | enforced | Pre-push and reusable CI security gates |

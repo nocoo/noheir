@@ -41,6 +41,7 @@ export interface CommitMetadata {
   strategy?: string | undefined;
   tactics?: string | undefined;
   startDate?: string | null | undefined;
+  endDate?: string | null | undefined;
   unitNote?: string | null | undefined;
 }
 
@@ -93,7 +94,7 @@ export interface BuildCommitInput {
 const ARCHIVED = "已归档";
 
 /**
- * endDate is derived, never client-supplied: archived units get a date,
+ * Archived units get a date; an explicit archival correction is applied by the builder,
  * everything else is forced to null. Mirrors PUT /api/units/:id
  * (worker/src/index.ts:901-922) so /commit cannot produce illegal states.
  *
@@ -214,7 +215,12 @@ export function buildCommitStatements(input: BuildCommitInput): Statement[] {
 
   // Always written: non-archived units must have end_date = NULL.
   const finalStatus = metadata?.status ?? expected.status;
-  set("end_date", resolveEndDate(finalStatus, expected.status, expected.endDate, today));
+  set(
+    "end_date",
+    finalStatus === ARCHIVED && metadata?.endDate != null
+      ? metadata.endDate
+      : resolveEndDate(finalStatus, expected.status, expected.endDate, today),
+  );
   set("commit_token", commitToken);
   set("updated_at", now);
 

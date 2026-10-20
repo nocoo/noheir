@@ -69,6 +69,7 @@ function addMonthsToIso(iso: string, delta: number): string {
 export function ruleToFormInitial(rule: RecurrenceRule): RecurringExpenseFormInitial {
   return {
     id: rule.id,
+    version: rule.version,
     name: rule.name,
     amount: rule.amountCents / 100,
     categoryId: rule.categoryId,
@@ -94,7 +95,9 @@ export function CalendarClient({
   const [viewMonth, setViewMonth] = React.useState<string>(() => monthStartFromIso(todayIso));
   const [selectedDay, setSelectedDay] = React.useState<string | null>(null);
   const [createOpen, setCreateOpen] = React.useState(false);
-  const [editingId, setEditingId] = React.useState<string | null>(null);
+  const [editingRule, setEditingRule] = React.useState<RecurrenceRule | null>(null);
+  const setEditingId = (id: string | null) =>
+    setEditingRule(id ? (rules.find((rule) => rule.id === id) ?? null) : null);
 
   // Reusable categoryMaps. Building once per render is fine — categories
   // are bounded by UI (per-user, typically <20).
@@ -126,11 +129,6 @@ export function CalendarClient({
     const toIso = formatIso(adjustDay(start, 42 - startCellNum.dow - 1));
     return aggregateOccurrences(rules, fromIso, toIso);
   }, [rules, viewMonth]);
-
-  const editingRule = React.useMemo(
-    () => (editingId ? (rules.find((r) => r.id === editingId) ?? null) : null),
-    [editingId, rules],
-  );
 
   const rulesByName = React.useMemo(
     () => [...rules].sort((a, b) => a.name.localeCompare(b.name, "zh")),

@@ -97,6 +97,7 @@ export type InvestmentTactics =
 export type UnitStatus = "已成立" | "计划中" | "筹集中" | "已归档";
 
 export interface DomainProduct {
+  version: number;
   id: string;
   name: string;
   code: string | null;
@@ -111,6 +112,7 @@ export interface DomainProduct {
 }
 
 export interface DomainUnit {
+  version: number;
   id: string;
   unitCode: string;
   amount: number; // Display value (cents / 100)
@@ -143,9 +145,10 @@ export interface UnitDisplayInfo extends DomainUnit {
 
 export type ContributionOperationType = "invest" | "withdraw" | "adjust";
 /** "mcp" mirrors 132 existing production rows — see docs/003 § Decision K. */
-export type ContributionSource = "manual" | "auto" | "import" | "mcp";
+export type ContributionSource = "manual" | "auto" | "import" | "api" | "mcp";
 
 export interface DomainContributionLog {
+  version: number;
   id: string;
   unitId: string;
   productId: string | null;
@@ -204,6 +207,7 @@ export interface UnitTimelineLog extends DomainContributionLog {
  * precomputed. Distinct from DomainUnit (nested product) and UnitDisplayInfo.
  */
 export interface SerializedUnit {
+  version: number;
   id: string;
   unitCode: string;
   amount: number;
@@ -228,36 +232,6 @@ export interface SerializedUnit {
 
 // ── Insight types ──
 
-export interface RecurringPayment {
-  id: string;
-  description: string;
-  account: string;
-  amount: number;
-  frequency: "monthly" | "quarterly" | "yearly" | "weekly" | "biweekly";
-  nextPaymentDate: string;
-  averageInterval: number;
-  occurrences: number;
-  totalAmount: number;
-  category: string;
-  yearlyTotal: number;
-  recentTransactions: Array<{
-    date: string;
-    amount: number;
-    description: string;
-  }>;
-}
-
-export interface PaymentInsight {
-  type: "recurring_payment" | "upcoming_renewal" | "irregular_payment" | "budget_alert";
-  priority: "high" | "medium" | "low";
-  title: string;
-  description: string;
-  amount?: number;
-  dueDate?: string;
-  recommendation: string;
-  confidence: number;
-}
-
 // ── Settings types ──
 
 export type AccountType = "debit" | "credit" | "prepaid" | "financial" | "unclassified";
@@ -268,16 +242,10 @@ export interface AccountTypeConfig {
 }
 
 export interface BalanceAnchor {
+  currency?: string;
   accountName: string;
   date: string;
   balance: number;
-}
-
-export interface AIConfig {
-  enabled: boolean;
-  apiKey: string;
-  baseURL: string;
-  modelName: string;
 }
 
 // ── Theme & Color types ──

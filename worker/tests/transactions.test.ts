@@ -286,7 +286,7 @@ describe("transactions repo", () => {
     expect(result.total_returned).toBe(0);
   });
 
-  test("search tags overlap handles double-encoded JSON from legacy migration", async () => {
+  test("search does not reinterpret malformed double-encoded tags", async () => {
     const repos = getTestRepos();
     // Simulate double-encoded tags that might come from legacy data migration
     // Instead of '["工资"]', the data might be '"[\\"工资\\"]"' (JSON string of JSON string)
@@ -294,7 +294,7 @@ describe("transactions repo", () => {
     await repos.transactions.create(userId, { ...baseTx, tags: doubleEncoded });
 
     const result = await repos.transactions.search(userId, { tags: ["工资"] });
-    expect(result.total_returned).toBe(1);
+    expect(result.total_returned).toBe(0);
   });
 
   test("search limit clamping: max 500", async () => {
@@ -449,4 +449,32 @@ describe("transactions repo", () => {
     expect(result[1]?.date).toBe("2026-03-10");
     expect(result[2]?.date).toBe("2026-03-01");
   });
+});
+
+test("bulk creation validates every row before inserting and tag filters are exact", async () => {
+  resetTestDb();
+  const owner = seedUser();
+  const repos = getTestRepos();
+  const row = {
+    date: "2026-01-01",
+    year: 2026,
+    month: 1,
+    day: 1,
+    primaryCategory: "Food",
+    tertiaryCategory: "Meals",
+    amountCents: 100,
+    type: "expense",
+    account: "Bank",
+    currency: "CNY",
+    tags: '["aXb"]',
+  };
+  await expect(
+    repos.transactions.createMany(owner, [
+      ...Array.from({ length: 6 }, () => row),
+      { ...row, currency: "ZZZ" },
+    ]),
+  ).rejects.toThrow();
+  expect(await repos.transactions.count(owner)).toBe(0);
+  await repos.transactions.create(owner, row);
+  expect((await repos.transactions.search(owner, { tags: ["a%b"] })).total_returned).toBe(0);
 });

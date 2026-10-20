@@ -114,3 +114,27 @@ and gives an explicit login command when credentials are unavailable. Header
 regression tests cover credential replacement. Real login was attempted but the
 Access transfer service timed out; live acceptance remains pending. Fixture tests
 prove isolation, not the availability of a real identity provider or login session.
+
+## 2026-10-20 — Prove effects, snapshots and complete reads during API retirement
+
+The scoped REST refactor initially treated insertion of a mutation context as
+proof that a capital commit succeeded. A concurrent change to the swap target
+could instead make the guarded business update affect zero rows while leaving a
+successful replay receipt. Review reproduced the race before publication. The
+context now carries the complete source-and-target CAS predicate, and a focused
+regression proves that neither an audit nor a success receipt survives failure.
+
+The UI also held old draft values while reading a new version from refreshed
+loader props. This could authorize overwriting data the editor had never seen.
+Drafts now retain their original base version/revision until explicitly reloaded;
+rerender tests cover the financial forms and report edits. Mutation completion
+reloads real versions rather than guessing a version increment.
+
+Native acceptance then expected two matching audit events in the first 500 rows.
+Immutable history from earlier tests exceeded that page; the second event was on
+the next page. SQLite proved exactly two effects, and the HTTP check was corrected
+to traverse opaque cursors without deleting audit history or raising the cap.
+Retiring MCP tests also removed incidental availability coverage, exposing a
+94.58% branch result. Direct domain boundary tests restored the unchanged 95%
+gate. Always distinguish a complete dataset from one page, and replace accidental
+coverage with focused behavior checks when deleting an old integration.

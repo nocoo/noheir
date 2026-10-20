@@ -28,17 +28,9 @@ const coverageExclude = [
   "src/lib/capital-mappers.ts",
   "src/lib/category-builders.ts",
   "src/lib/navigation.ts",
-  "src/lib/recurring-payment-detector.ts",
   "src/lib/table-columns.ts",
   "src/lib/worker-db-client.ts",
   "src/lib/palette.ts",
-  "src/lib/mcp/server.ts",
-  "src/lib/mcp/tools/delete.ts",
-  "src/lib/mcp/tools/summary.ts",
-  "src/lib/mcp/tools/product.ts",
-  "src/services/mcp-clients.ts",
-  "src/services/mcp-auth-codes.ts",
-  "src/lib/mcp/tools/unit.ts",
   "src/domain/data-management.ts",
   "src/domain/dashboard/account-detail.ts",
   "src/domain/dashboard/account-analysis.ts",
@@ -58,9 +50,6 @@ const coverageExclude = [
   "src/lib/tag-colors.ts",
   "src/domain/assets/capital-dashboard.ts",
   "src/domain/assets/capital-decisions.ts",
-  "src/lib/mcp/tools/portfolio.ts",
-  "src/lib/mcp/tools/query.ts",
-  "src/lib/mcp/tools/resolver.ts",
 ];
 
 export default defineConfig({

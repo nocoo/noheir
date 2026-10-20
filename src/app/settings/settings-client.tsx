@@ -1,80 +1,108 @@
-import { Button } from "@nocoo/basalt";
+import { Button, Field, Input, Label } from "@nocoo/basalt";
+import { Slider } from "@nocoo/basalt/components/slider";
 import { Save, Settings, Target, TrendingUp } from "lucide-react";
 import { useState, useTransition } from "react";
-import { useRevalidator } from "react-router";
+import { Link, useRevalidator } from "react-router";
 import { toast } from "sonner";
-import { saveGeneralSettings, saveReturnRateSettings } from "@/app/actions/settings-actions";
+import { saveFinancialPreferences } from "@/app/actions/settings-actions";
+import { FinancialSnapshotNotice } from "@/components/shared/financial-snapshot-notice";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
-import {
-  clampMaxReturnRate,
-  clampMinReturnRate,
-  DEFAULT_MAX_RETURN_RATE,
-  DEFAULT_MIN_RETURN_RATE,
-} from "@/domain/settings/return-rate";
+import type { FinancialPreferences } from "@/domain/api-contract";
+import { clampMaxReturnRate, clampMinReturnRate } from "@/domain/settings/return-rate";
 import { clampSavingsRate, getSavingsRateTone } from "@/domain/settings/savings-rate";
 import { cn } from "@/lib/utils";
 
 interface SettingsClientProps {
-  settingsJson: Record<string, unknown>;
+  preferences: FinancialPreferences;
 }
 
-export function SettingsClient({ settingsJson }: SettingsClientProps) {
+export function SettingsClient({ preferences }: SettingsClientProps) {
   const revalidator = useRevalidator();
   const [isPending, startTransition] = useTransition();
+  const [baseVersion, setBaseVersion] = useState(preferences.version);
 
   // Savings rate settings
-  const [savingsTarget, setSavingsTarget] = useState(
-    Number(settingsJson.savings_rate_target ?? 30),
-  );
+  const [savingsTarget, setSavingsTarget] = useState(preferences.savingsRateTarget);
 
   // Return rate settings
-  const [minReturnRate, setMinReturnRate] = useState(
-    Number(settingsJson.min_return_rate ?? DEFAULT_MIN_RETURN_RATE),
-  );
-  const [maxReturnRate, setMaxReturnRate] = useState(
-    Number(settingsJson.max_return_rate ?? DEFAULT_MAX_RETURN_RATE),
-  );
+  const [minReturnRate, setMinReturnRate] = useState(preferences.minReturnRate);
+  const [maxReturnRate, setMaxReturnRate] = useState(preferences.maxReturnRate);
+
+  const [expectedReturnRate, setExpectedReturnRate] = useState(preferences.expectedReturnRate);
 
   const savingsRateTone = getSavingsRateTone(savingsTarget);
 
   const handleSave = () => {
     startTransition(async () => {
-      // Save all settings in parallel
-      const [generalResult, returnRateResult] = await Promise.all([
-        saveGeneralSettings({
+      const result = await saveFinancialPreferences(
+        {
           savingsRateTarget: savingsTarget,
-          expectedReturnRate: maxReturnRate,
-        }),
-        saveReturnRateSettings({ minReturnRate, maxReturnRate }),
-      ]);
-
-      if (generalResult.success && returnRateResult.success) {
+          expectedReturnRate,
+          minReturnRate,
+          maxReturnRate,
+        },
+        baseVersion,
+      );
+      if (result.success) {
         toast.success("设置已保存");
         revalidator.revalidate();
-      } else {
-        const errorMsg = !generalResult.success
-          ? generalResult.error
-          : !returnRateResult.success
-            ? returnRateResult.error
-            : "未知错误";
-        toast.error(errorMsg);
-      }
+      } else toast.error(result.error);
     });
   };
 
   return (
     <div className="space-y-6">
+      <FinancialSnapshotNotice
+        changed={baseVersion !== preferences.version}
+        onReset={() => {
+          setSavingsTarget(preferences.savingsRateTarget);
+          setExpectedReturnRate(preferences.expectedReturnRate);
+          setMinReturnRate(preferences.minReturnRate);
+          setMaxReturnRate(preferences.maxReturnRate);
+          setBaseVersion(preferences.version);
+        }}
+      />
       {/* Header */}
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold">
           <Settings className="text-primary size-6" />
-          系统设置
+          财务假设
         </h1>
-        <p className="text-muted-foreground text-sm">应用偏好与配置</p>
+        <p className="text-muted-foreground text-sm">
+          储蓄目标、收益率假设与收支分类；不包含身份、外观或密钥管理。
+        </p>
       </div>
 
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" asChild>
+          <Link to="/category-settings">收支分类</Link>
+        </Button>
+        <Button variant="outline" asChild>
+          <Link to="/account-types">账户分类</Link>
+        </Button>
+        <Button variant="outline" asChild>
+          <Link to="/balance-anchors">余额锚点</Link>
+        </Button>
+      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">预期年化收益率</CardTitle>
+          <CardDescription>财务规划假设，不代表投资承诺。</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Field label="预期年化收益率 (%)" htmlFor="expected-return">
+            <Input
+              id="expected-return"
+              type="number"
+              min={-100}
+              max={100}
+              step={0.1}
+              value={expectedReturnRate}
+              onChange={(event) => setExpectedReturnRate(event.target.valueAsNumber)}
+            />
+          </Field>
+        </CardContent>
+      </Card>
       {/* Savings Rate Settings */}
       <Card>
         <CardHeader>

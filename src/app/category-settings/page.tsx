@@ -1,10 +1,12 @@
 import { useLoaderData } from "react-router";
 import { AppShell } from "@/components/layout";
+import { financeApi } from "@/lib/finance-api";
 import { workerDbClient } from "@/lib/worker-db-client";
 import { CategorySettingsClient } from "./category-settings-client";
 
 export interface CategorySettingsLoaderData {
   incomeCategories: string[];
+  version: number;
   expenseCategories: string[];
   activeIncomeCategories: string[];
   fixedExpenseCategories: string[];
@@ -17,37 +19,29 @@ export async function categorySettingsLoader(): Promise<CategorySettingsLoaderDa
   const [incomeSummary, expenseSummary, settingsResult] = await Promise.all([
     workerDbClient.getCategorySummary(year, undefined, "income"),
     workerDbClient.getCategorySummary(year, undefined, "expense"),
-    workerDbClient.getSettings(),
+    financeApi.getFinancialPreferences(),
   ]);
 
-  const incomeSecondary = new Set<string>();
+  const incomeLeaves = new Set<string>();
   for (const cat of incomeSummary.categories) {
-    if (cat.secondary_category) {
-      incomeSecondary.add(cat.secondary_category);
+    if (cat.tertiary_category) {
+      incomeLeaves.add(cat.tertiary_category);
     }
   }
-  const incomeCategories = Array.from(incomeSecondary).sort();
+  const incomeCategories = Array.from(incomeLeaves).sort();
 
-  const expenseSecondary = new Set<string>();
+  const expenseLeaves = new Set<string>();
   for (const cat of expenseSummary.categories) {
-    if (cat.secondary_category) {
-      expenseSecondary.add(cat.secondary_category);
+    if (cat.tertiary_category) {
+      expenseLeaves.add(cat.tertiary_category);
     }
   }
-  const expenseCategories = Array.from(expenseSecondary).sort();
+  const expenseCategories = Array.from(expenseLeaves).sort();
 
-  const row = (settingsResult.settings as Record<string, unknown>) ?? {};
-  const rawJson = typeof row.settings === "string" ? row.settings : "{}";
-  const parsed = JSON.parse(rawJson) as Record<string, unknown>;
-
-  const activeIncomeCategories = Array.isArray(parsed.active_income_categories)
-    ? parsed.active_income_categories
-    : [];
-  const fixedExpenseCategories = Array.isArray(parsed.fixed_expense_categories)
-    ? parsed.fixed_expense_categories
-    : [];
+  const { activeIncomeCategories, fixedExpenseCategories, version } = settingsResult.data;
 
   return {
+    version,
     incomeCategories,
     expenseCategories,
     activeIncomeCategories,
@@ -56,12 +50,18 @@ export async function categorySettingsLoader(): Promise<CategorySettingsLoaderDa
 }
 
 export default function CategorySettingsPage() {
-  const { incomeCategories, expenseCategories, activeIncomeCategories, fixedExpenseCategories } =
-    useLoaderData<CategorySettingsLoaderData>();
+  const {
+    incomeCategories,
+    expenseCategories,
+    activeIncomeCategories,
+    fixedExpenseCategories,
+    version,
+  } = useLoaderData<CategorySettingsLoaderData>();
 
   return (
     <AppShell>
       <CategorySettingsClient
+        version={version}
         incomeCategories={incomeCategories}
         expenseCategories={expenseCategories}
         activeIncomeCategories={activeIncomeCategories}

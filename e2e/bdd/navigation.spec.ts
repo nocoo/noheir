@@ -51,7 +51,7 @@ test.beforeAll(async ({ request }) => {
         secondaryCategory: "外卖",
         tertiaryCategory: "午餐",
         account: "招商银行",
-        currency: "人民币",
+        currency: "CNY",
         tags: "[]",
         ...row,
       },
@@ -69,8 +69,8 @@ const routes = [
   "/account",
   "/account-detail",
   "/account-types",
-  "/ai-insight",
-  "/ai-settings",
+  "/analyses",
+  "/api-keys",
   "/balance-anchors",
   "/capital-dashboard",
   "/capital-decisions",
@@ -87,7 +87,6 @@ const routes = [
   "/liquidity",
   "/login",
   "/manage",
-  "/mcp-tokens",
   "/plan/calendar",
   "/plan/categories",
   "/privacy",
@@ -261,4 +260,74 @@ test("capital unit commit persists updated fields and writes contribution log", 
   );
   expect(commitLog).toBeDefined();
   expect(commitLog?.operationType).toBe("adjust");
+});
+
+test("a scoped key writes an external report, safe UI edits it, and revocation takes effect", async ({
+  page,
+  playwright,
+}) => {
+  await page.goto("/api-keys");
+  await page.getByRole("button", { name: "报告撰写", exact: true }).click();
+  await page.getByLabel("密钥名称", { exact: true }).fill("Browser analysis key");
+  await page.getByRole("button", { name: "创建密钥", exact: true }).click();
+  const secret = await page
+    .locator("code")
+    .filter({ hasText: /^nhk_[A-Za-z0-9_-]{43}$/ })
+    .textContent();
+  if (!secret) throw new Error("One-time token missing");
+  const machine = await playwright.request.newContext({
+    baseURL: origin,
+    extraHTTPHeaders: { Authorization: `Bearer ${secret}` },
+  });
+  try {
+    const preferences = await machine.get("/api/v1/financial-preferences");
+    expect(preferences.status()).toBe(200);
+    const { meta } = await preferences.json();
+    const response = await machine.post("/api/v1/analyses", {
+      headers: { "Idempotency-Key": "browser-external-report" },
+      data: {
+        title: "External browser report",
+        markdown:
+          "# Safe report\n\n**Verified renderer**\n\n<script>window.injected = true</script>\n\n![remote](https://invalid.example/tracker.png)\n\n[unsafe](javascript:alert(1))",
+        periodStart: "2026-10-01",
+        periodEnd: "2026-10-31",
+        currencies: ["CNY"],
+        dataRevision: meta.dataRevision,
+        evidence: [],
+        author: "External test",
+        model: "Unverified model label",
+      },
+    });
+    expect(response.status()).toBe(201);
+    const { data: created } = await response.json();
+    await page.getByRole("button", { name: "我已保存，关闭密钥", exact: true }).click();
+    await expect(page.locator("body")).not.toContainText(secret);
+    await page.goto(`/analyses/${created.id}`);
+    await expect(
+      page.getByRole("heading", { name: "External browser report", exact: true }),
+    ).toBeVisible();
+    await expect(page.getByText("Verified renderer", { exact: true })).toBeVisible();
+    expect(await page.evaluate(() => Object.hasOwn(window, "injected"))).toBe(false);
+    await expect(page.locator('img[src*="invalid.example"],a[href^="javascript:"]')).toHaveCount(0);
+    await page.getByRole("button", { name: "编辑报告", exact: true }).click();
+    await page.getByLabel("报告标题", { exact: true }).fill("Reviewed external report");
+    await page.getByRole("button", { name: "保存报告", exact: true }).click();
+    await expect(
+      page.getByRole("heading", { name: "Reviewed external report", exact: true }),
+    ).toBeVisible();
+    await page.setViewportSize({ width: 390, height: 844 });
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    ).toBe(true);
+    await page.goto("/api-keys");
+    await expect(page.locator("body")).not.toContainText(secret);
+    await page.getByRole("button", { name: "撤销 Browser analysis key", exact: true }).click();
+    await page.getByRole("button", { name: "确认撤销", exact: true }).click();
+    await expect(
+      page.getByRole("button", { name: "撤销 Browser analysis key", exact: true }),
+    ).toHaveCount(0);
+    expect((await machine.get("/api/v1/me")).status()).toBe(401);
+  } finally {
+    await machine.dispose();
+  }
 });

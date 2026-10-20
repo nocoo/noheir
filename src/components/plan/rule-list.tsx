@@ -198,16 +198,32 @@ export function RuleList({
           try {
             switch (kind) {
               case "pause":
-                await callAction(() => pauseRecurringExpense(rule.id), "已暂停", onActionSuccess);
+                await callAction(
+                  () => pauseRecurringExpense(rule.id, rule.version),
+                  "已暂停",
+                  onActionSuccess,
+                );
                 break;
               case "resume":
-                await callAction(() => resumeRecurringExpense(rule.id), "已恢复", onActionSuccess);
+                await callAction(
+                  () => resumeRecurringExpense(rule.id, rule.version),
+                  "已恢复",
+                  onActionSuccess,
+                );
                 break;
               case "end":
-                await callAction(() => endRecurringExpense(rule.id), "已结束", onActionSuccess);
+                await callAction(
+                  () => endRecurringExpense(rule.id, rule.version),
+                  "已结束",
+                  onActionSuccess,
+                );
                 break;
               case "delete":
-                await callAction(() => deleteRecurringExpense(rule.id), "已删除", onActionSuccess);
+                await callAction(
+                  () => deleteRecurringExpense(rule.id, rule.version),
+                  "已删除",
+                  onActionSuccess,
+                );
                 break;
             }
           } finally {

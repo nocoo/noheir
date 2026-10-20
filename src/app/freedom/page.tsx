@@ -2,6 +2,7 @@ import { useLoaderData } from "react-router";
 import { AppShell } from "@/components/layout";
 import { buildFreedomSummary, buildIncomeBreakdown } from "@/domain/dashboard/financial-freedom";
 import type { DomainTransaction } from "@/domain/types";
+import { financeApi } from "@/lib/finance-api";
 import { toDomainTransaction } from "@/lib/transaction-mappers";
 import { workerDbClient } from "@/lib/worker-db-client";
 import { FinancialFreedomClient } from "./financial-freedom-client";
@@ -9,6 +10,7 @@ import { FinancialFreedomClient } from "./financial-freedom-client";
 export interface FreedomLoaderData {
   transactions: DomainTransaction[];
   totalExpenseFromSummary: number;
+  activeIncomeCategories: string[];
 }
 
 export async function freedomLoader({ request }: { request: Request }): Promise<FreedomLoaderData> {
@@ -26,23 +28,27 @@ export async function freedomLoader({ request }: { request: Request }): Promise<
     selectedYear = availableYears[0] ?? new Date().getFullYear();
   }
 
-  const [summary, result] = await Promise.all([
-    workerDbClient.getYearlySummary(selectedYear),
+  const [summary, result, preferences] = await Promise.all([
+    workerDbClient.getYearlySummary(selectedYear, "CNY"),
     workerDbClient.getAllTransactionsByYear(selectedYear),
+    financeApi.getFinancialPreferences(),
   ]);
 
   const totalExpenseFromSummary = summary.totals.expense / 100;
-  const transactions = result.transactions.map((raw) =>
-    toDomainTransaction(raw as Record<string, unknown>),
-  );
+  const transactions = result.transactions
+    .map((raw) => toDomainTransaction(raw as Record<string, unknown>))
+    .filter((row) => row.currency === "CNY");
 
-  return { transactions, totalExpenseFromSummary };
+  return {
+    transactions,
+    totalExpenseFromSummary,
+    activeIncomeCategories: preferences.data.activeIncomeCategories,
+  };
 }
 
 export default function FreedomPage() {
-  const { transactions, totalExpenseFromSummary } = useLoaderData<FreedomLoaderData>();
-
-  const activeIncomeCategories: string[] = [];
+  const { transactions, totalExpenseFromSummary, activeIncomeCategories } =
+    useLoaderData<FreedomLoaderData>();
   const breakdown = buildIncomeBreakdown(transactions, activeIncomeCategories);
   const totalExpense = totalExpenseFromSummary;
   const summary = buildFreedomSummary(totalExpense, breakdown.passiveIncome);

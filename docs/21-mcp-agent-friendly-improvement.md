@@ -1,5 +1,7 @@
 # 21 — MCP Agent-Friendly Improvement Plan
 
+> Historical only. MCP/OAuth and their credentials are retired by [25-scoped-api](25-scoped-api.md). This draft is not an active implementation plan or connection guide.
+
 > Improve MCP tools to prevent Agent misjudgment on pagination, provide complete views for common business queries, and standardize the tool system.
 
 **Status**: Draft

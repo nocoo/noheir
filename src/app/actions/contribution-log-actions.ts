@@ -52,6 +52,7 @@ export async function updateContributionLog(
     operationDate?: string;
     note?: string | null;
   },
+  version: number | undefined,
 ): Promise<ActionResult> {
   try {
     const payload: Parameters<typeof workerDbClient.updateContributionLog>[1] = {};
@@ -68,7 +69,7 @@ export async function updateContributionLog(
     if (data.operationDate !== undefined) payload.operationDate = data.operationDate;
     if (data.note !== undefined) payload.note = data.note;
 
-    await workerDbClient.updateContributionLog(id, payload);
+    await workerDbClient.updateContributionLog(id, payload, version);
     return { success: true, data: undefined };
   } catch (err) {
     return {
@@ -78,9 +79,12 @@ export async function updateContributionLog(
   }
 }
 
-export async function deleteContributionLog(id: string): Promise<ActionResult> {
+export async function deleteContributionLog(
+  id: string,
+  version: number | undefined,
+): Promise<ActionResult> {
   try {
-    await workerDbClient.deleteContributionLog(id);
+    await workerDbClient.deleteContributionLog(id, version);
     return { success: true, data: undefined };
   } catch (err) {
     return {
@@ -90,9 +94,12 @@ export async function deleteContributionLog(id: string): Promise<ActionResult> {
   }
 }
 
-export async function restoreContributionLog(id: string): Promise<ActionResult> {
+export async function restoreContributionLog(
+  id: string,
+  version: number | undefined,
+): Promise<ActionResult> {
   try {
-    await workerDbClient.restoreContributionLog(id);
+    await workerDbClient.restoreContributionLog(id, version);
     return { success: true, data: undefined };
   } catch (err) {
     return {
@@ -106,6 +113,7 @@ export async function restoreContributionLog(id: string): Promise<ActionResult> 
 export async function listUnitContributionLogs(unitId: string): Promise<
   ActionResult<{
     logs: DomainContributionLog[];
+    version: number;
     expected: ExpectedUnitSnapshot;
     currentProductName: string | null;
     availableDate: string | null;
@@ -119,6 +127,7 @@ export async function listUnitContributionLogs(unitId: string): Promise<
       data: {
         logs: result.logs.map((raw) => toDomainContributionLog(raw as Record<string, unknown>)),
         expected: result.expected,
+        version: result.version,
         currentProductName: result.currentProductName,
         availableDate: result.availableDate ?? null,
         latestInvestDate: result.latestInvestDate ?? null,
@@ -145,9 +154,10 @@ export async function commitUnit(
     operationDate?: string;
     commitNote?: string | null;
   },
+  version: number | undefined,
 ): Promise<ActionResult> {
   try {
-    await workerDbClient.commitUnit(unitId, payload);
+    await workerDbClient.commitUnit(unitId, payload, version);
     return { success: true, data: undefined };
   } catch (err) {
     return {

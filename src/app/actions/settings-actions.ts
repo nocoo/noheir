@@ -1,111 +1,68 @@
+import {
+  accountClassificationSchema,
+  balanceAnchorSchema,
+  type FinancialPreferencesInput,
+} from "@/domain/api-contract";
 import type { AccountTypeConfig, BalanceAnchor } from "@/domain/types";
 import type { ActionResult } from "@/lib/action-result";
-import { workerDbClient } from "@/lib/worker-db-client";
+import { financeApi } from "@/lib/finance-api";
 
-// ── Helper: read-modify-write the settings JSON column ──
-
-async function patchSettingsJson(
-  patchFn: (parsed: Record<string, unknown>) => Record<string, unknown>,
-): Promise<ActionResult> {
+async function save(operation: () => Promise<unknown>): Promise<ActionResult> {
   try {
-    const result = await workerDbClient.getSettings();
-    const row = (result.settings as Record<string, unknown>) ?? {};
-    const rawJson = typeof row.settings === "string" ? row.settings : "{}";
-    const parsed = JSON.parse(rawJson) as Record<string, unknown>;
-
-    const patched = patchFn(parsed);
-
-    const payload: Record<string, unknown> = {
-      settings: JSON.stringify(patched),
-    };
-
-    await workerDbClient.saveSettings(payload);
+    await operation();
     return { success: true, data: undefined };
-  } catch (err) {
+  } catch (error) {
     return {
       success: false,
-      error: err instanceof Error ? err.message : "Failed to save settings",
+      error: error instanceof Error ? error.message : "Failed to save financial data",
     };
   }
 }
 
-// ── General Settings ──
-
-export async function saveGeneralSettings(data: {
-  savingsRateTarget: number;
-  expectedReturnRate: number;
-}): Promise<ActionResult> {
-  return patchSettingsJson((parsed) => ({
-    ...parsed,
-    savings_rate_target: data.savingsRateTarget,
-    expected_return_rate: data.expectedReturnRate,
-  }));
+export function saveFinancialPreferences(
+  data: Partial<FinancialPreferencesInput>,
+  version: number,
+): Promise<ActionResult> {
+  return save(() => financeApi.saveFinancialPreferences(data, version));
 }
-
-// ── Income Category Settings ──
-
-export async function saveActiveIncomeCategories(categories: string[]): Promise<ActionResult> {
-  return patchSettingsJson((parsed) => ({
-    ...parsed,
-    active_income_categories: categories,
-  }));
+export function saveActiveIncomeCategories(
+  categories: string[],
+  version: number,
+): Promise<ActionResult> {
+  return saveFinancialPreferences({ activeIncomeCategories: categories }, version);
 }
-
-// ── Expense Category Settings ──
-
-export async function saveFixedExpenseCategories(categories: string[]): Promise<ActionResult> {
-  return patchSettingsJson((parsed) => ({
-    ...parsed,
-    fixed_expense_categories: categories,
-  }));
+export function saveFixedExpenseCategories(
+  categories: string[],
+  version: number,
+): Promise<ActionResult> {
+  return saveFinancialPreferences({ fixedExpenseCategories: categories }, version);
 }
-
-// ── Return Rate Settings ──
-
-export async function saveReturnRateSettings(data: {
-  minReturnRate: number;
-  maxReturnRate: number;
-}): Promise<ActionResult> {
-  return patchSettingsJson((parsed) => ({
-    ...parsed,
-    min_return_rate: data.minReturnRate,
-    max_return_rate: data.maxReturnRate,
-  }));
+export function saveBalanceAnchors(
+  anchors: BalanceAnchor[],
+  revision: number,
+): Promise<ActionResult> {
+  return save(() =>
+    financeApi.replaceBalanceAnchors(
+      anchors.map((anchor) =>
+        balanceAnchorSchema.parse({
+          accountName: anchor.accountName,
+          date: anchor.date,
+          currency: anchor.currency ?? "CNY",
+          balanceCents: Math.round(anchor.balance * 100),
+        }),
+      ),
+      revision,
+    ),
+  );
 }
-
-// ── Balance Anchor Settings ──
-
-export async function saveBalanceAnchors(anchors: BalanceAnchor[]): Promise<ActionResult> {
-  return patchSettingsJson((parsed) => ({
-    ...parsed,
-    balance_anchors: anchors,
-  }));
-}
-
-// ── AI Settings ──
-
-export async function saveAiSettings(data: {
-  enabled: boolean;
-  baseURL: string;
-  modelName: string;
-  apiKey: string;
-}): Promise<ActionResult> {
-  return patchSettingsJson((parsed) => ({
-    ...parsed,
-    ai_config: {
-      enabled: data.enabled,
-      baseURL: data.baseURL,
-      modelName: data.modelName,
-      apiKey: data.apiKey,
-    },
-  }));
-}
-
-// ── Account Types ──
-
-export async function saveAccountTypes(types: AccountTypeConfig[]): Promise<ActionResult> {
-  return patchSettingsJson((parsed) => ({
-    ...parsed,
-    account_types: types,
-  }));
+export function saveAccountTypes(
+  types: AccountTypeConfig[],
+  revision: number,
+): Promise<ActionResult> {
+  return save(() =>
+    financeApi.replaceAccountClassifications(
+      types.map((item) => accountClassificationSchema.parse(item)),
+      revision,
+    ),
+  );
 }

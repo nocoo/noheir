@@ -1,5 +1,5 @@
 /**
- * Portable SQL adapter used by MCP OAuth and tools.
+ * Request-scoped SQL adapter for native D1 operations.
  *
  * Request-scoped: construct with createD1Db(env.DB) per request.
  * There is no process-global singleton and no HTTP SQL bridge.

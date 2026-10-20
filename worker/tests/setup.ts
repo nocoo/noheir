@@ -186,6 +186,16 @@ export function createTestDb() {
   sqlite = new Database(":memory:");
   sqlite.exec("PRAGMA foreign_keys = ON;");
   sqlite.exec(SCHEMA_DDL);
+  for (const table of [
+    "financial_products",
+    "capital_units",
+    "transactions",
+    "transfers",
+    "contribution_logs",
+    "expense_categories",
+    "recurring_expenses",
+  ])
+    sqlite.exec(`ALTER TABLE ${table} ADD COLUMN version INTEGER NOT NULL DEFAULT 1`);
   db = drizzle(sqlite);
   repos = createAllRepos(db as unknown as Parameters<typeof createAllRepos>[0]);
 }

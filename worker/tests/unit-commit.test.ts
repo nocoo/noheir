@@ -447,3 +447,12 @@ describe("buildCommitStatements — set_available_date", () => {
     expect(stmts[1]?.params[10]).toBe("可用日期覆盖: 2026-09-15→自动");
   });
 });
+
+test("shared commit accepts explicit archival end dates but clears them for active units", () => {
+  const archived = buildCommitStatements(
+    makeInput({ metadata: { status: "已归档", endDate: "2026-01-15" } }),
+  );
+  expect(archived[0]?.params).toContain("2026-01-15");
+  const active = buildCommitStatements(makeInput({ metadata: { endDate: "2026-01-15" } }));
+  expect(active[0]?.params).not.toContain("2026-01-15");
+});

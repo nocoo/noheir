@@ -25,6 +25,7 @@ export async function warehouseLoader(): Promise<WarehouseLoaderData> {
 
   const serialized = units.map((u) => ({
     id: u.id,
+    version: u.version,
     unitCode: u.unitCode,
     amount: u.amount,
     currency: u.currency,

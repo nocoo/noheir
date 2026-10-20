@@ -46,7 +46,7 @@ describe("createTransactionSchema", () => {
       month: 3,
       day: 15,
       amountCents: 3200,
-      currency: "人民币",
+      currency: "CNY",
       tags: "[]",
     });
     expect(result.data).not.toHaveProperty("id");

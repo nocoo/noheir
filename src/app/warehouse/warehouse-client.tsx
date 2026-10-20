@@ -21,6 +21,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { sumCurrency } from "@/domain/currency-summary";
 import type { DomainProduct } from "@/domain/types";
 import { formatCurrencyFull } from "@/lib/chart-config";
 import {
@@ -383,7 +384,7 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
     return Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b));
   }, [filtered, groupBy]);
 
-  const totalAmount = filtered.reduce((sum, u) => sum + u.amount, 0);
+  const totalAmount = sumCurrency(filtered);
 
   // Toggle filter helper
   const toggleFilter = (current: string, value: string, setter: (v: string) => void) => {
@@ -401,7 +402,7 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
               资本仓库
             </h1>
             <p className="text-muted-foreground text-xs sm:text-sm">
-              {groupedUnits.length}个分组 · {filtered.length}个单位 ·{" "}
+              {groupedUnits.length}个分组 · {filtered.length}个单位 · CNY{" "}
               {formatCurrencyFull(totalAmount)}
             </p>
           </div>
@@ -718,7 +719,7 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
         {/* Grouped Waffle Grid */}
         {groupedUnits.map(([groupName, groupUnits]) => {
           const colorToken = getGroupToken(groupName, groupBy);
-          const groupTotal = groupUnits.reduce((sum, u) => sum + u.amount, 0);
+          const groupTotal = sumCurrency(groupUnits);
 
           return (
             <div key={groupName} className="space-y-2 sm:space-y-3">
@@ -729,7 +730,7 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
                 />
                 <h2 className="text-xs font-semibold sm:text-sm">{groupName}</h2>
                 <span className="text-muted-foreground text-[10px] sm:text-xs">
-                  {groupUnits.length}个 · {formatCurrencyFull(groupTotal)}
+                  {groupUnits.length}个 · CNY {formatCurrencyFull(groupTotal)}
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-1.5 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8 3xl:grid-cols-9 4xl:grid-cols-10">

@@ -33,7 +33,7 @@ describe("E2E: Units", () => {
 
   test("foreign products cannot be linked by creating or updating a unit", async () => {
     await cleanupUser(TEST_USER_B);
-    const { product } = await api<{ product: { id: string } }>({
+    const { product } = await api<{ product: { id: string; version: number } }>({
       method: "POST",
       path: "/api/products",
       userId: TEST_USER_B,
@@ -49,7 +49,7 @@ describe("E2E: Units", () => {
       expect(create.status).toBe(404);
     }
     expect((await api<{ units: unknown[] }>({ path: "/api/units", userId })).units).toEqual([]);
-    const { unit } = await api<{ unit: { id: string } }>({
+    const { unit } = await api<{ unit: { id: string; version: number } }>({
       method: "POST",
       path: "/api/units",
       userId,
@@ -60,6 +60,7 @@ describe("E2E: Units", () => {
         await rawFetch({
           method: "PUT",
           path: `/api/units/${unit.id}`,
+          version: unit.version,
           userId,
           body: { productId: product.id },
         })
@@ -200,6 +201,7 @@ describe("E2E: Units", () => {
     const { unit: updated } = await api<{ unit: Record<string, unknown> }>({
       method: "PUT",
       path: `/api/units/${created.id}`,
+      version: created.version,
       userId,
       body: { status: "已归档", note: "测试归档" },
     });
@@ -220,6 +222,7 @@ describe("E2E: Units", () => {
     const res = await api<{ success: boolean }>({
       method: "DELETE",
       path: `/api/units/${created.id}`,
+      version: created.version,
       userId,
     });
     expect(res.success).toBe(true);
@@ -290,6 +293,7 @@ describe("E2E: Units", () => {
     await api({
       method: "PUT",
       path: `/api/units/${unit.id}`,
+      version: unit.version,
       userId,
       body: { productId: product.id },
     });
@@ -337,6 +341,7 @@ describe("E2E: Units", () => {
     await api({
       method: "PUT",
       path: `/api/units/${unit.id}`,
+      version: unit.version,
       userId,
       body: { productId: productB.id },
     });
@@ -378,13 +383,14 @@ describe("E2E: Units", () => {
     const res = await rawFetch({
       method: "PUT",
       path: `/api/units/${unit.id}`,
+      version: unit.version,
       userId,
       body: { productId: product.id, note: "This should fail" },
     });
 
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toContain("productId must be updated alone");
+    expect(body.code).toBe("invalid_input");
   });
 
   // ── Archive state machine: endDate auto-set/clear ──
@@ -401,6 +407,7 @@ describe("E2E: Units", () => {
     const { unit: archived } = await api<{ unit: Record<string, unknown> }>({
       method: "PUT",
       path: `/api/units/${created.id}`,
+      version: created.version,
       userId,
       body: { status: "已归档" },
     });
@@ -422,6 +429,7 @@ describe("E2E: Units", () => {
     const { unit: archived } = await api<{ unit: Record<string, unknown> }>({
       method: "PUT",
       path: `/api/units/${created.id}`,
+      version: created.version,
       userId,
       body: { status: "已归档", endDate: "2026-01-15" },
     });
@@ -438,9 +446,10 @@ describe("E2E: Units", () => {
     });
 
     // First archive
-    await api({
+    const { unit: archived } = await api<{ unit: Record<string, unknown> }>({
       method: "PUT",
       path: `/api/units/${created.id}`,
+      version: created.version,
       userId,
       body: { status: "已归档" },
     });
@@ -449,6 +458,7 @@ describe("E2E: Units", () => {
     const { unit: unarchived } = await api<{ unit: Record<string, unknown> }>({
       method: "PUT",
       path: `/api/units/${created.id}`,
+      version: archived.version,
       userId,
       body: { status: "已成立" },
     });
@@ -493,6 +503,7 @@ describe("E2E: Units", () => {
     const { unit: updated } = await api<{ unit: Record<string, unknown> }>({
       method: "PUT",
       path: `/api/units/${created.id}`,
+      version: created.version,
       userId,
       body: { note: "test", endDate: "2026-12-31" }, // Try to set endDate
     });

@@ -27,7 +27,7 @@ export async function liquidityLoader(): Promise<LiquidityLoaderData> {
     toUnitDisplayInfo(raw as Record<string, unknown>),
   );
 
-  const monthlyData = buildMonthlyAvailability(units);
+  const monthlyData = buildMonthlyAvailability(units.filter((unit) => unit.currency === "CNY"));
   const series = buildSeries(monthlyData);
   const summaryStats = buildSummaryStats(monthlyData);
   const upcomingUnits = buildUpcomingUnits(units);

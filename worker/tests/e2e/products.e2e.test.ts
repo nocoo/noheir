@@ -85,6 +85,7 @@ describe("E2E: Products", () => {
     const { product: updated } = await api<{ product: Record<string, unknown> }>({
       method: "PUT",
       path: `/api/products/${created.id}`,
+      version: created.version,
       userId,
       body: { name: "已改名产品", annualReturnRate: 4.5 },
     });
@@ -105,6 +106,7 @@ describe("E2E: Products", () => {
     const res = await api<{ success: boolean }>({
       method: "DELETE",
       path: `/api/products/${created.id}`,
+      version: created.version,
       userId,
     });
     expect(res.success).toBe(true);
@@ -169,13 +171,12 @@ describe("E2E: Products", () => {
     const res = await rawFetch({
       method: "DELETE",
       path: `/api/products/${product.id}`,
+      version: product.version,
       userId,
     });
 
     expect(res.status).toBe(409);
-    const body = (await res.json()) as { error: string; hasContributionLogs: boolean };
-    expect(body.hasContributionLogs).toBe(true);
-    expect(body.error).toContain("contribution history");
+    expect(await res.json()).toMatchObject({ code: "resource_referenced" });
   });
 
   test("DELETE /api/products/:id succeeds when product has no contribution logs", async () => {
@@ -189,6 +190,7 @@ describe("E2E: Products", () => {
     const res = await api<{ success: boolean }>({
       method: "DELETE",
       path: `/api/products/${product.id}`,
+      version: product.version,
       userId,
     });
 

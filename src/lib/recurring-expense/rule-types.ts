@@ -30,6 +30,7 @@ const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 /** Domain RecurrenceRule — the canonical in-memory shape used by
  *  computeOccurrences and sumWindow. ISO date strings, amount in cents. */
 export interface RecurrenceRule {
+  version: number;
   id: string;
   userId: string;
   name: string;

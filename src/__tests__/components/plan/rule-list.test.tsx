@@ -33,6 +33,7 @@ import type { RecurrenceRule } from "@/lib/recurring-expense/rule-types";
 
 function rule(overrides: Partial<RecurrenceRule>): RecurrenceRule {
   return {
+    version: 1,
     id: "r1",
     userId: "u",
     name: "Netflix",
@@ -276,7 +277,7 @@ describe("RuleList action invocations (P3-C8)", () => {
     );
     await openMenu("A");
     await user.click(await screen.findByRole("menuitem", { name: "暂停" }));
-    expect(pauseMock).toHaveBeenCalledWith("r1");
+    expect(pauseMock).toHaveBeenCalledWith("r1", 1);
     expect(toastSuccess).toHaveBeenCalledWith("已暂停");
   });
 
@@ -293,7 +294,7 @@ describe("RuleList action invocations (P3-C8)", () => {
     );
     await openMenu("A");
     await user.click(await screen.findByRole("menuitem", { name: "恢复" }));
-    expect(resumeMock).toHaveBeenCalledWith("r1");
+    expect(resumeMock).toHaveBeenCalledWith("r1", 1);
     expect(toastSuccess).toHaveBeenCalledWith("已恢复");
   });
 
@@ -310,7 +311,7 @@ describe("RuleList action invocations (P3-C8)", () => {
     );
     await openMenu("A");
     await user.click(await screen.findByRole("menuitem", { name: "结束" }));
-    expect(endMock).toHaveBeenCalledWith("r1");
+    expect(endMock).toHaveBeenCalledWith("r1", 1);
     expect(toastSuccess).toHaveBeenCalledWith("已结束");
   });
 
@@ -327,7 +328,7 @@ describe("RuleList action invocations (P3-C8)", () => {
     );
     await openMenu("A");
     await user.click(await screen.findByRole("menuitem", { name: "删除" }));
-    expect(deleteMock).toHaveBeenCalledWith("r1");
+    expect(deleteMock).toHaveBeenCalledWith("r1", 1);
     expect(toastSuccess).toHaveBeenCalledWith("已删除");
   });
 

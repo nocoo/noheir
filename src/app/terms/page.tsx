@@ -33,7 +33,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-lg font-semibold">3. 免责声明</h2>
             <p className="text-muted-foreground">
-              本应用提供的分析结果、AI 洞察等内容仅供参考，不构成任何投资建议。
+              本应用提供的分析结果与报告内容仅供参考，不构成任何投资建议。
               用户应自行判断并承担因使用本应用而产生的任何风险。
             </p>
           </section>
