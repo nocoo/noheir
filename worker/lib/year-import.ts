@@ -228,11 +228,12 @@ export function transferJsonRow(row: NormalizedTransferRow): Record<string, unkn
   };
 }
 
-export function transactionInsertFromJsonSql(): string {
+export function transactionInsertFromJsonSql(guarded = false): string {
+  const guard = guarded ? " WHERE $GUARD" : "";
   return `INSERT INTO transactions (
     id, user_id, date, year, month, day, primary_category, secondary_category,
     tertiary_category, amount_cents, type, account, currency, tags, note,
-    raw_index, has_secondary_mapping, created_at
+    raw_index, has_secondary_mapping, created_at, updated_at
   )
   SELECT
     json_extract(value, '$.id'),
@@ -252,15 +253,17 @@ export function transactionInsertFromJsonSql(): string {
     json_extract(value, '$.note'),
     json_extract(value, '$.raw_index'),
     json_extract(value, '$.has_secondary_mapping'),
+    ?,
     ?
-  FROM json_each(?)`;
+  FROM json_each(?)${guard}`;
 }
 
-export function transferInsertFromJsonSql(): string {
+export function transferInsertFromJsonSql(guarded = false): string {
+  const guard = guarded ? " WHERE $GUARD" : "";
   return `INSERT INTO transfers (
     id, user_id, date, year, month, day, primary_category, secondary_category,
     transaction_type, inflow_amount_cents, outflow_amount_cents, currency,
-    account, tags, note, raw_index, created_at
+    account, tags, note, raw_index, created_at, updated_at
   )
   SELECT
     json_extract(value, '$.id'),
@@ -279,8 +282,9 @@ export function transferInsertFromJsonSql(): string {
     json_extract(value, '$.tags'),
     json_extract(value, '$.note'),
     json_extract(value, '$.raw_index'),
+    ?,
     ?
-  FROM json_each(?)`;
+  FROM json_each(?)${guard}`;
 }
 
 export function buildYearReplaceStatements(input: {
@@ -301,7 +305,35 @@ export function buildYearReplaceStatements(input: {
   for (const chunk of input.chunks) {
     statements.push({
       sql: insertSql,
-      params: [input.userId, input.createdAt, chunk],
+      params: [input.userId, input.createdAt, input.createdAt, chunk],
+    });
+  }
+  return statements;
+}
+
+/** Scoped ledger-replacement commit: same json_each chunks with mutation guard checks. */
+export function buildGuardedLedgerReplaceStatements(input: {
+  table: "transactions" | "transfers";
+  userId: string;
+  year: number | null;
+  chunks: string[];
+  createdAt: number;
+}): SqlStatement[] {
+  const insertSql =
+    input.table === "transactions"
+      ? transactionInsertFromJsonSql(true)
+      : transferInsertFromJsonSql(true);
+  const yearClause = input.year === null ? "" : " AND year = ?";
+  const statements: SqlStatement[] = [
+    {
+      sql: `DELETE FROM ${input.table} WHERE user_id = ?${yearClause} AND $GUARD`,
+      params: [input.userId, ...(input.year === null ? [] : [input.year]), "$GUARD_PARAMS"],
+    },
+  ];
+  for (const chunk of input.chunks) {
+    statements.push({
+      sql: insertSql,
+      params: [input.userId, input.createdAt, input.createdAt, chunk, "$GUARD_PARAMS"],
     });
   }
   return statements;
@@ -324,7 +356,7 @@ export function buildUserReplaceStatements(input: {
   for (const chunk of input.chunks) {
     statements.push({
       sql: insertSql,
-      params: [input.userId, input.createdAt, chunk],
+      params: [input.userId, input.createdAt, input.createdAt, chunk],
     });
   }
   return statements;

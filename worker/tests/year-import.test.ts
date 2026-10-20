@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  buildGuardedLedgerReplaceStatements,
   buildUserReplaceStatements,
   buildYearReplaceStatements,
   chunkJsonArrays,
@@ -107,7 +108,7 @@ describe("import year / envelope", () => {
     });
     expect(statements).toHaveLength(2);
     expect(statements[1]?.sql).toBe(transferInsertFromJsonSql());
-    expect(statements[1]?.params).toEqual(["u1", 9, "[{}]"]);
+    expect(statements[1]?.params).toEqual(["u1", 9, 9, "[{}]"]);
   });
 
   test("annual import row parse failure is row_invalid", () => {
@@ -202,7 +203,7 @@ describe("replace statements", () => {
     expect(statements[0]?.params).toEqual(["u1", 2026]);
     expect(statements[1]?.sql).toBe(transactionInsertFromJsonSql());
     expect(statements[1]?.sql).toContain("FROM json_each(?)");
-    expect(statements[1]?.params).toEqual(["u1", 42, chunked.chunks[0]]);
+    expect(statements[1]?.params).toEqual(["u1", 42, 42, chunked.chunks[0]]);
   });
 
   test("transfer year replace uses transfer json_each SQL", () => {
@@ -233,6 +234,21 @@ describe("replace statements", () => {
         rawIndex: null,
       }),
     ).toMatchObject({ inflow_amount_cents: 1, outflow_amount_cents: 2 });
+  });
+
+  test("guarded ledger replace adds mutation guard to delete and json_each insert", () => {
+    const statements = buildGuardedLedgerReplaceStatements({
+      table: "transactions",
+      userId: "u1",
+      year: 2026,
+      chunks: ["[]"],
+      createdAt: 9,
+    });
+    expect(statements[0]?.sql).toContain("AND $GUARD");
+    expect(statements[0]?.params).toEqual(["u1", 2026, "$GUARD_PARAMS"]);
+    expect(statements[1]?.sql).toBe(transactionInsertFromJsonSql(true));
+    expect(statements[1]?.sql).toContain("updated_at");
+    expect(statements[1]?.params).toEqual(["u1", 9, 9, "[]", "$GUARD_PARAMS"]);
   });
 });
 
