@@ -4,6 +4,7 @@ Start with the [project README](../README.md) and [project rules](../AGENTS.md).
 
 | Document | Scope |
 | --- | --- |
+| [25-scoped-api](25-scoped-api.md) | Approved implementation: scoped REST API, external analysis writeback and AI/MCP retirement; in progress |
 | [24-local-environments](24-local-environments.md) | Demo/E2E/Prod launch, switching, ownership, catalog and verification |
 | [04-run](04-run.md) | Native Workers development, Access/MCP, CI/CD, rollback and cleanup |
 | [23-workers-migration](23-workers-migration.md) | Architecture, identity invariants, work ownership, acceptance and deployment evidence |
