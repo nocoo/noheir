@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Fixes
+
+- Normalize legacy ISO-text `created_at`/`updated_at` values when wiring financial rows for scoped Bearer REST lists and portfolio summaries, instead of throwing `Invalid Date` and returning opaque 500s; log unexpected scoped API failures with request metadata for operations.
+
 ## [3.1.0] - 2026-10-20
 
 ### Breaking Changes

@@ -17,6 +17,7 @@ import {
   createUnitSchema,
   dateParts,
 } from "../db/validation";
+import { normalizeLogTimestamp } from "../lib/contribution-log-time";
 
 export class ApiError extends Error {
   constructor(
@@ -89,18 +90,53 @@ const jsonFields = new Set([
   "fixedExpenseCategories",
   "createdBy",
 ]);
+
+/** Zoneless SQLite `YYYY-MM-DD HH:MM:SS[.fff]` stored as UTC. */
+const SQLITE_DATETIME = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}(?:\.\d+)?)$/;
+
+export function toIso(value: unknown): string | null {
+  if (value == null) return null;
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    const sqlite = SQLITE_DATETIME.exec(trimmed);
+    if (sqlite) {
+      const ms = Date.parse(`${sqlite[1]}T${sqlite[2]}Z`);
+      if (Number.isNaN(ms)) return null;
+      try {
+        return new Date(ms).toISOString();
+      } catch {
+        return null;
+      }
+    }
+  }
+
+  const ms = normalizeLogTimestamp(value);
+  if (ms == null) return null;
+  try {
+    return new Date(ms).toISOString();
+  } catch {
+    return null;
+  }
+}
+
+function parseJsonColumn(key: string, value: unknown): unknown {
+  if (typeof value !== "string") return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return key === "tags" ? [] : null;
+  }
+}
+
 export function wire(row: Row): Row {
   const result: Row = {};
   for (const [column, value] of Object.entries(row)) {
     const key = camel(column);
     if (["userId", "ownerId", "commitToken", "rawIndex", "hasSecondaryMapping"].includes(key))
       continue;
-    if (jsonFields.has(key)) result[key] = typeof value === "string" ? JSON.parse(value) : value;
-    else if (["createdAt", "updatedAt", "deletedAt"].includes(key))
-      result[key] =
-        value == null
-          ? null
-          : new Date(Number(value) < 1e12 ? Number(value) * 1000 : Number(value)).toISOString();
+    if (jsonFields.has(key)) result[key] = parseJsonColumn(key, value);
+    else if (["createdAt", "updatedAt", "deletedAt"].includes(key)) result[key] = toIso(value);
     else if (key === "isArchived") result[key] = Boolean(value);
     else result[key] = value;
   }
