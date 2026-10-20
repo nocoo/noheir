@@ -110,6 +110,13 @@ for (const path of routes) {
     await page.goto(`${path}?year=2025`);
     await expect(page.locator("h1").first()).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole("heading", { name: "数据加载失败" })).toHaveCount(0);
+    await expect(page.locator("[data-basalt-shell]")).toHaveCount(path === "/login" ? 0 : 1);
+    if (path !== "/login") {
+      await expect(page.locator("[data-basalt-shell] > [data-basalt-main] > header")).toHaveCount(
+        1,
+      );
+      await expect(page.locator("[data-basalt-main] [data-basalt-island]")).toHaveCount(1);
+    }
     expect(failures).toEqual([]);
   });
 }
@@ -162,6 +169,20 @@ test("CSV preview and commit persist the selected year", async ({ page, request 
     headers: { "Cf-Access-Jwt-Assertion": token },
   });
   expect(await response.json()).toEqual({ count: 1 });
+  const shell = await page.locator("[data-basalt-shell]").evaluateHandle((node) => node);
+  await page
+    .getByRole("complementary", { name: "主导航", exact: true })
+    .getByRole("link", { name: "收入分析", exact: true })
+    .click();
+  await page.getByRole("combobox", { name: "财务年份" }).click();
+  await expect(page.getByRole("option", { name: "2023", exact: true })).toBeVisible();
+  await page.getByRole("option", { name: "2023", exact: true }).click();
+  await expect(page).toHaveURL(/year=2023/);
+  await expect
+    .poll(() =>
+      page.locator("[data-basalt-shell]").evaluate((node, previous) => node === previous, shell),
+    )
+    .toBe(true);
 });
 
 test("backup download contains financial records and preserves declared scope", async ({
@@ -274,8 +295,125 @@ test("mobile navigation restores focus and unlocks scrolling after dismissal", a
   await opener.click();
   await page.getByRole("dialog").getByRole("link", { name: "分析报告", exact: true }).click();
   await expect(page).toHaveURL("/analyses");
+  await expect(page.getByRole("heading", { name: "分析报告", exact: true })).toBeVisible();
   await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(opener).toBeFocused();
   await expect.poll(() => page.evaluate(() => document.body.style.overflow)).not.toBe("hidden");
+});
+
+test("shared shell retains sidebar scroll and groups across routes and history", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 640 });
+  await page.goto("/income?year=2025");
+  const sidebar = page.getByRole("complementary", { name: "主导航", exact: true });
+  const group = sidebar.getByRole("button", { name: "总览", exact: true });
+  const contentId = await group.getAttribute("aria-controls");
+  expect(contentId).toBeTruthy();
+  const groupContent = page.locator(`[id="${contentId}"]`);
+  await group.click();
+  await expect
+    .poll(() => groupContent.evaluate((node) => node.getBoundingClientRect().height))
+    .toBe(0);
+  const nav = sidebar.locator('[data-slot="sidebar-nav"]');
+  const original = await nav.evaluateHandle((node) => node);
+  const top = await nav.evaluate((node) => {
+    node.scrollTop = node.scrollHeight;
+    return node.scrollTop;
+  });
+  expect(top).toBeGreaterThan(0);
+  const island = page.locator("[data-basalt-island]");
+  expect(
+    await island.evaluate((node) => {
+      node.scrollTop = node.scrollHeight;
+      return node.scrollTop;
+    }),
+  ).toBeGreaterThan(0);
+
+  await sidebar.getByRole("link", { name: "API 密钥", exact: true }).click();
+  await expect(page).toHaveURL("/api-keys");
+  await expect(page.getByRole("heading", { name: "API 密钥", exact: true })).toBeVisible();
+  await expect.poll(() => nav.evaluate((node, previous) => node === previous, original)).toBe(true);
+  await expect.poll(() => nav.evaluate((node) => node.scrollTop)).toBe(top);
+  await expect(group).toHaveAttribute("data-state", "closed");
+  await expect.poll(() => island.evaluate((node) => node.scrollTop)).toBe(0);
+
+  await sidebar.getByRole("link", { name: "账户设置", exact: true }).click();
+  await expect(page).toHaveURL("/account-types");
+  await expect(page.getByRole("heading", { name: "账户类型管理", exact: true })).toBeVisible();
+  await page.goBack();
+  await expect(page).toHaveURL("/api-keys");
+  await expect(page.getByRole("heading", { name: "API 密钥", exact: true })).toBeVisible();
+  await page.goForward();
+  await expect(page).toHaveURL("/account-types");
+  await expect(page.getByRole("heading", { name: "账户类型管理", exact: true })).toBeVisible();
+  await expect.poll(() => nav.evaluate((node, previous) => node === previous, original)).toBe(true);
+  await expect.poll(() => nav.evaluate((node) => node.scrollTop)).toBe(top);
+  await expect(group).toHaveAttribute("data-state", "closed");
+});
+
+test("shared shell retains collapsed rail and scroll after navigation", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 640 });
+  await page.goto("/api-keys");
+  const sidebar = page.getByRole("complementary", { name: "主导航", exact: true });
+  await sidebar.getByRole("button", { name: "收起侧边栏" }).click();
+  const nav = sidebar.locator("nav");
+  const original = await nav.evaluateHandle((node) => node);
+  const top = await nav.evaluate((node) => {
+    node.scrollTop = node.scrollHeight;
+    return node.scrollTop;
+  });
+  expect(top).toBeGreaterThan(0);
+  await sidebar.getByRole("link", { name: "数据导入", exact: true }).click();
+  await expect(page).toHaveURL("/import");
+  await expect(page.getByRole("heading", { name: "数据导入", exact: true })).toBeVisible();
+  await expect(sidebar.getByRole("button", { name: "展开侧边栏" })).toBeVisible();
+  await expect.poll(() => nav.evaluate((node, previous) => node === previous, original)).toBe(true);
+  await expect.poll(() => nav.evaluate((node) => node.scrollTop)).toBe(top);
+});
+
+test("shared shell survives a child loader failure and recovers through navigation", async ({
+  page,
+}) => {
+  await page.goto("/api-keys");
+  const sidebar = page.getByRole("complementary", { name: "主导航", exact: true });
+  const original = await sidebar.evaluateHandle((node) => node);
+  await sidebar.getByRole("button", { name: "收起侧边栏" }).click();
+  await page.route("**/api/account-classifications", (route) =>
+    route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ error: "Test read failure" }),
+    }),
+  );
+  await sidebar.getByRole("link", { name: "账户设置", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "数据加载失败" })).toBeVisible();
+  await expect
+    .poll(() => sidebar.evaluate((node, previous) => node === previous, original))
+    .toBe(true);
+  await expect(sidebar.getByRole("button", { name: "展开侧边栏" })).toBeVisible();
+  await sidebar.getByRole("link", { name: "数据导入", exact: true }).click();
+  await expect(page).toHaveURL("/import");
+  await expect(page.getByRole("heading", { name: "数据导入", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "数据加载失败" })).toHaveCount(0);
+  await expect
+    .poll(() => sidebar.evaluate((node, previous) => node === previous, original))
+    .toBe(true);
+});
+
+test("shared shell contains the not-found boundary", async ({ page }) => {
+  await page.goto("/missing-financial-page");
+  await expect(page.locator("[data-basalt-shell]")).toHaveCount(1);
+  await expect(
+    page.locator("[data-basalt-island]").getByRole("heading", { name: "数据加载失败" }),
+  ).toBeVisible();
+  await page
+    .getByRole("complementary", { name: "主导航", exact: true })
+    .getByRole("link", { name: "分析报告", exact: true })
+    .click();
+  await expect(page).toHaveURL("/analyses");
+  await expect(page.getByRole("heading", { name: "分析报告", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "数据加载失败" })).toHaveCount(0);
 });
 
 test("mobile capital labels remain single-line within a horizontally scrollable table", async ({

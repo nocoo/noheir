@@ -1,5 +1,4 @@
 import { useLoaderData, useNavigate, useRevalidator } from "react-router";
-import { AppShell } from "@/components/layout";
 import { financeApi } from "@/lib/finance-api";
 import { AnalysisDetail } from "./analysis-detail";
 
@@ -18,13 +17,11 @@ export default function AnalysisPage() {
   const navigate = useNavigate();
   const revalidator = useRevalidator();
   return (
-    <AppShell>
-      <AnalysisDetail
-        key={`${data.report.id}-${data.report.version}`}
-        {...data}
-        onDeleted={() => navigate("/analyses")}
-        onSaved={() => revalidator.revalidate()}
-      />
-    </AppShell>
+    <AnalysisDetail
+      key={`${data.report.id}-${data.report.version}`}
+      {...data}
+      onDeleted={() => navigate("/analyses")}
+      onSaved={() => revalidator.revalidate()}
+    />
   );
 }

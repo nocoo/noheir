@@ -1,5 +1,4 @@
 import { useLoaderData, useNavigation } from "react-router";
-import { AppShell } from "@/components/layout";
 import { buildAnalysisFilters } from "@/domain/analyses";
 import { financeApi } from "@/lib/finance-api";
 import { AnalysesClient } from "./analyses-client";
@@ -16,9 +15,5 @@ export async function analysesLoader({ request }: { request: Request }) {
 export default function AnalysesPage() {
   const data = useLoaderData<typeof analysesLoader>();
   const navigation = useNavigation();
-  return (
-    <AppShell>
-      <AnalysesClient {...data} loading={navigation.state !== "idle"} />
-    </AppShell>
-  );
+  return <AnalysesClient {...data} loading={navigation.state !== "idle"} />;
 }

@@ -1,5 +1,4 @@
 import { useLoaderData } from "react-router";
-import { AppShell } from "@/components/layout";
 import { workerDbClient } from "@/lib/worker-db-client";
 import { QualityClient } from "./quality-client";
 
@@ -33,9 +32,5 @@ export async function qualityLoader(): Promise<QualityLoaderData> {
 export default function QualityPage() {
   const { metadata } = useLoaderData<QualityLoaderData>();
 
-  return (
-    <AppShell>
-      <QualityClient metadata={metadata} />
-    </AppShell>
-  );
+  return <QualityClient metadata={metadata} />;
 }

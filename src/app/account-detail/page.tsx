@@ -1,5 +1,4 @@
 import { useLoaderData } from "react-router";
-import { AppShell } from "@/components/layout";
 import {
   buildAccountDetailData,
   buildBalanceEntries,
@@ -121,14 +120,12 @@ export default function AccountDetailPage() {
     useLoaderData<AccountDetailLoaderData>();
 
   return (
-    <AppShell>
-      <AccountDetailClient
-        uniqueAccounts={uniqueAccounts}
-        selectedAccount={selectedAccount}
-        dailyBalances={dailyBalances}
-        displayEntries={displayEntries}
-        summary={summary}
-      />
-    </AppShell>
+    <AccountDetailClient
+      uniqueAccounts={uniqueAccounts}
+      selectedAccount={selectedAccount}
+      dailyBalances={dailyBalances}
+      displayEntries={displayEntries}
+      summary={summary}
+    />
   );
 }

@@ -1,5 +1,4 @@
 import { useLoaderData } from "react-router";
-import { AppShell } from "@/components/layout";
 import type { MonthlyData } from "@/domain/types";
 import { MONTH_NAMES } from "@/lib/constants";
 import { financeApi } from "@/lib/finance-api";
@@ -51,12 +50,10 @@ export default function ComparePage() {
     useLoaderData<CompareLoaderData>();
 
   return (
-    <AppShell>
-      <YearComparisonClient
-        yearlyMonthlyData={yearlyMonthlyData}
-        availableYears={availableYears}
-        targetSavingsRate={targetSavingsRate}
-      />
-    </AppShell>
+    <YearComparisonClient
+      yearlyMonthlyData={yearlyMonthlyData}
+      availableYears={availableYears}
+      targetSavingsRate={targetSavingsRate}
+    />
   );
 }

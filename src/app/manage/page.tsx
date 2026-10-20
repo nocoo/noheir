@@ -1,5 +1,4 @@
 import { useLoaderData } from "react-router";
-import { AppShell } from "@/components/layout";
 import { buildDataHealthMetrics, buildDataSummary } from "@/domain/data-management";
 import type { DomainTransaction, DomainTransfer } from "@/domain/types";
 import { toDomainTransaction, toDomainTransfer } from "@/lib/transaction-mappers";
@@ -45,9 +44,5 @@ export async function manageLoader(): Promise<ManageLoaderData> {
 export default function ManagePage() {
   const { dataSummary, healthMetrics } = useLoaderData<ManageLoaderData>();
 
-  return (
-    <AppShell>
-      <ManageClient dataSummary={dataSummary} healthMetrics={healthMetrics} />
-    </AppShell>
-  );
+  return <ManageClient dataSummary={dataSummary} healthMetrics={healthMetrics} />;
 }

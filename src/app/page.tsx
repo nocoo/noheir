@@ -1,5 +1,4 @@
 import { useLoaderData } from "react-router";
-import { AppShell } from "@/components/layout";
 import { buildSavingsRate } from "@/domain/dashboard/overview";
 import type { DomainTransaction, MonthlyData } from "@/domain/types";
 import { MONTH_NAMES } from "@/lib/constants";
@@ -78,16 +77,14 @@ export default function OverviewPage() {
   const data = useLoaderData<OverviewLoaderData>();
 
   return (
-    <AppShell>
-      <OverviewClient
-        transactions={data.transactions}
-        monthlyData={data.monthlyData}
-        totalIncome={data.totalIncome}
-        totalExpense={data.totalExpense}
-        balance={data.balance}
-        savingsRate={data.savingsRate}
-        targetSavingsRate={data.targetSavingsRate}
-      />
-    </AppShell>
+    <OverviewClient
+      transactions={data.transactions}
+      monthlyData={data.monthlyData}
+      totalIncome={data.totalIncome}
+      totalExpense={data.totalExpense}
+      balance={data.balance}
+      savingsRate={data.savingsRate}
+      targetSavingsRate={data.targetSavingsRate}
+    />
   );
 }

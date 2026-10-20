@@ -1,5 +1,4 @@
 import { useLoaderData } from "react-router";
-import { AppShell } from "@/components/layout";
 import type { AccountSummary } from "@/domain/dashboard/account-analysis";
 import {
   buildAccountGroups,
@@ -147,14 +146,12 @@ export default function AccountPage() {
     useLoaderData<AccountLoaderData>();
 
   return (
-    <AppShell>
-      <AccountAnalysisClient
-        accounts={serializedAccounts}
-        accountGroups={serializedGroups}
-        chartData={chartData}
-        pieData={pieData}
-        summaryStats={summaryStats}
-      />
-    </AppShell>
+    <AccountAnalysisClient
+      accounts={serializedAccounts}
+      accountGroups={serializedGroups}
+      chartData={chartData}
+      pieData={pieData}
+      summaryStats={summaryStats}
+    />
   );
 }

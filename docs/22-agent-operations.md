@@ -24,6 +24,28 @@ ordinary surfaces and controls use the package's `basalt-*` tokens, not a second
 application theme. Financial colors and stable domain-label mappings remain
 independent from the control accent.
 
+Business routes inherit one persistent route layout, following the installed
+template's nesting; `/login` remains outside the workspace shell:
+
+```text
+AppShell (workspace)
+├── AppSkipLink
+├── Sidebar
+└── AppMain
+    ├── AppHeader
+    └── island spacing wrapper
+        └── ContentIsland
+            └── Outlet / route error boundary
+                └── page heading, sections and business content
+```
+
+Page components and route errors must not create another AppShell. Sidebar scroll,
+collapsed state and open groups survive navigation, query changes and child-loader
+failures. Only the ContentIsland is keyed by pathname to reset page scrolling;
+query-only changes keep the content instance. The shared layout loader supplies
+available years on navigation and revalidation, including after imports. Mobile
+navigation closes and restores focus to the persistent header trigger.
+
 Navigation uses public link-capable components: `EditableNavItem` inside
 `SidebarNav`, and `NavigationMenuLink asChild` in the collapsed rail. The router
 adapter forwards anchor attributes, events and refs. Do not paint selected rows

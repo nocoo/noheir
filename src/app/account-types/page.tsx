@@ -1,5 +1,4 @@
 import { useLoaderData } from "react-router";
-import { AppShell } from "@/components/layout";
 import { groupAccountsByType } from "@/domain/settings/account-types";
 import type { AccountTypeConfig } from "@/domain/types";
 import { financeApi } from "@/lib/finance-api";
@@ -33,13 +32,11 @@ export default function AccountTypesPage() {
   const { accounts, accountTypes, grouped, revision } = useLoaderData<AccountTypesLoaderData>();
 
   return (
-    <AppShell>
-      <AccountTypesClient
-        revision={revision}
-        accounts={accounts}
-        accountTypes={accountTypes}
-        grouped={grouped}
-      />
-    </AppShell>
+    <AccountTypesClient
+      revision={revision}
+      accounts={accounts}
+      accountTypes={accountTypes}
+      grouped={grouped}
+    />
   );
 }

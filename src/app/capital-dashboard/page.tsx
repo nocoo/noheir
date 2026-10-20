@@ -1,5 +1,4 @@
 import { useLoaderData } from "react-router";
-import { AppShell } from "@/components/layout";
 import { buildDeploymentRate } from "@/domain/assets/capital-dashboard";
 import { toUnitDisplayInfo } from "@/lib/capital-mappers";
 import { workerDbClient } from "@/lib/worker-db-client";
@@ -21,9 +20,5 @@ export async function capitalDashboardLoader(): Promise<CapitalDashboardLoaderDa
 export default function CapitalDashboardPage() {
   const { units, deploymentRate } = useLoaderData<CapitalDashboardLoaderData>();
 
-  return (
-    <AppShell>
-      <CapitalDashboardClient units={units} deploymentRate={deploymentRate} />
-    </AppShell>
-  );
+  return <CapitalDashboardClient units={units} deploymentRate={deploymentRate} />;
 }

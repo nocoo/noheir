@@ -1,5 +1,4 @@
 import { useLoaderData } from "react-router";
-import { AppShell } from "@/components/layout";
 import {
   buildDecisionStats,
   buildFilterCounts,
@@ -83,12 +82,10 @@ export default function CapitalDecisionsPage() {
   const { serializedDecisions, stats, filterCounts } = useLoaderData<CapitalDecisionsLoaderData>();
 
   return (
-    <AppShell>
-      <CapitalDecisionsClient
-        decisions={serializedDecisions}
-        stats={stats}
-        filterCounts={filterCounts}
-      />
-    </AppShell>
+    <CapitalDecisionsClient
+      decisions={serializedDecisions}
+      stats={stats}
+      filterCounts={filterCounts}
+    />
   );
 }

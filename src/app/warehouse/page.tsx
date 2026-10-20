@@ -1,5 +1,4 @@
 import { useLoaderData } from "react-router";
-import { AppShell } from "@/components/layout";
 import type { DomainProduct, SerializedUnit, UnitDisplayInfo } from "@/domain/types";
 import { toDomainProduct, toUnitDisplayInfo } from "@/lib/capital-mappers";
 import { workerDbClient } from "@/lib/worker-db-client";
@@ -53,9 +52,5 @@ export async function warehouseLoader(): Promise<WarehouseLoaderData> {
 export default function WarehousePage() {
   const { serialized, products } = useLoaderData<WarehouseLoaderData>();
 
-  return (
-    <AppShell>
-      <WarehouseClient units={serialized} products={products} />
-    </AppShell>
-  );
+  return <WarehouseClient units={serialized} products={products} />;
 }

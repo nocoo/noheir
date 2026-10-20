@@ -1,5 +1,4 @@
 import { data, useLoaderData } from "react-router";
-import { AppShell } from "@/components/layout";
 import { FEATURE_PLAN_CALENDAR } from "@/lib/navigation";
 import { workerDbClient } from "@/lib/worker-db-client";
 import { CategoriesClient, type CategoryRow } from "./categories-client";
@@ -40,9 +39,5 @@ export async function planCategoriesLoader(): Promise<PlanCategoriesLoaderData> 
 export default function PlanCategoriesPage() {
   const { categories, usage } = useLoaderData<PlanCategoriesLoaderData>();
 
-  return (
-    <AppShell>
-      <CategoriesClient categories={categories} usage={usage} />
-    </AppShell>
-  );
+  return <CategoriesClient categories={categories} usage={usage} />;
 }

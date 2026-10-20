@@ -1,5 +1,4 @@
 import { useLoaderData } from "react-router";
-import { AppShell } from "@/components/layout";
 import type { DomainProduct, SerializedUnit, UnitDisplayInfo } from "@/domain/types";
 import { toDomainProduct, toUnitDisplayInfo } from "@/lib/capital-mappers";
 import { workerDbClient } from "@/lib/worker-db-client";
@@ -51,9 +50,5 @@ export async function fundsLoader(): Promise<FundsLoaderData> {
 export default function FundsPage() {
   const { serialized, products } = useLoaderData<FundsLoaderData>();
 
-  return (
-    <AppShell>
-      <FundsClient units={serialized} products={products} />
-    </AppShell>
-  );
+  return <FundsClient units={serialized} products={products} />;
 }

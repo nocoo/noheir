@@ -1,14 +1,5 @@
-import {
-  createContext,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { createContext, type ReactNode, useCallback, useContext, useMemo } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
-import { getAvailableYears } from "@/app/actions/get-available-years";
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -36,34 +27,24 @@ interface YearContextValue {
 
 const YearContext = createContext<YearContextValue | null>(null);
 
-export function YearProvider({ children }: { children: ReactNode }) {
+export function YearProvider({ children, years }: { children: ReactNode; years: number[] }) {
   const navigate = useNavigate();
   const location = useLocation();
   const pathname = location.pathname;
   const [searchParams] = useSearchParams();
 
-  const [years, setYears] = useState<number[]>([CURRENT_YEAR]);
+  const availableYears = useMemo(() => (years.length > 0 ? years : [CURRENT_YEAR]), [years]);
 
   // Derive year from URL param or use first available year
   const urlYear = searchParams.get("year");
   const year = useMemo(() => {
-    if (urlYear && years.includes(Number(urlYear))) {
+    if (urlYear && availableYears.includes(Number(urlYear))) {
       return Number(urlYear);
     }
-    return years[0] ?? CURRENT_YEAR;
-  }, [urlYear, years]);
+    return availableYears[0] ?? CURRENT_YEAR;
+  }, [urlYear, availableYears]);
 
   const isYearEnabled = YEAR_ENABLED_PATHS.has(pathname);
-
-  // Fetch available years on mount
-  useEffect(() => {
-    getAvailableYears()
-      .then((fetched) => {
-        const sorted = fetched.length > 0 ? fetched : [CURRENT_YEAR];
-        setYears(sorted);
-      })
-      .catch(() => setYears([CURRENT_YEAR]));
-  }, []);
 
   const setYear = useCallback(
     (newYear: number) => {
@@ -78,7 +59,7 @@ export function YearProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <YearContext.Provider value={{ year, years, setYear, isYearEnabled }}>
+    <YearContext.Provider value={{ year, years: availableYears, setYear, isYearEnabled }}>
       {children}
     </YearContext.Provider>
   );

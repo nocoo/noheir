@@ -1,5 +1,4 @@
 import { useLoaderData } from "react-router";
-import { AppShell } from "@/components/layout";
 import {
   buildFinancialHealthResult,
   buildSafeMonthlyData,
@@ -70,9 +69,5 @@ export async function financialHealthLoader({
 export default function FinancialHealthPage() {
   const { healthResult, monthlyData } = useLoaderData<FinancialHealthLoaderData>();
 
-  return (
-    <AppShell>
-      <FinancialHealthClient healthResult={healthResult} monthlyData={monthlyData} />
-    </AppShell>
-  );
+  return <FinancialHealthClient healthResult={healthResult} monthlyData={monthlyData} />;
 }

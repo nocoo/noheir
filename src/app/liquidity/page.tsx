@@ -1,5 +1,4 @@
 import { useLoaderData } from "react-router";
-import { AppShell } from "@/components/layout";
 import {
   buildMonthlyAvailability,
   buildSeries,
@@ -58,16 +57,14 @@ export default function LiquidityPage() {
     useLoaderData<LiquidityLoaderData>();
 
   return (
-    <AppShell>
-      <LiquidityClient
-        chartData={chartData}
-        strategies={strategies}
-        total12m={total12m}
-        avgMonth={avgMonth}
-        peakMonth={peakMonth}
-        peakAmount={peakAmount}
-        upcomingUnits={upcomingUnits}
-      />
-    </AppShell>
+    <LiquidityClient
+      chartData={chartData}
+      strategies={strategies}
+      total12m={total12m}
+      avgMonth={avgMonth}
+      peakMonth={peakMonth}
+      peakAmount={peakAmount}
+      upcomingUnits={upcomingUnits}
+    />
   );
 }

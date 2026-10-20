@@ -14,7 +14,7 @@ import {
 } from "@nocoo/basalt/components/sheet";
 import { Menu } from "lucide-react";
 import { Suspense, useEffect, useMemo, useRef } from "react";
-import { useLocation } from "react-router";
+import { Outlet, useLoaderData, useLocation } from "react-router";
 import { EnvironmentSwitch } from "@/components/environment-switch";
 import { GithubIcon } from "@/components/icons/github-icon";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -25,11 +25,6 @@ import { Sidebar } from "./sidebar";
 import { SidebarProvider, useSidebar } from "./sidebar-context";
 import { ThemeToggle } from "./theme-toggle";
 import { YearProvider } from "./year-context";
-
-interface AppShellProps {
-  children: React.ReactNode;
-  breadcrumbs?: { label: string; href?: string }[];
-}
 
 /**
  * Build breadcrumbs from pathname using navigation config
@@ -58,22 +53,12 @@ function buildBreadcrumbsFromPath(pathname: string): { label: string; href?: str
   return crumbs;
 }
 
-function AppShellInner({
-  children,
-  breadcrumbs,
-}: {
-  children: React.ReactNode;
-  breadcrumbs: { label: string; href?: string }[] | undefined;
-}) {
+function AppShellInner() {
   const isMobile = useIsMobile();
   const { mobileOpen, setMobileOpen } = useSidebar();
   const mobileMenuTrigger = useRef<HTMLButtonElement>(null);
   const location = useLocation();
   const pathname = location.pathname;
-
-  // Auto-generate breadcrumbs from pathname if not provided
-  const autoBreadcrumbs = useMemo(() => buildBreadcrumbsFromPath(pathname), [pathname]);
-  const finalBreadcrumbs = breadcrumbs ?? autoBreadcrumbs;
 
   // Close mobile sidebar on route change
   // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is the trigger; body doesn't read its value
@@ -86,12 +71,12 @@ function AppShellInner({
   }, [isMobile, setMobileOpen]);
 
   const breadcrumbsList = useMemo(
-    () => [{ label: "首页", href: "/" }, ...finalBreadcrumbs],
-    [finalBreadcrumbs],
+    () => [{ label: "首页", href: "/" }, ...buildBreadcrumbsFromPath(pathname)],
+    [pathname],
   );
 
   return (
-    <BasaltAppShell>
+    <BasaltAppShell layout="workspace">
       <AppSkipLink>跳到主要内容</AppSkipLink>
 
       {/* Desktop sidebar */}
@@ -165,8 +150,8 @@ function AppShellInner({
         />
 
         {/* Floating island content area */}
-        <div className="flex-1 min-h-0 px-2 pb-2 md:px-3 md:pb-3 flex flex-col">
-          <ContentIsland className="flex-1 overflow-y-auto">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col px-basalt-space-lg pb-basalt-space-lg">
+          <ContentIsland key={pathname}>
             {[
               "/",
               "/income",
@@ -191,7 +176,7 @@ function AppShellInner({
                 金额汇总币种：CNY（人民币）。不折算或合计其他币种；其他币种记录与编辑操作保留。
               </p>
             )}
-            {children}
+            <Outlet />
           </ContentIsland>
         </div>
       </AppMain>
@@ -199,12 +184,13 @@ function AppShellInner({
   );
 }
 
-export function AppShell({ children, breadcrumbs }: AppShellProps) {
+export function AppShell() {
+  const years = useLoaderData<number[]>();
   return (
     <SidebarProvider>
       <Suspense>
-        <YearProvider>
-          <AppShellInner breadcrumbs={breadcrumbs ?? undefined}>{children}</AppShellInner>
+        <YearProvider years={years}>
+          <AppShellInner />
         </YearProvider>
       </Suspense>
     </SidebarProvider>

@@ -1,5 +1,4 @@
 import { useLoaderData } from "react-router";
-import { AppShell } from "@/components/layout";
 import { financeApi } from "@/lib/finance-api";
 import { workerDbClient } from "@/lib/worker-db-client";
 import { CategorySettingsClient } from "./category-settings-client";
@@ -59,14 +58,12 @@ export default function CategorySettingsPage() {
   } = useLoaderData<CategorySettingsLoaderData>();
 
   return (
-    <AppShell>
-      <CategorySettingsClient
-        version={version}
-        incomeCategories={incomeCategories}
-        expenseCategories={expenseCategories}
-        activeIncomeCategories={activeIncomeCategories}
-        fixedExpenseCategories={fixedExpenseCategories}
-      />
-    </AppShell>
+    <CategorySettingsClient
+      version={version}
+      incomeCategories={incomeCategories}
+      expenseCategories={expenseCategories}
+      activeIncomeCategories={activeIncomeCategories}
+      fixedExpenseCategories={fixedExpenseCategories}
+    />
   );
 }

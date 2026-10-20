@@ -1,5 +1,4 @@
 import { data, useLoaderData } from "react-router";
-import { AppShell } from "@/components/layout";
 import { FEATURE_PLAN_CALENDAR } from "@/lib/navigation";
 import type { RecurringExpenseRow } from "@/lib/recurring-expense/mappers";
 import { toRecurrenceRule } from "@/lib/recurring-expense/mappers";
@@ -48,9 +47,5 @@ export async function planCalendarLoader(): Promise<PlanCalendarLoaderData> {
 export default function PlanCalendarPage() {
   const { rules, categories, today } = useLoaderData<PlanCalendarLoaderData>();
 
-  return (
-    <AppShell>
-      <CalendarClient rules={rules} categories={categories} todayIso={today} />
-    </AppShell>
-  );
+  return <CalendarClient rules={rules} categories={categories} todayIso={today} />;
 }

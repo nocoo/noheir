@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import { useLoaderData } from "react-router";
-import { AppShell } from "@/components/layout";
 import type { DomainProduct, UnitDisplayInfo } from "@/domain/types";
 import { toDomainProduct, toUnitDisplayInfo } from "@/lib/capital-mappers";
 import { workerDbClient } from "@/lib/worker-db-client";
@@ -53,10 +52,8 @@ export default function ProductsPage() {
   const { products, serializedUnits } = useLoaderData<ProductsLoaderData>();
 
   return (
-    <AppShell>
-      <Suspense>
-        <ProductsClient products={products} units={serializedUnits} />
-      </Suspense>
-    </AppShell>
+    <Suspense>
+      <ProductsClient products={products} units={serializedUnits} />
+    </Suspense>
   );
 }

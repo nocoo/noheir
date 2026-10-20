@@ -1,5 +1,4 @@
 import { useLoaderData } from "react-router";
-import { AppShell } from "@/components/layout";
 import type { BalanceAnchor } from "@/domain/types";
 import { financeApi } from "@/lib/finance-api";
 import { workerDbClient } from "@/lib/worker-db-client";
@@ -33,9 +32,5 @@ export async function balanceAnchorsLoader(): Promise<BalanceAnchorsLoaderData> 
 export default function BalanceAnchorsPage() {
   const { accounts, anchors, revision } = useLoaderData<BalanceAnchorsLoaderData>();
 
-  return (
-    <AppShell>
-      <BalanceAnchorsClient revision={revision} accounts={accounts} initialAnchors={anchors} />
-    </AppShell>
-  );
+  return <BalanceAnchorsClient revision={revision} accounts={accounts} initialAnchors={anchors} />;
 }

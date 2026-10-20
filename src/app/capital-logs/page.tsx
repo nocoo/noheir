@@ -1,5 +1,4 @@
 import { useLoaderData } from "react-router";
-import { AppShell } from "@/components/layout";
 import type { DomainContributionLog, DomainProduct, DomainUnit } from "@/domain/types";
 import { toDomainContributionLog, toDomainProduct, toDomainUnit } from "@/lib/capital-mappers";
 import { workerDbClient } from "@/lib/worker-db-client";
@@ -32,9 +31,5 @@ export async function capitalLogsLoader(): Promise<CapitalLogsLoaderData> {
 export default function CapitalLogsPage() {
   const { logs, units, products } = useLoaderData<CapitalLogsLoaderData>();
 
-  return (
-    <AppShell>
-      <CapitalLogsClient logs={logs} units={units} products={products} />
-    </AppShell>
-  );
+  return <CapitalLogsClient logs={logs} units={units} products={products} />;
 }

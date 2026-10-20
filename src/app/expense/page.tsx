@@ -1,5 +1,4 @@
 import { useLoaderData } from "react-router";
-import { AppShell } from "@/components/layout";
 import {
   buildAverageMonthly,
   buildFilteredTransactions,
@@ -57,28 +56,26 @@ export default function ExpensePage() {
   const accountData = buildAccountData(filtered, totalAmount, 10);
 
   return (
-    <AppShell>
-      <TransactionAnalysisClient
-        type={type}
-        totalAmount={totalAmount}
-        avgMonthly={avgMonthly}
-        transactionCount={filtered.length}
-        monthlyData={monthlyData}
-        chartData={chartData}
-        detailList={detailList}
-        accountData={accountData}
-        topTransactions={topTransactions.map((t) => ({
-          id: t.id,
-          date: t.date,
-          primaryCategory: t.primaryCategory,
-          secondaryCategory: t.secondaryCategory,
-          tertiaryCategory: t.tertiaryCategory,
-          account: t.account,
-          description: t.note,
-          amount: t.amount,
-        }))}
-        labels={labels}
-      />
-    </AppShell>
+    <TransactionAnalysisClient
+      type={type}
+      totalAmount={totalAmount}
+      avgMonthly={avgMonthly}
+      transactionCount={filtered.length}
+      monthlyData={monthlyData}
+      chartData={chartData}
+      detailList={detailList}
+      accountData={accountData}
+      topTransactions={topTransactions.map((t) => ({
+        id: t.id,
+        date: t.date,
+        primaryCategory: t.primaryCategory,
+        secondaryCategory: t.secondaryCategory,
+        tertiaryCategory: t.tertiaryCategory,
+        account: t.account,
+        description: t.note,
+        amount: t.amount,
+      }))}
+      labels={labels}
+    />
   );
 }

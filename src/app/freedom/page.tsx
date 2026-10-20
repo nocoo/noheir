@@ -1,5 +1,4 @@
 import { useLoaderData } from "react-router";
-import { AppShell } from "@/components/layout";
 import { buildFreedomSummary, buildIncomeBreakdown } from "@/domain/dashboard/financial-freedom";
 import type { DomainTransaction } from "@/domain/types";
 import { financeApi } from "@/lib/finance-api";
@@ -61,16 +60,14 @@ export default function FreedomPage() {
   );
 
   return (
-    <AppShell>
-      <FinancialFreedomClient
-        totalIncome={breakdown.totalIncome}
-        activeIncome={breakdown.activeIncome}
-        passiveIncome={breakdown.passiveIncome}
-        totalExpense={totalExpense}
-        summary={summary}
-        activeByCategoryList={activeByCategoryList}
-        passiveByCategoryList={passiveByCategoryList}
-      />
-    </AppShell>
+    <FinancialFreedomClient
+      totalIncome={breakdown.totalIncome}
+      activeIncome={breakdown.activeIncome}
+      passiveIncome={breakdown.passiveIncome}
+      totalExpense={totalExpense}
+      summary={summary}
+      activeByCategoryList={activeByCategoryList}
+      passiveByCategoryList={passiveByCategoryList}
+    />
   );
 }

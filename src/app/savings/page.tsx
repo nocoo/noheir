@@ -1,5 +1,4 @@
 import { useLoaderData } from "react-router";
-import { AppShell } from "@/components/layout";
 import {
   buildSavingsRateChartData,
   buildSavingsRateSummary,
@@ -54,12 +53,10 @@ export default function SavingsPage() {
   const summary = buildSavingsRateSummary(totals, targetSavingsRate);
 
   return (
-    <AppShell>
-      <SavingsRateClient
-        chartData={chartData}
-        summary={summary}
-        targetSavingsRate={targetSavingsRate}
-      />
-    </AppShell>
+    <SavingsRateClient
+      chartData={chartData}
+      summary={summary}
+      targetSavingsRate={targetSavingsRate}
+    />
   );
 }

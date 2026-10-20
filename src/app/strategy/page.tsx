@@ -1,5 +1,4 @@
 import { useLoaderData } from "react-router";
-import { AppShell } from "@/components/layout";
 import { buildStrategyHierarchy, buildTotalAmount } from "@/domain/assets/strategy-sunburst";
 import type { UnitDisplayInfo } from "@/domain/types";
 import { toUnitDisplayInfo } from "@/lib/capital-mappers";
@@ -26,9 +25,5 @@ export async function strategyLoader(): Promise<StrategyLoaderData> {
 export default function StrategyPage() {
   const { hierarchy, totalAmount } = useLoaderData<StrategyLoaderData>();
 
-  return (
-    <AppShell>
-      <StrategyClient hierarchy={hierarchy} totalAmount={totalAmount} />
-    </AppShell>
-  );
+  return <StrategyClient hierarchy={hierarchy} totalAmount={totalAmount} />;
 }

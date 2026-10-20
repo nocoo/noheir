@@ -1,5 +1,4 @@
 import { useLoaderData } from "react-router";
-import { AppShell } from "@/components/layout";
 import { workerDbClient } from "@/lib/worker-db-client";
 import { FlowAnalysisClient } from "./flow-analysis-client";
 
@@ -65,9 +64,5 @@ export async function flowLoader({ request }: { request: Request }): Promise<Flo
 export default function FlowPage() {
   const { incomeFlows, expenseFlows } = useLoaderData<FlowLoaderData>();
 
-  return (
-    <AppShell>
-      <FlowAnalysisClient incomeFlows={incomeFlows} expenseFlows={expenseFlows} />
-    </AppShell>
-  );
+  return <FlowAnalysisClient incomeFlows={incomeFlows} expenseFlows={expenseFlows} />;
 }

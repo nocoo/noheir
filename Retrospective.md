@@ -190,3 +190,26 @@ domain wrapper now explicitly retains `whitespace-nowrap`; a red/green component
 test and a real-browser table check cover it. Search fields also flex instead of
 squeezing short action labels. Preserve meaningful domain layout contracts when
 replacing primitives, and inspect rendered content rather than overflow alone.
+
+## 2026-10-20 - Mount application chrome at the route boundary
+
+The Basalt control migration preserved a page-owned AppShell wrapper on every
+business route. Each page rendered correctly in isolation, but navigation replaced
+the entire sidebar DOM: Chrome measured scrollTop dropping from 663 to zero, and
+a collapsed rail expanded again. Mobile navigation also lost restored focus when
+its header trigger was removed. The existing route-rendering and hover tests did
+not check cross-route component identity or persistent local state.
+
+The application now inherits one shared workspace layout using the installed
+Basalt template tree. Login stays outside; child-loader errors remain inside the
+island. A pathname key resets only the content island, while the layout loader
+refreshes available years after navigation and import revalidation. Browser
+regressions reproduce the old failures and check DOM identity, scroll, collapsed
+groups, history, error recovery and mobile focus. Shell acceptance must exercise
+navigation between pages, not just direct page loads. Scroll assertions also wait
+for a disclosure's exit animation before recording its final scroll range.
+Read its `aria-controls` ID before closing: this Radix version removes the
+attribute when closed, so checking a selector built afterward can silently
+target a nonexistent element rather than the animated content.
+Route checks and screenshots wait for the destination heading as well as its
+URL; concurrent React navigation can update history before painting the new page.
