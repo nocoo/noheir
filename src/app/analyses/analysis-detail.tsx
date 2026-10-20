@@ -90,22 +90,22 @@ export function AnalysisDetail({
           </div>
           <p>{revisionLabels[status]}</p>
           <dl className="grid gap-x-4 gap-y-2 sm:grid-cols-[auto_1fr]">
-            <dt className="text-muted-foreground">提交身份（服务端记录）</dt>
+            <dt className="text-basalt-muted-foreground">提交身份（服务端记录）</dt>
             <dd className="break-all">
               {report.createdBy.kind === "human" ? "用户" : `API 密钥 ${report.createdBy.keyId}`}
             </dd>
-            <dt className="text-muted-foreground">创建 / 更新</dt>
+            <dt className="text-basalt-muted-foreground">创建 / 更新</dt>
             <dd>
               {report.createdAt} / {report.updatedAt}
             </dd>
-            <dt className="text-muted-foreground">外部标识</dt>
+            <dt className="text-basalt-muted-foreground">外部标识</dt>
             <dd>{report.externalId ?? "未提供"}</dd>
-            <dt className="text-muted-foreground">描述标签（未经验证）</dt>
+            <dt className="text-basalt-muted-foreground">描述标签（未经验证）</dt>
             <dd>
               {report.author ?? "未提供作者"} · {report.model ?? "未提供模型"}
             </dd>
           </dl>
-          <p className="text-muted-foreground">
+          <p className="text-basalt-muted-foreground">
             证据资源 ID
             已在保存时由服务端核对归属；外部提交还需对应读取权限。这不验证正文结论、作者标签或修订声明，不构成产品操作指令或投资建议。
           </p>
@@ -118,7 +118,7 @@ export function AnalysisDetail({
                     <p>
                       {evidence.resource} · 数据修订 {evidence.dataRevision}
                     </p>
-                    <p className="break-all text-muted-foreground">
+                    <p className="break-all text-basalt-muted-foreground">
                       {evidence.ids.length ? evidence.ids.join(", ") : "未提供记录标识"}
                     </p>
                   </li>
@@ -126,7 +126,7 @@ export function AnalysisDetail({
               )}
             </ul>
           ) : (
-            <p className="text-muted-foreground">未提供结构化证据。</p>
+            <p className="text-basalt-muted-foreground">未提供结构化证据。</p>
           )}
         </LayerCard.Body>
       </LayerCard>
@@ -140,7 +140,7 @@ export function AnalysisDetail({
           <>
             此操作无法撤销，外部标识仍保留以阻止延迟请求重新创建。
             {error && (
-              <span role="alert" className="block text-destructive">
+              <span role="alert" className="block text-basalt-destructive">
                 {error}
               </span>
             )}

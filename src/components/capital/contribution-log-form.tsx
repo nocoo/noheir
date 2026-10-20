@@ -1,37 +1,38 @@
-import { Button } from "@nocoo/basalt";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { useMemo, useState, useTransition } from "react";
-import { toast } from "sonner";
 import {
-  createContributionLog,
-  updateContributionLog,
-} from "@/app/actions/contribution-log-actions";
-import {
-  Command,
+  Button,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
+  DialogClose,
+} from "@nocoo/basalt";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+} from "@nocoo/basalt/components/dialog";
+import { Input } from "@nocoo/basalt/components/input";
+import { InputArea } from "@nocoo/basalt/components/input-area";
+import { Label } from "@nocoo/basalt/components/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@nocoo/basalt/components/popover";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+} from "@nocoo/basalt/components/select";
+import { toast } from "@nocoo/basalt/components/toast";
+import { Check, ChevronsUpDown, XIcon } from "lucide-react";
+import { useMemo, useState, useTransition } from "react";
+import {
+  createContributionLog,
+  updateContributionLog,
+} from "@/app/actions/contribution-log-actions";
+import { Command } from "@/components/ui/command";
 import type {
   ContributionOperationType,
   DomainContributionLog,
@@ -68,7 +69,7 @@ export function ContributionLogForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-md overflow-y-auto">
+      <DialogContent size="lg" className="grid gap-4 max-h-[90vh] max-w-md">
         <ContributionLogFormInner
           key={formKey}
           log={log}
@@ -77,6 +78,11 @@ export function ContributionLogForm({
           onOpenChange={onOpenChange}
           onSuccess={onSuccess}
         />
+        <DialogClose asChild>
+          <Button variant="ghost" size="icon" className="absolute right-2 top-2" aria-label="Close">
+            <XIcon aria-hidden="true" />
+          </Button>
+        </DialogClose>
       </DialogContent>
     </Dialog>
   );
@@ -183,7 +189,7 @@ function ContributionLogFormInner({
   return (
     <>
       <DialogHeader>
-        <DialogTitle>{isEditing ? "编辑投入记录" : "新增投入记录"}</DialogTitle>
+        <DialogTitle className="pr-8">{isEditing ? "编辑投入记录" : "新增投入记录"}</DialogTitle>
         <DialogDescription>
           {isEditing ? "修改投入记录信息" : "记录资金的投入或取出操作"}
         </DialogDescription>
@@ -193,7 +199,7 @@ function ContributionLogFormInner({
         {/* Unit selector (required, disabled when editing) */}
         <div className="space-y-1.5">
           <Label>
-            资金单元 <span className="text-destructive">*</span>
+            资金单元 <span className="text-basalt-destructive">*</span>
           </Label>
           <Popover open={unitOpen} onOpenChange={setUnitOpen}>
             <PopoverTrigger asChild>
@@ -231,7 +237,7 @@ function ContributionLogFormInner({
                         />
                         <div className="flex flex-col">
                           <span>{u.unitCode}</span>
-                          <span className="text-muted-foreground text-xs">
+                          <span className="text-basalt-muted-foreground text-xs">
                             {u.strategy} · {u.tactics}
                           </span>
                         </div>
@@ -276,7 +282,7 @@ function ContributionLogFormInner({
                       <Check
                         className={cn("mr-2 size-4", !productId ? "opacity-100" : "opacity-0")}
                       />
-                      <span className="text-muted-foreground">不关联产品</span>
+                      <span className="text-basalt-muted-foreground">不关联产品</span>
                     </CommandItem>
                     {products.map((p) => (
                       <CommandItem
@@ -295,7 +301,7 @@ function ContributionLogFormInner({
                         />
                         <div className="flex flex-col">
                           <span>{p.name}</span>
-                          <span className="text-muted-foreground text-xs">
+                          <span className="text-basalt-muted-foreground text-xs">
                             {p.channel ?? ""} · {p.category ?? ""}
                           </span>
                         </div>
@@ -311,7 +317,7 @@ function ContributionLogFormInner({
         {/* Operation type */}
         <div className="space-y-1.5">
           <Label>
-            操作类型 <span className="text-destructive">*</span>
+            操作类型 <span className="text-basalt-destructive">*</span>
           </Label>
           <Select
             value={operationType}
@@ -333,7 +339,7 @@ function ContributionLogFormInner({
         {/* Amount */}
         <div className="space-y-1.5">
           <Label>
-            金额（元） <span className="text-destructive">*</span>
+            金额（元） <span className="text-basalt-destructive">*</span>
           </Label>
           <Input
             type="number"
@@ -343,7 +349,7 @@ function ContributionLogFormInner({
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0.00"
           />
-          <p className="text-muted-foreground text-xs">
+          <p className="text-basalt-muted-foreground text-xs">
             {operationType === "withdraw" ? "取出金额将自动记为负数" : "投入金额记为正数"}
           </p>
         </div>
@@ -359,13 +365,15 @@ function ContributionLogFormInner({
             onChange={(e) => setPnl(e.target.value)}
             placeholder="如 500 或 -200"
           />
-          <p className="text-muted-foreground text-xs">本金流动记在金额，已实现收益记在这里</p>
+          <p className="text-basalt-muted-foreground text-xs">
+            本金流动记在金额，已实现收益记在这里
+          </p>
         </div>
 
         {/* Date */}
         <div className="space-y-1.5">
           <Label>
-            操作日期 <span className="text-destructive">*</span>
+            操作日期 <span className="text-basalt-destructive">*</span>
           </Label>
           <Input
             type="date"
@@ -377,7 +385,7 @@ function ContributionLogFormInner({
         {/* Note */}
         <div className="space-y-1.5">
           <Label>备注</Label>
-          <Textarea
+          <InputArea
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="可选备注..."

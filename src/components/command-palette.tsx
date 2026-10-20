@@ -1,4 +1,15 @@
 import {
+  CommandPalette as BasaltCommandPalette,
+  Button,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+  DialogClose,
+} from "@nocoo/basalt";
+import {
   CreditCard as AccountTypeIcon,
   ArrowLeftRight,
   BarChart3,
@@ -22,18 +33,10 @@ import {
   TrendingDown,
   TrendingUp,
   Warehouse,
+  X,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import {
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from "@/components/ui/command";
 
 interface NavItem {
   label: string;
@@ -102,8 +105,8 @@ export function CommandPalette() {
   }, {});
 
   return (
-    <CommandDialog open={open} onOpenChange={setOpen}>
-      <CommandInput placeholder="搜索页面或功能..." />
+    <BasaltCommandPalette open={open} onOpenChange={setOpen}>
+      <CommandInput placeholder="搜索页面或功能..." className="pr-10" />
       <CommandList>
         <CommandEmpty>未找到匹配结果</CommandEmpty>
         {Object.entries(groups).map(([group, items], i) => (
@@ -124,6 +127,11 @@ export function CommandPalette() {
           </div>
         ))}
       </CommandList>
-    </CommandDialog>
+      <DialogClose asChild>
+        <Button variant="ghost" size="icon" className="absolute right-2 top-2" aria-label="Close">
+          <X aria-hidden="true" />
+        </Button>
+      </DialogClose>
+    </BasaltCommandPalette>
   );
 }

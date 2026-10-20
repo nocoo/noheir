@@ -1,3 +1,14 @@
+import { LayerCard } from "@nocoo/basalt";
+import { Badge } from "@nocoo/basalt/components/badge";
+import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@nocoo/basalt/components/table";
 import { CreditCard, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import {
   Bar,
@@ -13,16 +24,6 @@ import {
   YAxis,
 } from "recharts";
 import { StatCard } from "@/components/shared/stat-card";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import type { AccountType } from "@/domain/types";
 import { formatCurrencyFull, formatCurrencyK } from "@/lib/chart-config";
 import { cn } from "@/lib/utils";
@@ -75,7 +76,7 @@ const PIE_COLORS = [
 
 const INCOME_HEX = "var(--color-income)";
 const EXPENSE_HEX = "var(--color-expense)";
-const BALANCE_HEX = "var(--color-primary)";
+const BALANCE_HEX = "hsl(var(--chart-1))";
 
 export function AccountAnalysisClient({
   accounts,
@@ -90,10 +91,10 @@ export function AccountAnalysisClient({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold">
-            <Wallet className="text-primary size-6" />
+            <Wallet className="text-basalt-primary size-6" />
             账户分析
           </h1>
-          <p className="text-muted-foreground text-sm">各账户收支概览与分布</p>
+          <p className="text-basalt-muted-foreground text-sm">各账户收支概览与分布</p>
         </div>
       </div>
 
@@ -126,36 +127,42 @@ export function AccountAnalysisClient({
       </div>
 
       {/* Bar Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>账户收支对比</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <LayerCard>
+        <LayerCard.Header className="items-stretch flex-col gap-1.5">
+          <h3 className="text-lg font-semibold leading-none tracking-tight text-basalt-foreground">
+            账户收支对比
+          </h3>
+        </LayerCard.Header>
+        <LayerCard.Body className="min-h-0 flex-1">
           <div className="h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={chartData.slice(0, 15)}
                 margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
               >
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                <CartesianGrid strokeDasharray="3 3" className="stroke-basalt-border/50" />
                 <XAxis
                   dataKey="name"
                   tick={{ fontSize: 11 }}
                   angle={-45}
                   textAnchor="end"
                   height={80}
-                  className="text-muted-foreground"
+                  className="text-basalt-muted-foreground"
                 />
                 <YAxis
                   tick={{ fontSize: 12 }}
-                  className="text-muted-foreground"
+                  className="text-basalt-muted-foreground"
                   tickFormatter={formatCurrencyK}
                 />
                 <Tooltip
                   content={({ active, payload, label }) => {
                     if (!active || !payload?.length) return null;
                     return (
-                      <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
+                      <div
+                        className={overlayPanelClass(
+                          "px-basalt-card-sm py-basalt-space-lg text-basalt-sm",
+                        )}
+                      >
                         <p className="mb-1 font-medium">{label}</p>
                         {payload.map((entry) => (
                           <p
@@ -176,18 +183,20 @@ export function AccountAnalysisClient({
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </CardContent>
-      </Card>
+        </LayerCard.Body>
+      </LayerCard>
 
       {/* Pie + Groups */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Pie Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle>交易量分布</CardTitle>
-            <CardDescription>各账户交易金额占比</CardDescription>
-          </CardHeader>
-          <CardContent>
+        <LayerCard>
+          <LayerCard.Header className="items-stretch flex-col gap-1.5">
+            <h3 className="text-lg font-semibold leading-none tracking-tight text-basalt-foreground">
+              交易量分布
+            </h3>
+            <p className="text-sm text-basalt-muted-foreground">各账户交易金额占比</p>
+          </LayerCard.Header>
+          <LayerCard.Body className="min-h-0 flex-1">
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -224,9 +233,13 @@ export function AccountAnalysisClient({
                         | undefined;
                       if (!data) return null;
                       return (
-                        <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
+                        <div
+                          className={overlayPanelClass(
+                            "px-basalt-card-sm py-basalt-space-lg text-basalt-sm",
+                          )}
+                        >
                           <p className="font-medium">{data.name}</p>
-                          <p className="text-muted-foreground">
+                          <p className="text-basalt-muted-foreground">
                             {formatCurrencyFull(data.value)} ({data.percentage.toFixed(1)}%)
                           </p>
                         </div>
@@ -236,16 +249,18 @@ export function AccountAnalysisClient({
                 </PieChart>
               </ResponsiveContainer>
             </div>
-          </CardContent>
-        </Card>
+          </LayerCard.Body>
+        </LayerCard>
 
         {/* Account Groups */}
-        <Card>
-          <CardHeader>
-            <CardTitle>账户分组</CardTitle>
-            <CardDescription>按前缀分组的账户概览</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <LayerCard>
+          <LayerCard.Header className="items-stretch flex-col gap-1.5">
+            <h3 className="text-lg font-semibold leading-none tracking-tight text-basalt-foreground">
+              账户分组
+            </h3>
+            <p className="text-sm text-basalt-muted-foreground">按前缀分组的账户概览</p>
+          </LayerCard.Header>
+          <LayerCard.Body className="min-h-0 flex-1 space-y-4">
             {accountGroups.map((group) => (
               <div key={group.prefix} className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -266,57 +281,61 @@ export function AccountAnalysisClient({
                   {group.accounts.slice(0, 6).map((acc) => (
                     <div key={acc.name} className="rounded-md border p-2 text-xs">
                       <p className="truncate font-medium">{acc.name}</p>
-                      <p className="text-muted-foreground">{acc.transactionCount}笔</p>
+                      <p className="text-basalt-muted-foreground">{acc.transactionCount}笔</p>
                     </div>
                   ))}
                 </div>
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </LayerCard.Body>
+        </LayerCard>
       </div>
 
       {/* Account Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>账户明细表</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>账户</TableHead>
-                <TableHead className="text-right">收入</TableHead>
-                <TableHead className="text-right">支出</TableHead>
-                <TableHead className="text-right">结余</TableHead>
-                <TableHead className="text-right">笔数</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {accounts.map((acc) => (
-                <TableRow key={acc.name}>
-                  <TableCell className="font-medium">{acc.name}</TableCell>
-                  <TableCell className="text-income text-right">
-                    {formatCurrencyFull(acc.income)}
-                  </TableCell>
-                  <TableCell className="text-expense text-right">
-                    {formatCurrencyFull(acc.expense)}
-                  </TableCell>
-                  <TableCell
-                    className={cn(
-                      "text-right font-medium",
-                      acc.balance >= 0 ? "text-income" : "text-expense",
-                    )}
-                  >
-                    {formatCurrencyFull(acc.balance)}
-                  </TableCell>
-                  <TableCell className="text-right">{acc.transactionCount}</TableCell>
+      <LayerCard>
+        <LayerCard.Header className="items-stretch flex-col gap-1.5">
+          <h3 className="text-lg font-semibold leading-none tracking-tight text-basalt-foreground">
+            账户明细表
+          </h3>
+        </LayerCard.Header>
+        <LayerCard.Body className="min-h-0 flex-1">
+          <div className="relative w-full overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>账户</TableHead>
+                  <TableHead className="text-right">收入</TableHead>
+                  <TableHead className="text-right">支出</TableHead>
+                  <TableHead className="text-right">结余</TableHead>
+                  <TableHead className="text-right">笔数</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {accounts.map((acc) => (
+                  <TableRow key={acc.name}>
+                    <TableCell className="font-medium">{acc.name}</TableCell>
+                    <TableCell className="text-income text-right">
+                      {formatCurrencyFull(acc.income)}
+                    </TableCell>
+                    <TableCell className="text-expense text-right">
+                      {formatCurrencyFull(acc.expense)}
+                    </TableCell>
+                    <TableCell
+                      className={cn(
+                        "text-right font-medium",
+                        acc.balance >= 0 ? "text-income" : "text-expense",
+                      )}
+                    >
+                      {formatCurrencyFull(acc.balance)}
+                    </TableCell>
+                    <TableCell className="text-right">{acc.transactionCount}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </LayerCard.Body>
+      </LayerCard>
     </div>
   );
 }

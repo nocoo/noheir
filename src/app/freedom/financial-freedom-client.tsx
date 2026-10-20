@@ -1,9 +1,10 @@
+import { LayerCard } from "@nocoo/basalt";
+import { Badge } from "@nocoo/basalt/components/badge";
+import { Slider } from "@nocoo/basalt/components/slider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@nocoo/basalt/components/tabs";
 import { Briefcase, Coins, Lightbulb, Target } from "lucide-react";
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { FinancialFreedomSummary } from "@/domain/dashboard/financial-freedom";
 import {
   buildIncreaseIncomeScenario,
@@ -50,24 +51,27 @@ export function FinancialFreedomClient({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold">
-            <Target className="text-primary size-6" />
+            <Target className="text-basalt-primary size-6" />
             财务自由分析
           </h1>
-          <p className="text-muted-foreground text-sm">被动收入 vs 支出，追踪财务自由进度</p>
+          <p className="text-basalt-muted-foreground text-sm">被动收入 vs 支出，追踪财务自由进度</p>
         </div>
       </div>
 
       {/* Status Card */}
-      <Card
-        className={cn("border-l-4", summary.isFree ? "border-l-success" : "border-l-amber-500")}
+      <LayerCard
+        className={cn(
+          "border-l-4",
+          summary.isFree ? "border-l-basalt-success" : "border-l-amber-500",
+        )}
       >
-        <CardContent className="space-y-4 pt-6">
+        <LayerCard.Body className="min-h-0 flex-1 space-y-4 pt-6">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold">
                 {summary.isFree ? "已实现财务自由" : "尚未实现财务自由"}
               </h3>
-              <p className="text-muted-foreground text-sm">
+              <p className="text-basalt-muted-foreground text-sm">
                 被动收入覆盖支出的 {summary.freedomRatio.toFixed(1)}%
               </p>
             </div>
@@ -84,22 +88,22 @@ export function FinancialFreedomClient({
             </div>
             <Progress value={Math.min(summary.freedomRatio, 100)} className="h-3" />
           </div>
-        </CardContent>
-      </Card>
+        </LayerCard.Body>
+      </LayerCard>
 
       {/* Income Breakdown */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card className="border-l-4 border-l-primary">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Briefcase className="text-primary size-5" />
+        <LayerCard className="border-l-4 border-l-basalt-primary">
+          <LayerCard.Header className="items-stretch flex-col gap-1.5">
+            <h3 className="font-semibold leading-none tracking-tight text-basalt-foreground flex items-center gap-2 text-base">
+              <Briefcase className="text-basalt-primary size-5" />
               主动收入 ({formatCurrencyFull(activeIncome)})
-            </CardTitle>
-            <CardDescription>工资、劳务等需要投入时间的收入</CardDescription>
-          </CardHeader>
-          <CardContent>
+            </h3>
+            <p className="text-sm text-basalt-muted-foreground">工资、劳务等需要投入时间的收入</p>
+          </LayerCard.Header>
+          <LayerCard.Body className="min-h-0 flex-1">
             {sortedActive.length === 0 ? (
-              <p className="text-muted-foreground text-sm">暂无主动收入分类配置</p>
+              <p className="text-basalt-muted-foreground text-sm">暂无主动收入分类配置</p>
             ) : (
               <div className="space-y-3">
                 {sortedActive.map((item) => (
@@ -110,20 +114,22 @@ export function FinancialFreedomClient({
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </LayerCard.Body>
+        </LayerCard>
 
-        <Card className="border-l-4 border-l-success">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Coins className="text-success size-5" />
+        <LayerCard className="border-l-4 border-l-basalt-success">
+          <LayerCard.Header className="items-stretch flex-col gap-1.5">
+            <h3 className="font-semibold leading-none tracking-tight text-basalt-foreground flex items-center gap-2 text-base">
+              <Coins className="text-basalt-success size-5" />
               被动收入 ({formatCurrencyFull(passiveIncome)})
-            </CardTitle>
-            <CardDescription>投资理财、股息、租金等不需要主动工作的收入</CardDescription>
-          </CardHeader>
-          <CardContent>
+            </h3>
+            <p className="text-sm text-basalt-muted-foreground">
+              投资理财、股息、租金等不需要主动工作的收入
+            </p>
+          </LayerCard.Header>
+          <LayerCard.Body className="min-h-0 flex-1">
             {sortedPassive.length === 0 ? (
-              <p className="text-muted-foreground text-sm">暂无被动收入记录</p>
+              <p className="text-basalt-muted-foreground text-sm">暂无被动收入记录</p>
             ) : (
               <div className="space-y-3">
                 {sortedPassive.map((item) => (
@@ -134,20 +140,22 @@ export function FinancialFreedomClient({
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </LayerCard.Body>
+        </LayerCard>
       </div>
 
       {/* What-If Scenarios */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
+      <LayerCard>
+        <LayerCard.Header className="items-stretch flex-col gap-1.5">
+          <h3 className="font-semibold leading-none tracking-tight text-basalt-foreground flex items-center gap-2 text-base">
             <Lightbulb className="size-5" />
             假设场景分析
-          </CardTitle>
-          <CardDescription>调整滑块探索不同情境下的财务自由可能性</CardDescription>
-        </CardHeader>
-        <CardContent>
+          </h3>
+          <p className="text-sm text-basalt-muted-foreground">
+            调整滑块探索不同情境下的财务自由可能性
+          </p>
+        </LayerCard.Header>
+        <LayerCard.Body className="min-h-0 flex-1">
           <Tabs defaultValue="reduce" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="reduce">削减支出</TabsTrigger>
@@ -160,17 +168,16 @@ export function FinancialFreedomClient({
                   <span>削减支出比例</span>
                   <span className="font-medium">{reductionPct}%</span>
                 </div>
-                <input
-                  type="range"
+                <Slider
+                  aria-label="削减支出比例"
                   min={0}
                   max={80}
                   step={5}
-                  value={reductionPct}
-                  onChange={(e) => setReductionPct(Number(e.target.value))}
-                  className="w-full"
+                  value={[reductionPct]}
+                  onValueChange={([value]) => setReductionPct(value ?? 0)}
                 />
               </div>
-              <div className="bg-muted/50 space-y-2 rounded-lg p-4">
+              <div className="space-y-2 rounded-lg p-4">
                 <div className="flex justify-between text-sm">
                   <span>调整后支出:</span>
                   <span className="font-medium">
@@ -196,17 +203,16 @@ export function FinancialFreedomClient({
                   <span>增加被动收入比例</span>
                   <span className="font-medium">{increasePct}%</span>
                 </div>
-                <input
-                  type="range"
+                <Slider
+                  aria-label="增加被动收入比例"
                   min={0}
                   max={500}
                   step={10}
-                  value={increasePct}
-                  onChange={(e) => setIncreasePct(Number(e.target.value))}
-                  className="w-full"
+                  value={[increasePct]}
+                  onValueChange={([value]) => setIncreasePct(value ?? 0)}
                 />
               </div>
-              <div className="bg-muted/50 space-y-2 rounded-lg p-4">
+              <div className="space-y-2 rounded-lg p-4">
                 <div className="flex justify-between text-sm">
                   <span>总支出:</span>
                   <span className="font-medium">{formatCurrencyFull(totalExpense)}</span>
@@ -226,24 +232,26 @@ export function FinancialFreedomClient({
               </div>
             </TabsContent>
           </Tabs>
-        </CardContent>
-      </Card>
+        </LayerCard.Body>
+      </LayerCard>
 
       {/* Tips */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">财务自由小贴士</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="text-muted-foreground list-disc space-y-2 pl-5 text-sm">
+      <LayerCard>
+        <LayerCard.Header className="items-stretch flex-col gap-1.5">
+          <h3 className="font-semibold leading-none tracking-tight text-basalt-foreground text-base">
+            财务自由小贴士
+          </h3>
+        </LayerCard.Header>
+        <LayerCard.Body className="min-h-0 flex-1">
+          <ul className="text-basalt-muted-foreground list-disc space-y-2 pl-5 text-sm">
             <li>财务自由的核心：被动收入 ≥ 生活支出</li>
             <li>先积累本金，再追求被动收入的增长</li>
             <li>控制支出增长比提高收入更容易实现</li>
             <li>多元化被动收入来源，降低单一风险</li>
             <li>定期审视主动收入分类配置，确保分析准确</li>
           </ul>
-        </CardContent>
-      </Card>
+        </LayerCard.Body>
+      </LayerCard>
     </div>
   );
 }

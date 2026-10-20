@@ -1,3 +1,21 @@
+import { LayerCard } from "@nocoo/basalt";
+import { Badge } from "@nocoo/basalt/components/badge";
+import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@nocoo/basalt/components/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@nocoo/basalt/components/table";
 import { CreditCard } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router";
 import {
@@ -10,23 +28,6 @@ import {
   YAxis,
 } from "recharts";
 import { StatCard } from "@/components/shared/stat-card";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import type { DailyBalance, DisplayEntry } from "@/domain/dashboard/account-detail";
 import { formatCurrencyFull, formatCurrencyK } from "@/lib/chart-config";
 import { cn } from "@/lib/utils";
@@ -52,7 +53,7 @@ const TYPE_LABELS: Record<string, { label: string; color: string }> = {
   income: { label: "收入", color: "text-income" },
   expense: { label: "支出", color: "text-expense" },
   transfer: { label: "转账", color: "text-blue-600" },
-  anchor: { label: "锚点", color: "text-muted-foreground" },
+  anchor: { label: "锚点", color: "text-basalt-muted-foreground" },
 };
 
 export function AccountDetailClient({
@@ -77,10 +78,10 @@ export function AccountDetailClient({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold">
-            <CreditCard className="text-primary size-6" />
+            <CreditCard className="text-basalt-primary size-6" />
             账户明细
           </h1>
-          <p className="text-muted-foreground text-sm">查看单个账户的余额变化和交易明细</p>
+          <p className="text-basalt-muted-foreground text-sm">查看单个账户的余额变化和交易明细</p>
         </div>
         <div className="flex items-center gap-2">
           <Select value={selectedAccount} onValueChange={handleAccountChange}>
@@ -127,12 +128,14 @@ export function AccountDetailClient({
       </div>
 
       {/* Balance Line Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>余额变化</CardTitle>
-          <CardDescription>{selectedAccount} 的日均余额趋势</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <LayerCard>
+        <LayerCard.Header className="items-stretch flex-col gap-1.5">
+          <h3 className="text-lg font-semibold leading-none tracking-tight text-basalt-foreground">
+            余额变化
+          </h3>
+          <p className="text-sm text-basalt-muted-foreground">{selectedAccount} 的日均余额趋势</p>
+        </LayerCard.Header>
+        <LayerCard.Body className="min-h-0 flex-1">
           <div className="h-[350px]">
             {dailyBalances.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -140,21 +143,29 @@ export function AccountDetailClient({
                   data={dailyBalances}
                   margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-basalt-border/50" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 11 }}
+                    className="text-basalt-muted-foreground"
+                  />
                   <YAxis
                     tick={{ fontSize: 12 }}
-                    className="text-muted-foreground"
+                    className="text-basalt-muted-foreground"
                     tickFormatter={formatCurrencyK}
                   />
                   <Tooltip
                     content={({ active, payload, label }) => {
                       if (!active || !payload?.length) return null;
                       return (
-                        <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
+                        <div
+                          className={overlayPanelClass(
+                            "px-basalt-card-sm py-basalt-space-lg text-basalt-sm",
+                          )}
+                        >
                           <p className="mb-1 font-medium">{label}</p>
                           {payload.map((entry) => (
-                            <p key={String(entry.dataKey)} className="text-muted-foreground">
+                            <p key={String(entry.dataKey)} className="text-basalt-muted-foreground">
                               {entry.name}: {formatCurrencyFull(Number(entry.value ?? 0))}
                             </p>
                           ))}
@@ -166,7 +177,7 @@ export function AccountDetailClient({
                     type="monotone"
                     dataKey="balance"
                     name="余额"
-                    stroke="hsl(var(--primary))"
+                    stroke="hsl(var(--chart-1))"
                     strokeWidth={2}
                     dot={false}
                     activeDot={{ r: 4 }}
@@ -174,78 +185,82 @@ export function AccountDetailClient({
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <div className="text-muted-foreground flex h-full items-center justify-center">
+              <div className="text-basalt-muted-foreground flex h-full items-center justify-center">
                 暂无余额数据
               </div>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </LayerCard.Body>
+      </LayerCard>
 
       {/* Transaction Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>交易明细</CardTitle>
-          <CardDescription>{displayEntries.length} 条记录</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>日期</TableHead>
-                <TableHead>类别</TableHead>
-                <TableHead>类型</TableHead>
-                <TableHead className="text-right">金额</TableHead>
-                <TableHead className="text-right">余额</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {displayEntries.map((entry) => {
-                const typeInfo = TYPE_LABELS[entry.type] ?? {
-                  label: "支出",
-                  color: "text-expense",
-                };
-                const isAnchor = entry.isAnchor === true;
+      <LayerCard>
+        <LayerCard.Header className="items-stretch flex-col gap-1.5">
+          <h3 className="text-lg font-semibold leading-none tracking-tight text-basalt-foreground">
+            交易明细
+          </h3>
+          <p className="text-sm text-basalt-muted-foreground">{displayEntries.length} 条记录</p>
+        </LayerCard.Header>
+        <LayerCard.Body className="min-h-0 flex-1">
+          <div className="relative w-full overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>日期</TableHead>
+                  <TableHead>类别</TableHead>
+                  <TableHead>类型</TableHead>
+                  <TableHead className="text-right">金额</TableHead>
+                  <TableHead className="text-right">余额</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {displayEntries.map((entry) => {
+                  const typeInfo = TYPE_LABELS[entry.type] ?? {
+                    label: "支出",
+                    color: "text-expense",
+                  };
+                  const isAnchor = entry.isAnchor === true;
 
-                return (
-                  <TableRow key={entry.id} className={cn(isAnchor && "bg-muted/50")}>
-                    <TableCell>{entry.date}</TableCell>
-                    <TableCell>
-                      {isAnchor ? (
-                        <Badge variant="outline">锚点</Badge>
-                      ) : (
-                        <span className="text-sm">
-                          {entry.primaryCategory ?? "—"}
-                          {entry.tertiaryCategory ? ` / ${entry.tertiaryCategory}` : ""}
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          entry.type === "income"
-                            ? "default"
-                            : entry.type === "expense"
-                              ? "destructive"
-                              : "secondary"
-                        }
-                      >
-                        {typeInfo.label}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className={cn("text-right font-medium", typeInfo.color)}>
-                      {isAnchor ? "—" : formatCurrencyFull(entry.amount)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatCurrencyFull(entry.balanceAfter)}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                  return (
+                    <TableRow key={entry.id} className={cn(isAnchor && "bg-basalt-muted/50")}>
+                      <TableCell>{entry.date}</TableCell>
+                      <TableCell>
+                        {isAnchor ? (
+                          <Badge variant="outline">锚点</Badge>
+                        ) : (
+                          <span className="text-sm">
+                            {entry.primaryCategory ?? "—"}
+                            {entry.tertiaryCategory ? ` / ${entry.tertiaryCategory}` : ""}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            entry.type === "income"
+                              ? "default"
+                              : entry.type === "expense"
+                                ? "destructive"
+                                : "secondary"
+                          }
+                        >
+                          {typeInfo.label}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className={cn("text-right font-medium", typeInfo.color)}>
+                        {isAnchor ? "—" : formatCurrencyFull(entry.amount)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrencyFull(entry.balanceAfter)}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </LayerCard.Body>
+      </LayerCard>
     </div>
   );
 }

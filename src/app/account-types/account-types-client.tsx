@@ -1,4 +1,5 @@
-import { Button } from "@nocoo/basalt";
+import { Button, LayerCard } from "@nocoo/basalt";
+import { Badge } from "@nocoo/basalt/components/badge";
 import {
   Select,
   SelectContent,
@@ -6,14 +7,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@nocoo/basalt/components/select";
+import { toast } from "@nocoo/basalt/components/toast";
 import { CreditCard, Save } from "lucide-react";
 import { useState, useTransition } from "react";
 import { useRevalidator } from "react-router";
-import { toast } from "sonner";
 import { saveAccountTypes } from "@/app/actions/settings-actions";
 import { FinancialSnapshotNotice } from "@/components/shared/financial-snapshot-notice";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { buildAccountTypesUpdate } from "@/domain/settings/account-types";
 import type { AccountType, AccountTypeConfig } from "@/domain/types";
 
@@ -76,10 +75,12 @@ export function AccountTypesClient({
       {/* Header */}
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <CreditCard className="text-primary size-6" />
+          <CreditCard className="text-basalt-primary size-6" />
           账户类型管理
         </h1>
-        <p className="text-muted-foreground text-sm">配置各账户的归类（储蓄卡、信用卡、理财等）</p>
+        <p className="text-basalt-muted-foreground text-sm">
+          配置各账户的归类（储蓄卡、信用卡、理财等）
+        </p>
       </div>
 
       {/* Grouped View */}
@@ -88,16 +89,16 @@ export function AccountTypesClient({
           ([typeKey, config]) => {
             const items = grouped[typeKey] ?? [];
             return (
-              <Card key={typeKey}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center gap-2 text-base">
+              <LayerCard key={typeKey}>
+                <LayerCard.Header className="items-stretch flex-col gap-1.5 pb-2">
+                  <h3 className="font-semibold leading-none tracking-tight text-basalt-foreground flex items-center gap-2 text-base">
                     <Badge className={config.color}>{config.label}</Badge>
-                    <span className="text-muted-foreground text-sm font-normal">
+                    <span className="text-basalt-muted-foreground text-sm font-normal">
                       {items.length}个
                     </span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+                  </h3>
+                </LayerCard.Header>
+                <LayerCard.Body className="min-h-0 flex-1">
                   {items.length > 0 ? (
                     <div className="flex flex-wrap gap-1">
                       {items.map((name) => (
@@ -107,22 +108,24 @@ export function AccountTypesClient({
                       ))}
                     </div>
                   ) : (
-                    <p className="text-muted-foreground text-xs">无账户</p>
+                    <p className="text-basalt-muted-foreground text-xs">无账户</p>
                   )}
-                </CardContent>
-              </Card>
+                </LayerCard.Body>
+              </LayerCard>
             );
           },
         )}
       </div>
 
       {/* Account Type Editor */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">账户类型编辑</CardTitle>
-          <CardDescription>为每个账户指定类型</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <LayerCard>
+        <LayerCard.Header className="items-stretch flex-col gap-1.5">
+          <h3 className="font-semibold leading-none tracking-tight text-basalt-foreground text-base">
+            账户类型编辑
+          </h3>
+          <p className="text-sm text-basalt-muted-foreground">为每个账户指定类型</p>
+        </LayerCard.Header>
+        <LayerCard.Body className="min-h-0 flex-1">
           <div className="space-y-2">
             {accounts.map((account) => (
               <div
@@ -150,11 +153,11 @@ export function AccountTypesClient({
               </div>
             ))}
             {accounts.length === 0 && (
-              <p className="text-muted-foreground py-4 text-center text-sm">暂无账户数据</p>
+              <p className="text-basalt-muted-foreground py-4 text-center text-sm">暂无账户数据</p>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </LayerCard.Body>
+      </LayerCard>
 
       {/* Save */}
       <div className="flex justify-end">

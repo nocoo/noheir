@@ -1,4 +1,4 @@
-import { Button } from "@nocoo/basalt";
+import { Button, DialogClose } from "@nocoo/basalt";
 import {
   Dialog,
   DialogContent,
@@ -6,7 +6,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@nocoo/basalt/components/dialog";
+import { XIcon } from "lucide-react";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -27,9 +28,9 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent size="lg">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <DialogTitle className="pr-8">{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -40,6 +41,11 @@ export function ConfirmDialog({
             {loading ? "处理中..." : "确认删除"}
           </Button>
         </DialogFooter>
+        <DialogClose asChild>
+          <Button variant="ghost" size="icon" className="absolute right-2 top-2" aria-label="Close">
+            <XIcon aria-hidden="true" />
+          </Button>
+        </DialogClose>
       </DialogContent>
     </Dialog>
   );

@@ -16,6 +16,32 @@ Deployments must use the successful CI commit and verify its live build revision
 Public `/api/live` performs a read-only D1 probe and returns version, build SHA,
 database status and no-store; dependency failures return a generic 503.
 
+## Basalt integration
+
+The installed `@nocoo/basalt` 3.2.0 artifact is the UI API authority. Configure
+the product's Blue preset with `AccentProvider accent="primary" persist={false}`;
+ordinary surfaces and controls use the package's `basalt-*` tokens, not a second
+application theme. Financial colors and stable domain-label mappings remain
+independent from the control accent.
+
+Navigation uses public link-capable components: `EditableNavItem` inside
+`SidebarNav`, and `NavigationMenuLink asChild` in the collapsed rail. The router
+adapter forwards anchor attributes, events and refs. Do not paint selected rows
+with `accent` or override native hover; selection must persist while the pointer
+highlights another destination. Keep the logo aligned in both rail modes.
+
+Let public controls own focus, selection and surface styling. Application-owned
+composites may supply business content, responsive layout and domain colors;
+they must not fork generic control styling. Verify light/dark, keyboard focus,
+mobile navigation and bounded year selection in Chrome, not only component tests.
+
+The remaining local UI modules are domain-colored badges, a thin inline `cmdk`
+container, application-controlled asynchronous confirmation, and a Radix progress
+bar that supports indeterminate values. They are not parallel generic themes.
+Custom financial chart content uses the public `overlayPanelClass` surface helper;
+the package's `chartTooltipContentStyle` only clears the outer Recharts wrapper
+and must not be mistaken for a painted tooltip surface.
+
 ## Domain labels and availability
 
 ### Unified Badge System

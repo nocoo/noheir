@@ -3,18 +3,18 @@
  * unit-editor.tsx; the unit being edited is never offered as a target.
  */
 
-import { Button } from "@nocoo/basalt";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { useState } from "react";
 import {
-  Command,
+  Button,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+} from "@nocoo/basalt";
+import { Popover, PopoverContent, PopoverTrigger } from "@nocoo/basalt/components/popover";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { useState } from "react";
+import { Command } from "@/components/ui/command";
 import type { SerializedUnit } from "@/domain/types";
 import { formatCurrencyFull } from "@/lib/chart-config";
 import { eligibleSwapTargets } from "@/lib/unit-commit-plan";
@@ -46,13 +46,13 @@ export function UnitSwapPicker({
           role="combobox"
           aria-expanded={open}
           aria-label="选择对换单元"
-          className="h-9 w-full justify-between text-xs font-normal"
+          className="w-full justify-between font-normal"
         >
           {selected ? selected.unitCode : "选择对换单元..."}
           <ChevronsUpDown className="ml-2 size-3.5 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+      <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
         <Command>
           <CommandInput placeholder="搜索番号..." />
           <CommandList>
@@ -75,7 +75,7 @@ export function UnitSwapPicker({
                   />
                   <div className="flex min-w-0 flex-col">
                     <span className="truncate">{unit.unitCode}</span>
-                    <span className="text-muted-foreground truncate text-xs">
+                    <span className="text-basalt-muted-foreground truncate text-xs">
                       {[unit.productName, formatCurrencyFull(unit.amount)]
                         .filter(Boolean)
                         .join(" · ")}

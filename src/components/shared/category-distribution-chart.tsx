@@ -1,3 +1,11 @@
+import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@nocoo/basalt/components/select";
 import { Layers } from "lucide-react";
 import { useState } from "react";
 import {
@@ -11,13 +19,6 @@ import {
   YAxis,
 } from "recharts";
 import { ChartCard } from "@/components/shared/chart-card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { formatCurrencyFull, formatCurrencyK } from "@/lib/chart-config";
 
 /** Category drill-down structure for the distribution chart */
@@ -88,11 +89,11 @@ export function CategoryDistributionChart({
             layout="vertical"
             margin={{ top: 10, right: 20, bottom: 10, left: 10 }}
           >
-            <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+            <CartesianGrid strokeDasharray="3 3" className="stroke-basalt-border/50" />
             <XAxis
               type="number"
               tick={{ fontSize: 12 }}
-              className="text-muted-foreground"
+              className="text-basalt-muted-foreground"
               tickFormatter={formatCurrencyK}
             />
             <YAxis
@@ -100,14 +101,18 @@ export function CategoryDistributionChart({
               dataKey="name"
               width={100}
               tick={{ fontSize: 12 }}
-              className="text-muted-foreground"
+              className="text-basalt-muted-foreground"
             />
             <Tooltip
               content={({ active, payload }) => {
                 if (!active || !payload?.length) return null;
                 const entry = payload[0];
                 return (
-                  <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
+                  <div
+                    className={overlayPanelClass(
+                      "px-basalt-card-sm py-basalt-space-lg text-basalt-sm",
+                    )}
+                  >
                     <p className="font-medium">{entry?.payload?.name}</p>
                     <p style={{ color: tooltipColor }}>
                       金额: {formatCurrencyFull(Number(entry?.value ?? 0))}

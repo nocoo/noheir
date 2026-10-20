@@ -157,3 +157,36 @@ existing integration gap. A native browser regression first reproduced the lost
 focus; the Sheet close callback now restores the explicit opener reference.
 Overlay acceptance must check keyboard focus, navigation dismissal and scroll
 unlocking as well as a visible open/closed state.
+
+## 2026-10-20 - Verify token names and visible header bounds
+
+During the Basalt cleanup, the first logo-layout change used Tailwind spacing
+names as if they were CSS custom properties. The browser ignored the undefined
+calculation and the logo shifted 14 pixels on collapse. A Chrome geometry check
+caught this before commit. The calculation now uses the actual published
+`--basalt-size-rail` and `--basalt-space-nav-inset` tokens, and a browser regression
+checks both themes and rail modes. Utility names are not evidence of variable
+names; read the installed stylesheet before using a custom-property expression.
+
+The same pass found a header whose action strip extended beyond the mobile
+viewport despite `scrollWidth` reporting no overflow, because its parent clipped
+the excess. Year selection now has a bounded native Select, breadcrumbs use the
+package's shrinking region, and narrow-screen project links remain available in
+the navigation drawer. Check visible action bounds and keyboard reachability,
+not just the document's scroll width, when accepting a responsive shell.
+
+The first full browser run also compared the permission groups using two separate
+geometry reads during the desktop-to-mobile re-render. It combined the old narrow
+card height with the new lower card position and reported an overlap. A fresh
+mobile inspection showed a correctly stacked single-column grid. The assertion
+now reads both rectangles in one browser layout snapshot and retries that actual
+relationship; no fixed delay, relaxed overlap tolerance or layout workaround was
+added to make the test pass.
+
+Settled mobile screenshots then exposed a real migration regression: the old
+domain Badge kept labels on one line, while the native Badge permits wrapping.
+Strategy labels became vertical strings even inside an overflow container. The
+domain wrapper now explicitly retains `whitespace-nowrap`; a red/green component
+test and a real-browser table check cover it. Search fields also flex instead of
+squeezing short action labels. Preserve meaningful domain layout contracts when
+replacing primitives, and inspect rendered content rather than overflow alone.

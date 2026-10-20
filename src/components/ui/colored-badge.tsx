@@ -7,7 +7,7 @@
  * free-text values (unit code prefix, channel) are hashed onto the same palette.
  */
 
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@nocoo/basalt/components/badge";
 import {
   getCurrencyToken,
   getProductCategoryToken,
@@ -37,7 +37,7 @@ function ChartColorBadge({
   return (
     <Badge
       variant="outline"
-      className={cn("border-transparent font-normal", className)}
+      className={cn("whitespace-nowrap border-transparent font-normal", className)}
       style={{
         backgroundColor: withAlpha(token, 0.15),
         color: withAlpha(token, 1),
@@ -59,7 +59,7 @@ export function UnitCodeBadge({ unitCode, className }: { unitCode: string; class
   return (
     <Badge
       variant="outline"
-      className={cn("border-transparent font-mono", className)}
+      className={cn("whitespace-nowrap border-transparent font-mono", className)}
       style={{
         backgroundColor: withAlpha(token, 0.15),
         color: withAlpha(token, 1),

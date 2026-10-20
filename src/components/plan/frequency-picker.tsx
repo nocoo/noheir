@@ -19,9 +19,10 @@
 // arrow-key navigation. Conditional fields render inline below and
 // are wired to Input components consistent with the rest of Noheir.
 
+import { Button } from "@nocoo/basalt/components/button";
+import { Input } from "@nocoo/basalt/components/input";
+import { Label } from "@nocoo/basalt/components/label";
 import * as React from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 export const FREQUENCIES = ["daily", "weekly", "monthly", "yearly"] as const;
@@ -217,24 +218,22 @@ export function FrequencyPicker({
           role="radiogroup"
           aria-label="频率"
           aria-disabled={disabled || undefined}
-          className={cn(
-            "inline-flex rounded-md border border-border bg-secondary p-1 gap-1",
-            disabled && "opacity-50 pointer-events-none",
-          )}
+          className="inline-flex flex-wrap gap-basalt-space-sm"
         >
           {FREQUENCIES.map((f, idx) => {
             const selected = f === value.frequency;
             const isTabStop = idx === tabIdx;
             return (
-              // biome-ignore lint/a11y/useSemanticElements: styled chip, not a native input radio
-              <button
+              <Button
                 key={f}
                 ref={(el) => {
                   buttonRef.current[idx] = el;
                 }}
                 type="button"
+                variant="outline"
                 role="radio"
                 aria-checked={selected}
+                data-state={selected ? "checked" : "unchecked"}
                 aria-label={FREQ_LABEL[f]}
                 data-frequency={f}
                 tabIndex={disabled ? -1 : isTabStop ? 0 : -1}
@@ -245,16 +244,9 @@ export function FrequencyPicker({
                   setFrequency(f);
                 }}
                 onKeyDown={(e) => handleKey(e, idx)}
-                className={cn(
-                  "rounded-sm px-3 py-1.5 text-sm font-medium transition-colors outline-none",
-                  "focus-visible:ring-2 focus-visible:ring-ring",
-                  selected
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
               >
                 {FREQ_LABEL[f]}
-              </button>
+              </Button>
             );
           })}
         </div>
@@ -281,10 +273,10 @@ export function FrequencyPicker({
             }}
             className="w-24"
           />
-          <span className="text-sm text-muted-foreground">{FREQ_UNIT[value.frequency]}</span>
+          <span className="text-sm text-basalt-muted-foreground">{FREQ_UNIT[value.frequency]}</span>
         </div>
         {errors?.interval ? (
-          <p id={`${intervalId}-error`} role="alert" className="text-sm text-destructive">
+          <p id={`${intervalId}-error`} role="alert" className="text-sm text-basalt-destructive">
             {errors.interval}
           </p>
         ) : null}
@@ -305,15 +297,16 @@ export function FrequencyPicker({
               const selected = value.weekday === w;
               const isTabStop = w === weekdayTabIdx;
               return (
-                // biome-ignore lint/a11y/useSemanticElements: styled chip, not a native input radio
-                <button
+                <Button
                   key={label}
                   ref={(el) => {
                     weekdayRef.current[w] = el;
                   }}
                   type="button"
+                  variant="outline"
                   role="radio"
                   aria-checked={selected}
+                  data-state={selected ? "checked" : "unchecked"}
                   aria-label={label}
                   disabled={disabled}
                   tabIndex={disabled ? -1 : isTabStop ? 0 : -1}
@@ -324,21 +317,18 @@ export function FrequencyPicker({
                     onChange({ ...value, weekday: w });
                   }}
                   onKeyDown={(e) => handleWeekdayKey(e, w)}
-                  className={cn(
-                    "rounded-md border px-3 py-1.5 text-sm transition-colors outline-none",
-                    "focus-visible:ring-2 focus-visible:ring-ring",
-                    selected
-                      ? "border-foreground bg-foreground/10"
-                      : "border-border bg-secondary hover:bg-background",
-                  )}
                 >
                   {label}
-                </button>
+                </Button>
               );
             })}
           </div>
           {errors?.weekday ? (
-            <p id={`${weekdayGroupId}-error`} role="alert" className="text-sm text-destructive">
+            <p
+              id={`${weekdayGroupId}-error`}
+              role="alert"
+              className="text-sm text-basalt-destructive"
+            >
               {errors.weekday}
             </p>
           ) : null}
@@ -366,7 +356,7 @@ export function FrequencyPicker({
             className="w-24"
           />
           {errors?.monthOfYear ? (
-            <p id={`${monthId}-error`} role="alert" className="text-sm text-destructive">
+            <p id={`${monthId}-error`} role="alert" className="text-sm text-basalt-destructive">
               {errors.monthOfYear}
             </p>
           ) : null}
@@ -394,7 +384,7 @@ export function FrequencyPicker({
             className="w-24"
           />
           {errors?.dayOfMonth ? (
-            <p id={`${dayId}-error`} role="alert" className="text-sm text-destructive">
+            <p id={`${dayId}-error`} role="alert" className="text-sm text-basalt-destructive">
               {errors.dayOfMonth}
             </p>
           ) : null}

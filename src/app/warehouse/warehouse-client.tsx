@@ -1,3 +1,16 @@
+import { Badge, Button } from "@nocoo/basalt";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@nocoo/basalt/components/collapsible";
+import { Input } from "@nocoo/basalt/components/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@nocoo/basalt/components/tooltip";
 import {
   Building2,
   ChevronDown,
@@ -17,10 +30,13 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { useNavigate, useRevalidator, useSearchParams } from "react-router";
 import { type SerializedUnit, UnitEditor } from "@/components/capital/unit-editor";
 import { UnitTooltip } from "@/components/capital/unit-tooltip";
-import { Card, CardContent } from "@/components/ui/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Input } from "@/components/ui/input";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  ChannelBadge,
+  ProductBadge,
+  StatusBadge,
+  StrategyBadge,
+  TacticsBadge,
+} from "@/components/ui/colored-badge";
 import { sumCurrency } from "@/domain/currency-summary";
 import type { DomainProduct } from "@/domain/types";
 import { formatCurrencyFull } from "@/lib/chart-config";
@@ -72,7 +88,7 @@ const AVAILABILITY_OPTIONS = [
     label: "即将可用",
     color: "text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30",
   },
-  { value: "locked", label: "锁定中", color: "text-destructive bg-destructive/10" },
+  { value: "locked", label: "锁定中", color: "text-basalt-destructive bg-basalt-destructive/10" },
 ] as const;
 type AvailabilityFilter = "all" | "available" | "soon" | "locked";
 
@@ -398,10 +414,10 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
             <h1 className="flex items-center gap-2 text-xl font-bold sm:text-2xl">
-              <Warehouse className="text-primary size-5 shrink-0 sm:size-6" />
+              <Warehouse className="text-basalt-primary size-5 shrink-0 sm:size-6" />
               资本仓库
             </h1>
-            <p className="text-muted-foreground text-xs sm:text-sm">
+            <p className="text-basalt-muted-foreground text-xs sm:text-sm">
               {groupedUnits.length}个分组 · {filtered.length}个单位 · CNY{" "}
               {formatCurrencyFull(totalAmount)}
             </p>
@@ -409,25 +425,28 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
 
           {/* Search - right aligned, always visible */}
           <div className="relative shrink-0">
-            <Search className="text-muted-foreground absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2" />
+            <Search className="text-basalt-muted-foreground absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2" />
             <Input
               ref={searchInputRef}
               placeholder="筛选 /"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-8 w-[120px] pl-8 pr-7 text-xs sm:h-9 sm:w-[160px] sm:text-sm"
+              className="w-[120px] pl-8 pr-10 sm:w-[160px]"
             />
             {search && (
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="清除搜索"
+                className="absolute right-0 top-1/2 -translate-y-1/2"
                 type="button"
                 onClick={() => {
                   setSearch("");
                   searchInputRef.current?.focus();
                 }}
-                className="text-muted-foreground hover:text-foreground absolute right-2 top-1/2 -translate-y-1/2"
               >
                 <X className="size-3.5" />
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -435,209 +454,188 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
         {/* Filter Rows */}
         <Collapsible open={!filtersCollapsed} onOpenChange={(open) => setFiltersCollapsed(!open)}>
           <div className="flex items-center gap-1.5 sm:gap-2">
-            <CollapsibleTrigger className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-[10px] sm:text-xs">
-              <ChevronDown
-                className={cn(
-                  "size-3 transition-transform sm:size-3.5",
-                  filtersCollapsed && "-rotate-90",
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <ChevronDown
+                  className={cn(
+                    "size-3 transition-transform sm:size-3.5",
+                    filtersCollapsed && "-rotate-90",
+                  )}
+                />
+                <span>筛选</span>
+                {activeFilterCount > 0 && (
+                  <span className="bg-basalt-primary text-basalt-primary-foreground rounded-full px-1.5 text-basalt-sm">
+                    {activeFilterCount}
+                  </span>
                 )}
-              />
-              <span>筛选</span>
-              {activeFilterCount > 0 && (
-                <span className="bg-primary text-primary-foreground rounded-full px-1.5 text-[9px]">
-                  {activeFilterCount}
-                </span>
-              )}
+              </Button>
             </CollapsibleTrigger>
             {/* Reset All Button - always visible */}
             {hasActiveFilters && (
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="重置所有筛选"
+                className="ml-auto"
                 type="button"
                 onClick={resetAllFilters}
-                className="text-muted-foreground hover:text-foreground ml-auto flex items-center gap-1 text-[10px] sm:text-xs"
                 title="重置所有筛选"
               >
                 <RotateCcw className="size-3" />
                 <span className="hidden sm:inline">重置</span>
-              </button>
+              </Button>
             )}
           </div>
 
-          <CollapsibleContent className="space-y-1.5 pt-1.5 sm:space-y-2 sm:pt-2">
+          <CollapsibleContent unstyled className="space-y-1.5 pt-1.5 sm:space-y-2 sm:pt-2">
             {/* Row 1: Group By */}
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <div className="text-muted-foreground flex w-12 shrink-0 items-center gap-1 text-[10px] sm:w-14 sm:text-xs">
+              <div className="text-basalt-muted-foreground flex w-12 shrink-0 items-center gap-1 text-basalt-sm sm:w-14 sm:text-xs">
                 <Layers className="size-3 sm:size-3.5" />
                 <span>分组</span>
               </div>
               {GROUP_BY_OPTIONS.map((opt) => (
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-pressed={groupBy === opt.value}
                   type="button"
                   key={opt.value}
                   onClick={() => setGroupBy(opt.value)}
-                  className={cn(
-                    "rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors sm:px-2.5 sm:py-1 sm:text-xs",
-                    groupBy === opt.value
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted hover:bg-muted/80 text-muted-foreground",
-                  )}
                 >
                   {opt.label}
-                </button>
+                </Button>
               ))}
             </div>
 
             {/* Row 2: Availability */}
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <div className="text-muted-foreground flex w-12 shrink-0 items-center gap-1 text-[10px] sm:w-14 sm:text-xs">
+              <div className="text-basalt-muted-foreground flex w-12 shrink-0 items-center gap-1 text-basalt-sm sm:w-14 sm:text-xs">
                 <Clock className="size-3 sm:size-3.5" />
                 <span>可用</span>
               </div>
               {AVAILABILITY_OPTIONS.map((opt) => (
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-pressed={filterAvailability === opt.value}
                   type="button"
                   key={opt.value}
                   onClick={() =>
                     setFilterAvailability(filterAvailability === opt.value ? "all" : opt.value)
                   }
-                  className={cn(
-                    "rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors sm:px-2.5 sm:py-1 sm:text-xs",
-                    filterAvailability === opt.value
-                      ? opt.color
-                      : "bg-muted hover:bg-muted/80 text-muted-foreground",
-                  )}
                 >
-                  {opt.label}
-                </button>
+                  <Badge variant="outline" className={opt.color}>
+                    {opt.label}
+                  </Badge>
+                </Button>
               ))}
               {filterAvailability !== "all" && (
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="清除可用性筛选"
                   type="button"
                   onClick={() => setFilterAvailability("all")}
-                  className="text-muted-foreground hover:text-foreground ml-1"
                 >
                   <X className="size-3" />
-                </button>
+                </Button>
               )}
             </div>
 
             {/* Row 3: Status */}
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <div className="text-muted-foreground flex w-12 shrink-0 items-center gap-1 text-[10px] sm:w-14 sm:text-xs">
+              <div className="text-basalt-muted-foreground flex w-12 shrink-0 items-center gap-1 text-basalt-sm sm:w-14 sm:text-xs">
                 <Flag className="size-3 sm:size-3.5" />
                 <span>状态</span>
               </div>
               {STATUSES.map((s) => (
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-pressed={filterStatus === s}
                   type="button"
                   key={s}
                   onClick={() => toggleFilter(filterStatus, s, setFilterStatus)}
-                  className={cn(
-                    "rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors sm:px-2.5 sm:py-1 sm:text-xs",
-                    filterStatus === s
-                      ? "text-primary-foreground"
-                      : "bg-muted hover:bg-muted/80 text-muted-foreground",
-                  )}
-                  style={
-                    filterStatus === s
-                      ? {
-                          backgroundColor: withAlpha(getStatusToken(s), 1),
-                        }
-                      : undefined
-                  }
                 >
-                  {s}
-                </button>
+                  <StatusBadge status={s} />
+                </Button>
               ))}
               {filterStatus !== "all" && (
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="清除状态筛选"
                   type="button"
                   onClick={() => setFilterStatus("all")}
-                  className="text-muted-foreground hover:text-foreground ml-1"
                 >
                   <X className="size-3" />
-                </button>
+                </Button>
               )}
             </div>
 
             {/* Row 3: Strategy */}
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <div className="text-muted-foreground flex w-12 shrink-0 items-center gap-1 text-[10px] sm:w-14 sm:text-xs">
+              <div className="text-basalt-muted-foreground flex w-12 shrink-0 items-center gap-1 text-basalt-sm sm:w-14 sm:text-xs">
                 <Compass className="size-3 sm:size-3.5" />
                 <span>策略</span>
               </div>
               <div className="flex flex-wrap gap-1 sm:gap-1.5">
                 {STRATEGIES.map((s) => (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    aria-pressed={filterStrategy === s}
                     type="button"
                     key={s}
                     onClick={() => toggleFilter(filterStrategy, s, setFilterStrategy)}
-                    className={cn(
-                      "rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors sm:px-2.5 sm:py-1 sm:text-xs",
-                      filterStrategy === s
-                        ? "text-primary-foreground"
-                        : "bg-muted hover:bg-muted/80 text-muted-foreground",
-                    )}
-                    style={
-                      filterStrategy === s
-                        ? {
-                            backgroundColor: withAlpha(getStrategyToken(s), 1),
-                          }
-                        : undefined
-                    }
                   >
-                    {s}
-                  </button>
+                    <StrategyBadge strategy={s} />
+                  </Button>
                 ))}
                 {filterStrategy !== "all" && (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="清除策略筛选"
                     type="button"
                     onClick={() => setFilterStrategy("all")}
-                    className="text-muted-foreground hover:text-foreground ml-1"
                   >
                     <X className="size-3" />
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
 
             {/* Row 5: Tactics */}
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <div className="text-muted-foreground flex w-12 shrink-0 items-center gap-1 text-[10px] sm:w-14 sm:text-xs">
+              <div className="text-basalt-muted-foreground flex w-12 shrink-0 items-center gap-1 text-basalt-sm sm:w-14 sm:text-xs">
                 <Target className="size-3 sm:size-3.5" />
                 <span>战术</span>
               </div>
               <div className="flex flex-wrap gap-1 sm:gap-1.5">
                 {TACTICS.map((t) => (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    aria-pressed={filterTactics === t}
                     type="button"
                     key={t}
                     onClick={() => toggleFilter(filterTactics, t, setFilterTactics)}
-                    className={cn(
-                      "rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors sm:px-2.5 sm:py-1 sm:text-xs",
-                      filterTactics === t
-                        ? "text-primary-foreground"
-                        : "bg-muted hover:bg-muted/80 text-muted-foreground",
-                    )}
-                    style={
-                      filterTactics === t
-                        ? {
-                            backgroundColor: withAlpha(getTacticsToken(t), 1),
-                          }
-                        : undefined
-                    }
                   >
-                    {t}
-                  </button>
+                    <TacticsBadge tactics={t} />
+                  </Button>
                 ))}
                 {filterTactics !== "all" && (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="清除战术筛选"
                     type="button"
                     onClick={() => setFilterTactics("all")}
-                    className="text-muted-foreground hover:text-foreground ml-1"
                   >
                     <X className="size-3" />
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -645,34 +643,33 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
             {/* Row 6: Channel (derived from data) */}
             {channels.length > 0 && (
               <div className="flex items-center gap-1.5 sm:gap-2">
-                <div className="text-muted-foreground flex w-12 shrink-0 items-center gap-1 text-[10px] sm:w-14 sm:text-xs">
+                <div className="text-basalt-muted-foreground flex w-12 shrink-0 items-center gap-1 text-basalt-sm sm:w-14 sm:text-xs">
                   <Building2 className="size-3 sm:size-3.5" />
                   <span>渠道</span>
                 </div>
                 <div className="flex flex-wrap gap-1 sm:gap-1.5">
                   {channels.map((c) => (
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      aria-pressed={filterChannel === c}
                       type="button"
                       key={c}
                       onClick={() => toggleFilter(filterChannel, c, setFilterChannel)}
-                      className={cn(
-                        "rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors sm:px-2.5 sm:py-1 sm:text-xs",
-                        filterChannel === c
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted hover:bg-muted/80 text-muted-foreground",
-                      )}
                     >
-                      {c}
-                    </button>
+                      <ChannelBadge channel={c} />
+                    </Button>
                   ))}
                   {filterChannel !== "all" && (
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="清除渠道筛选"
                       type="button"
                       onClick={() => setFilterChannel("all")}
-                      className="text-muted-foreground hover:text-foreground ml-1"
                     >
                       <X className="size-3" />
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>
@@ -681,34 +678,36 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
             {/* Row 7: Product (derived from data) */}
             {productNames.length > 0 && (
               <div className="flex items-center gap-1.5 sm:gap-2">
-                <div className="text-muted-foreground flex w-12 shrink-0 items-center gap-1 text-[10px] sm:w-14 sm:text-xs">
+                <div className="text-basalt-muted-foreground flex w-12 shrink-0 items-center gap-1 text-basalt-sm sm:w-14 sm:text-xs">
                   <Package className="size-3 sm:size-3.5" />
                   <span>产品</span>
                 </div>
                 <div className="flex flex-wrap gap-1 sm:gap-1.5">
                   {productNames.map((p) => (
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      aria-pressed={filterProduct === p}
                       type="button"
                       key={p}
                       onClick={() => toggleFilter(filterProduct, p, setFilterProduct)}
-                      className={cn(
-                        "rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors sm:px-2.5 sm:py-1 sm:text-xs",
-                        filterProduct === p
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted hover:bg-muted/80 text-muted-foreground",
-                      )}
                     >
-                      {p}
-                    </button>
+                      <ProductBadge
+                        productName={p}
+                        category={products.find((product) => product.name === p)?.category}
+                      />
+                    </Button>
                   ))}
                   {filterProduct !== "all" && (
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="清除产品筛选"
                       type="button"
                       onClick={() => setFilterProduct("all")}
-                      className="text-muted-foreground hover:text-foreground ml-1"
                     >
                       <X className="size-3" />
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>
@@ -729,7 +728,7 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
                   style={{ backgroundColor: withAlpha(colorToken, 1) }}
                 />
                 <h2 className="text-xs font-semibold sm:text-sm">{groupName}</h2>
-                <span className="text-muted-foreground text-[10px] sm:text-xs">
+                <span className="text-basalt-muted-foreground text-basalt-sm sm:text-xs">
                   {groupUnits.length}个 · CNY {formatCurrencyFull(groupTotal)}
                 </span>
               </div>
@@ -748,11 +747,10 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
                   return (
                     <Tooltip key={unit.id}>
                       <TooltipTrigger asChild>
-                        <Card
-                          role="button"
-                          tabIndex={0}
+                        <button
+                          type="button"
                           aria-label={`资金单元 ${unit.unitCode}${isFlagged ? ` · ${FLAGGED_CATEGORY}` : ""}`}
-                          className="focus-visible:ring-ring relative cursor-pointer overflow-hidden border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
+                          className="flex w-full flex-col rounded-basalt-lg text-left text-basalt-foreground focus-visible:ring-basalt-ring relative cursor-pointer overflow-hidden border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
                           style={{
                             backgroundColor: withAlpha(availabilityToken, 0.1),
                             borderColor: withAlpha(availabilityToken, 0.2),
@@ -760,13 +758,6 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
                           onClick={() => {
                             setSelectedUnit(unit);
                             setEditorOpen(true);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              e.preventDefault();
-                              setSelectedUnit(unit);
-                              setEditorOpen(true);
-                            }
                           }}
                         >
                           <div
@@ -800,16 +791,16 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
                               {getSeriesPrefix(unit.unitCode)}
                             </span>
                           </div>
-                          <CardContent className="relative space-y-0.5 p-1.5 pl-2 sm:p-2 sm:pl-3">
-                            <p className="text-foreground text-[10px] font-bold sm:text-xs">
+                          <div className="min-h-0 flex-1 relative space-y-0.5 p-1.5 pl-2 sm:p-2 sm:pl-3">
+                            <p className="text-basalt-foreground text-basalt-sm font-bold sm:text-xs">
                               {formatCurrencyFull(unit.amount)}
                             </p>
-                            <p className="text-muted-foreground truncate text-[9px] sm:text-[10px]">
+                            <p className="text-basalt-muted-foreground truncate text-basalt-sm sm:text-basalt-sm">
                               {secondaryInfo}
                             </p>
                             {unit.daysUntilAvailable != null ? (
                               <p
-                                className="text-[9px] font-medium sm:text-[10px]"
+                                className="text-basalt-sm font-medium sm:text-basalt-sm"
                                 style={{ color: withAlpha(availabilityToken, 1) }}
                               >
                                 {unit.daysUntilAvailable <= 0
@@ -822,22 +813,21 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
                               </p>
                             ) : unit.status === "计划中" ? (
                               <p
-                                className="text-[9px] font-medium sm:text-[10px]"
+                                className="text-basalt-sm font-medium sm:text-basalt-sm"
                                 style={{ color: withAlpha(availabilityToken, 1) }}
                               >
                                 计划中
                               </p>
                             ) : null}
-                          </CardContent>
-                        </Card>
+                          </div>
+                        </button>
                       </TooltipTrigger>
                       <TooltipContent
                         side="top"
                         align="start"
                         sideOffset={6}
                         collisionPadding={8}
-                        showArrow={false}
-                        className="border-0 bg-transparent p-0 text-inherit shadow-none"
+                        className="max-w-[calc(100vw-2rem)] p-0"
                       >
                         <UnitTooltip unit={unit} product={product} />
                       </TooltipContent>
@@ -850,7 +840,7 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
         })}
 
         {filtered.length === 0 && (
-          <div className="text-muted-foreground py-12 text-center">
+          <div className="text-basalt-muted-foreground py-12 text-center">
             {search || activeFilterCount > 0 ? "未找到匹配的单位" : "暂无资本单位"}
           </div>
         )}

@@ -170,7 +170,7 @@ export function ApiKeysClient({ initialKeys }: { initialKeys: ApiKeyInfo[] }) {
         description="仅当前用户可管理。密钥只获得明确勾选的权限；不允许管理密钥或站点设置。"
       />
       {error && !revoke && (
-        <p role="alert" className="text-destructive text-sm">
+        <p role="alert" className="text-basalt-destructive text-sm">
           {error}
         </p>
       )}
@@ -183,7 +183,7 @@ export function ApiKeysClient({ initialKeys }: { initialKeys: ApiKeyInfo[] }) {
             </span>
           </LayerCard.Header>
           <LayerCard.Body className="space-y-3">
-            <p className="text-muted-foreground text-sm">
+            <p className="text-basalt-muted-foreground text-sm">
               关闭或离开页面后无法再次查看。请勿将密钥放入网址、日志或共享报告。
             </p>
             <code className="block break-all select-all text-sm">{secret}</code>
@@ -228,7 +228,7 @@ export function ApiKeysClient({ initialKeys }: { initialKeys: ApiKeyInfo[] }) {
             <>
               <p>当前为本地 {environment.mode} 环境。命令行还必须附带当前实例请求头：</p>
               <code className="block break-all">x-noheir-instance: {environment.id}</code>
-              <p className="text-muted-foreground">
+              <p className="text-basalt-muted-foreground">
                 本地密钥不用于生产；切换或重启实例后重新核对实例请求头。
               </p>
             </>
@@ -290,7 +290,7 @@ export function ApiKeysClient({ initialKeys }: { initialKeys: ApiKeyInfo[] }) {
               </Field>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-muted-foreground text-sm">权限预设</span>
+              <span className="text-basalt-muted-foreground text-sm">权限预设</span>
               {(
                 [
                   ["analyst", "财务只读", ScanEye, "text-basalt-info"],
@@ -435,7 +435,7 @@ export function ApiKeysClient({ initialKeys }: { initialKeys: ApiKeyInfo[] }) {
                 已选择破坏性权限。删除和账本替换不可撤回，请仅向可信工具授予。
               </p>
             )}
-            <p className="break-words text-xs text-muted-foreground">
+            <p className="break-words text-xs text-basalt-muted-foreground">
               {scopes.join(", ") || "未选择权限"}
             </p>
             <Button type="submit" disabled={busy || !!secret}>
@@ -454,7 +454,7 @@ export function ApiKeysClient({ initialKeys }: { initialKeys: ApiKeyInfo[] }) {
         </LayerCard.Header>
         <LayerCard.Body>
           {keys.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
+            <p className="text-basalt-muted-foreground text-sm">
               暂无密钥。创建后请仅授予当前任务所需的最小权限。
             </p>
           ) : (
@@ -504,12 +504,12 @@ export function ApiKeysClient({ initialKeys }: { initialKeys: ApiKeyInfo[] }) {
                         </Button>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-basalt-muted-foreground">
                       签发 {key.createdAt} · 到期 {key.expiresAt} · 最近使用{" "}
                       {key.lastUsedAt ?? "从未"}
                       {key.revokedAt && ` · 撤销 ${key.revokedAt}`}
                     </p>
-                    <p className="break-words text-xs text-muted-foreground">
+                    <p className="break-words text-xs text-basalt-muted-foreground">
                       {key.scopes.join(", ")}
                     </p>
                   </li>
@@ -529,7 +529,7 @@ export function ApiKeysClient({ initialKeys }: { initialKeys: ApiKeyInfo[] }) {
           <>
             {revoke?.label} 将立即失效，已有外部请求不会被撤回。
             {error && (
-              <span role="alert" className="block text-destructive">
+              <span role="alert" className="block text-basalt-destructive">
                 {error}
               </span>
             )}

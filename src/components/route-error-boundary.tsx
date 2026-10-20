@@ -16,11 +16,11 @@ export function RouteErrorBoundary() {
   return (
     <AppShell>
       <div className="flex min-h-[400px] flex-col items-center justify-center p-6 text-center">
-        <div className="mb-4 rounded-full bg-destructive/10 p-4 text-destructive">
+        <div className="mb-4 rounded-full bg-basalt-destructive/10 p-4 text-basalt-destructive">
           <AlertCircle className="size-8" />
         </div>
         <h2 className="mb-2 text-xl font-bold">数据加载失败</h2>
-        <p className="mb-6 max-w-md text-sm text-muted-foreground">{message}</p>
+        <p className="mb-6 max-w-md text-sm text-basalt-muted-foreground">{message}</p>
         <Button onClick={() => window.location.reload()} variant="outline" className="gap-2">
           <RefreshCw className="size-4" />
           重新加载

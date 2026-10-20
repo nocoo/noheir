@@ -1,12 +1,11 @@
-import { Button, Field, Input, Label } from "@nocoo/basalt";
+import { Button, Field, Input, Label, LayerCard } from "@nocoo/basalt";
 import { Slider } from "@nocoo/basalt/components/slider";
+import { toast } from "@nocoo/basalt/components/toast";
 import { Save, Settings, Target, TrendingUp } from "lucide-react";
 import { useState, useTransition } from "react";
 import { Link, useRevalidator } from "react-router";
-import { toast } from "sonner";
 import { saveFinancialPreferences } from "@/app/actions/settings-actions";
 import { FinancialSnapshotNotice } from "@/components/shared/financial-snapshot-notice";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { FinancialPreferences } from "@/domain/api-contract";
 import { clampMaxReturnRate, clampMinReturnRate } from "@/domain/settings/return-rate";
 import { clampSavingsRate, getSavingsRateTone } from "@/domain/settings/savings-rate";
@@ -65,10 +64,10 @@ export function SettingsClient({ preferences }: SettingsClientProps) {
       {/* Header */}
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <Settings className="text-primary size-6" />
+          <Settings className="text-basalt-primary size-6" />
           财务假设
         </h1>
-        <p className="text-muted-foreground text-sm">
+        <p className="text-basalt-muted-foreground text-sm">
           储蓄目标、收益率假设与收支分类；不包含身份、外观或密钥管理。
         </p>
       </div>
@@ -84,12 +83,14 @@ export function SettingsClient({ preferences }: SettingsClientProps) {
           <Link to="/balance-anchors">余额锚点</Link>
         </Button>
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">预期年化收益率</CardTitle>
-          <CardDescription>财务规划假设，不代表投资承诺。</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <LayerCard>
+        <LayerCard.Header className="items-stretch flex-col gap-1.5">
+          <h3 className="font-semibold leading-none tracking-tight text-basalt-foreground text-base">
+            预期年化收益率
+          </h3>
+          <p className="text-sm text-basalt-muted-foreground">财务规划假设，不代表投资承诺。</p>
+        </LayerCard.Header>
+        <LayerCard.Body className="min-h-0 flex-1">
           <Field label="预期年化收益率 (%)" htmlFor="expected-return">
             <Input
               id="expected-return"
@@ -101,22 +102,22 @@ export function SettingsClient({ preferences }: SettingsClientProps) {
               onChange={(event) => setExpectedReturnRate(event.target.valueAsNumber)}
             />
           </Field>
-        </CardContent>
-      </Card>
+        </LayerCard.Body>
+      </LayerCard>
       {/* Savings Rate Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
+      <LayerCard>
+        <LayerCard.Header className="items-stretch flex-col gap-1.5">
+          <h3 className="font-semibold leading-none tracking-tight text-basalt-foreground flex items-center gap-2 text-base">
             <Target className="size-4" />
             目标储蓄率
-          </CardTitle>
-          <CardDescription>设置每月的储蓄目标比例</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          </h3>
+          <p className="text-sm text-basalt-muted-foreground">设置每月的储蓄目标比例</p>
+        </LayerCard.Header>
+        <LayerCard.Body className="min-h-0 flex-1 space-y-4">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label>目标储蓄率</Label>
-              <span className="text-primary text-2xl font-bold">{savingsTarget}%</span>
+              <span className="text-basalt-primary text-2xl font-bold">{savingsTarget}%</span>
             </div>
             <Slider
               value={[savingsTarget]}
@@ -126,7 +127,7 @@ export function SettingsClient({ preferences }: SettingsClientProps) {
               step={5}
               className="w-full"
             />
-            <div className="text-muted-foreground flex justify-between text-xs">
+            <div className="text-basalt-muted-foreground flex justify-between text-xs">
               <span>0%</span>
               <span>25%</span>
               <span>50%</span>
@@ -134,7 +135,7 @@ export function SettingsClient({ preferences }: SettingsClientProps) {
               <span>100%</span>
             </div>
           </div>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-basalt-muted-foreground text-sm">
             建议储蓄率在 30%-70% 之间，当前设置：
             <span
               className={cn(
@@ -149,21 +150,21 @@ export function SettingsClient({ preferences }: SettingsClientProps) {
               {savingsRateTone === "low" ? "偏低" : savingsRateTone === "high" ? "偏高" : "合理"}
             </span>
           </p>
-        </CardContent>
-      </Card>
+        </LayerCard.Body>
+      </LayerCard>
 
       {/* Return Rate Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
+      <LayerCard>
+        <LayerCard.Header className="items-stretch flex-col gap-1.5">
+          <h3 className="font-semibold leading-none tracking-tight text-basalt-foreground flex items-center gap-2 text-base">
             <TrendingUp className="size-4" />
             收益率范围
-          </CardTitle>
-          <CardDescription>
+          </h3>
+          <p className="text-sm text-basalt-muted-foreground">
             设置理财产品收益率的合理范围，用于识别过低或过高的收益率
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
+          </p>
+        </LayerCard.Header>
+        <LayerCard.Body className="min-h-0 flex-1 space-y-6">
           {/* Min Return Rate */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -179,7 +180,7 @@ export function SettingsClient({ preferences }: SettingsClientProps) {
               value={[minReturnRate]}
               onValueChange={([v]: number[]) => setMinReturnRate(clampMinReturnRate(v ?? 0))}
             />
-            <div className="text-muted-foreground flex justify-between text-xs">
+            <div className="text-basalt-muted-foreground flex justify-between text-xs">
               <span>0%</span>
               <span>低于此值显示为黄色警告</span>
               <span>10%</span>
@@ -201,7 +202,7 @@ export function SettingsClient({ preferences }: SettingsClientProps) {
               value={[maxReturnRate]}
               onValueChange={([v]: number[]) => setMaxReturnRate(clampMaxReturnRate(v ?? 0))}
             />
-            <div className="text-muted-foreground flex justify-between text-xs">
+            <div className="text-basalt-muted-foreground flex justify-between text-xs">
               <span>0%</span>
               <span>高于此值显示为红色风险</span>
               <span>15%</span>
@@ -209,7 +210,7 @@ export function SettingsClient({ preferences }: SettingsClientProps) {
           </div>
 
           {/* Visual Range Display */}
-          <div className="bg-muted/50 mt-6 space-y-3 rounded-lg p-4">
+          <div className="mt-6 space-y-3 rounded-lg p-4">
             <p className="text-sm font-medium">收益率范围可视化:</p>
             <div className="relative h-8 overflow-hidden rounded-md bg-gradient-to-r from-amber-200 via-emerald-200 to-rose-200 dark:from-amber-900/30 dark:via-emerald-900/30 dark:to-rose-900/30">
               {/* Min marker */}
@@ -227,7 +228,7 @@ export function SettingsClient({ preferences }: SettingsClientProps) {
                 <div className="absolute -top-1 left-1/2 size-3 -translate-x-1/2 rounded-full bg-rose-600 dark:bg-rose-400" />
               </div>
             </div>
-            <div className="text-muted-foreground flex justify-between text-xs">
+            <div className="text-basalt-muted-foreground flex justify-between text-xs">
               <span>0%</span>
               <span>15%</span>
             </div>
@@ -248,8 +249,8 @@ export function SettingsClient({ preferences }: SettingsClientProps) {
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </LayerCard.Body>
+      </LayerCard>
 
       {/* Save */}
       <div className="flex justify-end">

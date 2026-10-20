@@ -1,7 +1,13 @@
 import { Button } from "@nocoo/basalt";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@nocoo/basalt/components/select";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useTransition } from "react";
-import { cn } from "@/lib/utils";
 import { useYear } from "./year-context";
 
 export function GlobalYearSelector() {
@@ -36,7 +42,7 @@ export function GlobalYearSelector() {
       <Button
         variant="ghost"
         size="icon"
-        className="size-7"
+        className="hidden sm:inline-flex"
         onClick={goPrev}
         disabled={!canGoPrev || isPending}
         aria-label="上一年"
@@ -44,32 +50,28 @@ export function GlobalYearSelector() {
         <ChevronLeft className="size-4" />
       </Button>
 
-      {/* Year labels */}
-      <div className="flex items-center">
-        {years.map((y) => (
-          <Button
-            key={y}
-            variant="ghost"
-            size="sm"
-            className={cn(
-              "h-7 px-2 text-sm font-medium",
-              y === year
-                ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-            onClick={() => navigateToYear(y)}
-            disabled={isPending}
-          >
-            {y}
-          </Button>
-        ))}
-      </div>
+      <Select
+        value={String(year)}
+        onValueChange={(value) => navigateToYear(Number(value))}
+        disabled={isPending}
+      >
+        <SelectTrigger aria-label="财务年份" className="w-24">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {years.map((y) => (
+            <SelectItem key={y} value={String(y)}>
+              {y}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
       {/* Next year (newer) */}
       <Button
         variant="ghost"
         size="icon"
-        className="size-7"
+        className="hidden sm:inline-flex"
         onClick={goNext}
         disabled={!canGoNext || isPending}
         aria-label="下一年"

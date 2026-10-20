@@ -1,13 +1,12 @@
-import { Button } from "@nocoo/basalt";
-import { Check, Save, Shield, Tags, TrendingUp } from "lucide-react";
-import { useState, useTransition } from "react";
+import { Button, Checkbox, Label, LayerCard } from "@nocoo/basalt";
+import { Badge } from "@nocoo/basalt/components/badge";
+import { ScrollArea } from "@nocoo/basalt/components/scroll-area";
+import { toast } from "@nocoo/basalt/components/toast";
+import { Save, Shield, Tags, TrendingUp } from "lucide-react";
+import { useId, useState, useTransition } from "react";
 import { useRevalidator } from "react-router";
-import { toast } from "sonner";
 import { saveFinancialPreferences } from "@/app/actions/settings-actions";
 import { FinancialSnapshotNotice } from "@/components/shared/financial-snapshot-notice";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   getExpenseTypeDescription,
   toggleFixedExpenseCategory,
@@ -16,7 +15,6 @@ import {
   getIncomeTypeDescription,
   toggleActiveIncomeCategory,
 } from "@/domain/settings/income-categories";
-import { cn } from "@/lib/utils";
 
 interface CategorySettingsClientProps {
   incomeCategories: string[];
@@ -34,6 +32,7 @@ export function CategorySettingsClient({
   fixedExpenseCategories: initialFixed,
 }: CategorySettingsClientProps) {
   const revalidator = useRevalidator();
+  const selectionId = useId();
   const [isPending, startTransition] = useTransition();
   const [baseVersion, setBaseVersion] = useState(version);
 
@@ -76,34 +75,35 @@ export function CategorySettingsClient({
       {/* Header */}
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <Tags className="text-primary size-6" />
+          <Tags className="text-basalt-primary size-6" />
           分类设置
         </h1>
-        <p className="text-muted-foreground text-sm">配置收入和支出分类的类型</p>
+        <p className="text-basalt-muted-foreground text-sm">配置收入和支出分类的类型</p>
       </div>
 
       {/* Income Category Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
+      <LayerCard>
+        <LayerCard.Header className="items-stretch flex-col gap-1.5">
+          <h3 className="font-semibold leading-none tracking-tight text-basalt-foreground flex items-center gap-2 text-base">
             <TrendingUp className="text-income size-5" />
             收入类型分类
-          </CardTitle>
-          <CardDescription>
+          </h3>
+          <p className="text-sm text-basalt-muted-foreground">
             设置哪些收入分类为主动收入（需付出时间/劳动），默认所有收入为被动收入
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          </p>
+        </LayerCard.Header>
+        <LayerCard.Body className="min-h-0 flex-1 space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium">主动收入分类</p>
-              <p className="text-muted-foreground text-xs">
+              <p className="text-basalt-muted-foreground text-xs">
                 已选择 {activeIncome.length} / {incomeCategories.length} 个分类
               </p>
             </div>
             <Button
               variant="outline"
               size="sm"
+              aria-expanded={showIncomeSelector}
               onClick={() => setShowIncomeSelector(!showIncomeSelector)}
             >
               {showIncomeSelector ? "收起" : "选择分类"}
@@ -114,28 +114,21 @@ export function CategorySettingsClient({
             <div className="space-y-3 rounded-lg border p-4">
               <ScrollArea className="h-[250px] pr-4">
                 <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
-                  {incomeCategories.map((category) => {
+                  {incomeCategories.map((category, index) => {
                     const isActive = activeIncome.includes(category);
                     return (
-                      <button
+                      <Label
                         key={category}
-                        type="button"
-                        onClick={() => handleToggleIncome(category)}
-                        className={cn(
-                          "flex items-center gap-2 rounded-md border p-2 text-left text-sm transition-colors hover:bg-muted/50",
-                          isActive && "border-income bg-income/10",
-                        )}
+                        htmlFor={`${selectionId}-income-${index}`}
+                        className="flex min-w-0 items-center gap-2 p-2 font-normal"
                       >
-                        <div
-                          className={cn(
-                            "flex size-4 shrink-0 items-center justify-center rounded-sm border",
-                            isActive ? "border-income bg-income" : "border-muted-foreground",
-                          )}
-                        >
-                          {isActive && <Check className="text-income-foreground size-3" />}
-                        </div>
+                        <Checkbox
+                          id={`${selectionId}-income-${index}`}
+                          checked={isActive}
+                          onCheckedChange={() => handleToggleIncome(category)}
+                        />
                         <span className="truncate">{category}</span>
-                      </button>
+                      </Label>
                     );
                   })}
                 </div>
@@ -157,44 +150,45 @@ export function CategorySettingsClient({
             </div>
           )}
 
-          <div className="bg-muted/50 space-y-1 rounded-lg p-3 text-sm">
+          <div className="space-y-1 rounded-lg p-3 text-sm">
             <p className="font-medium">收入类型说明</p>
-            <ul className="text-muted-foreground space-y-1 pl-4">
+            <ul className="text-basalt-muted-foreground space-y-1 pl-4">
               <li>
                 • <span className="text-income font-medium">主动收入</span>：
                 {getIncomeTypeDescription(true)}
               </li>
               <li>
-                • <span className="text-muted-foreground font-medium">被动收入</span>：
+                • <span className="text-basalt-muted-foreground font-medium">被动收入</span>：
                 {getIncomeTypeDescription(false)}
               </li>
             </ul>
           </div>
-        </CardContent>
-      </Card>
+        </LayerCard.Body>
+      </LayerCard>
 
       {/* Expense Category Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
+      <LayerCard>
+        <LayerCard.Header className="items-stretch flex-col gap-1.5">
+          <h3 className="font-semibold leading-none tracking-tight text-basalt-foreground flex items-center gap-2 text-base">
             <Shield className="text-expense size-5" />
             支出类型分类
-          </CardTitle>
-          <CardDescription>
+          </h3>
+          <p className="text-sm text-basalt-muted-foreground">
             设置哪些支出分类为固定支出（每个月必须支付的钱），默认所有支出为弹性支出
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          </p>
+        </LayerCard.Header>
+        <LayerCard.Body className="min-h-0 flex-1 space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium">固定支出分类</p>
-              <p className="text-muted-foreground text-xs">
+              <p className="text-basalt-muted-foreground text-xs">
                 已选择 {fixedExpense.length} / {expenseCategories.length} 个分类
               </p>
             </div>
             <Button
               variant="outline"
               size="sm"
+              aria-expanded={showExpenseSelector}
               onClick={() => setShowExpenseSelector(!showExpenseSelector)}
             >
               {showExpenseSelector ? "收起" : "选择分类"}
@@ -205,28 +199,21 @@ export function CategorySettingsClient({
             <div className="space-y-3 rounded-lg border p-4">
               <ScrollArea className="h-[250px] pr-4">
                 <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
-                  {expenseCategories.map((category) => {
+                  {expenseCategories.map((category, index) => {
                     const isFixed = fixedExpense.includes(category);
                     return (
-                      <button
+                      <Label
                         key={category}
-                        type="button"
-                        onClick={() => handleToggleExpense(category)}
-                        className={cn(
-                          "flex items-center gap-2 rounded-md border p-2 text-left text-sm transition-colors hover:bg-muted/50",
-                          isFixed && "border-expense bg-expense/10",
-                        )}
+                        htmlFor={`${selectionId}-expense-${index}`}
+                        className="flex min-w-0 items-center gap-2 p-2 font-normal"
                       >
-                        <div
-                          className={cn(
-                            "flex size-4 shrink-0 items-center justify-center rounded-sm border",
-                            isFixed ? "border-expense bg-expense" : "border-muted-foreground",
-                          )}
-                        >
-                          {isFixed && <Check className="text-expense-foreground size-3" />}
-                        </div>
+                        <Checkbox
+                          id={`${selectionId}-expense-${index}`}
+                          checked={isFixed}
+                          onCheckedChange={() => handleToggleExpense(category)}
+                        />
                         <span className="truncate">{category}</span>
-                      </button>
+                      </Label>
                     );
                   })}
                 </div>
@@ -248,21 +235,21 @@ export function CategorySettingsClient({
             </div>
           )}
 
-          <div className="bg-muted/50 space-y-1 rounded-lg p-3 text-sm">
+          <div className="space-y-1 rounded-lg p-3 text-sm">
             <p className="font-medium">支出类型说明</p>
-            <ul className="text-muted-foreground space-y-1 pl-4">
+            <ul className="text-basalt-muted-foreground space-y-1 pl-4">
               <li>
                 • <span className="text-expense font-medium">固定支出</span>：
                 {getExpenseTypeDescription(true)}
               </li>
               <li>
-                • <span className="text-muted-foreground font-medium">弹性支出</span>：
+                • <span className="text-basalt-muted-foreground font-medium">弹性支出</span>：
                 {getExpenseTypeDescription(false)}
               </li>
             </ul>
           </div>
-        </CardContent>
-      </Card>
+        </LayerCard.Body>
+      </LayerCard>
 
       {/* Save */}
       <div className="flex justify-end">

@@ -26,24 +26,23 @@
 //     `categoryMap`, `todayIso`. Display status comes from
 //     deriveDisplayStatus (P2-C4) so we don't duplicate the rule.
 
-import { Button } from "@nocoo/basalt";
+import { Button, Separator } from "@nocoo/basalt";
+import { Badge } from "@nocoo/basalt/components/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@nocoo/basalt/components/dropdown-menu";
+import { toast } from "@nocoo/basalt/components/toast";
 import { MoreHorizontal } from "lucide-react";
 import * as React from "react";
-import { toast } from "sonner";
 import { deleteRecurringExpense } from "@/app/actions/recurring-expense-actions";
 import {
   endRecurringExpense,
   pauseRecurringExpense,
   resumeRecurringExpense,
 } from "@/app/actions/recurring-expense-state-actions";
-import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { CHART_TOKENS } from "@/lib/palette";
 import {
   deriveDisplayStatus,
@@ -77,7 +76,7 @@ export interface RuleListProps {
   className?: string;
 }
 
-const FALLBACK_COLOR = "hsl(var(--muted-foreground))";
+const FALLBACK_COLOR = "hsl(var(--basalt-muted-foreground))";
 
 function tokenColor(token: string | undefined): string {
   if (!token) return FALLBACK_COLOR;
@@ -172,7 +171,7 @@ export function RuleList({
       <div
         data-testid="rule-list-empty"
         className={cn(
-          "flex flex-col items-center justify-center rounded-md border border-dashed border-border p-8 text-sm text-muted-foreground",
+          "flex flex-col items-center justify-center rounded-md border border-dashed border-basalt-border p-8 text-sm text-basalt-muted-foreground",
           className,
         )}
       >
@@ -184,7 +183,10 @@ export function RuleList({
   return (
     <ul
       aria-label="周期支出"
-      className={cn("divide-y divide-border rounded-md border border-border", className)}
+      className={cn(
+        "divide-y divide-basalt-border rounded-md border border-basalt-border",
+        className,
+      )}
     >
       {rules.map((rule) => {
         const status = deriveDisplayStatus(rule, todayIso);
@@ -251,7 +253,7 @@ export function RuleList({
                   {statusChipText(status, rule)}
                 </Badge>
               </div>
-              <p className="truncate text-xs text-muted-foreground">
+              <p className="truncate text-xs text-basalt-muted-foreground">
                 {describeFrequency(rule)}
                 {cat ? ` · ${cat.name}` : ""}
               </p>
@@ -323,10 +325,10 @@ export function RuleList({
                   // delete
                   return (
                     <React.Fragment key="delete-wrap">
-                      {idx > 0 ? <DropdownMenuSeparator /> : null}
+                      {idx > 0 ? <Separator /> : null}
                       <DropdownMenuItem
                         key="delete"
-                        className="text-destructive focus:text-destructive"
+                        className="text-basalt-destructive focus:text-basalt-destructive"
                         onSelect={() => {
                           void handle("delete");
                         }}

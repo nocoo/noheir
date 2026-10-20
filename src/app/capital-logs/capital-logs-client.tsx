@@ -1,4 +1,21 @@
-import { Button } from "@nocoo/basalt";
+import { Button, LayerCard } from "@nocoo/basalt";
+import { Badge } from "@nocoo/basalt/components/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@nocoo/basalt/components/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@nocoo/basalt/components/table";
+import { toast } from "@nocoo/basalt/components/toast";
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -13,31 +30,13 @@ import {
 } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 import { useRevalidator } from "react-router";
-import { toast } from "sonner";
 import {
   deleteContributionLog,
   restoreContributionLog,
 } from "@/app/actions/contribution-log-actions";
 import { ContributionLogForm } from "@/components/capital/contribution-log-form";
 import { StatCard } from "@/components/shared/stat-card";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProductBadge, UnitCodeBadge } from "@/components/ui/colored-badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import type {
   ContributionOperationType,
   DomainContributionLog,
@@ -190,10 +189,10 @@ export function CapitalLogsClient({ logs, units, products }: CapitalLogsClientPr
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold">
-            <History className="text-primary size-6" />
+            <History className="text-basalt-primary size-6" />
             时间视图
           </h1>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-basalt-muted-foreground text-sm">
             资金投入/取出历史记录
             {activeFilterCount > 0 && <span className="ml-2">({filteredLogs.length} 条记录)</span>}
           </p>
@@ -207,7 +206,7 @@ export function CapitalLogsClient({ logs, units, products }: CapitalLogsClientPr
       {/* Filter Bar */}
       <div className="flex flex-wrap items-center gap-2">
         <Select value={filterUnit} onValueChange={setFilterUnit}>
-          <SelectTrigger className="h-8 w-[140px] text-xs">
+          <SelectTrigger className="w-[140px]">
             <SelectValue placeholder="资金单元" />
           </SelectTrigger>
           <SelectContent>
@@ -221,7 +220,7 @@ export function CapitalLogsClient({ logs, units, products }: CapitalLogsClientPr
         </Select>
 
         <Select value={filterProduct} onValueChange={setFilterProduct}>
-          <SelectTrigger className="h-8 w-[140px] text-xs">
+          <SelectTrigger className="w-[140px]">
             <SelectValue placeholder="产品" />
           </SelectTrigger>
           <SelectContent>
@@ -235,7 +234,7 @@ export function CapitalLogsClient({ logs, units, products }: CapitalLogsClientPr
         </Select>
 
         <Select value={filterType} onValueChange={setFilterType}>
-          <SelectTrigger className="h-8 w-[100px] text-xs">
+          <SelectTrigger className="w-[100px]">
             <SelectValue placeholder="类型" />
           </SelectTrigger>
           <SelectContent>
@@ -249,7 +248,7 @@ export function CapitalLogsClient({ logs, units, products }: CapitalLogsClientPr
         </Select>
 
         <Select value={filterSource} onValueChange={setFilterSource}>
-          <SelectTrigger className="h-8 w-[100px] text-xs">
+          <SelectTrigger className="w-[100px]">
             <SelectValue placeholder="来源" />
           </SelectTrigger>
           <SelectContent>
@@ -263,16 +262,16 @@ export function CapitalLogsClient({ logs, units, products }: CapitalLogsClientPr
         </Select>
 
         <Button
-          variant={showDeleted ? "secondary" : "ghost"}
+          variant="ghost"
+          aria-pressed={showDeleted}
           size="sm"
-          className="h-8 text-xs"
           onClick={() => setShowDeleted(!showDeleted)}
         >
           {showDeleted ? "隐藏已删除" : "显示已删除"}
         </Button>
 
         {activeFilterCount > 0 && (
-          <Button variant="ghost" size="sm" onClick={resetFilters} className="h-8 text-xs">
+          <Button variant="ghost" size="sm" onClick={resetFilters}>
             <X className="mr-1 size-3" />
             清除 ({activeFilterCount})
           </Button>
@@ -308,141 +307,143 @@ export function CapitalLogsClient({ logs, units, products }: CapitalLogsClientPr
       </div>
 
       {/* Logs Table */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm">投入记录</CardTitle>
-          <CardDescription className="text-xs">按操作日期倒序排列</CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className={CAPITAL_TABLE_COLUMNS.date}>日期</TableHead>
-                <TableHead className={CAPITAL_TABLE_COLUMNS.operationType}>类型</TableHead>
-                <TableHead className={CAPITAL_TABLE_COLUMNS.amount}>金额</TableHead>
-                <TableHead className={CAPITAL_TABLE_COLUMNS.pnl}>收益</TableHead>
-                <TableHead className={CAPITAL_TABLE_COLUMNS.unitCode}>资金单元</TableHead>
-                <TableHead className={CAPITAL_TABLE_COLUMNS.product}>产品</TableHead>
-                <TableHead className={CAPITAL_TABLE_COLUMNS.source}>来源</TableHead>
-                <TableHead className={CAPITAL_TABLE_COLUMNS.note}>备注</TableHead>
-                <TableHead className={CAPITAL_TABLE_COLUMNS.actions}>操作</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredLogs.length === 0 ? (
+      <LayerCard>
+        <LayerCard.Header className="items-stretch flex-col gap-1.5 pb-2">
+          <h3 className="font-semibold leading-none tracking-tight text-basalt-foreground text-sm">
+            投入记录
+          </h3>
+          <p className="text-sm text-basalt-muted-foreground text-xs">按操作日期倒序排列</p>
+        </LayerCard.Header>
+        <LayerCard.Body className="min-h-0 flex-1 p-0">
+          <div className="relative w-full overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={9} className="h-24 text-center">
-                    暂无记录
-                  </TableCell>
+                  <TableHead className={CAPITAL_TABLE_COLUMNS.date}>日期</TableHead>
+                  <TableHead className={CAPITAL_TABLE_COLUMNS.operationType}>类型</TableHead>
+                  <TableHead className={CAPITAL_TABLE_COLUMNS.amount}>金额</TableHead>
+                  <TableHead className={CAPITAL_TABLE_COLUMNS.pnl}>收益</TableHead>
+                  <TableHead className={CAPITAL_TABLE_COLUMNS.unitCode}>资金单元</TableHead>
+                  <TableHead className={CAPITAL_TABLE_COLUMNS.product}>产品</TableHead>
+                  <TableHead className={CAPITAL_TABLE_COLUMNS.source}>来源</TableHead>
+                  <TableHead className={CAPITAL_TABLE_COLUMNS.note}>备注</TableHead>
+                  <TableHead className={CAPITAL_TABLE_COLUMNS.actions}>操作</TableHead>
                 </TableRow>
-              ) : (
-                filteredLogs.map((log) => {
-                  const op = getOperationDisplay(log.operationType);
-                  const OpIcon = op.icon;
-                  return (
-                    <TableRow key={log.id} className={log.isDeleted ? "opacity-50" : ""}>
-                      <TableCell className="text-xs whitespace-nowrap">
-                        {formatOperationDate(log.operationDate)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <OpIcon className={`size-3 ${op.color}`} />
-                          <span className="text-xs">{op.label}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell
-                        className={`text-right font-medium ${
-                          log.amount >= 0 ? "text-green-600" : "text-red-600"
-                        }`}
-                      >
-                        {log.amount >= 0 ? "+" : ""}
-                        {formatCurrencyFull(log.amount)}
-                      </TableCell>
-                      <TableCell
-                        className={`text-right font-medium ${
-                          log.pnl == null
-                            ? "text-muted-foreground"
-                            : log.pnl >= 0
-                              ? "text-green-600"
-                              : "text-red-600"
-                        }`}
-                      >
-                        {log.pnl == null
-                          ? "-"
-                          : `${log.pnl > 0 ? "+" : ""}${formatCurrencyFull(log.pnl)}`}
-                      </TableCell>
-                      <TableCell>
-                        {log.unit?.unitCode ? (
-                          <UnitCodeBadge unitCode={log.unit.unitCode} />
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {log.productName || log.product?.name ? (
-                          <ProductBadge
-                            productName={log.productName ?? log.product?.name ?? ""}
-                            category={log.product?.category}
-                          />
-                        ) : (
-                          <span className="text-muted-foreground text-xs">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-xs">
-                          {getSourceLabel(log.source)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="max-w-[150px] truncate text-xs">
-                        {log.note ?? "-"}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          {log.isDeleted ? (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="size-7"
-                              aria-label="恢复记录"
-                              onClick={() => handleRestore(log.id)}
-                              disabled={isPending}
-                            >
-                              <RotateCcw className="size-3" />
-                            </Button>
+              </TableHeader>
+              <TableBody>
+                {filteredLogs.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="h-24 text-center">
+                      暂无记录
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredLogs.map((log) => {
+                    const op = getOperationDisplay(log.operationType);
+                    const OpIcon = op.icon;
+                    return (
+                      <TableRow key={log.id} className={log.isDeleted ? "opacity-50" : ""}>
+                        <TableCell className="text-xs whitespace-nowrap">
+                          {formatOperationDate(log.operationDate)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <OpIcon className={`size-3 ${op.color}`} />
+                            <span className="text-xs">{op.label}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell
+                          className={`text-right font-medium ${
+                            log.amount >= 0 ? "text-green-600" : "text-red-600"
+                          }`}
+                        >
+                          {log.amount >= 0 ? "+" : ""}
+                          {formatCurrencyFull(log.amount)}
+                        </TableCell>
+                        <TableCell
+                          className={`text-right font-medium ${
+                            log.pnl == null
+                              ? "text-basalt-muted-foreground"
+                              : log.pnl >= 0
+                                ? "text-green-600"
+                                : "text-red-600"
+                          }`}
+                        >
+                          {log.pnl == null
+                            ? "-"
+                            : `${log.pnl > 0 ? "+" : ""}${formatCurrencyFull(log.pnl)}`}
+                        </TableCell>
+                        <TableCell>
+                          {log.unit?.unitCode ? (
+                            <UnitCodeBadge unitCode={log.unit.unitCode} />
                           ) : (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="size-7"
-                                aria-label="编辑记录"
-                                onClick={() => handleEdit(log)}
-                                disabled={isPending}
-                              >
-                                <Pencil className="size-3" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-destructive size-7"
-                                aria-label="删除记录"
-                                onClick={() => handleDelete(log.id)}
-                                disabled={isPending}
-                              >
-                                <Trash2 className="size-3" />
-                              </Button>
-                            </>
+                            <span className="text-basalt-muted-foreground">-</span>
                           )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                        </TableCell>
+                        <TableCell>
+                          {log.productName || log.product?.name ? (
+                            <ProductBadge
+                              productName={log.productName ?? log.product?.name ?? ""}
+                              category={log.product?.category}
+                            />
+                          ) : (
+                            <span className="text-basalt-muted-foreground text-xs">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs">
+                            {getSourceLabel(log.source)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="max-w-[150px] truncate text-xs">
+                          {log.note ?? "-"}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            {log.isDeleted ? (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label="恢复记录"
+                                onClick={() => handleRestore(log.id)}
+                                disabled={isPending}
+                              >
+                                <RotateCcw className="size-3" />
+                              </Button>
+                            ) : (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  aria-label="编辑记录"
+                                  onClick={() => handleEdit(log)}
+                                  disabled={isPending}
+                                >
+                                  <Pencil className="size-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-basalt-destructive"
+                                  aria-label="删除记录"
+                                  onClick={() => handleDelete(log.id)}
+                                  disabled={isPending}
+                                >
+                                  <Trash2 className="size-3" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </LayerCard.Body>
+      </LayerCard>
 
       {/* Form Dialog */}
       <ContributionLogForm

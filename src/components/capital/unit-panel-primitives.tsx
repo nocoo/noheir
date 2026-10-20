@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 export function SectionTitle({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
-    <div className="text-muted-foreground/80 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.18em]">
+    <div className="text-basalt-muted-foreground/80 flex items-center gap-1.5 text-basalt-sm font-medium uppercase tracking-[0.18em]">
       <span className="opacity-70">{icon}</span>
       {label}
     </div>
@@ -30,7 +30,7 @@ export function DataRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-3 text-[11px]">
-      <div className="text-muted-foreground flex items-center gap-1.5">
+      <div className="text-basalt-muted-foreground flex items-center gap-1.5">
         {dotColor && (
           <span
             className={cn("size-1.5 rounded-full", pulse && "animate-pulse")}
@@ -39,7 +39,7 @@ export function DataRow({
         )}
         <span>{label}</span>
       </div>
-      <div className={cn("text-foreground text-right", mono && "font-mono tabular-nums")}>
+      <div className={cn("text-basalt-foreground text-right", mono && "font-mono tabular-nums")}>
         {value}
       </div>
     </div>

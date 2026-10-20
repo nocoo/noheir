@@ -178,9 +178,10 @@ export function ColorTokenPicker({
             style={{ backgroundColor: `hsl(var(--${token}))` }}
             className={cn(
               "size-8 rounded-md outline-none transition-all",
-              "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+              "focus-visible:ring-2 focus-visible:ring-basalt-ring focus-visible:ring-offset-2 focus-visible:ring-offset-basalt-background",
               "hover:scale-110",
-              selected && "ring-2 ring-foreground ring-offset-2 ring-offset-background",
+              selected &&
+                "ring-2 ring-basalt-foreground ring-offset-2 ring-offset-basalt-background",
             )}
           >
             {selected ? (

@@ -1,7 +1,7 @@
 import { Button, Checkbox, Field, Input, LayerCard } from "@nocoo/basalt";
+import { InputArea } from "@nocoo/basalt/components/input-area";
 import { useState } from "react";
 import { ReportMarkdown } from "@/components/report-markdown";
-import { Textarea } from "@/components/ui/textarea";
 import { type AnalysisDraft, buildAnalysisInput, createAnalysisDraft } from "@/domain/analyses";
 import type { Analysis } from "@/domain/api-contract";
 import { financeApi } from "@/lib/finance-api";
@@ -56,7 +56,7 @@ export function AnalysisEditor({
       <LayerCard.Body>
         <form onSubmit={save} className="space-y-3">
           {error && (
-            <p role="alert" className="text-destructive text-sm">
+            <p role="alert" className="text-basalt-destructive text-sm">
               {error}
             </p>
           )}
@@ -148,7 +148,7 @@ export function AnalysisEditor({
                 htmlFor="report-markdown"
                 hint="不执行 HTML，不加载图片；链接仅允许安全协议。"
               >
-                <Textarea
+                <InputArea
                   id="report-markdown"
                   className="min-h-64 font-mono"
                   maxLength={100000}
@@ -200,7 +200,7 @@ export function AnalysisEditor({
                 '数组格式，例如 [{"resource":"transactions","ids":[],"dataRevision":1}]。服务端验证资源 ID 属于当前用户；外部写入还需要对应读取权限。正文、修订声明与描述标签不代表内容经过验证。'
               }
             >
-              <Textarea
+              <InputArea
                 id="report-evidence"
                 className="min-h-24 font-mono"
                 value={draft.evidence}

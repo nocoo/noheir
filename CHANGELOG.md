@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 ### Fixes
 
 - Separate API key scope groups into clear responsive columns with colored Lucide icons; restore mobile navigation focus after dismissal.
+- Use Basalt Blue and native persistent sidebar selection/hover; replace copied controls and the duplicate theme, retain financial colors, and keep year selection and drawer dismissal usable across mobile breakpoints.
 - Keep financial drafts bound to their original version when loaders refresh, and reload log snapshots after mutations instead of guessing versions.
 - Prevent mixed-currency totals; legacy browser summaries explicitly use CNY while retaining other-currency records and editing.
 - Harden concurrent unit swaps, deletion retries, report deduplication, Unicode cursors, calendar validation, evidence boundaries and HTTP error/method contracts.

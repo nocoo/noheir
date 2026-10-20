@@ -1,6 +1,5 @@
-import { Trophy } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { LayerCard } from "@nocoo/basalt";
+import { Badge } from "@nocoo/basalt/components/badge";
 import {
   Table,
   TableBody,
@@ -8,7 +7,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@nocoo/basalt/components/table";
+import { Trophy } from "lucide-react";
 import { getLabelColorClasses } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
@@ -39,89 +39,91 @@ export function TopTransactionsTable({
   colorClass,
 }: TopTransactionsTableProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Trophy className="text-primary size-5" />
+    <LayerCard>
+      <LayerCard.Header className="items-stretch flex-col gap-1.5">
+        <h3 className="text-lg font-semibold leading-none tracking-tight text-basalt-foreground flex items-center gap-2">
+          <Trophy className="text-basalt-primary size-5" />
           {title}
-        </CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-16">排名</TableHead>
-              <TableHead>日期</TableHead>
-              <TableHead>一级分类</TableHead>
-              <TableHead>二级分类</TableHead>
-              <TableHead>三级分类</TableHead>
-              <TableHead className="hidden xl:table-cell">账户</TableHead>
-              <TableHead>备注</TableHead>
-              <TableHead className="text-right">金额</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {transactions.map((t, index) => {
-              const primaryColor = getLabelColorClasses(t.primaryCategory);
-              const secondaryColor = getLabelColorClasses(t.secondaryCategory ?? "");
-              const tertiaryColor = getLabelColorClasses(t.tertiaryCategory);
+        </h3>
+        {description && <p className="text-sm text-basalt-muted-foreground">{description}</p>}
+      </LayerCard.Header>
+      <LayerCard.Body className="min-h-0 flex-1">
+        <div className="relative w-full overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-16">排名</TableHead>
+                <TableHead>日期</TableHead>
+                <TableHead>一级分类</TableHead>
+                <TableHead>二级分类</TableHead>
+                <TableHead>三级分类</TableHead>
+                <TableHead className="hidden xl:table-cell">账户</TableHead>
+                <TableHead>备注</TableHead>
+                <TableHead className="text-right">金额</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {transactions.map((t, index) => {
+                const primaryColor = getLabelColorClasses(t.primaryCategory);
+                const secondaryColor = getLabelColorClasses(t.secondaryCategory ?? "");
+                const tertiaryColor = getLabelColorClasses(t.tertiaryCategory);
 
-              return (
-                <TableRow key={t.id}>
-                  <TableCell className="font-medium">
-                    {index < 3 ? (
-                      <span
-                        className={cn(
-                          "inline-flex size-6 items-center justify-center rounded-full text-xs font-bold",
-                          index === 0 && "bg-yellow-100 text-yellow-700",
-                          index === 1 && "bg-gray-100 text-gray-700",
-                          index === 2 && "bg-orange-100 text-orange-700",
-                        )}
-                      >
-                        {index + 1}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">#{index + 1}</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-sm">{t.date}</TableCell>
-                  <TableCell>
-                    <Badge className={cn(primaryColor.bg, primaryColor.text)}>
-                      {t.primaryCategory}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {t.secondaryCategory && (
-                      <Badge className={cn(secondaryColor.bg, secondaryColor.text)}>
-                        {t.secondaryCategory}
+                return (
+                  <TableRow key={t.id}>
+                    <TableCell className="font-medium">
+                      {index < 3 ? (
+                        <span
+                          className={cn(
+                            "inline-flex size-6 items-center justify-center rounded-full text-xs font-bold",
+                            index === 0 && "bg-yellow-100 text-yellow-700",
+                            index === 1 && "bg-gray-100 text-gray-700",
+                            index === 2 && "bg-orange-100 text-orange-700",
+                          )}
+                        >
+                          {index + 1}
+                        </span>
+                      ) : (
+                        <span className="text-basalt-muted-foreground">#{index + 1}</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-sm">{t.date}</TableCell>
+                    <TableCell>
+                      <Badge className={cn(primaryColor.bg, primaryColor.text)}>
+                        {t.primaryCategory}
                       </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={cn(tertiaryColor.bg, tertiaryColor.text)}>
-                      {t.tertiaryCategory}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground hidden xl:table-cell">
-                    {t.account}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
-                    {t.description ?? "-"}
-                  </TableCell>
-                  <TableCell className={`text-right font-semibold ${colorClass}`}>
-                    ¥
-                    {t.amount.toLocaleString("zh-CN", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+                    </TableCell>
+                    <TableCell>
+                      {t.secondaryCategory && (
+                        <Badge className={cn(secondaryColor.bg, secondaryColor.text)}>
+                          {t.secondaryCategory}
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={cn(tertiaryColor.bg, tertiaryColor.text)}>
+                        {t.tertiaryCategory}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-basalt-muted-foreground hidden xl:table-cell">
+                      {t.account}
+                    </TableCell>
+                    <TableCell className="text-basalt-muted-foreground text-sm">
+                      {t.description ?? "-"}
+                    </TableCell>
+                    <TableCell className={`text-right font-semibold ${colorClass}`}>
+                      ¥
+                      {t.amount.toLocaleString("zh-CN", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      </LayerCard.Body>
+    </LayerCard>
   );
 }

@@ -1,3 +1,6 @@
+import { LayerCard } from "@nocoo/basalt";
+import { Badge } from "@nocoo/basalt/components/badge";
+import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
 import {
   AlertCircle,
   CheckCircle2,
@@ -19,8 +22,6 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import type { MonthlyData } from "@/domain/types";
 import type { FinancialHealthResult } from "@/lib/financial-health-algorithm";
@@ -32,11 +33,19 @@ interface FinancialHealthClientProps {
 }
 
 const gradeColors: Record<string, { text: string; bg: string; border: string }> = {
-  "A+": { text: "text-primary", bg: "bg-primary/10", border: "border-primary" },
-  A: { text: "text-primary", bg: "bg-primary/10", border: "border-primary" },
+  "A+": {
+    text: "text-basalt-primary",
+    bg: "bg-basalt-primary/10",
+    border: "border-basalt-primary",
+  },
+  A: { text: "text-basalt-primary", bg: "bg-basalt-primary/10", border: "border-basalt-primary" },
   B: { text: "text-chart-2", bg: "bg-chart-2/10", border: "border-chart-2" },
   C: { text: "text-yellow-600", bg: "bg-yellow-100", border: "border-yellow-600" },
-  D: { text: "text-destructive", bg: "bg-destructive/10", border: "border-destructive" },
+  D: {
+    text: "text-basalt-destructive",
+    bg: "bg-basalt-destructive/10",
+    border: "border-basalt-destructive",
+  },
 };
 
 const dimensionConfig = [
@@ -58,9 +67,9 @@ export function FinancialHealthClient({ healthResult, monthlyData }: FinancialHe
   const { totalScore, maxScore, grade, dimensions } = healthResult;
   const colors = gradeColors[grade] ??
     gradeColors.D ?? {
-      text: "text-destructive",
-      bg: "bg-destructive/10",
-      border: "border-destructive",
+      text: "text-basalt-destructive",
+      bg: "bg-basalt-destructive/10",
+      border: "border-basalt-destructive",
     };
   const scorePct = (totalScore / maxScore) * 100;
 
@@ -79,40 +88,48 @@ export function FinancialHealthClient({ healthResult, monthlyData }: FinancialHe
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">财务健康分析</h1>
-          <p className="text-muted-foreground text-sm">5维度反脆弱评估体系</p>
+          <p className="text-basalt-muted-foreground text-sm">5维度反脆弱评估体系</p>
         </div>
       </div>
 
       {/* Overall Score Card */}
-      <Card className={cn("border-2", colors.border)}>
-        <CardContent className="flex items-center gap-6 pt-6">
+      <LayerCard className={cn("border-2", colors.border)}>
+        <LayerCard.Body className="min-h-0 flex-1 flex items-center gap-6 pt-6">
           <HeartPulse className={cn("size-12", colors.text)} />
           <div className="flex-1">
-            <CardTitle className="text-lg">综合评分</CardTitle>
-            <CardDescription>基于 {monthlyData.length} 个月数据评估</CardDescription>
+            <h3 className="font-semibold leading-none tracking-tight text-basalt-foreground text-lg">
+              综合评分
+            </h3>
+            <p className="text-sm text-basalt-muted-foreground">
+              基于 {monthlyData.length} 个月数据评估
+            </p>
           </div>
           <div className="flex items-center gap-3">
             <StatusIcon className={cn("size-8", colors.text)} />
             <div className="text-right">
               <p className={cn("text-3xl font-bold", colors.text)}>
                 {totalScore}
-                <span className="text-muted-foreground text-lg font-normal">/{maxScore}</span>
+                <span className="text-basalt-muted-foreground text-lg font-normal">
+                  /{maxScore}
+                </span>
               </p>
               <Badge className={cn(colors.bg, colors.text, "border-transparent")}>
                 等级 {grade}
               </Badge>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </LayerCard.Body>
+      </LayerCard>
 
       {/* Radar Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>财务健康雷达图</CardTitle>
-          <CardDescription>5维度综合评估，凹陷处代表短板</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <LayerCard>
+        <LayerCard.Header className="items-stretch flex-col gap-1.5">
+          <h3 className="text-lg font-semibold leading-none tracking-tight text-basalt-foreground">
+            财务健康雷达图
+          </h3>
+          <p className="text-sm text-basalt-muted-foreground">5维度综合评估，凹陷处代表短板</p>
+        </LayerCard.Header>
+        <LayerCard.Body className="min-h-0 flex-1">
           <div className="h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={radarData}>
@@ -131,9 +148,13 @@ export function FinancialHealthClient({ healthResult, monthlyData }: FinancialHe
                       | undefined;
                     if (!data) return null;
                     return (
-                      <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
+                      <div
+                        className={overlayPanelClass(
+                          "px-basalt-card-sm py-basalt-space-lg text-basalt-sm",
+                        )}
+                      >
                         <p className="font-medium">{data.dimension}</p>
-                        <p className="text-muted-foreground">
+                        <p className="text-basalt-muted-foreground">
                           {data.score} / {data.fullMark} 分
                         </p>
                       </div>
@@ -143,16 +164,16 @@ export function FinancialHealthClient({ healthResult, monthlyData }: FinancialHe
                 <Radar
                   name="得分"
                   dataKey="score"
-                  stroke="var(--color-primary)"
-                  fill="var(--color-primary)"
+                  stroke="hsl(var(--chart-1))"
+                  fill="hsl(var(--chart-1))"
                   fillOpacity={0.3}
                   strokeWidth={2}
                 />
               </RadarChart>
             </ResponsiveContainer>
           </div>
-        </CardContent>
-      </Card>
+        </LayerCard.Body>
+      </LayerCard>
 
       {/* Dimension Detail Cards */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -164,38 +185,44 @@ export function FinancialHealthClient({ healthResult, monthlyData }: FinancialHe
           const interpretation = result.details.interpretation;
           const borderColor =
             pct >= 80
-              ? "border-l-success"
+              ? "border-l-basalt-success"
               : pct >= 50
                 ? "border-l-amber-500"
-                : "border-l-destructive";
+                : "border-l-basalt-destructive";
           const iconColor =
-            pct >= 80 ? "text-success" : pct >= 50 ? "text-amber-500" : "text-destructive";
+            pct >= 80
+              ? "text-basalt-success"
+              : pct >= 50
+                ? "text-amber-500"
+                : "text-basalt-destructive";
 
           return (
-            <Card key={dim.key} className={cn("border-l-4", borderColor)}>
-              <CardHeader className="pb-3">
+            <LayerCard key={dim.key} className={cn("border-l-4", borderColor)}>
+              <LayerCard.Header className="items-stretch flex-col gap-1.5 pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2 text-base">
+                  <h3 className="font-semibold leading-none tracking-tight text-basalt-foreground flex items-center gap-2 text-base">
                     <Icon className={cn("size-5", iconColor)} />
                     {dim.name}
-                  </CardTitle>
-                  <span className="text-muted-foreground text-sm font-medium">
+                  </h3>
+                  <span className="text-basalt-muted-foreground text-sm font-medium">
                     {result.score}/{result.maxScore}
                   </span>
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
+              </LayerCard.Header>
+              <LayerCard.Body className="min-h-0 flex-1 space-y-3">
                 <Progress value={pct} className="h-3" />
                 <div className="flex items-center gap-2">
                   <Badge variant={status.variant}>{status.label}</Badge>
-                  <span className="text-muted-foreground text-sm">{interpretation}</span>
+                  <span className="text-basalt-muted-foreground text-sm">{interpretation}</span>
                 </div>
-                <div className="bg-muted/50 flex items-start gap-2 rounded-md p-3">
-                  <Info className="text-muted-foreground mt-0.5 size-4 shrink-0" />
-                  <p className="text-muted-foreground text-xs">{getRecommendation(dim.key, pct)}</p>
+                <div className="flex items-start gap-2 rounded-md p-3">
+                  <Info className="text-basalt-muted-foreground mt-0.5 size-4 shrink-0" />
+                  <p className="text-basalt-muted-foreground text-xs">
+                    {getRecommendation(dim.key, pct)}
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
+              </LayerCard.Body>
+            </LayerCard>
           );
         })}
       </div>

@@ -1,6 +1,6 @@
+import { toast } from "@nocoo/basalt/components/toast";
 import { ToggleGroup, ToggleGroupItem } from "@nocoo/basalt/components/toggle-group";
 import { useState } from "react";
-import { toast } from "sonner";
 import { currentEnvironment, type EnvironmentMode, switchEnvironment } from "./environment-runtime";
 
 export function EnvironmentSwitch() {

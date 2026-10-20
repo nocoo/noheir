@@ -1,5 +1,5 @@
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@nocoo/basalt/components/tabs";
 import { ArrowRightLeft, FileUp } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TransactionImport } from "./transaction-import";
 import { TransferImport } from "./transfer-import";
 
@@ -9,10 +9,10 @@ export function ImportClient() {
       {/* Header */}
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <FileUp className="text-primary size-6" />
+          <FileUp className="text-basalt-primary size-6" />
           数据导入
         </h1>
-        <p className="text-muted-foreground text-sm">从 CSV 文件导入收支流水和转账数据</p>
+        <p className="text-basalt-muted-foreground text-sm">从 CSV 文件导入收支流水和转账数据</p>
       </div>
 
       {/* Tabs */}

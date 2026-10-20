@@ -1,4 +1,6 @@
-import { Button, Input, Label } from "@nocoo/basalt";
+import { Button, Input, Label, LayerCard } from "@nocoo/basalt";
+import { Badge } from "@nocoo/basalt/components/badge";
+import { Banner } from "@nocoo/basalt/components/banner";
 import {
   Select,
   SelectContent,
@@ -6,15 +8,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@nocoo/basalt/components/select";
+import { toast } from "@nocoo/basalt/components/toast";
 import { AlertCircle, Anchor, Calendar, Plus, Save, Trash2 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { useRevalidator } from "react-router";
-import { toast } from "sonner";
 import { saveBalanceAnchors } from "@/app/actions/settings-actions";
 import { FinancialSnapshotNotice } from "@/components/shared/financial-snapshot-notice";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { groupAnchorsByAccount } from "@/domain/settings/balance-anchors";
 import type { BalanceAnchor } from "@/domain/types";
 import { getLocalDateString } from "@/lib/local-date";
@@ -97,28 +96,35 @@ export function BalanceAnchorsClient({
       {/* Header */}
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <Anchor className="text-primary size-6" />
+          <Anchor className="text-basalt-primary size-6" />
           余额锚点设置
         </h1>
-        <p className="text-muted-foreground text-sm">为账户设置已知日期的余额，用于计算历史余额</p>
+        <p className="text-basalt-muted-foreground text-sm">
+          为账户设置已知日期的余额，用于计算历史余额
+        </p>
       </div>
 
       {/* Info Alert */}
-      <Alert>
-        <AlertCircle className="size-4" />
-        <AlertDescription className="text-sm">
-          余额锚点是指某一天<strong>结束时的余额</strong>
-          。如果这一天有交易，计算时会将交易处理在余额调整之前。
-        </AlertDescription>
-      </Alert>
+      <Banner
+        role="alert"
+        icon={<AlertCircle className="size-4" />}
+        description={
+          <>
+            余额锚点是指某一天<strong>结束时的余额</strong>
+            。如果这一天有交易，计算时会将交易处理在余额调整之前。
+          </>
+        }
+      />
 
       {/* Add New Anchor */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">添加余额锚点</CardTitle>
-          <CardDescription>为指定账户设置某日期的已知余额</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <LayerCard>
+        <LayerCard.Header className="items-stretch flex-col gap-1.5">
+          <h3 className="font-semibold leading-none tracking-tight text-basalt-foreground text-base">
+            添加余额锚点
+          </h3>
+          <p className="text-sm text-basalt-muted-foreground">为指定账户设置某日期的已知余额</p>
+        </LayerCard.Header>
+        <LayerCard.Body className="min-h-0 flex-1">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
             <div className="space-y-2">
               <Label>账户</Label>
@@ -183,18 +189,20 @@ export function BalanceAnchorsClient({
               </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </LayerCard.Body>
+      </LayerCard>
 
       {/* Existing Anchors */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">已设置的余额锚点 ({anchors.length})</CardTitle>
-          <CardDescription>按账户分组显示所有余额锚点</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <LayerCard>
+        <LayerCard.Header className="items-stretch flex-col gap-1.5">
+          <h3 className="font-semibold leading-none tracking-tight text-basalt-foreground text-base">
+            已设置的余额锚点 ({anchors.length})
+          </h3>
+          <p className="text-sm text-basalt-muted-foreground">按账户分组显示所有余额锚点</p>
+        </LayerCard.Header>
+        <LayerCard.Body className="min-h-0 flex-1">
           {Object.keys(anchorsByAccount).length === 0 ? (
-            <div className="text-muted-foreground py-8 text-center">暂无余额锚点</div>
+            <div className="text-basalt-muted-foreground py-8 text-center">暂无余额锚点</div>
           ) : (
             <div className="space-y-4">
               {Object.entries(anchorsByAccount).map(([accountName, acctAnchors]) => (
@@ -207,15 +215,15 @@ export function BalanceAnchorsClient({
                     {acctAnchors.map((anchor) => (
                       <div
                         key={`${anchor.accountName}-${anchor.date}-${anchor.currency}`}
-                        className="bg-secondary flex items-center justify-between rounded-lg p-3"
+                        className="bg-basalt-secondary flex items-center justify-between rounded-lg p-3"
                       >
                         <div className="flex flex-1 items-center gap-4">
                           <div className="flex items-center gap-2 text-sm">
-                            <Calendar className="text-muted-foreground size-4" />
+                            <Calendar className="text-basalt-muted-foreground size-4" />
                             <span className="font-medium">{anchor.date}</span>
                           </div>
                           <div className="text-sm">
-                            <span className="text-muted-foreground">余额: </span>
+                            <span className="text-basalt-muted-foreground">余额: </span>
                             <span className="font-semibold">
                               {anchor.currency ?? "CNY"} {anchor.balance.toFixed(2)}
                             </span>
@@ -228,7 +236,7 @@ export function BalanceAnchorsClient({
                           onClick={() =>
                             handleRemoveAnchor(anchor.accountName, anchor.date, anchor.currency)
                           }
-                          className="text-muted-foreground hover:text-destructive size-8"
+                          className="text-basalt-muted-foreground hover:text-basalt-destructive"
                         >
                           <Trash2 className="size-4" />
                         </Button>
@@ -239,8 +247,8 @@ export function BalanceAnchorsClient({
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </LayerCard.Body>
+      </LayerCard>
 
       {/* Save */}
       <div className="flex justify-end">

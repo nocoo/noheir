@@ -241,7 +241,6 @@ describe("DayDetailPopover interaction (P3-C7)", () => {
         onClose={onClose}
       />,
     );
-    // Radix Dialog renders the close X with sr-only "Close" text.
     await user.click(screen.getByRole("button", { name: "Close" }));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
@@ -262,7 +261,7 @@ describe("DayDetailPopover interaction (P3-C7)", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  test("dialog renders a Radix Overlay (DismissableLayer machinery is wired up)", () => {
+  test("dialog establishes a new Basalt surface root", () => {
     render(
       <DayDetailPopover
         open={true}
@@ -272,11 +271,7 @@ describe("DayDetailPopover interaction (P3-C7)", () => {
         onClose={() => {}}
       />,
     );
-    // The presence of the overlay node is the load-bearing structural
-    // proof that we're using the Radix Dialog primitive rather than a
-    // hand-rolled overlay; outside-click dismissal is then covered by
-    // Radix's own tests in @radix-ui/react-dialog.
-    expect(document.querySelector("[data-slot='dialog-overlay']")).not.toBeNull();
+    expect(screen.getByRole("dialog")).toHaveAttribute("data-basalt-surface-root");
   });
 
   test("clicking inside the inner panel does NOT close", async () => {

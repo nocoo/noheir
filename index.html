@@ -11,7 +11,7 @@
     <link rel="manifest" href="/manifest.json" />
     <meta property="og:title" content="noheir - 个人财务管理" />
     <meta property="og:image" content="https://noheir.hexly.ai/opengraph-image.png" />
-    <script>try{if(localStorage.getItem('theme')==='dark'||(!localStorage.getItem('theme')&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');if(localStorage.getItem('colorScheme')==='swapped')document.documentElement.classList.add('color-scheme-swapped')}catch{}</script>
+    <script>try{const theme=localStorage.getItem('theme');const dark=theme==='dark'||(theme!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',dark);document.documentElement.classList.toggle('light',!dark);document.documentElement.dataset.mode=dark?'dark':'light';if(localStorage.getItem('colorScheme')==='swapped')document.documentElement.classList.add('color-scheme-swapped')}catch{}</script>
   </head>
   <body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body>
 </html>

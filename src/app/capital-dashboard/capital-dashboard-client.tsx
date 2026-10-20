@@ -1,16 +1,16 @@
-import { Button } from "@nocoo/basalt";
-import { BarChart3, Clock, Percent, PiggyBank, X } from "lucide-react";
-import { useMemo, useState } from "react";
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { StatCard } from "@/components/shared/stat-card";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button, LayerCard } from "@nocoo/basalt";
+import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@nocoo/basalt/components/select";
+import { BarChart3, Clock, Percent, PiggyBank, X } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { StatCard } from "@/components/shared/stat-card";
 import {
   buildAvailabilityDistribution,
   buildCurrencyDistribution,
@@ -76,12 +76,14 @@ function DistributionPie({
   data: DistributionItem[];
 }) {
   return (
-    <Card className="border-l-4 border-l-primary">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm">{title}</CardTitle>
-        <CardDescription className="text-xs">{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="pb-3">
+    <LayerCard className="border-l-4 border-l-basalt-primary">
+      <LayerCard.Header className="items-stretch flex-col gap-1.5 pb-2">
+        <h3 className="font-semibold leading-none tracking-tight text-basalt-foreground text-sm">
+          {title}
+        </h3>
+        <p className="text-sm text-basalt-muted-foreground text-xs">{description}</p>
+      </LayerCard.Header>
+      <LayerCard.Body className="min-h-0 flex-1 pb-3">
         <div className="h-[180px]">
           {data.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
@@ -110,9 +112,13 @@ function DistributionPie({
                     const d = payload[0]?.payload as DistributionItem | undefined;
                     if (!d) return null;
                     return (
-                      <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
+                      <div
+                        className={overlayPanelClass(
+                          "px-basalt-card-sm py-basalt-space-lg text-basalt-sm",
+                        )}
+                      >
                         <p className="font-medium">{d.name}</p>
-                        <p className="text-muted-foreground">
+                        <p className="text-basalt-muted-foreground">
                           {formatCurrencyFull(d.value)} ({d.percentage.toFixed(1)}%)
                         </p>
                       </div>
@@ -122,7 +128,7 @@ function DistributionPie({
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="text-muted-foreground flex h-full items-center justify-center text-sm">
+            <div className="text-basalt-muted-foreground flex h-full items-center justify-center text-sm">
               暂无数据
             </div>
           )}
@@ -137,13 +143,13 @@ function DistributionPie({
                   backgroundColor: PIE_COLORS[i % PIE_COLORS.length] ?? PIE_COLORS[0] ?? "#64748b",
                 }}
               />
-              <span className="text-muted-foreground">{item.name}</span>
+              <span className="text-basalt-muted-foreground">{item.name}</span>
               <span className="font-medium">{item.percentage.toFixed(0)}%</span>
             </div>
           ))}
         </div>
-      </CardContent>
-    </Card>
+      </LayerCard.Body>
+    </LayerCard>
   );
 }
 
@@ -223,10 +229,10 @@ export function CapitalDashboardClient({ units, deploymentRate }: CapitalDashboa
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold">
-            <BarChart3 className="text-primary size-6" />
+            <BarChart3 className="text-basalt-primary size-6" />
             资本仪表盘
           </h1>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-basalt-muted-foreground text-sm">
             资本配置总览与分布分析
             {activeFilterCount > 0 && (
               <span className="ml-2">
@@ -240,7 +246,7 @@ export function CapitalDashboardClient({ units, deploymentRate }: CapitalDashboa
       {/* Filter Bar - Single Row */}
       <div className="flex flex-wrap items-center gap-2">
         <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="h-8 w-[110px] text-xs">
+          <SelectTrigger className="w-[110px]">
             <SelectValue placeholder="状态" />
           </SelectTrigger>
           <SelectContent>
@@ -254,7 +260,7 @@ export function CapitalDashboardClient({ units, deploymentRate }: CapitalDashboa
         </Select>
 
         <Select value={filterStrategy} onValueChange={setFilterStrategy}>
-          <SelectTrigger className="h-8 w-[110px] text-xs">
+          <SelectTrigger className="w-[110px]">
             <SelectValue placeholder="策略" />
           </SelectTrigger>
           <SelectContent>
@@ -268,7 +274,7 @@ export function CapitalDashboardClient({ units, deploymentRate }: CapitalDashboa
         </Select>
 
         <Select value={filterTactics} onValueChange={setFilterTactics}>
-          <SelectTrigger className="h-8 w-[110px] text-xs">
+          <SelectTrigger className="w-[110px]">
             <SelectValue placeholder="战术" />
           </SelectTrigger>
           <SelectContent>
@@ -282,7 +288,7 @@ export function CapitalDashboardClient({ units, deploymentRate }: CapitalDashboa
         </Select>
 
         <Select value={filterCurrency} onValueChange={setFilterCurrency}>
-          <SelectTrigger className="h-8 w-[90px] text-xs">
+          <SelectTrigger className="w-[90px]">
             <SelectValue placeholder="币种" />
           </SelectTrigger>
           <SelectContent>
@@ -296,7 +302,7 @@ export function CapitalDashboardClient({ units, deploymentRate }: CapitalDashboa
         </Select>
 
         {activeFilterCount > 0 && (
-          <Button variant="ghost" size="sm" onClick={resetFilters} className="h-8 text-xs">
+          <Button variant="ghost" size="sm" onClick={resetFilters}>
             <X className="mr-1 size-3" />
             清除 ({activeFilterCount})
           </Button>
@@ -330,18 +336,18 @@ export function CapitalDashboardClient({ units, deploymentRate }: CapitalDashboa
       {Object.keys(totalsByCurrency).length > 0 && (
         <div className="grid grid-cols-3 gap-3">
           {Object.entries(totalsByCurrency).map(([currency, amount]) => (
-            <Card key={currency} className="border-l-4 border-l-primary">
-              <CardContent className="flex items-center justify-between p-3">
-                <span className="text-muted-foreground text-sm">{currency}</span>
-                <span className="text-primary font-bold">
+            <LayerCard key={currency} className="border-l-4 border-l-basalt-primary">
+              <LayerCard.Body className="min-h-0 flex-1 flex items-center justify-between p-3">
+                <span className="text-basalt-muted-foreground text-sm">{currency}</span>
+                <span className="text-basalt-primary font-bold">
                   {currency}{" "}
                   {amount.toLocaleString("zh-CN", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
                 </span>
-              </CardContent>
-            </Card>
+              </LayerCard.Body>
+            </LayerCard>
           ))}
         </div>
       )}

@@ -1,23 +1,22 @@
-import { ContentIsland } from "@nocoo/basalt";
+import { Button, ContentIsland } from "@nocoo/basalt";
 import { AppHeader } from "@nocoo/basalt/components/app-header";
 import {
   AppMain,
   AppSkipLink,
   AppShell as BasaltAppShell,
 } from "@nocoo/basalt/components/app-shell";
-import { Menu } from "lucide-react";
-import { Suspense, useEffect, useMemo, useRef } from "react";
-import { useLocation } from "react-router";
-import { EnvironmentSwitch } from "@/components/environment-switch";
-import { GithubIcon } from "@/components/icons/github-icon";
-import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet";
+} from "@nocoo/basalt/components/sheet";
+import { Menu } from "lucide-react";
+import { Suspense, useEffect, useMemo, useRef } from "react";
+import { useLocation } from "react-router";
+import { EnvironmentSwitch } from "@/components/environment-switch";
+import { GithubIcon } from "@/components/icons/github-icon";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ALL_NAV_ITEMS, isNavItemActive, NAV_GROUPS } from "@/lib/navigation";
 import { GlobalYearSelector } from "./global-year-selector";
@@ -82,17 +81,9 @@ function AppShellInner({
     setMobileOpen(false);
   }, [pathname, setMobileOpen]);
 
-  // Prevent body scroll when mobile sidebar is open
   useEffect(() => {
-    if (mobileOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [mobileOpen]);
+    if (!isMobile) setMobileOpen(false);
+  }, [isMobile, setMobileOpen]);
 
   const breadcrumbsList = useMemo(
     () => [{ label: "首页", href: "/" }, ...finalBreadcrumbs],
@@ -110,8 +101,7 @@ function AppShellInner({
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetContent
             side="left"
-            className="w-[260px] p-0 sm:max-w-[260px]"
-            showCloseButton={false}
+            className="w-fit p-0 sm:p-0"
             onCloseAutoFocus={(event) => {
               event.preventDefault();
               mobileMenuTrigger.current?.focus();
@@ -129,24 +119,23 @@ function AppShellInner({
       <AppMain>
         {/* Header */}
         <AppHeader
+          className="max-[360px]:h-auto max-[360px]:flex-wrap max-[360px]:py-basalt-space-sm"
           leading={
-            <div className="flex min-w-0 items-center gap-3">
-              {isMobile ? (
-                <HeaderTooltip label="打开导航">
-                  <button
-                    ref={mobileMenuTrigger}
-                    type="button"
-                    onClick={() => setMobileOpen(true)}
-                    aria-label="打开导航"
-                    className="flex h-8 w-8 items-center justify-center rounded-lg text-basalt-muted-foreground hover:text-basalt-foreground hover:bg-basalt-accent transition-colors"
-                  >
-                    <Menu className="h-5 w-5" aria-hidden="true" strokeWidth={1.5} />
-                  </button>
-                </HeaderTooltip>
-              ) : null}
-              <Breadcrumbs items={breadcrumbsList} />
-            </div>
+            isMobile ? (
+              <HeaderTooltip label="打开导航">
+                <Button
+                  ref={mobileMenuTrigger}
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setMobileOpen(true)}
+                  aria-label="打开导航"
+                >
+                  <Menu className="h-5 w-5" aria-hidden="true" strokeWidth={1.5} />
+                </Button>
+              </HeaderTooltip>
+            ) : null
           }
+          breadcrumbs={isMobile ? [] : breadcrumbsList}
           actions={
             <>
               <EnvironmentSwitch />
@@ -154,17 +143,22 @@ function AppShellInner({
                 <GlobalYearSelector />
               </Suspense>
               <HeaderTooltip label="GitHub repository">
-                <a
-                  href="https://github.com/nocoo/noheir"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="GitHub repository"
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-basalt-muted-foreground hover:text-basalt-foreground hover:bg-basalt-accent transition-colors"
-                >
-                  <GithubIcon className="h-[18px] w-[18px]" aria-hidden="true" strokeWidth={1.5} />
-                </a>
+                <Button variant="ghost" size="icon" className="hidden md:inline-flex" asChild>
+                  <a
+                    href="https://github.com/nocoo/noheir"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="GitHub repository"
+                  >
+                    <GithubIcon
+                      className="h-[18px] w-[18px]"
+                      aria-hidden="true"
+                      strokeWidth={1.5}
+                    />
+                  </a>
+                </Button>
               </HeaderTooltip>
-              <HexlyLink />
+              <HexlyLink className="hidden md:inline-flex" />
               <ThemeToggle />
             </>
           }
@@ -193,7 +187,7 @@ function AppShellInner({
               "/plan/calendar",
               "/manage",
             ].includes(pathname) && (
-              <p className="mb-3 text-sm text-muted-foreground">
+              <p className="mb-3 text-sm text-basalt-muted-foreground">
                 金额汇总币种：CNY（人民币）。不折算或合计其他币种；其他币种记录与编辑操作保留。
               </p>
             )}

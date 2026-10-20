@@ -1,39 +1,40 @@
-import { Button } from "@nocoo/basalt";
-import { Check, ChevronsUpDown, ExternalLink, Package, Plus, X } from "lucide-react";
-import { useMemo, useState, useTransition } from "react";
-import { Link } from "react-router";
-import { toast } from "sonner";
-import { createProduct } from "@/app/actions/product-actions";
-import { createUnit } from "@/app/actions/unit-actions";
-import { UnitCommitDialog } from "@/components/capital/unit-commit-dialog";
 import {
-  Command,
+  Button,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
   CommandSeparator,
-} from "@/components/ui/command";
+  DialogClose,
+} from "@nocoo/basalt";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+} from "@nocoo/basalt/components/dialog";
+import { Input } from "@nocoo/basalt/components/input";
+import { InputArea } from "@nocoo/basalt/components/input-area";
+import { Label } from "@nocoo/basalt/components/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@nocoo/basalt/components/popover";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
+} from "@nocoo/basalt/components/select";
+import { Separator } from "@nocoo/basalt/components/separator";
+import { toast } from "@nocoo/basalt/components/toast";
+import { Check, ChevronsUpDown, ExternalLink, Package, Plus, X, XIcon } from "lucide-react";
+import { useMemo, useState, useTransition } from "react";
+import { Link } from "react-router";
+import { createProduct } from "@/app/actions/product-actions";
+import { createUnit } from "@/app/actions/unit-actions";
+import { UnitCommitDialog } from "@/components/capital/unit-commit-dialog";
+import { Command } from "@/components/ui/command";
 import type { DomainProduct, SerializedUnit } from "@/domain/types";
 import { cn } from "@/lib/utils";
 import { InvestmentTimeline } from "./investment-timeline";
@@ -121,7 +122,7 @@ export function UnitEditor({
   if (unit) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-6xl">
+        <DialogContent size="lg" className="grid gap-4 max-h-[90vh] sm:max-w-6xl sm:w-full">
           <UnitCommitDialog
             key={formKey}
             unit={unit}
@@ -130,6 +131,16 @@ export function UnitEditor({
             onOpenChange={onOpenChange}
             onSuccess={onSuccess}
           />
+          <DialogClose asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-2 top-2"
+              aria-label="Close"
+            >
+              <XIcon aria-hidden="true" />
+            </Button>
+          </DialogClose>
         </DialogContent>
       </Dialog>
     );
@@ -137,7 +148,7 @@ export function UnitEditor({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
+      <DialogContent size="lg" className="grid gap-4 max-h-[90vh] max-w-lg">
         <UnitEditorForm
           key={formKey}
           unit={null}
@@ -145,6 +156,11 @@ export function UnitEditor({
           onOpenChange={onOpenChange}
           onSuccess={onSuccess}
         />
+        <DialogClose asChild>
+          <Button variant="ghost" size="icon" className="absolute right-2 top-2" aria-label="Close">
+            <XIcon aria-hidden="true" />
+          </Button>
+        </DialogClose>
       </DialogContent>
     </Dialog>
   );
@@ -272,33 +288,32 @@ function UnitEditorForm({
   return (
     <>
       <DialogHeader>
-        <DialogTitle>新增资本单位</DialogTitle>
+        <DialogTitle className="pr-8">新增资本单位</DialogTitle>
         <DialogDescription>创建新的资本单位并关联投资产品</DialogDescription>
       </DialogHeader>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Section: Basic Info */}
         <div className="space-y-3">
-          <h4 className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+          <h4 className="text-basalt-muted-foreground text-xs font-medium uppercase tracking-wider">
             基本信息
           </h4>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="unitCode" className="text-xs">
-                编号 <span className="text-destructive">*</span>
+                编号 <span className="text-basalt-destructive">*</span>
               </Label>
               <Input
                 id="unitCode"
                 value={unitCode}
                 onChange={(e) => setUnitCode(e.target.value)}
                 placeholder="如 CU01-001"
-                className="h-9"
                 required
               />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="amount" className="text-xs">
-                金额 <span className="text-destructive">*</span>
+                金额 <span className="text-basalt-destructive">*</span>
               </Label>
               <Input
                 id="amount"
@@ -308,7 +323,6 @@ function UnitEditorForm({
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="10000"
-                className="h-9"
                 required
               />
             </div>
@@ -317,7 +331,7 @@ function UnitEditorForm({
             <div className="space-y-1.5">
               <Label className="text-xs">币种</Label>
               <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger className="h-9">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -330,7 +344,7 @@ function UnitEditorForm({
             <div className="space-y-1.5">
               <Label className="text-xs">状态</Label>
               <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="h-9">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -349,16 +363,16 @@ function UnitEditorForm({
 
         {/* Section: Strategy & Tactics */}
         <div className="space-y-3">
-          <h4 className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+          <h4 className="text-basalt-muted-foreground text-xs font-medium uppercase tracking-wider">
             投资配置
           </h4>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs">
-                策略 <span className="text-destructive">*</span>
+                策略 <span className="text-basalt-destructive">*</span>
               </Label>
               <Select value={strategy} onValueChange={setStrategy}>
-                <SelectTrigger className="h-9">
+                <SelectTrigger>
                   <SelectValue placeholder="选择策略" />
                 </SelectTrigger>
                 <SelectContent>
@@ -372,10 +386,10 @@ function UnitEditorForm({
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">
-                战术 <span className="text-destructive">*</span>
+                战术 <span className="text-basalt-destructive">*</span>
               </Label>
               <Select value={tactics} onValueChange={setTactics}>
-                <SelectTrigger className="h-9">
+                <SelectTrigger>
                   <SelectValue placeholder="选择战术" />
                 </SelectTrigger>
                 <SelectContent>
@@ -394,7 +408,7 @@ function UnitEditorForm({
 
         {/* Section: Product Association */}
         <div className="space-y-3">
-          <h4 className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+          <h4 className="text-basalt-muted-foreground text-xs font-medium uppercase tracking-wider">
             关联产品
           </h4>
 
@@ -408,27 +422,27 @@ function UnitEditorForm({
                   variant="outline"
                   role="combobox"
                   aria-expanded={productSearchOpen}
-                  className="h-9 w-full justify-between font-normal"
+                  className="w-full justify-between font-normal"
                 >
                   {selectedProduct ? (
                     <span className="flex items-center gap-2">
-                      <Package className="text-muted-foreground size-3.5" />
+                      <Package className="text-basalt-muted-foreground size-3.5" />
                       <span>{selectedProduct.name}</span>
                       {selectedProduct.channel && (
-                        <span className="text-muted-foreground text-xs">
+                        <span className="text-basalt-muted-foreground text-xs">
                           ({selectedProduct.channel})
                         </span>
                       )}
                     </span>
                   ) : productId ? (
-                    <span className="text-muted-foreground">新建产品 (刷新后显示)</span>
+                    <span className="text-basalt-muted-foreground">新建产品 (刷新后显示)</span>
                   ) : (
-                    <span className="text-muted-foreground">选择产品...</span>
+                    <span className="text-basalt-muted-foreground">选择产品...</span>
                   )}
-                  <ChevronsUpDown className="text-muted-foreground ml-2 size-4 shrink-0 opacity-50" />
+                  <ChevronsUpDown className="text-basalt-muted-foreground ml-2 size-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+              <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
                 <Command>
                   <CommandInput placeholder="搜索产品..." />
                   <CommandList>
@@ -454,7 +468,7 @@ function UnitEditorForm({
                           <div className="flex flex-col">
                             <span>{product.name}</span>
                             {(product.channel || product.category) && (
-                              <span className="text-muted-foreground text-xs">
+                              <span className="text-basalt-muted-foreground text-xs">
                                 {[product.channel, product.category].filter(Boolean).join(" · ")}
                               </span>
                             )}
@@ -479,7 +493,7 @@ function UnitEditorForm({
                             setProductId(null);
                             setProductSearchOpen(false);
                           }}
-                          className="text-muted-foreground"
+                          className="text-basalt-muted-foreground"
                         >
                           <X className="mr-2 size-4" />
                           取消关联
@@ -493,7 +507,7 @@ function UnitEditorForm({
             {selectedProduct && (
               <Link
                 to={`/products?edit=${selectedProduct.id}`}
-                className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs transition-colors"
+                className="text-basalt-muted-foreground hover:text-basalt-foreground inline-flex items-center gap-1 text-xs transition-colors"
                 target="_blank"
               >
                 <ExternalLink className="size-3" />
@@ -504,14 +518,14 @@ function UnitEditorForm({
 
           {/* Quick Product Create Form */}
           {showQuickCreate && (
-            <div className="space-y-3 rounded-lg border bg-muted/30 p-3">
+            <div className="space-y-3 rounded-lg border bg-basalt-muted/30 p-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium">快速创建产品</span>
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="size-6"
+                  aria-label="关闭快速创建产品"
                   onClick={() => setShowQuickCreate(false)}
                 >
                   <X className="size-3.5" />
@@ -522,11 +536,10 @@ function UnitEditorForm({
                   placeholder="产品名称 *"
                   value={newProductName}
                   onChange={(e) => setNewProductName(e.target.value)}
-                  className="h-8 text-sm"
                 />
                 <div className="grid grid-cols-2 gap-2">
                   <Select value={newProductChannel} onValueChange={setNewProductChannel}>
-                    <SelectTrigger className="h-8 text-sm">
+                    <SelectTrigger>
                       <SelectValue placeholder="渠道" />
                     </SelectTrigger>
                     <SelectContent>
@@ -538,7 +551,7 @@ function UnitEditorForm({
                     </SelectContent>
                   </Select>
                   <Select value={newProductCategory} onValueChange={setNewProductCategory}>
-                    <SelectTrigger className="h-8 text-sm">
+                    <SelectTrigger>
                       <SelectValue placeholder="类别" />
                     </SelectTrigger>
                     <SelectContent>
@@ -571,7 +584,7 @@ function UnitEditorForm({
             <>
               <Separator />
               <div className="space-y-3">
-                <h4 className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+                <h4 className="text-basalt-muted-foreground text-xs font-medium uppercase tracking-wider">
                   投资时间线
                 </h4>
                 <InvestmentTimeline
@@ -588,7 +601,7 @@ function UnitEditorForm({
 
         {/* Section: Dates & Note */}
         <div className="space-y-3">
-          <h4 className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+          <h4 className="text-basalt-muted-foreground text-xs font-medium uppercase tracking-wider">
             时间与备注
           </h4>
           <div className="space-y-1.5">
@@ -600,7 +613,6 @@ function UnitEditorForm({
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="h-9"
             />
           </div>
           {/* endDate (归档日期) is managed automatically by backend when status = 已归档 */}
@@ -608,7 +620,7 @@ function UnitEditorForm({
             <Label htmlFor="note" className="text-xs">
               备注
             </Label>
-            <Textarea
+            <InputArea
               id="note"
               value={note}
               onChange={(e) => setNote(e.target.value)}

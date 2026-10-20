@@ -9,26 +9,26 @@
  */
 
 import { Button } from "@nocoo/basalt";
-import { Info } from "lucide-react";
-import { useCallback, useEffect, useState, useTransition } from "react";
-import { toast } from "sonner";
-import { commitUnit, listUnitContributionLogs } from "@/app/actions/contribution-log-actions";
-import { InvestmentTimeline } from "@/components/capital/investment-timeline";
-import { UnitLogTimeline } from "@/components/capital/unit-log-timeline";
-import { UnitOperationsPanel } from "@/components/capital/unit-operations-panel";
-import { SectionTitle } from "@/components/capital/unit-panel-primitives";
-import { DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { DialogDescription, DialogHeader, DialogTitle } from "@nocoo/basalt/components/dialog";
+import { Input } from "@nocoo/basalt/components/input";
+import { InputArea } from "@nocoo/basalt/components/input-area";
+import { Label } from "@nocoo/basalt/components/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
+} from "@nocoo/basalt/components/select";
+import { Separator } from "@nocoo/basalt/components/separator";
+import { toast } from "@nocoo/basalt/components/toast";
+import { Info } from "lucide-react";
+import { useCallback, useEffect, useState, useTransition } from "react";
+import { commitUnit, listUnitContributionLogs } from "@/app/actions/contribution-log-actions";
+import { InvestmentTimeline } from "@/components/capital/investment-timeline";
+import { UnitLogTimeline } from "@/components/capital/unit-log-timeline";
+import { UnitOperationsPanel } from "@/components/capital/unit-operations-panel";
+import { SectionTitle } from "@/components/capital/unit-panel-primitives";
 import type {
   DomainContributionLog,
   DomainProduct,
@@ -253,7 +253,7 @@ export function UnitCommitDialog({
   return (
     <>
       <DialogHeader>
-        <DialogTitle>编辑资本单位 · {unit.unitCode}</DialogTitle>
+        <DialogTitle className="pr-8">编辑资本单位 · {unit.unitCode}</DialogTitle>
         <DialogDescription>
           修改基础信息、执行操作，并为本次变更留下一条备注。保存时一并生效。
         </DialogDescription>
@@ -278,11 +278,12 @@ export function UnitCommitDialog({
                   id="unitCode"
                   value={unitCode}
                   onChange={(e) => setUnitCode(e.target.value)}
-                  className="h-9"
                   disabled={codeLocked}
                 />
                 {codeLocked && (
-                  <p className="text-muted-foreground text-[10px]">已暂存番号对换，编号不可手改</p>
+                  <p className="text-basalt-muted-foreground text-basalt-sm">
+                    已暂存番号对换，编号不可手改
+                  </p>
                 )}
               </div>
 
@@ -297,11 +298,10 @@ export function UnitCommitDialog({
                   min="0"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="h-9"
                   disabled={amountLocked}
                 />
                 {amountLocked && (
-                  <p className="text-muted-foreground text-[10px]">
+                  <p className="text-basalt-muted-foreground text-basalt-sm">
                     已暂存产品切换，金额不可同时改
                   </p>
                 )}
@@ -311,7 +311,7 @@ export function UnitCommitDialog({
                 <div className="space-y-1.5">
                   <Label className="text-xs">币种</Label>
                   <Select value={currency} onValueChange={setCurrency}>
-                    <SelectTrigger className="h-9" aria-label="币种">
+                    <SelectTrigger aria-label="币种">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -324,7 +324,7 @@ export function UnitCommitDialog({
                 <div className="space-y-1.5">
                   <Label className="text-xs">状态</Label>
                   <Select value={status} onValueChange={setStatus}>
-                    <SelectTrigger className="h-9" aria-label="状态">
+                    <SelectTrigger aria-label="状态">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -341,7 +341,7 @@ export function UnitCommitDialog({
               <div className="space-y-1.5">
                 <Label className="text-xs">策略</Label>
                 <Select value={strategy} onValueChange={setStrategy}>
-                  <SelectTrigger className="h-9" aria-label="策略">
+                  <SelectTrigger aria-label="策略">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -357,7 +357,7 @@ export function UnitCommitDialog({
               <div className="space-y-1.5">
                 <Label className="text-xs">战术</Label>
                 <Select value={tactics} onValueChange={setTactics}>
-                  <SelectTrigger className="h-9" aria-label="战术">
+                  <SelectTrigger aria-label="战术">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -379,7 +379,6 @@ export function UnitCommitDialog({
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="h-9"
                 />
               </div>
 
@@ -387,7 +386,7 @@ export function UnitCommitDialog({
                 <Label htmlFor="unitNote" className="text-xs">
                   单元备注
                 </Label>
-                <Textarea
+                <InputArea
                   id="unitNote"
                   value={unitNote}
                   onChange={(e) => setUnitNote(e.target.value)}
@@ -452,7 +451,6 @@ export function UnitCommitDialog({
                 value={commitNote}
                 onChange={(e) => setCommitNote(e.target.value)}
                 placeholder="为什么做这次变更（会写入日志）"
-                className="h-9"
               />
             </div>
             <div className="w-full space-y-1.5 sm:w-44">
@@ -464,7 +462,6 @@ export function UnitCommitDialog({
                 type="date"
                 value={operationDate}
                 onChange={(e) => setOperationDate(e.target.value)}
-                className="h-9"
               />
             </div>
           </div>

@@ -17,15 +17,15 @@
 //   sonner toast so the parent can close a dialog / navigate.
 
 import { Button } from "@nocoo/basalt";
+import { Input } from "@nocoo/basalt/components/input";
+import { Label } from "@nocoo/basalt/components/label";
+import { toast } from "@nocoo/basalt/components/toast";
 import * as React from "react";
-import { toast } from "sonner";
 import {
   createExpenseCategory,
   updateExpenseCategory,
 } from "@/app/actions/expense-category-actions";
 import { ColorTokenPicker } from "@/components/plan/color-token-picker";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { CHART_TOKENS } from "@/lib/palette";
 
 export interface CategoryFormInitial {
@@ -146,7 +146,7 @@ export function CategoryForm({
           autoFocus
         />
         {errors.name ? (
-          <p id="category-name-error" role="alert" className="text-sm text-destructive">
+          <p id="category-name-error" role="alert" className="text-sm text-basalt-destructive">
             {errors.name}
           </p>
         ) : null}
@@ -170,7 +170,7 @@ export function CategoryForm({
           label="选择分类颜色"
         />
         {errors.colorToken ? (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="text-sm text-basalt-destructive">
             {errors.colorToken}
           </p>
         ) : null}

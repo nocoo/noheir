@@ -20,15 +20,10 @@ export function HeaderTooltip({ label, children }: { label: string; children: Re
   );
 }
 
-export function HexlyLink() {
+export function HexlyLink({ className }: { className?: string } = {}) {
   return (
     <HeaderTooltip label="Noheir on hexly.ai">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8 shrink-0 text-basalt-muted-foreground hover:text-basalt-foreground"
-        asChild
-      >
+      <Button variant="ghost" size="icon" className={className} asChild>
         <a
           href="https://hexly.ai/projects/noheir"
           target="_blank"

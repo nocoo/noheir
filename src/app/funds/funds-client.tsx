@@ -1,23 +1,29 @@
-import { Button } from "@nocoo/basalt";
+import { Button, LayerCard } from "@nocoo/basalt";
+import { Badge } from "@nocoo/basalt/components/badge";
+import { Input } from "@nocoo/basalt/components/input";
+import { Label } from "@nocoo/basalt/components/label";
 import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-  Filter,
-  Landmark,
-  Pencil,
-  Plus,
-  Search,
-  Trash2,
-  X,
-} from "lucide-react";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@nocoo/basalt/components/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableSortableHeader,
+} from "@nocoo/basalt/components/table";
+import { toast } from "@nocoo/basalt/components/toast";
+import { Filter, Landmark, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 import { useRevalidator } from "react-router";
-import { toast } from "sonner";
 import { deleteUnit } from "@/app/actions/unit-actions";
 import { type SerializedUnit, UnitEditor } from "@/components/capital/unit-editor";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   CurrencyBadge,
   StatusBadge,
@@ -26,23 +32,6 @@ import {
   UnitCodeBadge,
 } from "@/components/ui/colored-badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { sumCurrency } from "@/domain/currency-summary";
 import type { DomainProduct } from "@/domain/types";
 import { formatCurrencyFull } from "@/lib/chart-config";
@@ -119,15 +108,6 @@ export function FundsClient({ units, products }: FundsClientProps) {
       setSortField(field);
       setSortDir("asc");
     }
-  };
-
-  const getSortIcon = (field: SortField) => {
-    if (sortField !== field) return <ArrowUpDown className="ml-1 inline size-3" />;
-    return sortDir === "asc" ? (
-      <ArrowUp className="ml-1 inline size-3" />
-    ) : (
-      <ArrowDown className="ml-1 inline size-3" />
-    );
   };
 
   const getAriaSort = (field: SortField): "ascending" | "descending" | "none" => {
@@ -214,29 +194,30 @@ export function FundsClient({ units, products }: FundsClientProps) {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold">
-            <Landmark className="text-primary size-6" />
+            <Landmark className="text-basalt-primary size-6" />
             资本单位管理
           </h1>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-basalt-muted-foreground text-sm">
             ({filteredAndSorted.length} / {units.length} 个单位) · CNY 总计{" "}
             {formatCurrencyFull(totalAmount)}
           </p>
         </div>
         <div className="flex gap-2">
-          <div className="relative">
-            <Search className="text-muted-foreground absolute left-3 top-1/2 size-4 -translate-y-1/2" />
+          <div className="relative min-w-0 flex-1 sm:flex-none">
+            <Search className="text-basalt-muted-foreground absolute left-3 top-1/2 size-4 -translate-y-1/2" />
             <Input
               placeholder="搜索单位..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-9 w-[200px] pl-9"
+              className="w-full pl-9 sm:w-[200px]"
             />
           </div>
           <Button
             variant="outline"
             size="sm"
+            aria-expanded={showFilters}
+            className="shrink-0"
             onClick={() => setShowFilters(!showFilters)}
-            className={activeFilterCount > 0 ? "border-primary" : ""}
           >
             <Filter className="mr-1 size-4" />
             筛选
@@ -246,7 +227,7 @@ export function FundsClient({ units, products }: FundsClientProps) {
               </Badge>
             )}
           </Button>
-          <Button onClick={handleCreate} size="sm">
+          <Button onClick={handleCreate} size="sm" className="shrink-0">
             <Plus className="mr-1 size-4" />
             新增
           </Button>
@@ -265,7 +246,7 @@ export function FundsClient({ units, products }: FundsClientProps) {
 
       {/* Filter Panel */}
       {showFilters && (
-        <div className="space-y-4 rounded-lg border bg-muted/30 p-4">
+        <div className="space-y-4 rounded-lg border bg-basalt-muted/30 p-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium">筛选条件</h3>
             <Button variant="ghost" size="sm" onClick={resetFilters}>
@@ -276,7 +257,7 @@ export function FundsClient({ units, products }: FundsClientProps) {
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             {/* Status Filter */}
             <div className="space-y-1.5">
-              <Label className="text-muted-foreground text-xs">状态</Label>
+              <Label className="text-basalt-muted-foreground text-xs">状态</Label>
               <Select value={filterStatus} onValueChange={setFilterStatus}>
                 <SelectTrigger>
                   <SelectValue />
@@ -294,7 +275,7 @@ export function FundsClient({ units, products }: FundsClientProps) {
 
             {/* Strategy Filter */}
             <div className="space-y-1.5">
-              <Label className="text-muted-foreground text-xs">策略</Label>
+              <Label className="text-basalt-muted-foreground text-xs">策略</Label>
               <Select value={filterStrategy} onValueChange={setFilterStrategy}>
                 <SelectTrigger>
                   <SelectValue />
@@ -312,7 +293,7 @@ export function FundsClient({ units, products }: FundsClientProps) {
 
             {/* Tactics Filter */}
             <div className="space-y-1.5">
-              <Label className="text-muted-foreground text-xs">战术</Label>
+              <Label className="text-basalt-muted-foreground text-xs">战术</Label>
               <Select value={filterTactics} onValueChange={setFilterTactics}>
                 <SelectTrigger>
                   <SelectValue />
@@ -332,167 +313,169 @@ export function FundsClient({ units, products }: FundsClientProps) {
       )}
 
       {/* Units Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">单位列表</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead
-                  className={CAPITAL_TABLE_COLUMNS.unitCode}
-                  aria-sort={getAriaSort("unitCode")}
-                >
-                  <button
-                    type="button"
-                    onClick={() => toggleSort("unitCode")}
-                    className="hover:text-foreground flex items-center text-sm transition-colors"
-                  >
-                    编号
-                    {getSortIcon("unitCode")}
-                  </button>
-                </TableHead>
-                <TableHead
-                  className={CAPITAL_TABLE_COLUMNS.amount}
-                  aria-sort={getAriaSort("amount")}
-                >
-                  <button
-                    type="button"
-                    onClick={() => toggleSort("amount")}
-                    className="hover:text-foreground flex items-center text-sm transition-colors"
-                  >
-                    金额
-                    {getSortIcon("amount")}
-                  </button>
-                </TableHead>
-                <TableHead
-                  className={CAPITAL_TABLE_COLUMNS.strategy}
-                  aria-sort={getAriaSort("strategy")}
-                >
-                  <button
-                    type="button"
-                    onClick={() => toggleSort("strategy")}
-                    className="hover:text-foreground flex items-center text-sm transition-colors"
-                  >
-                    策略
-                    {getSortIcon("strategy")}
-                  </button>
-                </TableHead>
-                <TableHead className={CAPITAL_TABLE_COLUMNS.tactics}>战术</TableHead>
-                <TableHead className={CAPITAL_TABLE_COLUMNS.product}>产品</TableHead>
-                <TableHead
-                  className={CAPITAL_TABLE_COLUMNS.status}
-                  aria-sort={getAriaSort("status")}
-                >
-                  <button
-                    type="button"
-                    onClick={() => toggleSort("status")}
-                    className="hover:text-foreground flex items-center text-sm transition-colors"
-                  >
-                    状态
-                    {getSortIcon("status")}
-                  </button>
-                </TableHead>
-                <TableHead
-                  className={CAPITAL_TABLE_COLUMNS.date}
-                  aria-sort={getAriaSort("availableDate")}
-                >
-                  <button
-                    type="button"
-                    onClick={() => toggleSort("availableDate")}
-                    className="hover:text-foreground flex items-center text-sm transition-colors"
-                  >
-                    可用日期
-                    {getSortIcon("availableDate")}
-                  </button>
-                </TableHead>
-                <TableHead className={CAPITAL_TABLE_COLUMNS.actions}>操作</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredAndSorted.map((unit) => (
-                <TableRow key={unit.id}>
-                  <TableCell>
-                    <UnitCodeBadge unitCode={unit.unitCode} />
-                  </TableCell>
-                  <TableCell className="font-bold">
-                    {formatCurrencyFull(unit.amount)}{" "}
-                    <CurrencyBadge currency={unit.currency} className="ml-1 text-xs font-normal" />
-                  </TableCell>
-                  <TableCell>
-                    <StrategyBadge strategy={unit.strategy} />
-                  </TableCell>
-                  <TableCell>
-                    <TacticsBadge tactics={unit.tactics} />
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-xs">
-                    {unit.productName ?? "—"}
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge status={unit.status} />
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={cn(
-                        "text-sm font-medium",
-                        unit.isAvailable
-                          ? "text-green-600 dark:text-green-400"
-                          : unit.daysUntilAvailable != null && unit.daysUntilAvailable <= 30
-                            ? "text-amber-600 dark:text-amber-400"
-                            : unit.daysUntilAvailable != null
-                              ? "text-destructive"
-                              : "text-muted-foreground",
-                      )}
-                    >
-                      {unit.availableDate ?? "—"}
-                      {unit.daysUntilAvailable != null && (
-                        <span className="ml-1 text-xs">
-                          (
-                          {unit.isAvailable
-                            ? "可用"
-                            : unit.daysUntilAvailable <= 30
-                              ? `${unit.daysUntilAvailable}天`
-                              : "锁定中"}
-                          )
-                        </span>
-                      )}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-7"
-                        onClick={() => handleEdit(unit)}
-                      >
-                        <Pencil className="size-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive size-7"
-                        onClick={() => handleDelete(unit)}
-                        disabled={isPending}
-                      >
-                        <Trash2 className="size-3.5" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {filteredAndSorted.length === 0 && (
+      <LayerCard>
+        <LayerCard.Header className="items-stretch flex-col gap-1.5">
+          <h3 className="font-semibold leading-none tracking-tight text-basalt-foreground text-base">
+            单位列表
+          </h3>
+        </LayerCard.Header>
+        <LayerCard.Body className="min-h-0 flex-1">
+          <div className="relative w-full overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={8} className="text-muted-foreground py-8 text-center">
-                    {search || activeFilterCount > 0 ? "未找到匹配的单位" : "暂无资本单位"}
-                  </TableCell>
+                  <TableHead
+                    className={CAPITAL_TABLE_COLUMNS.unitCode}
+                    aria-sort={getAriaSort("unitCode")}
+                  >
+                    <TableSortableHeader
+                      {...(sortField === "unitCode" ? { sorted: sortDir } : {})}
+                      onClick={() => toggleSort("unitCode")}
+                    >
+                      编号
+                    </TableSortableHeader>
+                  </TableHead>
+                  <TableHead
+                    className={CAPITAL_TABLE_COLUMNS.amount}
+                    aria-sort={getAriaSort("amount")}
+                  >
+                    <TableSortableHeader
+                      {...(sortField === "amount" ? { sorted: sortDir } : {})}
+                      textAlign="end"
+                      onClick={() => toggleSort("amount")}
+                    >
+                      金额
+                    </TableSortableHeader>
+                  </TableHead>
+                  <TableHead
+                    className={CAPITAL_TABLE_COLUMNS.strategy}
+                    aria-sort={getAriaSort("strategy")}
+                  >
+                    <TableSortableHeader
+                      {...(sortField === "strategy" ? { sorted: sortDir } : {})}
+                      onClick={() => toggleSort("strategy")}
+                    >
+                      策略
+                    </TableSortableHeader>
+                  </TableHead>
+                  <TableHead className={CAPITAL_TABLE_COLUMNS.tactics}>战术</TableHead>
+                  <TableHead className={CAPITAL_TABLE_COLUMNS.product}>产品</TableHead>
+                  <TableHead
+                    className={CAPITAL_TABLE_COLUMNS.status}
+                    aria-sort={getAriaSort("status")}
+                  >
+                    <TableSortableHeader
+                      {...(sortField === "status" ? { sorted: sortDir } : {})}
+                      onClick={() => toggleSort("status")}
+                    >
+                      状态
+                    </TableSortableHeader>
+                  </TableHead>
+                  <TableHead
+                    className={CAPITAL_TABLE_COLUMNS.date}
+                    aria-sort={getAriaSort("availableDate")}
+                  >
+                    <TableSortableHeader
+                      {...(sortField === "availableDate" ? { sorted: sortDir } : {})}
+                      onClick={() => toggleSort("availableDate")}
+                    >
+                      可用日期
+                    </TableSortableHeader>
+                  </TableHead>
+                  <TableHead className={CAPITAL_TABLE_COLUMNS.actions}>操作</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {filteredAndSorted.map((unit) => (
+                  <TableRow key={unit.id}>
+                    <TableCell>
+                      <UnitCodeBadge unitCode={unit.unitCode} />
+                    </TableCell>
+                    <TableCell className="font-bold">
+                      {formatCurrencyFull(unit.amount)}{" "}
+                      <CurrencyBadge
+                        currency={unit.currency}
+                        className="ml-1 text-xs font-normal"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <StrategyBadge strategy={unit.strategy} />
+                    </TableCell>
+                    <TableCell>
+                      <TacticsBadge tactics={unit.tactics} />
+                    </TableCell>
+                    <TableCell className="text-basalt-muted-foreground text-xs">
+                      {unit.productName ?? "—"}
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge status={unit.status} />
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={cn(
+                          "text-sm font-medium",
+                          unit.isAvailable
+                            ? "text-green-600 dark:text-green-400"
+                            : unit.daysUntilAvailable != null && unit.daysUntilAvailable <= 30
+                              ? "text-amber-600 dark:text-amber-400"
+                              : unit.daysUntilAvailable != null
+                                ? "text-basalt-destructive"
+                                : "text-basalt-muted-foreground",
+                        )}
+                      >
+                        {unit.availableDate ?? "—"}
+                        {unit.daysUntilAvailable != null && (
+                          <span className="ml-1 text-xs">
+                            (
+                            {unit.isAvailable
+                              ? "可用"
+                              : unit.daysUntilAvailable <= 30
+                                ? `${unit.daysUntilAvailable}天`
+                                : "锁定中"}
+                            )
+                          </span>
+                        )}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`编辑 ${unit.unitCode}`}
+                          onClick={() => handleEdit(unit)}
+                        >
+                          <Pencil className="size-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-basalt-destructive"
+                          aria-label={`删除 ${unit.unitCode}`}
+                          onClick={() => handleDelete(unit)}
+                          disabled={isPending}
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {filteredAndSorted.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={8}
+                      className="text-basalt-muted-foreground py-8 text-center"
+                    >
+                      {search || activeFilterCount > 0 ? "未找到匹配的单位" : "暂无资本单位"}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </LayerCard.Body>
+      </LayerCard>
 
       {/* Delete Confirmation */}
       <ConfirmDialog

@@ -1,3 +1,4 @@
+import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
 import { CreditCard } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ChartCard } from "@/components/shared/chart-card";
@@ -35,13 +36,13 @@ export function AccountDistributionChart({
             layout={layout}
             margin={{ top: 10, right: 20, bottom: 10, left: 10 }}
           >
-            <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+            <CartesianGrid strokeDasharray="3 3" className="stroke-basalt-border/50" />
             {isVertical ? (
               <>
                 <XAxis
                   type="number"
                   tick={{ fontSize: 12 }}
-                  className="text-muted-foreground"
+                  className="text-basalt-muted-foreground"
                   tickFormatter={formatCurrencyK}
                 />
                 <YAxis
@@ -49,7 +50,7 @@ export function AccountDistributionChart({
                   dataKey="name"
                   width={100}
                   tick={{ fontSize: 12 }}
-                  className="text-muted-foreground"
+                  className="text-basalt-muted-foreground"
                 />
               </>
             ) : (
@@ -58,12 +59,12 @@ export function AccountDistributionChart({
                   type="category"
                   dataKey="name"
                   tick={{ fontSize: 12 }}
-                  className="text-muted-foreground"
+                  className="text-basalt-muted-foreground"
                 />
                 <YAxis
                   type="number"
                   tick={{ fontSize: 12 }}
-                  className="text-muted-foreground"
+                  className="text-basalt-muted-foreground"
                   tickFormatter={formatCurrencyK}
                 />
               </>
@@ -75,9 +76,13 @@ export function AccountDistributionChart({
                 // biome-ignore lint/suspicious/noExplicitAny: recharts Tooltip payload shape is untyped
                 const pct = (entry?.payload as any)?.percentage as number | undefined;
                 return (
-                  <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
+                  <div
+                    className={overlayPanelClass(
+                      "px-basalt-card-sm py-basalt-space-lg text-basalt-sm",
+                    )}
+                  >
                     <p className="font-medium">{entry?.payload?.name}</p>
-                    <p className="text-muted-foreground">
+                    <p className="text-basalt-muted-foreground">
                       金额: {formatCurrencyFull(Number(entry?.value ?? 0))}
                       {pct ? ` (${pct.toFixed(1)}%)` : ""}
                     </p>

@@ -1,3 +1,4 @@
+import { Separator } from "@nocoo/basalt/components/separator";
 import { Activity, CalendarClock, Package2, Sparkles } from "lucide-react";
 import type { SerializedUnit } from "@/components/capital/unit-editor";
 import { DataRow, SectionTitle } from "@/components/capital/unit-panel-primitives";
@@ -11,7 +12,6 @@ import {
   TacticsBadge,
   UnitCodeBadge,
 } from "@/components/ui/colored-badge";
-import { Separator } from "@/components/ui/separator";
 import type { DomainProduct } from "@/domain/types";
 import { formatCurrencyFull, formatDate } from "@/lib/chart-config";
 import {
@@ -23,11 +23,6 @@ import {
 } from "@/lib/palette";
 import { computeUnlockPhase } from "@/lib/unit-tooltip-phase";
 import { cn } from "@/lib/utils";
-
-export interface UnitTooltipProps {
-  unit: SerializedUnit;
-  product: DomainProduct | null;
-}
 
 export interface UnitTooltipProps {
   unit: SerializedUnit;
@@ -72,10 +67,7 @@ export function UnitTooltip({ unit, product }: UnitTooltipProps) {
   const isUrgent = phase.kind === "openWindow" && phase.daysLeft <= 3;
 
   return (
-    <div
-      className="bg-background/95 relative w-80 overflow-hidden rounded-lg border shadow-2xl backdrop-blur"
-      style={{ borderColor: withAlpha(availabilityToken, 0.35) }}
-    >
+    <div className="relative w-80 max-w-full overflow-hidden">
       <div
         className="h-[2px] w-full"
         style={{
@@ -89,18 +81,18 @@ export function UnitTooltip({ unit, product }: UnitTooltipProps) {
       {/* Header */}
       <div className="space-y-1.5 px-3.5 pb-2.5 pt-3">
         <div className="flex items-center justify-between gap-2">
-          <UnitCodeBadge unitCode={unit.unitCode} className="text-[10px]" />
-          <StatusBadge status={unit.status} className="text-[10px]" />
+          <UnitCodeBadge unitCode={unit.unitCode} className="text-basalt-sm" />
+          <StatusBadge status={unit.status} className="text-basalt-sm" />
         </div>
         <div className="flex items-baseline justify-between gap-2">
-          <span className="text-foreground font-mono text-lg font-semibold tabular-nums leading-none">
+          <span className="text-basalt-foreground font-mono text-lg font-semibold tabular-nums leading-none">
             {formatCurrencyFull(unit.amount)}
           </span>
-          <CurrencyBadge currency={unit.currency} className="text-[10px]" />
+          <CurrencyBadge currency={unit.currency} className="text-basalt-sm" />
         </div>
-        <div className="text-muted-foreground flex flex-wrap items-center gap-1 text-[10px]">
-          <StrategyBadge strategy={unit.strategy} className="text-[10px]" />
-          <TacticsBadge tactics={unit.tactics} className="text-[10px]" />
+        <div className="text-basalt-muted-foreground flex flex-wrap items-center gap-1 text-basalt-sm">
+          <StrategyBadge strategy={unit.strategy} className="text-basalt-sm" />
+          <TacticsBadge tactics={unit.tactics} className="text-basalt-sm" />
         </div>
       </div>
 
@@ -113,22 +105,24 @@ export function UnitTooltip({ unit, product }: UnitTooltipProps) {
           <>
             <ProductBadge productName={productName} category={category} className="text-[11px]" />
             <div className="flex flex-wrap items-center gap-1">
-              {channel && <ChannelBadge channel={channel} className="text-[9px] px-1.5 py-0" />}
-              {category && <CategoryBadge category={category} className="text-[9px] px-1.5 py-0" />}
+              {channel && <ChannelBadge channel={channel} className="text-basalt-sm px-1.5 py-0" />}
+              {category && (
+                <CategoryBadge category={category} className="text-basalt-sm px-1.5 py-0" />
+              )}
               {annual && (
-                <span className="text-muted-foreground font-mono text-[10px] tabular-nums">
-                  年化 <span className="text-foreground font-semibold">{annual}</span>
+                <span className="text-basalt-muted-foreground font-mono text-basalt-sm tabular-nums">
+                  年化 <span className="text-basalt-foreground font-semibold">{annual}</span>
                 </span>
               )}
             </div>
             {meta.length > 0 && (
-              <div className="text-muted-foreground font-mono text-[10px] tabular-nums tracking-tight">
+              <div className="text-basalt-muted-foreground font-mono text-basalt-sm tabular-nums tracking-tight">
                 {meta.join(" · ")}
               </div>
             )}
           </>
         ) : (
-          <div className="text-muted-foreground/60 text-[11px] italic">未绑定产品</div>
+          <div className="text-basalt-muted-foreground/60 text-[11px] italic">未绑定产品</div>
         )}
       </div>
 
@@ -184,7 +178,7 @@ export function UnitTooltip({ unit, product }: UnitTooltipProps) {
           </div>
           {phase.ratio != null && (
             <span
-              className="font-mono text-[10px] tabular-nums"
+              className="font-mono text-basalt-sm tabular-nums"
               style={{ color: availabilityColor }}
             >
               {Math.round(phase.ratio * 100)}%
@@ -193,7 +187,7 @@ export function UnitTooltip({ unit, product }: UnitTooltipProps) {
         </div>
         {phase.ratio != null && (
           <div
-            className="bg-muted/60 relative h-1 w-full overflow-hidden rounded-full"
+            className="bg-basalt-muted/60 relative h-1 w-full overflow-hidden rounded-full"
             style={{ boxShadow: `inset 0 0 4px ${withAlpha(availabilityToken, 0.15)}` }}
           >
             <div
@@ -221,7 +215,7 @@ export function UnitTooltip({ unit, product }: UnitTooltipProps) {
           <Separator className="opacity-40" />
           <div className="space-y-1 px-3.5 py-2.5">
             <SectionTitle icon={<Sparkles className="size-3" />} label="备注" />
-            <p className="text-foreground/80 line-clamp-3 text-[11px] leading-relaxed">
+            <p className="text-basalt-foreground/80 line-clamp-3 text-[11px] leading-relaxed">
               {unit.note}
             </p>
           </div>

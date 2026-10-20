@@ -1,17 +1,5 @@
-import { Button } from "@nocoo/basalt";
-import {
-  AlertTriangle,
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-  CheckCircle,
-  Clock,
-  Lightbulb,
-} from "lucide-react";
-import { useMemo, useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CurrencyBadge, StrategyBadge, UnitCodeBadge } from "@/components/ui/colored-badge";
+import { Button, LayerCard } from "@nocoo/basalt";
+import { Badge } from "@nocoo/basalt/components/badge";
 import {
   Table,
   TableBody,
@@ -19,7 +7,11 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+  TableSortableHeader,
+} from "@nocoo/basalt/components/table";
+import { AlertTriangle, CheckCircle, Clock, Lightbulb } from "lucide-react";
+import { useMemo, useState } from "react";
+import { CurrencyBadge, StrategyBadge, UnitCodeBadge } from "@/components/ui/colored-badge";
 import { formatCurrencyFull } from "@/lib/chart-config";
 import { CAPITAL_TABLE_COLUMNS } from "@/lib/table-columns";
 import { cn } from "@/lib/utils";
@@ -86,15 +78,6 @@ export function CapitalDecisionsClient({
     }
   };
 
-  const getSortIcon = (column: SortColumn) => {
-    if (sortColumn !== column) return <ArrowUpDown className="ml-1 inline size-4" />;
-    return sortDirection === "asc" ? (
-      <ArrowUp className="ml-1 inline size-4" />
-    ) : (
-      <ArrowDown className="ml-1 inline size-4" />
-    );
-  };
-
   const getAriaSort = (column: SortColumn): "ascending" | "descending" | "none" => {
     if (sortColumn !== column) return "none";
     return sortDirection === "asc" ? "ascending" : "descending";
@@ -132,15 +115,15 @@ export function CapitalDecisionsClient({
       <div className="space-y-6">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold">
-            <Lightbulb className="text-primary size-6" />
+            <Lightbulb className="text-basalt-primary size-6" />
             决策中心
           </h1>
-          <p className="text-muted-foreground text-sm">需要关注和处理的资本单位</p>
+          <p className="text-basalt-muted-foreground text-sm">需要关注和处理的资本单位</p>
         </div>
         <div className="rounded-xl border p-12 text-center">
           <div className="mb-4 text-4xl">✅</div>
           <h3 className="mb-2 text-lg font-semibold">一切正常</h3>
-          <p className="text-muted-foreground">当前没有需要特别关注的资金项目</p>
+          <p className="text-basalt-muted-foreground">当前没有需要特别关注的资金项目</p>
         </div>
       </div>
     );
@@ -151,35 +134,41 @@ export function CapitalDecisionsClient({
       {/* Header */}
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <Lightbulb className="text-primary size-6" />
+          <Lightbulb className="text-basalt-primary size-6" />
           决策中心
         </h1>
-        <p className="text-muted-foreground text-sm">需要关注和处理的资本单位</p>
+        <p className="text-basalt-muted-foreground text-sm">需要关注和处理的资本单位</p>
       </div>
 
       {/* Summary Stats */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <div className="rounded-lg border p-4">
-          <p className="text-muted-foreground text-sm">需决策项目</p>
+          <p className="text-basalt-muted-foreground text-sm">需决策项目</p>
           <p className="text-2xl font-bold">{stats.totalDecisions}</p>
-          <p className="text-muted-foreground text-xs">
+          <p className="text-basalt-muted-foreground text-xs">
             涉及 {formatCurrencyFull(stats.totalAmount)}
           </p>
         </div>
-        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
-          <p className="text-destructive text-sm">紧急</p>
-          <p className="text-destructive text-2xl font-bold">{stats.urgentCount}</p>
-          <p className="text-muted-foreground text-xs">{formatCurrencyFull(stats.urgentAmount)}</p>
+        <div className="rounded-lg border border-basalt-destructive/30 bg-basalt-destructive/5 p-4">
+          <p className="text-basalt-destructive text-sm">紧急</p>
+          <p className="text-basalt-destructive text-2xl font-bold">{stats.urgentCount}</p>
+          <p className="text-basalt-muted-foreground text-xs">
+            {formatCurrencyFull(stats.urgentAmount)}
+          </p>
         </div>
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
           <p className="text-sm text-amber-600 dark:text-amber-400">即将到期</p>
           <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.soonCount}</p>
-          <p className="text-muted-foreground text-xs">{formatCurrencyFull(stats.soonAmount)}</p>
+          <p className="text-basalt-muted-foreground text-xs">
+            {formatCurrencyFull(stats.soonAmount)}
+          </p>
         </div>
         <div className="rounded-lg border border-slate-500/30 bg-slate-500/5 p-4">
-          <p className="text-muted-foreground text-sm">正常</p>
+          <p className="text-basalt-muted-foreground text-sm">正常</p>
           <p className="text-2xl font-bold">{stats.normalCount}</p>
-          <p className="text-muted-foreground text-xs">{formatCurrencyFull(stats.normalAmount)}</p>
+          <p className="text-basalt-muted-foreground text-xs">
+            {formatCurrencyFull(stats.normalAmount)}
+          </p>
         </div>
       </div>
 
@@ -190,147 +179,152 @@ export function CapitalDecisionsClient({
           return (
             <Button
               key={key}
-              variant={filter === key ? "default" : "outline"}
+              variant="outline"
+              aria-pressed={filter === key}
               size="sm"
               onClick={() => setFilter(key)}
               className="gap-2"
             >
               {key === "all" ? "全部" : (URGENCY_CONFIG[key]?.label ?? key)}
-              <Badge variant={filter === key ? "secondary" : "outline"} className="text-xs">
-                {count}
-              </Badge>
+              <Badge variant="secondary">{count}</Badge>
             </Button>
           );
         })}
       </div>
 
       {/* Decisions Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">行动清单</CardTitle>
-          <CardDescription>{filteredAndSortedDecisions.length} 条待处理项</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead
-                  className={CAPITAL_TABLE_COLUMNS.urgency}
-                  aria-sort={getAriaSort("urgency")}
-                >
-                  <button
-                    type="button"
-                    onClick={() => handleSort("urgency")}
-                    className="hover:text-foreground flex items-center text-sm transition-colors"
-                  >
-                    紧急度
-                    {getSortIcon("urgency")}
-                  </button>
-                </TableHead>
-                <TableHead
-                  className={CAPITAL_TABLE_COLUMNS.unitCode}
-                  aria-sort={getAriaSort("unitCode")}
-                >
-                  <button
-                    type="button"
-                    onClick={() => handleSort("unitCode")}
-                    className="hover:text-foreground flex items-center text-sm transition-colors"
-                  >
-                    单位
-                    {getSortIcon("unitCode")}
-                  </button>
-                </TableHead>
-                <TableHead
-                  className={CAPITAL_TABLE_COLUMNS.strategy}
-                  aria-sort={getAriaSort("strategy")}
-                >
-                  <button
-                    type="button"
-                    onClick={() => handleSort("strategy")}
-                    className="hover:text-foreground flex items-center text-sm transition-colors"
-                  >
-                    策略
-                    {getSortIcon("strategy")}
-                  </button>
-                </TableHead>
-                <TableHead
-                  className={CAPITAL_TABLE_COLUMNS.amount}
-                  aria-sort={getAriaSort("amount")}
-                >
-                  <button
-                    type="button"
-                    onClick={() => handleSort("amount")}
-                    className="hover:text-foreground flex items-center text-sm transition-colors"
-                  >
-                    金额
-                    {getSortIcon("amount")}
-                  </button>
-                </TableHead>
-                <TableHead className={CAPITAL_TABLE_COLUMNS.date}>到期</TableHead>
-                <TableHead className={CAPITAL_TABLE_COLUMNS.reason}>原因</TableHead>
-                <TableHead className={CAPITAL_TABLE_COLUMNS.reason}>建议操作</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredAndSortedDecisions.length === 0 ? (
+      <LayerCard>
+        <LayerCard.Header className="items-stretch flex-col gap-1.5">
+          <h3 className="font-semibold leading-none tracking-tight text-basalt-foreground text-base">
+            行动清单
+          </h3>
+          <p className="text-sm text-basalt-muted-foreground">
+            {filteredAndSortedDecisions.length} 条待处理项
+          </p>
+        </LayerCard.Header>
+        <LayerCard.Body className="min-h-0 flex-1">
+          <div className="relative w-full overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={7} className="text-muted-foreground py-8 text-center">
-                    该筛选条件下没有项目
-                  </TableCell>
+                  <TableHead
+                    className={CAPITAL_TABLE_COLUMNS.urgency}
+                    aria-sort={getAriaSort("urgency")}
+                  >
+                    <TableSortableHeader
+                      {...(sortColumn === "urgency" ? { sorted: sortDirection } : {})}
+                      onClick={() => handleSort("urgency")}
+                    >
+                      紧急度
+                    </TableSortableHeader>
+                  </TableHead>
+                  <TableHead
+                    className={CAPITAL_TABLE_COLUMNS.unitCode}
+                    aria-sort={getAriaSort("unitCode")}
+                  >
+                    <TableSortableHeader
+                      {...(sortColumn === "unitCode" ? { sorted: sortDirection } : {})}
+                      onClick={() => handleSort("unitCode")}
+                    >
+                      单位
+                    </TableSortableHeader>
+                  </TableHead>
+                  <TableHead
+                    className={CAPITAL_TABLE_COLUMNS.strategy}
+                    aria-sort={getAriaSort("strategy")}
+                  >
+                    <TableSortableHeader
+                      {...(sortColumn === "strategy" ? { sorted: sortDirection } : {})}
+                      onClick={() => handleSort("strategy")}
+                    >
+                      策略
+                    </TableSortableHeader>
+                  </TableHead>
+                  <TableHead
+                    className={CAPITAL_TABLE_COLUMNS.amount}
+                    aria-sort={getAriaSort("amount")}
+                  >
+                    <TableSortableHeader
+                      {...(sortColumn === "amount" ? { sorted: sortDirection } : {})}
+                      textAlign="end"
+                      onClick={() => handleSort("amount")}
+                    >
+                      金额
+                    </TableSortableHeader>
+                  </TableHead>
+                  <TableHead className={CAPITAL_TABLE_COLUMNS.date}>到期</TableHead>
+                  <TableHead className={CAPITAL_TABLE_COLUMNS.reason}>原因</TableHead>
+                  <TableHead className={CAPITAL_TABLE_COLUMNS.reason}>建议操作</TableHead>
                 </TableRow>
-              ) : (
-                filteredAndSortedDecisions.map((d) => {
-                  const config = URGENCY_CONFIG[d.urgency];
-                  return (
-                    <TableRow key={d.unitCode}>
-                      <TableCell>
-                        <Badge variant={config?.variant ?? "secondary"}>
-                          {config?.label ?? d.urgency}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <UnitCodeBadge unitCode={d.unitCode} />
-                      </TableCell>
-                      <TableCell>
-                        <StrategyBadge strategy={d.strategy} />
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {formatCurrencyFull(d.amount)}{" "}
-                        <CurrencyBadge currency={d.currency} className="ml-1 text-xs" />
-                      </TableCell>
-                      <TableCell>
-                        {d.availableDate ?? "—"}
-                        {d.daysUntilAvailable != null && (
-                          <span
-                            className={cn(
-                              "ml-1 text-xs",
-                              d.daysUntilAvailable <= 0
-                                ? "text-green-600 dark:text-green-400"
+              </TableHeader>
+              <TableBody>
+                {filteredAndSortedDecisions.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={7}
+                      className="text-basalt-muted-foreground py-8 text-center"
+                    >
+                      该筛选条件下没有项目
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredAndSortedDecisions.map((d) => {
+                    const config = URGENCY_CONFIG[d.urgency];
+                    return (
+                      <TableRow key={d.unitCode}>
+                        <TableCell>
+                          <Badge variant={config?.variant ?? "secondary"}>
+                            {config?.label ?? d.urgency}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <UnitCodeBadge unitCode={d.unitCode} />
+                        </TableCell>
+                        <TableCell>
+                          <StrategyBadge strategy={d.strategy} />
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {formatCurrencyFull(d.amount)}{" "}
+                          <CurrencyBadge currency={d.currency} className="ml-1 text-xs" />
+                        </TableCell>
+                        <TableCell>
+                          {d.availableDate ?? "—"}
+                          {d.daysUntilAvailable != null && (
+                            <span
+                              className={cn(
+                                "ml-1 text-xs",
+                                d.daysUntilAvailable <= 0
+                                  ? "text-green-600 dark:text-green-400"
+                                  : d.daysUntilAvailable <= 30
+                                    ? "text-amber-600 dark:text-amber-400"
+                                    : "text-basalt-destructive",
+                              )}
+                            >
+                              (
+                              {d.daysUntilAvailable <= 0
+                                ? "可用"
                                 : d.daysUntilAvailable <= 30
-                                  ? "text-amber-600 dark:text-amber-400"
-                                  : "text-destructive",
-                            )}
-                          >
-                            (
-                            {d.daysUntilAvailable <= 0
-                              ? "可用"
-                              : d.daysUntilAvailable <= 30
-                                ? `${d.daysUntilAvailable}天`
-                                : "锁定中"}
-                            )
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{d.reason}</TableCell>
-                      <TableCell className="text-primary text-sm font-medium">{d.action}</TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                                  ? `${d.daysUntilAvailable}天`
+                                  : "锁定中"}
+                              )
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-basalt-muted-foreground text-sm">
+                          {d.reason}
+                        </TableCell>
+                        <TableCell className="text-basalt-primary text-sm font-medium">
+                          {d.action}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </LayerCard.Body>
+      </LayerCard>
     </div>
   );
 }

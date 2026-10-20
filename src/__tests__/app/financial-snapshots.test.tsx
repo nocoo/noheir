@@ -22,7 +22,7 @@ vi.mock("@/app/actions/settings-actions", () => ({
   saveBalanceAnchors: vi.fn(),
   saveFinancialPreferences: vi.fn(),
 }));
-vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+vi.mock("@nocoo/basalt/components/toast", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 const preferences = {
   savingsRateTarget: 30,
   expectedReturnRate: 4,

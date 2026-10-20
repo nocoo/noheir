@@ -1,6 +1,6 @@
+import { LayerCard } from "@nocoo/basalt";
+import { Badge } from "@nocoo/basalt/components/badge";
 import { AlertTriangle, CheckCircle, Info, Shield } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 
 interface QualityClientProps {
@@ -89,35 +89,39 @@ export function QualityClient({ metadata }: QualityClientProps) {
       {/* Header */}
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <Shield className="text-primary size-6" />
+          <Shield className="text-basalt-primary size-6" />
           数据质量
         </h1>
-        <p className="text-muted-foreground text-sm">检查数据完整性与质量指标</p>
+        <p className="text-basalt-muted-foreground text-sm">检查数据完整性与质量指标</p>
       </div>
 
       {/* Score */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">质量评分</CardTitle>
-          <CardDescription>基于数据完整度的综合评分</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <LayerCard>
+        <LayerCard.Header className="items-stretch flex-col gap-1.5">
+          <h3 className="font-semibold leading-none tracking-tight text-basalt-foreground text-base">
+            质量评分
+          </h3>
+          <p className="text-sm text-basalt-muted-foreground">基于数据完整度的综合评分</p>
+        </LayerCard.Header>
+        <LayerCard.Body className="min-h-0 flex-1">
           <div className="flex items-center gap-4">
             <div className="text-4xl font-bold">{score}%</div>
             <Progress value={score} className="flex-1" />
           </div>
-          <p className="text-muted-foreground mt-2 text-xs">
+          <p className="text-basalt-muted-foreground mt-2 text-xs">
             {passCount}/{checks.length} 项检查通过
           </p>
-        </CardContent>
-      </Card>
+        </LayerCard.Body>
+      </LayerCard>
 
       {/* Checks */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">检查项目</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <LayerCard>
+        <LayerCard.Header className="items-stretch flex-col gap-1.5">
+          <h3 className="font-semibold leading-none tracking-tight text-basalt-foreground text-base">
+            检查项目
+          </h3>
+        </LayerCard.Header>
+        <LayerCard.Body className="min-h-0 flex-1">
           <div className="space-y-3">
             {checks.map((check) => (
               <div
@@ -129,14 +133,14 @@ export function QualityClient({ metadata }: QualityClientProps) {
                   <span className="text-sm font-medium">{check.label}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground text-xs">{check.detail}</span>
+                  <span className="text-basalt-muted-foreground text-xs">{check.detail}</span>
                   {statusBadge(check.status)}
                 </div>
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        </LayerCard.Body>
+      </LayerCard>
     </div>
   );
 }

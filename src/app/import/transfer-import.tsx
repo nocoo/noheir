@@ -1,4 +1,6 @@
-import { Button } from "@nocoo/basalt";
+import { Button, LayerCard } from "@nocoo/basalt";
+import { Badge } from "@nocoo/basalt/components/badge";
+import { toast } from "@nocoo/basalt/components/toast";
 import {
   AlertTriangle,
   ArrowRight,
@@ -10,10 +12,7 @@ import {
 } from "lucide-react";
 import { useCallback, useRef, useState, useTransition } from "react";
 import { useRevalidator } from "react-router";
-import { toast } from "sonner";
 import { countTransfersByYear, deleteAndImportTransfers } from "@/app/actions/import-actions";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import {
   type ChineseTransferCSVParseResult,
@@ -174,15 +173,15 @@ export function TransferImport() {
   };
 
   return (
-    <Card>
-      <CardContent className="space-y-6 p-6">
+    <LayerCard>
+      <LayerCard.Body className="min-h-0 flex-1 space-y-6 p-6">
         {/* Upload Area */}
         {/* biome-ignore lint/a11y/useSemanticElements: dropzone needs drag/drop events; <button> is semantically wrong here */}
         <div
           className={`relative cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
             isDragging
-              ? "border-primary bg-primary/5"
-              : "border-muted-foreground/25 hover:border-primary/50"
+              ? "border-basalt-primary bg-basalt-primary/5"
+              : "border-basalt-muted-foreground/25 hover:border-basalt-primary/50"
           } ${step === "parsing" || step === "validating" ? "pointer-events-none opacity-50" : ""}`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -209,14 +208,16 @@ export function TransferImport() {
 
           <div className="space-y-4">
             <div className="flex justify-center">
-              {step === "idle" && <Upload className="text-muted-foreground size-8" />}
+              {step === "idle" && <Upload className="text-basalt-muted-foreground size-8" />}
               {(step === "parsing" || step === "validating") && (
-                <Loader2 className="text-primary size-8 animate-spin" />
+                <Loader2 className="text-basalt-primary size-8 animate-spin" />
               )}
               {step === "confirming" && <CheckCircle2 className="size-8 text-green-600" />}
-              {step === "uploading" && <Loader2 className="text-primary size-8 animate-spin" />}
+              {step === "uploading" && (
+                <Loader2 className="text-basalt-primary size-8 animate-spin" />
+              )}
               {step === "done" && <CheckCircle2 className="size-8 text-green-600" />}
-              {step === "error" && <AlertTriangle className="text-destructive size-8" />}
+              {step === "error" && <AlertTriangle className="text-basalt-destructive size-8" />}
             </div>
             <div>
               <h3 className="text-lg font-semibold">
@@ -228,7 +229,7 @@ export function TransferImport() {
                 {step === "done" && "导入成功！"}
                 {step === "error" && "导入失败"}
               </h3>
-              <p className="text-muted-foreground mt-1 text-sm">
+              <p className="text-basalt-muted-foreground mt-1 text-sm">
                 {step === "idle" && "支持 CSV 格式"}
                 {step === "parsing" && (fileName || "")}
                 {step === "validating" && `${parseResult?.transfers.length ?? 0} 条记录`}
@@ -250,7 +251,7 @@ export function TransferImport() {
             {step === "uploading" && (
               <div className="space-y-2">
                 <Progress value={uploadProgress} />
-                <p className="text-muted-foreground text-xs">{uploadProgress}% 完成</p>
+                <p className="text-basalt-muted-foreground text-xs">{uploadProgress}% 完成</p>
               </div>
             )}
           </div>
@@ -259,7 +260,7 @@ export function TransferImport() {
         {/* Confirmation panel */}
         {step === "confirming" && (
           <div className="space-y-4">
-            <div className="bg-muted flex items-center gap-4 rounded-lg px-4 py-3">
+            <div className="bg-basalt-muted flex items-center gap-4 rounded-lg px-4 py-3">
               <Badge variant="outline" className="px-3 py-1 text-lg">
                 <Calendar className="mr-1 size-3" />
                 {csvYear}
@@ -267,7 +268,7 @@ export function TransferImport() {
               <div className="text-sm">
                 <span className="font-medium">{parseResult?.transfers.length}</span> 条转账记录
                 {parseResult && parseResult.filteredCount > 0 && (
-                  <span className="text-muted-foreground ml-2">
+                  <span className="text-basalt-muted-foreground ml-2">
                     (已过滤 {parseResult.filteredCount} 条优惠抵扣)
                   </span>
                 )}
@@ -347,20 +348,20 @@ export function TransferImport() {
         {step === "idle" && (
           <div className="space-y-3">
             <div className="rounded-lg border p-3">
-              <p className="text-muted-foreground text-sm">
+              <p className="text-basalt-muted-foreground text-sm">
                 <span className="font-medium">CSV 格式要求：</span>
                 日期,收支大类,交易分类,交易类型,流入金额,流出金额,币种,资金账户,标签,备注
               </p>
             </div>
             <div className="rounded-lg border p-3">
-              <p className="text-muted-foreground text-sm">
+              <p className="text-basalt-muted-foreground text-sm">
                 <Calendar className="mr-1 inline size-4" />
                 <span className="font-medium">年份要求：</span>
                 转账数据的年份需与收支数据对应。
               </p>
             </div>
             <div className="rounded-lg border p-3">
-              <p className="text-muted-foreground text-sm">
+              <p className="text-basalt-muted-foreground text-sm">
                 <AlertTriangle className="mr-1 inline size-4" />
                 <span className="font-medium">自动过滤：</span>
                 &quot;转账 / 优惠抵扣&quot;记录会被自动过滤（已在收支中记录）。
@@ -368,7 +369,7 @@ export function TransferImport() {
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </LayerCard.Body>
+    </LayerCard>
   );
 }

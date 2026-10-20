@@ -70,7 +70,7 @@ export interface PlanCalendarProps {
 }
 
 const WEEKDAY_HEADERS = ["日", "一", "二", "三", "四", "五", "六"] as const;
-const FALLBACK_COLOR = "hsl(var(--muted-foreground))";
+const FALLBACK_COLOR = "hsl(var(--basalt-muted-foreground))";
 const MAX_BANNERS = 3;
 
 /** Coerce a token to a CSS color. Unknown tokens fall back so the
@@ -174,7 +174,7 @@ export function PlanCalendar({
       {/* Weekday header — sticky on small screens via natural flow */}
       <div
         role="row"
-        className="grid grid-cols-7 border-b border-border pb-2 text-center text-xs text-muted-foreground"
+        className="grid grid-cols-7 border-b border-basalt-border pb-2 text-center text-xs text-basalt-muted-foreground"
       >
         {WEEKDAY_HEADERS.map((label) => (
           <div key={label} role="columnheader" aria-label={`星期${label}`}>
@@ -220,12 +220,12 @@ export function PlanCalendar({
                 }
               }}
               className={cn(
-                "relative flex min-h-[7rem] cursor-pointer flex-col gap-1 border-b border-r border-border p-1.5 text-left outline-none transition-colors",
-                "focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring",
+                "relative flex min-h-[7rem] cursor-pointer flex-col gap-1 border-b border-r border-basalt-border p-1.5 text-left outline-none transition-colors",
+                "focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-basalt-ring",
                 cell.inMonth
-                  ? "bg-background hover:bg-accent/30"
-                  : "bg-muted/30 text-muted-foreground hover:bg-muted/50",
-                isSelected && "ring-2 ring-foreground ring-inset",
+                  ? "bg-basalt-background hover:bg-basalt-accent/30"
+                  : "bg-basalt-muted/30 text-basalt-muted-foreground hover:bg-basalt-muted/50",
+                isSelected && "ring-2 ring-basalt-foreground ring-inset",
               )}
             >
               {/* Day-number chip — purely decorative; the entire cell is
@@ -233,7 +233,7 @@ export function PlanCalendar({
               <span
                 className={cn(
                   "inline-flex w-fit items-center gap-1 rounded-full px-1.5 text-xs font-medium",
-                  isToday && "bg-primary text-primary-foreground",
+                  isToday && "bg-basalt-primary text-basalt-primary-foreground",
                 )}
               >
                 {cell.day}
@@ -277,17 +277,17 @@ export function PlanCalendar({
                         }}
                         className={cn(
                           "flex w-full items-center justify-between gap-1 rounded-sm py-0.5 pl-1.5 pr-1.5",
-                          "border-l-[3px] bg-muted/70 text-foreground",
-                          "text-[10px] font-medium leading-tight",
-                          "outline-none ring-offset-background transition-colors",
-                          "hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring",
+                          "border-l-[3px] bg-basalt-muted/70 text-basalt-foreground",
+                          "text-basalt-sm font-medium leading-tight",
+                          "outline-none ring-offset-basalt-background transition-colors",
+                          "hover:bg-basalt-muted focus-visible:ring-2 focus-visible:ring-basalt-ring",
                           // Dim the entire banner on out-of-month cells
                           // so the in-month entries stay the focal point.
                           !cell.inMonth && "opacity-60",
                         )}
                       >
                         <span className="min-w-0 flex-1 truncate text-left">{rule.name}</span>
-                        <span className="shrink-0 tabular-nums text-foreground">
+                        <span className="shrink-0 tabular-nums text-basalt-foreground">
                           {formatAmountCompact(rule.amountCents)}
                         </span>
                       </button>
@@ -302,8 +302,8 @@ export function PlanCalendar({
                       }}
                       data-testid={`overflow-${cell.iso}`}
                       className={cn(
-                        "rounded-sm px-1.5 py-0.5 text-left text-[10px] font-medium text-muted-foreground",
-                        "hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring outline-none",
+                        "rounded-sm px-1.5 py-0.5 text-left text-basalt-sm font-medium text-basalt-muted-foreground",
+                        "hover:bg-basalt-accent focus-visible:ring-2 focus-visible:ring-basalt-ring outline-none",
                       )}
                       aria-label={`查看 ${cell.iso} 全部 ${occs.length} 项周期支出`}
                     >

@@ -58,7 +58,7 @@ export function TransactionAnalysisClient({
             <h1 className="text-2xl font-bold">{isIncome ? "收入分析" : "支出分析"}</h1>
           </div>
         </div>
-        <div className="text-muted-foreground py-8 text-center">
+        <div className="text-basalt-muted-foreground py-8 text-center">
           暂无{isIncome ? "收入" : "支出"}数据
         </div>
       </div>
@@ -71,7 +71,7 @@ export function TransactionAnalysisClient({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">{isIncome ? "收入分析" : "支出分析"}</h1>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-basalt-muted-foreground text-sm">
             {isIncome ? "收入来源与趋势分析" : "支出结构与趋势分析"}
           </p>
         </div>

@@ -31,7 +31,7 @@ vi.mock("@/app/actions/recurring-expense-state-actions", () => ({
   resumeRecurringExpense: resumeMock,
   endRecurringExpense: endMock,
 }));
-vi.mock("sonner", () => ({
+vi.mock("@nocoo/basalt/components/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 

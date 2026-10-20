@@ -1,6 +1,6 @@
+import { Toaster } from "@nocoo/basalt/components/toast";
 import { Outlet } from "react-router";
 import { CommandPalette } from "@/components/command-palette";
-import { Toaster } from "@/components/ui/sonner";
 
 /**
  * RootLayout renders inside RouterProvider so that components

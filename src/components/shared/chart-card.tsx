@@ -1,6 +1,5 @@
+import { LayerCard } from "@nocoo/basalt";
 import type { ReactNode } from "react";
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export interface ChartCardProps {
   title: string;
@@ -20,24 +19,26 @@ export function ChartCard({
   className,
 }: ChartCardProps) {
   return (
-    <Card className={className}>
-      <CardHeader>
-        <div className="flex items-center justify-between">
+    <LayerCard {...(className ? { className } : {})}>
+      <LayerCard.Header className="items-stretch flex-col gap-1.5">
+        <div className="flex w-full items-center justify-between gap-2">
           <div>
             {Icon ? (
-              <CardTitle className="flex items-center gap-2">
-                <Icon className="text-primary size-5" />
+              <h3 className="text-lg font-semibold leading-none tracking-tight text-basalt-foreground flex items-center gap-2">
+                <Icon className="text-basalt-primary size-5" />
                 {title}
-              </CardTitle>
+              </h3>
             ) : (
-              <CardTitle>{title}</CardTitle>
+              <h3 className="text-lg font-semibold leading-none tracking-tight text-basalt-foreground">
+                {title}
+              </h3>
             )}
-            {description && <CardDescription>{description}</CardDescription>}
+            {description && <p className="text-sm text-basalt-muted-foreground">{description}</p>}
           </div>
           {actions}
         </div>
-      </CardHeader>
-      <CardContent>{children}</CardContent>
-    </Card>
+      </LayerCard.Header>
+      <LayerCard.Body className="min-h-0 flex-1">{children}</LayerCard.Body>
+    </LayerCard>
   );
 }

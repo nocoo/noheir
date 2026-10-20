@@ -17,8 +17,8 @@
 // window is the contract pinned by tests; a leap day at the boundary
 // is handled by computeOccurrences.
 
+import { LayerCard } from "@nocoo/basalt";
 import * as React from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { formatAmountYuan } from "@/lib/recurring-expense/format";
 import { sumMonth, sumNextDays } from "@/lib/recurring-expense/occurrences-aggregate";
 import type { RecurrenceRule } from "@/lib/recurring-expense/rule-types";
@@ -89,9 +89,13 @@ export function PlanSummaryCards({
       aria-label="周期支出汇总"
     >
       {items.map((item) => (
-        <Card key={item.key} data-summary-key={item.key} className="border-l-4 border-l-primary/60">
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">{item.label}</p>
+        <LayerCard
+          key={item.key}
+          data-summary-key={item.key}
+          className="border-l-4 border-l-basalt-primary/60"
+        >
+          <LayerCard.Body className="min-h-0 flex-1">
+            <p className="text-sm text-basalt-muted-foreground">{item.label}</p>
             {/* biome-ignore lint/a11y/useAriaPropsSupportedByRole: intentional screen-reader label combining number and unit */}
             <p
               className="mt-1 text-2xl font-semibold tabular-nums"
@@ -100,8 +104,8 @@ export function PlanSummaryCards({
             >
               {formatAmountYuan(item.amount)}
             </p>
-          </CardContent>
-        </Card>
+          </LayerCard.Body>
+        </LayerCard>
       ))}
     </div>
   );

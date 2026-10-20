@@ -1,3 +1,4 @@
+import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
 import { TrendingUp } from "lucide-react";
 import {
   Bar,
@@ -38,12 +39,16 @@ export function IncomeExpenseChart({ monthlyData, targetSavingsRate }: IncomeExp
       <div className="h-[400px]">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={displayData}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-            <XAxis dataKey="month" tick={{ fontSize: 12 }} className="text-muted-foreground" />
+            <CartesianGrid strokeDasharray="3 3" className="stroke-basalt-border/50" />
+            <XAxis
+              dataKey="month"
+              tick={{ fontSize: 12 }}
+              className="text-basalt-muted-foreground"
+            />
             <YAxis
               yAxisId="left"
               tick={{ fontSize: 12 }}
-              className="text-muted-foreground"
+              className="text-basalt-muted-foreground"
               tickFormatter={formatCurrencyK}
             />
             <YAxis
@@ -51,7 +56,7 @@ export function IncomeExpenseChart({ monthlyData, targetSavingsRate }: IncomeExp
               orientation="right"
               width={50}
               tick={{ fontSize: 12 }}
-              className="text-muted-foreground"
+              className="text-basalt-muted-foreground"
               tickFormatter={(value: number) => `${value}%`}
               domain={[-50, 100]}
             />
@@ -59,7 +64,11 @@ export function IncomeExpenseChart({ monthlyData, targetSavingsRate }: IncomeExp
               content={({ active, payload, label }) => {
                 if (!active || !payload?.length) return null;
                 return (
-                  <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
+                  <div
+                    className={overlayPanelClass(
+                      "px-basalt-card-sm py-basalt-space-lg text-basalt-sm",
+                    )}
+                  >
                     <p className="mb-1 font-medium">{label}</p>
                     {payload.map((entry) => {
                       const key = String(entry.dataKey ?? "");
@@ -72,13 +81,13 @@ export function IncomeExpenseChart({ monthlyData, targetSavingsRate }: IncomeExp
                         );
                       }
                       return (
-                        <p key={key} className="text-muted-foreground">
+                        <p key={key} className="text-basalt-muted-foreground">
                           {entry.name}: {formatCurrencyFull(val)}
                         </p>
                       );
                     })}
                     <p
-                      className="mt-1 border-t border-border/50 pt-1"
+                      className="mt-1 border-t border-basalt-border/50 pt-1"
                       style={{ color: TARGET_HEX }}
                     >
                       目标储蓄率: {targetSavingsRate}%

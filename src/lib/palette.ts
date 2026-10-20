@@ -44,7 +44,7 @@ export function chartVar(token: string): string {
 // ── 24 sequential chart colors ──
 
 export const chart = {
-  sky: v("chart-1"), // Sky (= primary)
+  sky: v("chart-1"), // Sky (financial chart)
   teal: v("chart-2"),
   jade: v("chart-3"),
   green: v("chart-4"),

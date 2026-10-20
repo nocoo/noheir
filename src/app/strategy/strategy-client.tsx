@@ -1,6 +1,6 @@
 import { ResponsiveSunburst } from "@nivo/sunburst";
+import { LayerCard } from "@nocoo/basalt";
 import { Layers } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { SunburstData } from "@/domain/assets/strategy-sunburst";
 import { formatCurrencyFull } from "@/lib/chart-config";
 import {
@@ -77,22 +77,24 @@ export function StrategyClient({ hierarchy, totalAmount }: StrategyClientProps) 
       {/* Header */}
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <Layers className="text-primary size-6" />
+          <Layers className="text-basalt-primary size-6" />
           策略透视
         </h1>
-        <p className="text-muted-foreground text-sm">
+        <p className="text-basalt-muted-foreground text-sm">
           从币种 → 策略 → 产品的层级视角，识别集中度风险
           {totalAmount > 0 && ` · 总计 ${formatCurrencyFull(totalAmount)}`}
         </p>
       </div>
 
       {/* Sunburst Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>资产配置结构</CardTitle>
-          <CardDescription>内圈币种 → 中圈策略 → 外圈产品</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <LayerCard>
+        <LayerCard.Header className="items-stretch flex-col gap-1.5">
+          <h3 className="text-lg font-semibold leading-none tracking-tight text-basalt-foreground">
+            资产配置结构
+          </h3>
+          <p className="text-sm text-basalt-muted-foreground">内圈币种 → 中圈策略 → 外圈产品</p>
+        </LayerCard.Header>
+        <LayerCard.Body className="min-h-0 flex-1">
           <div className="h-[600px]">
             {hasData ? (
               <ResponsiveSunburst<SunburstData>
@@ -118,7 +120,7 @@ export function StrategyClient({ hierarchy, totalAmount }: StrategyClientProps) 
                 // colours) — that stringifies to rgb(0, 0, 0), unreadable in
                 // dark mode. Bind straight to --foreground so the label
                 // colour follows the current theme without any modifier.
-                arcLabelsTextColor="hsl(var(--foreground))"
+                arcLabelsTextColor="hsl(var(--basalt-foreground))"
                 animate
                 motionConfig="gentle"
                 tooltip={({ data, value }) => {
@@ -150,32 +152,32 @@ export function StrategyClient({ hierarchy, totalAmount }: StrategyClientProps) 
                 }}
               />
             ) : (
-              <div className="text-muted-foreground flex h-full items-center justify-center">
+              <div className="text-basalt-muted-foreground flex h-full items-center justify-center">
                 暂无策略配置数据
               </div>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </LayerCard.Body>
+      </LayerCard>
 
       {/* Insights */}
       <div className="grid gap-4 md:grid-cols-2">
-        <Card className="border-l-4 border-l-primary">
-          <CardContent className="p-4">
+        <LayerCard className="border-l-4 border-l-basalt-primary">
+          <LayerCard.Body className="min-h-0 flex-1">
             <h3 className="mb-2 font-semibold">💡 透视价值</h3>
-            <ul className="text-muted-foreground space-y-1 text-sm">
+            <ul className="text-basalt-muted-foreground space-y-1 text-sm">
               <li>• 识别单一渠道/产品过度集中</li>
               <li>• 评估美元资产配置占比</li>
               <li>• 检查各策略资金分布均衡性</li>
               <li>• 发现&ldquo;产品名称不同但实际同类&rdquo;的情况</li>
             </ul>
-          </CardContent>
-        </Card>
+          </LayerCard.Body>
+        </LayerCard>
 
-        <Card className="border-l-4 border-l-primary">
-          <CardContent className="p-4">
+        <LayerCard className="border-l-4 border-l-basalt-primary">
+          <LayerCard.Body className="min-h-0 flex-1">
             <h3 className="mb-2 font-semibold">📊 使用指南</h3>
-            <ul className="text-muted-foreground space-y-1 text-sm">
+            <ul className="text-basalt-muted-foreground space-y-1 text-sm">
               <li>
                 • <strong>内圈</strong>: 币种分类 (人民币/美元/港币)
               </li>
@@ -190,8 +192,8 @@ export function StrategyClient({ hierarchy, totalAmount }: StrategyClientProps) 
               </li>
               <li>• 悬停查看详细金额和占比</li>
             </ul>
-          </CardContent>
-        </Card>
+          </LayerCard.Body>
+        </LayerCard>
       </div>
     </div>
   );

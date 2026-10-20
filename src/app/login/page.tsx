@@ -16,7 +16,7 @@ function Barcode() {
         <div
           // biome-ignore lint/suspicious/noArrayIndexKey: purely decorative bars, fixed-length list
           key={`bar-${i}`}
-          className="rounded-[0.5px] bg-primary-foreground"
+          className="rounded-[0.5px] bg-basalt-primary-foreground"
           style={{ width: `${w * 1.5}px`, opacity: i % 3 === 0 ? 0.9 : 0.5 }}
         />
       ))}
@@ -35,21 +35,21 @@ function LoginContent() {
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col bg-background overflow-hidden">
+    <div className="relative flex min-h-screen flex-col bg-basalt-background overflow-hidden">
       {/* Radial glow */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           background: [
             "radial-gradient(ellipse 70% 55% at 50% 50%,",
-            "hsl(var(--foreground) / 0.045) 0%,",
-            "hsl(var(--foreground) / 0.042) 10%,",
-            "hsl(var(--foreground) / 0.036) 20%,",
-            "hsl(var(--foreground) / 0.028) 32%,",
-            "hsl(var(--foreground) / 0.020) 45%,",
-            "hsl(var(--foreground) / 0.012) 58%,",
-            "hsl(var(--foreground) / 0.006) 72%,",
-            "hsl(var(--foreground) / 0.002) 86%,",
+            "hsl(var(--basalt-foreground) / 0.045) 0%,",
+            "hsl(var(--basalt-foreground) / 0.042) 10%,",
+            "hsl(var(--basalt-foreground) / 0.036) 20%,",
+            "hsl(var(--basalt-foreground) / 0.028) 32%,",
+            "hsl(var(--basalt-foreground) / 0.020) 45%,",
+            "hsl(var(--basalt-foreground) / 0.012) 58%,",
+            "hsl(var(--basalt-foreground) / 0.006) 72%,",
+            "hsl(var(--basalt-foreground) / 0.002) 86%,",
             "transparent 100%)",
           ].join(" "),
         }}
@@ -63,7 +63,7 @@ function LoginContent() {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="GitHub repository"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-basalt-muted-foreground hover:text-basalt-foreground hover:bg-basalt-accent transition-colors"
           >
             <GithubIcon className="h-[18px] w-[18px]" aria-hidden="true" strokeWidth={1.5} />
           </a>
@@ -89,7 +89,7 @@ function LoginContent() {
             }}
           >
             {/* Header strip with barcode */}
-            <div className="bg-primary px-5 py-4">
+            <div className="bg-basalt-primary px-5 py-4">
               <div className="flex items-center justify-between">
                 <div
                   className="h-4 w-8 rounded-full bg-basalt-background/80"
@@ -99,15 +99,17 @@ function LoginContent() {
                   }}
                 />
                 <div className="flex items-center gap-2">
-                  <Shield className="h-4 w-4 text-primary-foreground" strokeWidth={1.5} />
-                  <span className="text-sm font-semibold text-primary-foreground">noheir</span>
+                  <Shield className="h-4 w-4 text-basalt-primary-foreground" strokeWidth={1.5} />
+                  <span className="text-sm font-semibold text-basalt-primary-foreground">
+                    noheir
+                  </span>
                 </div>
-                <span className="text-[10px] font-medium uppercase tracking-widest text-primary-foreground/60">
+                <span className="text-[10px] font-medium uppercase tracking-widest text-basalt-primary-foreground/60">
                   财务
                 </span>
               </div>
               <div className="mt-3 flex items-center justify-between">
-                <span className="text-[9px] font-mono text-primary-foreground/40 tracking-wider">
+                <span className="text-[9px] font-mono text-basalt-primary-foreground/40 tracking-wider">
                   ID {year}-{today.slice(4)}
                 </span>
                 <div className="h-6">
@@ -146,7 +148,7 @@ function LoginContent() {
                 variant="outline"
                 size="lg"
                 onClick={handleLogin}
-                className="h-11 w-full rounded-xl cursor-pointer"
+                className="w-full rounded-xl cursor-pointer"
               >
                 <Shield className="h-4 w-4" />
                 Cloudflare Access 登录
@@ -160,7 +162,7 @@ function LoginContent() {
             {/* Footer strip */}
             <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center border-t border-basalt-border bg-basalt-secondary/50 py-2.5">
               <div className="flex items-center gap-1.5">
-                <div className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
+                <div className="h-1.5 w-1.5 rounded-full bg-basalt-success animate-pulse" />
                 <span className="text-[10px] text-basalt-muted-foreground">安全认证</span>
               </div>
             </div>
@@ -168,13 +170,13 @@ function LoginContent() {
         </div>
       </div>
       <footer className="py-4 text-center">
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-basalt-muted-foreground">
           由{" "}
           <a
             href="https://github.com/nocoo/noheir"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary hover:text-primary/80 transition-colors"
+            className="text-basalt-primary hover:text-basalt-primary/80 transition-colors"
           >
             noheir
           </a>{" "}

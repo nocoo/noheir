@@ -18,8 +18,9 @@
 //     the action calls `revalidatePath("/plan")`, so a fresh request
 //     re-hydrates the props (no stale local state).
 
-import { Button } from "@nocoo/basalt";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { Button, DialogClose } from "@nocoo/basalt";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@nocoo/basalt/components/dialog";
+import { ChevronLeft, ChevronRight, Plus, XIcon } from "lucide-react";
 import * as React from "react";
 import { useRevalidator } from "react-router";
 import { DayDetailPopover } from "@/components/plan/day-detail-popover";
@@ -34,7 +35,6 @@ import {
   type RecurringExpenseFormInitial,
 } from "@/components/plan/recurring-expense-form";
 import { RuleList, type RuleListCategory } from "@/components/plan/rule-list";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatIso, parseIso } from "@/lib/recurring-expense/occurrences";
 import type { RecurrenceRule } from "@/lib/recurring-expense/rule-types";
 
@@ -140,7 +140,7 @@ export function CalendarClient({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">资金计划日历</h1>
-          <p className="text-sm text-muted-foreground">管理家庭周期支出，可视化未来现金流</p>
+          <p className="text-sm text-basalt-muted-foreground">管理家庭周期支出，可视化未来现金流</p>
         </div>
         <Button onClick={() => setCreateOpen(true)} data-testid="open-create-rule">
           <Plus className="size-4" />
@@ -150,7 +150,7 @@ export function CalendarClient({
 
       <PlanSummaryCards rules={rules} viewMonth={viewMonth} todayIso={todayIso} />
 
-      <div className="rounded-md border border-border p-4">
+      <div className="rounded-md border border-basalt-border p-4">
         <div className="mb-3 flex items-center gap-2">
           <Button
             type="button"
@@ -214,9 +214,9 @@ export function CalendarClient({
 
       {/* Create dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+        <DialogContent size="lg" className="grid gap-4 max-h-[90vh] sm:max-w-2xl sm:w-full">
           <DialogHeader>
-            <DialogTitle>新建周期支出</DialogTitle>
+            <DialogTitle className="pr-8">新建周期支出</DialogTitle>
           </DialogHeader>
           <RecurringExpenseForm
             categories={categories.map((c) => ({ id: c.id, name: c.name }))}
@@ -226,6 +226,16 @@ export function CalendarClient({
             }}
             onCancel={() => setCreateOpen(false)}
           />
+          <DialogClose asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-2 top-2"
+              aria-label="Close"
+            >
+              <XIcon aria-hidden="true" />
+            </Button>
+          </DialogClose>
         </DialogContent>
       </Dialog>
 
@@ -236,9 +246,9 @@ export function CalendarClient({
           if (!open) setEditingId(null);
         }}
       >
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+        <DialogContent size="lg" className="grid gap-4 max-h-[90vh] sm:max-w-2xl sm:w-full">
           <DialogHeader>
-            <DialogTitle>编辑周期支出</DialogTitle>
+            <DialogTitle className="pr-8">编辑周期支出</DialogTitle>
           </DialogHeader>
           {editingRule ? (
             <RecurringExpenseForm
@@ -251,6 +261,16 @@ export function CalendarClient({
               onCancel={() => setEditingId(null)}
             />
           ) : null}
+          <DialogClose asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-2 top-2"
+              aria-label="Close"
+            >
+              <XIcon aria-hidden="true" />
+            </Button>
+          </DialogClose>
         </DialogContent>
       </Dialog>
     </div>

@@ -2,10 +2,13 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
+  Badge,
   Sidebar as BasaltSidebar,
+  Button,
   SidebarFooter,
   SidebarGroup,
   SidebarHeader,
+  SidebarIconItem,
   SidebarNav,
   SidebarUser,
   Tooltip,
@@ -13,241 +16,170 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@nocoo/basalt";
+import { EditableNavItem } from "@nocoo/basalt/components/editable-nav-item";
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+} from "@nocoo/basalt/components/navigation-menu";
 import { LogOut, PanelLeft } from "lucide-react";
 import { Link, useLocation } from "react-router";
+import { GithubIcon } from "@/components/icons/github-icon";
 import { useAuth } from "@/lib/auth-context";
-import { ALL_NAV_ITEMS, isNavItemActive, NAV_GROUPS, type NavGroup } from "@/lib/navigation";
+import { ALL_NAV_ITEMS, isNavItemActive, NAV_GROUPS } from "@/lib/navigation";
 import pkg from "../../../package.json";
+import { HexlyLink } from "./header-links";
 import { useSidebar } from "./sidebar-context";
 import { useYear, YEAR_ENABLED_PATHS } from "./year-context";
 
-/**
- * Build href with year param if the target path supports it
- */
 function buildHrefWithYear(href: string, year: number): string {
-  if (YEAR_ENABLED_PATHS.has(href)) {
-    return `${href}?year=${year}`;
-  }
-  return href;
+  return YEAR_ENABLED_PATHS.has(href) ? `${href}?year=${year}` : href;
 }
 
-function NavGroupSection({
-  group,
-  pathname,
-  year,
-  onNavigate,
-}: {
-  group: NavGroup;
-  pathname: string;
-  year: number;
-  onNavigate: () => void;
-}) {
-  return (
-    <SidebarGroup label={group.label} defaultOpen={group.defaultOpen ?? true}>
-      {group.items.map((item) => {
-        const isActive = isNavItemActive(pathname, item.href);
-
-        return (
-          <Link
-            key={item.href}
-            to={buildHrefWithYear(item.href, year)}
-            onClick={onNavigate}
-            aria-current={isActive ? "page" : undefined}
-            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-normal transition-colors ${
-              isActive
-                ? "bg-basalt-accent text-basalt-foreground"
-                : "text-basalt-muted-foreground hover:bg-basalt-accent hover:text-basalt-foreground"
-            }`}
-          >
-            <item.icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
-            <span className="flex-1 text-left">{item.label}</span>
-          </Link>
-        );
-      })}
-    </SidebarGroup>
-  );
-}
-
-interface SidebarProps {
-  mobile?: boolean;
-}
-
-export function Sidebar({ mobile = false }: SidebarProps) {
-  const location = useLocation();
-  const pathname = location.pathname;
+export function Sidebar({ mobile = false }: { mobile?: boolean }) {
+  const { pathname } = useLocation();
   const { collapsed, toggle, setMobileOpen } = useSidebar();
   const { year } = useYear();
   const { user, logout } = useAuth();
-
+  const isCollapsed = !mobile && collapsed;
   const userName = user?.name ?? "用户";
-  const userEmail = user?.email ?? "";
-  const userImage = user?.image;
-  const userInitial = userName[0] ?? "?";
-
   const handleNavigate = () => setMobileOpen(false);
-  const handleSignOut = () => logout();
-
-  const isCollapsed = mobile ? false : collapsed;
+  const avatar = (
+    <Avatar>
+      {user?.image && <AvatarImage src={user.image} alt={userName} />}
+      <AvatarFallback>{userName[0] ?? "?"}</AvatarFallback>
+    </Avatar>
+  );
 
   return (
     <TooltipProvider delayDuration={0}>
-      <BasaltSidebar
-        aria-label={mobile ? "主导航抽屉" : "主导航"}
-        collapsed={isCollapsed}
-        className={mobile ? "!w-[260px] !h-full" : undefined}
-      >
+      <BasaltSidebar aria-label={mobile ? "主导航抽屉" : "主导航"} collapsed={isCollapsed}>
+        <SidebarHeader className="gap-0">
+          <div className="flex w-[calc(var(--basalt-size-rail)-2*var(--basalt-space-nav-inset))] shrink-0 justify-center">
+            <img src="/logo-24.png" alt="noheir" width={24} height={24} />
+          </div>
+          {!isCollapsed && (
+            <>
+              <div className="flex min-w-0 flex-1 items-center gap-2">
+                <span className="font-semibold tracking-tight">noheir</span>
+                <Badge variant="secondary" className="font-mono">
+                  v{pkg.version}
+                </Badge>
+              </div>
+              {!mobile && (
+                <Button variant="ghost" size="icon" onClick={toggle} aria-label="收起侧边栏">
+                  <PanelLeft aria-hidden="true" strokeWidth={1.5} />
+                </Button>
+              )}
+            </>
+          )}
+        </SidebarHeader>
+
         {isCollapsed ? (
-          /* ── Collapsed (icon-only) view ── */
-          <div className="flex h-screen w-[68px] flex-col items-center">
-            {/* Logo */}
-            <div className="flex h-14 w-full items-center justify-start pl-6 pr-3">
-              <img src="/logo-24.png" alt="noheir" width={24} height={24} className="shrink-0" />
-            </div>
-
-            {/* Expand toggle */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  onClick={toggle}
-                  aria-label="展开侧边栏"
-                  className="flex h-10 w-10 items-center justify-center rounded-lg text-basalt-muted-foreground hover:text-basalt-foreground hover:bg-basalt-accent transition-colors mb-2"
-                >
-                  <PanelLeft className="h-4 w-4" aria-hidden="true" strokeWidth={1.5} />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right" sideOffset={8}>
-                展开侧边栏
-              </TooltipContent>
-            </Tooltip>
-
-            {/* Navigation — flat icon list, no groups */}
-            <nav className="flex-1 flex flex-col items-center gap-1 overflow-y-auto pt-1">
-              {ALL_NAV_ITEMS.map((item) => {
-                const isActive = isNavItemActive(pathname, item.href);
-
-                return (
-                  <Tooltip key={item.href}>
-                    <TooltipTrigger asChild>
-                      <Link
-                        to={buildHrefWithYear(item.href, year)}
-                        onClick={handleNavigate}
-                        aria-label={item.label}
-                        aria-current={isActive ? "page" : undefined}
-                        className={`relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors ${
-                          isActive
-                            ? "bg-basalt-accent text-basalt-foreground"
-                            : "text-basalt-muted-foreground hover:bg-basalt-accent hover:text-basalt-foreground"
-                        }`}
-                      >
-                        <item.icon className="h-4 w-4" strokeWidth={1.5} />
-                      </Link>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" sideOffset={8}>
-                      {item.label}
-                    </TooltipContent>
-                  </Tooltip>
-                );
-              })}
-            </nav>
-
-            {/* User avatar */}
-            <div className="py-3 flex justify-center w-full">
+          <>
+            <div className="flex justify-center">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    onClick={handleSignOut}
-                    aria-label="退出登录"
-                    className="cursor-pointer"
-                  >
-                    <Avatar className="h-9 w-9">
-                      {userImage && <AvatarImage src={userImage} alt={userName} />}
-                      <AvatarFallback className="text-xs">{userInitial}</AvatarFallback>
-                    </Avatar>
-                  </button>
+                  <SidebarIconItem onClick={toggle} aria-label="展开侧边栏">
+                    <PanelLeft aria-hidden="true" strokeWidth={1.5} />
+                  </SidebarIconItem>
                 </TooltipTrigger>
-                <TooltipContent side="right" sideOffset={8}>
-                  {userName} &middot; 点击退出登录
-                </TooltipContent>
+                <TooltipContent side="right">展开侧边栏</TooltipContent>
               </Tooltip>
             </div>
-          </div>
+            <NavigationMenu
+              orientation="vertical"
+              className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain"
+            >
+              <NavigationMenuList className="items-center">
+                {ALL_NAV_ITEMS.map((item) => (
+                  <NavigationMenuItem key={item.href}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <NavigationMenuLink
+                          asChild
+                          active={isNavItemActive(pathname, item.href)}
+                          className="w-basalt-control justify-center"
+                        >
+                          <Link
+                            to={buildHrefWithYear(item.href, year)}
+                            onClick={handleNavigate}
+                            aria-label={item.label}
+                          >
+                            <item.icon aria-hidden="true" strokeWidth={1.5} />
+                          </Link>
+                        </NavigationMenuLink>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">{item.label}</TooltipContent>
+                    </Tooltip>
+                  </NavigationMenuItem>
+                ))}
+              </NavigationMenuList>
+            </NavigationMenu>
+          </>
         ) : (
-          /* ── Expanded view ── */
-          <div className="flex h-screen w-[260px] flex-col">
-            {/* Header: logo + collapse toggle */}
-            <SidebarHeader>
-              <div className="flex w-full items-center justify-between px-3">
-                <div className="flex items-center gap-2">
-                  <img
-                    src="/logo-24.png"
-                    alt="noheir"
-                    width={24}
-                    height={24}
-                    className="shrink-0"
+          <SidebarNav>
+            {NAV_GROUPS.map((group) => (
+              <SidebarGroup
+                key={group.label}
+                label={group.label}
+                defaultOpen={group.defaultOpen ?? true}
+              >
+                {group.items.map((item) => (
+                  <EditableNavItem
+                    key={item.href}
+                    label={item.label}
+                    href={buildHrefWithYear(item.href, year)}
+                    selected={isNavItemActive(pathname, item.href)}
+                    icon={<item.icon strokeWidth={1.5} />}
+                    onSelect={handleNavigate}
                   />
-                  <span className="text-lg font-bold tracking-tighter">noheir</span>
-                  <span className="rounded-full bg-basalt-muted px-2 py-0.5 text-[10px] font-medium text-basalt-muted-foreground font-mono">
-                    v{pkg.version}
-                  </span>
-                </div>
-                {!mobile && (
-                  <button
-                    type="button"
-                    onClick={toggle}
-                    aria-label="收起侧边栏"
-                    className="flex h-7 w-7 items-center justify-center rounded-md text-basalt-muted-foreground hover:text-basalt-foreground transition-colors"
-                  >
-                    <PanelLeft className="h-4 w-4" aria-hidden="true" strokeWidth={1.5} />
-                  </button>
-                )}
-              </div>
-            </SidebarHeader>
-
-            {/* Navigation — grouped with collapsible sections */}
-            <SidebarNav>
-              {NAV_GROUPS.map((group) => (
-                <NavGroupSection
-                  key={group.label}
-                  group={group}
-                  pathname={pathname}
-                  year={year}
-                  onNavigate={handleNavigate}
-                />
-              ))}
-            </SidebarNav>
-
-            {/* User info + sign out */}
-            <SidebarFooter>
-              <SidebarUser
-                name={userName}
-                email={userEmail}
-                avatar={
-                  <Avatar className="h-9 w-9 shrink-0">
-                    {userImage && <AvatarImage src={userImage} alt={userName} />}
-                    <AvatarFallback className="text-xs">{userInitial}</AvatarFallback>
-                  </Avatar>
-                }
-                action={
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        onClick={handleSignOut}
-                        aria-label="退出登录"
-                        className="flex h-8 w-8 items-center justify-center rounded-lg text-basalt-muted-foreground hover:text-basalt-foreground hover:bg-basalt-accent transition-colors shrink-0"
-                      >
-                        <LogOut className="h-4 w-4" aria-hidden="true" strokeWidth={1.5} />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top">退出登录</TooltipContent>
-                  </Tooltip>
-                }
-              />
-            </SidebarFooter>
-          </div>
+                ))}
+              </SidebarGroup>
+            ))}
+          </SidebarNav>
         )}
+
+        <SidebarFooter>
+          {mobile && (
+            <div className="flex items-center gap-basalt-space-sm">
+              <Button variant="ghost" asChild>
+                <a href="https://github.com/nocoo/noheir" target="_blank" rel="noopener noreferrer">
+                  <GithubIcon aria-hidden="true" strokeWidth={1.5} />
+                  GitHub
+                </a>
+              </Button>
+              <HexlyLink />
+            </div>
+          )}
+          {isCollapsed ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={logout} aria-label="退出登录">
+                  {avatar}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">{userName} · 退出登录</TooltipContent>
+            </Tooltip>
+          ) : (
+            <SidebarUser
+              name={userName}
+              email={user?.email ?? ""}
+              avatar={avatar}
+              action={
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={logout} aria-label="退出登录">
+                      <LogOut aria-hidden="true" strokeWidth={1.5} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">退出登录</TooltipContent>
+                </Tooltip>
+              }
+            />
+          )}
+        </SidebarFooter>
       </BasaltSidebar>
     </TooltipProvider>
   );

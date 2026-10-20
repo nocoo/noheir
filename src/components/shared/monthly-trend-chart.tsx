@@ -1,3 +1,4 @@
+import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
 import {
   Area,
   AreaChart,
@@ -45,11 +46,15 @@ export function MonthlyTrendChart({
                 <stop offset="95%" stopColor={colorHex} stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-            <XAxis dataKey="month" tick={{ fontSize: 12 }} className="text-muted-foreground" />
+            <CartesianGrid strokeDasharray="3 3" className="stroke-basalt-border/50" />
+            <XAxis
+              dataKey="month"
+              tick={{ fontSize: 12 }}
+              className="text-basalt-muted-foreground"
+            />
             <YAxis
               tick={{ fontSize: 12 }}
-              className="text-muted-foreground"
+              className="text-basalt-muted-foreground"
               tickFormatter={formatCurrencyK}
             />
             <Tooltip
@@ -57,9 +62,13 @@ export function MonthlyTrendChart({
                 if (!active || !payload?.length) return null;
                 const entry = payload[0];
                 return (
-                  <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
+                  <div
+                    className={overlayPanelClass(
+                      "px-basalt-card-sm py-basalt-space-lg text-basalt-sm",
+                    )}
+                  >
                     <p className="font-medium">{tooltipLabel}</p>
-                    <p className="text-muted-foreground">
+                    <p className="text-basalt-muted-foreground">
                       {labelText}: {formatCurrencyFull(Number(entry?.value ?? 0))}
                     </p>
                   </div>

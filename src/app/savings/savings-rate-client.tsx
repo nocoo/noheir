@@ -1,3 +1,6 @@
+import { LayerCard } from "@nocoo/basalt";
+import { Badge } from "@nocoo/basalt/components/badge";
+import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
 import { PiggyBank, Target, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import {
   Bar,
@@ -11,8 +14,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { SavingsRateChartPoint, SavingsRateSummary } from "@/domain/dashboard/savings-rate";
 import { formatCurrencyFull, formatCurrencyK } from "@/lib/chart-config";
 import { cn } from "@/lib/utils";
@@ -40,10 +41,10 @@ export function SavingsRateClient({
 
   const savingsRateColorClass =
     savingsRateStatus === "below"
-      ? "text-destructive"
+      ? "text-basalt-destructive"
       : savingsRateStatus === "met"
-        ? "text-primary"
-        : "text-success";
+        ? "text-basalt-primary"
+        : "text-basalt-success";
 
   return (
     <div className="space-y-6">
@@ -51,26 +52,26 @@ export function SavingsRateClient({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold">
-            <PiggyBank className="text-primary size-6" />
+            <PiggyBank className="text-basalt-primary size-6" />
             储蓄率分析
           </h1>
-          <p className="text-muted-foreground text-sm">月度储蓄率趋势和累计储蓄</p>
+          <p className="text-basalt-muted-foreground text-sm">月度储蓄率趋势和累计储蓄</p>
         </div>
       </div>
 
       {/* Summary Stats */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <Card
+        <LayerCard
           className={cn(
             "border-l-4",
-            savingsRateStatus === "below" && "border-l-destructive",
-            savingsRateStatus === "met" && "border-l-primary",
-            savingsRateStatus === "exceeded" && "border-l-success",
+            savingsRateStatus === "below" && "border-l-basalt-destructive",
+            savingsRateStatus === "met" && "border-l-basalt-primary",
+            savingsRateStatus === "exceeded" && "border-l-basalt-success",
           )}
         >
-          <CardContent className="flex items-center justify-between p-4">
+          <LayerCard.Body className="min-h-0 flex-1 flex items-center justify-between">
             <div className="min-w-0 flex-1">
-              <p className="text-muted-foreground text-xs">年度储蓄率</p>
+              <p className="text-basalt-muted-foreground text-xs">年度储蓄率</p>
               <div className="flex items-baseline gap-2">
                 <p className={cn("text-xl font-bold", savingsRateColorClass)}>
                   {summary.annualSavingsRate.toFixed(1)}%
@@ -83,23 +84,25 @@ export function SavingsRateClient({
                   {summary.savingsRateDiff.toFixed(1)}%
                 </Badge>
               </div>
-              <p className="text-muted-foreground mt-1 text-xs">目标: {targetSavingsRate}%</p>
+              <p className="text-basalt-muted-foreground mt-1 text-xs">
+                目标: {targetSavingsRate}%
+              </p>
             </div>
             <Target
               className={cn(
                 "size-7 shrink-0 opacity-40",
-                savingsRateStatus === "below" && "text-destructive",
-                savingsRateStatus === "met" && "text-primary",
-                savingsRateStatus === "exceeded" && "text-success",
+                savingsRateStatus === "below" && "text-basalt-destructive",
+                savingsRateStatus === "met" && "text-basalt-primary",
+                savingsRateStatus === "exceeded" && "text-basalt-success",
               )}
             />
-          </CardContent>
-        </Card>
-        <Card className="border-l-4 border-l-primary">
-          <CardContent className="flex items-center justify-between p-4">
+          </LayerCard.Body>
+        </LayerCard>
+        <LayerCard className="border-l-4 border-l-basalt-primary">
+          <LayerCard.Body className="min-h-0 flex-1 flex items-center justify-between">
             <div className="min-w-0 flex-1">
-              <p className="text-muted-foreground text-xs">累计储蓄</p>
-              <p className="text-primary text-xl font-bold">
+              <p className="text-basalt-muted-foreground text-xs">累计储蓄</p>
+              <p className="text-basalt-primary text-xl font-bold">
                 {formatCurrencyFull(summary.totalSavings)}
               </p>
               <div className="mt-1 flex items-center gap-1">
@@ -110,56 +113,62 @@ export function SavingsRateClient({
                   {summary.savingsGap >= 0 ? "+" : ""}
                   {formatCurrencyFull(Math.abs(summary.savingsGap))}
                 </Badge>
-                <span className="text-muted-foreground text-xs">
+                <span className="text-basalt-muted-foreground text-xs">
                   {summary.savingsGap >= 0 ? "超额" : "还差"}
                 </span>
               </div>
             </div>
-            <Wallet className="text-primary size-7 shrink-0 opacity-40" />
-          </CardContent>
-        </Card>
-        <Card className="border-l-4 border-l-success">
-          <CardContent className="flex items-center justify-between p-4">
+            <Wallet className="text-basalt-primary size-7 shrink-0 opacity-40" />
+          </LayerCard.Body>
+        </LayerCard>
+        <LayerCard className="border-l-4 border-l-basalt-success">
+          <LayerCard.Body className="min-h-0 flex-1 flex items-center justify-between">
             <div className="min-w-0 flex-1">
-              <p className="text-muted-foreground text-xs">最佳月份</p>
+              <p className="text-basalt-muted-foreground text-xs">最佳月份</p>
               <p className="text-lg font-semibold">{summary.bestMonth?.month ?? "—"}</p>
-              <p className="text-success text-sm">
+              <p className="text-basalt-success text-sm">
                 {summary.bestMonth?.savingsRate.toFixed(1) ?? "0"}%
               </p>
             </div>
-            <TrendingUp className="text-success size-7 shrink-0 opacity-40" />
-          </CardContent>
-        </Card>
-        <Card className="border-l-4 border-l-destructive">
-          <CardContent className="flex items-center justify-between p-4">
+            <TrendingUp className="text-basalt-success size-7 shrink-0 opacity-40" />
+          </LayerCard.Body>
+        </LayerCard>
+        <LayerCard className="border-l-4 border-l-basalt-destructive">
+          <LayerCard.Body className="min-h-0 flex-1 flex items-center justify-between">
             <div className="min-w-0 flex-1">
-              <p className="text-muted-foreground text-xs">待改善月份</p>
+              <p className="text-basalt-muted-foreground text-xs">待改善月份</p>
               <p className="text-lg font-semibold">{summary.worstMonth?.month ?? "—"}</p>
-              <p className="text-destructive text-sm">
+              <p className="text-basalt-destructive text-sm">
                 {summary.worstMonth?.savingsRate.toFixed(1) ?? "0"}%
               </p>
             </div>
-            <TrendingDown className="text-destructive size-7 shrink-0 opacity-40" />
-          </CardContent>
-        </Card>
+            <TrendingDown className="text-basalt-destructive size-7 shrink-0 opacity-40" />
+          </LayerCard.Body>
+        </LayerCard>
       </div>
 
       {/* Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>月度储蓄率趋势</CardTitle>
-          <CardDescription>柱状图为储蓄额，折线为储蓄率</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <LayerCard>
+        <LayerCard.Header className="items-stretch flex-col gap-1.5">
+          <h3 className="text-lg font-semibold leading-none tracking-tight text-basalt-foreground">
+            月度储蓄率趋势
+          </h3>
+          <p className="text-sm text-basalt-muted-foreground">柱状图为储蓄额，折线为储蓄率</p>
+        </LayerCard.Header>
+        <LayerCard.Body className="min-h-0 flex-1">
           <div className="h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-                <XAxis dataKey="month" tick={{ fontSize: 12 }} className="text-muted-foreground" />
+                <CartesianGrid strokeDasharray="3 3" className="stroke-basalt-border/50" />
+                <XAxis
+                  dataKey="month"
+                  tick={{ fontSize: 12 }}
+                  className="text-basalt-muted-foreground"
+                />
                 <YAxis
                   yAxisId="left"
                   tick={{ fontSize: 12 }}
-                  className="text-muted-foreground"
+                  className="text-basalt-muted-foreground"
                   tickFormatter={(value: number) => `${value}%`}
                   domain={[-50, 100]}
                 />
@@ -167,14 +176,18 @@ export function SavingsRateClient({
                   yAxisId="right"
                   orientation="right"
                   tick={{ fontSize: 12 }}
-                  className="text-muted-foreground"
+                  className="text-basalt-muted-foreground"
                   tickFormatter={formatCurrencyK}
                 />
                 <Tooltip
                   content={({ active, payload, label }) => {
                     if (!active || !payload?.length) return null;
                     return (
-                      <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
+                      <div
+                        className={overlayPanelClass(
+                          "px-basalt-card-sm py-basalt-space-lg text-basalt-sm",
+                        )}
+                      >
                         <p className="mb-1 font-medium">{label}</p>
                         {payload.map((entry) => {
                           const key = String(entry.dataKey ?? "");
@@ -193,7 +206,7 @@ export function SavingsRateClient({
                           }
                           if (key === "savings") {
                             return (
-                              <p key={key} className="text-muted-foreground">
+                              <p key={key} className="text-basalt-muted-foreground">
                                 储蓄额: {formatCurrencyFull(val)}
                               </p>
                             );
@@ -207,17 +220,17 @@ export function SavingsRateClient({
                 <ReferenceLine
                   yAxisId="left"
                   y={0}
-                  stroke="hsl(var(--destructive))"
+                  stroke="hsl(var(--basalt-destructive))"
                   strokeDasharray="3 3"
                 />
                 <ReferenceLine
                   yAxisId="left"
                   y={summary.annualSavingsRate}
-                  stroke="hsl(var(--primary))"
+                  stroke="hsl(var(--chart-1))"
                   strokeDasharray="5 5"
                   label={{
                     value: `年度 ${summary.annualSavingsRate.toFixed(1)}%`,
-                    fill: "hsl(var(--primary))",
+                    fill: "hsl(var(--chart-1))",
                     fontSize: 11,
                   }}
                 />
@@ -247,20 +260,20 @@ export function SavingsRateClient({
                   yAxisId="left"
                   type="monotone"
                   dataKey="savingsRate"
-                  stroke="hsl(var(--primary))"
+                  stroke="hsl(var(--chart-1))"
                   strokeWidth={3}
                   dot={{
-                    fill: "hsl(var(--primary))",
+                    fill: "hsl(var(--chart-1))",
                     strokeWidth: 2,
                     r: 4,
                   }}
-                  activeDot={{ r: 6, fill: "hsl(var(--primary))" }}
+                  activeDot={{ r: 6, fill: "hsl(var(--chart-1))" }}
                 />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
-        </CardContent>
-      </Card>
+        </LayerCard.Body>
+      </LayerCard>
     </div>
   );
 }

@@ -126,7 +126,7 @@ export function AnalysesClient({
         }
       />
       {error && (
-        <p role="alert" className="text-destructive text-sm">
+        <p role="alert" className="text-basalt-destructive text-sm">
           {error}
         </p>
       )}
@@ -144,7 +144,7 @@ export function AnalysesClient({
         </LayerCard.Header>
         <LayerCard.Body>
           {result.data.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
+            <p className="text-basalt-muted-foreground text-sm">
               暂无匹配报告。调整筛选条件或创建第一份报告。
             </p>
           ) : (
@@ -153,18 +153,18 @@ export function AnalysesClient({
                 <li key={report.id} className="rounded-md bg-basalt-secondary p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <Link
-                      className="font-medium text-primary hover:underline"
+                      className="font-medium text-basalt-primary hover:underline"
                       to={`/analyses/${encodeURIComponent(report.id)}`}
                     >
                       {report.title}
                     </Link>
                     <Badge variant="secondary">{report.currencies.join(" / ")}</Badge>
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
+                  <p className="mt-1 text-xs text-basalt-muted-foreground">
                     {report.periodStart} – {report.periodEnd} · 来源修订 {report.dataRevision} ·
                     版本 {report.version}
                   </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
+                  <p className="mt-1 text-xs text-basalt-muted-foreground">
                     {report.createdBy.kind === "human"
                       ? "用户提交"
                       : `API 密钥 ${report.createdBy.keyId}`}{" "}

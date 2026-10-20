@@ -32,7 +32,7 @@ export function OverviewClient({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">财务概览</h1>
-          <p className="text-muted-foreground text-sm">查看您的财务状况和趋势</p>
+          <p className="text-basalt-muted-foreground text-sm">查看您的财务状况和趋势</p>
         </div>
       </div>
 

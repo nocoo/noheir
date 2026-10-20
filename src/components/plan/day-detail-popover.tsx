@@ -12,8 +12,7 @@
 //   - frequency description (`describeFrequency` from P2-C4)
 //   - amount in yuan (`formatAmountYuan`)
 //
-// Uses the project's Radix-backed Dialog primitive
-// (src/components/ui/dialog.tsx) rather than a hand-rolled overlay so
+// Uses Basalt's Radix-backed Dialog rather than a hand-rolled overlay so
 // we get the full `aria-modal` contract — FocusScope (Tab trap),
 // DismissableLayer (Escape + outside click), background `aria-hidden`,
 // scroll lock — without re-implementing it.
@@ -25,15 +24,16 @@
 //   - Mutate state. Pause/resume/end actions live on the rule list
 //     (P3-C8), not here.
 
-import { Button } from "@nocoo/basalt";
-import * as React from "react";
+import { Button, DialogClose } from "@nocoo/basalt";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@nocoo/basalt/components/dialog";
+import { XIcon } from "lucide-react";
+import * as React from "react";
 import { CHART_TOKENS } from "@/lib/palette";
 import { describeFrequency, formatAmountYuan } from "@/lib/recurring-expense/format";
 import type { RecurrenceRule } from "@/lib/recurring-expense/rule-types";
@@ -60,7 +60,7 @@ export interface DayDetailPopoverProps {
   className?: string;
 }
 
-const FALLBACK_COLOR = "hsl(var(--muted-foreground))";
+const FALLBACK_COLOR = "hsl(var(--basalt-muted-foreground))";
 
 function tokenColor(token: string | undefined): string {
   if (!token) return FALLBACK_COLOR;
@@ -137,9 +137,11 @@ export function DayDetailPopover({
         if (!next) onClose();
       }}
     >
-      <DialogContent className={cn("max-w-md p-0", className)}>
-        <DialogHeader className="border-b border-border p-4 text-left">
-          <DialogTitle data-testid="day-detail-title">{isoDate ?? ""}</DialogTitle>
+      <DialogContent size="lg" className={cn("max-w-md p-0 sm:p-0", className)}>
+        <DialogHeader className="border-b border-basalt-border p-4 text-left">
+          <DialogTitle className="pr-8" data-testid="day-detail-title">
+            {isoDate ?? ""}
+          </DialogTitle>
           <DialogDescription data-testid="day-detail-description">
             {rows.length === 0
               ? "当天无周期支出"
@@ -148,7 +150,7 @@ export function DayDetailPopover({
         </DialogHeader>
 
         {rows.length === 0 ? null : (
-          <ul className="max-h-[60vh] overflow-y-auto divide-y divide-border">
+          <ul className="max-h-[60vh] overflow-y-auto divide-y divide-basalt-border">
             {rows.map((row) => (
               <li
                 key={row.ruleId}
@@ -163,7 +165,7 @@ export function DayDetailPopover({
                 />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{row.name}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-basalt-muted-foreground">
                     {row.frequencyText}
                     {row.categoryName ? ` · ${row.categoryName}` : ""}
                   </p>
@@ -183,6 +185,11 @@ export function DayDetailPopover({
             ))}
           </ul>
         )}
+        <DialogClose asChild>
+          <Button variant="ghost" size="icon" className="absolute right-2 top-2" aria-label="Close">
+            <XIcon aria-hidden="true" />
+          </Button>
+        </DialogClose>
       </DialogContent>
     </Dialog>
   );

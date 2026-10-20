@@ -6,22 +6,22 @@
  * bottom 保存 (docs/003 § D5). All staging logic lives in unit-commit-plan.ts.
  */
 
-import { Button } from "@nocoo/basalt";
-import { ArrowLeftRight, Calendar, Package, Repeat, X } from "lucide-react";
-import { useState } from "react";
-import { SectionTitle } from "@/components/capital/unit-panel-primitives";
-import { UnitSwapPicker } from "@/components/capital/unit-swap-picker";
 import {
-  Command,
+  Button,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+} from "@nocoo/basalt";
+import { Input } from "@nocoo/basalt/components/input";
+import { Label } from "@nocoo/basalt/components/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@nocoo/basalt/components/popover";
+import { ArrowLeftRight, Calendar, Package, Repeat, X } from "lucide-react";
+import { useState } from "react";
+import { SectionTitle } from "@/components/capital/unit-panel-primitives";
+import { UnitSwapPicker } from "@/components/capital/unit-swap-picker";
+import { Command } from "@/components/ui/command";
 import type { DomainProduct, SerializedUnit } from "@/domain/types";
 import {
   describeStagedOperation,
@@ -102,10 +102,10 @@ export function UnitOperationsPanel({
       <div className="space-y-2">
         <SectionTitle icon={<Package className="size-3" />} label="当前产品" />
         <p className="text-sm">
-          {currentProduct?.name ?? <span className="text-muted-foreground">未关联产品</span>}
+          {currentProduct?.name ?? <span className="text-basalt-muted-foreground">未关联产品</span>}
         </p>
         {currentProduct?.channel && (
-          <p className="text-muted-foreground text-xs">{currentProduct.channel}</p>
+          <p className="text-basalt-muted-foreground text-xs">{currentProduct.channel}</p>
         )}
       </div>
 
@@ -117,7 +117,8 @@ export function UnitOperationsPanel({
             type="button"
             variant="secondary"
             size="sm"
-            className="h-9 justify-start text-xs"
+            className="justify-start"
+            aria-expanded={switchOpen}
             onClick={() => setSwitchOpen((v) => !v)}
             disabled={stagedSwitch !== undefined}
           >
@@ -128,7 +129,8 @@ export function UnitOperationsPanel({
             type="button"
             variant="secondary"
             size="sm"
-            className="h-9 justify-start text-xs"
+            className="justify-start"
+            aria-expanded={swapOpen}
             onClick={() => setSwapOpen((v) => !v)}
             disabled={stagedSwap !== undefined}
           >
@@ -139,7 +141,8 @@ export function UnitOperationsPanel({
             type="button"
             variant="secondary"
             size="sm"
-            className="h-9 justify-start text-xs"
+            className="justify-start"
+            aria-expanded={availOpen}
             onClick={() => {
               setPendingAvailableDate(currentOverride ?? currentAvailableDate ?? "");
               setAvailOpen((v) => !v);
@@ -152,7 +155,7 @@ export function UnitOperationsPanel({
         </div>
 
         {switchOpen && !stagedSwitch && (
-          <div className="bg-muted/30 space-y-2 rounded-lg border p-2.5">
+          <div className="bg-basalt-muted/30 space-y-2 rounded-lg border p-2.5">
             <Label className="text-xs">新产品</Label>
             <Popover open={productPickerOpen} onOpenChange={setProductPickerOpen}>
               <PopoverTrigger asChild>
@@ -161,14 +164,14 @@ export function UnitOperationsPanel({
                   variant="outline"
                   role="combobox"
                   aria-label="选择新产品"
-                  className="h-9 w-full justify-between text-xs font-normal"
+                  className="w-full justify-between font-normal"
                 >
                   {pendingProductId === undefined
                     ? "选择产品..."
                     : (pendingProduct?.name ?? "取消关联")}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+              <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
                 <Command>
                   <CommandInput placeholder="搜索产品..." />
                   <CommandList>
@@ -185,7 +188,7 @@ export function UnitOperationsPanel({
                             setProductPickerOpen(false);
                           }}
                         >
-                          <span className="text-muted-foreground">取消关联</span>
+                          <span className="text-basalt-muted-foreground">取消关联</span>
                         </CommandItem>
                       )}
                       {products
@@ -222,7 +225,6 @@ export function UnitOperationsPanel({
                   value={pnlInput}
                   onChange={(e) => setPnlInput(e.target.value)}
                   placeholder="如 500 或 -200"
-                  className="h-9 text-xs"
                 />
               </div>
             )}
@@ -230,7 +232,7 @@ export function UnitOperationsPanel({
             <Button
               type="button"
               size="sm"
-              className="h-9 w-full text-xs"
+              className="w-full"
               onClick={confirmSwitch}
               disabled={pendingProductId === undefined}
             >
@@ -240,7 +242,7 @@ export function UnitOperationsPanel({
         )}
 
         {swapOpen && !stagedSwap && (
-          <div className="bg-muted/30 space-y-2 rounded-lg border p-2.5">
+          <div className="bg-basalt-muted/30 space-y-2 rounded-lg border p-2.5">
             <Label className="text-xs">与哪个单元对换</Label>
             <UnitSwapPicker
               units={units}
@@ -259,8 +261,8 @@ export function UnitOperationsPanel({
         )}
 
         {availOpen && !stagedAvail && (
-          <div className="bg-muted/30 space-y-2 rounded-lg border p-2.5">
-            <p className="text-muted-foreground text-[10px]">
+          <div className="bg-basalt-muted/30 space-y-2 rounded-lg border p-2.5">
+            <p className="text-basalt-muted-foreground text-basalt-sm">
               覆盖自动计算的解锁日，投入流水不变。
               {currentOverride
                 ? ` 当前手动：${currentOverride}`
@@ -276,12 +278,11 @@ export function UnitOperationsPanel({
               type="date"
               value={pendingAvailableDate}
               onChange={(e) => setPendingAvailableDate(e.target.value)}
-              className="h-9 text-xs"
             />
             <Button
               type="button"
               size="sm"
-              className="h-9 w-full text-xs"
+              className="w-full"
               onClick={() => {
                 if (!pendingAvailableDate) return;
                 onStage({ kind: "set_available_date", availableDate: pendingAvailableDate });
@@ -296,7 +297,7 @@ export function UnitOperationsPanel({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-8 w-full text-xs"
+                className="w-full"
                 onClick={() => {
                   onStage({ kind: "set_available_date", availableDate: null });
                   setAvailOpen(false);
@@ -316,19 +317,19 @@ export function UnitOperationsPanel({
             {operations.map((op) => (
               <li
                 key={op.kind}
-                className="border-primary/30 bg-primary/10 flex items-start gap-2 rounded-md border p-2.5"
+                className="border-basalt-primary/30 bg-basalt-primary/10 flex items-start gap-2 rounded-md border p-2.5"
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium">{describeStagedOperation(op)}</p>
                   {op.kind === "switch_product" && op.pnl != null && (
-                    <p className="text-muted-foreground text-[10px]">损益 {op.pnl}</p>
+                    <p className="text-basalt-muted-foreground text-basalt-sm">损益 {op.pnl}</p>
                   )}
                 </div>
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="size-5 shrink-0"
+                  className="shrink-0"
                   aria-label={`撤销${describeStagedOperation(op)}`}
                   onClick={() => onUnstage(op.kind)}
                 >

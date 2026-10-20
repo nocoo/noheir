@@ -8,21 +8,21 @@
 //   `usage` — the per-category rule count is computed server-side so the
 //   delete-confirm dialog can warn that N rules will lose their color.
 
-import { Button } from "@nocoo/basalt";
-import { Pencil, Plus, Trash2 } from "lucide-react";
-import * as React from "react";
-import { useRevalidator } from "react-router";
-import { toast } from "sonner";
-import { deleteExpenseCategory } from "@/app/actions/expense-category-actions";
-import { CategoryForm } from "@/components/plan/category-form";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Button, DialogClose } from "@nocoo/basalt";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@nocoo/basalt/components/dialog";
+import { toast } from "@nocoo/basalt/components/toast";
+import { Pencil, Plus, Trash2, XIcon } from "lucide-react";
+import * as React from "react";
+import { useRevalidator } from "react-router";
+import { deleteExpenseCategory } from "@/app/actions/expense-category-actions";
+import { CategoryForm } from "@/components/plan/category-form";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { CHART_TOKENS } from "@/lib/palette";
 
 export interface CategoryRow {
@@ -40,7 +40,9 @@ export interface CategoriesClientProps {
 }
 
 function colorCss(token: string): string {
-  return CHART_TOKENS.includes(token) ? `hsl(var(--${token}))` : "hsl(var(--muted-foreground))";
+  return CHART_TOKENS.includes(token)
+    ? `hsl(var(--${token}))`
+    : "hsl(var(--basalt-muted-foreground))";
 }
 
 export function CategoriesClient({ categories, usage }: CategoriesClientProps): React.ReactElement {
@@ -72,7 +74,7 @@ export function CategoriesClient({ categories, usage }: CategoriesClientProps): 
       <div className="flex items-center justify-between gap-2">
         <div>
           <h1 className="text-2xl font-bold">分类</h1>
-          <p className="text-sm text-muted-foreground">管理周期支出的分类与颜色标记</p>
+          <p className="text-sm text-basalt-muted-foreground">管理周期支出的分类与颜色标记</p>
         </div>
         <Button onClick={() => setCreateOpen(true)} data-testid="open-create">
           <Plus className="size-4" />
@@ -83,7 +85,7 @@ export function CategoriesClient({ categories, usage }: CategoriesClientProps): 
       {categories.length === 0 ? (
         <div
           data-testid="categories-empty"
-          className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-border p-12 text-sm text-muted-foreground"
+          className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-basalt-border p-12 text-sm text-basalt-muted-foreground"
         >
           <p>还没有任何分类</p>
           <Button variant="outline" size="sm" onClick={() => setCreateOpen(true)}>
@@ -94,7 +96,7 @@ export function CategoriesClient({ categories, usage }: CategoriesClientProps): 
       ) : (
         <ul
           aria-label="分类列表"
-          className="divide-y divide-border rounded-md border border-border"
+          className="divide-y divide-basalt-border rounded-md border border-basalt-border"
         >
           {categories.map((cat) => {
             const count = usage[cat.id] ?? 0;
@@ -108,7 +110,7 @@ export function CategoriesClient({ categories, usage }: CategoriesClientProps): 
                 />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{cat.name}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-basalt-muted-foreground">
                     {count > 0 ? `${count} 条规则使用` : "未被规则使用"}
                   </p>
                 </div>
@@ -127,7 +129,7 @@ export function CategoriesClient({ categories, usage }: CategoriesClientProps): 
                   size="icon"
                   aria-label={`删除 ${cat.name}`}
                   onClick={() => setDeleting(cat)}
-                  className="text-destructive hover:text-destructive"
+                  className="text-basalt-destructive hover:text-basalt-destructive"
                 >
                   <Trash2 className="size-4" />
                 </Button>
@@ -139,9 +141,9 @@ export function CategoriesClient({ categories, usage }: CategoriesClientProps): 
 
       {/* Create dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent>
+        <DialogContent size="lg" className="grid gap-4">
           <DialogHeader>
-            <DialogTitle>新建分类</DialogTitle>
+            <DialogTitle className="pr-8">新建分类</DialogTitle>
             <DialogDescription>
               选择一个名称和颜色标记。颜色用于日历和列表的可视化。
             </DialogDescription>
@@ -153,6 +155,16 @@ export function CategoriesClient({ categories, usage }: CategoriesClientProps): 
             }}
             onCancel={() => setCreateOpen(false)}
           />
+          <DialogClose asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-2 top-2"
+              aria-label="Close"
+            >
+              <XIcon aria-hidden="true" />
+            </Button>
+          </DialogClose>
         </DialogContent>
       </Dialog>
 
@@ -163,9 +175,9 @@ export function CategoriesClient({ categories, usage }: CategoriesClientProps): 
           if (!open) setEditing(null);
         }}
       >
-        <DialogContent>
+        <DialogContent size="lg" className="grid gap-4">
           <DialogHeader>
-            <DialogTitle>编辑分类</DialogTitle>
+            <DialogTitle className="pr-8">编辑分类</DialogTitle>
             <DialogDescription>修改名称、颜色或排序。</DialogDescription>
           </DialogHeader>
           {editing ? (
@@ -178,6 +190,16 @@ export function CategoriesClient({ categories, usage }: CategoriesClientProps): 
               onCancel={() => setEditing(null)}
             />
           ) : null}
+          <DialogClose asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-2 top-2"
+              aria-label="Close"
+            >
+              <XIcon aria-hidden="true" />
+            </Button>
+          </DialogClose>
         </DialogContent>
       </Dialog>
 

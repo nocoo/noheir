@@ -278,6 +278,103 @@ test("mobile navigation restores focus and unlocks scrolling after dismissal", a
   await expect.poll(() => page.evaluate(() => document.body.style.overflow)).not.toBe("hidden");
 });
 
+test("mobile capital labels remain single-line within a horizontally scrollable table", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/funds");
+  const row = page.getByRole("row", { name: /U-BROWSER-01/ });
+  await expect(row.getByText("U-BROWSER-01", { exact: true })).toHaveCSS("white-space", "nowrap");
+  await expect(row.getByText("短期理财", { exact: true })).toHaveCSS("white-space", "nowrap");
+  const scroller = page.locator("table").locator("..");
+  await expect(scroller).toHaveCSS("overflow-x", "auto");
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+    .toBe(true);
+});
+
+test("leaving the mobile breakpoint dismisses the drawer and releases its scroll lock", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/api-keys");
+  await page.getByRole("button", { name: "打开导航", exact: true }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => document.body.style.overflow)).not.toBe("hidden");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+});
+
+for (const theme of ["light", "dark"]) {
+  test(`sidebar keeps native selection during hover in ${theme} mode`, async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.addInitScript((value) => {
+      localStorage.setItem("theme", value);
+      localStorage.setItem("basalt-accent", "rose");
+    }, theme);
+    await page.goto("/income?year=2025");
+    const sidebar = page.getByRole("complementary", { name: "主导航", exact: true });
+    const logo = sidebar.getByRole("img", { name: "noheir", exact: true });
+    const expandedLogo = await logo.boundingBox();
+    if (!expandedLogo) throw new Error("Sidebar logo missing");
+    for (const collapsed of [false, true]) {
+      if (collapsed) await page.getByRole("button", { name: "收起侧边栏" }).click();
+      const current = sidebar.locator('a[aria-current="page"]');
+      await expect(current).toHaveAttribute("href", "/income?year=2025");
+      const row = current.locator("xpath=ancestor-or-self::*[@data-basalt-hover-item][1]");
+      const expected = await row.evaluate((element) => {
+        const probe = document.createElement("div");
+        element.append(probe);
+        probe.style.backgroundColor = "hsl(var(--basalt-selected))";
+        const color = getComputedStyle(probe).backgroundColor;
+        probe.remove();
+        return color;
+      });
+      await expect
+        .poll(() => row.evaluate((el) => getComputedStyle(el).backgroundColor))
+        .toBe(expected);
+      const neighbor = sidebar.getByRole("link", { name: "分析报告", exact: true });
+      await neighbor.hover();
+      await expect
+        .poll(() =>
+          neighbor.evaluate(
+            (el) => el.closest<HTMLElement>(".basalt-hover-list")?.dataset.hoverVisible,
+          ),
+        )
+        .toBe("true");
+      await expect
+        .poll(() => row.evaluate((el) => getComputedStyle(el).backgroundColor))
+        .toBe(expected);
+      await expect
+        .poll(async () => Math.abs((await logo.boundingBox())!.x - expandedLogo.x))
+        .toBeLessThan(1);
+    }
+  });
+}
+
+test("mobile financial header keeps navigation, year and theme controls inside the viewport", async ({
+  page,
+}) => {
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto("/income?year=2025");
+    const controls = ["打开导航", "财务年份", "切换主题"];
+    for (const label of controls) {
+      const control = page.getByLabel(label, { exact: true });
+      await expect(control).toBeVisible();
+      const bounds = await control.boundingBox();
+      if (!bounds) throw new Error(`Missing ${label}`);
+      expect(bounds.x).toBeGreaterThanOrEqual(0);
+      expect(bounds.x + bounds.width).toBeLessThanOrEqual(width);
+    }
+    await page.getByRole("combobox", { name: "财务年份" }).click();
+    await page.getByRole("option", { name: "2024", exact: true }).click();
+    await expect(page).toHaveURL(/year=2024/);
+  }
+});
+
 test("permission groups have a visible desktop divider and stack without mobile overflow", async ({
   page,
 }) => {
@@ -297,10 +394,15 @@ test("permission groups have a visible desktop divider and stack without mobile 
   expect(right.x - left.x - left.width).toBeGreaterThanOrEqual(24);
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(divider).toBeHidden();
-  const upper = await financial.boundingBox();
-  const lower = await planning.boundingBox();
-  if (!upper || !lower) throw new Error("Mobile permission groups are missing");
-  expect(lower.y).toBeGreaterThanOrEqual(upper.y + upper.height);
+  await expect
+    .poll(() =>
+      permissions.evaluate((element) => {
+        const upper = element.querySelector('[aria-label="财务记录"]')?.getBoundingClientRect();
+        const lower = element.querySelector('[aria-label="规划与分析"]')?.getBoundingClientRect();
+        return !!upper && !!lower && lower.y >= upper.bottom;
+      }),
+    )
+    .toBe(true);
   await expect
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
     .toBe(true);

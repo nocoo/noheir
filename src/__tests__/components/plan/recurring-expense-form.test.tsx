@@ -17,7 +17,7 @@ vi.mock("@/app/actions/recurring-expense-actions", () => ({
   updateRecurringExpense: updateMock,
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@nocoo/basalt/components/toast", () => ({
   toast: { success: toastSuccess, error: toastError },
 }));
 
@@ -30,6 +30,16 @@ const CATEGORIES = [
 
 beforeEach(() => {
   vi.resetAllMocks();
+  vi.stubGlobal("matchMedia", () => ({
+    matches: false,
+    addEventListener() {},
+    removeEventListener() {},
+  }));
+  if (!HTMLElement.prototype.hasPointerCapture) {
+    HTMLElement.prototype.hasPointerCapture = () => false;
+    HTMLElement.prototype.setPointerCapture = () => {};
+    HTMLElement.prototype.releasePointerCapture = () => {};
+  }
 });
 
 const NAME = () => screen.getByLabelText("名称") as HTMLInputElement;
@@ -37,7 +47,7 @@ const AMOUNT = () => screen.getByLabelText("金额 (元)") as HTMLInputElement;
 const START = () => screen.getByLabelText("开始日期") as HTMLInputElement;
 const END = () => screen.getByLabelText("结束日期") as HTMLInputElement;
 const NOTE = () => screen.getByLabelText("备注") as HTMLTextAreaElement;
-const CATEGORY_SELECT = () => screen.getByLabelText("分类") as HTMLSelectElement;
+const CATEGORY_SELECT = () => screen.getByRole("combobox", { name: "分类" });
 const DAY = () => screen.getByLabelText("日") as HTMLInputElement;
 const SUBMIT = (label: string) => screen.getByRole("button", { name: label });
 
@@ -49,15 +59,20 @@ describe("RecurringExpenseForm rendering (P3-C4)", () => {
     expect(AMOUNT()).toHaveValue(null);
     expect(START()).toHaveValue("");
     expect(END()).toHaveValue("");
-    expect(CATEGORY_SELECT()).toHaveValue("");
+    expect(CATEGORY_SELECT()).toHaveTextContent("未分类");
     expect(screen.getByRole("radio", { name: "每月" })).toHaveAttribute("aria-checked", "true");
     expect(SUBMIT("创建")).toBeInTheDocument();
   });
 
-  test("category select lists provided categories plus 未分类", () => {
+  test("category select lists provided categories plus 未分类", async () => {
+    const user = userEvent.setup();
     render(<RecurringExpenseForm categories={CATEGORIES} />);
-    const labels = Array.from(CATEGORY_SELECT().options).map((o) => o.text);
-    expect(labels).toEqual(["未分类", "房贷", "保险"]);
+    await user.click(CATEGORY_SELECT());
+    expect(screen.getAllByRole("option").map((option) => option.textContent)).toEqual([
+      "未分类",
+      "房贷",
+      "保险",
+    ]);
   });
 
   test("edit mode: every field prefilled, button '保存'", () => {
@@ -82,7 +97,7 @@ describe("RecurringExpenseForm rendering (P3-C4)", () => {
     expect(screen.getByRole("form", { name: "编辑周期支出" })).toBeInTheDocument();
     expect(NAME()).toHaveValue("Netflix");
     expect(AMOUNT()).toHaveValue(99);
-    expect(CATEGORY_SELECT()).toHaveValue("cat-a");
+    expect(CATEGORY_SELECT()).toHaveTextContent("房贷");
     expect(screen.getByLabelText("账户")).toHaveValue("招行储蓄卡");
     expect(START()).toHaveValue("2026-01-15");
     expect(END()).toHaveValue("2026-12-31");
@@ -180,7 +195,8 @@ describe("RecurringExpenseForm submit — create (P3-C4)", () => {
     await user.type(NAME(), "房租");
     await user.type(AMOUNT(), "1500.5");
     await user.type(START(), "2026-01-15");
-    await user.selectOptions(CATEGORY_SELECT(), "cat-a");
+    await user.click(CATEGORY_SELECT());
+    await user.click(screen.getByRole("option", { name: "房贷" }));
     await user.type(DAY(), "15");
     await user.click(SUBMIT("创建"));
     expect(createMock).toHaveBeenCalledTimes(1);
@@ -267,6 +283,33 @@ describe("RecurringExpenseForm submit — create (P3-C4)", () => {
 });
 
 describe("RecurringExpenseForm submit — edit (P3-C4)", () => {
+  test("selecting 未分类 clears an existing category to null", async () => {
+    const user = userEvent.setup();
+    updateMock.mockResolvedValueOnce({ success: true, data: undefined });
+    render(
+      <RecurringExpenseForm
+        categories={CATEGORIES}
+        initial={{
+          id: "r-category",
+          name: "Rent",
+          amount: 10,
+          categoryId: "cat-a",
+          frequency: "daily",
+          interval: 1,
+          startDate: "2026-01-01",
+        }}
+      />,
+    );
+    await user.click(CATEGORY_SELECT());
+    await user.click(screen.getByRole("option", { name: "未分类" }));
+    await user.click(SUBMIT("保存"));
+    expect(updateMock).toHaveBeenCalledWith(
+      "r-category",
+      expect.objectContaining({ categoryId: null }),
+      undefined,
+    );
+  });
+
   test("edit calls updateRecurringExpense with id, NOT create", async () => {
     const user = userEvent.setup();
     const onSuccess = vi.fn();

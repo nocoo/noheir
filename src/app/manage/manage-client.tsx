@@ -1,4 +1,12 @@
-import { Button } from "@nocoo/basalt";
+import { Button, LayerCard } from "@nocoo/basalt";
+import { Badge } from "@nocoo/basalt/components/badge";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@nocoo/basalt/components/collapsible";
+import { Separator } from "@nocoo/basalt/components/separator";
+import { toast } from "@nocoo/basalt/components/toast";
 import {
   Activity,
   AlertTriangle,
@@ -18,14 +26,9 @@ import {
 } from "lucide-react";
 import { useRef, useState, useTransition } from "react";
 import { useNavigate, useRevalidator } from "react-router";
-import { toast } from "sonner";
 import { clearAllData, exportBackup, restoreBackup } from "@/app/actions/data-actions";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
 import type { DataHealthMetrics, DataSummary } from "@/domain/data-management";
 import {
   formatCurrency,
@@ -142,43 +145,45 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
       {/* Header */}
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <Database className="text-primary size-6" />
+          <Database className="text-basalt-primary size-6" />
           数据管理
         </h1>
-        <p className="text-muted-foreground text-sm">查看数据概览、导出备份与管理数据</p>
+        <p className="text-basalt-muted-foreground text-sm">查看数据概览、导出备份与管理数据</p>
       </div>
 
       {/* Overall Summary Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">数据总览</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <LayerCard>
+        <LayerCard.Header className="items-stretch flex-col gap-1.5">
+          <h3 className="font-semibold leading-none tracking-tight text-basalt-foreground text-base">
+            数据总览
+          </h3>
+        </LayerCard.Header>
+        <LayerCard.Body className="min-h-0 flex-1">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
             <div>
-              <p className="text-xs text-muted-foreground">覆盖年份</p>
+              <p className="text-xs text-basalt-muted-foreground">覆盖年份</p>
               <p className="text-2xl font-semibold font-display">{dataSummary.years.length}</p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">交易记录</p>
+              <p className="text-xs text-basalt-muted-foreground">交易记录</p>
               <p className="text-2xl font-semibold font-display">
                 {dataSummary.totalTransactions.toLocaleString()}
               </p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">转账记录</p>
+              <p className="text-xs text-basalt-muted-foreground">转账记录</p>
               <p className="text-2xl font-semibold font-display">
                 {dataSummary.totalTransfers.toLocaleString()}
               </p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">总收入</p>
+              <p className="text-xs text-basalt-muted-foreground">总收入</p>
               <p className="text-xl font-semibold font-display text-income">
                 {formatCurrency(dataSummary.totalIncome)}
               </p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">总支出</p>
+              <p className="text-xs text-basalt-muted-foreground">总支出</p>
               <p className="text-xl font-semibold font-display text-expense">
                 {formatCurrency(dataSummary.totalExpense)}
               </p>
@@ -190,7 +195,7 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
               <Separator className="my-4" />
               <div className="space-y-3">
                 <div>
-                  <p className="text-xs text-muted-foreground mb-2">
+                  <p className="text-xs text-basalt-muted-foreground mb-2">
                     资金账户 ({dataSummary.totalAccounts.length})
                   </p>
                   <div className="flex flex-wrap gap-1">
@@ -207,7 +212,7 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground mb-2">
+                  <p className="text-xs text-basalt-muted-foreground mb-2">
                     一级分类 ({dataSummary.totalCategories.length})
                   </p>
                   <div className="flex flex-wrap gap-1">
@@ -226,20 +231,20 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
               </div>
             </>
           )}
-        </CardContent>
-      </Card>
+        </LayerCard.Body>
+      </LayerCard>
 
       {/* Data Health Card */}
       {hasData && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
+        <LayerCard>
+          <LayerCard.Header className="items-stretch flex-col gap-1.5">
+            <h3 className="font-semibold leading-none tracking-tight text-basalt-foreground flex items-center gap-2 text-base">
               <Activity className="size-4" />
               数据健康度
-            </CardTitle>
-            <CardDescription>数据完整性和有效性评估</CardDescription>
-          </CardHeader>
-          <CardContent>
+            </h3>
+            <p className="text-sm text-basalt-muted-foreground">数据完整性和有效性评估</p>
+          </LayerCard.Header>
+          <LayerCard.Body className="min-h-0 flex-1">
             <div className="flex items-center gap-6 mb-6">
               <div className={`text-5xl font-semibold font-display ${healthColor}`}>
                 {healthScore.toFixed(0)}%
@@ -303,12 +308,12 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
 
             {/* Category Mapping Warning */}
             {healthMetrics.missingSecondaryMappings > 0 && (
-              <div className="mt-4 p-3 rounded-[var(--radius-card)] bg-secondary border border-yellow-500/50">
+              <div className="mt-4 p-3 rounded-[var(--basalt-radius-card)] bg-basalt-secondary border border-yellow-500/50">
                 <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-400 font-medium mb-2">
                   <AlertTriangle className="size-4" />
                   分类映射缺失
                 </div>
-                <p className="text-sm text-muted-foreground mb-2">
+                <p className="text-sm text-basalt-muted-foreground mb-2">
                   {healthMetrics.missingSecondaryMappings} 条记录的三级分类未找到对应的二级分类映射
                 </p>
                 <div className="flex flex-wrap gap-1">
@@ -329,18 +334,20 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
                 </div>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </LayerCard.Body>
+        </LayerCard>
       )}
 
       {/* Yearly Breakdown */}
       {dataSummary.yearlyStats.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">年度数据明细</CardTitle>
-            <CardDescription>点击展开查看每年详细统计</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
+        <LayerCard>
+          <LayerCard.Header className="items-stretch flex-col gap-1.5">
+            <h3 className="font-semibold leading-none tracking-tight text-basalt-foreground text-base">
+              年度数据明细
+            </h3>
+            <p className="text-sm text-basalt-muted-foreground">点击展开查看每年详细统计</p>
+          </LayerCard.Header>
+          <LayerCard.Body className="min-h-0 flex-1 space-y-2">
             {dataSummary.yearlyStats.map((stats) => (
               <Collapsible
                 key={stats.year}
@@ -348,12 +355,12 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
                 onOpenChange={() => toggleYear(stats.year)}
               >
                 <CollapsibleTrigger asChild>
-                  <div className="flex items-center justify-between p-3 rounded-[var(--radius-card)] border hover:bg-secondary cursor-pointer transition-colors">
+                  <Button variant="outline" className="w-full justify-between">
                     <div className="flex items-center gap-3">
                       <Badge variant="default" className="text-sm font-semibold">
                         {stats.year}
                       </Badge>
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-sm text-basalt-muted-foreground">
                         {stats.transactionCount} 条交易
                         {stats.transferCount > 0 && ` / ${stats.transferCount} 条转账`}
                       </span>
@@ -366,31 +373,31 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
                         -{formatCurrency(stats.totalExpense)}
                       </span>
                       {expandedYears.has(stats.year) ? (
-                        <ChevronUp className="size-4 text-muted-foreground" />
+                        <ChevronUp className="size-4 text-basalt-muted-foreground" />
                       ) : (
-                        <ChevronDown className="size-4 text-muted-foreground" />
+                        <ChevronDown className="size-4 text-basalt-muted-foreground" />
                       )}
                     </div>
-                  </div>
+                  </Button>
                 </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <div className="mt-2 p-4 rounded-[var(--radius-card)] bg-secondary space-y-4">
+                <CollapsibleContent unstyled>
+                  <div className="mt-2 p-4 rounded-[var(--basalt-radius-card)] bg-basalt-secondary space-y-4">
                     {/* Year Stats Grid */}
                     <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                       <div>
-                        <p className="text-xs text-muted-foreground">收入笔数</p>
+                        <p className="text-xs text-basalt-muted-foreground">收入笔数</p>
                         <p className="text-lg font-semibold font-display text-income">
                           {stats.incomeCount}
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground">支出笔数</p>
+                        <p className="text-xs text-basalt-muted-foreground">支出笔数</p>
                         <p className="text-lg font-semibold font-display text-expense">
                           {stats.expenseCount}
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground">净收入</p>
+                        <p className="text-xs text-basalt-muted-foreground">净收入</p>
                         <p
                           className={`text-lg font-semibold font-display ${stats.netAmount >= 0 ? "text-income" : "text-expense"}`}
                         >
@@ -398,7 +405,7 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground">覆盖月份</p>
+                        <p className="text-xs text-basalt-muted-foreground">覆盖月份</p>
                         <p className="text-lg font-semibold font-display">
                           {stats.monthsCovered.length}/12
                         </p>
@@ -407,7 +414,7 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
 
                     {/* Date Range */}
                     {stats.dateRange && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2 text-sm text-basalt-muted-foreground">
                         <Calendar className="size-4" />
                         <span>
                           数据范围: {stats.dateRange.start} ~ {stats.dateRange.end}
@@ -418,7 +425,7 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
                     {/* Accounts & Categories */}
                     <div className="space-y-2">
                       <div>
-                        <p className="text-xs text-muted-foreground mb-1">
+                        <p className="text-xs text-basalt-muted-foreground mb-1">
                           涉及账户 ({stats.accountCount})
                         </p>
                         <div className="flex flex-wrap gap-1">
@@ -435,7 +442,7 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
                         </div>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground mb-1">
+                        <p className="text-xs text-basalt-muted-foreground mb-1">
                           一级分类 ({stats.categoryCount})
                         </p>
                         <div className="flex flex-wrap gap-1">
@@ -455,15 +462,15 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
 
                     {/* Months Heatmap */}
                     <div>
-                      <p className="text-xs text-muted-foreground mb-2">月份覆盖情况</p>
+                      <p className="text-xs text-basalt-muted-foreground mb-2">月份覆盖情况</p>
                       <div className="flex gap-1">
                         {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
                           <div
                             key={month}
                             className={`w-6 h-6 rounded text-xs flex items-center justify-center ${
                               stats.monthsCovered.includes(month)
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-muted text-muted-foreground"
+                                ? "bg-basalt-primary text-basalt-primary-foreground"
+                                : "bg-basalt-muted text-basalt-muted-foreground"
                             }`}
                           >
                             {month}
@@ -475,17 +482,19 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
                 </CollapsibleContent>
               </Collapsible>
             ))}
-          </CardContent>
-        </Card>
+          </LayerCard.Body>
+        </LayerCard>
       )}
 
       {/* Action Buttons - 3 columns */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">数据操作</CardTitle>
-          <CardDescription>导出备份、导入数据</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <LayerCard>
+        <LayerCard.Header className="items-stretch flex-col gap-1.5">
+          <h3 className="font-semibold leading-none tracking-tight text-basalt-foreground text-base">
+            数据操作
+          </h3>
+          <p className="text-sm text-basalt-muted-foreground">导出备份、导入数据</p>
+        </LayerCard.Header>
+        <LayerCard.Body className="min-h-0 flex-1">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Button onClick={handleExport} disabled={exporting} className="w-full">
               <Download className="mr-2 size-4" />
@@ -512,25 +521,25 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
               导入交易/转账
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </LayerCard.Body>
+      </LayerCard>
 
       {/* Danger Zone */}
-      <Card className="border-destructive/50 bg-destructive/5">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base text-destructive">
+      <LayerCard>
+        <LayerCard.Header className="items-stretch flex-col gap-1.5">
+          <h3 className="font-semibold leading-none tracking-tight text-basalt-foreground flex items-center gap-2 text-base text-basalt-destructive">
             <AlertTriangle className="size-4" />
             危险操作
-          </CardTitle>
-          <CardDescription>以下操作不可撤销，请谨慎操作</CardDescription>
-        </CardHeader>
-        <CardContent>
+          </h3>
+          <p className="text-sm text-basalt-muted-foreground">以下操作不可撤销，请谨慎操作</p>
+        </LayerCard.Header>
+        <LayerCard.Body className="min-h-0 flex-1">
           <Button variant="destructive" onClick={handleClear} disabled={isPending}>
             <Trash2 className="mr-2 size-4" />
             清除所有数据
           </Button>
-        </CardContent>
-      </Card>
+        </LayerCard.Body>
+      </LayerCard>
 
       {/* Clear Confirmation */}
       <ConfirmDialog
@@ -568,12 +577,12 @@ function CompletenessBar({
     <div>
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
-          <Icon className="size-3 text-muted-foreground" />
+          <Icon className="size-3 text-basalt-muted-foreground" />
           <span className="text-xs">{name}</span>
         </div>
         <span className="text-xs font-medium">{percentage.toFixed(1)}%</span>
       </div>
-      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+      <div className="h-1.5 bg-basalt-muted rounded-full overflow-hidden">
         <div
           className={`h-full ${getColor(percentage)} transition-all`}
           style={{ width: `${percentage}%` }}

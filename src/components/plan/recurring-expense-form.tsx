@@ -21,8 +21,18 @@
 // sonner toast, uses React.useTransition for the pending state.
 
 import { Button } from "@nocoo/basalt";
+import { Input } from "@nocoo/basalt/components/input";
+import { InputArea } from "@nocoo/basalt/components/input-area";
+import { Label } from "@nocoo/basalt/components/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@nocoo/basalt/components/select";
+import { toast } from "@nocoo/basalt/components/toast";
 import * as React from "react";
-import { toast } from "sonner";
 import {
   createRecurringExpense,
   updateRecurringExpense,
@@ -32,9 +42,6 @@ import {
   type FrequencyPickerErrors,
   type FrequencyValue,
 } from "@/components/plan/frequency-picker";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 
 export interface CategoryOption {
   id: string;
@@ -221,7 +228,7 @@ export function RecurringExpenseForm({
             autoFocus
           />
           {errors.name ? (
-            <p id="rx-name-error" role="alert" className="text-sm text-destructive">
+            <p id="rx-name-error" role="alert" className="text-sm text-basalt-destructive">
               {errors.name}
             </p>
           ) : null}
@@ -243,7 +250,7 @@ export function RecurringExpenseForm({
             placeholder="0.00"
           />
           {errors.amount ? (
-            <p id="rx-amount-error" role="alert" className="text-sm text-destructive">
+            <p id="rx-amount-error" role="alert" className="text-sm text-basalt-destructive">
               {errors.amount}
             </p>
           ) : null}
@@ -253,21 +260,24 @@ export function RecurringExpenseForm({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="rx-category">分类</Label>
-          <select
-            id="rx-category"
+          <Select
             name="categoryId"
-            value={categoryId}
+            value={categoryId || "uncategorized"}
             disabled={isPending}
-            onChange={(e) => setCategoryId(e.target.value)}
-            className="border-border bg-secondary ring-offset-background focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm hover:border-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            onValueChange={(value) => setCategoryId(value === "uncategorized" ? "" : value)}
           >
-            <option value="">未分类</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger id="rx-category">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="uncategorized">未分类</SelectItem>
+              {categories.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-2">
@@ -305,7 +315,7 @@ export function RecurringExpenseForm({
             onChange={(e) => setStartDate(e.target.value)}
           />
           {errors.startDate ? (
-            <p id="rx-start-error" role="alert" className="text-sm text-destructive">
+            <p id="rx-start-error" role="alert" className="text-sm text-basalt-destructive">
               {errors.startDate}
             </p>
           ) : null}
@@ -324,7 +334,7 @@ export function RecurringExpenseForm({
             placeholder="可选"
           />
           {errors.endDate ? (
-            <p id="rx-end-error" role="alert" className="text-sm text-destructive">
+            <p id="rx-end-error" role="alert" className="text-sm text-basalt-destructive">
               {errors.endDate}
             </p>
           ) : null}
@@ -333,7 +343,7 @@ export function RecurringExpenseForm({
 
       <div className="space-y-2">
         <Label htmlFor="rx-note">备注</Label>
-        <Textarea
+        <InputArea
           id="rx-note"
           maxLength={1000}
           value={note}
@@ -345,7 +355,7 @@ export function RecurringExpenseForm({
       </div>
 
       {errors.form ? (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-basalt-destructive">
           {errors.form}
         </p>
       ) : null}

@@ -17,7 +17,7 @@ vi.mock("react-router", async (original) => ({
   ...(await original<typeof import("react-router")>()),
   useRevalidator: () => ({ revalidate }),
 }));
-vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+vi.mock("@nocoo/basalt/components/toast", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 describe("capital log post-mutation snapshots", () => {
   it("revalidates server snapshots instead of guessing version increments", async () => {
     const user = userEvent.setup();

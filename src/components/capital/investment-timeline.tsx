@@ -116,25 +116,25 @@ export function InvestmentTimeline({
               title={`${seg.label}: ${formatDate(seg.startDate)} - ${formatDate(seg.endDate)}`}
             >
               {width > 8 && (
-                <span className="truncate px-1 text-[10px] font-medium">{seg.label}</span>
+                <span className="truncate px-1 text-basalt-sm font-medium">{seg.label}</span>
               )}
             </div>
           );
         })}
         {showToday && (
           <div
-            className="absolute top-0 h-full w-px border-l-2 border-dashed border-foreground/60"
+            className="absolute top-0 h-full w-px border-l-2 border-dashed border-basalt-foreground/60"
             style={{ left: `${todayOffset}%` }}
           />
         )}
       </div>
 
       {/* Date labels */}
-      <div className="text-muted-foreground relative h-4 text-[10px]">
+      <div className="text-basalt-muted-foreground relative h-4 text-basalt-sm">
         <span className="absolute left-0">{formatDate(timelineStart)}</span>
         {showToday && (
           <span
-            className="text-foreground absolute -translate-x-1/2 font-medium"
+            className="text-basalt-foreground absolute -translate-x-1/2 font-medium"
             style={{ left: `${todayOffset}%` }}
           >
             今天

@@ -24,7 +24,7 @@ vi.mock("@/app/actions/recurring-expense-actions", () => ({
   deleteRecurringExpense: deleteMock,
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@nocoo/basalt/components/toast", () => ({
   toast: { success: toastSuccess, error: toastError },
 }));
 

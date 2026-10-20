@@ -1,6 +1,6 @@
+import { Button, LayerCard } from "@nocoo/basalt";
 import { ChevronDown, ChevronRight, FileText } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 /** Transaction entry within a tertiary category */
 export interface CategoryTransaction {
@@ -80,29 +80,29 @@ export function CategoryDetailList({
   const safeColors = colors.length > 0 ? colors : ["#64748b"];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FileText className="text-primary size-5" />
+    <LayerCard>
+      <LayerCard.Header className="items-stretch flex-col gap-1.5">
+        <h3 className="text-lg font-semibold leading-none tracking-tight text-basalt-foreground flex items-center gap-2">
+          <FileText className="text-basalt-primary size-5" />
           {title}
-        </CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent>
+        </h3>
+        <p className="text-sm text-basalt-muted-foreground">{description}</p>
+      </LayerCard.Header>
+      <LayerCard.Body className="min-h-0 flex-1">
         <div className="space-y-4">
           {detailList.map((cat, i) => {
             const primaryColor = safeColors[i % safeColors.length] ?? safeColors[0] ?? "#64748b";
             return (
               <div key={cat.primary} className="overflow-hidden rounded-lg">
                 {/* Primary Category Row */}
-                <div className="bg-muted/20 flex items-center gap-3 px-3 py-2">
+                <div className="bg-basalt-muted/20 flex items-center gap-3 px-3 py-2">
                   <div
                     className="size-3 shrink-0 rounded-sm"
                     style={{ backgroundColor: primaryColor }}
                   />
                   <span className="flex-1 font-medium">{cat.primary}</span>
                   <div className="w-32 shrink-0">
-                    <div className="bg-muted h-2 overflow-hidden rounded-full">
+                    <div className="bg-basalt-muted h-2 overflow-hidden rounded-full">
                       <div
                         className="h-full rounded-full transition-all"
                         style={{
@@ -131,23 +131,25 @@ export function CategoryDetailList({
 
                       return (
                         <div key={sub.name} className="overflow-hidden rounded-lg">
-                          <button
+                          <Button
                             type="button"
+                            variant="ghost"
+                            aria-expanded={!isSubCollapsed}
                             onClick={() => toggleCollapse(secondaryKey)}
-                            className="hover:bg-muted/30 flex w-full items-center gap-3 px-3 py-2 text-left transition-colors"
+                            className="w-full justify-start gap-3 text-left"
                           >
                             <div className="shrink-0">
                               {isSubCollapsed ? (
-                                <ChevronRight className="text-muted-foreground size-4" />
+                                <ChevronRight className="text-basalt-muted-foreground size-4" />
                               ) : (
-                                <ChevronDown className="text-muted-foreground size-4" />
+                                <ChevronDown className="text-basalt-muted-foreground size-4" />
                               )}
                             </div>
-                            <span className="text-muted-foreground flex-1 text-sm font-medium">
+                            <span className="text-basalt-muted-foreground flex-1 text-sm font-medium">
                               {sub.name}
                             </span>
                             <div className="w-32 shrink-0">
-                              <div className="bg-muted h-2 overflow-hidden rounded-full">
+                              <div className="bg-basalt-muted h-2 overflow-hidden rounded-full">
                                 <div
                                   className="h-full rounded-full transition-all"
                                   style={{
@@ -164,7 +166,7 @@ export function CategoryDetailList({
                                 maximumFractionDigits: 2,
                               })}
                             </span>
-                          </button>
+                          </Button>
 
                           {/* Tertiary Categories */}
                           {!isSubCollapsed && sub.tertiaryList.length > 0 && (
@@ -177,23 +179,25 @@ export function CategoryDetailList({
 
                                 return (
                                   <div key={tertiary.name} className="overflow-hidden rounded-lg">
-                                    <button
+                                    <Button
                                       type="button"
+                                      variant="ghost"
+                                      aria-expanded={!isTertiaryCollapsed}
                                       onClick={() => toggleCollapse(tertiaryKey)}
-                                      className="hover:bg-muted/20 flex w-full items-center gap-3 px-3 py-2 text-left transition-colors"
+                                      className="w-full justify-start gap-3 text-left"
                                     >
                                       <div className="shrink-0">
                                         {isTertiaryCollapsed ? (
-                                          <ChevronRight className="text-muted-foreground size-4" />
+                                          <ChevronRight className="text-basalt-muted-foreground size-4" />
                                         ) : (
-                                          <ChevronDown className="text-muted-foreground size-4" />
+                                          <ChevronDown className="text-basalt-muted-foreground size-4" />
                                         )}
                                       </div>
-                                      <span className="text-muted-foreground flex-1 text-sm">
+                                      <span className="text-basalt-muted-foreground flex-1 text-sm">
                                         {tertiary.name}
                                       </span>
                                       <div className="w-32 shrink-0">
-                                        <div className="bg-muted h-2 overflow-hidden rounded-full">
+                                        <div className="bg-basalt-muted h-2 overflow-hidden rounded-full">
                                           <div
                                             className="h-full rounded-full transition-all"
                                             style={{
@@ -213,7 +217,7 @@ export function CategoryDetailList({
                                           maximumFractionDigits: 2,
                                         })}
                                       </span>
-                                    </button>
+                                    </Button>
 
                                     {/* Transactions */}
                                     {!isTertiaryCollapsed &&
@@ -226,14 +230,14 @@ export function CategoryDetailList({
                                           <div
                                             // biome-ignore lint/suspicious/noArrayIndexKey: CategoryTransaction has no stable id; date+amount can collide
                                             key={`${tx.date}-${idx}`}
-                                            className="hover:bg-muted/10 flex items-center gap-3 rounded px-3 py-2 transition-colors"
+                                            className="hover:bg-basalt-muted/10 flex items-center gap-3 rounded px-3 py-2 transition-colors"
                                           >
-                                            <span className="text-muted-foreground w-20 shrink-0 text-sm">
+                                            <span className="text-basalt-muted-foreground w-20 shrink-0 text-sm">
                                               {tx.date}
                                             </span>
                                             <div className="flex-1" />
                                             <div className="w-32 shrink-0">
-                                              <div className="bg-muted h-2 overflow-hidden rounded-full">
+                                              <div className="bg-basalt-muted h-2 overflow-hidden rounded-full">
                                                 <div
                                                   className="h-full rounded-full transition-all"
                                                   style={{
@@ -270,7 +274,7 @@ export function CategoryDetailList({
             );
           })}
         </div>
-      </CardContent>
-    </Card>
+      </LayerCard.Body>
+    </LayerCard>
   );
 }

@@ -1,8 +1,8 @@
+import { LayerCard } from "@nocoo/basalt";
+import { Badge } from "@nocoo/basalt/components/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@nocoo/basalt/components/tabs";
 import { ArrowRight, ArrowRightLeft } from "lucide-react";
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatCurrencyFull } from "@/lib/chart-config";
 
 interface FlowNode {
@@ -30,7 +30,7 @@ function FlowList({ flows, colors }: { flows: FlowNode[]; colors: string[] }) {
   const maxValue = flows[0]?.value ?? 1;
 
   if (flows.length === 0) {
-    return <div className="text-muted-foreground py-8 text-center text-sm">暂无数据</div>;
+    return <div className="text-basalt-muted-foreground py-8 text-center text-sm">暂无数据</div>;
   }
 
   return (
@@ -46,14 +46,14 @@ function FlowList({ flows, colors }: { flows: FlowNode[]; colors: string[] }) {
                 <Badge variant="outline" className="text-xs">
                   {flow.source}
                 </Badge>
-                <ArrowRight className="text-muted-foreground size-3" />
+                <ArrowRight className="text-basalt-muted-foreground size-3" />
                 <Badge variant="secondary" className="text-xs">
                   {flow.target}
                 </Badge>
               </div>
               <span className="font-medium">{formatCurrencyFull(flow.value)}</span>
             </div>
-            <div className="bg-muted h-2 overflow-hidden rounded-full">
+            <div className="bg-basalt-muted h-2 overflow-hidden rounded-full">
               <div
                 className={`h-full rounded-full ${colorClass}`}
                 style={{ width: `${widthPct}%` }}
@@ -75,20 +75,24 @@ export function FlowAnalysisClient({ incomeFlows, expenseFlows }: FlowAnalysisCl
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold">
-            <ArrowRightLeft className="text-primary size-6" />
+            <ArrowRightLeft className="text-basalt-primary size-6" />
             流向分析
           </h1>
-          <p className="text-muted-foreground text-sm">可视化资金从来源到分类的流向分布</p>
+          <p className="text-basalt-muted-foreground text-sm">可视化资金从来源到分类的流向分布</p>
         </div>
       </div>
 
       {/* Flow Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>资金流向</CardTitle>
-          <CardDescription>展示账户到分类、分类到子分类的资金流向</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <LayerCard>
+        <LayerCard.Header className="items-stretch flex-col gap-1.5">
+          <h3 className="text-lg font-semibold leading-none tracking-tight text-basalt-foreground">
+            资金流向
+          </h3>
+          <p className="text-sm text-basalt-muted-foreground">
+            展示账户到分类、分类到子分类的资金流向
+          </p>
+        </LayerCard.Header>
+        <LayerCard.Body className="min-h-0 flex-1">
           <Tabs value={tab} onValueChange={setTab}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="income">收入流向 ({incomeFlows.length})</TabsTrigger>
@@ -101,8 +105,8 @@ export function FlowAnalysisClient({ incomeFlows, expenseFlows }: FlowAnalysisCl
               <FlowList flows={expenseFlows} colors={EXPENSE_COLORS} />
             </TabsContent>
           </Tabs>
-        </CardContent>
-      </Card>
+        </LayerCard.Body>
+      </LayerCard>
     </div>
   );
 }

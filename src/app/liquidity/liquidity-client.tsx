@@ -1,3 +1,18 @@
+import { Button, LayerCard } from "@nocoo/basalt";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@nocoo/basalt/components/collapsible";
+import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@nocoo/basalt/components/table";
 import {
   BarChart3,
   Calendar,
@@ -20,22 +35,12 @@ import {
   YAxis,
 } from "recharts";
 import { StatCard } from "@/components/shared/stat-card";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   ProductBadge,
   StrategyBadge,
   TacticsBadge,
   UnitCodeBadge,
 } from "@/components/ui/colored-badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import type { UpcomingUnit } from "@/domain/assets/liquidity-ladder";
 import { formatCurrencyFull, formatCurrencyK, yAxisWidth } from "@/lib/chart-config";
 import { CAPITAL_TABLE_COLUMNS } from "@/lib/table-columns";
@@ -107,10 +112,10 @@ export function LiquidityClient({
       {/* Header */}
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <Droplets className="text-primary size-6" />
+          <Droplets className="text-basalt-primary size-6" />
           流动性阶梯
         </h1>
-        <p className="text-muted-foreground text-sm">未来24个月到期资金分布</p>
+        <p className="text-basalt-muted-foreground text-sm">未来24个月到期资金分布</p>
       </div>
 
       {/* Summary Stats */}
@@ -137,12 +142,14 @@ export function LiquidityClient({
       </div>
 
       {/* Stacked Bar Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>到期时间分布</CardTitle>
-          <CardDescription>按策略分组的月度到期金额堆叠图</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <LayerCard>
+        <LayerCard.Header className="items-stretch flex-col gap-1.5">
+          <h3 className="text-lg font-semibold leading-none tracking-tight text-basalt-foreground">
+            到期时间分布
+          </h3>
+          <p className="text-sm text-basalt-muted-foreground">按策略分组的月度到期金额堆叠图</p>
+        </LayerCard.Header>
+        <LayerCard.Body className="min-h-0 flex-1">
           <div className="h-[400px]">
             {chartData.length > 0 && strategies.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -154,10 +161,17 @@ export function LiquidityClient({
                     content={({ active, payload, label }) => {
                       if (!active || !payload?.length) return null;
                       return (
-                        <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
+                        <div
+                          className={overlayPanelClass(
+                            "px-basalt-card-sm py-basalt-space-lg text-basalt-sm",
+                          )}
+                        >
                           <p className="mb-1 font-medium">{String(label ?? "")}</p>
                           {payload.map((entry) => (
-                            <p key={String(entry.name ?? "")} className="text-muted-foreground">
+                            <p
+                              key={String(entry.name ?? "")}
+                              className="text-basalt-muted-foreground"
+                            >
                               <span
                                 className="mr-1 inline-block size-2 rounded-full"
                                 style={{ backgroundColor: String(entry.color ?? "#888") }}
@@ -182,35 +196,37 @@ export function LiquidityClient({
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="text-muted-foreground flex h-full items-center justify-center">
+              <div className="text-basalt-muted-foreground flex h-full items-center justify-center">
                 暂无到期数据
               </div>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </LayerCard.Body>
+      </LayerCard>
 
       {/* Upcoming Units Table - Grouped by Month */}
-      <Card>
-        <CardHeader>
+      <LayerCard>
+        <LayerCard.Header className="items-stretch flex-col gap-1.5">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>即将解禁明细</CardTitle>
-              <CardDescription>
+              <h3 className="text-lg font-semibold leading-none tracking-tight text-basalt-foreground">
+                即将解禁明细
+              </h3>
+              <p className="text-sm text-basalt-muted-foreground">
                 未来24个月内到期的资金单元，共 {upcomingUnits.length} 个
-              </CardDescription>
+              </p>
             </div>
             <Link
               to="/warehouse?availability=soon"
-              className="text-primary hover:text-primary/80 flex items-center gap-1 text-sm"
+              className="text-basalt-primary hover:text-basalt-primary/80 flex items-center gap-1 text-sm"
             >
               <Warehouse className="size-4" />
               在仓库查看
               <ExternalLink className="size-3" />
             </Link>
           </div>
-        </CardHeader>
-        <CardContent>
+        </LayerCard.Header>
+        <LayerCard.Body className="min-h-0 flex-1">
           {sortedMonths.length > 0 ? (
             <div className="space-y-4">
               {sortedMonths.map((monthKey) => {
@@ -226,96 +242,107 @@ export function LiquidityClient({
                     onOpenChange={() => toggleMonth(monthKey)}
                   >
                     {/* Month Header - Clickable */}
-                    <CollapsibleTrigger className="flex w-full items-center justify-between border-b pb-2 hover:bg-muted/50 -mx-2 px-2 rounded transition-colors">
-                      <div className="flex items-center gap-2">
-                        <ChevronDown
-                          className={cn("size-4 transition-transform", isCollapsed && "-rotate-90")}
-                        />
-                        <h3 className="font-semibold">{monthData.monthLabel}</h3>
-                      </div>
-                      <span className="text-muted-foreground text-sm">
-                        {monthData.units.length} 个单元 · {formatCurrencyFull(monthTotal)}
-                      </span>
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" className="w-full justify-between">
+                        <div className="flex items-center gap-2">
+                          <ChevronDown
+                            className={cn(
+                              "size-4 transition-transform",
+                              isCollapsed && "-rotate-90",
+                            )}
+                          />
+                          <h3 className="font-semibold">{monthData.monthLabel}</h3>
+                        </div>
+                        <span className="text-basalt-muted-foreground text-sm">
+                          {monthData.units.length} 个单元 · {formatCurrencyFull(monthTotal)}
+                        </span>
+                      </Button>
                     </CollapsibleTrigger>
 
                     {/* Units Table */}
-                    <CollapsibleContent>
-                      <Table className="mt-2">
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className={CAPITAL_TABLE_COLUMNS.unitCode}>编号</TableHead>
-                            <TableHead className={CAPITAL_TABLE_COLUMNS.strategy}>策略</TableHead>
-                            <TableHead className={CAPITAL_TABLE_COLUMNS.tactics}>战术</TableHead>
-                            <TableHead className={CAPITAL_TABLE_COLUMNS.product}>产品</TableHead>
-                            <TableHead className={CAPITAL_TABLE_COLUMNS.amount}>金额</TableHead>
-                            <TableHead className={CAPITAL_TABLE_COLUMNS.date}>解禁日</TableHead>
-                            <TableHead className={CAPITAL_TABLE_COLUMNS.countdown}>
-                              倒计时
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {monthData.units.map((unit) => (
-                            <TableRow key={unit.id}>
-                              <TableCell>
-                                <Link to={`/warehouse?q=${unit.unitCode}`}>
-                                  <UnitCodeBadge unitCode={unit.unitCode} />
-                                </Link>
-                              </TableCell>
-                              <TableCell>
-                                <StrategyBadge strategy={unit.strategy} />
-                              </TableCell>
-                              <TableCell>
-                                <TacticsBadge tactics={unit.tactics} />
-                              </TableCell>
-                              <TableCell>
-                                {unit.productName ? (
-                                  <Link to={`/products?q=${encodeURIComponent(unit.productName)}`}>
-                                    <ProductBadge
-                                      productName={unit.productName}
-                                      category={unit.productCategory}
-                                    />
-                                  </Link>
-                                ) : (
-                                  <span className="text-muted-foreground text-sm">—</span>
-                                )}
-                              </TableCell>
-                              <TableCell className="text-right font-medium">
-                                {formatCurrencyFull(unit.amount)}
-                              </TableCell>
-                              <TableCell className="text-muted-foreground text-right text-sm">
-                                {unit.availableDate}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <span
-                                  className={cn(
-                                    "text-sm font-medium",
-                                    unit.daysUntilAvailable <= 0
-                                      ? "text-green-600 dark:text-green-400"
-                                      : unit.daysUntilAvailable <= 30
-                                        ? "text-amber-600 dark:text-amber-400"
-                                        : "text-muted-foreground",
-                                  )}
-                                >
-                                  {unit.daysUntilAvailable <= 0
-                                    ? "已可用"
-                                    : `${unit.daysUntilAvailable}天`}
-                                </span>
-                              </TableCell>
+                    <CollapsibleContent unstyled>
+                      <div className="relative w-full overflow-x-auto">
+                        <Table className="mt-2">
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className={CAPITAL_TABLE_COLUMNS.unitCode}>编号</TableHead>
+                              <TableHead className={CAPITAL_TABLE_COLUMNS.strategy}>策略</TableHead>
+                              <TableHead className={CAPITAL_TABLE_COLUMNS.tactics}>战术</TableHead>
+                              <TableHead className={CAPITAL_TABLE_COLUMNS.product}>产品</TableHead>
+                              <TableHead className={CAPITAL_TABLE_COLUMNS.amount}>金额</TableHead>
+                              <TableHead className={CAPITAL_TABLE_COLUMNS.date}>解禁日</TableHead>
+                              <TableHead className={CAPITAL_TABLE_COLUMNS.countdown}>
+                                倒计时
+                              </TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                          </TableHeader>
+                          <TableBody>
+                            {monthData.units.map((unit) => (
+                              <TableRow key={unit.id}>
+                                <TableCell>
+                                  <Link to={`/warehouse?q=${unit.unitCode}`}>
+                                    <UnitCodeBadge unitCode={unit.unitCode} />
+                                  </Link>
+                                </TableCell>
+                                <TableCell>
+                                  <StrategyBadge strategy={unit.strategy} />
+                                </TableCell>
+                                <TableCell>
+                                  <TacticsBadge tactics={unit.tactics} />
+                                </TableCell>
+                                <TableCell>
+                                  {unit.productName ? (
+                                    <Link
+                                      to={`/products?q=${encodeURIComponent(unit.productName)}`}
+                                    >
+                                      <ProductBadge
+                                        productName={unit.productName}
+                                        category={unit.productCategory}
+                                      />
+                                    </Link>
+                                  ) : (
+                                    <span className="text-basalt-muted-foreground text-sm">—</span>
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-right font-medium">
+                                  {formatCurrencyFull(unit.amount)}
+                                </TableCell>
+                                <TableCell className="text-basalt-muted-foreground text-right text-sm">
+                                  {unit.availableDate}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <span
+                                    className={cn(
+                                      "text-sm font-medium",
+                                      unit.daysUntilAvailable <= 0
+                                        ? "text-green-600 dark:text-green-400"
+                                        : unit.daysUntilAvailable <= 30
+                                          ? "text-amber-600 dark:text-amber-400"
+                                          : "text-basalt-muted-foreground",
+                                    )}
+                                  >
+                                    {unit.daysUntilAvailable <= 0
+                                      ? "已可用"
+                                      : `${unit.daysUntilAvailable}天`}
+                                  </span>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
                     </CollapsibleContent>
                   </Collapsible>
                 );
               })}
             </div>
           ) : (
-            <div className="text-muted-foreground py-8 text-center">暂无即将解禁的资金单元</div>
+            <div className="text-basalt-muted-foreground py-8 text-center">
+              暂无即将解禁的资金单元
+            </div>
           )}
-        </CardContent>
-      </Card>
+        </LayerCard.Body>
+      </LayerCard>
     </div>
   );
 }

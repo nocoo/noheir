@@ -1,67 +1,24 @@
 @import "@nocoo/basalt/styles/tailwind";
 @import "tailwindcss";
-@import "tw-animate-css";
 @source "../../node_modules/@nocoo/basalt/dist/**/*.{js,jsx,ts,tsx}";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/*
- * Tailwind v4 theme — map CSS custom properties to --color-* namespace
- * so utilities like bg-background, text-foreground, etc. work.
- *
- * Design system: basalt matte, 3-tier luminance (L0->L1->L2)
- * Primary: Sky (200 deg hue)
- * Financial: Income (Emerald) / Expense (Rose)
- */
+:root {
+  --basalt-font-sans: "Inter Variable", system-ui, sans-serif;
+  --basalt-font-display: "DM Sans Variable", system-ui, sans-serif;
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+/* Application-only financial colors, charts and layout extensions. */
 @theme inline {
   --breakpoint-xs: 480px;
   --breakpoint-3xl: 1800px;
   --breakpoint-4xl: 2400px;
-
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-  --color-primary-hover: hsl(var(--primary-hover));
-  --color-primary-light: hsl(var(--primary-light));
-  --color-primary-dark: hsl(var(--primary-dark));
-
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
-
-  --color-destructive: hsl(var(--destructive));
-  --color-destructive-foreground: hsl(var(--destructive-foreground));
-
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
-
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
-
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
-
-  --color-sidebar: hsl(var(--sidebar-background));
-  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
-  --color-sidebar-primary: hsl(var(--sidebar-primary));
-  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
-  --color-sidebar-accent: hsl(var(--sidebar-accent));
-  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
-  --color-sidebar-border: hsl(var(--sidebar-border));
-  --color-sidebar-ring: hsl(var(--sidebar-ring));
-
-  --color-success: hsl(var(--success));
-  --color-success-foreground: hsl(var(--success-foreground));
-
-  --color-badge-red: hsl(var(--badge-red));
-  --color-badge-red-foreground: hsl(var(--badge-red-foreground));
 
   /* Financial colors (noheir-specific) */
   --color-income: hsl(var(--income));
@@ -76,19 +33,7 @@
   --color-expense-dark: hsl(var(--expense-dark));
   --color-expense-light: hsl(var(--expense-light));
 
-  /* Semantic text colors */
-  --color-text-main: hsl(var(--text-main));
-  --color-text-secondary: hsl(var(--text-secondary));
-  --color-text-muted: hsl(var(--text-muted));
-  --color-text-income: hsl(var(--text-income));
-  --color-text-expense: hsl(var(--text-expense));
-
-  /* Semantic background colors */
-  --color-bg-main: hsl(var(--bg-main));
-  --color-bg-surface: hsl(var(--bg-surface));
-  --color-bg-alt: hsl(var(--bg-alt));
-
-  /* 24 sequential chart colors (basalt palette) */
+  /* Stable financial chart colors */
   --color-chart-1: hsl(var(--chart-1));
   --color-chart-2: hsl(var(--chart-2));
   --color-chart-3: hsl(var(--chart-3));
@@ -116,134 +61,19 @@
   --color-chart-axis: hsl(var(--chart-axis));
   --color-chart-muted: hsl(var(--chart-muted));
 
-  /* Heatmap color scales (HSL-based, 4 intensities x 4 hues) */
-  --color-heatmap-green-1: hsl(var(--heatmap-green-1));
-  --color-heatmap-green-2: hsl(var(--heatmap-green-2));
-  --color-heatmap-green-3: hsl(var(--heatmap-green-3));
-  --color-heatmap-green-4: hsl(var(--heatmap-green-4));
-  --color-heatmap-red-1: hsl(var(--heatmap-red-1));
-  --color-heatmap-red-2: hsl(var(--heatmap-red-2));
-  --color-heatmap-red-3: hsl(var(--heatmap-red-3));
-  --color-heatmap-red-4: hsl(var(--heatmap-red-4));
-  --color-heatmap-blue-1: hsl(var(--heatmap-blue-1));
-  --color-heatmap-blue-2: hsl(var(--heatmap-blue-2));
-  --color-heatmap-blue-3: hsl(var(--heatmap-blue-3));
-  --color-heatmap-blue-4: hsl(var(--heatmap-blue-4));
-  --color-heatmap-orange-1: hsl(var(--heatmap-orange-1));
-  --color-heatmap-orange-2: hsl(var(--heatmap-orange-2));
-  --color-heatmap-orange-3: hsl(var(--heatmap-orange-3));
-  --color-heatmap-orange-4: hsl(var(--heatmap-orange-4));
-
-  /* Legacy heatmap (backward compat for existing components) */
-  --color-heatmap-0: var(--heatmap-0);
-  --color-heatmap-1: var(--heatmap-1);
-  --color-heatmap-2: var(--heatmap-2);
-  --color-heatmap-3: var(--heatmap-3);
-  --color-heatmap-4: var(--heatmap-4);
-
-  /* Radii */
-  --radius-card: 14px;
-  --radius-widget: 10px;
-  --radius-island: 20px;
-  --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
-
   /* Animations */
-  --animate-accordion-down: accordion-down 0.2s ease-out;
-  --animate-accordion-up: accordion-up 0.2s ease-out;
-  --animate-caret-blink: caret-blink 1.25s ease-out infinite;
+
   --animate-fade-up: fade-up 0.5s ease-out both;
 
   /* Font families */
-  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
-  --font-serif: var(--font-dm-sans), system-ui, sans-serif;
+  --font-sans: var(--basalt-font-sans);
+  --font-serif: var(--basalt-font-display);
   --font-mono:
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
     monospace;
 }
 
-@keyframes accordion-down {
-  from {
-    height: 0;
-  }
-  to {
-    height: var(--radix-accordion-content-height);
-  }
-}
-
-@keyframes accordion-up {
-  from {
-    height: var(--radix-accordion-content-height);
-  }
-  to {
-    height: 0;
-  }
-}
-
-@keyframes caret-blink {
-  0%,
-  70%,
-  100% {
-    opacity: 1;
-  }
-  20%,
-  50% {
-    opacity: 0;
-  }
-}
-
-/*
- * Design tokens — light (default) & dark mode
- * 3-tier luminance: L0 body -> L1 content panel -> L2 inner cards
- * Primary: Sky (200 deg hue)
- */
 :root {
-  /* L0 body */
-  --background: 220 14% 94%;
-  --foreground: 0 0% 12%;
-
-  /* L1 content panel */
-  --card: 220 14% 97%;
-  --card-foreground: 0 0% 12%;
-
-  /* L2 inner cards */
-  --secondary: 0 0% 100%;
-  --secondary-foreground: 0 0% 12%;
-
-  --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 12%;
-
-  /* ========== Primary: Sky ========== */
-  --primary: 200 90% 55%;
-  --primary-foreground: 0 0% 100%;
-  --primary-hover: 200 90% 48%;
-  --primary-light: 200 60% 95%;
-  --primary-dark: 200 90% 42%;
-
-  /* ========== Muted ========== */
-  --muted: 220 14% 92%;
-  --muted-foreground: 0 0% 45%;
-
-  /* ========== Accent ========== */
-  --accent: 220 14% 92%;
-  --accent-foreground: 0 0% 12%;
-
-  /* ========== Destructive ========== */
-  --destructive: 0 72% 51%;
-  --destructive-foreground: 0 0% 100%;
-
-  /* ========== Border & Input ========== */
-  --border: 220 13% 88%;
-  --input: 220 13% 88%;
-  --ring: 200 90% 55%;
-
-  /* ========== Success / Badge ========== */
-  --success: 142 71% 45%;
-  --success-foreground: 0 0% 100%;
-  --badge-red: 340 82% 55%;
-  --badge-red-foreground: 0 0% 100%;
-
   /* ========== Financial Colors ========== */
   --income: 160 84% 39%;
   --income-foreground: 210 40% 98%;
@@ -256,13 +86,6 @@
   --expense-bg: 350 89% 97%;
   --expense-dark: 350 89% 65%;
   --expense-light: 350 89% 95%;
-
-  /* Semantic Text Colors */
-  --text-main: 0 0% 12%;
-  --text-secondary: 0 0% 45%;
-  --text-muted: 0 0% 60%;
-  --text-income: 160 84% 39%;
-  --text-expense: 350 89% 60%;
 }
 
 /* ========== Swapped Color Scheme (Light Mode) ========== */
@@ -280,19 +103,11 @@
   --expense-bg: 160 84% 97%;
   --expense-dark: 160 84% 45%;
   --expense-light: 160 84% 95%;
-
-  --text-income: 350 89% 60%;
-  --text-expense: 160 84% 39%;
 }
 
 :root {
-  /* Semantic Backgrounds */
-  --bg-main: 220 14% 94%;
-  --bg-surface: 220 14% 97%;
-  --bg-alt: 220 14% 92%;
-
-  /* ========== 24 Sequential Chart Colors (basalt) ========== */
-  --chart-1: 200 90% 55%; /* Sky (= primary) */
+  /* ========== Stable Financial Chart Colors ========== */
+  --chart-1: 200 90% 55%; /* Sky (financial chart) */
   --chart-2: 186 80% 45%; /* Teal */
   --chart-3: 166 72% 44%; /* Jade */
   --chart-4: 142 71% 45%; /* Green */
@@ -320,104 +135,9 @@
   /* Chart utility tokens */
   --chart-axis: 0 0% 40%;
   --chart-muted: 0 0% 70%;
-
-  /* ========== Heatmap Color Scales (HSL, 4 intensities) ========== */
-  --heatmap-green-1: 142 50% 85%;
-  --heatmap-green-2: 142 55% 65%;
-  --heatmap-green-3: 142 60% 45%;
-  --heatmap-green-4: 142 65% 30%;
-  --heatmap-red-1: 0 55% 85%;
-  --heatmap-red-2: 0 60% 65%;
-  --heatmap-red-3: 0 65% 48%;
-  --heatmap-red-4: 0 65% 35%;
-  --heatmap-blue-1: 200 50% 85%;
-  --heatmap-blue-2: 200 55% 65%;
-  --heatmap-blue-3: 200 60% 48%;
-  --heatmap-blue-4: 200 65% 35%;
-  --heatmap-orange-1: 30 55% 85%;
-  --heatmap-orange-2: 30 60% 65%;
-  --heatmap-orange-3: 30 65% 48%;
-  --heatmap-orange-4: 30 65% 35%;
-
-  /* Legacy heatmap (backward compat) */
-  --heatmap-0: #ebedf0;
-  --heatmap-1: #c6e48b;
-  --heatmap-2: #7bc96f;
-  --heatmap-3: #239a3b;
-  --heatmap-4: #196127;
-
-  /* ========== Sidebar ========== */
-  --sidebar-background: 220 14% 94%;
-  --sidebar-foreground: 0 0% 12%;
-  --sidebar-primary: 200 90% 55%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 220 14% 90%;
-  --sidebar-accent-foreground: 0 0% 12%;
-  --sidebar-border: 220 13% 88%;
-  --sidebar-ring: 200 90% 55%;
-
-  /* ========== Other ========== */
-  --radius: 0.75rem;
-
-  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-  --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-  --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-  --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
-
-  --tracking-normal: 0em;
-  --spacing: 0.25rem;
 }
 
 .dark {
-  /* L0 body: #171717 */
-  --background: 0 0% 9%;
-  --foreground: 0 0% 93%;
-
-  /* L1 content panel: #1b1b1b */
-  --card: 0 0% 10.6%;
-  --card-foreground: 0 0% 93%;
-
-  /* L2 inner cards: #1f1f1f */
-  --secondary: 0 0% 12.2%;
-  --secondary-foreground: 0 0% 93%;
-
-  --popover: 0 0% 10.6%;
-  --popover-foreground: 0 0% 93%;
-
-  /* ========== Primary: Sky (Dark Mode) ========== */
-  --primary: 200 90% 60%;
-  --primary-foreground: 0 0% 100%;
-  --primary-hover: 200 90% 65%;
-  --primary-light: 200 60% 20%;
-  --primary-dark: 200 90% 50%;
-
-  /* ========== Muted (Dark Mode) ========== */
-  --muted: 0 0% 12.2%;
-  --muted-foreground: 0 0% 48%;
-
-  /* ========== Accent (Dark Mode) ========== */
-  --accent: 0 0% 14%;
-  --accent-foreground: 0 0% 93%;
-
-  /* ========== Destructive (Dark Mode) ========== */
-  --destructive: 0 72% 51%;
-  --destructive-foreground: 0 0% 100%;
-
-  /* ========== Border & Input (Dark Mode) ========== */
-  --border: 0 0% 16%;
-  --input: 0 0% 12%;
-  --ring: 200 90% 60%;
-
-  /* ========== Success / Badge (Dark Mode) ========== */
-  --success: 142 71% 45%;
-  --success-foreground: 0 0% 100%;
-  --badge-red: 340 82% 55%;
-  --badge-red-foreground: 0 0% 100%;
-
   /* ========== Financial Colors (Dark Mode) ========== */
   --income: 160 100% 50%;
   --income-foreground: 160 100% 10%;
@@ -430,13 +150,6 @@
   --expense-bg: 350 89% 15%;
   --expense-dark: 350 100% 60%;
   --expense-light: 350 89% 25%;
-
-  /* Semantic Text Colors (Dark Mode) */
-  --text-main: 0 0% 93%;
-  --text-secondary: 0 0% 48%;
-  --text-muted: 0 0% 40%;
-  --text-income: 160 100% 55%;
-  --text-expense: 350 100% 70%;
 }
 
 /* ========== Swapped Color Scheme (Dark Mode) ========== */
@@ -453,17 +166,9 @@
   --expense-bg: 160 84% 15%;
   --expense-dark: 160 100% 45%;
   --expense-light: 160 84% 25%;
-
-  --text-income: 350 100% 70%;
-  --text-expense: 160 100% 55%;
 }
 
 .dark {
-  /* Semantic Backgrounds (Dark Mode) */
-  --bg-main: 0 0% 9%;
-  --bg-surface: 0 0% 10.6%;
-  --bg-alt: 0 0% 14%;
-
   /* ========== 24 Sequential Chart Colors (boosted for dark bg) ========== */
   --chart-1: 200 90% 60%;
   --chart-2: 186 80% 50%;
@@ -493,51 +198,6 @@
   /* Chart utility tokens */
   --chart-axis: 0 0% 50%;
   --chart-muted: 0 0% 35%;
-
-  /* ========== Heatmap (boosted for dark bg) ========== */
-  --heatmap-green-1: 142 45% 25%;
-  --heatmap-green-2: 142 50% 35%;
-  --heatmap-green-3: 142 55% 45%;
-  --heatmap-green-4: 142 60% 58%;
-  --heatmap-red-1: 0 45% 25%;
-  --heatmap-red-2: 0 55% 35%;
-  --heatmap-red-3: 0 60% 45%;
-  --heatmap-red-4: 0 65% 55%;
-  --heatmap-blue-1: 200 45% 25%;
-  --heatmap-blue-2: 200 50% 35%;
-  --heatmap-blue-3: 200 55% 45%;
-  --heatmap-blue-4: 200 60% 55%;
-  --heatmap-orange-1: 30 45% 25%;
-  --heatmap-orange-2: 30 55% 35%;
-  --heatmap-orange-3: 30 60% 45%;
-  --heatmap-orange-4: 30 65% 55%;
-
-  /* Legacy heatmap (backward compat) */
-  --heatmap-0: #161b22;
-  --heatmap-1: #0e4429;
-  --heatmap-2: #006d32;
-  --heatmap-3: #26a641;
-  --heatmap-4: #39d353;
-
-  /* ========== Sidebar (Dark Mode) ========== */
-  --sidebar-background: 0 0% 9%;
-  --sidebar-foreground: 0 0% 93%;
-  --sidebar-primary: 200 90% 60%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 0 0% 14%;
-  --sidebar-accent-foreground: 0 0% 93%;
-  --sidebar-border: 0 0% 16%;
-  --sidebar-ring: 200 90% 60%;
-
-  /* ========== Shadows (Dark Mode) ========== */
-  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.3);
-  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.3);
-  --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.4), 0 1px 2px -1px hsl(0 0% 0% / 0.4);
-  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.4), 0 1px 2px -1px hsl(0 0% 0% / 0.4);
-  --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.4), 0 2px 4px -1px hsl(0 0% 0% / 0.4);
-  --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.4), 0 4px 6px -1px hsl(0 0% 0% / 0.4);
-  --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.4), 0 8px 10px -1px hsl(0 0% 0% / 0.4);
-  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.6);
 }
 
 /*
@@ -545,11 +205,11 @@
  */
 @layer base {
   * {
-    @apply border-border;
+    @apply border-basalt-border;
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-basalt-background text-basalt-foreground;
   }
 }
 
@@ -557,7 +217,7 @@
  * Custom utilities
  */
 @utility font-display {
-  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-family: var(--basalt-font-display);
 }
 
 @utility stagger-1 {
@@ -601,65 +261,4 @@
   100% {
     transform: translateX(-100%);
   }
-}
-
-/* Date Input Styling for Dark Mode Support */
-input[type="date"] {
-  position: relative;
-  color-scheme: light;
-}
-
-.dark input[type="date"] {
-  color-scheme: dark;
-}
-
-input[type="date"]::-webkit-calendar-picker-indicator {
-  cursor: pointer;
-  filter: invert(0);
-  opacity: 0.6;
-  transition: opacity 0.2s;
-}
-
-input[type="date"]::-webkit-calendar-picker-indicator:hover {
-  opacity: 1;
-}
-
-.dark input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(1) brightness(1.5);
-  opacity: 0.8;
-}
-
-.dark input[type="date"]::-webkit-calendar-picker-indicator:hover {
-  opacity: 1;
-}
-
-/* Remove ugly blue focus outline on Recharts elements */
-.recharts-wrapper,
-.recharts-wrapper *,
-.recharts-surface,
-.recharts-layer,
-.recharts-sector,
-.recharts-bar-rectangle,
-.recharts-area,
-.recharts-line,
-.recharts-responsive-container,
-.recharts-responsive-container * {
-  /* biome-ignore lint/complexity/noImportantStyles: recharts injects inline styles; !important is required to override them */
-  outline: none !important;
-  /* biome-ignore lint/complexity/noImportantStyles: recharts injects inline styles; !important is required to override them */
-  box-shadow: none !important;
-}
-
-.recharts-wrapper:focus,
-.recharts-wrapper:focus-visible,
-.recharts-wrapper *:focus,
-.recharts-wrapper *:focus-visible,
-.recharts-surface:focus,
-.recharts-surface:focus-visible,
-.recharts-responsive-container:focus,
-.recharts-responsive-container:focus-visible {
-  /* biome-ignore lint/complexity/noImportantStyles: recharts injects inline styles; !important is required to override them */
-  outline: none !important;
-  /* biome-ignore lint/complexity/noImportantStyles: recharts injects inline styles; !important is required to override them */
-  box-shadow: none !important;
 }

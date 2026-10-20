@@ -9,15 +9,15 @@
  */
 
 import { Button } from "@nocoo/basalt";
+import { Badge } from "@nocoo/basalt/components/badge";
+import { Input } from "@nocoo/basalt/components/input";
+import { SkeletonLine } from "@nocoo/basalt/components/skeleton-line";
+import { toast } from "@nocoo/basalt/components/toast";
 import { ArrowDownLeft, ArrowUpRight, Check, History, Pencil, Settings2, X } from "lucide-react";
 import { useState, useTransition } from "react";
-import { toast } from "sonner";
 import { updateContributionLog } from "@/app/actions/contribution-log-actions";
 import { SectionTitle } from "@/components/capital/unit-panel-primitives";
-import { Badge } from "@/components/ui/badge";
 import { ProductBadge } from "@/components/ui/colored-badge";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import type { ContributionOperationType, DomainContributionLog } from "@/domain/types";
 import { formatCurrencyFull } from "@/lib/chart-config";
 import { formatOperationDate } from "@/lib/local-date";
@@ -101,12 +101,16 @@ export function UnitLogTimeline({ logs, loading, onRefresh, limit = 500 }: UnitL
 
   if (loading) {
     return (
-      <div className="flex min-h-0 flex-col gap-4 lg:h-full">
+      <div
+        role="status"
+        aria-label="加载历史记录"
+        className="flex min-h-0 flex-col gap-4 lg:h-full"
+      >
         <div className="flex h-4 shrink-0 items-center">
           <SectionTitle icon={<History className="size-3" />} label="历史记录" />
         </div>
         {[0, 1, 2].map((i) => (
-          <Skeleton key={i} className="h-14 w-full" />
+          <SkeletonLine key={i} height={56} minWidth={100} maxWidth={100} />
         ))}
       </div>
     );
@@ -132,9 +136,11 @@ export function UnitLogTimeline({ logs, loading, onRefresh, limit = 500 }: UnitL
       </div>
 
       {logs.length === 0 ? (
-        <p className="text-muted-foreground py-6 text-center text-xs lg:flex-1">暂无历史记录</p>
+        <p className="text-basalt-muted-foreground py-6 text-center text-xs lg:flex-1">
+          暂无历史记录
+        </p>
       ) : (
-        <ul className="divide-border min-h-0 divide-y lg:flex-1 lg:overflow-y-auto">
+        <ul className="divide-basalt-border min-h-0 divide-y lg:flex-1 lg:overflow-y-auto">
           {logs.map((log) => {
             const meta = OPERATION_META[log.operationType] ?? OPERATION_META.adjust;
             const Icon = meta.icon;
@@ -148,7 +154,7 @@ export function UnitLogTimeline({ logs, loading, onRefresh, limit = 500 }: UnitL
                   <span className={cn("size-2 shrink-0 rounded-full", meta.dot)} />
                   <Icon className={cn("size-3.5 shrink-0", meta.text)} />
                   <span className="shrink-0 text-xs font-medium">{meta.label}</span>
-                  <span className="text-muted-foreground shrink-0 font-mono text-[10px] tabular-nums">
+                  <span className="text-basalt-muted-foreground shrink-0 font-mono text-basalt-sm tabular-nums">
                     {formatOperationDate(log.operationDate)}
                   </span>
                   <span
@@ -156,7 +162,7 @@ export function UnitLogTimeline({ logs, loading, onRefresh, limit = 500 }: UnitL
                       "ml-auto shrink-0 font-mono text-xs tabular-nums",
                       log.amount > 0 && "text-green-600 dark:text-green-400",
                       log.amount < 0 && "text-red-600 dark:text-red-400",
-                      log.amount === 0 && "text-muted-foreground",
+                      log.amount === 0 && "text-basalt-muted-foreground",
                     )}
                   >
                     {log.amount > 0 ? "+" : ""}
@@ -172,7 +178,7 @@ export function UnitLogTimeline({ logs, loading, onRefresh, limit = 500 }: UnitL
                       category={log.product?.category}
                     />
                   )}
-                  <Badge variant="outline" className="shrink-0 text-[9px] font-normal">
+                  <Badge variant="outline" className="shrink-0 text-basalt-sm font-normal">
                     {SOURCE_LABELS[log.source] ?? log.source}
                   </Badge>
 
@@ -184,14 +190,13 @@ export function UnitLogTimeline({ logs, loading, onRefresh, limit = 500 }: UnitL
                         value={draftPnl}
                         onChange={(e) => setDraftPnl(e.target.value)}
                         placeholder="损益"
-                        className="h-7 w-24 text-[11px]"
+                        className="w-24"
                         aria-label="损益"
                       />
                       <Button
                         type="button"
                         size="icon"
                         variant="ghost"
-                        className="size-7"
                         onClick={() => savePnl(log)}
                         disabled={isPending}
                         aria-label="保存损益"
@@ -202,7 +207,6 @@ export function UnitLogTimeline({ logs, loading, onRefresh, limit = 500 }: UnitL
                         type="button"
                         size="icon"
                         variant="ghost"
-                        className="size-7"
                         onClick={() => setEditing(null)}
                         disabled={isPending}
                         aria-label="取消"
@@ -215,7 +219,7 @@ export function UnitLogTimeline({ logs, loading, onRefresh, limit = 500 }: UnitL
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-6 shrink-0 gap-1 px-2 text-[10px] font-normal"
+                      className="shrink-0 font-normal"
                       onClick={() => startEdit(log)}
                       aria-label={log.pnl != null ? "编辑损益" : "记录损益"}
                     >
@@ -240,7 +244,7 @@ export function UnitLogTimeline({ logs, loading, onRefresh, limit = 500 }: UnitL
                 </div>
 
                 {log.note && (
-                  <p className="text-muted-foreground whitespace-pre-line pl-4 text-[10px]">
+                  <p className="text-basalt-muted-foreground whitespace-pre-line pl-4 text-basalt-sm">
                     {log.note}
                   </p>
                 )}
@@ -251,7 +255,7 @@ export function UnitLogTimeline({ logs, loading, onRefresh, limit = 500 }: UnitL
       )}
 
       {logs.length >= limit && (
-        <p className="text-muted-foreground shrink-0 text-center text-[10px]">
+        <p className="text-basalt-muted-foreground shrink-0 text-center text-basalt-sm">
           仅显示最近 {limit} 条
         </p>
       )}

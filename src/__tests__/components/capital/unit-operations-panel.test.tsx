@@ -1,6 +1,15 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+
+beforeEach(() => {
+  vi.stubGlobal("matchMedia", () => ({
+    matches: false,
+    addEventListener() {},
+    removeEventListener() {},
+  }));
+});
+
 import { UnitOperationsPanel } from "@/components/capital/unit-operations-panel";
 import type { DomainProduct, SerializedUnit } from "@/domain/types";
 import type { StagedOperation } from "@/lib/unit-commit-plan";

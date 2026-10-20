@@ -12,7 +12,7 @@ vi.mock("@/app/actions/contribution-log-actions", () => ({
   updateContributionLog: updateMock,
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@nocoo/basalt/components/toast", () => ({
   toast: { success: toastSuccess, error: toastError },
 }));
 
@@ -48,8 +48,8 @@ describe("UnitLogTimeline", () => {
   });
 
   test("renders a skeleton while loading", () => {
-    const { container } = render(<UnitLogTimeline logs={[]} loading onRefresh={vi.fn()} />);
-    expect(container.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
+    render(<UnitLogTimeline logs={[]} loading onRefresh={vi.fn()} />);
+    expect(screen.getByRole("status", { name: "加载历史记录" })).toBeInTheDocument();
   });
 
   test("renders an empty state", () => {

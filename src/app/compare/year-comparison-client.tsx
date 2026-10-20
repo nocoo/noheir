@@ -1,3 +1,13 @@
+import { LayerCard } from "@nocoo/basalt";
+import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@nocoo/basalt/components/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@nocoo/basalt/components/tabs";
 import { GitCompare } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
@@ -12,15 +22,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { buildMonthVsMonthData, buildYearVsYearData } from "@/domain/dashboard/year-comparison";
 import type { MonthlyData } from "@/domain/types";
 import { formatCurrencyFull, formatCurrencyK } from "@/lib/chart-config";
@@ -88,11 +89,11 @@ export function YearComparisonClient({
     return (
       <div className="space-y-6">
         <Header />
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">暂无数据</p>
-          </CardContent>
-        </Card>
+        <LayerCard>
+          <LayerCard.Body className="min-h-0 flex-1 py-12 text-center">
+            <p className="text-basalt-muted-foreground">暂无数据</p>
+          </LayerCard.Body>
+        </LayerCard>
       </div>
     );
   }
@@ -109,12 +110,16 @@ export function YearComparisonClient({
 
         {/* ── Year-vs-Year Tab ── */}
         <TabsContent value="year">
-          <Card>
-            <CardHeader>
+          <LayerCard>
+            <LayerCard.Header className="items-stretch flex-col gap-1.5">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <CardTitle>年度收支对比</CardTitle>
-                  <CardDescription>选择两个年份，按月对比收支与储蓄率</CardDescription>
+                  <h3 className="text-lg font-semibold leading-none tracking-tight text-basalt-foreground">
+                    年度收支对比
+                  </h3>
+                  <p className="text-sm text-basalt-muted-foreground">
+                    选择两个年份，按月对比收支与储蓄率
+                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <YearSelect
@@ -123,7 +128,7 @@ export function YearComparisonClient({
                     years={availableYears}
                     label="年份 A"
                   />
-                  <span className="text-muted-foreground text-sm font-medium">vs</span>
+                  <span className="text-basalt-muted-foreground text-sm font-medium">vs</span>
                   <YearSelect
                     value={yearB}
                     onChange={setYearB}
@@ -132,24 +137,24 @@ export function YearComparisonClient({
                   />
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
+            </LayerCard.Header>
+            <LayerCard.Body className="min-h-0 flex-1">
               <div className="h-[450px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart
                     data={yearCompData}
                     margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-basalt-border/50" />
                     <XAxis
                       dataKey="month"
                       tick={{ fontSize: 12 }}
-                      className="text-muted-foreground"
+                      className="text-basalt-muted-foreground"
                     />
                     <YAxis
                       yAxisId="left"
                       tick={{ fontSize: 12 }}
-                      className="text-muted-foreground"
+                      className="text-basalt-muted-foreground"
                       tickFormatter={formatCurrencyK}
                     />
                     <YAxis
@@ -157,7 +162,7 @@ export function YearComparisonClient({
                       orientation="right"
                       width={50}
                       tick={{ fontSize: 12 }}
-                      className="text-muted-foreground"
+                      className="text-basalt-muted-foreground"
                       tickFormatter={(value: number) => `${value}%`}
                       domain={[-50, 100]}
                     />
@@ -165,7 +170,11 @@ export function YearComparisonClient({
                       content={({ active, payload, label }) => {
                         if (!active || !payload?.length) return null;
                         return (
-                          <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
+                          <div
+                            className={overlayPanelClass(
+                              "px-basalt-card-sm py-basalt-space-lg text-basalt-sm",
+                            )}
+                          >
                             <p className="mb-1 font-medium">{label}</p>
                             {payload.map((entry) => {
                               const key = String(entry.dataKey ?? "");
@@ -190,7 +199,7 @@ export function YearComparisonClient({
                               );
                             })}
                             <p
-                              className="mt-1 border-t border-border/50 pt-1"
+                              className="mt-1 border-t border-basalt-border/50 pt-1"
                               style={{ color: TARGET_HEX }}
                             >
                               目标储蓄率: {targetSavingsRate}%
@@ -300,18 +309,22 @@ export function YearComparisonClient({
                   </ComposedChart>
                 </ResponsiveContainer>
               </div>
-            </CardContent>
-          </Card>
+            </LayerCard.Body>
+          </LayerCard>
         </TabsContent>
 
         {/* ── Month-vs-Month Tab ── */}
         <TabsContent value="month">
-          <Card>
-            <CardHeader>
+          <LayerCard>
+            <LayerCard.Header className="items-stretch flex-col gap-1.5">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <CardTitle>月度收支对比</CardTitle>
-                  <CardDescription>选择两个月份，对比收支与储蓄率</CardDescription>
+                  <h3 className="text-lg font-semibold leading-none tracking-tight text-basalt-foreground">
+                    月度收支对比
+                  </h3>
+                  <p className="text-sm text-basalt-muted-foreground">
+                    选择两个月份，对比收支与储蓄率
+                  </p>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <YearSelect
@@ -321,7 +334,7 @@ export function YearComparisonClient({
                     label="年份"
                   />
                   <MonthSelect value={monthIdxA} onChange={setMonthIdxA} label="月份" />
-                  <span className="text-muted-foreground text-sm font-medium">vs</span>
+                  <span className="text-basalt-muted-foreground text-sm font-medium">vs</span>
                   <YearSelect
                     value={monthYearB}
                     onChange={setMonthYearB}
@@ -331,8 +344,8 @@ export function YearComparisonClient({
                   <MonthSelect value={monthIdxB} onChange={setMonthIdxB} label="月份" />
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
+            </LayerCard.Header>
+            <LayerCard.Body className="min-h-0 flex-1">
               <div className="h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart
@@ -340,16 +353,16 @@ export function YearComparisonClient({
                     margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                     barCategoryGap="25%"
                   >
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-basalt-border/50" />
                     <XAxis
                       dataKey="label"
                       tick={{ fontSize: 13 }}
-                      className="text-muted-foreground"
+                      className="text-basalt-muted-foreground"
                     />
                     <YAxis
                       yAxisId="left"
                       tick={{ fontSize: 12 }}
-                      className="text-muted-foreground"
+                      className="text-basalt-muted-foreground"
                       tickFormatter={formatCurrencyK}
                     />
                     <YAxis
@@ -357,7 +370,7 @@ export function YearComparisonClient({
                       orientation="right"
                       width={50}
                       tick={{ fontSize: 12 }}
-                      className="text-muted-foreground"
+                      className="text-basalt-muted-foreground"
                       tickFormatter={(value: number) => `${value}%`}
                       domain={[-50, 100]}
                     />
@@ -365,7 +378,11 @@ export function YearComparisonClient({
                       content={({ active, payload, label }) => {
                         if (!active || !payload?.length) return null;
                         return (
-                          <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
+                          <div
+                            className={overlayPanelClass(
+                              "px-basalt-card-sm py-basalt-space-lg text-basalt-sm",
+                            )}
+                          >
                             <p className="mb-1 font-medium">{label}</p>
                             {payload.map((entry) => {
                               const key = String(entry.dataKey ?? "");
@@ -384,7 +401,7 @@ export function YearComparisonClient({
                               );
                             })}
                             <p
-                              className="mt-1 border-t border-border/50 pt-1"
+                              className="mt-1 border-t border-basalt-border/50 pt-1"
                               style={{ color: TARGET_HEX }}
                             >
                               目标储蓄率: {targetSavingsRate}%
@@ -434,8 +451,8 @@ export function YearComparisonClient({
                   </ComposedChart>
                 </ResponsiveContainer>
               </div>
-            </CardContent>
-          </Card>
+            </LayerCard.Body>
+          </LayerCard>
         </TabsContent>
       </Tabs>
     </div>
@@ -448,10 +465,10 @@ function Header() {
   return (
     <div>
       <h1 className="flex items-center gap-2 text-2xl font-bold">
-        <GitCompare className="text-primary size-6" />
+        <GitCompare className="text-basalt-primary size-6" />
         年度对比分析
       </h1>
-      <p className="text-muted-foreground text-sm">多维度收支趋势与储蓄率对比</p>
+      <p className="text-basalt-muted-foreground text-sm">多维度收支趋势与储蓄率对比</p>
     </div>
   );
 }
