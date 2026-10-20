@@ -1064,6 +1064,17 @@ export function createMachineApi() {
   });
   return app;
 }
+export function listMachineApiRoutes(): string[] {
+  const mount = new Hono<AppEnv>();
+  mount.route("/api/v1", createMachineApi());
+  return [
+    ...new Set(
+      mount.routes
+        .filter((route) => route.path.startsWith("/api/v1/") && route.method !== "ALL")
+        .map((route) => `${route.method} ${route.path.replace(/:([^/]+)/g, "{$1}")}`),
+    ),
+  ].sort();
+}
 const instructions = {
   version: "1",
   authentication:
