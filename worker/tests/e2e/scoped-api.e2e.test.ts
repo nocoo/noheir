@@ -403,4 +403,42 @@ describe("Native complete financial analysis workflow", () => {
     ).toEqual(created);
     expect((await request(full.token, `/analyses/${created.id}`)).status).toBe(404);
   });
+
+  test("large ledger replacements commit within HTTP time budget", async () => {
+    const key = await issue();
+    const row = (i: number) => ({
+      ...transaction(`Bulk-${i}`),
+      date: `2026-${String((i % 12) + 1).padStart(2, "0")}-15`,
+    });
+    const timings: Record<string, number> = {};
+    for (const count of [2_000, 5_000]) {
+      const revision = (await data<unknown>(await request(key.token, "/financial-preferences")))
+        .meta.dataRevision as number;
+      const transactions = Array.from({ length: count }, (_, i) => row(i));
+      const payload = {
+        year: 2026,
+        transactions,
+        allowEmpty: false,
+        expectedDataRevision: revision,
+      };
+      const preview = await data<{ digest: string }>(
+        await write(key.token, "/ledger-replacements/preview", payload),
+      );
+      const started = performance.now();
+      const committed = await data(
+        await write(
+          key.token,
+          "/ledger-replacements",
+          { ...payload, digest: preview.data.digest },
+          "POST",
+          undefined,
+          `bulk-${count}`,
+        ),
+      );
+      timings[String(count)] = performance.now() - started;
+      expect(committed.data.affected).toBe(count);
+      expect(timings[String(count)]).toBeLessThan(25_000);
+    }
+    console.info("ledger replacement commit ms", timings);
+  });
 });

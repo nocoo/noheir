@@ -457,6 +457,226 @@ describe("typed finance resources and reports", () => {
     ).toBe(403);
   });
 });
+
+describe("ledger replacement bulk commits", () => {
+  const replaceScopes = [
+    "data:replace",
+    "transactions:read",
+    "transactions:write",
+    "transactions:delete",
+    "transfers:read",
+    "transfers:write",
+    "transfers:delete",
+  ];
+  function ledgerRow(i: number) {
+    const month = (i % 12) + 1;
+    const day = (i % 28) + 1;
+    return {
+      date: `2026-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
+      type: "expense",
+      primaryCategory: "Food",
+      tertiaryCategory: "Meals",
+      amountCents: -(100 + i),
+      account: "Bank",
+      currency: "CNY",
+      tags: ["bulk"],
+    };
+  }
+  function dataRevision() {
+    return (
+      (
+        sqlite
+          .prepare(
+            "SELECT coalesce(revision,0) revision FROM owner_revisions WHERE owner_id='owner'",
+          )
+          .get() as { revision: number } | undefined
+      )?.revision ?? 0
+    );
+  }
+  async function replaceYear(
+    token: string,
+    count: number,
+    options: { revision?: number; idempotencyKey?: string; badIndex?: number } = {},
+  ) {
+    const rows = Array.from({ length: count }, (_, i) => {
+      const row = ledgerRow(i);
+      if (options.badIndex === i) return { ...row, type: "not-a-type" };
+      return row;
+    });
+    const expectedDataRevision = options.revision ?? dataRevision();
+    const payload = { year: 2026, transactions: rows, expectedDataRevision };
+    const preview = await request("/api/v1/ledger-replacements/preview", "POST", payload, token);
+    expect(preview.status).toBe(200);
+    const digest = (await preview.json()).data.digest;
+    return request("/api/v1/ledger-replacements", "POST", { ...payload, digest }, token, {
+      "Idempotency-Key": options.idempotencyKey ?? crypto.randomUUID(),
+    });
+  }
+  function yearCount(year = 2026) {
+    return (
+      sqlite
+        .prepare("SELECT count(*) count FROM transactions WHERE user_id='owner' AND year=?")
+        .get(year) as { count: number }
+    ).count;
+  }
+  test("capabilities advertise replacement row and body limits", async () => {
+    const issued = await key(["transactions:read"]);
+    const caps = await (
+      await request("/api/v1/capabilities", "GET", undefined, issued.token)
+    ).json();
+    expect(caps.data.limits.replacementRows).toBe(20_000);
+    expect(caps.data.limits.replacementBodyBytes).toBe(8 * 1024 * 1024);
+    const instructions = await (
+      await request("/api/v1/instructions", "GET", undefined, issued.token)
+    ).json();
+    expect(instructions.limits.replacementRows).toBe(20_000);
+    expect(instructions.limits.replacementBodyBytes).toBe(8 * 1024 * 1024);
+  });
+  for (const count of [2_000, 5_000, 20_000]) {
+    test(`replaces ${count} transaction rows atomically in one commit`, async () => {
+      const issued = await key(replaceScopes);
+      sqlite
+        .prepare(
+          "INSERT INTO transactions(id,user_id,date,year,month,day,primary_category,tertiary_category,amount_cents,type,account,currency,tags,created_at,updated_at) VALUES('old','owner','2026-01-01',2026,1,1,'Old','Old',-1,'expense','Bank','CNY','[]',1,1)",
+        )
+        .run();
+      expect((await replaceYear(issued.token, count)).status).toBe(200);
+      expect(yearCount()).toBe(count);
+      expect(sqlite.prepare("SELECT id FROM transactions WHERE id='old'").get()).toBeUndefined();
+    });
+  }
+  test("rejects more than 20000 rows per ledger", async () => {
+    const issued = await key(replaceScopes);
+    const rows = Array.from({ length: 20_001 }, () => ledgerRow(0));
+    const response = await request(
+      "/api/v1/ledger-replacements/preview",
+      "POST",
+      { year: 2026, transactions: rows, expectedDataRevision: 0 },
+      issued.token,
+    );
+    expect(response.status).toBe(400);
+    expect((await response.json()).code).toBe("replacement_too_many_rows");
+  });
+  test("invalid row rolls back and leaves the prior year intact", async () => {
+    const issued = await key(replaceScopes);
+    sqlite
+      .prepare(
+        "INSERT INTO transactions(id,user_id,date,year,month,day,primary_category,tertiary_category,amount_cents,type,account,currency,tags,created_at,updated_at) VALUES('keep','owner','2026-06-01',2026,6,1,'Keep','Keep',-99,'expense','Bank','CNY','[]',1,1)",
+      )
+      .run();
+    const badRows = Array.from({ length: 2_000 }, (_, i) =>
+      i === 1_499 ? { ...ledgerRow(i), type: "not-a-type" } : ledgerRow(i),
+    );
+    expect(
+      (
+        await request(
+          "/api/v1/ledger-replacements/preview",
+          "POST",
+          { year: 2026, transactions: badRows, expectedDataRevision: dataRevision() },
+          issued.token,
+        )
+      ).status,
+    ).toBe(400);
+    expect(yearCount()).toBe(1);
+    expect(sqlite.prepare("SELECT id FROM transactions WHERE id='keep'").get()).toBeTruthy();
+  });
+  test("idempotent replay returns the same receipt without extra audit rows", async () => {
+    const issued = await key(replaceScopes);
+    const rows = Array.from({ length: 50 }, (_, i) => ledgerRow(i));
+    const expectedDataRevision = dataRevision();
+    const payload = { year: 2026, transactions: rows, expectedDataRevision };
+    const preview = await request(
+      "/api/v1/ledger-replacements/preview",
+      "POST",
+      payload,
+      issued.token,
+    );
+    const digest = (await preview.json()).data.digest;
+    const commitBody = { ...payload, digest };
+    const idempotencyKey = "ledger-replace-replay";
+    const first = await request("/api/v1/ledger-replacements", "POST", commitBody, issued.token, {
+      "Idempotency-Key": idempotencyKey,
+    });
+    expect(first.status).toBe(200);
+    const auditAfterFirst = (
+      sqlite.prepare("SELECT count(*) count FROM api_audit WHERE owner_id='owner'").get() as {
+        count: number;
+      }
+    ).count;
+    const second = await request("/api/v1/ledger-replacements", "POST", commitBody, issued.token, {
+      "Idempotency-Key": idempotencyKey,
+    });
+    expect(second.status).toBe(200);
+    const firstBody = await first.json();
+    const secondBody = await second.json();
+    expect(secondBody.data).toEqual(firstBody.data);
+    expect(
+      (
+        sqlite.prepare("SELECT count(*) count FROM api_audit WHERE owner_id='owner'").get() as {
+          count: number;
+        }
+      ).count,
+    ).toBe(auditAfterFirst);
+  });
+  test("same idempotency key with different payload conflicts", async () => {
+    const issued = await key(replaceScopes);
+    const keyName = "ledger-replace-conflict";
+    expect((await replaceYear(issued.token, 10, { idempotencyKey: keyName })).status).toBe(200);
+    expect((await replaceYear(issued.token, 11, { idempotencyKey: keyName })).status).toBe(409);
+  });
+  test("uses a small bounded statement count for 2000-row batches", async () => {
+    const issued = await key(replaceScopes);
+    let statementCount = 0;
+    const underlying = d1.batch.bind(d1);
+    d1.batch = async (statements: D1PreparedStatement[]) => {
+      statementCount = statements.length;
+      return underlying(statements);
+    };
+    expect((await replaceYear(issued.token, 2_000)).status).toBe(200);
+    expect(statementCount).toBeGreaterThan(0);
+    expect(statementCount).toBeLessThanOrEqual(10);
+  });
+  test("stale expectedDataRevision is rejected on commit", async () => {
+    const issued = await key(replaceScopes);
+    const payload = { year: 2026, transactions: [tx], expectedDataRevision: 0 };
+    const preview = await request(
+      "/api/v1/ledger-replacements/preview",
+      "POST",
+      payload,
+      issued.token,
+    );
+    const digest = (await preview.json()).data.digest;
+    sqlite
+      .prepare(
+        "INSERT INTO owner_revisions(owner_id,revision) VALUES('owner',1) ON CONFLICT(owner_id) DO UPDATE SET revision=1",
+      )
+      .run();
+    expect(
+      (
+        await request("/api/v1/ledger-replacements", "POST", { ...payload, digest }, issued.token, {
+          "Idempotency-Key": "stale-replace",
+        })
+      ).status,
+    ).toBe(412);
+  });
+  test("transaction-only replacement leaves transfers and other years untouched", async () => {
+    const issued = await key(replaceScopes);
+    sqlite
+      .prepare(
+        "INSERT INTO transfers(id,user_id,date,year,month,day,inflow_amount_cents,outflow_amount_cents,currency,account,tags,created_at,updated_at) VALUES('tr','owner','2025-12-01',2025,12,1,0,100,'CNY','Bank','[]',1,1)",
+      )
+      .run();
+    sqlite
+      .prepare(
+        "INSERT INTO transactions(id,user_id,date,year,month,day,primary_category,tertiary_category,amount_cents,type,account,currency,tags,created_at,updated_at) VALUES('other-year','owner','2025-12-01',2025,12,1,'X','X',1,'income','Bank','CNY','[]',1,1)",
+      )
+      .run();
+    expect((await replaceYear(issued.token, 3)).status).toBe(200);
+    expect(sqlite.prepare("SELECT id FROM transfers WHERE id='tr'").get()).toBeTruthy();
+    expect(sqlite.prepare("SELECT id FROM transactions WHERE id='other-year'").get()).toBeTruthy();
+  });
+});
+
 test("migration preserves existing financial settings and rejects ambiguous anchors", () => {
   const historical = new Database(":memory:");
   const directory = new URL("../db/migrations/", import.meta.url);
