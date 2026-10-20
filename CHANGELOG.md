@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.1] - 2026-10-20
+
+### Features
+
+- **db** — normalize legacy mcp timestamps
+
+### Fixes
+
+- tolerate legacy timestamp wire encodings
+
 ## [Unreleased]
 
 ### Fixes
