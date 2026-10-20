@@ -25,9 +25,16 @@ import { computeAvailability } from "../lib/availability";
 import { isRecurringStatus, patchForTransition } from "../lib/recurring-state";
 import { buildCommitStatements, type SwapTarget } from "../lib/unit-commit";
 import {
+  buildGuardedLedgerReplaceStatements,
+  chunkJsonArrays,
+  MAX_IMPORT_BODY_BYTES,
+  MAX_IMPORT_ROWS,
+} from "../lib/year-import";
+import {
   ApiError,
   canonical,
   checkedRead,
+  dbFields,
   owned,
   prepareFinancialData,
   type Row,
@@ -1027,6 +1034,8 @@ export function createMachineApi() {
         defaultPageSize: 100,
         maxPageSize: 500,
         maxBatchSize: 100,
+        replacementRows: MAX_IMPORT_ROWS,
+        replacementBodyBytes: MAX_IMPORT_BODY_BYTES,
         idempotencyDays: 7,
         rateLimits: RATE_LIMITS,
       },
@@ -1069,7 +1078,8 @@ const instructions = {
   limits: {
     pageSize: 500,
     batchRows: 100,
-    replacementRows: 500,
+    replacementRows: MAX_IMPORT_ROWS,
+    replacementBodyBytes: MAX_IMPORT_BODY_BYTES,
     aggregateGroups: 500,
     occurrenceDays: 366,
     metadataValuesPerFacet: 500,
@@ -1691,8 +1701,8 @@ function assertSafe(rows: Row[]) {
 }
 const replacementSchema = z.strictObject({
   year: z.number().int().min(1900).max(2100).nullable(),
-  transactions: z.array(z.unknown()).max(500).optional(),
-  transfers: z.array(z.unknown()).max(500).optional(),
+  transactions: z.array(z.unknown()).max(MAX_IMPORT_ROWS).optional(),
+  transfers: z.array(z.unknown()).max(MAX_IMPORT_ROWS).optional(),
   allowEmpty: z.boolean().default(false),
   expectedDataRevision: z.number().int().nonnegative(),
   digest: z
@@ -1761,8 +1771,14 @@ function registerOperations(app: Hono<AppEnv>) {
 
   const replacement = async (c: C, preview: boolean) => {
     requireScopes(c, ["data:replace"]);
-    const parsed = replacementSchema.safeParse(await json(c));
-    if (!parsed.success) throw new ApiError(400, "invalid_replacement");
+    const raw = await json(c);
+    for (const ledger of ["transactions", "transfers"] as const) {
+      const rows = (raw as Row)[ledger];
+      if (Array.isArray(rows) && rows.length > MAX_IMPORT_ROWS)
+        throw new ApiError(400, "replacement_too_many_rows");
+    }
+    const parsed = replacementSchema.safeParse(raw);
+    if (!parsed.success) throw new ApiError(400, "invalid_replacement", parsed.error.issues);
     const body = parsed.data,
       selected = (["transactions", "transfers"] as const).filter((r) => body[r] !== undefined);
     if (!selected.length) throw new ApiError(400, "empty_selection");
@@ -1816,23 +1832,26 @@ function registerOperations(app: Hono<AppEnv>) {
     if (body.digest !== digest) throw new ApiError(400, "replacement_digest_mismatch");
     return mutate(c, "ledger-replacements", payload, async () => {
       const statements: Sql[] = [],
-        now = Date.now();
+        now = Date.now(),
+        createdAt = Math.floor(now / 1000);
       for (const resource of selected) {
-        statements.push({
-          sql: `DELETE FROM ${resources[resource].table} WHERE user_id=? ${body.year === null ? "" : "AND year=?"} AND $GUARD`,
-          params: [p.owner, ...(body.year === null ? [] : [body.year]), ...guardArgs],
+        const items = payload[resource] as Row[];
+        const jsonRows = items.map((item) => {
+          const id = crypto.randomUUID();
+          const fields = dbFields(prepareFinancialData(resource, item, now, true, p));
+          return { id, ...fields };
         });
-        for (const item of payload[resource] as Row[])
-          statements.push(
-            rowStatement(
-              resources[resource].table,
-              crypto.randomUUID(),
-              p.owner,
-              prepareFinancialData(resource, item, now, true, p),
-              "$GUARD",
-              guardArgs,
-            ),
-          );
+        const chunks = chunkJsonArrays(jsonRows);
+        if (!chunks.ok) throw new ApiError(400, "invalid_replacement");
+        statements.push(
+          ...buildGuardedLedgerReplaceStatements({
+            table: resources[resource].table as "transactions" | "transfers",
+            userId: p.owner,
+            year: body.year,
+            chunks: chunks.chunks,
+            createdAt,
+          }),
+        );
       }
       return {
         statements,

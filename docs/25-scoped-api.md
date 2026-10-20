@@ -585,9 +585,11 @@ audit history exceeds 500 events, and a first page is not a complete collection.
 - Currencies: `CNY`, `USD`, `HKD`; signed safe integer cents; no implicit FX.
   Existing browser financial totals explicitly select CNY and label it. Other
   currency rows remain available for CRUD and currency-specific REST queries.
-- Request body: 8 MiB. Lists: default 100 / maximum 500 per page. Batch create:
-  100 rows. Replacement: 500 rows per selected ledger, with digest/revision and
-  explicit `allowEmpty`. Larger jobs must not be silently truncated.
+- Request body: 8 MiB (`replacementBodyBytes` in `/capabilities` and
+  `/instructions`). Lists: default 100 / maximum 500 per page. Batch create: 100
+  rows. Replacement: 20,000 rows per selected ledger (`replacementRows`), with
+  digest/revision and explicit `allowEmpty`; over-limit rows return
+  `replacement_too_many_rows`. Larger jobs must not be silently truncated.
 - Aggregation: at most 500 groups; portfolio/preflight at most 500 units/logs;
   metadata at most 500 distinct values per facet. Exceeding these limits returns
   an explicit error, not a partial success. Narrow supported filters or traverse

@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Features
+
+- Raise scoped REST ledger-replacement limits to 20,000 rows per ledger (8 MiB body) using chunked `json_each` inserts in one atomic batch; advertise `replacementRows` and `replacementBodyBytes` in capabilities and instructions.
+
+### Fixes
+
+- Set `updated_at` on browser CSV year import rows (json_each insert path).
+
 ## [3.1.0] - 2026-10-20
 
 ### Breaking Changes
