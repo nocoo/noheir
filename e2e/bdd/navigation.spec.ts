@@ -363,11 +363,9 @@ test("shared shell retains sidebar scroll and groups across routes and history",
     .poll(() => groupContent.evaluate((node) => node.getBoundingClientRect().height))
     .toBe(0);
   const nav = sidebar.locator('[data-slot="sidebar-nav"]');
+  await waitForSidebarNavLayoutStable(nav);
   const original = await nav.evaluateHandle((node) => node);
-  const top = await nav.evaluate((node) => {
-    node.scrollTop = node.scrollHeight;
-    return node.scrollTop;
-  });
+  const top = await scrollSidebarNavToSettledBottom(nav);
   expect(top).toBeGreaterThan(0);
   const island = page.locator("[data-basalt-island]");
   expect(
@@ -380,8 +378,9 @@ test("shared shell retains sidebar scroll and groups across routes and history",
   await sidebar.getByRole("link", { name: "API 密钥", exact: true }).click();
   await expect(page).toHaveURL("/api-keys");
   await expect(page.getByRole("heading", { name: "API 密钥", exact: true })).toBeVisible();
+  await waitForSidebarNavLayoutStable(nav);
   await expect.poll(() => nav.evaluate((node, previous) => node === previous, original)).toBe(true);
-  await expect.poll(() => nav.evaluate((node) => node.scrollTop)).toBe(top);
+  await expectSidebarNavScrolledToBottom(nav);
   await expect(group).toHaveAttribute("data-state", "closed");
   await expect.poll(() => island.evaluate((node) => node.scrollTop)).toBe(0);
 
@@ -394,8 +393,9 @@ test("shared shell retains sidebar scroll and groups across routes and history",
   await page.goForward();
   await expect(page).toHaveURL("/account-types");
   await expect(page.getByRole("heading", { name: "账户类型管理", exact: true })).toBeVisible();
+  await waitForSidebarNavLayoutStable(nav);
   await expect.poll(() => nav.evaluate((node, previous) => node === previous, original)).toBe(true);
-  await expect.poll(() => nav.evaluate((node) => node.scrollTop)).toBe(top);
+  await expectSidebarNavScrolledToBottom(nav);
   await expect(group).toHaveAttribute("data-state", "closed");
 });
 

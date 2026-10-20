@@ -16,7 +16,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixes
 
-- Stabilize the collapsed-rail sidebar scroll BDD check by waiting for the collapse transition and settled nav metrics before scrolling, and by asserting the rail stays pinned to the bottom edge after client navigation instead of comparing a stale absolute `scrollTop`.
+- Stabilize the shared-shell sidebar scroll BDD checks (expanded nav and collapsed rail) by waiting for settled nav metrics before scrolling, and by asserting the sidebar stays pinned to the bottom edge after client navigation instead of comparing a stale absolute `scrollTop`.
 - Normalize legacy ISO-text `created_at`/`updated_at` values when wiring financial rows for scoped Bearer REST lists and portfolio summaries, instead of throwing `Invalid Date` and returning opaque 500s; log unexpected scoped API failures with request metadata for operations.
 - Add D1 migration `0013_normalize_legacy_timestamps.sql` to rewrite parseable Gen2 MCP text timestamps on `financial_products`, `capital_units` and `contribution_logs` to integer seconds (or log-native ms where applicable) without bumping row versions or writing audit events; apply with `bunx wrangler d1 migrations apply noheir-db --remote` (and `--local` for dev) **before** deploying a Worker that depends on it — release/deploy does not run migrations automatically (see `docs/04-run.md`).
 
