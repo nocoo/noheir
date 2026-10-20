@@ -6,7 +6,7 @@ import {
   AppShell as BasaltAppShell,
 } from "@nocoo/basalt/components/app-shell";
 import { Menu } from "lucide-react";
-import { Suspense, useEffect, useMemo } from "react";
+import { Suspense, useEffect, useMemo, useRef } from "react";
 import { useLocation } from "react-router";
 import { EnvironmentSwitch } from "@/components/environment-switch";
 import { GithubIcon } from "@/components/icons/github-icon";
@@ -68,6 +68,7 @@ function AppShellInner({
 }) {
   const isMobile = useIsMobile();
   const { mobileOpen, setMobileOpen } = useSidebar();
+  const mobileMenuTrigger = useRef<HTMLButtonElement>(null);
   const location = useLocation();
   const pathname = location.pathname;
 
@@ -111,6 +112,10 @@ function AppShellInner({
             side="left"
             className="w-[260px] p-0 sm:max-w-[260px]"
             showCloseButton={false}
+            onCloseAutoFocus={(event) => {
+              event.preventDefault();
+              mobileMenuTrigger.current?.focus();
+            }}
           >
             <SheetHeader className="sr-only">
               <SheetTitle>导航菜单</SheetTitle>
@@ -129,6 +134,7 @@ function AppShellInner({
               {isMobile ? (
                 <HeaderTooltip label="打开导航">
                   <button
+                    ref={mobileMenuTrigger}
                     type="button"
                     onClick={() => setMobileOpen(true)}
                     aria-label="打开导航"

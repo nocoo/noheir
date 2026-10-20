@@ -262,6 +262,22 @@ test("capital unit commit persists updated fields and writes contribution log", 
   expect(commitLog?.operationType).toBe("adjust");
 });
 
+test("mobile navigation restores focus and unlocks scrolling after dismissal", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/api-keys");
+  const opener = page.getByRole("button", { name: "打开导航", exact: true });
+  await opener.click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(opener).toBeFocused();
+  await opener.click();
+  await page.getByRole("dialog").getByRole("link", { name: "分析报告", exact: true }).click();
+  await expect(page).toHaveURL("/analyses");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => document.body.style.overflow)).not.toBe("hidden");
+});
+
 test("permission groups have a visible desktop divider and stack without mobile overflow", async ({
   page,
 }) => {

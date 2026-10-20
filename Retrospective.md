@@ -146,3 +146,14 @@ not in this repository's allowed type list. Git was interrupted before creating
 the commit; the staged changes remained intact. The corrected `fix:` commit ran
 the normal hook again without amending history or bypassing checks. Read the
 local commit rules before choosing a conventional prefix, even for UI-only work.
+
+## 2026-10-20 - Verify drawer focus, not only visibility
+
+Dependency acceptance in Chrome found that Escape closed the mobile navigation
+but left keyboard focus outside its opener. The application controls the Sheet
+from a header button outside its Trigger, so the library cannot restore that
+reference automatically. Route-rendering and overflow checks had missed this
+existing integration gap. A native browser regression first reproduced the lost
+focus; the Sheet close callback now restores the explicit opener reference.
+Overlay acceptance must check keyboard focus, navigation dismissal and scroll
+unlocking as well as a visible open/closed state.
