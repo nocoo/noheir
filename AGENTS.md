@@ -12,6 +12,7 @@ Raise weaker enforcement to the contract. Maintain project rules only here.
 | Fact | Where |
 | --- | --- |
 | Human docs | [README.md](README.md), [docs/README.md](docs/README.md) |
+| Scoped Bearer REST (`/api/v1`) | [docs/api.md](docs/api.md), live `GET /api/v1/openapi.json` |
 | Version | Root `package.json`, imported by UI and Worker |
 | Enforcement | `.husky/`, parallel hook scripts, CI, root/Worker Vitest |
 | Runtime configuration | `wrangler.jsonc`, `vite.config.ts`, `.env.example` |
@@ -25,6 +26,7 @@ Raise weaker enforcement to the contract. Maintain project rules only here.
 - Run the Worker before static assets. Disable workers.dev and preview URLs. Demo/E2E use launcher-issued signed fixture identities with controlled JWKS; no environment or loopback host bypasses verification.
 - Browser mutations require same origin. Derive ownership on the server, ignoring user-id and internal-action headers and ownership fields in JSON.
 - Human-only API key/site administration never accepts Bearer credentials. Machine routes never fall back to Access. Keys are hash-only, expiring, revocable and explicitly scoped; read/write/delete grants are independent. No public interface contains `agent` terminology.
+- Any change to `/api/v1` routes, query/body schemas, limits, scopes or stable problem `code` values must update [docs/api.md](docs/api.md) in the same PR; `worker/tests/api-docs.test.ts` fails if a registered machine route is missing from that file.
 - Shared financial mutations require snapshot `If-Match`; machine mutations additionally require `Idempotency-Key`. Preserve atomic financial writes, actor audit and financial revisions. Reports have separate revisions, immutable creator/external identity and durable creation receipts after deletion.
 - Keep report Markdown inert: no raw HTML or remote images. Evidence references require source read grants and same-owner IDs; author/model labels are unverified text. Only external tools perform inference.
 - CSV transaction import replaces the selected user's whole year of income and expense; transfer import is separate. Validate all rows before a single atomic D1 batch. Keep JSON parameters below D1 limits using chunks; never delete before validation or in a separate request.
