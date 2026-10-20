@@ -104,7 +104,7 @@ Conditional scope needs (enforced at runtime):
 | Currencies | `CNY`, `USD`, `HKD` only for API writes; aggregates never mix currencies |
 | FX | No implicit conversion; multi-currency totals are per-currency rows |
 | Dates | `YYYY-MM-DD` (ISO calendar day); business calendar helpers use **Asia/Shanghai** |
-| Timestamps | Resource `createdAt` / `updatedAt` in JSON are ISO-8601 strings; ledger tables store Unix seconds internally |
+| Timestamps | `createdAt`, `updatedAt`, and `deletedAt` in JSON responses are ISO-8601 strings or `null`. `wire()` accepts legacy storage: Unix seconds or milliseconds, zoneless SQLite `YYYY-MM-DD HH:MM:SS[.fff]` text (parsed as UTC), and other values normalized like contribution-log timestamps. Unparseable values become `null` instead of failing the request. New writes still use the resource-specific storage rules (ledger rows: Unix seconds). |
 | Rates | Financial preference percentages are **percentage points** (not ratios) |
 | Ordering | Lists use stable `id DESC` keyset pagination |
 | Unknown vs zero | Missing balance anchors or investment history → **unknown** (`status: "unknown"` on balances), not `0` |
@@ -255,6 +255,8 @@ Exceeded → `429 rate_limit_exceeded` with `Retry-After: 60`.
 | 500 | `internal_error` |
 
 `401` responses include `WWW-Authenticate: Bearer`.
+
+Unexpected non-`ApiError` failures on scoped routes are logged once as structured JSON (`level`, `requestId`, `method`, `path`, error `name`/`message`/`stack`) before the client receives `500 internal_error`. The log line is server-side only; the problem body still exposes only `requestId` and `code`.
 
 ---
 
