@@ -27,7 +27,7 @@ All notable changes to this project will be documented in this file.
 
 ### Maintenance
 
-- Upgrade Basalt to 3.1.0, React Router to 8.5.0, Lucide to 1.59.0, PostCSS to 8.5.31, Wrangler to 4.151.2 and Workers types to 5.20261019.1. Resolve dependency issues #618, #649, #650, #651, #652 and #653.
+- Upgrade Basalt to 3.2.0, React Router to 8.5.0, Lucide to 1.59.0, PostCSS to 8.5.31, Wrangler to 4.151.2 and Workers types to 5.20261019.1. Resolve dependency issues #618, #649, #650, #651, #652 and #653.
 - Include intervening dependency/security maintenance since the last published GitHub release v3.0.0, remove unused AI/MCP dependencies and obsolete overrides, and align both package lockfiles.
 - Expand native HTTP/browser regression coverage and index-snapshot quality gates without lowering the configured four-metric 95% coverage floors.
 
