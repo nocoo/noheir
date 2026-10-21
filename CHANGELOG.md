@@ -8,6 +8,10 @@ All notable changes to this project will be documented in this file.
 
 - Add [docs/api.md](docs/api.md), the scoped Bearer `/api/v1` API reference for external tools, with a Worker test that fails when registered routes are missing from the doc.
 
+### Fixes
+
+- Stabilize the shared-shell sidebar scroll BDD checks (expanded nav and collapsed rail) by waiting for settled nav metrics before scrolling, and by asserting the sidebar stays pinned to the bottom edge after client navigation instead of comparing a stale absolute `scrollTop`.
+
 ## [3.1.1] - 2026-10-20
 
 ### Features

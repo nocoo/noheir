@@ -1,5 +1,52 @@
 import { existsSync, readFileSync } from "node:fs";
-import { expect, test } from "@playwright/test";
+import { expect, type Locator, test } from "@playwright/test";
+
+/** Wait until the scrollable nav column stops reflowing (collapse transition, fonts, etc.). */
+async function waitForSidebarNavLayoutStable(nav: Locator) {
+  await expect
+    .poll(async () => {
+      const first = await nav.evaluate((node) => ({
+        scrollHeight: node.scrollHeight,
+        clientHeight: node.clientHeight,
+      }));
+      await nav.evaluate(
+        () =>
+          new Promise<void>((resolve) => {
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+          }),
+      );
+      const second = await nav.evaluate((node) => ({
+        scrollHeight: node.scrollHeight,
+        clientHeight: node.clientHeight,
+      }));
+      return (
+        first.scrollHeight === second.scrollHeight && first.clientHeight === second.clientHeight
+      );
+    })
+    .toBe(true);
+}
+
+async function expectSidebarNavScrolledToBottom(nav: Locator) {
+  await expect
+    .poll(() =>
+      nav.evaluate((node) => {
+        const max = Math.max(0, node.scrollHeight - node.clientHeight);
+        return node.scrollTop === max;
+      }),
+    )
+    .toBe(true);
+}
+
+/** Scroll to the settled bottom edge; max scrollTop can change when the rail relayouts. */
+async function scrollSidebarNavToSettledBottom(nav: Locator) {
+  await waitForSidebarNavLayoutStable(nav);
+  await nav.evaluate((node) => {
+    const max = Math.max(0, node.scrollHeight - node.clientHeight);
+    node.scrollTop = max;
+  });
+  await expectSidebarNavScrolledToBottom(nav);
+  return await nav.evaluate((node) => node.scrollTop);
+}
 
 const origin = "http://127.0.0.1:27004";
 const tokenPath = new URL("../../.wrangler/browser-token.json", import.meta.url);
@@ -316,11 +363,9 @@ test("shared shell retains sidebar scroll and groups across routes and history",
     .poll(() => groupContent.evaluate((node) => node.getBoundingClientRect().height))
     .toBe(0);
   const nav = sidebar.locator('[data-slot="sidebar-nav"]');
+  await waitForSidebarNavLayoutStable(nav);
   const original = await nav.evaluateHandle((node) => node);
-  const top = await nav.evaluate((node) => {
-    node.scrollTop = node.scrollHeight;
-    return node.scrollTop;
-  });
+  const top = await scrollSidebarNavToSettledBottom(nav);
   expect(top).toBeGreaterThan(0);
   const island = page.locator("[data-basalt-island]");
   expect(
@@ -333,8 +378,9 @@ test("shared shell retains sidebar scroll and groups across routes and history",
   await sidebar.getByRole("link", { name: "API 密钥", exact: true }).click();
   await expect(page).toHaveURL("/api-keys");
   await expect(page.getByRole("heading", { name: "API 密钥", exact: true })).toBeVisible();
+  await waitForSidebarNavLayoutStable(nav);
   await expect.poll(() => nav.evaluate((node, previous) => node === previous, original)).toBe(true);
-  await expect.poll(() => nav.evaluate((node) => node.scrollTop)).toBe(top);
+  await expectSidebarNavScrolledToBottom(nav);
   await expect(group).toHaveAttribute("data-state", "closed");
   await expect.poll(() => island.evaluate((node) => node.scrollTop)).toBe(0);
 
@@ -347,8 +393,9 @@ test("shared shell retains sidebar scroll and groups across routes and history",
   await page.goForward();
   await expect(page).toHaveURL("/account-types");
   await expect(page.getByRole("heading", { name: "账户类型管理", exact: true })).toBeVisible();
+  await waitForSidebarNavLayoutStable(nav);
   await expect.poll(() => nav.evaluate((node, previous) => node === previous, original)).toBe(true);
-  await expect.poll(() => nav.evaluate((node) => node.scrollTop)).toBe(top);
+  await expectSidebarNavScrolledToBottom(nav);
   await expect(group).toHaveAttribute("data-state", "closed");
 });
 
@@ -357,19 +404,26 @@ test("shared shell retains collapsed rail and scroll after navigation", async ({
   await page.goto("/api-keys");
   const sidebar = page.getByRole("complementary", { name: "主导航", exact: true });
   await sidebar.getByRole("button", { name: "收起侧边栏" }).click();
+  await expect(sidebar.getByRole("button", { name: "展开侧边栏" })).toBeVisible();
   const nav = sidebar.locator("nav");
-  const original = await nav.evaluateHandle((node) => node);
-  const top = await nav.evaluate((node) => {
-    node.scrollTop = node.scrollHeight;
-    return node.scrollTop;
+  await nav.evaluate(async (node) => {
+    const shell = node.closest("[data-basalt-sidebar]");
+    if (shell instanceof HTMLElement) {
+      await Promise.all(
+        shell.getAnimations().map((animation) => animation.finished.catch(() => undefined)),
+      );
+    }
   });
+  const original = await nav.evaluateHandle((node) => node);
+  const top = await scrollSidebarNavToSettledBottom(nav);
   expect(top).toBeGreaterThan(0);
   await sidebar.getByRole("link", { name: "数据导入", exact: true }).click();
   await expect(page).toHaveURL("/import");
   await expect(page.getByRole("heading", { name: "数据导入", exact: true })).toBeVisible();
   await expect(sidebar.getByRole("button", { name: "展开侧边栏" })).toBeVisible();
+  await waitForSidebarNavLayoutStable(nav);
   await expect.poll(() => nav.evaluate((node, previous) => node === previous, original)).toBe(true);
-  await expect.poll(() => nav.evaluate((node) => node.scrollTop)).toBe(top);
+  await expectSidebarNavScrolledToBottom(nav);
 });
 
 test("shared shell survives a child loader failure and recovers through navigation", async ({

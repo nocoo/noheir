@@ -103,6 +103,11 @@ coverage. Both L1 suites require statements/branches/functions/lines each >=95%
 in their configured scope. Do not lower thresholds, add exclusions to hide new
 logic, skip/focus tests or bypass hooks.
 
+Flaky automated tests are worse than no test: stabilize them when found, or delete
+them if they cannot be made deterministic (for example, prove stability with
+`bunx playwright test <spec> --repeat-each=30` locally with zero failures). Never
+add retries, skips, or looser assertions solely to mask timing or layout races.
+
 | Piece | Requirement and scope | Status | Evidence |
 | --- | --- | --- | --- |
 | L1 — complete unified contract | All four coverage metrics >=95% plus strict static lanes on an installed index-snapshot hook with proven rejection, under 30s | planned | `.husky/pre-commit` runs `scripts/pre-commit.py` against a temporary export of the Git index and fails closed on missing/empty/failed/skipped test reports, missing/invalid/below-95% coverage reports, static failures and timeout. Installed-hook fixture rejection and full timing remain to be verified. The subcheck rows below describe the configured lanes |
