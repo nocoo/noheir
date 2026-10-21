@@ -241,7 +241,7 @@ Exceeded → `429 rate_limit_exceeded` with `Retry-After: 60`.
 
 | HTTP | Code (representative) |
 | --- | --- |
-| 400 | `invalid_query`, `invalid_input`, `invalid_json`, `invalid_cursor`, `invalid_batch`, `invalid_commit`, `invalid_replacement`, `year_mismatch`, `aggregate_too_many_groups`, … |
+| 400 | `invalid_query`, `invalid_input`, `invalid_json`, `invalid_cursor`, `invalid_batch`, `invalid_commit`, `invalid_replacement`, `replacement_too_many_rows`, `replacement_digest_mismatch`, `year_mismatch`, `aggregate_too_many_groups`, … |
 | 401 | `invalid_credentials` |
 | 403 | `insufficient_scope` (+ `missingScopes`) |
 | 404 | `not_found` |
@@ -296,7 +296,7 @@ Unexpected non-`ApiError` failures on scoped routes are logged once as structure
 | | |
 | --- | --- |
 | Scopes | none |
-| Response | `schemaVersion`, granted `scopes`, `limits` (pagination, batch, idempotency, rate limits), `conventions` |
+| Response | `schemaVersion`, granted `scopes`, `limits` (pagination, batch, `replacementRows`, `replacementBodyBytes`, idempotency, rate limits), `conventions` |
 
 ---
 
@@ -629,16 +629,18 @@ Singleton per owner (`id` = owner user id). Fields: `savingsRateTarget`, `expect
 
 ## Ledger replacement
 
-Whole-year (or all-years) **replace** for `transactions` and/or `transfers`. Max **500 rows** per ledger in the request body. Not a full JSON backup/restore.
+Whole-year (or all-years) **replace** for `transactions` and/or `transfers`. Max **20,000 rows** per selected ledger (`transactions` / `transfers` array) in one request. The entire JSON body must stay within the global **8 MiB** limit (`replacementBodyBytes` on `/capabilities` and `/instructions`; over limit → `413 request_body_too_large`). Not a full JSON backup/restore.
 
 Preview does not mutate data and does **not** require `Idempotency-Key`.
+
+**Commit write path:** after all rows pass validation, the server deletes the scoped year (or all years when `year` is `null`) and inserts the payload in **one atomic D1 batch** using chunked `INSERT … SELECT … FROM json_each(?)` statements (512 KiB JSON chunks per ledger), with the same mutation guard, `expectedDataRevision` precondition, idempotency, and row-level audit triggers as before. This replaces the former one-`INSERT`-per-row pattern (which hit D1 per-invocation statement limits around ~500 rows per ledger).
 
 Body (`replacementSchema`):
 
 | Field | Notes |
 | --- | --- |
 | `year` | `1900–2100` or `null` for all years |
-| `transactions` / `transfers` | Optional arrays (max 500 each); at least one ledger required |
+| `transactions` / `transfers` | Optional arrays (max **20,000** each); at least one ledger required; more than 20,000 → `400 replacement_too_many_rows` |
 | `allowEmpty` | default `false`; empty array requires `true` |
 | `expectedDataRevision` | Must match current owner revision at commit |
 | `digest` | Required on commit; must match preview digest |
@@ -659,8 +661,8 @@ All row dates must match `year` when `year` is set.
 | Scopes | same |
 | Headers | `Idempotency-Key` |
 | Body | Same as preview plus matching `digest` |
-| Effect | Deletes existing rows in scope, inserts payload atomically |
-| Errors | `400 replacement_digest_mismatch`, `409 dataset_changed` |
+| Effect | Deletes existing rows in scope, inserts payload atomically (chunked `json_each` inserts) |
+| Errors | `400 replacement_digest_mismatch`, `400 replacement_too_many_rows`, `409 dataset_changed` (preview), `412 stale_version` (commit when `expectedDataRevision` is stale) |
 
 ---
 

@@ -207,7 +207,8 @@ export function createTransactionsRepo(db: DrizzleD1Database) {
       if (!parsed.ok) throw new Error(parsed.message);
       const payload = JSON.stringify(parsed.rows.map(transactionJsonRow));
       if (utf8ByteLength(payload) > JSON_CHUNK_BYTES) throw new Error("Batch too large");
-      const params = [userId, Math.floor(Date.now() / 1000), payload];
+      const createdAt = Math.floor(Date.now() / 1000);
+      const params = [userId, createdAt, createdAt, payload];
       const parts = transactionInsertFromJsonSql().split("?");
       const query = sql.join(
         parts.flatMap((part, i) => [

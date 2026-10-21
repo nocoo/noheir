@@ -102,7 +102,8 @@ CREATE TABLE IF NOT EXISTS transactions (
   note TEXT,
   raw_index INTEGER,
   has_secondary_mapping INTEGER DEFAULT 1,
-  created_at INTEGER NOT NULL
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS transfers (
@@ -122,7 +123,8 @@ CREATE TABLE IF NOT EXISTS transfers (
   tags TEXT DEFAULT '[]',
   note TEXT,
   raw_index INTEGER,
-  created_at INTEGER NOT NULL
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS settings (
