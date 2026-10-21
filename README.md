@@ -52,8 +52,8 @@ its one-time secret in your tool's secure storage. Read/write/delete grants are
 independent. Key administration and site settings remain human-only.
 
 - Base path: `/api/v1`; authentication: `Authorization: Bearer <key>`.
-- Discover exact schemas and scopes at `/api/v1/openapi.json` and
-  `/api/v1/instructions`.
+- Human-readable reference: [docs/api.md](docs/api.md). Machine discovery:
+  `/api/v1/openapi.json` and `/api/v1/instructions`.
 - Page through financial records using `nextCursor`; restart if the dataset
   changes. Currency totals stay separate, with no implicit exchange conversion.
 - Mutations require `Idempotency-Key`; updates/deletes also require the version

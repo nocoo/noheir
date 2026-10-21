@@ -6,11 +6,26 @@ All notable changes to this project will be documented in this file.
 
 ### Features
 
-- Raise scoped REST ledger-replacement limits to 20,000 rows per ledger (8 MiB body) using chunked `json_each` inserts in one atomic batch; advertise `replacementRows` and `replacementBodyBytes` in capabilities and instructions.
+- Raise scoped REST ledger-replacement per-ledger row cap from **500** to **20,000** in a single request: commit still runs in one atomic D1 batch, but writes use chunked `INSERT … SELECT … FROM json_each(?)` (512 KiB chunks) instead of one `INSERT` per row. Advertise `replacementRows` and `replacementBodyBytes` (8 MiB) on `/capabilities` and `/instructions`; reject over-limit row counts with `replacement_too_many_rows`.
 
 ### Fixes
 
 - Set `updated_at` on browser CSV year import rows (json_each insert path).
+- Stabilize the shared-shell sidebar scroll BDD checks (expanded nav and collapsed rail) by waiting for settled nav metrics before scrolling, and by asserting the sidebar stays pinned to the bottom edge after client navigation instead of comparing a stale absolute `scrollTop`.
+
+### Documentation
+
+- Add [docs/api.md](docs/api.md), the scoped Bearer `/api/v1` API reference for external tools, with a Worker test that fails when registered routes are missing from the doc.
+
+## [3.1.1] - 2026-10-20
+
+### Features
+
+- **db** — normalize legacy mcp timestamps
+
+### Fixes
+
+- tolerate legacy timestamp wire encodings
 
 ## [3.1.0] - 2026-10-20
 

@@ -98,6 +98,20 @@ export function beginApiRequest(c: C) {
 }
 export function problem(c: C, error: unknown): Response {
   const failure = error instanceof ApiError ? error : new ApiError(500, "internal_error");
+  if (!(error instanceof ApiError)) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    console.error(
+      JSON.stringify({
+        level: "error",
+        requestId: requestId(c),
+        method: c.req.method,
+        path: c.req.path,
+        name: err.name,
+        message: err.message,
+        stack: err.stack,
+      }),
+    );
+  }
   if (failure.status === 401) c.header("WWW-Authenticate", "Bearer");
   if (failure.status === 429) c.header("Retry-After", "60");
   return c.json(
@@ -1058,6 +1072,17 @@ export function createMachineApi() {
     throw new ApiError(404, "not_found");
   });
   return app;
+}
+export function listMachineApiRoutes(): string[] {
+  const mount = new Hono<AppEnv>();
+  mount.route("/api/v1", createMachineApi());
+  return [
+    ...new Set(
+      mount.routes
+        .filter((route) => route.path.startsWith("/api/v1/") && route.method !== "ALL")
+        .map((route) => `${route.method} ${route.path.replace(/:([^/]+)/g, "{$1}")}`),
+    ),
+  ].sort();
 }
 const instructions = {
   version: "1",
