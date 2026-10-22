@@ -55,6 +55,7 @@ const coverageExclude = [
 export default defineConfig({
   resolve: { alias },
   test: {
+    maxWorkers: 4,
     // Two projects so React component tests can use jsdom without
     // forcing the existing pure-logic .test.ts suite to pay the
     // jsdom setup cost.

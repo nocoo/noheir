@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Upgrade Basalt from 3.2.0 to 3.2.1 without application-level component or theme overrides.
 - Align the Worker test package's Vite dependency and override with the root's 8.3.4 release.
 - Require deterministic browser tests in the project handbook; retain the existing quality gates and coverage thresholds.
+- Bound both Vitest suites to four workers, matching the index-snapshot gate and avoiding CPU contention when pre-push runs unit suites, native HTTP checks and scans together.
 
 ## [3.1.1] - 2026-10-20
 

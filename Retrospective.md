@@ -213,3 +213,19 @@ attribute when closed, so checking a selector built afterward can silently
 target a nonexistent element rather than the animated content.
 Route checks and screenshots wait for the destination heading as well as its
 URL; concurrent React navigation can update history before painting the new page.
+
+## 2026-10-22 - Bound concurrency across parallel quality gates
+
+The v3.1.2 release commit passed its index-snapshot checks with four workers per
+Vitest suite, but pre-push failed before any remote update: one API-key interaction
+test took 5,143 ms and exceeded its unchanged 5,000 ms timeout. The same test and
+all 934 frontend tests had just passed in the commit hook. Pre-push launched the
+frontend and Worker suites, native HTTP checks and security scans together, while
+both Vitest configurations independently defaulted to the 18-core machine's
+available parallelism. The commit hook's worker limit did not carry over.
+
+Both test configurations now cap their workers at four so direct runs, pre-push
+and CI share the bounded concurrency already used by the index-snapshot gate.
+No timeout, assertion, retry policy, test selection or coverage floor changed.
+Validate concurrency at the composed gate, not only one successful test command;
+independently reasonable parallel defaults can contend when combined.
