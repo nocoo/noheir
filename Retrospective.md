@@ -229,3 +229,11 @@ and CI share the bounded concurrency already used by the index-snapshot gate.
 No timeout, assertion, retry policy, test selection or coverage floor changed.
 Validate concurrency at the composed gate, not only one successful test command;
 independently reasonable parallel defaults can contend when combined.
+
+The production smoke probe also reused a global `getByText("已撤销")` assertion
+from the first key issuance check. Issuance, scope enforcement and revocation all
+succeeded, but the final assertion matched historical revoked keys as well as
+this run's key. The probe now scopes the status assertion to the uniquely named
+key row. Persistent production history is not an empty fixture: identify the
+resource created by the current probe instead of assuming globally unique status
+text. The temporary key was already revoked, and no financial writes occurred.
