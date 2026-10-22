@@ -45,7 +45,7 @@ Raise weaker enforcement to the contract. Maintain project rules only here.
 | Domain/UI | `src/domain/`, `src/components/`; preserve MVVM and Basalt controls |
 | API/auth | Hono, jose/Access, scoped Bearer REST; `worker/src/`, shared `src/domain/api-contract.ts` |
 | Data | Direct request-scoped D1, Drizzle; `worker/db/`, canonical `worker/db/migrations/` |
-| Tooling | Bun 1.4.2 / Node 26.8.1 in CI, TypeScript 7, Biome, Vitest/Playwright |
+| Tooling | Bun 1.4.2 / Node 26.12.1 in CI, TypeScript 7, Biome, Vitest/Playwright |
 
 ## Commands
 
