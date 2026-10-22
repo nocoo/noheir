@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [3.1.2] - 2026-10-22
 
 ### Documentation
 
@@ -11,6 +11,12 @@ All notable changes to this project will be documented in this file.
 ### Fixes
 
 - Stabilize the shared-shell sidebar scroll BDD checks (expanded nav and collapsed rail) by waiting for settled nav metrics before scrolling, and by asserting the sidebar stays pinned to the bottom edge after client navigation instead of comparing a stale absolute `scrollTop`.
+
+### Maintenance
+
+- Upgrade Basalt from 3.2.0 to 3.2.1 without application-level component or theme overrides.
+- Align the Worker test package's Vite dependency and override with the root's 8.3.4 release.
+- Require deterministic browser tests in the project handbook; retain the existing quality gates and coverage thresholds.
 
 ## [3.1.1] - 2026-10-20
 
