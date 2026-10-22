@@ -7,7 +7,7 @@ retained; no financial ownership keys are rewritten.
 
 ## Local development
 
-Use Bun 1.4.2 and Node 26.8.1 (the CI versions). Install both test packages:
+Use Bun 1.4.2 and Node 26.12.1 (the CI versions). Install both test packages:
 
 ```sh
 bun install --frozen-lockfile

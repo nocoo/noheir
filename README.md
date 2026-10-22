@@ -69,7 +69,7 @@ See the [API design and acceptance record](docs/25-scoped-api.md) and
 
 ## Development
 
-CI pins Bun 1.4.2 and Node 26.8.1. Install the root application and Worker test
+CI pins Bun 1.4.2 and Node 26.12.1. Install the root application and Worker test
 package, then start the native local Demo runtime:
 
 ```sh
