@@ -28,43 +28,43 @@ This adds 1 extra commit per renamed route but eliminates any window where front
 
 ### Layer 1: Route Path Issues
 
-| ID | Issue | Current | Proposed | Severity |
-|----|-------|---------|----------|----------|
-| P1 | `/api/metadata` is too generic — collides with potential future metadata endpoints | `GET /api/metadata` | `GET /api/reports/metadata` | High |
-| P2 | `/by-year` and `/count-by-year` are verb-phrases, not RESTful sub-resources | `DELETE /api/transactions/by-year?year=2025` | `DELETE /api/transactions/years/:year` | Medium |
-| P3 | `/count-by-year` same issue | `GET /api/transactions/count-by-year?year=2025` | `GET /api/transactions/years/:year/count` | Medium |
-| P4 | `/api/users/upsert` leaks implementation detail ("upsert" is a DB concept) | `POST /api/users/upsert` | `PUT /api/users/me` | High |
-| P5 | `/api/backup` and `/api/restore` are verbs at root level, not grouped | `GET /api/backup` / `POST /api/restore` | `GET /api/data/export` / `POST /api/data/import` | Medium |
-| P6 | `/api/reports/monthly` lacks `-summary` suffix while all siblings have it | `GET /api/reports/monthly` | `GET /api/reports/monthly-summary` | Medium |
-| P7 | `/api/live` is non-standard for health checks | `GET /api/live` | `GET /api/health` | Low |
+| ID  | Issue                                                                              | Current                                         | Proposed                                         | Severity |
+| --- | ---------------------------------------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------ | -------- |
+| P1  | `/api/metadata` is too generic — collides with potential future metadata endpoints | `GET /api/metadata`                             | `GET /api/reports/metadata`                      | High     |
+| P2  | `/by-year` and `/count-by-year` are verb-phrases, not RESTful sub-resources        | `DELETE /api/transactions/by-year?year=2025`    | `DELETE /api/transactions/years/:year`           | Medium   |
+| P3  | `/count-by-year` same issue                                                        | `GET /api/transactions/count-by-year?year=2025` | `GET /api/transactions/years/:year/count`        | Medium   |
+| P4  | `/api/users/upsert` leaks implementation detail ("upsert" is a DB concept)         | `POST /api/users/upsert`                        | `PUT /api/users/me`                              | High     |
+| P5  | `/api/backup` and `/api/restore` are verbs at root level, not grouped              | `GET /api/backup` / `POST /api/restore`         | `GET /api/data/export` / `POST /api/data/import` | Medium   |
+| P6  | `/api/reports/monthly` lacks `-summary` suffix while all siblings have it          | `GET /api/reports/monthly`                      | `GET /api/reports/monthly-summary`               | Medium   |
+| P7  | `/api/live` is non-standard for health checks                                      | `GET /api/live`                                 | `GET /api/health`                                | Low      |
 
 ### Layer 2: Response Shape Issues
 
-| ID | Issue | Current | Proposed | Severity |
-|----|-------|---------|----------|----------|
-| R1 | **Contract fix (not rename):** 404 format inconsistent — GET-by-id returns `{ entity: null }` at `index.ts:169,236,267,313`, PUT/DELETE returns `{ error: "Not found" }` | Mixed | All 404s return `{ error: "Not found" }` with status 404 | High |
-| R2 | `GET /api/backup` uses search repo with `limit: 5000` silently truncating data at `index.ts:468` | `repos.transactions.search(userId, { limit: 5000 })` | Dedicated `findAllByUser()` repo method without arbitrary limit | High |
+| ID  | Issue                                                                                                                                                                    | Current                                              | Proposed                                                        | Severity |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------- | --------------------------------------------------------------- | -------- |
+| R1  | **Contract fix (not rename):** 404 format inconsistent — GET-by-id returns `{ entity: null }` at `index.ts:169,236,267,313`, PUT/DELETE returns `{ error: "Not found" }` | Mixed                                                | All 404s return `{ error: "Not found" }` with status 404        | High     |
+| R2  | `GET /api/backup` uses search repo with `limit: 5000` silently truncating data at `index.ts:468`                                                                         | `repos.transactions.search(userId, { limit: 5000 })` | Dedicated `findAllByUser()` repo method without arbitrary limit | High     |
 
 ### Layer 3: Client Method Issues
 
-| ID | Issue | Current | Proposed | Severity |
-|----|-------|---------|----------|----------|
-| C1 | `upsertUser()` / `upsertSettings()` expose DB semantics | `upsertUser()`, `upsertSettings()` | `syncUser()`, `saveSettings()` | Medium |
-| C2 | `DELETE /api/settings` exists on Worker but has no business client method | Route at `index.ts:361` is called by E2E cleanup (`worker/tests/e2e/helpers/cleanup.ts:43`). **Not dead code.** | **Keep the route. Add `deleteSettings()` to `WorkerDbClient`** for completeness and future use. | Low |
+| ID  | Issue                                                                     | Current                                                                                                         | Proposed                                                                                        | Severity |
+| --- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | -------- |
+| C1  | `upsertUser()` / `upsertSettings()` expose DB semantics                   | `upsertUser()`, `upsertSettings()`                                                                              | `syncUser()`, `saveSettings()`                                                                  | Medium   |
+| C2  | `DELETE /api/settings` exists on Worker but has no business client method | Route at `index.ts:361` is called by E2E cleanup (`worker/tests/e2e/helpers/cleanup.ts:43`). **Not dead code.** | **Keep the route. Add `deleteSettings()` to `WorkerDbClient`** for completeness and future use. | Low      |
 
 ## Affected Files
 
-| File | Changes |
-|------|---------|
-| `worker/src/index.ts` | Route path renames, 404 response normalization, dual-path aliases |
-| `src/lib/worker-db-client.ts` | Client method renames, URL path updates |
-| `src/auth.ts` | `upsertUser()` → `syncUser()` call at line 123 |
-| `worker/db/repositories/transactions.ts` | Add `findAllByUser()` for backup |
-| `worker/db/repositories/transfers.ts` | Add `findAllByUser()` for backup |
-| `worker/db/repositories/metadata.ts` | No change (just re-mounted under reports) |
-| `worker/db/repositories/reports.ts` | Register metadata as sub-route |
-| `worker/tests/e2e/**/*.ts` | Update request paths in E2E tests |
-| `src/**/*.ts` (Server Components/Actions) | Update client method calls |
+| File                                      | Changes                                                           |
+| ----------------------------------------- | ----------------------------------------------------------------- |
+| `worker/src/index.ts`                     | Route path renames, 404 response normalization, dual-path aliases |
+| `src/lib/worker-db-client.ts`             | Client method renames, URL path updates                           |
+| `src/auth.ts`                             | `upsertUser()` → `syncUser()` call at line 123                    |
+| `worker/db/repositories/transactions.ts`  | Add `findAllByUser()` for backup                                  |
+| `worker/db/repositories/transfers.ts`     | Add `findAllByUser()` for backup                                  |
+| `worker/db/repositories/metadata.ts`      | No change (just re-mounted under reports)                         |
+| `worker/db/repositories/reports.ts`       | Register metadata as sub-route                                    |
+| `worker/tests/e2e/**/*.ts`                | Update request paths in E2E tests                                 |
+| `src/**/*.ts` (Server Components/Actions) | Update client method calls                                        |
 
 ## Implementation Plan
 
@@ -206,46 +206,46 @@ The original reform fixed `/api/data/export` to use `findAllByUser()` (unlimited
 
 ## Route Migration Table (Before → After)
 
-| # | Method | Before | After |
-|---|--------|--------|-------|
-| 1 | `GET` | `/api/live` | `/api/health` |
-| 2 | `POST` | `/api/users/upsert` | `PUT /api/users/me` |
-| 3 | `GET` | `/api/transactions/count-by-year?year=Y` | `/api/transactions/years/:year/count` |
-| 4 | `DELETE` | `/api/transactions/by-year?year=Y` | `/api/transactions/years/:year` |
-| 5 | `GET` | `/api/transfers/count-by-year?year=Y` | `/api/transfers/years/:year/count` |
-| 6 | `DELETE` | `/api/transfers/by-year?year=Y` | `/api/transfers/years/:year` |
-| 7 | `GET` | `/api/metadata` | `/api/reports/metadata` |
-| 8 | `GET` | `/api/reports/monthly` | `/api/reports/monthly-summary` |
-| 9 | `GET` | `/api/backup` | `/api/data/export` |
-| 10 | `POST` | `/api/restore` | `/api/data/import` |
+| #   | Method   | Before                                   | After                                 |
+| --- | -------- | ---------------------------------------- | ------------------------------------- |
+| 1   | `GET`    | `/api/live`                              | `/api/health`                         |
+| 2   | `POST`   | `/api/users/upsert`                      | `PUT /api/users/me`                   |
+| 3   | `GET`    | `/api/transactions/count-by-year?year=Y` | `/api/transactions/years/:year/count` |
+| 4   | `DELETE` | `/api/transactions/by-year?year=Y`       | `/api/transactions/years/:year`       |
+| 5   | `GET`    | `/api/transfers/count-by-year?year=Y`    | `/api/transfers/years/:year/count`    |
+| 6   | `DELETE` | `/api/transfers/by-year?year=Y`          | `/api/transfers/years/:year`          |
+| 7   | `GET`    | `/api/metadata`                          | `/api/reports/metadata`               |
+| 8   | `GET`    | `/api/reports/monthly`                   | `/api/reports/monthly-summary`        |
+| 9   | `GET`    | `/api/backup`                            | `/api/data/export`                    |
+| 10  | `POST`   | `/api/restore`                           | `/api/data/import`                    |
 
 ## Client Method Rename Table
 
-| Before | After | Notes |
-|--------|-------|-------|
-| `upsertUser(userId, data)` | `syncUser(userId, data)` | Path + method + name change |
-| `upsertSettings(userId, data)` | `saveSettings(userId, data)` | Name change only |
-| `backup(userId)` | `exportData(userId)` | Path + name change |
-| `restore(userId, data)` | `importData(userId, data)` | Path + name change |
-| *(missing)* | `deleteSettings(userId)` | New method for existing route |
-| `countTransactionsByYear(userId, year)` | *(same)* | Path change only |
-| `deleteTransactionsByYear(userId, year)` | *(same)* | Path change only |
-| `countTransfersByYear(userId, year)` | *(same)* | Path change only |
-| `deleteTransfersByYear(userId, year)` | *(same)* | Path change only |
-| `getMonthlyReport(...)` | *(same)* | Path change only |
-| `getMetadata(userId)` | *(same)* | Path change only |
-| `health()` | *(same)* | Path change only |
+| Before                                   | After                        | Notes                         |
+| ---------------------------------------- | ---------------------------- | ----------------------------- |
+| `upsertUser(userId, data)`               | `syncUser(userId, data)`     | Path + method + name change   |
+| `upsertSettings(userId, data)`           | `saveSettings(userId, data)` | Name change only              |
+| `backup(userId)`                         | `exportData(userId)`         | Path + name change            |
+| `restore(userId, data)`                  | `importData(userId, data)`   | Path + name change            |
+| _(missing)_                              | `deleteSettings(userId)`     | New method for existing route |
+| `countTransactionsByYear(userId, year)`  | _(same)_                     | Path change only              |
+| `deleteTransactionsByYear(userId, year)` | _(same)_                     | Path change only              |
+| `countTransfersByYear(userId, year)`     | _(same)_                     | Path change only              |
+| `deleteTransfersByYear(userId, year)`    | _(same)_                     | Path change only              |
+| `getMonthlyReport(...)`                  | _(same)_                     | Path change only              |
+| `getMetadata(userId)`                    | _(same)_                     | Path change only              |
+| `health()`                               | _(same)_                     | Path change only              |
 
 ## Risks & Mitigations
 
-| Risk | Mitigation |
-|------|------------|
-| **Worker/Next.js deploy ordering mismatch** | Dual-path transition: old paths kept as aliases until Next.js is confirmed on new paths, then removed in commit 12 |
-| MCP server uses old API paths | MCP server uses Supabase directly (archived), not the Worker API — no impact |
-| Next.js `/api/live` conflicts with Worker `/api/health` rename | They are separate services (Next.js vs Worker) — no conflict |
-| 404 contract change (R1) breaks callers expecting `{ entity: null }` | `WorkerDbClient` already throws `WorkerDbError` on non-2xx — callers use try/catch, not null-checking. Verify all call sites before commit 1. |
-| Backup truncation fix (R2) changes response size characteristics | `findAllByUser()` returns all rows — monitor response size in production. D1 has a 10MB response limit per query; if data exceeds this, pagination will be needed (out of scope for this reform). |
-| E2E cleanup depends on `DELETE /api/settings` | Route is **kept** (commit 11 adds client method, does not remove route) |
+| Risk                                                                 | Mitigation                                                                                                                                                                                        |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Worker/Next.js deploy ordering mismatch**                          | Dual-path transition: old paths kept as aliases until Next.js is confirmed on new paths, then removed in commit 12                                                                                |
+| MCP server uses old API paths                                        | MCP server uses Supabase directly (archived), not the Worker API — no impact                                                                                                                      |
+| Next.js `/api/live` conflicts with Worker `/api/health` rename       | They are separate services (Next.js vs Worker) — no conflict                                                                                                                                      |
+| 404 contract change (R1) breaks callers expecting `{ entity: null }` | `WorkerDbClient` already throws `WorkerDbError` on non-2xx — callers use try/catch, not null-checking. Verify all call sites before commit 1.                                                     |
+| Backup truncation fix (R2) changes response size characteristics     | `findAllByUser()` returns all rows — monitor response size in production. D1 has a 10MB response limit per query; if data exceeds this, pagination will be needed (out of scope for this reform). |
+| E2E cleanup depends on `DELETE /api/settings`                        | Route is **kept** (commit 11 adds client method, does not remove route)                                                                                                                           |
 
 ## Out of Scope
 

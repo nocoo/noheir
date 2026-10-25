@@ -4,13 +4,13 @@ This document details the differences between the old Supabase-based system and 
 
 ## Global Breaking Changes
 
-| Change | Old (Supabase) | New (D1/Worker) | Impact |
-|--------|---------------|-----------------|--------|
-| **Amount units** | 元 (yuan, decimal) | 分 (cents/fen, integer) | All clients must multiply by 100 on write, divide by 100 on read |
-| **User ID format** | Supabase UUID | Google `sub` (providerAccountId) | Existing data migration required |
-| **Tags storage** | PostgreSQL array `text[]` | JSON string `'["tag1","tag2"]'` | Clients must `JSON.parse()` on read |
-| **Field naming** | snake_case (`created_at`) | camelCase (`createdAt`) | API response shape changed |
-| **Security model** | PostgreSQL RLS | Application-layer isolation | Worker validates `X-User-Id` header |
+| Change             | Old (Supabase)            | New (D1/Worker)                  | Impact                                                           |
+| ------------------ | ------------------------- | -------------------------------- | ---------------------------------------------------------------- |
+| **Amount units**   | 元 (yuan, decimal)        | 分 (cents/fen, integer)          | All clients must multiply by 100 on write, divide by 100 on read |
+| **User ID format** | Supabase UUID             | Google `sub` (providerAccountId) | Existing data migration required                                 |
+| **Tags storage**   | PostgreSQL array `text[]` | JSON string `'["tag1","tag2"]'`  | Clients must `JSON.parse()` on read                              |
+| **Field naming**   | snake_case (`created_at`) | camelCase (`createdAt`)          | API response shape changed                                       |
+| **Security model** | PostgreSQL RLS            | Application-layer isolation      | Worker validates `X-User-Id` header                              |
 
 ---
 
@@ -18,20 +18,20 @@ This document details the differences between the old Supabase-based system and 
 
 ### Schema Changes
 
-| Field | Old | New | Notes |
-|-------|-----|-----|-------|
-| `amount` | `DECIMAL` (yuan) | `INTEGER` (cents) | **Breaking** |
-| `tags` | `text[]` | `TEXT` (JSON) | **Breaking** |
-| `type` | `income \| expense \| transfer` | `income \| expense` | Transfer removed from enum |
-| `created_at` | `TIMESTAMPTZ` | `createdAt TEXT` (ISO 8601) | Field renamed |
+| Field        | Old                             | New                         | Notes                      |
+| ------------ | ------------------------------- | --------------------------- | -------------------------- |
+| `amount`     | `DECIMAL` (yuan)                | `INTEGER` (cents)           | **Breaking**               |
+| `tags`       | `text[]`                        | `TEXT` (JSON)               | **Breaking**               |
+| `type`       | `income \| expense \| transfer` | `income \| expense`         | Transfer removed from enum |
+| `created_at` | `TIMESTAMPTZ`                   | `createdAt TEXT` (ISO 8601) | Field renamed              |
 
 ### API Changes
 
-| Endpoint | Old | New |
-|----------|-----|-----|
-| Search | `POST /rest/v1/rpc/search_transactions` | `POST /api/transactions/search` |
-| Create | `POST /rest/v1/transactions` | `POST /api/transactions` |
-| Delete by year | N/A | `DELETE /api/transactions/years/:year` |
+| Endpoint       | Old                                     | New                                    |
+| -------------- | --------------------------------------- | -------------------------------------- |
+| Search         | `POST /rest/v1/rpc/search_transactions` | `POST /api/transactions/search`        |
+| Create         | `POST /rest/v1/transactions`            | `POST /api/transactions`               |
+| Delete by year | N/A                                     | `DELETE /api/transactions/years/:year` |
 
 ### Behavior Changes
 
@@ -45,20 +45,20 @@ This document details the differences between the old Supabase-based system and 
 
 ### Schema Changes
 
-| Field | Old | New | Notes |
-|-------|-----|-----|-------|
-| `amount` | `DECIMAL` (yuan) | `INTEGER` (cents) | **Breaking** |
-| `tags` | `text[]` | `TEXT` (JSON) | **Breaking** |
-| `from_account` | `from_account` | `fromAccount` | camelCase |
-| `to_account` | `to_account` | `toAccount` | camelCase |
-| `transaction_type` | `transaction_type` | `transactionType` | camelCase |
+| Field              | Old                | New               | Notes        |
+| ------------------ | ------------------ | ----------------- | ------------ |
+| `amount`           | `DECIMAL` (yuan)   | `INTEGER` (cents) | **Breaking** |
+| `tags`             | `text[]`           | `TEXT` (JSON)     | **Breaking** |
+| `from_account`     | `from_account`     | `fromAccount`     | camelCase    |
+| `to_account`       | `to_account`       | `toAccount`       | camelCase    |
+| `transaction_type` | `transaction_type` | `transactionType` | camelCase    |
 
 ### API Changes
 
-| Endpoint | Old | New |
-|----------|-----|-----|
-| Search | `POST /rest/v1/rpc/search_transfers` | `POST /api/transfers/search` |
-| Delete by year | N/A | `DELETE /api/transfers/years/:year` |
+| Endpoint       | Old                                  | New                                 |
+| -------------- | ------------------------------------ | ----------------------------------- |
+| Search         | `POST /rest/v1/rpc/search_transfers` | `POST /api/transfers/search`        |
+| Delete by year | N/A                                  | `DELETE /api/transfers/years/:year` |
 
 ---
 
@@ -66,12 +66,12 @@ This document details the differences between the old Supabase-based system and 
 
 ### Schema Changes
 
-| Field | Old | New | Notes |
-|-------|-----|-----|-------|
-| `channel` | CHECK constraint (7 values) | No constraint | Validation moved to app layer |
-| `category` | CHECK constraint (12 values) | No constraint | Validation moved to app layer |
-| `annual_return_rate` | `DECIMAL(5,4)` | `REAL` | Precision change |
-| `lock_period_days` | `INTEGER DEFAULT 0` | `INTEGER` (nullable) | Nullable in new system |
+| Field                | Old                          | New                  | Notes                         |
+| -------------------- | ---------------------------- | -------------------- | ----------------------------- |
+| `channel`            | CHECK constraint (7 values)  | No constraint        | Validation moved to app layer |
+| `category`           | CHECK constraint (12 values) | No constraint        | Validation moved to app layer |
+| `annual_return_rate` | `DECIMAL(5,4)`               | `REAL`               | Precision change              |
+| `lock_period_days`   | `INTEGER DEFAULT 0`          | `INTEGER` (nullable) | Nullable in new system        |
 
 ### Removed Constraints
 
@@ -89,14 +89,14 @@ New system: No DB-level constraints, relies on application validation.
 
 ### Schema Changes
 
-| Field | Old | New | Notes |
-|-------|-----|-----|-------|
-| `amount` | `DECIMAL` (yuan) | `INTEGER` (cents) | **Breaking** |
-| `start_date` | `DATE` | `TEXT` (ISO date) | Type change |
-| `end_date` | `DATE` | `TEXT` (ISO date) | Type change |
-| `strategy` | CHECK constraint (8 values) | No constraint | App-layer validation |
-| `tactics` | CHECK constraint (10 values) | No constraint | App-layer validation |
-| `status` | CHECK constraint (4 values) | No constraint | App-layer validation |
+| Field        | Old                          | New               | Notes                |
+| ------------ | ---------------------------- | ----------------- | -------------------- |
+| `amount`     | `DECIMAL` (yuan)             | `INTEGER` (cents) | **Breaking**         |
+| `start_date` | `DATE`                       | `TEXT` (ISO date) | Type change          |
+| `end_date`   | `DATE`                       | `TEXT` (ISO date) | Type change          |
+| `strategy`   | CHECK constraint (8 values)  | No constraint     | App-layer validation |
+| `tactics`    | CHECK constraint (10 values) | No constraint     | App-layer validation |
+| `status`     | CHECK constraint (4 values)  | No constraint     | App-layer validation |
 
 ### MCP Tool Ambiguity
 
@@ -115,12 +115,12 @@ All report endpoints now return amounts in **cents (分)**:
 
 ### API Changes
 
-| Endpoint | Old | New |
-|----------|-----|-----|
-| Metadata | `POST /rest/v1/rpc/get_metadata` | `GET /api/reports/metadata` |
-| Monthly summary | `POST /rest/v1/rpc/monthly_summary` | `GET /api/reports/monthly-summary?year=X&month=Y` |
-| Yearly summary | N/A | `GET /api/reports/yearly-summary?year=X` |
-| Category summary | N/A | `GET /api/reports/category-summary?year=X&month=Y` |
+| Endpoint         | Old                                 | New                                                |
+| ---------------- | ----------------------------------- | -------------------------------------------------- |
+| Metadata         | `POST /rest/v1/rpc/get_metadata`    | `GET /api/reports/metadata`                        |
+| Monthly summary  | `POST /rest/v1/rpc/monthly_summary` | `GET /api/reports/monthly-summary?year=X&month=Y`  |
+| Yearly summary   | N/A                                 | `GET /api/reports/yearly-summary?year=X`           |
+| Category summary | N/A                                 | `GET /api/reports/category-summary?year=X&month=Y` |
 
 ### New Capabilities
 
@@ -146,11 +146,11 @@ Clients must track these from the request parameters.
 
 ### Architecture Change
 
-| Aspect | Old (Supabase) | New (NextAuth.js v5) |
-|--------|---------------|---------------------|
-| Provider | Supabase Auth | NextAuth.js + Google OAuth |
-| Session | JWT via Supabase client | JWT via NextAuth `auth()` |
-| User ID | Supabase UUID | Google `sub` (providerAccountId) |
+| Aspect   | Old (Supabase)          | New (NextAuth.js v5)              |
+| -------- | ----------------------- | --------------------------------- |
+| Provider | Supabase Auth           | NextAuth.js + Google OAuth        |
+| Session  | JWT via Supabase client | JWT via NextAuth `auth()`         |
+| User ID  | Supabase UUID           | Google `sub` (providerAccountId)  |
 | API auth | Supabase RLS + anon key | Bearer token + `X-User-Id` header |
 
 ### User ID Format
@@ -209,37 +209,37 @@ Migration should be implemented in small, independently deployable commits. Each
 
 ### Phase 1: Additive Changes (No Breaking)
 
-| Commit | Description | Rollback Safe |
-|--------|-------------|---------------|
-| **1.1** | Add D1 schema with new field names (parallel to Supabase) | ✅ |
-| **1.2** | Add Worker routes for all endpoints | ✅ |
-| **1.3** | Add `WorkerDbClient` in Next.js with feature flag | ✅ |
-| **1.4** | Add amount conversion helpers (`yuanToCents`, `centsToYuan`) | ✅ |
-| **1.5** | Add tags JSON parse/stringify utilities | ✅ |
+| Commit  | Description                                                  | Rollback Safe |
+| ------- | ------------------------------------------------------------ | ------------- |
+| **1.1** | Add D1 schema with new field names (parallel to Supabase)    | ✅            |
+| **1.2** | Add Worker routes for all endpoints                          | ✅            |
+| **1.3** | Add `WorkerDbClient` in Next.js with feature flag            | ✅            |
+| **1.4** | Add amount conversion helpers (`yuanToCents`, `centsToYuan`) | ✅            |
+| **1.5** | Add tags JSON parse/stringify utilities                      | ✅            |
 
 ### Phase 2: Dual-Write (Shadow Traffic)
 
-| Commit | Description | Rollback Safe |
-|--------|-------------|---------------|
-| **2.1** | Enable dual-write: Supabase (primary) + D1 (shadow) | ✅ |
-| **2.2** | Add comparison logging to detect divergence | ✅ |
-| **2.3** | Run shadow traffic for 7 days, monitor logs | ✅ |
+| Commit  | Description                                         | Rollback Safe |
+| ------- | --------------------------------------------------- | ------------- |
+| **2.1** | Enable dual-write: Supabase (primary) + D1 (shadow) | ✅            |
+| **2.2** | Add comparison logging to detect divergence         | ✅            |
+| **2.3** | Run shadow traffic for 7 days, monitor logs         | ✅            |
 
 ### Phase 3: Gradual Cutover
 
-| Commit | Description | Rollback Safe |
-|--------|-------------|---------------|
-| **3.1** | Switch reads to D1 with Supabase fallback | ✅ |
-| **3.2** | Disable Supabase writes (D1 primary) | ⚠️ Requires data sync |
-| **3.3** | Remove Supabase client code | ❌ Point of no return |
+| Commit  | Description                               | Rollback Safe         |
+| ------- | ----------------------------------------- | --------------------- |
+| **3.1** | Switch reads to D1 with Supabase fallback | ✅                    |
+| **3.2** | Disable Supabase writes (D1 primary)      | ⚠️ Requires data sync |
+| **3.3** | Remove Supabase client code               | ❌ Point of no return |
 
 ### Phase 4: Cleanup
 
-| Commit | Description | Rollback Safe |
-|--------|-------------|---------------|
-| **4.1** | Remove feature flags | ✅ |
-| **4.2** | Remove conversion utilities (if amounts normalized) | ✅ |
-| **4.3** | Archive Supabase data | ✅ |
+| Commit  | Description                                         | Rollback Safe |
+| ------- | --------------------------------------------------- | ------------- |
+| **4.1** | Remove feature flags                                | ✅            |
+| **4.2** | Remove conversion utilities (if amounts normalized) | ✅            |
+| **4.3** | Archive Supabase data                               | ✅            |
 
 ### Commit Message Convention
 
@@ -271,17 +271,17 @@ describe("yuanToCents", () => {
   it("converts positive amounts", () => {
     expect(yuanToCents(123.45)).toBe(12345);
   });
-  
+
   it("handles edge case: 0.01 yuan", () => {
     expect(yuanToCents(0.01)).toBe(1);
   });
-  
+
   it("rounds half-up for sub-cent amounts", () => {
     expect(yuanToCents(1.005)).toBe(101); // 100.5 → 101
   });
-  
+
   it("preserves negative sign", () => {
-    expect(yuanToCents(-50.00)).toBe(-5000);
+    expect(yuanToCents(-50.0)).toBe(-5000);
   });
 });
 
@@ -300,11 +300,11 @@ describe("tagsToJson", () => {
   it("serializes array to JSON string", () => {
     expect(tagsToJson(["餐饮", "工作餐"])).toBe('["餐饮","工作餐"]');
   });
-  
+
   it("handles empty array", () => {
     expect(tagsToJson([])).toBe("[]");
   });
-  
+
   it("handles null/undefined", () => {
     expect(tagsToJson(null)).toBe("[]");
     expect(tagsToJson(undefined)).toBe("[]");
@@ -315,11 +315,11 @@ describe("jsonToTags", () => {
   it("parses JSON string to array", () => {
     expect(jsonToTags('["餐饮","工作餐"]')).toEqual(["餐饮", "工作餐"]);
   });
-  
+
   it("handles malformed JSON gracefully", () => {
     expect(jsonToTags("not-json")).toEqual([]);
   });
-  
+
   it("handles empty string", () => {
     expect(jsonToTags("")).toEqual([]);
   });
@@ -360,30 +360,30 @@ describe("TransactionRepository", () => {
     it("returns all transactions for year without limit", async () => {
       // Seed 100 transactions in 2026
       await seedTransactions(100, { year: 2026 });
-      
+
       const result = await repo.findAllByYear(userId, 2026);
-      
+
       expect(result).toHaveLength(100); // No 50-row default limit
     });
-    
+
     it("excludes other years", async () => {
       await seedTransactions(50, { year: 2025 });
       await seedTransactions(50, { year: 2026 });
-      
+
       const result = await repo.findAllByYear(userId, 2026);
-      
+
       expect(result).toHaveLength(50);
-      expect(result.every(t => t.year === 2026)).toBe(true);
+      expect(result.every((t) => t.year === 2026)).toBe(true);
     });
-    
+
     it("isolates by user", async () => {
       await seedTransactions(10, { userId: "user-a", year: 2026 });
       await seedTransactions(10, { userId: "user-b", year: 2026 });
-      
+
       const result = await repo.findAllByYear("user-a", 2026);
-      
+
       expect(result).toHaveLength(10);
-      expect(result.every(t => t.userId === "user-a")).toBe(true);
+      expect(result.every((t) => t.userId === "user-a")).toBe(true);
     });
   });
 });
@@ -399,17 +399,17 @@ describe("Amount storage in cents", () => {
       ...baseTransaction,
       amountCents: 12345,
     });
-    
+
     const stored = await db.select().from(transactions).where(eq(id, tx.id));
     expect(stored[0].amountCents).toBe(12345);
   });
-  
+
   it("aggregates correctly in cents", async () => {
     await repo.create({ ...baseTransaction, amountCents: 10000 }); // 100 yuan
-    await repo.create({ ...baseTransaction, amountCents: 5050 });  // 50.50 yuan
-    
+    await repo.create({ ...baseTransaction, amountCents: 5050 }); // 50.50 yuan
+
     const report = await reportService.getMonthlyReport(userId, 2026, 1);
-    
+
     expect(report.totalExpense).toBe(15050); // 150.50 yuan in cents
   });
 });
@@ -429,12 +429,12 @@ describe("GET /api/transactions/years/:year", () => {
     for (let i = 0; i < 100; i++) {
       await client.createTransaction({ ...baseData, note: `tx-${i}` });
     }
-    
+
     const response = await fetch(`${BASE_URL}/api/transactions/years/2026`, {
       headers: authHeaders,
     });
     const data = await response.json();
-    
+
     expect(data.total_returned).toBe(100);
     expect(data.transactions).toHaveLength(100);
   });
@@ -451,15 +451,11 @@ describe("Dual-write consistency", () => {
       amount: 123.45,
       note: "dual-write-test",
     });
-    
+
     // Verify Supabase
-    const supabaseRow = await supabase
-      .from("transactions")
-      .select()
-      .eq("id", tx.id)
-      .single();
+    const supabaseRow = await supabase.from("transactions").select().eq("id", tx.id).single();
     expect(supabaseRow.data.amount).toBe(123.45); // yuan
-    
+
     // Verify D1
     const d1Row = await workerClient.getTransaction(tx.id);
     expect(d1Row.amountCents).toBe(12345); // cents
@@ -469,11 +465,11 @@ describe("Dual-write consistency", () => {
 
 ### Test Coverage Requirements
 
-| Layer | Coverage Target | Focus Areas |
-|-------|----------------|-------------|
-| Unit | 95%+ | Conversion utilities, field mapping, business logic |
-| Integration | 80%+ | Repository methods, complex queries, aggregations |
-| E2E | Critical paths | Auth flow, CRUD operations, report generation |
+| Layer       | Coverage Target | Focus Areas                                         |
+| ----------- | --------------- | --------------------------------------------------- |
+| Unit        | 95%+            | Conversion utilities, field mapping, business logic |
+| Integration | 80%+            | Repository methods, complex queries, aggregations   |
+| E2E         | Critical paths  | Auth flow, CRUD operations, report generation       |
 
 ### CI Pipeline
 
@@ -483,16 +479,16 @@ jobs:
   unit:
     runs-on: ubuntu-latest
     steps:
-      - run: bun test tests/           # 327+ unit tests
-      
+      - run: bun test tests/ # 327+ unit tests
+
   integration:
     runs-on: ubuntu-latest
     services:
       d1:
         image: cloudflare/d1-local
     steps:
-      - run: bun test worker/tests/    # 118+ integration tests
-      
+      - run: bun test worker/tests/ # 118+ integration tests
+
   e2e:
     runs-on: ubuntu-latest
     needs: [unit, integration]

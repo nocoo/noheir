@@ -35,17 +35,17 @@ not add anonymous exceptions for HTML that depends on protected assets.
 
 `wrangler.jsonc` owns bindings and runtime variables. Production uses:
 
-| Setting | Value |
-| --- | --- |
-| Worker | `noheir-web` |
-| Domain | `noheir.hexly.ai` |
-| D1 binding | `DB` / `noheir-db` |
-| D1 ID | `586c101d-df19-4e1f-a946-42151c1e199d` |
-| Access team | `nocoo` |
-| Access audience | `19d100ea22080f644154aad7b35785c1381874d27dec7fd238a2cb8fd7d640ee` |
-| REST base URL | `https://noheir.hexly.ai/api/v1` |
-| Preview endpoints | `workers.dev` and preview URLs disabled |
-| Asset access | `run_worker_first: true` |
+| Setting           | Value                                                              |
+| ----------------- | ------------------------------------------------------------------ |
+| Worker            | `noheir-web`                                                       |
+| Domain            | `noheir.hexly.ai`                                                  |
+| D1 binding        | `DB` / `noheir-db`                                                 |
+| D1 ID             | `586c101d-df19-4e1f-a946-42151c1e199d`                             |
+| Access team       | `nocoo`                                                            |
+| Access audience   | `19d100ea22080f644154aad7b35785c1381874d27dec7fd238a2cb8fd7d640ee` |
+| REST base URL     | `https://noheir.hexly.ai/api/v1`                                   |
+| Preview endpoints | `workers.dev` and preview URLs disabled                            |
+| Asset access      | `run_worker_first: true`                                           |
 
 `local` and `test` environments have separate local-only database IDs and no
 routes. The deployment script refuses either environment, a dirty tree, local

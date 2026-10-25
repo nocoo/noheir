@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.6.3/schema.json",
   "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "linter": {
     "enabled": true,
@@ -62,6 +62,12 @@
       }
     },
     {
+      "includes": ["docs/api.md"],
+      "formatter": {
+        "enabled": false
+      }
+    },
+    {
       "includes": ["src/components/plan/plan-calendar.tsx"],
       "linter": {
         "rules": {
@@ -83,6 +89,10 @@
       ],
       "linter": {
         "rules": {
+          "correctness": {
+            "usePlaywrightValidDescribeCallback": "off",
+            "noComponentHookFactories": "off"
+          },
           "suspicious": {
             "noExplicitAny": "off",
             "noFocusedTests": "error",

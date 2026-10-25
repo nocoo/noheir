@@ -35,12 +35,12 @@ browser origin. API failure never selects a different environment.
 
 ## Resource ownership and identity
 
-| Target | Storage | Identity | Lifetime |
-| --- | --- | --- | --- |
-| Demo | `.wrangler/environments/demo` | Signed synthetic Access email | Persistent edits, explicit reset |
-| Manual E2E | Private `noheir-test-*` system temp directory | Fresh signing key and seeded users | Deleted on switch out or launcher shutdown |
-| Automated E2E | Independent private directory per runner | Signed test tokens, including invalid cases | Runner owns cleanup; no Prod credentials |
-| Prod | Deployed `https://noheir.hexly.ai` APIs | Real Cloudflare Access token kept server-side | Real data and side effects |
+| Target        | Storage                                       | Identity                                      | Lifetime                                   |
+| ------------- | --------------------------------------------- | --------------------------------------------- | ------------------------------------------ |
+| Demo          | `.wrangler/environments/demo`                 | Signed synthetic Access email                 | Persistent edits, explicit reset           |
+| Manual E2E    | Private `noheir-test-*` system temp directory | Fresh signing key and seeded users            | Deleted on switch out or launcher shutdown |
+| Automated E2E | Independent private directory per runner      | Signed test tokens, including invalid cases   | Runner owns cleanup; no Prod credentials   |
+| Prod          | Deployed `https://noheir.hexly.ai` APIs       | Real Cloudflare Access token kept server-side | Real data and side effects                 |
 
 `.wrangler/state` is preserved and unused by the new launcher. It is not silently
 imported into Demo. The initial implementation's pre-persistence Demo marker was
@@ -146,21 +146,21 @@ browser date; the capture command fixes browser presentation time separately.
 `L` = real route/API load checked; `A` = relevant operation asserted; `V` = screenshot
 reviewed. A static screenshot does not prove all controls on that page were used.
 
-| Routes / feature | Prepared catalog / scenario | Operations exercised | Visual evidence |
-| --- | --- | --- | --- |
-| `/`, `/income`, `/expense`, `/savings` | Three years, meaningful categories/tags, coherent totals and trends | L; A: year revalidation, search and CRUD in HTTP suite | V: overview and trend surfaces |
-| `/flow`, `/compare`, `/financial-health`, `/freedom` | Income, spending, category mix, savings targets and annual comparison | L; A: report HTTP suite | V: flow, comparison, radar and projections |
-| `/account`, `/account-detail`, `/account-types`, `/balance-anchors` | Four accounts, paired transfers, debit/credit/prepaid/financial types and opening anchors | L; A: settings and transfer HTTP checks | V: account chart, details and configuration |
-| `/capital-dashboard`, `/capital-decisions`, `/funds`, `/warehouse`, `/liquidity`, `/strategy` | All unit statuses, CNY/USD/HKD, strategies/tactics, available/soon/locked/unknown, cyclic product and explicit override | L; A: unit commit/CAS, ownership and availability HTTP/unit scenarios | V: dashboard, badges, warehouse, liquidity and sunburst |
-| `/products`, `/capital-logs` | Active/archived products, investment logs, deleted withdraw/adjust with P&L | L; A: browser product create and capital commit; HTTP log restore/delete | V: products table and timeline |
-| `/plan/calendar`, `/plan/categories` | Daily/weekly/monthly/yearly, active/paused/ended, four color tokens | L; A: browser creation and HTTP recurrence transitions/category CRUD | V: populated calendar and colored categories |
-| `/settings`, `/category-settings` | Savings/return targets, active income and fixed expense classifications | L; A: settings HTTP write/read | V: sliders and category surfaces |
-| `/api-keys` | Real scoped key issuance, one-time secret, revoke | New browser/API acceptance; environment draft-discard uses key label | Verification evidence recorded in scoped API plan |
-| `/analyses`, `/analyses/:id` | Synthetic external report, period/revision/provenance | New report CRUD, Markdown safety, evidence and API writeback scenarios | Verification evidence recorded in scoped API plan |
-| `/manage`, `/import`, `/quality` | Importable financial records and one intentionally unmapped transaction | L; A: CSV preview/import, export download, annual rollback and restore scope | V: management, import and quality surfaces |
-| `/login`, `/terms`, `/privacy`, user avatar | Real login composition and legal pages, original synthetic avatar | L; loaded-image assertion | V: all three pages; real Access login/MFA unverified |
-| Switch / draft / lifecycle | Manual E2E plus disposable Demo fixtures | A: explicit/saved E2E, cancel, accepted switch, stale 410, fresh reentry, persistence and marker rejection | V: local control; CI captures omit it |
-| Auth/error/ownership | Three signed users, unknown/expired/wrong issuer/audience and injected SQL failures | A: HTTP suite and environment tests; UI read failure never becomes zero balance | Error screenshot not separately reviewed |
+| Routes / feature                                                                              | Prepared catalog / scenario                                                                                             | Operations exercised                                                                                       | Visual evidence                                         |
+| --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `/`, `/income`, `/expense`, `/savings`                                                        | Three years, meaningful categories/tags, coherent totals and trends                                                     | L; A: year revalidation, search and CRUD in HTTP suite                                                     | V: overview and trend surfaces                          |
+| `/flow`, `/compare`, `/financial-health`, `/freedom`                                          | Income, spending, category mix, savings targets and annual comparison                                                   | L; A: report HTTP suite                                                                                    | V: flow, comparison, radar and projections              |
+| `/account`, `/account-detail`, `/account-types`, `/balance-anchors`                           | Four accounts, paired transfers, debit/credit/prepaid/financial types and opening anchors                               | L; A: settings and transfer HTTP checks                                                                    | V: account chart, details and configuration             |
+| `/capital-dashboard`, `/capital-decisions`, `/funds`, `/warehouse`, `/liquidity`, `/strategy` | All unit statuses, CNY/USD/HKD, strategies/tactics, available/soon/locked/unknown, cyclic product and explicit override | L; A: unit commit/CAS, ownership and availability HTTP/unit scenarios                                      | V: dashboard, badges, warehouse, liquidity and sunburst |
+| `/products`, `/capital-logs`                                                                  | Active/archived products, investment logs, deleted withdraw/adjust with P&L                                             | L; A: browser product create and capital commit; HTTP log restore/delete                                   | V: products table and timeline                          |
+| `/plan/calendar`, `/plan/categories`                                                          | Daily/weekly/monthly/yearly, active/paused/ended, four color tokens                                                     | L; A: browser creation and HTTP recurrence transitions/category CRUD                                       | V: populated calendar and colored categories            |
+| `/settings`, `/category-settings`                                                             | Savings/return targets, active income and fixed expense classifications                                                 | L; A: settings HTTP write/read                                                                             | V: sliders and category surfaces                        |
+| `/api-keys`                                                                                   | Real scoped key issuance, one-time secret, revoke                                                                       | New browser/API acceptance; environment draft-discard uses key label                                       | Verification evidence recorded in scoped API plan       |
+| `/analyses`, `/analyses/:id`                                                                  | Synthetic external report, period/revision/provenance                                                                   | New report CRUD, Markdown safety, evidence and API writeback scenarios                                     | Verification evidence recorded in scoped API plan       |
+| `/manage`, `/import`, `/quality`                                                              | Importable financial records and one intentionally unmapped transaction                                                 | L; A: CSV preview/import, export download, annual rollback and restore scope                               | V: management, import and quality surfaces              |
+| `/login`, `/terms`, `/privacy`, user avatar                                                   | Real login composition and legal pages, original synthetic avatar                                                       | L; loaded-image assertion                                                                                  | V: all three pages; real Access login/MFA unverified    |
+| Switch / draft / lifecycle                                                                    | Manual E2E plus disposable Demo fixtures                                                                                | A: explicit/saved E2E, cancel, accepted switch, stale 410, fresh reentry, persistence and marker rejection | V: local control; CI captures omit it                   |
+| Auth/error/ownership                                                                          | Three signed users, unknown/expired/wrong issuer/audience and injected SQL failures                                     | A: HTTP suite and environment tests; UI read failure never becomes zero balance                            | Error screenshot not separately reviewed                |
 
 Captures and `manifest.json` are written to ignored
 `test-results/environments-<timestamp>/`. The manifest records revision, fixture

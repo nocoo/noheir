@@ -2,19 +2,19 @@
 
 Start with the [project README](../README.md) and [project rules](../AGENTS.md).
 
-| Document | Scope |
-| --- | --- |
-| [api](api.md) | Published scoped Bearer REST reference for `/api/v1` (external tools) |
-| [25-scoped-api](25-scoped-api.md) | Scoped REST API design record, acceptance notes and local verification |
-| [24-local-environments](24-local-environments.md) | Demo/E2E/Prod launch, switching, ownership, catalog and verification |
-| [04-run](04-run.md) | Native Workers development, Access/scoped REST, CI/CD and data safety |
-| [23-workers-migration](23-workers-migration.md) | Architecture, identity invariants, work ownership, acceptance and deployment evidence |
-| [17-contribution-logs](17-contribution-logs.md) | Investment/redemption records |
-| [22-agent-operations](22-agent-operations.md) | Financial/UI constraints and operational guidance |
-| [001-capital-unit-date-refactor](001-capital-unit-date-refactor.md) | Capital dates |
-| [002-recurring-expense-calendar](002-recurring-expense-calendar.md) | Recurring expenses and planning calendar |
-| [003-unit-commit-and-log-enrichment](003-unit-commit-and-log-enrichment.md) | Atomic capital operations and log enrichment |
-| [Logo](../assets/brand/README.md) | Brand assets and provenance |
+| Document                                                                    | Scope                                                                                 |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| [api](api.md)                                                               | Published scoped Bearer REST reference for `/api/v1` (external tools)                 |
+| [25-scoped-api](25-scoped-api.md)                                           | Scoped REST API design record, acceptance notes and local verification                |
+| [24-local-environments](24-local-environments.md)                           | Demo/E2E/Prod launch, switching, ownership, catalog and verification                  |
+| [04-run](04-run.md)                                                         | Native Workers development, Access/scoped REST, CI/CD and data safety                 |
+| [23-workers-migration](23-workers-migration.md)                             | Architecture, identity invariants, work ownership, acceptance and deployment evidence |
+| [17-contribution-logs](17-contribution-logs.md)                             | Investment/redemption records                                                         |
+| [22-agent-operations](22-agent-operations.md)                               | Financial/UI constraints and operational guidance                                     |
+| [001-capital-unit-date-refactor](001-capital-unit-date-refactor.md)         | Capital dates                                                                         |
+| [002-recurring-expense-calendar](002-recurring-expense-calendar.md)         | Recurring expenses and planning calendar                                              |
+| [003-unit-commit-and-log-enrichment](003-unit-commit-and-log-enrichment.md) | Atomic capital operations and log enrichment                                          |
+| [Logo](../assets/brand/README.md)                                           | Brand assets and provenance                                                           |
 
 ## Historical architecture
 

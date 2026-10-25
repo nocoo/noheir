@@ -47,9 +47,9 @@ bun run test:unit
 
 ## Git Hooks
 
-| Hook | 执行内容 | 说明 |
-|---|---|---|
-| pre-commit | `bun run test:unit` | 快速反馈，每次 commit 前运行 |
-| pre-push | `bun run test:unit && lint && test:e2e` | 推送前全量验证（E2E 需要 Docker） |
+| Hook       | 执行内容                                | 说明                              |
+| ---------- | --------------------------------------- | --------------------------------- |
+| pre-commit | `bun run test:unit`                     | 快速反馈，每次 commit 前运行      |
+| pre-push   | `bun run test:unit && lint && test:e2e` | 推送前全量验证（E2E 需要 Docker） |
 
 下一步：了解文档规范 → [06-docs-guidelines.md](./06-docs-guidelines.md)

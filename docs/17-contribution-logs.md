@@ -15,22 +15,22 @@
 
 **Table:** `contribution_logs`
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| id | TEXT | PRIMARY KEY | UUID |
-| user_id | TEXT | NOT NULL, FK users(id) CASCADE | 用户隔离 |
-| unit_id | TEXT | NOT NULL, FK capital_units(id) CASCADE | 关联资金单元 |
-| product_id | TEXT | FK financial_products(id) RESTRICT | 关联产品（可选） |
-| product_name | TEXT | | 产品名称快照（审计用，产品删除后仍可追溯） |
-| operation_type | TEXT | NOT NULL | "invest" / "withdraw" / "adjust" |
-| amount_cents | INTEGER | NOT NULL | 金额（分），正=投入，负=取出 |
-| balance_after_cents | INTEGER | | 操作后余额快照 |
-| operation_date | TEXT | NOT NULL | YYYY-MM-DD |
-| source | TEXT | DEFAULT "manual" | "manual" / "auto" / "import" |
-| note | TEXT | | 备注 |
-| deleted_at | INTEGER | | 软删除时间戳 |
-| created_at | INTEGER | NOT NULL | 创建时间 |
-| updated_at | INTEGER | NOT NULL | 更新时间 |
+| Column              | Type    | Constraints                            | Description                                |
+| ------------------- | ------- | -------------------------------------- | ------------------------------------------ |
+| id                  | TEXT    | PRIMARY KEY                            | UUID                                       |
+| user_id             | TEXT    | NOT NULL, FK users(id) CASCADE         | 用户隔离                                   |
+| unit_id             | TEXT    | NOT NULL, FK capital_units(id) CASCADE | 关联资金单元                               |
+| product_id          | TEXT    | FK financial_products(id) RESTRICT     | 关联产品（可选）                           |
+| product_name        | TEXT    |                                        | 产品名称快照（审计用，产品删除后仍可追溯） |
+| operation_type      | TEXT    | NOT NULL                               | "invest" / "withdraw" / "adjust"           |
+| amount_cents        | INTEGER | NOT NULL                               | 金额（分），正=投入，负=取出               |
+| balance_after_cents | INTEGER |                                        | 操作后余额快照                             |
+| operation_date      | TEXT    | NOT NULL                               | YYYY-MM-DD                                 |
+| source              | TEXT    | DEFAULT "manual"                       | "manual" / "auto" / "import"               |
+| note                | TEXT    |                                        | 备注                                       |
+| deleted_at          | INTEGER |                                        | 软删除时间戳                               |
+| created_at          | INTEGER | NOT NULL                               | 创建时间                                   |
+| updated_at          | INTEGER | NOT NULL                               | 更新时间                                   |
 
 **设计要点:**
 - `product_id` 使用 **RESTRICT** 而非 SET NULL，防止删除有历史记录的产品破坏审计
@@ -38,8 +38,8 @@
 
 **Enums:**
 ```ts
-CONTRIBUTION_OPERATION_TYPES = ["invest", "withdraw", "adjust"] as const
-CONTRIBUTION_SOURCES = ["manual", "auto", "import"] as const
+CONTRIBUTION_OPERATION_TYPES = ["invest", "withdraw", "adjust"] as const;
+CONTRIBUTION_SOURCES = ["manual", "auto", "import"] as const;
 ```
 
 ---
@@ -74,12 +74,15 @@ app.delete("/api/products/:id", async (c) => {
   } catch (err) {
     // D1 RESTRICT constraint violation
     if (err instanceof Error && err.message.includes("FOREIGN KEY constraint failed")) {
-      return c.json({ 
-        error: "Cannot delete product with contribution history. Archive it instead.",
-        hasContributionLogs: true,
-      }, 409);
+      return c.json(
+        {
+          error: "Cannot delete product with contribution history. Archive it instead.",
+          hasContributionLogs: true,
+        },
+        409,
+      );
     }
-    throw err;  // Re-throw other errors for global handler
+    throw err; // Re-throw other errors for global handler
   }
 });
 ```
@@ -97,16 +100,16 @@ test("DELETE /api/products/:id returns 409 when product has contribution logs", 
 
 ## API Design
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/contribution-logs/search` | 搜索日志（支持分页） |
-| GET | `/api/contribution-logs/summary/unit/:unitId` | 资金单元投入汇总 |
-| GET | `/api/contribution-logs/summary/product/:productId` | 产品投入汇总 |
-| GET | `/api/contribution-logs/:id` | 获取单条 |
-| POST | `/api/contribution-logs` | 创建 |
-| PUT | `/api/contribution-logs/:id` | 更新 |
-| DELETE | `/api/contribution-logs/:id` | 软删除 |
-| POST | `/api/contribution-logs/:id/restore` | 恢复 |
+| Method | Endpoint                                            | Description          |
+| ------ | --------------------------------------------------- | -------------------- |
+| POST   | `/api/contribution-logs/search`                     | 搜索日志（支持分页） |
+| GET    | `/api/contribution-logs/summary/unit/:unitId`       | 资金单元投入汇总     |
+| GET    | `/api/contribution-logs/summary/product/:productId` | 产品投入汇总         |
+| GET    | `/api/contribution-logs/:id`                        | 获取单条             |
+| POST   | `/api/contribution-logs`                            | 创建                 |
+| PUT    | `/api/contribution-logs/:id`                        | 更新                 |
+| DELETE | `/api/contribution-logs/:id`                        | 软删除               |
+| POST   | `/api/contribution-logs/:id/restore`                | 恢复                 |
 
 > **Note:** Seed endpoint (`POST /api/contribution-logs/seed`) 已于 2026-04-05 执行并移除。初始数据已填充完成。
 
@@ -167,31 +170,33 @@ POST /api/contribution-logs/search
 
 ```ts
 // worker/db/validation.ts
-export const updateUnitSchema = z.object({
-  unitCode: z.string().min(1).optional(),
-  amountCents: z.number().int().min(0).optional(),
-  currency: z.enum(CURRENCIES).optional(),
-  status: z.enum(UNIT_STATUSES).optional(),
-  strategy: z.enum(STRATEGIES).optional(),
-  tactics: z.enum(TACTICS).optional(),
-  productId: z.string().uuid().optional().nullable(),
-  startDate: z.string().optional().nullable(),
-  endDate: z.string().optional().nullable(),
-  note: z.string().optional().nullable(),
-}).refine(
-  (data) => Object.keys(data).length > 0,
-  { message: "At least one field must be provided for update" },
-).refine(
-  (data) => {
-    // If productId is being updated, it must be the ONLY field
-    if (data.productId !== undefined) {
-      const otherFields = Object.keys(data).filter(k => k !== "productId");
-      return otherFields.length === 0;
-    }
-    return true;
-  },
-  { message: "productId must be updated alone; cannot combine with other fields" },
-);
+export const updateUnitSchema = z
+  .object({
+    unitCode: z.string().min(1).optional(),
+    amountCents: z.number().int().min(0).optional(),
+    currency: z.enum(CURRENCIES).optional(),
+    status: z.enum(UNIT_STATUSES).optional(),
+    strategy: z.enum(STRATEGIES).optional(),
+    tactics: z.enum(TACTICS).optional(),
+    productId: z.string().uuid().optional().nullable(),
+    startDate: z.string().optional().nullable(),
+    endDate: z.string().optional().nullable(),
+    note: z.string().optional().nullable(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one field must be provided for update",
+  })
+  .refine(
+    (data) => {
+      // If productId is being updated, it must be the ONLY field
+      if (data.productId !== undefined) {
+        const otherFields = Object.keys(data).filter((k) => k !== "productId");
+        return otherFields.length === 0;
+      }
+      return true;
+    },
+    { message: "productId must be updated alone; cannot combine with other fields" },
+  );
 ```
 
 ### 实现
@@ -228,8 +233,8 @@ app.put("/api/units/:id", async (c) => {
     return c.json({ error: "Not found" }, 404);
   }
 
-  const productIdChanging = parsed.data.productId !== undefined 
-    && original.productId !== parsed.data.productId;
+  const productIdChanging =
+    parsed.data.productId !== undefined && original.productId !== parsed.data.productId;
 
   if (productIdChanging) {
     const newProductId = parsed.data.productId;
@@ -238,18 +243,21 @@ app.put("/api/units/:id", async (c) => {
     const updateSql = original.productId
       ? `UPDATE capital_units SET product_id = ? WHERE id = ? AND user_id = ? AND product_id = ?`
       : `UPDATE capital_units SET product_id = ? WHERE id = ? AND user_id = ? AND product_id IS NULL`;
-    
+
     const updateStmt = original.productId
       ? db.prepare(updateSql).bind(newProductId, id, userId, original.productId)
       : db.prepare(updateSql).bind(newProductId, id, userId);
 
     const updateResult = await updateStmt.run();
-    
+
     // CAS check
     if (!updateResult.meta.changes || updateResult.meta.changes === 0) {
-      return c.json({ 
-        error: "Conflict: unit was modified by another request. Please retry.",
-      }, 409);
+      return c.json(
+        {
+          error: "Conflict: unit was modified by another request. Please retry.",
+        },
+        409,
+      );
     }
 
     // Phase 2: Insert logs (UPDATE succeeded, we "own" this transition)
@@ -259,32 +267,52 @@ app.put("/api/units/:id", async (c) => {
     if (original.productId) {
       const oldProduct = await repos.products.findById(userId, original.productId);
       logStatements.push(
-        db.prepare(
-          `INSERT INTO contribution_logs 
+        db
+          .prepare(
+            `INSERT INTO contribution_logs 
            (id, user_id, unit_id, product_id, product_name, operation_type, amount_cents, operation_date, source, note, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        ).bind(
-          crypto.randomUUID(), userId, id, original.productId, oldProduct?.name ?? null,
-          "withdraw", -original.amountCents, today, "auto",
-          `Auto: moved out to ${newProductId ? "another product" : "unassigned"}`,
-          Date.now(), Date.now()
-        )
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          )
+          .bind(
+            crypto.randomUUID(),
+            userId,
+            id,
+            original.productId,
+            oldProduct?.name ?? null,
+            "withdraw",
+            -original.amountCents,
+            today,
+            "auto",
+            `Auto: moved out to ${newProductId ? "another product" : "unassigned"}`,
+            Date.now(),
+            Date.now(),
+          ),
       );
     }
 
     if (newProductId) {
       const newProduct = await repos.products.findById(userId, newProductId);
       logStatements.push(
-        db.prepare(
-          `INSERT INTO contribution_logs 
+        db
+          .prepare(
+            `INSERT INTO contribution_logs 
            (id, user_id, unit_id, product_id, product_name, operation_type, amount_cents, operation_date, source, note, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        ).bind(
-          crypto.randomUUID(), userId, id, newProductId, newProduct?.name ?? null,
-          "invest", original.amountCents, today, "auto",
-          `Auto: moved in from ${original.productId ? "another product" : "unassigned"}`,
-          Date.now(), Date.now()
-        )
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          )
+          .bind(
+            crypto.randomUUID(),
+            userId,
+            id,
+            newProductId,
+            newProduct?.name ?? null,
+            "invest",
+            original.amountCents,
+            today,
+            "auto",
+            `Auto: moved in from ${original.productId ? "another product" : "unassigned"}`,
+            Date.now(),
+            Date.now(),
+          ),
       );
     }
 
@@ -297,7 +325,7 @@ app.put("/api/units/:id", async (c) => {
       const rollbackSql = newProductId
         ? `UPDATE capital_units SET product_id = ? WHERE id = ? AND user_id = ? AND product_id = ?`
         : `UPDATE capital_units SET product_id = ? WHERE id = ? AND user_id = ? AND product_id IS NULL`;
-      
+
       try {
         if (newProductId) {
           await db.prepare(rollbackSql).bind(original.productId, id, userId, newProductId).run();
@@ -308,7 +336,7 @@ app.put("/api/units/:id", async (c) => {
         // Rollback failed - log for manual intervention but don't mask original error
         console.error(`Failed to rollback unit ${id} productId change after log insert failure`);
       }
-      
+
       throw logError; // Re-throw to trigger 500
     }
 
@@ -333,59 +361,59 @@ app.put("/api/units/:id", async (c) => {
 
 ### Phase 1: Database Layer
 
-| File | Change |
-|------|--------|
-| `worker/db/schema.ts` | Add `contributionLogs` table (with `product_name` snapshot) |
-| `worker/db/enums.ts` | Add `CONTRIBUTION_OPERATION_TYPES`, `CONTRIBUTION_SOURCES` |
-| `worker/db/types.ts` | Export `ContributionLog`, `NewContributionLog` |
+| File                      | Change                                                                 |
+| ------------------------- | ---------------------------------------------------------------------- |
+| `worker/db/schema.ts`     | Add `contributionLogs` table (with `product_name` snapshot)            |
+| `worker/db/enums.ts`      | Add `CONTRIBUTION_OPERATION_TYPES`, `CONTRIBUTION_SOURCES`             |
+| `worker/db/types.ts`      | Export `ContributionLog`, `NewContributionLog`                         |
 | `worker/db/validation.ts` | Add Zod schemas; add `productId`-only constraint to `updateUnitSchema` |
 
 ### Phase 2: Repository
 
-| File | Change |
-|------|--------|
-| `worker/db/repositories/contribution-logs.ts` | New file |
-| `worker/db/repositories/index.ts` | Export new repo |
+| File                                          | Change          |
+| --------------------------------------------- | --------------- |
+| `worker/db/repositories/contribution-logs.ts` | New file        |
+| `worker/db/repositories/index.ts`             | Export new repo |
 
 ### Phase 3: API Routes
 
-| File | Change |
-|------|--------|
-| `worker/src/index.ts` | Add 9 contribution-logs routes (8 CRUD + 1 seed) |
-| `worker/src/index.ts` | Modify `PUT /api/units/:id` for atomic auto-logging |
+| File                  | Change                                                       |
+| --------------------- | ------------------------------------------------------------ |
+| `worker/src/index.ts` | Add 9 contribution-logs routes (8 CRUD + 1 seed)             |
+| `worker/src/index.ts` | Modify `PUT /api/units/:id` for atomic auto-logging          |
 | `worker/src/index.ts` | Modify `DELETE /api/products/:id` to check contribution logs |
 
 ### Phase 4: Frontend Client
 
-| File | Change |
-|------|--------|
-| `src/lib/worker-db-client.ts` | Add 7 methods |
-| `src/lib/capital-mappers.ts` | Add `toDomainContributionLog()` |
+| File                          | Change                          |
+| ----------------------------- | ------------------------------- |
+| `src/lib/worker-db-client.ts` | Add 7 methods                   |
+| `src/lib/capital-mappers.ts`  | Add `toDomainContributionLog()` |
 
 ### Phase 5: Domain Types
 
-| File | Change |
-|------|--------|
+| File                  | Change                                             |
+| --------------------- | -------------------------------------------------- |
 | `src/domain/types.ts` | Add `DomainContributionLog`, `ContributionSummary` |
 
 ### Phase 6: Frontend UI
 
-| File | Change |
-|------|--------|
-| `src/app/capital-logs/page.tsx` | Server Component (new) |
-| `src/app/capital-logs/capital-logs-client.tsx` | Client Component (new) |
-| `src/app/actions/contribution-log-actions.ts` | Server Actions (new) |
-| `src/components/capital/contribution-log-form.tsx` | Dialog form (new) |
-| `src/components/capital/contribution-summary-card.tsx` | Stats card (new) |
+| File                                                   | Change                 |
+| ------------------------------------------------------ | ---------------------- |
+| `src/app/capital-logs/page.tsx`                        | Server Component (new) |
+| `src/app/capital-logs/capital-logs-client.tsx`         | Client Component (new) |
+| `src/app/actions/contribution-log-actions.ts`          | Server Actions (new)   |
+| `src/components/capital/contribution-log-form.tsx`     | Dialog form (new)      |
+| `src/components/capital/contribution-summary-card.tsx` | Stats card (new)       |
 
 ### Phase 7: Tests
 
-| File | Change |
-|------|--------|
-| `worker/tests/contribution-logs.test.ts` | Repository unit tests (new) |
-| `worker/tests/e2e/contribution-logs.e2e.test.ts` | API E2E tests (new) |
-| `worker/tests/e2e/products.e2e.test.ts` | Add test for 409 on delete with logs |
-| `worker/tests/e2e/units.e2e.test.ts` | Add test for productId-only constraint |
+| File                                             | Change                                 |
+| ------------------------------------------------ | -------------------------------------- |
+| `worker/tests/contribution-logs.test.ts`         | Repository unit tests (new)            |
+| `worker/tests/e2e/contribution-logs.e2e.test.ts` | API E2E tests (new)                    |
+| `worker/tests/e2e/products.e2e.test.ts`          | Add test for 409 on delete with logs   |
+| `worker/tests/e2e/units.e2e.test.ts`             | Add test for productId-only constraint |
 
 ---
 
@@ -434,13 +462,13 @@ app.put("/api/units/:id", async (c) => {
 ```ts
 // worker/tests/contribution-logs.test.ts
 describe("ContributionLogsRepo", () => {
-  test("create and findById")
-  test("search with filters")
-  test("summarizeByUnit calculates totals")
-  test("summarizeByProduct with multiple units")
-  test("softDelete and restore")
-  test("user isolation")
-})
+  test("create and findById");
+  test("search with filters");
+  test("summarizeByUnit calculates totals");
+  test("summarizeByProduct with multiple units");
+  test("softDelete and restore");
+  test("user isolation");
+});
 ```
 
 ### L3 - API E2E Tests
@@ -448,29 +476,29 @@ describe("ContributionLogsRepo", () => {
 ```ts
 // worker/tests/e2e/contribution-logs.e2e.test.ts
 describe("Contribution Logs API", () => {
-  test("POST /api/contribution-logs creates log")
-  test("POST /api/contribution-logs validates unitId exists")
-  test("POST /api/contribution-logs/search filters correctly")
-  test("GET /api/contribution-logs/summary/unit/:id returns totals")
-  test("DELETE soft-deletes and restore recovers")
-  test("POST /api/contribution-logs/seed is idempotent")
-  test("POST /api/contribution-logs/seed can resume after partial failure")
-})
+  test("POST /api/contribution-logs creates log");
+  test("POST /api/contribution-logs validates unitId exists");
+  test("POST /api/contribution-logs/search filters correctly");
+  test("GET /api/contribution-logs/summary/unit/:id returns totals");
+  test("DELETE soft-deletes and restore recovers");
+  test("POST /api/contribution-logs/seed is idempotent");
+  test("POST /api/contribution-logs/seed can resume after partial failure");
+});
 
 // worker/tests/e2e/units.e2e.test.ts (additions)
 describe("Units API - Auto-logging", () => {
-  test("PUT /api/units/:id auto-logs on productId change")
-  test("PUT /api/units/:id creates withdraw + invest when switching products")
-  test("PUT /api/units/:id rejects productId with other fields")
-  test("PUT /api/units/:id with productId change is atomic (logs created or nothing)")
-  test("PUT /api/units/:id returns 409 when productId was concurrently modified")
-})
+  test("PUT /api/units/:id auto-logs on productId change");
+  test("PUT /api/units/:id creates withdraw + invest when switching products");
+  test("PUT /api/units/:id rejects productId with other fields");
+  test("PUT /api/units/:id with productId change is atomic (logs created or nothing)");
+  test("PUT /api/units/:id returns 409 when productId was concurrently modified");
+});
 
 // worker/tests/e2e/products.e2e.test.ts (additions)
 describe("Products API - Deletion guard", () => {
-  test("DELETE /api/products/:id returns 409 when product has contribution logs")
-  test("DELETE /api/products/:id succeeds when product has no contribution logs")
-})
+  test("DELETE /api/products/:id returns 409 when product has contribution logs");
+  test("DELETE /api/products/:id succeeds when product has no contribution logs");
+});
 ```
 
 ---
@@ -535,16 +563,16 @@ app.post("/api/contribution-logs/seed", async (c) => {
 
   // Get all units with products
   const units = await repos.units.findAllWithProducts(userId, {});
-  
+
   let created = 0;
   let skipped = 0;
   const BATCH_SIZE = 50;
-  
+
   // Process in batches for partial atomicity
   for (let i = 0; i < units.length; i += BATCH_SIZE) {
     const batch = units.slice(i, i + BATCH_SIZE);
     const statements: D1PreparedStatement[] = [];
-    
+
     for (const unit of batch) {
       if (!unit.productId) {
         skipped++;
@@ -556,44 +584,56 @@ app.post("/api/contribution-logs/seed", async (c) => {
         unitId: unit.id,
         source: "import",
         limit: 1,
-        includeDeleted: true,  // Soft-deleted import logs still count
+        includeDeleted: true, // Soft-deleted import logs still count
       });
-      
+
       if (existing.logs.length > 0) {
         skipped++;
         continue;
       }
 
       const operationDate = unit.startDate ?? new Date(unit.createdAt).toISOString().slice(0, 10);
-      
+
       statements.push(
-        db.prepare(
-          `INSERT INTO contribution_logs 
+        db
+          .prepare(
+            `INSERT INTO contribution_logs 
            (id, user_id, unit_id, product_id, product_name, operation_type, amount_cents, balance_after_cents, operation_date, source, note, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        ).bind(
-          crypto.randomUUID(), userId, unit.id, unit.productId, unit.product?.name ?? null,
-          "invest", unit.amountCents, unit.amountCents, operationDate, "import",
-          "Initial investment (data migration)",
-          Date.now(), Date.now()
-        )
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          )
+          .bind(
+            crypto.randomUUID(),
+            userId,
+            unit.id,
+            unit.productId,
+            unit.product?.name ?? null,
+            "invest",
+            unit.amountCents,
+            unit.amountCents,
+            operationDate,
+            "import",
+            "Initial investment (data migration)",
+            Date.now(),
+            Date.now(),
+          ),
       );
       created++;
     }
-    
+
     // Execute batch atomically
     if (statements.length > 0) {
       await db.batch(statements);
     }
   }
 
-  return c.json({ 
-    success: true, 
+  return c.json({
+    success: true,
     created,
     skipped,
-    message: skipped > 0 
-      ? `Created ${created} logs, skipped ${skipped} (already seeded or no product)`
-      : `Created ${created} logs`,
+    message:
+      skipped > 0
+        ? `Created ${created} logs, skipped ${skipped} (already seeded or no product)`
+        : `Created ${created} logs`,
   });
 });
 ```

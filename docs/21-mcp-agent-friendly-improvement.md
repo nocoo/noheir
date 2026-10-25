@@ -20,23 +20,23 @@ Current MCP tools have three Agent-facing issues:
 
 ## Current MCP Tool Inventory
 
-| Tool | Type | Pagination | Filters |
-|------|------|------------|---------|
-| `list_products` | Browse | `limit` + `offset` | channel, category, currency, include_archived |
-| `get_product` | Detail | — | id (full or short) |
-| `create_product` | Write | — | — |
-| `update_product` | Write | — | — |
-| `list_units` | Browse | `limit` + `offset` | status, strategy, tactics, currency |
-| `get_unit` | Detail | — | id or unit_code |
-| `create_unit` | Write | — | — |
-| `update_unit` | Write | — | — |
-| `get_products_summary` | Aggregate | — | — |
-| `get_units_summary` | Aggregate | — | — |
-| `query_transactions` | Browse | `limit` + `offset` | keyword, type, categories, accounts, tags, date, amount, year, month, currency |
-| `query_transfers` | Browse | `limit` + `offset` | keyword, accounts, date, year, month, currency |
-| `get_summary` | Metadata | — | include (years, accounts, categories, currencies) |
-| `get_monthly_report` | Aggregate | — | year, month, currency |
-| `aggregate_transactions` | Aggregate | — | group_by, type, year, month, currency |
+| Tool                     | Type      | Pagination         | Filters                                                                        |
+| ------------------------ | --------- | ------------------ | ------------------------------------------------------------------------------ |
+| `list_products`          | Browse    | `limit` + `offset` | channel, category, currency, include_archived                                  |
+| `get_product`            | Detail    | —                  | id (full or short)                                                             |
+| `create_product`         | Write     | —                  | —                                                                              |
+| `update_product`         | Write     | —                  | —                                                                              |
+| `list_units`             | Browse    | `limit` + `offset` | status, strategy, tactics, currency                                            |
+| `get_unit`               | Detail    | —                  | id or unit_code                                                                |
+| `create_unit`            | Write     | —                  | —                                                                              |
+| `update_unit`            | Write     | —                  | —                                                                              |
+| `get_products_summary`   | Aggregate | —                  | —                                                                              |
+| `get_units_summary`      | Aggregate | —                  | —                                                                              |
+| `query_transactions`     | Browse    | `limit` + `offset` | keyword, type, categories, accounts, tags, date, amount, year, month, currency |
+| `query_transfers`        | Browse    | `limit` + `offset` | keyword, accounts, date, year, month, currency                                 |
+| `get_summary`            | Metadata  | —                  | include (years, accounts, categories, currencies)                              |
+| `get_monthly_report`     | Aggregate | —                  | year, month, currency                                                          |
+| `aggregate_transactions` | Aggregate | —                  | group_by, type, year, month, currency                                          |
 
 ## Key Design Decisions
 
@@ -46,12 +46,12 @@ All tools accepting entity identifiers MUST use the same resolution logic.
 
 #### Product Resolver
 
-| Identifier | Resolution | Ambiguity Handling |
-|------------|------------|-------------------|
-| `product_id` (full ULID, 26 chars) | Exact match `id = ?` | — |
-| `product_id` (short, ≤8 chars) | Prefix match `id LIKE ?` + `LIMIT 2` | If 2 rows matched → error "Ambiguous short ID, use full ID" |
-| `product_name` | Exact match `name = ?` | If multiple rows → error "Multiple products named X, use product_id" |
-| `product_code` | Exact match `code = ?` | If multiple rows → error "Multiple products with code X, use product_id" |
+| Identifier                         | Resolution                           | Ambiguity Handling                                                       |
+| ---------------------------------- | ------------------------------------ | ------------------------------------------------------------------------ |
+| `product_id` (full ULID, 26 chars) | Exact match `id = ?`                 | —                                                                        |
+| `product_id` (short, ≤8 chars)     | Prefix match `id LIKE ?` + `LIMIT 2` | If 2 rows matched → error "Ambiguous short ID, use full ID"              |
+| `product_name`                     | Exact match `name = ?`               | If multiple rows → error "Multiple products named X, use product_id"     |
+| `product_code`                     | Exact match `code = ?`               | If multiple rows → error "Multiple products with code X, use product_id" |
 
 **Identifier rules**:
 - Exactly one identifier is recommended.
@@ -60,20 +60,20 @@ All tools accepting entity identifiers MUST use the same resolution logic.
 
 #### Unit Resolver
 
-| Identifier | Resolution | Ambiguity Handling |
-|------------|------------|-------------------|
-| `unit_id` (full ULID) | Exact match `id = ?` | — |
-| `unit_id` (short, ≤8 chars) | Prefix match `id LIKE ?` + `LIMIT 2` | Ambiguous → error |
-| `unit_code` (e.g., C10, A01) | Case-insensitive exact match `UPPER(unit_code) = UPPER(?)` | — |
+| Identifier                   | Resolution                                                 | Ambiguity Handling |
+| ---------------------------- | ---------------------------------------------------------- | ------------------ |
+| `unit_id` (full ULID)        | Exact match `id = ?`                                       | —                  |
+| `unit_id` (short, ≤8 chars)  | Prefix match `id LIKE ?` + `LIMIT 2`                       | Ambiguous → error  |
+| `unit_code` (e.g., C10, A01) | Case-insensitive exact match `UPPER(unit_code) = UPPER(?)` | —                  |
 
 ### KD-2: Unit Lifecycle Vocabulary
 
 `capital_units` does NOT have an `is_archived` field. Unit state is determined by `status` and `end_date`:
 
-| Status | Description | Filter Behavior |
-|--------|-------------|-----------------|
-| `已成立` | Active, funds committed | Included by default |
-| `已清算` | Closed, funds returned | Included by default |
+| Status   | Description               | Filter Behavior     |
+| -------- | ------------------------- | ------------------- |
+| `已成立` | Active, funds committed   | Included by default |
+| `已清算` | Closed, funds returned    | Included by default |
 | `已归档` | Archived (has `end_date`) | Excluded by default |
 
 **Filter naming**: Use `include_archived_units` to mean "include units with status=已归档". The status value is literally `已归档`, so the parameter name matches the domain term. Product `is_archived` and unit `status=已归档` are independent concepts — using the same word for both is acceptable since they refer to different entities.
@@ -106,36 +106,36 @@ This minimizes breaking changes — MCP clients that ignore unknown fields will 
 
 ```typescript
 interface PageMeta {
-  returned: number;    // items in this page
-  total: number;       // total matching items in DB
+  returned: number; // items in this page
+  total: number; // total matching items in DB
   limit: number;
   offset: number;
-  has_more: boolean;   // offset + returned < total
+  has_more: boolean; // offset + returned < total
 }
 
 interface CompletenessMeta {
-  complete: boolean;   // true = this is the full answer
-  truncated: boolean;  // true = data was cut off (hard cap)
-  total?: number;      // total available (if applicable)
-  returned?: number;   // actually returned (if applicable)
+  complete: boolean; // true = this is the full answer
+  truncated: boolean; // true = data was cut off (hard cap)
+  total?: number; // total available (if applicable)
+  returned?: number; // actually returned (if applicable)
 }
 
 interface NextHint {
   recommended: "answer" | "paginate" | "narrow" | "related_tool";
-  tool?: string;       // suggested next tool name
+  tool?: string; // suggested next tool name
   args?: Record<string, unknown>; // suggested args
 }
 ```
 
 #### Metadata by Tool Category
 
-| Category | `page` | `completeness` | `next` |
-|----------|--------|----------------|--------|
-| **Browse** | ✅ (always) | ❌ Not used | ✅ When `has_more=true` |
-| **Detail** | ❌ | ✅ `complete=true` | ✅ When related data exists |
-| **Portfolio** | ❌ | ✅ (always) | ✅ When truncated |
-| **Aggregate** | ❌ | ❌ Not used | ❌ |
-| **Write** | ❌ | ❌ Not used | ❌ |
+| Category      | `page`      | `completeness`     | `next`                      |
+| ------------- | ----------- | ------------------ | --------------------------- |
+| **Browse**    | ✅ (always) | ❌ Not used        | ✅ When `has_more=true`     |
+| **Detail**    | ❌          | ✅ `complete=true` | ✅ When related data exists |
+| **Portfolio** | ❌          | ✅ (always)        | ✅ When truncated           |
+| **Aggregate** | ❌          | ❌ Not used        | ❌                          |
+| **Write**     | ❌          | ❌ Not used        | ❌                          |
 
 **Key rule**: Browse tools use `page` only, NOT `completeness`. The reason: `has_more=false` does NOT mean the Agent has the full result set — it only means the current page is the last page. For example, `offset=50, total=75, returned=25, has_more=false` is the last page but not the full set. Using `completeness.complete=true` here would be misleading.
 
@@ -237,7 +237,10 @@ RETURNS:
     product_id: z.string().optional().describe("Product ID (full ULID or 8-char prefix)"),
     product_name: z.string().optional().describe("Product name (exact match; error if ambiguous)"),
     product_code: z.string().optional().describe("Product code (exact match; error if ambiguous)"),
-    include_archived_units: z.boolean().optional().describe("Include units with status=已归档 (default: false)"),
+    include_archived_units: z
+      .boolean()
+      .optional()
+      .describe("Include units with status=已归档 (default: false)"),
   },
   async (args) => {
     // At least one identifier required
@@ -255,7 +258,7 @@ RETURNS:
     // 3. Build summary
     // 4. Return with completeness indicator
   },
-)
+);
 ```
 
 #### 2.2 Return Structure
@@ -366,13 +369,13 @@ Current response only has `product: unit.product_name`. Add both short and full:
 
 #### 4.1 Tool Categories
 
-| Category | Tools | Purpose | Returns |
-|----------|-------|---------|---------|
-| **Browse** | `list_products`, `list_units`, `query_transactions`, `query_transfers` | Explore/filter data | Page with `has_more` |
-| **Detail** | `get_product`, `get_unit` | Single record lookup | Full record |
-| **Portfolio** | `get_product_portfolio` | Relationship query | Complete view + summary |
-| **Aggregate** | `get_products_summary`, `get_units_summary`, `get_summary`, `get_monthly_report`, `aggregate_transactions` | Statistics | Totals and breakdowns |
-| **Write** | `create_product`, `update_product`, `create_unit`, `update_unit` | Data mutation | Created/updated record |
+| Category      | Tools                                                                                                      | Purpose              | Returns                 |
+| ------------- | ---------------------------------------------------------------------------------------------------------- | -------------------- | ----------------------- |
+| **Browse**    | `list_products`, `list_units`, `query_transactions`, `query_transfers`                                     | Explore/filter data  | Page with `has_more`    |
+| **Detail**    | `get_product`, `get_unit`                                                                                  | Single record lookup | Full record             |
+| **Portfolio** | `get_product_portfolio`                                                                                    | Relationship query   | Complete view + summary |
+| **Aggregate** | `get_products_summary`, `get_units_summary`, `get_summary`, `get_monthly_report`, `aggregate_transactions` | Statistics           | Totals and breakdowns   |
+| **Write**     | `create_product`, `update_product`, `create_unit`, `update_unit`                                           | Data mutation        | Created/updated record  |
 
 #### 4.2 Description Convention
 
@@ -418,11 +421,11 @@ This is more reliable than relying on Agent to read `linked_units_count` and inf
 
 #### 5.1 Test Layers
 
-| Layer | Harness | What to Test | Command |
-|-------|---------|-------------|---------|
-| L1 Unit | Mock `Db`, mock `McpServer` | Each tool's SQL logic, parameter validation, envelope format | `bun run test` |
-| L2 Workflow | Mock `Db` with sequential responses | Product resolver → units → summary multi-step flows | `bun run test` |
-| L3 Smoke (optional) | Real MCP route, mock auth | Full MCP client call → response shape | `bun run test:e2e` |
+| Layer               | Harness                             | What to Test                                                 | Command            |
+| ------------------- | ----------------------------------- | ------------------------------------------------------------ | ------------------ |
+| L1 Unit             | Mock `Db`, mock `McpServer`         | Each tool's SQL logic, parameter validation, envelope format | `bun run test`     |
+| L2 Workflow         | Mock `Db` with sequential responses | Product resolver → units → summary multi-step flows          | `bun run test`     |
+| L3 Smoke (optional) | Real MCP route, mock auth           | Full MCP client call → response shape                        | `bun run test:e2e` |
 
 **L1 Unit** (blocking): Every tool function tested in isolation with mock Db. Validates:
 - SQL query construction (correct WHERE clauses, parameter binding)
@@ -504,6 +507,7 @@ bun run lint                    # Lint (biome check --error-on-warnings)
 Each commit should be independently deployable and testable. Test files are organized by feature area, not by tool name.
 
 #### Commit 1: Envelope Infrastructure + Product Resolver
+
 - Add `PageMeta`, `CompletenessMeta`, `NextHint` types to `types.ts`
 - Add `okWithPage()`, `okWithCompleteness()` helper functions — these merge metadata into the existing top-level payload (e.g., `{ units: [...], page: {...} }`), NOT a new root wrapper
 - Add `resolveProduct()` utility function (KD-1 resolver)
@@ -511,6 +515,7 @@ Each commit should be independently deployable and testable. Test files are orga
 - **Tests**: `src/__tests__/mcp/envelope.test.ts` (new), `src/__tests__/mcp/resolver.test.ts` (new)
 
 #### Commit 2: Apply Envelope to All Browse Tools
+
 - Update `list_products`, `list_units`, `query_transactions`, `query_transfers` with unified envelope
 - Add COUNT queries to each
 - Keep backward-compatible `count`/`limit`/`offset` fields (deprecated)
@@ -519,6 +524,7 @@ Each commit should be independently deployable and testable. Test files are orga
 - **Why combined**: All browse tools share the same envelope change; splitting would create 4 commits for identical pattern.
 
 #### Commit 3: Add `product_id` Filter + Response to `list_units`
+
 - Add `product_id` and `product_name` filter parameters (using KD-1 resolver)
 - Add `product_id` (short) and `product_id_full` to response
 - **Files**: `src/lib/mcp/tools/unit.ts`
@@ -526,6 +532,7 @@ Each commit should be independently deployable and testable. Test files are orga
 - **Why separate from Commit 2**: Filter addition is a feature change, not just envelope format change.
 
 #### Commit 4: Add `get_product_portfolio`
+
 - New tool implementation with product resolver
 - Summary calculation
 - Truncation handling (hard cap 1000)
@@ -535,29 +542,32 @@ Each commit should be independently deployable and testable. Test files are orga
 - **Note**: Must update `server.ts` to call `registerPortfolioTools()` — just exporting from `index.ts` does NOT register the tool.
 
 #### Commit 5: Enhance `get_product` with Navigation
+
 - Add `linked_units_count` and `linked_units_amount`
 - Add `completeness` and `next` hint (pointing to `get_product_portfolio` when linked_units_count > 0)
 - **Files**: `src/lib/mcp/tools/product.ts`
 - **Tests**: `src/__tests__/mcp/product.test.ts` (extend)
 
 #### Commit 6: Update Tool Descriptions
+
 - Add WHEN TO USE / DO NOT USE FOR / LIMITATIONS to all tools
 - **Files**: All tool files
 - **Tests**: No new tests needed (description changes only)
 
 #### Commit 7: Deprecation Cleanup
+
 - Remove old backward-compatible `count`/`limit`/`offset` top-level fields
 - **Files**: All paginated tool files
 - **Tests**: Update existing tests (remove backward-compat assertions)
 
 ## Risk Assessment
 
-| Risk | Impact | Mitigation |
-|------|--------|-----------|
-| COUNT query performance | Low (current data volumes small) | Monitor; add caching if needed |
-| Breaking existing MCP clients | Medium | Keep backward-compatible fields during deprecation period |
-| `get_product_portfolio` with >1000 units | Low | Hard cap + truncation signal + suggest narrowing |
-| Tool count increase | Low | Clear categories + description convention |
+| Risk                                     | Impact                           | Mitigation                                                |
+| ---------------------------------------- | -------------------------------- | --------------------------------------------------------- |
+| COUNT query performance                  | Low (current data volumes small) | Monitor; add caching if needed                            |
+| Breaking existing MCP clients            | Medium                           | Keep backward-compatible fields during deprecation period |
+| `get_product_portfolio` with >1000 units | Low                              | Hard cap + truncation signal + suggest narrowing          |
+| Tool count increase                      | Low                              | Clear categories + description convention                 |
 
 ## Success Criteria
 

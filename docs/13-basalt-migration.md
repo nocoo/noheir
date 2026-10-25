@@ -11,25 +11,25 @@ Migrate all noheir UI to the basalt design system (matte, 3-tier luminance, Sky 
 
 ## Source template
 
-| Key | Value |
-|-----|-------|
-| Template | `../basalt` |
-| Login template | `BadgeLoginPage` (not `LoginPage`) |
-| Primary color | **Sky** — `200 90% 55%` (light) / `200 90% 60%` (dark) |
+| Key             | Value                                                                          |
+| --------------- | ------------------------------------------------------------------------------ |
+| Template        | `../basalt`                                                                    |
+| Login template  | `BadgeLoginPage` (not `LoginPage`)                                             |
+| Primary color   | **Sky** — `200 90% 55%` (light) / `200 90% 60%` (dark)                         |
 | Design language | Matte cards (`border-0 shadow-none bg-secondary`), 3-tier luminance (L0→L1→L2) |
 
 ## Tech delta
 
-| Aspect | noheir (before) | basalt (target) | Migration |
-|--------|----------------|-----------------|-----------|
-| Tailwind | v3 + `tailwind.config.ts` + PostCSS | v4 + `@tailwindcss/vite` + `@theme inline` | Full rewrite of config |
-| Fonts | Roboto / Libre Caslon Text / Roboto Mono | Inter / DM Sans | Replace Google Fonts imports |
-| Primary | `219 43% 41%` (Logo Blue) | `200 90% 55%` (Sky) | CSS vars |
-| Luminance | Flat (white card on slate bg) | 3-tier (L0 body → L1 card → L2 secondary) | CSS vars |
-| Dark mode | Slate-based (`222 47% 11%`) | Neutral black (`0 0% 9%`) | CSS vars |
-| Chart palette | 5 colors | 24 colors + heatmap scales | Extend |
-| Layout | `children` prop, `bg-card` sidebar | `children` prop (keep), `bg-background` sidebar, `rounded-[20px] bg-card` content | Restyle |
-| Login | Card-based full-screen primary bg | Badge card with radial glow | Replace component |
+| Aspect        | noheir (before)                          | basalt (target)                                                                   | Migration                    |
+| ------------- | ---------------------------------------- | --------------------------------------------------------------------------------- | ---------------------------- |
+| Tailwind      | v3 + `tailwind.config.ts` + PostCSS      | v4 + `@tailwindcss/vite` + `@theme inline`                                        | Full rewrite of config       |
+| Fonts         | Roboto / Libre Caslon Text / Roboto Mono | Inter / DM Sans                                                                   | Replace Google Fonts imports |
+| Primary       | `219 43% 41%` (Logo Blue)                | `200 90% 55%` (Sky)                                                               | CSS vars                     |
+| Luminance     | Flat (white card on slate bg)            | 3-tier (L0 body → L1 card → L2 secondary)                                         | CSS vars                     |
+| Dark mode     | Slate-based (`222 47% 11%`)              | Neutral black (`0 0% 9%`)                                                         | CSS vars                     |
+| Chart palette | 5 colors                                 | 24 colors + heatmap scales                                                        | Extend                       |
+| Layout        | `children` prop, `bg-card` sidebar       | `children` prop (keep), `bg-background` sidebar, `rounded-[20px] bg-card` content | Restyle                      |
+| Login         | Card-based full-screen primary bg        | Badge card with radial glow                                                       | Replace component            |
 
 ## Phases
 
@@ -123,16 +123,16 @@ Every phase is a sequence of atomic commits. To rollback any phase, `git revert`
 
 ## Progress
 
-| Phase | Status | Commit | Notes |
-|-------|--------|--------|-------|
-| 0.1 Tailwind v4 | ✅ Done | `0732c5d` | Removed v3 config, installed v4 + `@tailwindcss/vite` |
-| 0.2 Font swap | ✅ Done | `d25c2b9` | Inter / DM Sans |
-| 0.3 Color palette | ✅ Done | `32c1089` | Sky primary, 3-tier luminance, 24 chart colors, heatmaps |
-| 1 Layout | ✅ Done | `cd4d491` | Basalt sidebar + rounded content area + ⌘K |
-| 2 BadgeLogin | ✅ Done | `fad293a` | Badge card with radial glow, Google OAuth |
-| 3 Page visual | ✅ Done | `f227a31` | Matte cards, LoadingPage, NotFound |
-| 4.1 shadcn/ui fixes | ✅ Done | `d290bc7` | caret-blink, animation, toast, sidebar |
-| 4.2 Palette resolver | ✅ Done | `4bc1607` | resolveColor, domain maps, 28 tests |
-| 4.3 Consumer migration | ✅ Done | `cf61170` | 7 files migrated to palette.ts |
-| 4.4 Hardcoded hex cleanup | ✅ Done | (this commit) | LiquidityLadder + CapitalUnitsManager |
-| 5 Full validation | ✅ Done | — | 327 UT + lint + build + 59 E2E + 168 MCP |
+| Phase                     | Status  | Commit        | Notes                                                    |
+| ------------------------- | ------- | ------------- | -------------------------------------------------------- |
+| 0.1 Tailwind v4           | ✅ Done | `0732c5d`     | Removed v3 config, installed v4 + `@tailwindcss/vite`    |
+| 0.2 Font swap             | ✅ Done | `d25c2b9`     | Inter / DM Sans                                          |
+| 0.3 Color palette         | ✅ Done | `32c1089`     | Sky primary, 3-tier luminance, 24 chart colors, heatmaps |
+| 1 Layout                  | ✅ Done | `cd4d491`     | Basalt sidebar + rounded content area + ⌘K               |
+| 2 BadgeLogin              | ✅ Done | `fad293a`     | Badge card with radial glow, Google OAuth                |
+| 3 Page visual             | ✅ Done | `f227a31`     | Matte cards, LoadingPage, NotFound                       |
+| 4.1 shadcn/ui fixes       | ✅ Done | `d290bc7`     | caret-blink, animation, toast, sidebar                   |
+| 4.2 Palette resolver      | ✅ Done | `4bc1607`     | resolveColor, domain maps, 28 tests                      |
+| 4.3 Consumer migration    | ✅ Done | `cf61170`     | 7 files migrated to palette.ts                           |
+| 4.4 Hardcoded hex cleanup | ✅ Done | (this commit) | LiquidityLadder + CapitalUnitsManager                    |
+| 5 Full validation         | ✅ Done | —             | 327 UT + lint + build + 59 E2E + 168 MCP                 |

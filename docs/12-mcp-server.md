@@ -99,39 +99,39 @@ src/
 
 ### Query Tools (4)
 
-| Tool | Description |
-|------|-------------|
-| `query_transactions` | Query income/expense transactions (16 filters) |
-| `query_transfers` | Query internal transfers (13 filters) |
-| `get_summary` | Get financial metadata (years, accounts, categories) |
-| `get_monthly_report` | Get monthly report by year/month |
+| Tool                 | Description                                          |
+| -------------------- | ---------------------------------------------------- |
+| `query_transactions` | Query income/expense transactions (16 filters)       |
+| `query_transfers`    | Query internal transfers (13 filters)                |
+| `get_summary`        | Get financial metadata (years, accounts, categories) |
+| `get_monthly_report` | Get monthly report by year/month                     |
 
 ### Product CRUD (5)
 
-| Tool | Type | Description |
-|------|------|-------------|
-| `list_products` | Simple Entity | List products with filters |
-| `get_product` | Simple Entity | Get product by ID |
-| `create_product` | Simple Entity | Create new product |
-| `update_product` | Simple Entity | Update product fields |
-| `delete_product` | Custom Tool | Archive product + unlink units |
+| Tool             | Type          | Description                    |
+| ---------------- | ------------- | ------------------------------ |
+| `list_products`  | Simple Entity | List products with filters     |
+| `get_product`    | Simple Entity | Get product by ID              |
+| `create_product` | Simple Entity | Create new product             |
+| `update_product` | Simple Entity | Update product fields          |
+| `delete_product` | Custom Tool   | Archive product + unlink units |
 
 ### Unit CRUD (5)
 
-| Tool | Type | Description |
-|------|------|-------------|
-| `list_units` | Entity + Enrichment | List units with availability info |
-| `get_unit` | Entity + Enrichment | Get unit by ID with availability |
-| `create_unit` | Entity + Hooks | Create unit (endDate invariant) |
-| `update_unit` | Entity + Hooks | Update unit (CAS + contribution logs) |
-| `delete_unit` | Custom Tool | Delete unit (checks contribution logs) |
+| Tool          | Type                | Description                            |
+| ------------- | ------------------- | -------------------------------------- |
+| `list_units`  | Entity + Enrichment | List units with availability info      |
+| `get_unit`    | Entity + Enrichment | Get unit by ID with availability       |
+| `create_unit` | Entity + Hooks      | Create unit (endDate invariant)        |
+| `update_unit` | Entity + Hooks      | Update unit (CAS + contribution logs)  |
+| `delete_unit` | Custom Tool         | Delete unit (checks contribution logs) |
 
 ### Summary Tools (2)
 
-| Tool | Description |
-|------|-------------|
+| Tool                   | Description                                  |
+| ---------------------- | -------------------------------------------- |
 | `get_products_summary` | Aggregated product stats by channel/category |
-| `get_units_summary` | Aggregated unit stats by strategy/tactics |
+| `get_units_summary`    | Aggregated unit stats by strategy/tactics    |
 
 ## Entity Design
 
@@ -156,11 +156,11 @@ Standard CRUD operations. Delete is a custom tool because it needs to:
 
 ### Token Lifecycle
 
-| Token Type | TTL | Rotation |
-|------------|-----|----------|
-| Authorization Code | 5 min | N/A (one-time) |
-| Access Token | 1 hour | N/A |
-| Refresh Token | 30 days | Every use |
+| Token Type         | TTL     | Rotation       |
+| ------------------ | ------- | -------------- |
+| Authorization Code | 5 min   | N/A (one-time) |
+| Access Token       | 1 hour  | N/A            |
+| Refresh Token      | 30 days | Every use      |
 
 ### Refresh Token Rotation
 
@@ -202,10 +202,10 @@ cd worker && bun test
 
 ### Test Coverage
 
-| Layer | File | Tests |
-|-------|------|-------|
+| Layer     | File                            | Tests                                 |
+| --------- | ------------------------------- | ------------------------------------- |
 | OAuth E2E | `worker/tests/e2e/oauth.e2e.ts` | OAuth flow, token refresh, revocation |
-| MCP E2E | `worker/tests/e2e/mcp.e2e.ts` | Origin validation, auth, HTTP methods |
+| MCP E2E   | `worker/tests/e2e/mcp.e2e.ts`   | Origin validation, auth, HTTP methods |
 
 ## Migration from v2
 

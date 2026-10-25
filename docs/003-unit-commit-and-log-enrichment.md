@@ -33,18 +33,18 @@
 
 > 以下为需求澄清阶段与用户闭环的结论，实现时不再重开讨论。
 
-| # | 决策 | 内容 |
-|---|---|---|
-| D1 | 损益语义 | **新增独立列** `pnl_cents`。`amount_cents` = 本金流动，`pnl_cents` = 已实现损益。可累加为"该单元累计收益" |
-| D2 | 番号对换范围 | **仅交换 `unitCode` 字符串**。金额、产品、策略、战术全部原地不动 |
-| D3 | 窄屏退化 | 宽屏三栏并排，窄屏纵向堆叠（`lg:grid-cols-3`），全部内容都在 |
-| D4 | 备注形态 | **对话框底部统一一个备注框**（`commitNote`，写进日志）。本次保存的所有变更共享它；元数据修改**也**写日志。与单元自身的持久备注 `unitNote` 区分，见 [Decision B] 前的说明 |
-| D5 | 操作提交时机 | 操作按钮**暂存**为待生效卡片（可撤销），点底部"保存"才统一提交 |
-| D6 | 元数据日志金额 | `amount_cents` **一律记 0**。日志是文字记录，不参与金额统计 |
-| D7 | 损益录入口 | ① 切换产品的暂存面板内；② 单元对话框时间线里逐条可编辑 |
-| D8 | 原子性 | **新建 `POST /api/units/:id/commit`**，一次接收元数据 + 操作列表 + 备注，`d1.batch` 全成或全不成 |
-| D9 | 时间线数据源 | 打开对话框时**按需拉取**（不由页面预取）。同一次拉取顺带取回 `expected` 用的 raw 单元快照，见 [Decision B] |
-| D10 | 对换目标范围 | **任意单元**，搜索选择 |
+| #   | 决策           | 内容                                                                                                                                                                     |
+| --- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| D1  | 损益语义       | **新增独立列** `pnl_cents`。`amount_cents` = 本金流动，`pnl_cents` = 已实现损益。可累加为"该单元累计收益"                                                                |
+| D2  | 番号对换范围   | **仅交换 `unitCode` 字符串**。金额、产品、策略、战术全部原地不动                                                                                                         |
+| D3  | 窄屏退化       | 宽屏三栏并排，窄屏纵向堆叠（`lg:grid-cols-3`），全部内容都在                                                                                                             |
+| D4  | 备注形态       | **对话框底部统一一个备注框**（`commitNote`，写进日志）。本次保存的所有变更共享它；元数据修改**也**写日志。与单元自身的持久备注 `unitNote` 区分，见 [Decision B] 前的说明 |
+| D5  | 操作提交时机   | 操作按钮**暂存**为待生效卡片（可撤销），点底部"保存"才统一提交                                                                                                           |
+| D6  | 元数据日志金额 | `amount_cents` **一律记 0**。日志是文字记录，不参与金额统计                                                                                                              |
+| D7  | 损益录入口     | ① 切换产品的暂存面板内；② 单元对话框时间线里逐条可编辑                                                                                                                   |
+| D8  | 原子性         | **新建 `POST /api/units/:id/commit`**，一次接收元数据 + 操作列表 + 备注，`d1.batch` 全成或全不成                                                                         |
+| D9  | 时间线数据源   | 打开对话框时**按需拉取**（不由页面预取）。同一次拉取顺带取回 `expected` 用的 raw 单元快照，见 [Decision B]                                                               |
+| D10 | 对换目标范围   | **任意单元**，搜索选择                                                                                                                                                   |
 
 ---
 
@@ -58,11 +58,11 @@
 SELECT source, typeof(created_at), COUNT(*) FROM contribution_logs GROUP BY 1,2;
 ```
 
-| source | typeof | 行数 | 实际编码 |
-|---|---|---|---|
-| `auto` | integer | 66 | **毫秒**（`1784956591451`） |
-| `import` | integer | 144 | **毫秒**（`1775362679500`） |
-| `mcp` | text | 132 | **ISO 字符串**（`"2026-07-02T05:51:49.226Z"`） |
+| source   | typeof  | 行数 | 实际编码                                       |
+| -------- | ------- | ---- | ---------------------------------------------- |
+| `auto`   | integer | 66   | **毫秒**（`1784956591451`）                    |
+| `import` | integer | 144  | **毫秒**（`1775362679500`）                    |
+| `mcp`    | text    | 132  | **ISO 字符串**（`"2026-07-02T05:51:49.226Z"`） |
 
 而 Drizzle schema 声明的是 `integer("created_at", {mode:"timestamp"})` —— **秒**（`worker/db/schema.ts:179`，`mode:"timestamp"` 解码时做 `new Date(value * 1000)`）。建表在 `0002_contribution_logs.sql:15`，是 `created_at INTEGER NOT NULL`，**无默认值**（不像 `0001_initial.sql` 其他表用 `DEFAULT (unixepoch())`），也就是说这一列的编码**完全由写入方决定**，而三个写入方各写各的。结果：`datetime(created_at,'unixepoch')` 对**每一行**都返回 `NULL`。
 
@@ -84,10 +84,10 @@ SELECT source, operation_type, COUNT(*) n,
 FROM contribution_logs GROUP BY 1,2;
 ```
 
-| source | type | 行数 | 其中正数 | 判定 |
-|---|---|---|---|---|
-| `auto` | withdraw | 31 | **0** | 正确（全负） |
-| `mcp` | withdraw | 65 | **65** | **全错（全正）** |
+| source | type     | 行数 | 其中正数 | 判定             |
+| ------ | -------- | ---- | -------- | ---------------- |
+| `auto` | withdraw | 31   | **0**    | 正确（全负）     |
+| `mcp`  | withdraw | 65   | **65**   | **全错（全正）** |
 
 `summarizeByUnit`（`worker/db/repositories/contribution-logs.ts:158-163`）按 `amountCents > 0` 判定投入 —— 这 65 条取出会被全部统计成投入。**这比时间戳问题严重得多**，它直接污染金额汇总。
 
@@ -133,22 +133,22 @@ ALTER TABLE contribution_logs ADD COLUMN pnl_cents INTEGER;
 
 **必须三处同步**（漏一处 → 单元测试与生产行为分叉）：
 
-| # | 文件 | 改动 |
-|---|---|---|
-| 1 | `worker/db/migrations/0008_contribution_log_pnl.sql` | `ALTER TABLE ... ADD COLUMN pnl_cents INTEGER;` |
-| 2 | `worker/db/schema.ts` | `pnlCents: integer("pnl_cents")`，紧邻 `balanceAfterCents`（~:174） |
-| 3 | `worker/tests/setup.ts` | `SCHEMA_DDL` 里 `contribution_logs` 块加 `pnl_cents INTEGER,`（~:75） |
+| #   | 文件                                                 | 改动                                                                  |
+| --- | ---------------------------------------------------- | --------------------------------------------------------------------- |
+| 1   | `worker/db/migrations/0008_contribution_log_pnl.sql` | `ALTER TABLE ... ADD COLUMN pnl_cents INTEGER;`                       |
+| 2   | `worker/db/schema.ts`                                | `pnlCents: integer("pnl_cents")`，紧邻 `balanceAfterCents`（~:174）   |
+| 3   | `worker/tests/setup.ts`                              | `SCHEMA_DDL` 里 `contribution_logs` 块加 `pnl_cents INTEGER,`（~:75） |
 
 > worker 单元测试**不读 migrations**，用的是手抄 DDL。这是本项目踩过的坑，见 `worker/tests/setup.ts:23-167`。
 
 ### 语义
 
-| 列 | 含义 | 番号对换 | 切换产品 | 校正可用日期 | 元数据修改 |
-|---|---|---|---|---|---|
-| `amount_cents` | 本金流动 | `0` | `-amt` / `+amt` | `0` | `0`（D6） |
-| `pnl_cents` | 已实现损益 | `NULL` | 挂在 `withdraw` 行 | `NULL` | `NULL` |
-| `operation_type` | 复用现有枚举 | `adjust` | `withdraw`+`invest` | `adjust` | `adjust` |
-| `operation_date` | 用户指定，默认今天 | 用户选 | 用户选 | 用户选 | 用户选 |
+| 列               | 含义               | 番号对换 | 切换产品            | 校正可用日期 | 元数据修改 |
+| ---------------- | ------------------ | -------- | ------------------- | ------------ | ---------- |
+| `amount_cents`   | 本金流动           | `0`      | `-amt` / `+amt`     | `0`          | `0`（D6）  |
+| `pnl_cents`      | 已实现损益         | `NULL`   | 挂在 `withdraw` 行  | `NULL`       | `NULL`     |
+| `operation_type` | 复用现有枚举       | `adjust` | `withdraw`+`invest` | `adjust`     | `adjust`   |
+| `operation_date` | 用户指定，默认今天 | 用户选   | 用户选              | 用户选       | 用户选     |
 
 **不新增 `swap` 枚举值**：`CONTRIBUTION_OPERATION_TYPES`（`worker/db/enums.ts`）被 `createContributionLogSchema`、`searchContributionLogsSchema`、`DomainContributionLog`（`src/domain/types.ts:141`）、`/capital-logs` 筛选器、MCP 工具共用，加值的爆炸半径远大于收益。语义写进 `note`。
 
@@ -175,46 +175,68 @@ const commitOperationSchema = z.discriminatedUnion("kind", [
 
 // 元数据补丁。刻意【不含 productId】（只能走 switch_product 操作），
 // 且把单元的持久备注命名为 unitNote，与本次提交的审计备注 commitNote 区分。
-const commitMetadataSchema = z.object({
-  unitCode:  z.string().min(1).optional(),
-  amountCents: z.number().int().min(0).optional(),
-  currency:  z.enum(CURRENCIES).optional(),
-  status:    z.enum(UNIT_STATUSES).optional(),
-  strategy:  z.enum(STRATEGIES).optional(),
-  tactics:   z.enum(TACTICS).optional(),
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
-  unitNote:  z.string().optional().nullable(),   // → capital_units.note
-}).refine(m => Object.keys(m).length > 0, { message: "metadata must not be empty" });
+const commitMetadataSchema = z
+  .object({
+    unitCode: z.string().min(1).optional(),
+    amountCents: z.number().int().min(0).optional(),
+    currency: z.enum(CURRENCIES).optional(),
+    status: z.enum(UNIT_STATUSES).optional(),
+    strategy: z.enum(STRATEGIES).optional(),
+    tactics: z.enum(TACTICS).optional(),
+    startDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional()
+      .nullable(),
+    unitNote: z.string().optional().nullable(), // → capital_units.note
+  })
+  .refine((m) => Object.keys(m).length > 0, { message: "metadata must not be empty" });
 
-export const commitUnitSchema = z.object({
-  metadata: commitMetadataSchema.optional(),
-  operations: z.array(commitOperationSchema).max(3).default([]),
-  operationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  commitNote: z.string().max(1000).optional().nullable(),  // → contribution_logs.note
-  expected: expectedUnitSchema,                            // 见 [Decision B]
-})
-.refine(d => d.metadata !== undefined || d.operations.length > 0 || (d.commitNote ?? "").length > 0,
-  { message: "commit must contain metadata, operations, or a note" })
-.refine(d => new Set(d.operations.map(o => o.kind)).size === d.operations.length,
-  { message: "at most one operation of each kind per commit" })
-// [P1-5] 直接改番号与番号对换互斥，否则最终番号不确定
-.refine(d => !(d.metadata?.unitCode !== undefined
-               && d.operations.some(o => o.kind === "swap_unit_code")),
-  { message: "unitCode cannot be edited while a code swap is staged" })
-// [P0-1] 改金额与切换产品互斥，见 [Decision C]
-.refine(d => !(d.metadata?.amountCents !== undefined
-               && d.operations.some(o => o.kind === "switch_product")),
-  { message: "amount cannot be edited while a product switch is staged" });
+export const commitUnitSchema = z
+  .object({
+    metadata: commitMetadataSchema.optional(),
+    operations: z.array(commitOperationSchema).max(3).default([]),
+    operationDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
+    commitNote: z.string().max(1000).optional().nullable(), // → contribution_logs.note
+    expected: expectedUnitSchema, // 见 [Decision B]
+  })
+  .refine(
+    (d) => d.metadata !== undefined || d.operations.length > 0 || (d.commitNote ?? "").length > 0,
+    { message: "commit must contain metadata, operations, or a note" },
+  )
+  .refine((d) => new Set(d.operations.map((o) => o.kind)).size === d.operations.length, {
+    message: "at most one operation of each kind per commit",
+  })
+  // [P1-5] 直接改番号与番号对换互斥，否则最终番号不确定
+  .refine(
+    (d) =>
+      !(
+        d.metadata?.unitCode !== undefined && d.operations.some((o) => o.kind === "swap_unit_code")
+      ),
+    { message: "unitCode cannot be edited while a code swap is staged" },
+  )
+  // [P0-1] 改金额与切换产品互斥，见 [Decision C]
+  .refine(
+    (d) =>
+      !(
+        d.metadata?.amountCents !== undefined &&
+        d.operations.some((o) => o.kind === "switch_product")
+      ),
+    { message: "amount cannot be edited while a product switch is staged" },
+  );
 ```
 
 `metadata` **刻意不含 `productId`** —— 产品变更只能通过 `switch_product` 操作表达，把写日志的逻辑收敛到一处。
 
-**[P1-5] `unitNote` 与 `commitNote` 是两个不同的东西**，原设计用同一个 `note` 字段表达，会导致"改单元备注"和"记录本次为什么这么改"互相覆盖：
+**[P1-5]`unitNote` 与 `commitNote` 是两个不同的东西**，原设计用同一个 `note` 字段表达，会导致"改单元备注"和"记录本次为什么这么改"互相覆盖：
 
-| 字段 | 落库位置 | 语义 | 生命周期 |
-|---|---|---|---|
-| `metadata.unitNote` | `capital_units.note` | 单元的**持久**备注 | 随单元存在，每次编辑覆盖前值，只保留最新 |
-| `commitNote` | `contribution_logs.note` | **本次提交**的审计备注 | 随日志行永久留存；后续再提交只会新增行，不会改动旧行 |
+| 字段                | 落库位置                 | 语义                   | 生命周期                                             |
+| ------------------- | ------------------------ | ---------------------- | ---------------------------------------------------- |
+| `metadata.unitNote` | `capital_units.note`     | 单元的**持久**备注     | 随单元存在，每次编辑覆盖前值，只保留最新             |
+| `commitNote`        | `contribution_logs.note` | **本次提交**的审计备注 | 随日志行永久留存；后续再提交只会新增行，不会改动旧行 |
 
 > `commitNote` 落库后**不会被后续提交覆盖**（每次提交写新行），但它**不是技术上不可变** —— 现有 `PUT /api/contribution-logs/:id`（`updateContributionLogSchema`）允许单独编辑某条日志的 `note`，`/capital-logs` 页面也提供了编辑入口。本期不收紧该 API：事后修正笔误是合理需求，且日志行本就带 `updatedAt`。
 
@@ -228,28 +250,28 @@ export const commitUnitSchema = z.object({
 // 严格镜像 capital_units 的可空性（worker/db/schema.ts:53-76）。
 // currency/status/strategy/tactics/startDate/endDate/note 在 DB 里【全部可空】。
 const expectedUnitSchema = z.object({
-  unitCode:    z.string(),                    // NOT NULL
-  amountCents: z.number().int(),              // NOT NULL
-  productId:   z.string().uuid().nullable(),
-  currency:    z.string().nullable(),
-  status:      z.string().nullable(),
-  strategy:    z.string().nullable(),
-  tactics:     z.string().nullable(),
-  startDate:   z.string().nullable(),
-  endDate:     z.string().nullable(),         // ← 原设计漏掉，生产 178 行全为 NULL
-  note:        z.string().nullable(),
+  unitCode: z.string(), // NOT NULL
+  amountCents: z.number().int(), // NOT NULL
+  productId: z.string().uuid().nullable(),
+  currency: z.string().nullable(),
+  status: z.string().nullable(),
+  strategy: z.string().nullable(),
+  tactics: z.string().nullable(),
+  startDate: z.string().nullable(),
+  endDate: z.string().nullable(), // ← 原设计漏掉，生产 178 行全为 NULL
+  note: z.string().nullable(),
   availableDateOverride: z.string().nullable(), // optional unlock pin; see 0010
 });
 ```
 
 **为什么必须镜像可空性 —— 这是会让功能直接不可用的坑。** 生产实测（178 个单元）：
 
-| 字段 | NULL 行数 | 影响 |
-|---|---|---|
-| `end_date` | **178 / 178** | 原设计**根本没把它放进 `expected`**，并发修改不受保护 |
-| `note` | **84 / 178** | 若声明为非空 `string`，这 84 个单元**永远无法提交** |
-| `start_date` | **26 / 178** | 同上 |
-| `currency` / `status` / `strategy` / `tactics` | 0 | 当前无 NULL，但 DB 允许，schema 必须容纳 |
+| 字段                                           | NULL 行数     | 影响                                                  |
+| ---------------------------------------------- | ------------- | ----------------------------------------------------- |
+| `end_date`                                     | **178 / 178** | 原设计**根本没把它放进 `expected`**，并发修改不受保护 |
+| `note`                                         | **84 / 178**  | 若声明为非空 `string`，这 84 个单元**永远无法提交**   |
+| `start_date`                                   | **26 / 178**  | 同上                                                  |
+| `currency` / `status` / `strategy` / `tactics` | 0             | 当前无 NULL，但 DB 允许，schema 必须容纳              |
 
 而 `toDomainUnit`（`src/lib/capital-mappers.ts`）会做兜底转换：`strategy`/`tactics` 用 `?? ""`，`currency`/`status` 用 `?? "CNY"` / `?? "已成立"`。**若前端把这些兜底值回传当 `expected`，与 DB 的 `NULL` 比较必然不等 → 恒 409**。
 
@@ -340,7 +362,7 @@ if (!results[0]?.meta.changes) {
 
 **代码分层**：`worker/lib/unit-commit.ts` 导出**纯**构建器，返回 `{ sql, params }[]` 与生成的备注串；`worker/src/index.ts` 只做 `d1.prepare(...).bind(...)` + `d1.batch` 的管道工作。分支逻辑进 `worker/lib/**`（95% 覆盖率门控），管道留在 `src/index.ts`（不门控）。
 
-### [Decision F] `/commit` 必须复用 `endDate` 状态不变量
+### [Decision F]`/commit` 必须复用 `endDate` 状态不变量
 
 现有 `PUT /api/units/:id`（`worker/src/index.ts:901-922`）在写库前强制一条不变量：
 
@@ -415,17 +437,17 @@ export function compareLogsForTimeline(a, b): number;
 export function sortLogsForTimeline<T>(logs: T[]): T[];
 ```
 
-| 输入 | 判定 | 输出 |
-|---|---|---|
-| `null` / `undefined` | — | `null` |
-| `Date` | 上游已解码 | `.getTime()`，`NaN` → `null` |
-| `number ≥ 1e12` | 毫秒 | 原值 |
-| `number ∈ [1e9, 1e12)` | 秒 | `× 1000` |
-| `number ∈ (0, 1e9)` | 秒（2001 前 / 测试夹具） | `× 1000` |
-| `number ≤ 0` | 哨兵值 | `null` |
-| 全数字 `string` | 按数字递归 | — |
-| ISO-8601 `string` | `Date.parse` | `NaN` → `null` |
-| 其他 | — | `null` |
+| 输入                   | 判定                     | 输出                         |
+| ---------------------- | ------------------------ | ---------------------------- |
+| `null` / `undefined`   | —                        | `null`                       |
+| `Date`                 | 上游已解码               | `.getTime()`，`NaN` → `null` |
+| `number ≥ 1e12`        | 毫秒                     | 原值                         |
+| `number ∈ [1e9, 1e12)` | 秒                       | `× 1000`                     |
+| `number ∈ (0, 1e9)`    | 秒（2001 前 / 测试夹具） | `× 1000`                     |
+| `number ≤ 0`           | 哨兵值                   | `null`                       |
+| 全数字 `string`        | 按数字递归               | —                            |
+| ISO-8601 `string`      | `Date.parse`             | `NaN` → `null`               |
+| 其他                   | —                        | `null`                       |
 
 `1e12` 这个分界点是无歧义的：2001–5138 年之间，秒与毫秒差三个数量级。**这是唯一不直观的地方，代码里留一行注释说明**。
 
@@ -461,28 +483,28 @@ SQL 只按 `operation_date DESC` 排，次级排序在 JS 里做（单元维度�
 - 删掉 `src/__tests__/lib/unit-update-diff.test.ts` 中 productId 专属的 4 个用例（:32-62），保留并改造其余 7 个 —— 逐字段拾取与置空的覆盖才是有价值的部分。
 - 独立成一个 `refactor(...)` commit，可单独回滚。该文件**不在** `vitest.config.ts` 的 `coverageExclude` 里，全局 95% 门控，替代品必须保持覆盖。
 
-### [Decision J] `totalPnl` 的类型契约
+### [Decision J]`totalPnl` 的类型契约
 
 `ContributionSummary`（`worker/db/types.ts:53`）是**手写 interface**，不是 Drizzle 推断类型 —— 加 `pnl_cents` 列不会让它自动带出 `totalPnl`。P1-C13 必须显式改它，否则端点返回的字段与类型不符，`tsc` 直接报错。
 
 三个子问题一次定死：
 
-| 问题 | 结论 | 理由 |
-|---|---|---|
-| **必填还是可选** | **必填** `totalPnl: number` | 与同结构的 `totalInvested` / `totalWithdrawn` / `netAmount` 一致。无 pnl 数据时聚合为 `0`，不是 `undefined` —— 可选会逼所有消费方写 `?? 0` |
-| **`summarizeByProduct` 是否也返回** | **是** | 两个方法共用同一个 `ContributionSummary` 返回类型（`contribution-logs.ts:174`），加了字段就是两边都有。刻意让 product 侧返回 `0` 反而要写额外分支 |
-| **`WorkerDbClient` 是否同步** | **必须** | `getContributionLogsSummaryByUnit`（`src/lib/worker-db-client.ts:286`）和 `...ByProduct`（`:297`）各自内联声明了返回结构，**不引用** `ContributionSummary`。两处都要手动加 `totalPnl: number`，漏一处则前端拿不到该字段且无类型报错 |
+| 问题                                | 结论                        | 理由                                                                                                                                                                                                                                |
+| ----------------------------------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **必填还是可选**                    | **必填** `totalPnl: number` | 与同结构的 `totalInvested` / `totalWithdrawn` / `netAmount` 一致。无 pnl 数据时聚合为 `0`，不是 `undefined` —— 可选会逼所有消费方写 `?? 0`                                                                                          |
+| **`summarizeByProduct` 是否也返回** | **是**                      | 两个方法共用同一个 `ContributionSummary` 返回类型（`contribution-logs.ts:174`），加了字段就是两边都有。刻意让 product 侧返回 `0` 反而要写额外分支                                                                                   |
+| **`WorkerDbClient` 是否同步**       | **必须**                    | `getContributionLogsSummaryByUnit`（`src/lib/worker-db-client.ts:286`）和 `...ByProduct`（`:297`）各自内联声明了返回结构，**不引用** `ContributionSummary`。两处都要手动加 `totalPnl: number`，漏一处则前端拿不到该字段且无类型报错 |
 
 聚合口径：`SUM(COALESCE(pnl_cents, 0))`，跳过软删除行（与现有 `summarizeByUnit` 的 `deletedAt IS NULL` 条件一致）。`unitCount?: number` 那种"仅 product 侧有"的可选字段模式**不复用** —— 它已经是既有设计里的一处别扭，不该再加一个。
 
-### [Decision K] `source='mcp'` 正式入枚举，而非改写为 `auto`
+### [Decision K]`source='mcp'` 正式入枚举，而非改写为 `auto`
 
 B2b 指出生产有 132 行 `source='mcp'`，而 `CONTRIBUTION_SOURCES`（`worker/db/enums.ts:63`）只有 `manual | auto | import`。两条路可走：
 
-| 方案 | 做法 | 问题 |
-|---|---|---|
-| ① 未来写 `auto` | MCP 改成写已有的 `auto` | **存量 132 行不迁移**（存量不管），它们会永远卡在枚举外：`/capital-logs` 的来源筛选器筛不出、`searchContributionLogsSchema` 的 `source` 参数匹配不到。等于把已知脏数据永久藏起来 |
-| ② **正式加 `mcp`**（采纳） | 枚举、领域类型、UI 筛选器同步加 | 改动面跨 worker/web，需拆两个 commit |
+| 方案                       | 做法                            | 问题                                                                                                                                                                             |
+| -------------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ① 未来写 `auto`            | MCP 改成写已有的 `auto`         | **存量 132 行不迁移**（存量不管），它们会永远卡在枚举外：`/capital-logs` 的来源筛选器筛不出、`searchContributionLogsSchema` 的 `source` 参数匹配不到。等于把已知脏数据永久藏起来 |
+| ② **正式加 `mcp`**（采纳） | 枚举、领域类型、UI 筛选器同步加 | 改动面跨 worker/web，需拆两个 commit                                                                                                                                             |
 
 **选 ②**。理由是存量既然不迁移，枚举就必须**如实反映库里真实存在的值**，否则筛选器对用户撒谎。而且 `mcp` 与 `auto` 语义本就不同 —— 一个是 AI 助手代操作，一个是系统在用户改产品时自动补记，混为一谈会丢失可追溯性。
 
@@ -512,7 +534,7 @@ B2b 指出生产有 132 行 `source='mcp'`，而 `CONTRIBUTION_SOURCES`（`worke
   </div>
   <Separator />
   {/* 统一备注框（commitNote，审计用）+ 取消 / 保存 */}
-</DialogContent>
+</DialogContent>;
 ```
 
 响应式白拿：默认单列，≥1024px 三列（D3）。`max-w-6xl` 是本仓库第一个超过 `sm:max-w-2xl` 的对话框 —— 作为**有意的、限定范围的例外**记录在此。
@@ -521,12 +543,12 @@ B2b 指出生产有 132 行 `source='mcp'`，而 `CONTRIBUTION_SOURCES`（`worke
 
 ### 新增组件（`src/components/capital/`）
 
-| 文件 | 职责 |
-|---|---|
+| 文件                        | 职责                                                                               |
+| --------------------------- | ---------------------------------------------------------------------------------- |
 | `unit-panel-primitives.tsx` | 从 `unit-tooltip.tsx:33-71` 提取 `SectionTitle` + `DataRow`，原文件逐字改为 import |
-| `unit-log-timeline.tsx` | 栏3 纵向历史列表 + 逐行损益内联编辑 |
-| `unit-operations-panel.tsx` | 栏2 操作按钮 + 待生效卡片（逐张可撤销） |
-| `unit-swap-picker.tsx` | 可搜索单元选择器，仿 `unit-editor.tsx:447-534` 的产品选择器 |
+| `unit-log-timeline.tsx`     | 栏3 纵向历史列表 + 逐行损益内联编辑                                                |
+| `unit-operations-panel.tsx` | 栏2 操作按钮 + 待生效卡片（逐张可撤销）                                            |
+| `unit-swap-picker.tsx`      | 可搜索单元选择器，仿 `unit-editor.tsx:447-534` 的产品选择器                        |
 
 栏1、栏2 的纯展示标记留在 `unit-editor.tsx` 内 —— 抽离无逻辑的容器只会增加 prop 钻取而不增加可测性。**只抽有逻辑的部分**。
 
@@ -544,10 +566,13 @@ B2b 指出生产有 132 行 `source='mcp'`，而 `CONTRIBUTION_SOURCES`（`worke
 // src/lib/unit-commit-plan.ts（纯函数，覆盖率门控）
 export type StagedOperation =
   | { kind: "swap_unit_code"; targetUnitId: string; targetUnitCode: string }
-  | { kind: "switch_product";
-      fromProductId: string | null; fromProductName: string | null;
-      toProductId:   string | null; toProductName:   string | null;
-      pnl: number | null;                    // UI 层用元
+  | {
+      kind: "switch_product";
+      fromProductId: string | null;
+      fromProductName: string | null;
+      toProductId: string | null;
+      toProductName: string | null;
+      pnl: number | null; // UI 层用元
     };
 ```
 
@@ -571,18 +596,18 @@ buildCommitPayload({ unit, form, operations, commitNote, operationDate }): Commi
 
 ### `pnl_cents` 全部触点
 
-| 文件 | 改动 |
-|---|---|
-| `worker/db/validation.ts` | `create` **和** `update` 两个 schema 都加 `pnlCents`（后者是时间线内联编辑的通路） |
-| `worker/db/repositories/contribution-logs.ts` | **`update()` 的 `Pick<>` 加 `"pnlCents"`**（B3，否则静默丢弃）；`summarizeByUnit` 加 `totalPnl` |
-| `worker/db/types.ts` | `ContributionLog` 无需改动（`$inferSelect` 自动带出 `pnlCents`）；但 **`ContributionSummary`（`:53`）是手写 interface，必须显式加 `totalPnl: number`** —— 见 [Decision J] |
-| `worker/src/index.ts` | 仅 `/commit` 的 INSERT 列表；`POST /api/contribution-logs` 展开 `parsed.data`，验证放行即可用 |
-| `src/lib/worker-db-client.ts` | 两个日志方法加 `pnlCents?`；新增 `commitUnit` / `listUnitLogs`；**两个 summary 方法（`:286` / `:297`）的内联返回类型各加 `totalPnl: number`**（[Decision J]） |
-| `src/lib/capital-mappers.ts` | `toDomainContributionLog`（:69-90）加 `pnl`；`createdAt`（:87）改为优先取 `createdAtMs` |
-| `src/domain/types.ts` | `DomainContributionLog` 加 `pnl`；`ContributionSummary` 加 `totalPnl` |
-| `src/app/actions/contribution-log-actions.ts` | create/update 加 `pnl?`，`Math.round(pnl * 100)` |
-| `src/app/capital-logs/capital-logs-client.tsx` | 加"收益"列（否则损益在主日志页不可见）；`SOURCES` 数组加 `mcp`（[Decision K]，P3-C7） |
-| `src/lib/mcp/tools/unit.ts:576,600` | **不需要**改 pnl（显式列表 + 可空列）；但要修 B2a（金额符号）与 B2c（`operation_date` 格式）。`source` 保持写 `'mcp'`，改的是枚举而非写入值（[Decision K]） |
+| 文件                                           | 改动                                                                                                                                                                      |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `worker/db/validation.ts`                      | `create` **和** `update` 两个 schema 都加 `pnlCents`（后者是时间线内联编辑的通路）                                                                                        |
+| `worker/db/repositories/contribution-logs.ts`  | **`update()` 的 `Pick<>` 加 `"pnlCents"`**（B3，否则静默丢弃）；`summarizeByUnit` 加 `totalPnl`                                                                           |
+| `worker/db/types.ts`                           | `ContributionLog` 无需改动（`$inferSelect` 自动带出 `pnlCents`）；但 **`ContributionSummary`（`:53`）是手写 interface，必须显式加 `totalPnl: number`** —— 见 [Decision J] |
+| `worker/src/index.ts`                          | 仅 `/commit` 的 INSERT 列表；`POST /api/contribution-logs` 展开 `parsed.data`，验证放行即可用                                                                             |
+| `src/lib/worker-db-client.ts`                  | 两个日志方法加 `pnlCents?`；新增 `commitUnit` / `listUnitLogs`；**两个 summary 方法（`:286` / `:297`）的内联返回类型各加 `totalPnl: number`**（[Decision J]）             |
+| `src/lib/capital-mappers.ts`                   | `toDomainContributionLog`（:69-90）加 `pnl`；`createdAt`（:87）改为优先取 `createdAtMs`                                                                                   |
+| `src/domain/types.ts`                          | `DomainContributionLog` 加 `pnl`；`ContributionSummary` 加 `totalPnl`                                                                                                     |
+| `src/app/actions/contribution-log-actions.ts`  | create/update 加 `pnl?`，`Math.round(pnl * 100)`                                                                                                                          |
+| `src/app/capital-logs/capital-logs-client.tsx` | 加"收益"列（否则损益在主日志页不可见）；`SOURCES` 数组加 `mcp`（[Decision K]，P3-C7）                                                                                     |
+| `src/lib/mcp/tools/unit.ts:576,600`            | **不需要**改 pnl（显式列表 + 可空列）；但要修 B2a（金额符号）与 B2c（`operation_date` 格式）。`source` 保持写 `'mcp'`，改的是枚举而非写入值（[Decision K]）               |
 
 备份/恢复与 MCP 查询不枚举 `contribution_logs` 列 —— 已核实，无影响。
 
@@ -590,14 +615,14 @@ buildCommitPayload({ unit, form, operations, commitNote, operationDate }): Commi
 
 ## Testing Strategy（6DQ）
 
-| 维度 | 内容 |
-|---|---|
-| **L1 Unit** | `worker/tests/contribution-log-time.test.ts`（归一化每一支，≥95%）、`worker/tests/unit-commit.test.ts`（语句构建器，≥95%）、`worker/tests/validation.test.ts`（`commitUnitSchema` + `pnlCents`）、`worker/tests/contribution-logs.test.ts`（pnl 往返、混合编码夹具经原始 sqlite 插入）、`src/__tests__/lib/unit-commit-plan.test.ts`（暂存不变量） |
-| **L1 Component** | RTL：`unit-log-timeline` / `unit-swap-picker` / `unit-operations-panel`，参照 `src/__tests__/components/plan/*.test.tsx` |
-| **L2 API** | `worker/tests/e2e/unit-commit.e2e.test.ts`：全成/全不成断言、409 走 `rawFetch`（`api()` 遇非 2xx 抛错）、番号对换后两个单元各有一条日志、`operation_date` 用本地日期 |
-| **G1 静态** | `bun run typecheck && bun run lint`（biome `--error-on-warnings`） |
-| **G2 安全** | pre-push 的 osv-scanner（已在用） |
-| **D1 隔离** | L2 跑本地 `wrangler dev --local`，不连生产 D1 |
+| 维度             | 内容                                                                                                                                                                                                                                                                                                                                               |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **L1 Unit**      | `worker/tests/contribution-log-time.test.ts`（归一化每一支，≥95%）、`worker/tests/unit-commit.test.ts`（语句构建器，≥95%）、`worker/tests/validation.test.ts`（`commitUnitSchema` + `pnlCents`）、`worker/tests/contribution-logs.test.ts`（pnl 往返、混合编码夹具经原始 sqlite 插入）、`src/__tests__/lib/unit-commit-plan.test.ts`（暂存不变量） |
+| **L1 Component** | RTL：`unit-log-timeline` / `unit-swap-picker` / `unit-operations-panel`，参照 `src/__tests__/components/plan/*.test.tsx`                                                                                                                                                                                                                           |
+| **L2 API**       | `worker/tests/e2e/unit-commit.e2e.test.ts`：全成/全不成断言、409 走 `rawFetch`（`api()` 遇非 2xx 抛错）、番号对换后两个单元各有一条日志、`operation_date` 用本地日期                                                                                                                                                                               |
+| **G1 静态**      | `bun run typecheck && bun run lint`（biome `--error-on-warnings`）                                                                                                                                                                                                                                                                                 |
+| **G2 安全**      | pre-push 的 osv-scanner（已在用）                                                                                                                                                                                                                                                                                                                  |
+| **D1 隔离**      | L2 跑本地 `wrangler dev --local`，不连生产 D1                                                                                                                                                                                                                                                                                                      |
 
 **混合编码夹具怎么造**：`worker/tests/setup.ts` 用真实 `better-sqlite3`，可绕过 Drizzle 直接 `INSERT` 出毫秒整数行、秒整数行、ISO 文本行，正是复现 B1 所需。
 
@@ -626,22 +651,22 @@ buildCommitPayload({ unit, form, operations, commitNote, operationDate }): Commi
 > 教训：业务字段的后置状态可以重复，不能用作身份凭证 —— 而且一旦引入身份凭证，**每一条依赖"前序是否成功"的语句都要用它**，漏一条就留一个洞。
 
 
-| # | Commit | 文件 | 门控 |
-|---|---|---|---|
-| P1-C1 | `feat(db): add 0008 pnl_cents migration` | `worker/db/migrations/0008_contribution_log_pnl.sql` | 本地 `wrangler d1 migrations apply noheir-db --local`；**部署门：本 commit 合并后立即 `--remote` 应用到生产，确认 `PRAGMA table_info(contribution_logs)` 含 `pnl_cents` 后，才继续合入 P1-C2** |
-| P1-C2 | `feat(schema): add pnl_cents to contribution_logs` | `worker/db/schema.ts`, `worker/tests/setup.ts` | 仓库测试加 pnl 用例；typecheck |
-| P1-C3 | `feat(worker): normalize mixed created_at encodings` | `worker/lib/contribution-log-time.ts` | 新建测试，每一支覆盖，≥95% |
-| P1-C4 | `fix(worker): tiebreak latest invest log by normalized time` | `worker/db/repositories/contribution-logs.ts` | 混合编码夹具测试 |
-| P1-C5 | `fix(worker): apply normalized sort to log search` | 同仓库文件 `search()` | 仓库测试：同 `operation_date` 下三种编码混排结果稳定 |
-| P1-C6 | `feat(worker): list unit logs with normalized timestamps` | 同仓库文件（原始 `sql<>` 投影） | 仓库测试 |
-| P1-C7 | `feat(worker): accept pnlCents in log validation` | `worker/db/validation.ts` + 仓库 `Pick<>` | validation 测试 + 仓库 pnl 更新行为测试（B3 澄清见上） |
-| P1-C8 | `feat(worker): unit commit statement builder` | `worker/lib/unit-commit.ts`（纯，含 `resolveEndDate`） | 新建测试，≥95%，覆盖 5 种归档状态转移（[Decision F]） —— **本期承重 commit** |
-| P1-C9 | `feat(worker): add commitUnitSchema` | `worker/db/validation.ts` | validation 测试 |
-| P1-C10 | `feat(worker): POST /api/units/:id/commit` | `worker/src/index.ts`（仅管道） | 新建 e2e：409（全字段锚点）、全成/全不成、`endDate` 不变量、无产品时带 pnl 返 400、**全 NULL 可选字段的单元能正常提交**（[Decision B]） |
-| P1-C11 | `feat(worker): GET /api/units/:id/logs` | `worker/src/index.ts` | e2e：`logs` 已归一化排序 + **`expected` 的 11 个字段与 DB 原始值逐一相等（`null` 不被兜底）** |
-| P1-C12 | `fix(worker): use local date for auto-log operation_date` | `worker/src/index.ts:814` | e2e 断言本地日期（B4） |
-| P1-C13 | `feat(worker): include totalPnl in summaries` | 仓库 + `worker/db/types.ts` + 端点 | 仓库测试 + e2e（见 [Decision J]） |
-| P1-C14 | `feat(worker): add mcp to contribution sources` | `worker/db/enums.ts` + validation | validation 测试（见 [Decision K]） |
+| #      | Commit                                                       | 文件                                                   | 门控                                                                                                                                                                                           |
+| ------ | ------------------------------------------------------------ | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P1-C1  | `feat(db): add 0008 pnl_cents migration`                     | `worker/db/migrations/0008_contribution_log_pnl.sql`   | 本地 `wrangler d1 migrations apply noheir-db --local`；**部署门：本 commit 合并后立即 `--remote` 应用到生产，确认 `PRAGMA table_info(contribution_logs)` 含 `pnl_cents` 后，才继续合入 P1-C2** |
+| P1-C2  | `feat(schema): add pnl_cents to contribution_logs`           | `worker/db/schema.ts`, `worker/tests/setup.ts`         | 仓库测试加 pnl 用例；typecheck                                                                                                                                                                 |
+| P1-C3  | `feat(worker): normalize mixed created_at encodings`         | `worker/lib/contribution-log-time.ts`                  | 新建测试，每一支覆盖，≥95%                                                                                                                                                                     |
+| P1-C4  | `fix(worker): tiebreak latest invest log by normalized time` | `worker/db/repositories/contribution-logs.ts`          | 混合编码夹具测试                                                                                                                                                                               |
+| P1-C5  | `fix(worker): apply normalized sort to log search`           | 同仓库文件 `search()`                                  | 仓库测试：同 `operation_date` 下三种编码混排结果稳定                                                                                                                                           |
+| P1-C6  | `feat(worker): list unit logs with normalized timestamps`    | 同仓库文件（原始 `sql<>` 投影）                        | 仓库测试                                                                                                                                                                                       |
+| P1-C7  | `feat(worker): accept pnlCents in log validation`            | `worker/db/validation.ts` + 仓库 `Pick<>`              | validation 测试 + 仓库 pnl 更新行为测试（B3 澄清见上）                                                                                                                                         |
+| P1-C8  | `feat(worker): unit commit statement builder`                | `worker/lib/unit-commit.ts`（纯，含 `resolveEndDate`） | 新建测试，≥95%，覆盖 5 种归档状态转移（[Decision F]） —— **本期承重 commit**                                                                                                                   |
+| P1-C9  | `feat(worker): add commitUnitSchema`                         | `worker/db/validation.ts`                              | validation 测试                                                                                                                                                                                |
+| P1-C10 | `feat(worker): POST /api/units/:id/commit`                   | `worker/src/index.ts`（仅管道）                        | 新建 e2e：409（全字段锚点）、全成/全不成、`endDate` 不变量、无产品时带 pnl 返 400、**全 NULL 可选字段的单元能正常提交**（[Decision B]）                                                        |
+| P1-C11 | `feat(worker): GET /api/units/:id/logs`                      | `worker/src/index.ts`                                  | e2e：`logs` 已归一化排序 + **`expected` 的 11 个字段与 DB 原始值逐一相等（`null` 不被兜底）**                                                                                                  |
+| P1-C12 | `fix(worker): use local date for auto-log operation_date`    | `worker/src/index.ts:814`                              | e2e 断言本地日期（B4）                                                                                                                                                                         |
+| P1-C13 | `feat(worker): include totalPnl in summaries`                | 仓库 + `worker/db/types.ts` + 端点                     | 仓库测试 + e2e（见 [Decision J]）                                                                                                                                                              |
+| P1-C14 | `feat(worker): add mcp to contribution sources`              | `worker/db/enums.ts` + validation                      | validation 测试（见 [Decision K]）                                                                                                                                                             |
 
 > **P1-C1 / P1-C2 顺序不可颠倒**：先 migration、再 schema/代码。反过来会出现"已部署的 Worker 引用了远端尚不存在的列"的窗口，`pnl_cents` 相关查询会直接 500。这也是为什么两个 commit 之间夹了一道**人工部署门**而不是连续合并。
 
@@ -695,14 +720,14 @@ P3-C1 提取 `unit-panel-primitives.tsx` · P3-C2 `unit-log-timeline.tsx` + RTL 
 
 实现完成后的代码审查发现 6 个问题，均已修复：
 
-| 级别 | 问题 | 修复 |
-|---|---|---|
-| P1 | **表单与 CAS 锚点不同源** —— 表单从 `unit` prop 初始化，`expected` 来自另一次请求。两者版本不同则用户基于旧数据编辑却用新快照过 CAS，**静默覆盖并发修改** | 新增 `formSnapshotFromExpected()`，表单在快照到达后从**同一份** raw 数据派生。另拆出 `refreshLogs()`：内联 pnl 编辑只动 `contribution_logs`，**不重新锚定** `expected` |
-| P1 | **对换目标日志丢失产品快照** —— `productId`/`productName` 写死 `null`，违反 Decision G "取该单元当前产品" | `SwapTarget` 增加产品字段，端点查询目标单元的产品一并传入 |
-| P2 | **归档日期误用操作日期** —— 补录历史日志并同时归档时，`end_date` 被回填成历史日期 | `BuildCommitInput` 拆出独立的 `today` 参数；`operationDate` 是资金移动时间，`today` 是归档时间 |
-| P2 | **产品选择未区分"未选择"与"取消关联"** —— 两者都用 `null`，且确认按钮始终可用 | `undefined` = 未选择（确认按钮禁用），`null` = 显式取消关联；单元本就无产品时隐藏"取消关联"选项（避免 `null → null` 被后端 400） |
-| P3 | 独立日志表单用 UTC 默认日期 | 新增 `src/lib/local-date.ts`，与 worker 的 `getLocalDateString` 对齐 |
-| P3 | `search()` 用 `createdAtMs` 排序却不返回该字段 | 随行返回，前端 mapper 不再回退解析混合编码 |
+| 级别 | 问题                                                                                                                                                      | 修复                                                                                                                                                                   |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P1   | **表单与 CAS 锚点不同源** —— 表单从 `unit` prop 初始化，`expected` 来自另一次请求。两者版本不同则用户基于旧数据编辑却用新快照过 CAS，**静默覆盖并发修改** | 新增 `formSnapshotFromExpected()`，表单在快照到达后从**同一份** raw 数据派生。另拆出 `refreshLogs()`：内联 pnl 编辑只动 `contribution_logs`，**不重新锚定** `expected` |
+| P1   | **对换目标日志丢失产品快照** —— `productId`/`productName` 写死 `null`，违反 Decision G "取该单元当前产品"                                                 | `SwapTarget` 增加产品字段，端点查询目标单元的产品一并传入                                                                                                              |
+| P2   | **归档日期误用操作日期** —— 补录历史日志并同时归档时，`end_date` 被回填成历史日期                                                                         | `BuildCommitInput` 拆出独立的 `today` 参数；`operationDate` 是资金移动时间，`today` 是归档时间                                                                         |
+| P2   | **产品选择未区分"未选择"与"取消关联"** —— 两者都用 `null`，且确认按钮始终可用                                                                             | `undefined` = 未选择（确认按钮禁用），`null` = 显式取消关联；单元本就无产品时隐藏"取消关联"选项（避免 `null → null` 被后端 400）                                       |
+| P3   | 独立日志表单用 UTC 默认日期                                                                                                                               | 新增 `src/lib/local-date.ts`，与 worker 的 `getLocalDateString` 对齐                                                                                                   |
+| P3   | `search()` 用 `createdAtMs` 排序却不返回该字段                                                                                                            | 随行返回，前端 mapper 不再回退解析混合编码                                                                                                                             |
 
 > **验证方式**：P1-2 与 P2-3 的修复都先临时回退代码，确认新增测试能精准捕获，再还原。测试 web **1024 → 1035**、worker **321 → 323**、e2e **154 → 156**，覆盖率 97.84% / 94.91% / 100%。
 
@@ -710,10 +735,10 @@ P3-C1 提取 `unit-panel-primitives.tsx` · P3-C2 `unit-log-timeline.tsx` + RTL 
 
 R4 关闭 5 项后，复审发现 2 处遗漏：
 
-| 级别 | 问题 | 修复 |
-|---|---|---|
-| P1 | **产品操作区仍未同源** —— R4 只把*基础表单*改成从 `expected` 派生，产品面板和锁定期时间线仍读旧的 `unit` prop。页面显示产品 A 而快照已是 B 时，用户点"取消关联"会成功解除 **B**，但他以为在操作 A | `UnitOperationsPanel` **移除 `unit` prop**，改收 `unitId` + `currentProductId` 两个显式字段 —— 组件拿不到整个 unit，就无从渲染旧数据。对话框传 `expected?.productId`，`selectedProduct` 同步改用快照。另用 `<fieldset disabled={loading}>` 包住编辑区，快照到达前不可操作 |
-| P2 | **对换目标产品未进守卫** —— 端点读取目标产品后、批处理执行前，若目标切换了产品，对换仍成功但日志记的是旧产品 | 目标产品纳入 `[0]` 号语句的 null-safe 守卫。`[1]` 号语句依赖 `[0]` 的后置状态，自动受保护 |
+| 级别 | 问题                                                                                                                                                                                              | 修复                                                                                                                                                                                                                                                                      |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P1   | **产品操作区仍未同源** —— R4 只把*基础表单*改成从 `expected` 派生，产品面板和锁定期时间线仍读旧的 `unit` prop。页面显示产品 A 而快照已是 B 时，用户点"取消关联"会成功解除 **B**，但他以为在操作 A | `UnitOperationsPanel` **移除 `unit` prop**，改收 `unitId` + `currentProductId` 两个显式字段 —— 组件拿不到整个 unit，就无从渲染旧数据。对话框传 `expected?.productId`，`selectedProduct` 同步改用快照。另用 `<fieldset disabled={loading}>` 包住编辑区，快照到达前不可操作 |
+| P2   | **对换目标产品未进守卫** —— 端点读取目标产品后、批处理执行前，若目标切换了产品，对换仍成功但日志记的是旧产品                                                                                      | 目标产品纳入 `[0]` 号语句的 null-safe 守卫。`[1]` 号语句依赖 `[0]` 的后置状态，自动受保护                                                                                                                                                                                 |
 
 > **一处如实说明**：P1 的护栏是**结构性**的（移除 prop 使误用无从发生）+ 组件测试锁住"渲染被告知的产品"，而非类型强制 —— 调用方若传 `unit.productId` 类型上仍合法。P2 的守卫覆盖的是"端点读取 → 批处理"窗口；"客户端读取 → 端点读取"这段由端点在请求内重新读取目标来保证，e2e 验证的是后者的契约（日志记提交时刻的产品）。
 >
@@ -723,11 +748,11 @@ R4 关闭 5 项后，复审发现 2 处遗漏：
 
 写入侧修好后，存量的三类脏数据也一并清掉了 —— 原计划"存量不管"，但 B2a 的 **65 条符号错误让 43 个单元的"累计投入"虚高 325 万元**，属于会误导判断的数字失真，不宜留着。
 
-| 问题 | 行数 | 处置 |
-|---|---|---|
-| B2a `withdraw` 金额为正 | 65 | `SET amount_cents = -amount_cents` |
-| B2c `operation_date` 是 ISO 串 | 132 | `SET operation_date = substr(...,1,10)` |
-| B1 `created_at` 为 ISO 文本 | 132 | `CAST(strftime('%s',...) AS INTEGER)*1000` |
+| 问题                           | 行数 | 处置                                       |
+| ------------------------------ | ---- | ------------------------------------------ |
+| B2a `withdraw` 金额为正        | 65   | `SET amount_cents = -amount_cents`         |
+| B2c `operation_date` 是 ISO 串 | 132  | `SET operation_date = substr(...,1,10)`    |
+| B1 `created_at` 为 ISO 文本    | 132  | `CAST(strftime('%s',...) AS INTEGER)*1000` |
 
 执行前导出了受影响的 132 行（三类有重叠）作回滚依据。清理后核对：
 

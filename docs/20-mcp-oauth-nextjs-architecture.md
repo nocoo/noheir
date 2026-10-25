@@ -153,11 +153,11 @@ noheir/
 
 ### 3.2 Token 生命周期
 
-| Token Type | TTL | 用途 |
-|------------|-----|------|
-| Authorization Code | 10 min | 一次性，换取 token |
-| Access Token | 30 days | MCP 请求认证 |
-| Refresh Token | 90 days | 刷新 access token |
+| Token Type         | TTL     | 用途               |
+| ------------------ | ------- | ------------------ |
+| Authorization Code | 10 min  | 一次性，换取 token |
+| Access Token       | 30 days | MCP 请求认证       |
+| Refresh Token      | 90 days | 刷新 access token  |
 
 ### 3.3 Token Rotation
 
@@ -235,9 +235,9 @@ CREATE TABLE mcp_refresh_tokens (
 // 封装 Worker SQL API 调用
 export function getDb(): Db {
   return {
-    query: <T>(sql, params?) => callWorkerApi('/api/v1/query', { sql, params }),
-    execute: (sql, params?) => callWorkerApi('/api/v1/execute', { sql, params }),
-    firstOrNull: <T>(sql, params?) => query<T>(sql, params).then(r => r.results[0] ?? null),
+    query: <T>(sql, params?) => callWorkerApi("/api/v1/query", { sql, params }),
+    execute: (sql, params?) => callWorkerApi("/api/v1/execute", { sql, params }),
+    firstOrNull: <T>(sql, params?) => query<T>(sql, params).then((r) => r.results[0] ?? null),
   };
 }
 ```
@@ -249,18 +249,18 @@ export function getDb(): Db {
 export async function validateMcpToken(db: Db, authHeader: string | null): Promise<McpAuthOutcome> {
   const bearerToken = extractBearerToken(authHeader);
   if (!bearerToken) return { valid: false, status: 401, error: "Missing token" };
-  
+
   const tokenHash = await sha256(bearerToken);
   const token = await getValidTokenByHash(db, tokenHash);
   if (!token) return { valid: false, status: 401, error: "Invalid token" };
-  
+
   updateLastUsed(db, token.id).catch(() => {}); // Fire-and-forget
   return { valid: true, token };
 }
 
 // Origin 验证（DNS rebinding 防护）
 export function validateOrigin(origin: string | null, siteUrl: string): McpAuthError | null {
-  if (!origin) return null;  // CLI clients
+  if (!origin) return null; // CLI clients
   // 允许: 同源, loopback, 非 HTTP 协议 (vscode://, electron://)
   // 拒绝: 其他 HTTP 源
 }
@@ -268,14 +268,14 @@ export function validateOrigin(origin: string | null, siteUrl: string): McpAuthE
 
 ### 5.3 OAuth Endpoints
 
-| Endpoint | 文件 | 功能 |
-|----------|------|------|
-| `GET /.well-known/oauth-authorization-server` | `src/app/.well-known/.../route.ts` | OAuth 元数据 |
-| `POST /api/mcp/register` | `src/app/api/mcp/register/route.ts` | 客户端注册 |
-| `GET /api/mcp/authorize` | `src/app/api/mcp/authorize/route.ts` | 创建 auth session |
-| `GET /api/mcp/callback` | `src/app/api/mcp/callback/route.ts` | 生成 auth code |
-| `POST /api/mcp/token` | `src/app/api/mcp/token/route.ts` | Token 交换 |
-| `POST /api/mcp/revoke` | `src/app/api/mcp/revoke/route.ts` | Token 撤销 |
+| Endpoint                                      | 文件                                 | 功能              |
+| --------------------------------------------- | ------------------------------------ | ----------------- |
+| `GET /.well-known/oauth-authorization-server` | `src/app/.well-known/.../route.ts`   | OAuth 元数据      |
+| `POST /api/mcp/register`                      | `src/app/api/mcp/register/route.ts`  | 客户端注册        |
+| `GET /api/mcp/authorize`                      | `src/app/api/mcp/authorize/route.ts` | 创建 auth session |
+| `GET /api/mcp/callback`                       | `src/app/api/mcp/callback/route.ts`  | 生成 auth code    |
+| `POST /api/mcp/token`                         | `src/app/api/mcp/token/route.ts`     | Token 交换        |
+| `POST /api/mcp/revoke`                        | `src/app/api/mcp/revoke/route.ts`    | Token 撤销        |
 
 ## 6. 环境变量
 
@@ -320,24 +320,24 @@ WORKER_SECRET=<shared-secret>  # 与 Next.js 匹配
 
 ### 8.1 待迁移工具清单
 
-| 工具 | 类型 | 复杂度 | 优先级 |
-|------|------|--------|--------|
-| `list_products` | Entity CRUD | 低 | P0 |
-| `get_product` | Entity CRUD | 低 | P0 |
-| `create_product` | Entity CRUD | 低 | P0 |
-| `update_product` | Entity CRUD | 低 | P0 |
-| `delete_product` | Custom Tool | 中 | P1 |
-| `list_units` | Entity + Enrichment | 中 | P0 |
-| `get_unit` | Entity + Enrichment | 中 | P0 |
-| `create_unit` | Entity + Hooks | 高 | P1 |
-| `update_unit` | Entity + Hooks | 高 | P1 |
-| `delete_unit` | Custom Tool | 中 | P1 |
-| `query_transactions` | Query Tool | 中 | P0 |
-| `query_transfers` | Query Tool | 中 | P0 |
-| `get_summary` | Query Tool | 低 | P0 |
-| `get_monthly_report` | Query Tool | 低 | P1 |
-| `get_products_summary` | Summary Tool | 低 | P1 |
-| `get_units_summary` | Summary Tool | 低 | P1 |
+| 工具                   | 类型                | 复杂度 | 优先级 |
+| ---------------------- | ------------------- | ------ | ------ |
+| `list_products`        | Entity CRUD         | 低     | P0     |
+| `get_product`          | Entity CRUD         | 低     | P0     |
+| `create_product`       | Entity CRUD         | 低     | P0     |
+| `update_product`       | Entity CRUD         | 低     | P0     |
+| `delete_product`       | Custom Tool         | 中     | P1     |
+| `list_units`           | Entity + Enrichment | 中     | P0     |
+| `get_unit`             | Entity + Enrichment | 中     | P0     |
+| `create_unit`          | Entity + Hooks      | 高     | P1     |
+| `update_unit`          | Entity + Hooks      | 高     | P1     |
+| `delete_unit`          | Custom Tool         | 中     | P1     |
+| `query_transactions`   | Query Tool          | 中     | P0     |
+| `query_transfers`      | Query Tool          | 中     | P0     |
+| `get_summary`          | Query Tool          | 低     | P0     |
+| `get_monthly_report`   | Query Tool          | 低     | P1     |
+| `get_products_summary` | Summary Tool        | 低     | P1     |
+| `get_units_summary`    | Summary Tool        | 低     | P1     |
 
 ### 8.2 原子化 Commit 计划
 
@@ -376,14 +376,14 @@ Phase 5: Summary Tools (P1) ✅ DONE
 
 每个 Phase 完成后验证：
 
-| 维度 | 检查项 |
-|------|--------|
-| **Design** | 工具 schema 是否清晰？description 是否足够？ |
-| **Dependencies** | 是否正确调用 SQL API？是否有循环依赖？ |
-| **Data** | 查询是否正确？是否有 SQL 注入风险？ |
-| **Defects** | 边界条件是否处理？错误消息是否友好？ |
-| **Documentation** | 工具用法是否在 description 中说明？ |
-| **Deployment** | 是否在 staging 验证？是否影响现有功能？ |
+| 维度              | 检查项                                       |
+| ----------------- | -------------------------------------------- |
+| **Design**        | 工具 schema 是否清晰？description 是否足够？ |
+| **Dependencies**  | 是否正确调用 SQL API？是否有循环依赖？       |
+| **Data**          | 查询是否正确？是否有 SQL 注入风险？          |
+| **Defects**       | 边界条件是否处理？错误消息是否友好？         |
+| **Documentation** | 工具用法是否在 description 中说明？          |
+| **Deployment**    | 是否在 staging 验证？是否影响现有功能？      |
 
 ### 8.4 迁移注意事项
 
