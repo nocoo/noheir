@@ -7,17 +7,20 @@ Current implementation incorrectly uses `capitalUnits.endDate` as "product matur
 ## Domain Model (Correct)
 
 ### Capital Unit Lifecycle
+
 - `startDate`: Unit creation date
 - `endDate`: Unit archive date (only set when status is `已归档`, null otherwise)
 - A unit can only be in ONE product at a time
 - `productId` CAN be null (unit not deployed to any product)
 
 ### Investment Timeline
+
 - Each investment is recorded in `contributionLogs` with `operationType: "invest"`
 - Switching products: keeps existing `withdraw` + `invest` logging behavior; availability computation uses the latest `invest` log only unless an override is set
 - **Initial unlock** = `available_date_override` if set, otherwise `latestInvest.operationDate + product.lockPeriodDays`. Returned `availableDate` is that unlock day during the initial lock, then the current cyclic window once past it.
 
 ### Unit Availability
+
 - If `available_date_override` is set: that calendar day is the initial unlock date (invest logs are not rewritten)
 - If `productId = null` and no override: not deployed, `availableDate = null`, `isAvailable = false`
 - If `productId != null` but no invest log and no override: `availableDate = null`, `isAvailable = false`
@@ -26,31 +29,34 @@ Current implementation incorrectly uses `capitalUnits.endDate` as "product matur
   - `isAvailable = false` if `today < availableDate`
 
 **Interpreting availability state**:
-| `availableDate` | `isAvailable` | `daysUntilAvailable` | Meaning |
-|-----------------|---------------|----------------------|---------|
-| `null` | `false` | `null` | Data insufficient (no override, and no product or no invest log) |
-| non-null | `false` | positive | Locked, N days until available |
-| non-null | `true` | 0 or negative | Available (negative = available since N days ago) |
+| `availableDate` | `isAvailable` | `daysUntilAvailable` | Meaning                                                          |
+| --------------- | ------------- | -------------------- | ---------------------------------------------------------------- |
+| `null`          | `false`       | `null`               | Data insufficient (no override, and no product or no invest log) |
+| non-null        | `false`       | positive             | Locked, N days until available                                   |
+| non-null        | `true`        | 0 or negative        | Available (negative = available since N days ago)                |
 
 ### Archive State Machine
-| Transition | `endDate` Action |
-|------------|------------------|
-| Any → `已归档` | Auto-set to today (user can override) |
-| `已归档` → Any other | Clear to null |
+
+| Transition           | `endDate` Action                      |
+| -------------------- | ------------------------------------- |
+| Any → `已归档`       | Auto-set to today (user can override) |
+| `已归档` → Any other | Clear to null                         |
 
 ---
 
 ## Current State (Problems)
 
 ### `capitalUnits` table
-| Field | Current Usage | Correct Usage |
-|-------|---------------|---------------|
-| `startDate` | ❓ Unclear | Unit creation date |
-| `endDate` | ❌ Product maturity date | Unit archive date (null if active) |
-| `productId` | ✅ Current product (nullable) | No change |
-| `status` | ✅ Unit status | No change |
+
+| Field       | Current Usage                 | Correct Usage                      |
+| ----------- | ----------------------------- | ---------------------------------- |
+| `startDate` | ❓ Unclear                    | Unit creation date                 |
+| `endDate`   | ❌ Product maturity date      | Unit archive date (null if active) |
+| `productId` | ✅ Current product (nullable) | No change                          |
+| `status`    | ✅ Unit status                | No change                          |
 
 ### Pages using `endDate` incorrectly
+
 1. **`/funds`** - Shows `endDate` as maturity date in table
 2. **`/capital-decisions`** - Uses `endDate` for decision logic
 3. **`/warehouse`** - Uses `endDate` for visualization
@@ -61,6 +67,7 @@ Current implementation incorrectly uses `capitalUnits.endDate` as "product matur
 ## Changes Required
 
 ### 1. Schema
+
 Keep `capitalUnits.endDate` as archive date. Availability stays computed, except for the optional pin `capital_units.available_date_override` (migration 0010): when set, that calendar day is the initial unlock date.
 
 ### 2. Backend: Add `availableDate` Computation
@@ -101,8 +108,8 @@ function computeAvailability(
   latestInvestLog: ContributionLog | null,
   product: FinancialProduct | null,
   today: Date = new Date(),
-  availableDateOverride: string | null = null
-): { availableDate: string | null; isAvailable: boolean; daysUntilAvailable: number | null }
+  availableDateOverride: string | null = null,
+): { availableDate: string | null; isAvailable: boolean; daysUntilAvailable: number | null };
 ```
 
 ### 3. Frontend: Map Fields Only
@@ -119,14 +126,14 @@ Frontend receives pre-computed fields from API, no longer derives from `endDate`
 
 ### 4. Rename Checklist
 
-| Old Name | New Name | Location |
-|----------|----------|----------|
-| `daysUntilMaturity` | `daysUntilAvailable` | `capital-mappers.ts`, domain types |
-| `buildMaturityDistribution` | `buildAvailabilityDistribution` | `capital-dashboard.ts` (bucket distribution: 7d/30d/90d/90d+) |
-| `buildMonthlyMaturities` | `buildMonthlyAvailability` | `liquidity-ladder.ts` (monthly aggregation) |
-| `MonthlyMaturity` | `MonthlyAvailability` | `liquidity-ladder.ts` type |
-| UI "到期" / "解锁" | "可用" | `/funds`, `/capital-decisions`, `/warehouse` |
-| `endDate` (in maturity context) | `availableDate` | All pages showing "maturity" |
+| Old Name                        | New Name                        | Location                                                      |
+| ------------------------------- | ------------------------------- | ------------------------------------------------------------- |
+| `daysUntilMaturity`             | `daysUntilAvailable`            | `capital-mappers.ts`, domain types                            |
+| `buildMaturityDistribution`     | `buildAvailabilityDistribution` | `capital-dashboard.ts` (bucket distribution: 7d/30d/90d/90d+) |
+| `buildMonthlyMaturities`        | `buildMonthlyAvailability`      | `liquidity-ladder.ts` (monthly aggregation)                   |
+| `MonthlyMaturity`               | `MonthlyAvailability`           | `liquidity-ladder.ts` type                                    |
+| UI "到期" / "解锁"              | "可用"                          | `/funds`, `/capital-decisions`, `/warehouse`                  |
+| `endDate` (in maturity context) | `availableDate`                 | All pages showing "maturity"                                  |
 
 **Two distinct modules**:
 - `liquidity-ladder.ts`: Monthly aggregation of future available funds (bar chart by month × strategy)
@@ -134,14 +141,14 @@ Frontend receives pre-computed fields from API, no longer derives from `endDate`
 
 ### 5. Frontend Pages
 
-| Page | Current | After Refactor |
-|------|---------|----------------|
-| `/funds` table | Shows `unit.endDate` | Shows computed `availableDate` |
-| `/funds` sort | Sorts by `endDate` | Sorts by `availableDate` |
-| `/capital-decisions` | Uses `endDate` | Uses `availableDate` |
-| `/warehouse` | Uses `endDate` for visualization | Uses `availableDate` |
-| Liquidity Ladder | Groups by `endDate` month | Groups by `availableDate` month |
-| Unit Editor | Input for `endDate` | Remove; auto-set on archive |
+| Page                 | Current                          | After Refactor                  |
+| -------------------- | -------------------------------- | ------------------------------- |
+| `/funds` table       | Shows `unit.endDate`             | Shows computed `availableDate`  |
+| `/funds` sort        | Sorts by `endDate`               | Sorts by `availableDate`        |
+| `/capital-decisions` | Uses `endDate`                   | Uses `availableDate`            |
+| `/warehouse`         | Uses `endDate` for visualization | Uses `availableDate`            |
+| Liquidity Ladder     | Groups by `endDate` month        | Groups by `availableDate` month |
+| Unit Editor          | Input for `endDate`              | Remove; auto-set on archive     |
 
 ### 6. Data Migration Strategy
 
@@ -162,6 +169,7 @@ Frontend receives pre-computed fields from API, no longer derives from `endDate`
 ## Implementation Tasks
 
 ### Phase 1: Backend (worker/) ✅
+
 - [x] 1.1 Add `computeAvailability()` helper in `worker/lib/availability.ts`
 - [x] 1.2 Add repository method: `getLatestInvestLogs(userId, unitIds)` in `worker/db/repositories/contribution-logs.ts`
 - [x] 1.3 Enhance `GET /units` and `GET /units/:id` to return `availableDate`, `isAvailable`, `daysUntilAvailable`
@@ -169,11 +177,13 @@ Frontend receives pre-computed fields from API, no longer derives from `endDate`
 - [x] 1.5 Add backend tests in `worker/tests/`
 
 ### Phase 2: Frontend Types & Mappers (src/) ✅
+
 - [x] 2.1 Update `src/domain/types.ts`: add `availableDate`, `isAvailable`, `daysUntilAvailable`; keep `endDate` for archive only
 - [x] 2.2 Update `src/lib/capital-mappers.ts`: remove `daysUntilMaturity` derivation from `endDate`, map new fields from API
 - [x] 2.3 Rename `daysUntilMaturity` → `daysUntilAvailable` in types
 
 ### Phase 3: Frontend Pages (src/) ✅
+
 - [x] 3.1 `/funds`: display `availableDate`, sort by `availableDate`, update column header to "可用日期"
 - [x] 3.2 `/capital-decisions`: replace `endDate` usage with `availableDate`
 - [x] 3.3 `/warehouse`: replace `endDate` usage with `availableDate`
@@ -182,6 +192,7 @@ Frontend receives pre-computed fields from API, no longer derives from `endDate`
 - [x] 3.6 Unit Editor: remove `endDate` input field
 
 ### Phase 4: Tests & Cleanup ✅
+
 - [x] 4.1 Add/update backend tests in `worker/tests/` for availability computation
 - [x] 4.2 Update frontend unit tests in `src/__tests__/`
 - [x] 4.3 Update e2e tests in `worker/tests/e2e/`
@@ -195,7 +206,7 @@ Frontend receives pre-computed fields from API, no longer derives from `endDate`
 1. **productId nullable**: Yes, units can exist without a product (not deployed).
 2. **Data migration**: New data only. Existing `endDate` preserved but ignored. User adds invest logs manually.
 3. **No invest log**: `availableDate = null` unless `available_date_override` is set. User can pin a date or add invest logs.
-4. **Archive state machine**: 
+4. **Archive state machine**:
    - Any → `已归档`: auto-set `endDate` to today, user can override
    - `已归档` → Any: clear `endDate` to null
 5. **Naming**: Rename maturity → available throughout codebase.

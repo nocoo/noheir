@@ -25,8 +25,8 @@ jobs:
     uses: nocoo/base-ci/.github/workflows/deploy-worker.yml@ac635753a869cb85fad1f52aae4ccbd6119f3cae # main 2026-10-22
     with:
       source-run-id: ${{ github.event_name == 'workflow_run' && format('{0}', github.event.workflow_run.id) || inputs.ci-run-id }}
-      runtime-version: '1.4.2'
-      node-version: '26.12.1'
+      runtime-version: "1.4.2"
+      node-version: "26.12.1"
       install-policy: trusted
       deploy-script: bun run deploy
       environment: noheir / production

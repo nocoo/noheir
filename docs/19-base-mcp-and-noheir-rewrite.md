@@ -97,7 +97,7 @@ export const productEntity: EntityConfig<Product> = {
   name: "product",
   display: "理财产品",
   plural: "products",
-  
+
   dataLayer: {
     list: (ctx, opts) => ctx.repos.products.list(opts),
     getById: (ctx, id) => ctx.repos.products.getById(id),
@@ -106,10 +106,16 @@ export const productEntity: EntityConfig<Product> = {
     update: (ctx, id, input) => ctx.repos.products.update(id, input),
     delete: (ctx, id) => ctx.repos.products.archive(id), // archive, not hard delete
   },
-  
-  schemas: { /* ... */ },
-  descriptions: { /* ... */ },
-  projection: { /* ... */ },
+
+  schemas: {
+    /* ... */
+  },
+  descriptions: {
+    /* ... */
+  },
+  projection: {
+    /* ... */
+  },
 };
 
 // Entity with Hooks 示例 (适合 unit —— 有 availability enrichment)
@@ -117,12 +123,12 @@ export const unitEntity: EntityConfig<Unit> = {
   name: "unit",
   display: "理财单元",
   plural: "units",
-  
+
   dataLayer: {
     list: async (ctx, opts) => {
       const units = await ctx.repos.units.list(opts);
       // Availability enrichment: 计算 daysToAvailable, availabilityStatus
-      return units.map(u => enrichAvailability(u));
+      return units.map((u) => enrichAvailability(u));
     },
     getById: async (ctx, id) => {
       const unit = await ctx.repos.units.getById(id);
@@ -130,7 +136,7 @@ export const unitEntity: EntityConfig<Unit> = {
     },
     // ... 其他方法
   },
-  
+
   hooks: {
     // update_unit 修改 productId 时需要记录 contribution log
     beforeUpdate: async (ctx, id, input, existing) => {
@@ -154,8 +160,10 @@ export const unitEntity: EntityConfig<Unit> = {
       }
     },
   },
-  
-  schemas: { /* ... */ },
+
+  schemas: {
+    /* ... */
+  },
 };
 
 // Custom Tool 示例 (delete_product 有特殊行为)
@@ -168,13 +176,13 @@ registerCustomTool(server, {
   handler: async (ctx, { id }) => {
     const product = await ctx.repos.products.getById(id);
     if (!product) return error("Product not found");
-    
+
     // Transaction: archive + unlink
     await ctx.db.transaction(async (tx) => {
       await ctx.repos.products.archive(tx, id);
       await ctx.repos.units.unlinkProduct(tx, id);
     });
-    
+
     return ok({ archived: true, unlinked_units: await ctx.repos.units.countByProduct(id) });
   },
 });
@@ -182,19 +190,19 @@ registerCustomTool(server, {
 
 **noheir 实体复杂度分类**：
 
-| Entity | 类型 | 原因 |
-|--------|------|------|
-| product.list/get/create | Simple Entity | 纯 CRUD |
-| product.update | Simple Entity | 纯字段更新 |
-| product.delete | Custom Tool | 需要 unlink units |
-| unit.list/get | Entity + Enrichment | availability 计算 |
-| unit.create/update | Entity + Hooks | productId CAS + contribution log |
-| unit.delete | Custom Tool | 需要检查关联 transactions |
+| Entity                  | 类型                | 原因                             |
+| ----------------------- | ------------------- | -------------------------------- |
+| product.list/get/create | Simple Entity       | 纯 CRUD                          |
+| product.update          | Simple Entity       | 纯字段更新                       |
+| product.delete          | Custom Tool         | 需要 unlink units                |
+| unit.list/get           | Entity + Enrichment | availability 计算                |
+| unit.create/update      | Entity + Hooks      | productId CAS + contribution log |
+| unit.delete             | Custom Tool         | 需要检查关联 transactions        |
 
 #### 1.3.3 OAuth 集成
 
 ```typescript
-import { 
+import {
   createOAuthHandlers,
   validateMcpToken,
   validateOrigin,
@@ -207,11 +215,11 @@ export async function POST(request: Request) {
   // 1. Origin 校验
   const originError = validateOrigin(request.headers.get("origin"), siteUrl);
   if (originError) return errorResponse(originError.error, originError.status);
-  
+
   // 2. Token 校验
   const authResult = await validateMcpToken(db, request.headers.get("authorization"));
   if (!authResult.valid) return errorResponse(authResult.error, authResult.status);
-  
+
   // 3. 创建 MCP Server 并处理请求
   const server = createMcpServer(config);
   registerEntityTools(server, productEntity, { db });
@@ -259,25 +267,25 @@ export function GET() {
 
 ### 1.5 从 firefly 提取的模块
 
-| firefly 路径 | base-mcp 路径 | 改动 |
-|--------------|---------------|------|
-| `src/lib/mcp/framework/types.ts` | `src/framework/types.ts` | 移除 `@/lib/db` 依赖，泛型化 |
-| `src/lib/mcp/framework/register.ts` | `src/framework/register.ts` | 无改动 |
-| `src/lib/mcp/framework/handlers.ts` | `src/framework/handlers.ts` | 无改动 |
-| `src/lib/mcp/framework/projection.ts` | `src/framework/projection.ts` | 无改动 |
-| `src/lib/mcp/framework/resolve.ts` | `src/framework/resolve.ts` | 泛型化 Db 类型 |
-| `src/lib/mcp/framework/response.ts` | `src/framework/response.ts` | 无改动 |
-| `src/lib/mcp/auth.ts` | `src/auth/token.ts` | 泛型化 |
-| `src/lib/mcp/oauth.ts` | `src/auth/pkce.ts` + `src/auth/oauth-metadata.ts` | 拆分 |
-| `src/lib/mcp/server.ts` | `src/server/create-server.ts` | 泛型化 |
+| firefly 路径                          | base-mcp 路径                                     | 改动                         |
+| ------------------------------------- | ------------------------------------------------- | ---------------------------- |
+| `src/lib/mcp/framework/types.ts`      | `src/framework/types.ts`                          | 移除 `@/lib/db` 依赖，泛型化 |
+| `src/lib/mcp/framework/register.ts`   | `src/framework/register.ts`                       | 无改动                       |
+| `src/lib/mcp/framework/handlers.ts`   | `src/framework/handlers.ts`                       | 无改动                       |
+| `src/lib/mcp/framework/projection.ts` | `src/framework/projection.ts`                     | 无改动                       |
+| `src/lib/mcp/framework/resolve.ts`    | `src/framework/resolve.ts`                        | 泛型化 Db 类型               |
+| `src/lib/mcp/framework/response.ts`   | `src/framework/response.ts`                       | 无改动                       |
+| `src/lib/mcp/auth.ts`                 | `src/auth/token.ts`                               | 泛型化                       |
+| `src/lib/mcp/oauth.ts`                | `src/auth/pkce.ts` + `src/auth/oauth-metadata.ts` | 拆分                         |
+| `src/lib/mcp/server.ts`               | `src/server/create-server.ts`                     | 泛型化                       |
 
 ### 1.6 测试策略
 
-| 层级 | 文件 | 测试内容 |
-|------|------|----------|
-| Unit | `src/**/*.test.ts` | 各模块独立测试 |
+| 层级        | 文件                 | 测试内容                     |
+| ----------- | -------------------- | ---------------------------- |
+| Unit        | `src/**/*.test.ts`   | 各模块独立测试               |
 | Integration | `tests/integration/` | 完整 OAuth 流程、Entity CRUD |
-| E2E | `tests/e2e/` | MCP 协议往返 |
+| E2E         | `tests/e2e/`         | MCP 协议往返                 |
 
 **测试覆盖率目标**: 90%+
 
@@ -301,25 +309,25 @@ export function GET() {
 
 ### 1.8 Commit 计划 (Part 1)
 
-| # | Commit | 内容 | 状态 |
-|---|--------|------|------|
-| 1 | `feat: init project structure` | pnpm init, tsconfig, vitest, eslint | ✅ |
-| 2 | `feat: add response builders` | `src/framework/response.ts` + tests | ✅ |
-| 3 | `feat: add projection engine` | `src/framework/projection.ts` + tests | ✅ |
-| 4 | `feat: add id/slug resolver` | `src/framework/resolve.ts` + tests | ✅ |
-| 5 | `feat: add entity types` | `src/framework/types.ts` | ✅ (合并到 #3) |
-| 6 | `feat: add CRUD handlers` | `src/framework/handlers.ts` + tests | ✅ |
-| 7 | `feat: add entity registration` | `src/framework/register.ts` + tests | ✅ |
-| 8 | `feat: add PKCE verification` | `src/auth/pkce.ts` + tests | ✅ |
-| 9 | `feat: add OAuth metadata` | `src/auth/oauth-metadata.ts` + tests | ✅ |
-| 10 | `feat: add origin validation` | `src/auth/origin.ts` + tests | ✅ |
-| 11 | `feat: add token management` | `src/auth/token.ts` + tests | ✅ |
-| 12 | `feat: add server factory` | `src/server/create-server.ts` + tests | ✅ |
-| 13 | `feat: add streamable HTTP transport` | N/A (使用 SDK 自带) | ⏭️ 跳过 |
-| 14 | `feat: add testing utilities` | `src/testing/*` | ✅ |
-| 15 | `feat: add public exports` | `src/index.ts` | ✅ (已在 #1 中) |
-| 16 | `docs: add README` | README.md | ✅ |
-| 17 | `chore: publish v0.1.0-alpha.1` | npm publish (预发版，仅供 noheir 验证) | ✅ |
+| #   | Commit                                | 内容                                   | 状态            |
+| --- | ------------------------------------- | -------------------------------------- | --------------- |
+| 1   | `feat: init project structure`        | pnpm init, tsconfig, vitest, eslint    | ✅              |
+| 2   | `feat: add response builders`         | `src/framework/response.ts` + tests    | ✅              |
+| 3   | `feat: add projection engine`         | `src/framework/projection.ts` + tests  | ✅              |
+| 4   | `feat: add id/slug resolver`          | `src/framework/resolve.ts` + tests     | ✅              |
+| 5   | `feat: add entity types`              | `src/framework/types.ts`               | ✅ (合并到 #3)  |
+| 6   | `feat: add CRUD handlers`             | `src/framework/handlers.ts` + tests    | ✅              |
+| 7   | `feat: add entity registration`       | `src/framework/register.ts` + tests    | ✅              |
+| 8   | `feat: add PKCE verification`         | `src/auth/pkce.ts` + tests             | ✅              |
+| 9   | `feat: add OAuth metadata`            | `src/auth/oauth-metadata.ts` + tests   | ✅              |
+| 10  | `feat: add origin validation`         | `src/auth/origin.ts` + tests           | ✅              |
+| 11  | `feat: add token management`          | `src/auth/token.ts` + tests            | ✅              |
+| 12  | `feat: add server factory`            | `src/server/create-server.ts` + tests  | ✅              |
+| 13  | `feat: add streamable HTTP transport` | N/A (使用 SDK 自带)                    | ⏭️ 跳过         |
+| 14  | `feat: add testing utilities`         | `src/testing/*`                        | ✅              |
+| 15  | `feat: add public exports`            | `src/index.ts`                         | ✅ (已在 #1 中) |
+| 16  | `docs: add README`                    | README.md                              | ✅              |
+| 17  | `chore: publish v0.1.0-alpha.1`       | npm publish (预发版，仅供 noheir 验证) | ✅              |
 
 **Part 1 完成统计**：
 - 代码行数：~1500 行
@@ -371,11 +379,11 @@ Claude Desktop ──HTTP──► Worker /mcp 端点
 
 **HTTP 方法定义**：
 
-| Method | Path | 用途 | Session 行为 |
-|--------|------|------|-------------|
-| POST | /mcp | 执行 MCP 请求（tools/call, resources/read 等） | 每请求新建 session |
-| GET | /mcp | SSE 通知流（可选，v1 不实现） | N/A |
-| DELETE | /mcp | 关闭 session（stateless 下为 no-op） | N/A |
+| Method | Path | 用途                                           | Session 行为       |
+| ------ | ---- | ---------------------------------------------- | ------------------ |
+| POST   | /mcp | 执行 MCP 请求（tools/call, resources/read 等） | 每请求新建 session |
+| GET    | /mcp | SSE 通知流（可选，v1 不实现）                  | N/A                |
+| DELETE | /mcp | 关闭 session（stateless 下为 no-op）           | N/A                |
 
 **Stateless Session 处理**：
 
@@ -384,19 +392,16 @@ Claude Desktop ──HTTP──► Worker /mcp 端点
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 
-export async function handleMcpRequest(
-  request: Request,
-  server: McpServer,
-): Promise<Response> {
+export async function handleMcpRequest(request: Request, server: McpServer): Promise<Response> {
   // WebStandardStreamableHTTPServerTransport 使用 Web Standard APIs (Request, Response, ReadableStream)
   // 原生支持 Cloudflare Workers, Deno, Bun, Hono.js 等 Web-standard 运行时
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined, // Stateless: 无 session ID
-    enableJsonResponse: true,      // 返回 JSON 而非 SSE stream
+    enableJsonResponse: true, // 返回 JSON 而非 SSE stream
   });
-  
+
   await server.connect(transport);
-  
+
   try {
     // handleRequest 接受 Web Request，返回 Web Response
     return await transport.handleRequest(request);
@@ -440,25 +445,25 @@ app.post("/mcp", async (c) => {
   // 1. Origin 校验
   const originError = validateOrigin(c.req.header("origin"), siteUrl);
   if (originError) return c.json({ error: originError.error }, originError.status);
-  
+
   // 2. Token 校验
   const authResult = await validateMcpToken(db, c.req.header("authorization"));
   if (!authResult.valid) return c.json({ error: authResult.error }, authResult.status);
-  
+
   // 3. 创建 MCP Server
   const userId = authResult.token.user_id;
   const server = createMcpServer({ name: "noheir", version: "3.0.0" });
-  
+
   // 4. 注册 Entity Tools
   const repos = createAllRepos(db, userId);
   registerEntityTools(server, productEntity, { repos });
   registerEntityTools(server, unitEntity, { repos });
   // ... 其他 entities
-  
+
   // 5. 注册 Extra Tools (非 CRUD)
   registerQueryTools(server, { repos });
   registerReportTools(server, { repos });
-  
+
   // 6. WebStandard HTTP Transport (Stateless)
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined,
@@ -503,7 +508,7 @@ export const productEntity: EntityConfig<Product> = {
   name: "product",
   display: "理财产品",
   plural: "products",
-  
+
   dataLayer: {
     list: async (ctx, opts) => ctx.repos.products.list(opts),
     getById: async (ctx, id) => ctx.repos.products.getById(id),
@@ -513,7 +518,7 @@ export const productEntity: EntityConfig<Product> = {
     // delete 不在 Entity 中定义，由 Custom Tool 处理
     // 见 worker/mcp/tools/delete-product.ts
   },
-  
+
   schemas: {
     list: {
       channel: z.string().optional(),
@@ -543,7 +548,7 @@ export const productEntity: EntityConfig<Product> = {
       annual_return_rate: z.number().nullable().optional(),
     },
   },
-  
+
   descriptions: {
     list: `Get a filtered list of financial products (理财产品).
 
@@ -559,7 +564,7 @@ LIMITATIONS:
     update: "Update an existing financial product. Only provided fields are updated.",
     delete: "Delete (archive) a financial product. Linked units get product_id set to NULL.",
   },
-  
+
   projection: {
     omit: ["created_at", "updated_at", "archived_at", "user_id"],
     groups: {
@@ -574,24 +579,24 @@ LIMITATIONS:
 
 **工具名称兼容策略**：v3 保持与 v2 相同的工具名称，避免客户端迁移成本。
 
-| 当前 MCP 工具 (v2) | v3 工具名 | 类型 | 备注 |
-|--------------------|-----------|------|------|
-| `query_transactions` | `query_transactions` | Extra Tool | 保持原名 |
-| `query_transfers` | `query_transfers` | Extra Tool | 保持原名 |
-| `get_summary` | `get_summary` | Extra Tool | 保持原名 |
-| `get_monthly_report` | `get_monthly_report` | Extra Tool | |
-| `list_products` | `list_products` | Simple Entity | |
-| `get_product` | `get_product` | Simple Entity | |
-| `create_product` | `create_product` | Simple Entity | |
-| `update_product` | `update_product` | Simple Entity | |
-| `delete_product` | `delete_product` | Custom Tool | 有 unlink 逻辑 |
-| `get_products_summary` | `get_products_summary` | Extra Tool | |
-| `list_units` | `list_units` | Entity + Enrichment | availability 计算 |
-| `get_unit` | `get_unit` | Entity + Enrichment | |
-| `create_unit` | `create_unit` | Entity + Hooks | |
-| `update_unit` | `update_unit` | Entity + Hooks | productId CAS |
-| `delete_unit` | `delete_unit` | Custom Tool | 检查关联 |
-| `get_units_summary` | `get_units_summary` | Extra Tool | |
+| 当前 MCP 工具 (v2)     | v3 工具名              | 类型                | 备注              |
+| ---------------------- | ---------------------- | ------------------- | ----------------- |
+| `query_transactions`   | `query_transactions`   | Extra Tool          | 保持原名          |
+| `query_transfers`      | `query_transfers`      | Extra Tool          | 保持原名          |
+| `get_summary`          | `get_summary`          | Extra Tool          | 保持原名          |
+| `get_monthly_report`   | `get_monthly_report`   | Extra Tool          |                   |
+| `list_products`        | `list_products`        | Simple Entity       |                   |
+| `get_product`          | `get_product`          | Simple Entity       |                   |
+| `create_product`       | `create_product`       | Simple Entity       |                   |
+| `update_product`       | `update_product`       | Simple Entity       |                   |
+| `delete_product`       | `delete_product`       | Custom Tool         | 有 unlink 逻辑    |
+| `get_products_summary` | `get_products_summary` | Extra Tool          |                   |
+| `list_units`           | `list_units`           | Entity + Enrichment | availability 计算 |
+| `get_unit`             | `get_unit`             | Entity + Enrichment |                   |
+| `create_unit`          | `create_unit`          | Entity + Hooks      |                   |
+| `update_unit`          | `update_unit`          | Entity + Hooks      | productId CAS     |
+| `delete_unit`          | `delete_unit`          | Custom Tool         | 检查关联          |
+| `get_units_summary`    | `get_units_summary`    | Extra Tool          |                   |
 
 ### 2.7 新增 OAuth 相关表
 
@@ -694,11 +699,11 @@ CREATE INDEX idx_mcp_refresh_tokens_expires ON mcp_refresh_tokens(expires_at);
 
 **Token 生命周期**：
 
-| Token 类型 | 有效期 | Rotation |
-|-----------|--------|----------|
-| Authorization Code | 5 分钟 | N/A (一次性) |
-| Access Token | 1 小时 | N/A |
-| Refresh Token | 30 天 | 每次使用都 rotate |
+| Token 类型         | 有效期 | Rotation          |
+| ------------------ | ------ | ----------------- |
+| Authorization Code | 5 分钟 | N/A (一次性)      |
+| Access Token       | 1 小时 | N/A               |
+| Refresh Token      | 30 天  | 每次使用都 rotate |
 
 **Refresh Token Rotation**：
 - 每次用 refresh token 换新 access token 时，同时发放新 refresh token
@@ -707,12 +712,12 @@ CREATE INDEX idx_mcp_refresh_tokens_expires ON mcp_refresh_tokens(expires_at);
 
 ### 2.8 测试策略
 
-| 层级 | 位置 | 测试内容 |
-|------|------|----------|
-| Unit | `worker/mcp/entities/*.test.ts` | Entity 定义校验 |
-| Unit | `worker/mcp/tools/*.test.ts` | Extra Tools 逻辑 |
-| Integration | `worker/tests/mcp/` | OAuth 流程 + MCP 工具 |
-| E2E | `worker/tests/e2e/mcp.e2e.ts` | 完整 MCP 协议 |
+| 层级        | 位置                            | 测试内容              |
+| ----------- | ------------------------------- | --------------------- |
+| Unit        | `worker/mcp/entities/*.test.ts` | Entity 定义校验       |
+| Unit        | `worker/mcp/tools/*.test.ts`    | Extra Tools 逻辑      |
+| Integration | `worker/tests/mcp/`             | OAuth 流程 + MCP 工具 |
+| E2E         | `worker/tests/e2e/mcp.e2e.ts`   | 完整 MCP 协议         |
 
 **TDD 流程**:
 1. 先写测试（基于现有 MCP 行为）
@@ -724,12 +729,12 @@ CREATE INDEX idx_mcp_refresh_tokens_expires ON mcp_refresh_tokens(expires_at);
 
 #### Phase 1: 基础设施 (Worker 层)
 
-| # | Commit | 内容 | 状态 |
-|---|--------|------|------|
-| 1 | `feat(worker): add mcp oauth tables` | D1 migrations (mcp_clients, mcp_auth_sessions, mcp_tokens, mcp_refresh_tokens) | ✅ |
-| 2 | `feat(worker): add mcp oauth repositories` | CRUD for all 4 tables + refresh token rotation 检测逻辑 | ✅ (合并到 #1) |
-| 3 | `feat(worker): add oauth endpoints` | register, authorize, callback, token (含 refresh_token grant) + revoke | ✅ |
-| 4 | `test(worker): add oauth e2e tests` | 完整 OAuth 流程测试 (16 tests) | ✅ (合并到 #3) |
+| #   | Commit                                     | 内容                                                                           | 状态           |
+| --- | ------------------------------------------ | ------------------------------------------------------------------------------ | -------------- |
+| 1   | `feat(worker): add mcp oauth tables`       | D1 migrations (mcp_clients, mcp_auth_sessions, mcp_tokens, mcp_refresh_tokens) | ✅             |
+| 2   | `feat(worker): add mcp oauth repositories` | CRUD for all 4 tables + refresh token rotation 检测逻辑                        | ✅ (合并到 #1) |
+| 3   | `feat(worker): add oauth endpoints`        | register, authorize, callback, token (含 refresh_token grant) + revoke         | ✅             |
+| 4   | `test(worker): add oauth e2e tests`        | 完整 OAuth 流程测试 (16 tests)                                                 | ✅ (合并到 #3) |
 
 **Phase 1 完成统计**：
 - OAuth 表：4 个 (mcp_clients, mcp_auth_sessions, mcp_tokens, mcp_refresh_tokens)
@@ -738,15 +743,15 @@ CREATE INDEX idx_mcp_refresh_tokens_expires ON mcp_refresh_tokens(expires_at);
 
 #### Phase 2: MCP Server 集成
 
-| # | Commit | 内容 | 状态 |
-|---|--------|------|------|
-| 5 | `feat(worker): add /mcp endpoint skeleton` | Streamable HTTP 传输 + OAuth token 验证 | ✅ |
-| 6 | `feat(worker): add product entity` | productEntity + tests | ✅ |
-| 7 | `feat(worker): add unit entity` | unitEntity + tests | ✅ |
-| 8 | `feat(worker): add query tools` | query_transactions, query_transfers, get_summary, get_monthly_report | ✅ (合并) |
-| 9 | `feat(worker): add summary tools` | get_products_summary, get_units_summary | ✅ (合并到 #8) |
-| 10 | `feat(worker): add delete tools` | delete_product, delete_unit | ✅ (合并到 #8) |
-| 11 | `test(worker): add mcp e2e tests` | 完整 MCP 协议测试 | ✅ |
+| #   | Commit                                     | 内容                                                                 | 状态           |
+| --- | ------------------------------------------ | -------------------------------------------------------------------- | -------------- |
+| 5   | `feat(worker): add /mcp endpoint skeleton` | Streamable HTTP 传输 + OAuth token 验证                              | ✅             |
+| 6   | `feat(worker): add product entity`         | productEntity + tests                                                | ✅             |
+| 7   | `feat(worker): add unit entity`            | unitEntity + tests                                                   | ✅             |
+| 8   | `feat(worker): add query tools`            | query_transactions, query_transfers, get_summary, get_monthly_report | ✅ (合并)      |
+| 9   | `feat(worker): add summary tools`          | get_products_summary, get_units_summary                              | ✅ (合并到 #8) |
+| 10  | `feat(worker): add delete tools`           | delete_product, delete_unit                                          | ✅ (合并到 #8) |
+| 11  | `test(worker): add mcp e2e tests`          | 完整 MCP 协议测试                                                    | ✅             |
 
 **Phase 2 完成统计**：
 - Entity 定义：2 个 (product, unit)
@@ -757,11 +762,11 @@ CREATE INDEX idx_mcp_refresh_tokens_expires ON mcp_refresh_tokens(expires_at);
 
 #### Phase 3: 清理
 
-| # | Commit | 内容 | 状态 |
-|---|--------|------|------|
-| 17 | `chore: deprecate old mcp/ directory` | 标记废弃，保留一段时间 | ✅ |
-| 18 | `docs: update 12-mcp-server.md` | 更新文档 | ✅ |
-| 19 | `chore: remove deprecated mcp/` | 删除旧代码 | ✅ |
+| #   | Commit                                | 内容                   | 状态 |
+| --- | ------------------------------------- | ---------------------- | ---- |
+| 17  | `chore: deprecate old mcp/ directory` | 标记废弃，保留一段时间 | ✅   |
+| 18  | `docs: update 12-mcp-server.md`       | 更新文档               | ✅   |
+| 19  | `chore: remove deprecated mcp/`       | 删除旧代码             | ✅   |
 
 **Phase 3 完成统计**：
 - 删除旧 MCP 目录（8 个文件，1759 行）
@@ -771,9 +776,9 @@ CREATE INDEX idx_mcp_refresh_tokens_expires ON mcp_refresh_tokens(expires_at);
 
 #### Phase 4: 发布正式版
 
-| # | Commit | 内容 | 状态 |
-|---|--------|------|------|
-| 20 | `chore(base-mcp): publish v0.1.0` | API 验证通过，发布正式版 | ✅ |
+| #   | Commit                            | 内容                     | 状态 |
+| --- | --------------------------------- | ------------------------ | ---- |
+| 20  | `chore(base-mcp): publish v0.1.0` | API 验证通过，发布正式版 | ✅   |
 
 **Phase 4 完成统计**：
 - `@nocoo/base-mcp@0.1.0` 发布到 npm
@@ -799,14 +804,14 @@ CREATE INDEX idx_mcp_refresh_tokens_expires ON mcp_refresh_tokens(expires_at);
 
 ## 时间线
 
-| 阶段 | 预计时间 | 产出 |
-|------|----------|------|
-| Part 1: base-mcp | 2-3 天 | `@nocoo/base-mcp@0.1.0-alpha.1` 预发版 |
-| Part 2 Phase 1: OAuth | 1 天 | Worker OAuth 端点 |
-| Part 2 Phase 2: MCP | 2 天 | Worker MCP 集成 |
-| Part 2 Phase 3: 清理 | 0.5 天 | 文档 + 删除旧代码 |
-| Part 2 Phase 4: 正式版 | 0.5 天 | `@nocoo/base-mcp@0.1.0` 正式发布 |
-| **总计** | **6-7 天** | |
+| 阶段                   | 预计时间   | 产出                                   |
+| ---------------------- | ---------- | -------------------------------------- |
+| Part 1: base-mcp       | 2-3 天     | `@nocoo/base-mcp@0.1.0-alpha.1` 预发版 |
+| Part 2 Phase 1: OAuth  | 1 天       | Worker OAuth 端点                      |
+| Part 2 Phase 2: MCP    | 2 天       | Worker MCP 集成                        |
+| Part 2 Phase 3: 清理   | 0.5 天     | 文档 + 删除旧代码                      |
+| Part 2 Phase 4: 正式版 | 0.5 天     | `@nocoo/base-mcp@0.1.0` 正式发布       |
+| **总计**               | **6-7 天** |                                        |
 
 ---
 
@@ -828,10 +833,10 @@ noheir Worker (Part 2)
 
 ## 风险与缓解
 
-| 风险 | 缓解措施 |
-|------|----------|
-| base-mcp API 设计不够通用 | 先发预发版在 noheir 验证，API 稳定后再发正式版 |
-| OAuth 流程复杂，调试困难 | 详细日志 + E2E 测试 |
-| Worker Cold Start 影响 MCP 响应 | D1 查询优化 + 必要时用 Durable Objects |
-| Claude Desktop 对 HTTP MCP 支持问题 | 保留 stdio fallback 选项 |
-| Entity CRUD 框架不够灵活 | 提供 hooks 机制 + Custom Tool escape hatch |
+| 风险                                | 缓解措施                                       |
+| ----------------------------------- | ---------------------------------------------- |
+| base-mcp API 设计不够通用           | 先发预发版在 noheir 验证，API 稳定后再发正式版 |
+| OAuth 流程复杂，调试困难            | 详细日志 + E2E 测试                            |
+| Worker Cold Start 影响 MCP 响应     | D1 查询优化 + 必要时用 Durable Objects         |
+| Claude Desktop 对 HTTP MCP 支持问题 | 保留 stdio fallback 选项                       |
+| Entity CRUD 框架不够灵活            | 提供 hooks 机制 + Custom Tool escape hatch     |

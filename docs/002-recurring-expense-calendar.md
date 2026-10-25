@@ -5,6 +5,7 @@
 ## Objective
 
 ### 用户故事
+
 - 作为家庭财务记录者，我要把"保险（年缴）"、"房租（月缴）"、"物业费（季缴）"等周期支出登记一次，系统自动告诉我未来每天有多少钱要付。
 - 作为分类强迫症患者，我要自定义分类（名字 + 颜色），把支出归类、在日历上一眼看出"红色 = 保险、蓝色 = 房租"。
 - 作为现金流规划者，我打开日历就能在月视图里看到当月每天的应付金额，并通过汇总卡得到"未来 30 天 / 未来 12 个月 / 当月合计"三个数。
@@ -12,6 +13,7 @@
 - 作为生活变化的人，我要能**暂停**某条规则（数据保留、不再渲染）；某条规则到期后可以**结束**（保留历史、不再渲染未来）。
 
 ### 成功标准（可测条件）
+
 1. 用户在 `/plan/categories` 创建分类「保险」配色 `chart-9`（红色 token），再在 `/plan/calendar` 创建一条"每年 1 月 5 日 8000 元、分类=保险"的规则，1 月 5 日的格子上出现红色徽章 `¥8000`，色值取 `hsl(var(--chart-9))`。
 2. 切换到 2024 年 1 月，**前提 `startDate <= 2024-01-05`**（用户在表单里把起始日设到 2024 或更早），规则在该月正常显示（历史回溯）。表单允许 `startDate` 任意 ISO 日期（包括过去），默认值为今天但用户可改。
 3. 暂停规则后，日历不再渲染、列表灰显且标"已暂停"；恢复后重新渲染。
@@ -31,21 +33,21 @@
 
 ## Tech Stack（与项目其他模块一致）
 
-| 层 | 选型 | 备注 |
-|----|----|----|
-| 框架 | Next.js 16.2.7（App Router） | 与现有页面一致 |
-| 渲染 | Server Components 拉数据，Client Components 交互 | 与 `capital-decisions`、`expense` 一致 |
-| 写操作 | Server Actions（`"use server"`），返回 `ActionResult<T>` | 与 `unit-actions`、`product-actions` 一致 |
-| 数据通道 | `WorkerDbClient`（`@/lib/worker-db-client`） → Worker SQL API → D1 | 不新增 `app/api/<feature>/` |
-| ORM | Drizzle ORM（worker 侧） | 与 `worker/db/schema.ts` 现有表一致 |
-| DB | Cloudflare D1（SQLite 语义） | `strftime('%Y', date)`，非 `EXTRACT` |
-| Sidebar 分区 | 在 `src/lib/navigation.ts` 的 `NAV_GROUPS` 加一个 group | 现有 `存量资金管理` 等分区先例 |
-| UI 基础 | `@/components/ui/*`（card / button / dialog / input / table / badge / popover） | 复用现有组件库 |
-| 表单校验 | Zod（`zod 4.5.4`） | 与 `unit-editor.tsx` 等一致 |
-| 日历视图 | 自实现（CSS Grid 7×N），不引第三方日历 | 包体可控、定制空间足 |
-| 颜色选择器 | 自实现（24 个 chart token 色块），不引第三方 | 复用 `popover`，不接受任意 hex |
-| 日期工具 | `date-fns@4.4.0` | 已在依赖中 |
-| 测试 | Vitest（`bun run test` + `bun run test:worker`） | 与现有单测一致 |
+| 层           | 选型                                                                            | 备注                                      |
+| ------------ | ------------------------------------------------------------------------------- | ----------------------------------------- |
+| 框架         | Next.js 16.2.7（App Router）                                                    | 与现有页面一致                            |
+| 渲染         | Server Components 拉数据，Client Components 交互                                | 与 `capital-decisions`、`expense` 一致    |
+| 写操作       | Server Actions（`"use server"`），返回 `ActionResult<T>`                        | 与 `unit-actions`、`product-actions` 一致 |
+| 数据通道     | `WorkerDbClient`（`@/lib/worker-db-client`） → Worker SQL API → D1              | 不新增 `app/api/<feature>/`               |
+| ORM          | Drizzle ORM（worker 侧）                                                        | 与 `worker/db/schema.ts` 现有表一致       |
+| DB           | Cloudflare D1（SQLite 语义）                                                    | `strftime('%Y', date)`，非 `EXTRACT`      |
+| Sidebar 分区 | 在 `src/lib/navigation.ts` 的 `NAV_GROUPS` 加一个 group                         | 现有 `存量资金管理` 等分区先例            |
+| UI 基础      | `@/components/ui/*`（card / button / dialog / input / table / badge / popover） | 复用现有组件库                            |
+| 表单校验     | Zod（`zod 4.5.4`）                                                              | 与 `unit-editor.tsx` 等一致               |
+| 日历视图     | 自实现（CSS Grid 7×N），不引第三方日历                                          | 包体可控、定制空间足                      |
+| 颜色选择器   | 自实现（24 个 chart token 色块），不引第三方                                    | 复用 `popover`，不接受任意 hex            |
+| 日期工具     | `date-fns@4.4.0`                                                                | 已在依赖中                                |
+| 测试         | Vitest（`bun run test` + `bun run test:worker`）                                | 与现有单测一致                            |
 
 **不引入的依赖：** `rrule`、`react-big-calendar`、`@fullcalendar/*`、`react-color`。规则简单、日历用 CSS Grid、调色板用现成 popover 即可。
 
@@ -134,8 +136,12 @@ import { uniqueIndex } from "drizzle-orm/sqlite-core";
 export const expenseCategories = sqliteTable(
   "expense_categories",
   {
-    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
 
     name: text("name").notNull(),
     // 存 chart token 名（如 "chart-7"），不存 hex
@@ -144,13 +150,14 @@ export const expenseCategories = sqliteTable(
     sortOrder: integer("sort_order").notNull().default(0),
 
     createdAt: integer("created_at", { mode: "timestamp" })
-      .notNull().$defaultFn(() => new Date()),
+      .notNull()
+      .$defaultFn(() => new Date()),
     updatedAt: integer("updated_at", { mode: "timestamp" })
-      .notNull().$defaultFn(() => new Date()),
+      .notNull()
+      .$defaultFn(() => new Date()),
   },
   (table) => ({
-    userNameUnique: uniqueIndex("expense_categories_user_name_uniq")
-      .on(table.userId, table.name),
+    userNameUnique: uniqueIndex("expense_categories_user_name_uniq").on(table.userId, table.name),
   }),
 );
 ```
@@ -171,42 +178,47 @@ CREATE UNIQUE INDEX expense_categories_user_name_uniq
 
 ```ts
 export const recurringExpenses = sqliteTable("recurring_expenses", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
 
   // 业务字段
-  name: text("name").notNull(),                       // "中行车险"
-  categoryId: text("category_id")
-    .references(() => expenseCategories.id, { onDelete: "set null" }),
+  name: text("name").notNull(), // "中行车险"
+  categoryId: text("category_id").references(() => expenseCategories.id, { onDelete: "set null" }),
   amountCents: integer("amount_cents").notNull(),
   currency: text("currency").default("CNY").notNull(),
-  account: text("account"),                            // 可选付款账户
+  account: text("account"), // 可选付款账户
 
   // 周期规则（嵌入；一规则一行，无需额外 join）
-  frequency: text("frequency").notNull(),              // 'daily' | 'weekly' | 'monthly' | 'yearly'
-  interval: integer("interval").notNull().default(1),  // 每 N 个 frequency 一次
-  dayOfMonth: integer("day_of_month"),                 // 1..31，monthly/yearly 取用
-  monthOfYear: integer("month_of_year"),               // 1..12，yearly 取用
-  weekday: integer("weekday"),                          // 0..6（0=周日），weekly 取用
+  frequency: text("frequency").notNull(), // 'daily' | 'weekly' | 'monthly' | 'yearly'
+  interval: integer("interval").notNull().default(1), // 每 N 个 frequency 一次
+  dayOfMonth: integer("day_of_month"), // 1..31，monthly/yearly 取用
+  monthOfYear: integer("month_of_year"), // 1..12，yearly 取用
+  weekday: integer("weekday"), // 0..6（0=周日），weekly 取用
 
-  startDate: text("start_date").notNull(),             // ISO "YYYY-MM-DD"
-  endDate: text("end_date"),                            // ISO；null = 永续
+  startDate: text("start_date").notNull(), // ISO "YYYY-MM-DD"
+  endDate: text("end_date"), // ISO；null = 永续
 
   // 状态机：active / paused / ended
   // - active: 渲染日历、参与汇总
   // - paused: 不渲染日历、列表灰显、汇总不计入；用户可恢复
   // - ended:  手动结束；historic occurrences (<= endedAt) 仍渲染；未来不再渲染
-  status: text("status").notNull().default("active"),  // 'active' | 'paused' | 'ended'
+  status: text("status").notNull().default("active"), // 'active' | 'paused' | 'ended'
 
   // 仅 status='ended' 时非 null，记录"结束日"（包含），由 endRecurringExpense 写入
-  endedAt: text("ended_at"),                           // ISO "YYYY-MM-DD" | null
+  endedAt: text("ended_at"), // ISO "YYYY-MM-DD" | null
 
   note: text("note"),
 
   createdAt: integer("created_at", { mode: "timestamp" })
-    .notNull().$defaultFn(() => new Date()),
+    .notNull()
+    .$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" })
-    .notNull().$defaultFn(() => new Date()),
+    .notNull()
+    .$defaultFn(() => new Date()),
 });
 ```
 
@@ -214,20 +226,20 @@ export const recurringExpenses = sqliteTable("recurring_expenses", {
 
 `endDate`、`endedAt`、`status` 三者职责清晰、互不重叠：
 
-| 字段 | 语义 | 谁来改 |
-|------|------|--------|
-| `status` | 生命周期状态（active / paused / ended） | **仅** Server Action（`pause/resume/end`） |
-| `endDate` | 规则有效期窗口（用户表达"我只想交三年"） | `create/update` 时由用户直接设置 |
+| 字段      | 语义                                           | 谁来改                                        |
+| --------- | ---------------------------------------------- | --------------------------------------------- |
+| `status`  | 生命周期状态（active / paused / ended）        | **仅** Server Action（`pause/resume/end`）    |
+| `endDate` | 规则有效期窗口（用户表达"我只想交三年"）       | `create/update` 时由用户直接设置              |
 | `endedAt` | 手动结束的截止日（包含），仅 `ended` 时非 null | `endRecurringExpense` 内部写入，UI 不直接编辑 |
 
 派生显示状态（前端纯函数，不写库）：
 
 ```ts
-function deriveDisplayStatus(rule, today): 'active' | 'paused' | 'ended' | 'expired' {
-  if (rule.status === 'paused') return 'paused';
-  if (rule.status === 'ended')  return 'ended';
-  if (rule.endDate && rule.endDate < today) return 'expired'; // 派生态：UI 标"已到期"
-  return 'active';
+function deriveDisplayStatus(rule, today): "active" | "paused" | "ended" | "expired" {
+  if (rule.status === "paused") return "paused";
+  if (rule.status === "ended") return "ended";
+  if (rule.endDate && rule.endDate < today) return "expired"; // 派生态：UI 标"已到期"
+  return "active";
 }
 ```
 
@@ -243,14 +255,15 @@ Occurrence 展开过滤规则（详见下文 Occurrence 算法的统一公式）
 // src/lib/recurring-expense/occurrences.ts
 export function computeOccurrences(
   rule: RecurrenceRule,
-  fromDate: string,        // ISO inclusive
-  toDate: string,          // ISO inclusive
-): string[]                // 升序 ISO 日期数组
+  fromDate: string, // ISO inclusive
+  toDate: string, // ISO inclusive
+): string[]; // 升序 ISO 日期数组
 ```
 
 行为（**所有规则均以 `startDate` 为 0 号锚点**，避免歧义）：
 - `status === 'paused'` 直接返回 `[]`。
 - 通用展开窗口公式（`active` / `ended` 共用，三上限取最小）：
+
   ```
   effectiveTo = min(
     toDate,
@@ -277,12 +290,12 @@ export function computeOccurrences(
 
 ```ts
 // src/lib/recurring-expense/occurrences-aggregate.ts
-export interface Window { fromDate: string; toDate: string }
+export interface Window {
+  fromDate: string;
+  toDate: string;
+}
 
-export function sumWindow(
-  rules: RecurrenceRule[],
-  window: Window,
-): number  // 单位 cents
+export function sumWindow(rules: RecurrenceRule[], window: Window): number; // 单位 cents
 ```
 
 UI 调用（视图月 = `viewMonth`，真实今天 = `today`）：
@@ -297,7 +310,7 @@ UI 调用（视图月 = `viewMonth`，真实今天 = `today`）：
 
 ```ts
 // src/app/actions/recurring-expense-actions.ts
-"use server"
+"use server";
 
 export async function createRecurringExpense(
   data: RecurringExpenseInput,
@@ -308,9 +321,7 @@ export async function updateRecurringExpense(
   data: Partial<RecurringExpenseInput>,
 ): Promise<ActionResult>;
 
-export async function deleteRecurringExpense(
-  id: string,
-): Promise<ActionResult>;
+export async function deleteRecurringExpense(id: string): Promise<ActionResult>;
 
 // 状态机捷径（避免 client 误传非法值）
 // 实现要点（Server Action 内一次 client.updateRecurringExpense 调用完成）：
@@ -322,11 +333,12 @@ export async function resumeRecurringExpense(id: string): Promise<ActionResult>;
 export async function endRecurringExpense(id: string): Promise<ActionResult>;
 
 // src/app/actions/expense-category-actions.ts
-"use server"
+("use server");
 
-export async function createCategory(
-  data: { name: string; colorToken: string },
-): Promise<ActionResult<{ id: string }>>;
+export async function createCategory(data: {
+  name: string;
+  colorToken: string;
+}): Promise<ActionResult<{ id: string }>>;
 
 export async function updateCategory(
   id: string,
@@ -346,16 +358,16 @@ export async function deleteCategory(id: string): Promise<ActionResult>;
 - 目标库：单一 `DB` binding（历史上的 `X-Target-DB` 已废弃；E2E 走 `wrangler dev --local`）
 - 更新动词：**`PUT`**（不引入 `PATCH`，因为 CORS `allowMethods` 不含 PATCH，引入需同步改 `worker/src/index.ts` 的 CORS、所有 client、所有测试 —— 本期不做）
 
-| Method | Path | 说明 |
-|--------|------|------|
-| GET    | `/api/expense-categories`       | 列表 |
-| POST   | `/api/expense-categories`       | 创建 |
-| PUT    | `/api/expense-categories/:id`   | 全量/部分更新（payload 仅含要变更的字段） |
-| DELETE | `/api/expense-categories/:id`   | 删除（DB 层 `ON DELETE SET NULL` 自动置空 `categoryId`） |
-| GET    | `/api/recurring-expenses`       | 列表（join 分类信息一并返回） |
-| POST   | `/api/recurring-expenses`       | 创建 |
-| PUT    | `/api/recurring-expenses/:id`   | 更新；**`status` 字段仅 `pause/resume/end` Action 写入** |
-| DELETE | `/api/recurring-expenses/:id`   | 删除（硬删）|
+| Method | Path                          | 说明                                                     |
+| ------ | ----------------------------- | -------------------------------------------------------- |
+| GET    | `/api/expense-categories`     | 列表                                                     |
+| POST   | `/api/expense-categories`     | 创建                                                     |
+| PUT    | `/api/expense-categories/:id` | 全量/部分更新（payload 仅含要变更的字段）                |
+| DELETE | `/api/expense-categories/:id` | 删除（DB 层 `ON DELETE SET NULL` 自动置空 `categoryId`） |
+| GET    | `/api/recurring-expenses`     | 列表（join 分类信息一并返回）                            |
+| POST   | `/api/recurring-expenses`     | 创建                                                     |
+| PUT    | `/api/recurring-expenses/:id` | 更新；**`status` 字段仅 `pause/resume/end` Action 写入** |
+| DELETE | `/api/recurring-expenses/:id` | 删除（硬删）                                             |
 
 ### `WorkerDbClient` 新增方法
 
@@ -431,33 +443,31 @@ deleteRecurringExpense(userId, id): Promise<void>;
 
 ```ts
 // src/app/actions/recurring-expense-actions.ts
-"use server"
+"use server";
 
-import { getAuthedClient } from "@/lib/api-helpers"
-import type { ActionResult } from "@/lib/action-result"
-import { recurringExpenseInputSchema } from "@/lib/recurring-expense/rule-types"
+import { getAuthedClient } from "@/lib/api-helpers";
+import type { ActionResult } from "@/lib/action-result";
+import { recurringExpenseInputSchema } from "@/lib/recurring-expense/rule-types";
 
-export async function createRecurringExpense(
-  data: unknown,
-): Promise<ActionResult<{ id: string }>> {
-  const parsed = recurringExpenseInputSchema.safeParse(data)
+export async function createRecurringExpense(data: unknown): Promise<ActionResult<{ id: string }>> {
+  const parsed = recurringExpenseInputSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.message }
+    return { success: false, error: parsed.error.message };
   }
   try {
-    const { userId, client } = await getAuthedClient()
-    const { amount, ...rest } = parsed.data
+    const { userId, client } = await getAuthedClient();
+    const { amount, ...rest } = parsed.data;
     const payload = {
       ...rest,
       amountCents: Math.round(amount * 100),
-    }
-    const result = await client.createRecurringExpense(userId, payload)
-    return { success: true, data: { id: String(result.item.id) } }
+    };
+    const result = await client.createRecurringExpense(userId, payload);
+    return { success: true, data: { id: String(result.item.id) } };
   } catch (err) {
     return {
       success: false,
       error: err instanceof Error ? err.message : "Failed to create",
-    }
+    };
   }
 }
 ```
@@ -471,20 +481,21 @@ export async function createRecurringExpense(
 
 ## Testing Strategy
 
-| 层 | 位置 | 必测点 |
-|----|------|--------|
-| 纯函数：occurrences | `src/__tests__/recurring-expense/occurrences.test.ts` | 月度 31 日跨 2 月、年度 2-29 闰年、interval=N、startDate 边界、status='paused' 返空、status='ended' + endedAt 历史保留 / 未来截断、**status='ended' 同时有 endDate（取 min(endedAt, endDate)）**、active + endDate 截顶、historic 回溯（fromDate < today 且 startDate 更早）、interval 锚点（daily/weekly/monthly/yearly 各一例） |
-| 纯函数：aggregate | `src/__tests__/recurring-expense/occurrences-aggregate.test.ts` | 跨月窗口、空规则集、暂停规则不计入 |
-| 纯函数：颜色 | — | 不需要：直接用 `CHART_TOKENS` 枚举校验，无对比度计算 |
-| Worker repository | `worker/tests/expense-categories.test.ts` + `recurring-expenses.test.ts` | CRUD 隔离、`userId` 过滤、外键 SET NULL、unique(userId,name) |
-| Server Action | `src/__tests__/actions/*.test.ts` | Zod 失败 → ActionResult.error；status 转移合法性；金额 yuan↔cents |
-| 视觉冒烟（手动） | `bun run dev` | 切月不闪烁、暂停立即从日历消失、删除分类后规则继续渲染（无色） |
+| 层                  | 位置                                                                     | 必测点                                                                                                                                                                                                                                                                                                                            |
+| ------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 纯函数：occurrences | `src/__tests__/recurring-expense/occurrences.test.ts`                    | 月度 31 日跨 2 月、年度 2-29 闰年、interval=N、startDate 边界、status='paused' 返空、status='ended' + endedAt 历史保留 / 未来截断、**status='ended' 同时有 endDate（取 min(endedAt, endDate)）**、active + endDate 截顶、historic 回溯（fromDate < today 且 startDate 更早）、interval 锚点（daily/weekly/monthly/yearly 各一例） |
+| 纯函数：aggregate   | `src/__tests__/recurring-expense/occurrences-aggregate.test.ts`          | 跨月窗口、空规则集、暂停规则不计入                                                                                                                                                                                                                                                                                                |
+| 纯函数：颜色        | —                                                                        | 不需要：直接用 `CHART_TOKENS` 枚举校验，无对比度计算                                                                                                                                                                                                                                                                              |
+| Worker repository   | `worker/tests/expense-categories.test.ts` + `recurring-expenses.test.ts` | CRUD 隔离、`userId` 过滤、外键 SET NULL、unique(userId,name)                                                                                                                                                                                                                                                                      |
+| Server Action       | `src/__tests__/actions/*.test.ts`                                        | Zod 失败 → ActionResult.error；status 转移合法性；金额 yuan↔cents                                                                                                                                                                                                                                                                 |
+| 视觉冒烟（手动）    | `bun run dev`                                                            | 切月不闪烁、暂停立即从日历消失、删除分类后规则继续渲染（无色）                                                                                                                                                                                                                                                                    |
 
 覆盖率目标：`src/lib/recurring-expense/` ≥ 90%。
 
 ## Boundaries
 
 ### Always
+
 - 通过 `getAuthedClient` 取 `userId`，所有 SQL 都按 `userId` 过滤。
 - 写操作返回 `ActionResult`，UI 用 `sonner` toast 处理。
 - 金额一律 `amountCents`（整数）落库；显示层转 yuan。
@@ -495,6 +506,7 @@ export async function createRecurringExpense(
 - 颜色字段 Zod 校验为 `CHART_TOKENS` 之一（枚举闭集），前端禁止裸 `style={{background: userInput}}`，必须 `hsl(var(--${token}))`。
 
 ### Ask First
+
 - 引入新 npm 依赖。
 - 修改公共组件（`@/components/ui/*`、sidebar、navigation）的接口而非新增。
 - 改动其它模块用到的 `WorkerDbClient`、`api-helpers`。
@@ -502,6 +514,7 @@ export async function createRecurringExpense(
 - 把"实付打卡"或"自动写入 transactions"塞进本期。
 
 ### Never
+
 - 把规则展开后的 occurrences 写入 DB。
 - 越过 Server Actions 让 Client Component 直接调 Worker。
 - 在 client 包里 import `@/lib/api-helpers` 或 `@/lib/db`。
@@ -532,15 +545,15 @@ export async function createRecurringExpense(
 
 落地后效果：worker 端能跑 8 个新 SQL 端点、新表 + 索引存在；web 端不动，行为零变化。
 
-| Commit | 改动 | 测试文件 / Gate | Migration / Deploy |
-|---|---|---|---|
-| **P1-C1** `feat(schema): add expense_categories + recurring_expenses tables` | `worker/db/schema.ts` 加两个 `sqliteTable` 定义 + `uniqueIndex("expense_categories_user_name_uniq")`；不改 SQL 文件 | `worker/tests/expense-categories.test.ts` + `worker/tests/recurring-expenses.test.ts` 新建占位（仅 import schema 类型，确保编译通过）；`bun run typecheck` | 无 migration / 无 deploy（纯类型层） |
-| **P1-C2** `feat(db): add 0007_recurring_expenses migration` | `worker/db/migrations/0007_recurring_expenses.sql`：建两表 + 显式 `CREATE UNIQUE INDEX` + `PRAGMA foreign_keys` 注释。SQL 与 P1-C1 schema 保持一致 | **gate**：本 commit 测试 = drizzle migration check + 本地 `wrangler d1 migrations apply noheir-db --local` 应用成功；不要求新增 .test.ts。`bun run test && bun run typecheck && bun run lint` 仍跑全。 | **deploy gate**：本 commit merge 后**先**手动 `wrangler d1 migrations apply noheir-db --remote` 应用到 production，再 merge 后续 commit |
-| **P1-C3** `feat(worker): expense_categories repository` | `worker/db/repositories/expense-categories.ts`：list/getById/create/update/delete，全部按 `userId` 过滤；`(userId, name)` 唯一冲突返 `409` 友好错误 | **repo 单测**：`worker/tests/expense-categories.test.ts`：CRUD、`userId` 隔离、unique 冲突、空字段拒绝 | 无 deploy（worker 还没暴露端点） |
-| **P1-C4** `feat(worker): recurring_expenses repository` | `worker/db/repositories/recurring-expenses.ts`：list（join expense_categories 一并返回 `categoryName`/`colorToken`）/getById/create/update/delete；repo 接受 `status`/`endedAt` 任意写入，端点层（P1-C6）才做契约过滤 | **repo 单测**：`worker/tests/recurring-expenses.test.ts`：CRUD、`userId` 隔离、join 后字段映射、`endedAt` 默认 null、删除 category 后 `categoryId` 自动 SET NULL（**关键：明确测此外键行为**） | 无 deploy |
-| **P1-C5** `feat(worker): expense-categories SQL endpoints` | `worker/src/index.ts` 加 4 个端点（GET 列表 / POST 创建 / PUT update / DELETE）；沿用 `X-User-Id` header + `Authorization: Bearer ${WORKER_TOKEN}` + `X-Target-DB` 约定（注：`X-Target-DB` 已于 2026-06 废弃，新代码不再发送）。**项目当前没有 `errorResponse` helper**，按 `worker/src/index.ts` 现有 `c.json({ error: "..." }, 4xx)` 写法照抄即可，不抢着抽公共 helper（spec 之外的 refactor） | **e2e 端点测试**：放在 `worker/tests/e2e/expense-categories.e2e.test.ts`（与 `auth.e2e.test.ts` 同目录约定）：fetch URL、status code、payload shape、CORS preflight | **deploy gate**：merge 后 deploy worker，验证 `curl -H "Authorization: Bearer ..." -H "X-User-Id: u1" /api/expense-categories` 200 OK |
-| **P1-C6** `feat(worker): recurring-expenses SQL endpoints` | `worker/src/index.ts` 加 4 个端点。**`PUT /api/recurring-expenses/:id` 在 body 里收到 `status` / `endedAt` 字段时 silently drop**（不返 4xx，让 client 不察觉；安全边界靠 `WORKER_TOKEN` + Server Action 链路），**除非 request 带 `X-Internal-Action: 1` header**。同步在 `worker/src/index.ts` 第 80~85 行 `allowHeaders` 数组加入 `"X-Internal-Action"`。具体见 [Decision A] | **e2e 端点测试**：`worker/tests/e2e/recurring-expenses.e2e.test.ts`：① 无 header + body 含 status → DB status 不变；② 有 `X-Internal-Action: 1` + body status='paused' → DB status 改；③ 有 header 但 body 含非状态机字段（如 amountCents）也照常更新；④ CORS preflight 接受 `X-Internal-Action` header | deploy worker（与 P1-C5 同一次 deploy 也可） |
-| **P1-C7** `chore(worker): pin recurring-expenses status guard with regression test` | 加额外回归测试：模拟 web client（不带 internal header）通过整个 PUT 路径试图改 `status` 和 `endedAt` 各一次，验证两个字段都没变 | 仅测试，无生产代码改动 | 无 deploy |
+| Commit                                                                              | 改动                                                                                                                                                                                                                                                                                                                                                                                             | 测试文件 / Gate                                                                                                                                                                                                                                                                                         | Migration / Deploy                                                                                                                      |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| **P1-C1** `feat(schema): add expense_categories + recurring_expenses tables`        | `worker/db/schema.ts` 加两个 `sqliteTable` 定义 + `uniqueIndex("expense_categories_user_name_uniq")`；不改 SQL 文件                                                                                                                                                                                                                                                                              | `worker/tests/expense-categories.test.ts` + `worker/tests/recurring-expenses.test.ts` 新建占位（仅 import schema 类型，确保编译通过）；`bun run typecheck`                                                                                                                                              | 无 migration / 无 deploy（纯类型层）                                                                                                    |
+| **P1-C2** `feat(db): add 0007_recurring_expenses migration`                         | `worker/db/migrations/0007_recurring_expenses.sql`：建两表 + 显式 `CREATE UNIQUE INDEX` + `PRAGMA foreign_keys` 注释。SQL 与 P1-C1 schema 保持一致                                                                                                                                                                                                                                               | **gate**：本 commit 测试 = drizzle migration check + 本地 `wrangler d1 migrations apply noheir-db --local` 应用成功；不要求新增 .test.ts。`bun run test && bun run typecheck && bun run lint` 仍跑全。                                                                                                  | **deploy gate**：本 commit merge 后**先**手动 `wrangler d1 migrations apply noheir-db --remote` 应用到 production，再 merge 后续 commit |
+| **P1-C3** `feat(worker): expense_categories repository`                             | `worker/db/repositories/expense-categories.ts`：list/getById/create/update/delete，全部按 `userId` 过滤；`(userId, name)` 唯一冲突返 `409` 友好错误                                                                                                                                                                                                                                              | **repo 单测**：`worker/tests/expense-categories.test.ts`：CRUD、`userId` 隔离、unique 冲突、空字段拒绝                                                                                                                                                                                                  | 无 deploy（worker 还没暴露端点）                                                                                                        |
+| **P1-C4** `feat(worker): recurring_expenses repository`                             | `worker/db/repositories/recurring-expenses.ts`：list（join expense_categories 一并返回 `categoryName`/`colorToken`）/getById/create/update/delete；repo 接受 `status`/`endedAt` 任意写入，端点层（P1-C6）才做契约过滤                                                                                                                                                                            | **repo 单测**：`worker/tests/recurring-expenses.test.ts`：CRUD、`userId` 隔离、join 后字段映射、`endedAt` 默认 null、删除 category 后 `categoryId` 自动 SET NULL（**关键：明确测此外键行为**）                                                                                                          | 无 deploy                                                                                                                               |
+| **P1-C5** `feat(worker): expense-categories SQL endpoints`                          | `worker/src/index.ts` 加 4 个端点（GET 列表 / POST 创建 / PUT update / DELETE）；沿用 `X-User-Id` header + `Authorization: Bearer ${WORKER_TOKEN}` + `X-Target-DB` 约定（注：`X-Target-DB` 已于 2026-06 废弃，新代码不再发送）。**项目当前没有 `errorResponse` helper**，按 `worker/src/index.ts` 现有 `c.json({ error: "..." }, 4xx)` 写法照抄即可，不抢着抽公共 helper（spec 之外的 refactor） | **e2e 端点测试**：放在 `worker/tests/e2e/expense-categories.e2e.test.ts`（与 `auth.e2e.test.ts` 同目录约定）：fetch URL、status code、payload shape、CORS preflight                                                                                                                                     | **deploy gate**：merge 后 deploy worker，验证 `curl -H "Authorization: Bearer ..." -H "X-User-Id: u1" /api/expense-categories` 200 OK   |
+| **P1-C6** `feat(worker): recurring-expenses SQL endpoints`                          | `worker/src/index.ts` 加 4 个端点。**`PUT /api/recurring-expenses/:id` 在 body 里收到 `status` / `endedAt` 字段时 silently drop**（不返 4xx，让 client 不察觉；安全边界靠 `WORKER_TOKEN` + Server Action 链路），**除非 request 带 `X-Internal-Action: 1` header**。同步在 `worker/src/index.ts` 第 80~85 行 `allowHeaders` 数组加入 `"X-Internal-Action"`。具体见 [Decision A]                  | **e2e 端点测试**：`worker/tests/e2e/recurring-expenses.e2e.test.ts`：① 无 header + body 含 status → DB status 不变；② 有 `X-Internal-Action: 1` + body status='paused' → DB status 改；③ 有 header 但 body 含非状态机字段（如 amountCents）也照常更新；④ CORS preflight 接受 `X-Internal-Action` header | deploy worker（与 P1-C5 同一次 deploy 也可）                                                                                            |
+| **P1-C7** `chore(worker): pin recurring-expenses status guard with regression test` | 加额外回归测试：模拟 web client（不带 internal header）通过整个 PUT 路径试图改 `status` 和 `endedAt` 各一次，验证两个字段都没变                                                                                                                                                                                                                                                                  | 仅测试，无生产代码改动                                                                                                                                                                                                                                                                                  | 无 deploy                                                                                                                               |
 
 **[Decision A] worker 层如何阻止 client 直接改 `status`/`endedAt`**：
 - **方案**：`PUT /api/recurring-expenses/:id` body 中的 `status` 和 `endedAt` 字段在 endpoint 层 silently drop，除非 request 带 `X-Internal-Action: 1` header。
@@ -561,18 +574,18 @@ export async function createRecurringExpense(
 
 落地后效果：web 端可以创建规则、调用纯函数算 occurrences；UI 还没接，但可在 Server Action 单测里端到端跑通。
 
-| Commit | 改动 | 测试 / Gate |
-|---|---|---|
-| **P2-C1** `feat(types): add RecurrenceRule and Zod schema` | `src/lib/recurring-expense/rule-types.ts`：`RecurrenceRule` interface + `recurringExpenseInputSchema` (Zod)；`colorToken` 校验为 `CHART_TOKENS` 闭集；`frequency` 枚举；`interval ≥ 1`；`startDate` ISO 校验 | `src/__tests__/recurring-expense/rule-types.test.ts`：合法 / 非法每个字段一个 case |
-| **P2-C2** `feat(domain): computeOccurrences pure function` | `src/lib/recurring-expense/occurrences.ts`：实现统一公式 `effectiveTo = min(toDate, endDate??+∞, endedAt??+∞)`；4 种 frequency × interval 锚点（spec 已规约） | `occurrences.test.ts`：必测点完整覆盖（spec Testing Strategy 表）— **gate: 此文件单独 ≥ 95% 覆盖率** |
-| **P2-C3** `feat(domain): sumWindow aggregate` | `src/lib/recurring-expense/occurrences-aggregate.ts`：`sumWindow(rules, window)`、`sumMonth(rules, viewMonth)`；调用 `computeOccurrences` | `occurrences-aggregate.test.ts`：跨月、空规则集、paused 不计入 |
-| **P2-C4** `feat(domain): rule mappers + format helpers` | `src/lib/recurring-expense/mappers.ts`（raw row ↔ domain）+ `format.ts`（"每 3 个月"等人类语描述）；`src/lib/expense-category/mappers.ts` | mappers 测试（往返）；format 测试（snapshot 即可） |
-| **P2-C5** `feat(client): WorkerDbClient methods for categories` | `src/lib/worker-db-client.ts` 加 4 个分类方法 | client 测试：mock fetch，验证 URL / headers / body shape |
-| **P2-C6** `feat(client): WorkerDbClient methods for recurring expenses` | 加 4 个 recurring 方法；`updateRecurringExpense(userId, id, payload, opts?: { internal: boolean })`，`internal=true` 时附 `X-Internal-Action: 1` | client 测试：默认请求不带 internal header；`internal=true` 时带 |
-| **P2-C7** `feat(actions): expense-category Server Actions` | `src/app/actions/expense-category-actions.ts`：create/update/delete；返回 `ActionResult` | `src/__tests__/actions/expense-category-actions.test.ts`：Zod 失败、auth 失败、worker 错误传播 |
-| **P2-C8** `feat(actions): recurring-expense CRUD Server Actions` | `src/app/actions/recurring-expense-actions.ts`：create/update/delete（**update 不允许传 `status`/`endedAt`，Zod schema 在 input 层 strip**） | action 测试：Zod 校验、yuan↔cents 转换、worker 调用参数 |
-| **P2-C9** `feat(actions): recurring-expense state machine actions` | 同一文件加 `pauseRecurringExpense` / `resumeRecurringExpense` / `endRecurringExpense`：内部调 `client.updateRecurringExpense(..., { internal: true })`，分别写 `{status, endedAt}` 三种组合 | action 测试：状态转移合法（active↔paused 双向 / *→ended 单向）；`endedAt` 在 end 时为 today、其他为 null |
-| **P2-C10** `chore(navigation): add 资金计划 NavGroup (data only)` | `src/lib/navigation.ts` 加 NavGroup（指向 `/plan/calendar` 和 `/plan/categories`），但**先在 navigation.ts 用 feature flag `FEATURE_PLAN_CALENDAR=false` gate**，避免 sidebar 显示死链。flag 落代码常量，commit 时为 false | 无新测试；`bun run typecheck` 验证 import |
+| Commit                                                                  | 改动                                                                                                                                                                                                                       | 测试 / Gate                                                                                              |
+| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| **P2-C1** `feat(types): add RecurrenceRule and Zod schema`              | `src/lib/recurring-expense/rule-types.ts`：`RecurrenceRule` interface + `recurringExpenseInputSchema` (Zod)；`colorToken` 校验为 `CHART_TOKENS` 闭集；`frequency` 枚举；`interval ≥ 1`；`startDate` ISO 校验               | `src/__tests__/recurring-expense/rule-types.test.ts`：合法 / 非法每个字段一个 case                       |
+| **P2-C2** `feat(domain): computeOccurrences pure function`              | `src/lib/recurring-expense/occurrences.ts`：实现统一公式 `effectiveTo = min(toDate, endDate??+∞, endedAt??+∞)`；4 种 frequency × interval 锚点（spec 已规约）                                                              | `occurrences.test.ts`：必测点完整覆盖（spec Testing Strategy 表）— **gate: 此文件单独 ≥ 95% 覆盖率**     |
+| **P2-C3** `feat(domain): sumWindow aggregate`                           | `src/lib/recurring-expense/occurrences-aggregate.ts`：`sumWindow(rules, window)`、`sumMonth(rules, viewMonth)`；调用 `computeOccurrences`                                                                                  | `occurrences-aggregate.test.ts`：跨月、空规则集、paused 不计入                                           |
+| **P2-C4** `feat(domain): rule mappers + format helpers`                 | `src/lib/recurring-expense/mappers.ts`（raw row ↔ domain）+ `format.ts`（"每 3 个月"等人类语描述）；`src/lib/expense-category/mappers.ts`                                                                                  | mappers 测试（往返）；format 测试（snapshot 即可）                                                       |
+| **P2-C5** `feat(client): WorkerDbClient methods for categories`         | `src/lib/worker-db-client.ts` 加 4 个分类方法                                                                                                                                                                              | client 测试：mock fetch，验证 URL / headers / body shape                                                 |
+| **P2-C6** `feat(client): WorkerDbClient methods for recurring expenses` | 加 4 个 recurring 方法；`updateRecurringExpense(userId, id, payload, opts?: { internal: boolean })`，`internal=true` 时附 `X-Internal-Action: 1`                                                                           | client 测试：默认请求不带 internal header；`internal=true` 时带                                          |
+| **P2-C7** `feat(actions): expense-category Server Actions`              | `src/app/actions/expense-category-actions.ts`：create/update/delete；返回 `ActionResult`                                                                                                                                   | `src/__tests__/actions/expense-category-actions.test.ts`：Zod 失败、auth 失败、worker 错误传播           |
+| **P2-C8** `feat(actions): recurring-expense CRUD Server Actions`        | `src/app/actions/recurring-expense-actions.ts`：create/update/delete（**update 不允许传 `status`/`endedAt`，Zod schema 在 input 层 strip**）                                                                               | action 测试：Zod 校验、yuan↔cents 转换、worker 调用参数                                                  |
+| **P2-C9** `feat(actions): recurring-expense state machine actions`      | 同一文件加 `pauseRecurringExpense` / `resumeRecurringExpense` / `endRecurringExpense`：内部调 `client.updateRecurringExpense(..., { internal: true })`，分别写 `{status, endedAt}` 三种组合                                | action 测试：状态转移合法（active↔paused 双向 / *→ended 单向）；`endedAt` 在 end 时为 today、其他为 null |
+| **P2-C10** `chore(navigation): add 资金计划 NavGroup (data only)`       | `src/lib/navigation.ts` 加 NavGroup（指向 `/plan/calendar` 和 `/plan/categories`），但**先在 navigation.ts 用 feature flag `FEATURE_PLAN_CALENDAR=false` gate**，避免 sidebar 显示死链。flag 落代码常量，commit 时为 false | 无新测试；`bun run typecheck` 验证 import                                                                |
 
 **Phase 2 验收**：
 - 全部新增 lib/ 文件 ≥ 90% 覆盖率（`occurrences` ≥ 95%）
@@ -586,20 +599,20 @@ export async function createRecurringExpense(
 
 落地后效果：用户可见两个新页面，全功能跑通。
 
-| Commit | 改动 | 测试 / Gate |
-|---|---|---|
-| **P3-C1** `feat(ui): color-token-picker component` | `src/components/plan/color-token-picker.tsx`：复用 popover + 24 个色块网格；受控；onChange 传 token 字符串 | 组件测试（vitest + RTL）：渲染 24 个色块、点击触发 onChange、键盘选择、a11y 焦点 |
-| **P3-C2** `feat(ui): frequency-picker component` | 周期选择器（daily/weekly/monthly/yearly + interval + dayOfMonth/monthOfYear/weekday 条件渲染） | 组件测试：切换 frequency 时条件字段切换、interval 数字校验 |
-| **P3-C3** `feat(ui): category-form` | `src/components/plan/category-form.tsx`：name + color-token-picker + 提交调 Server Action | 组件测试：提交成功 / 失败、color picker 集成 |
-| **P3-C4** `feat(ui): recurring-expense-form` | 创建/编辑共用表单，复用 frequency-picker；金额 yuan input；categoryId select | 组件测试：所有字段、Zod 错误回显、edit mode 预填 |
-| **P3-C5** `feat(ui): recurring-expense-calendar` | `src/components/plan/recurring-expense-calendar.tsx`：CSS Grid 7×N 月视图；接收 `rules` + `viewMonth`，调 `computeOccurrences` 算每格；圆点叠加（max 3 + `+N`） | 组件测试：单测纯渲染（mock rules + 固定 viewMonth），快照固定布局 |
-| **P3-C6** `feat(ui): summary-cards (3 KPIs)` | 当月 / 30 天 / 12 月 三卡；前者用视图月、后两者用真实 today；副标题"自今日起" | 组件测试：调用 `sumWindow` 时传入正确 window |
-| **P3-C7** `feat(ui): occurrence-detail-popover` | 日格点击弹层，列出当日所有项 + 分类徽章 | 组件测试 |
-| **P3-C8** `feat(ui): recurring-expense-list with status chips` | 旁侧列表，三态 chip + `expired` 派生态；右键/三点菜单（pause/resume/end/delete） | 组件测试：派生态显示、菜单项条件可见 |
-| **P3-C9** `feat(page): /plan/categories page + client component` | Server Component 拉数据；Client 用 P3-C3 的 form。**Server Component 顶部检查 `FEATURE_PLAN_CALENDAR` flag（与 P2-C10 同一常量）：flag=false 时调用 Next.js `notFound()` 返回 404**，确保用户即使知道 URL 也无法访问 | 页面集成测试（playwright 或 RTL）：增 / 改 / 删 走通；**额外 1 个 test：flag=false 时 GET `/plan/categories` 返回 404** | 无 deploy（仍未启用） |
-| **P3-C10** `feat(page): /plan/calendar page + client orchestration` | Server Component 拉 rules + categories；Client 拼装 calendar + list + summary cards + form dialog。**同样 flag gate `notFound()`**；redirect from `/plan` to `/plan/calendar` 也用同一 flag | 页面集成测试：创建规则后日历出现徽章；切月不闪烁；点击日格弹 popover；**额外 1 个 test：flag=false 时 GET `/plan/calendar` 返回 404** | 无 deploy（仍未启用） |
-| **P3-C11** `feat(navigation): enable plan calendar feature flag` | 把 P2-C10 的 `FEATURE_PLAN_CALENDAR` 改为 `true`，**同时打开 sidebar 显示 + 页面 route 访问**（同一 flag 控制两处）；P3-C9/C10 的 404 测试改为期望 200 | 无新代码；`bun run dev` 视觉冒烟（手动）；P3-C9/C10 测试 update | deploy（用户可见的唯一一刀）|
-| **P3-C12** `chore(release): version bump + smoke test` | 按现有 release 流程，跑 `bun run test && bun run test:worker && bun run typecheck && bun run lint && bun run build` | release tag |
+| Commit                                                              | 改动                                                                                                                                                                                                                 | 测试 / Gate                                                                                                                           |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| **P3-C1** `feat(ui): color-token-picker component`                  | `src/components/plan/color-token-picker.tsx`：复用 popover + 24 个色块网格；受控；onChange 传 token 字符串                                                                                                           | 组件测试（vitest + RTL）：渲染 24 个色块、点击触发 onChange、键盘选择、a11y 焦点                                                      |
+| **P3-C2** `feat(ui): frequency-picker component`                    | 周期选择器（daily/weekly/monthly/yearly + interval + dayOfMonth/monthOfYear/weekday 条件渲染）                                                                                                                       | 组件测试：切换 frequency 时条件字段切换、interval 数字校验                                                                            |
+| **P3-C3** `feat(ui): category-form`                                 | `src/components/plan/category-form.tsx`：name + color-token-picker + 提交调 Server Action                                                                                                                            | 组件测试：提交成功 / 失败、color picker 集成                                                                                          |
+| **P3-C4** `feat(ui): recurring-expense-form`                        | 创建/编辑共用表单，复用 frequency-picker；金额 yuan input；categoryId select                                                                                                                                         | 组件测试：所有字段、Zod 错误回显、edit mode 预填                                                                                      |
+| **P3-C5** `feat(ui): recurring-expense-calendar`                    | `src/components/plan/recurring-expense-calendar.tsx`：CSS Grid 7×N 月视图；接收 `rules` + `viewMonth`，调 `computeOccurrences` 算每格；圆点叠加（max 3 + `+N`）                                                      | 组件测试：单测纯渲染（mock rules + 固定 viewMonth），快照固定布局                                                                     |
+| **P3-C6** `feat(ui): summary-cards (3 KPIs)`                        | 当月 / 30 天 / 12 月 三卡；前者用视图月、后两者用真实 today；副标题"自今日起"                                                                                                                                        | 组件测试：调用 `sumWindow` 时传入正确 window                                                                                          |
+| **P3-C7** `feat(ui): occurrence-detail-popover`                     | 日格点击弹层，列出当日所有项 + 分类徽章                                                                                                                                                                              | 组件测试                                                                                                                              |
+| **P3-C8** `feat(ui): recurring-expense-list with status chips`      | 旁侧列表，三态 chip + `expired` 派生态；右键/三点菜单（pause/resume/end/delete）                                                                                                                                     | 组件测试：派生态显示、菜单项条件可见                                                                                                  |
+| **P3-C9** `feat(page): /plan/categories page + client component`    | Server Component 拉数据；Client 用 P3-C3 的 form。**Server Component 顶部检查 `FEATURE_PLAN_CALENDAR` flag（与 P2-C10 同一常量）：flag=false 时调用 Next.js `notFound()` 返回 404**，确保用户即使知道 URL 也无法访问 | 页面集成测试（playwright 或 RTL）：增 / 改 / 删 走通；**额外 1 个 test：flag=false 时 GET `/plan/categories` 返回 404**               | 无 deploy（仍未启用）        |
+| **P3-C10** `feat(page): /plan/calendar page + client orchestration` | Server Component 拉 rules + categories；Client 拼装 calendar + list + summary cards + form dialog。**同样 flag gate `notFound()`**；redirect from `/plan` to `/plan/calendar` 也用同一 flag                          | 页面集成测试：创建规则后日历出现徽章；切月不闪烁；点击日格弹 popover；**额外 1 个 test：flag=false 时 GET `/plan/calendar` 返回 404** | 无 deploy（仍未启用）        |
+| **P3-C11** `feat(navigation): enable plan calendar feature flag`    | 把 P2-C10 的 `FEATURE_PLAN_CALENDAR` 改为 `true`，**同时打开 sidebar 显示 + 页面 route 访问**（同一 flag 控制两处）；P3-C9/C10 的 404 测试改为期望 200                                                               | 无新代码；`bun run dev` 视觉冒烟（手动）；P3-C9/C10 测试 update                                                                       | deploy（用户可见的唯一一刀） |
+| **P3-C12** `chore(release): version bump + smoke test`              | 按现有 release 流程，跑 `bun run test && bun run test:worker && bun run typecheck && bun run lint && bun run build`                                                                                                  | release tag                                                                                                                           |
 
 **Phase 3 验收**：
 - 整体覆盖率不下降；`src/lib/recurring-expense/` ≥ 90%
@@ -652,6 +665,7 @@ export async function createRecurringExpense(
 Run on 2026-06-07 against `53883e4` (P3-C11 flag flip) on local dev.
 
 ### Automated gates
+
 - `bun run typecheck` — pass
 - `bun run lint` — pass (--max-warnings=0)
 - `bun run test` — 71 files / 945 tests pass
@@ -660,6 +674,7 @@ Run on 2026-06-07 against `53883e4` (P3-C11 flag flip) on local dev.
 - `bun run build` — succeeds; `/plan/calendar` and `/plan/categories` present as dynamic routes
 
 ### Route smoke (curl, no auth)
+
 - `GET /plan/categories` → 307 Temporary Redirect → `/login?callbackUrl=%2Fplan%2Fcategories`
 - `GET /plan/calendar` → 307 Temporary Redirect → `/login?callbackUrl=%2Fplan%2Fcalendar`
 - `GET /` → 307 (same auth redirect)
@@ -667,6 +682,7 @@ Run on 2026-06-07 against `53883e4` (P3-C11 flag flip) on local dev.
 The 307 (auth redirect) instead of 404 confirms FEATURE_PLAN_CALENDAR is on; otherwise notFound() would intercept before the auth layer.
 
 ### Manual smoke checklist (post-deploy)
+
 Run through these in an authenticated browser session:
 
 - [ ] Sidebar shows 资金计划 group between 存量资金管理 and 系统, with 日历 and 分类 items

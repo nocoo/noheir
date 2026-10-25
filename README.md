@@ -101,16 +101,16 @@ scripts/             Isolated test fixtures and release/deployment tools
 
 ## Validation
 
-| Check | Command |
-| --- | --- |
-| Application unit/component coverage | `bun run test:coverage` |
-| Worker unit coverage | `bun run --cwd worker test:coverage` |
-| Both TypeScript lanes | `bun run typecheck` |
-| Biome | `bun run lint` |
-| Production build | `bun run build` |
-| Real HTTP and SQLite | `bun run test:e2e` |
-| Browser journeys | `bun run test:e2e:bdd` |
-| Deployment bundle | `bun run deploy:check` |
+| Check                               | Command                              |
+| ----------------------------------- | ------------------------------------ |
+| Application unit/component coverage | `bun run test:coverage`              |
+| Worker unit coverage                | `bun run --cwd worker test:coverage` |
+| Both TypeScript lanes               | `bun run typecheck`                  |
+| Biome                               | `bun run lint`                       |
+| Production build                    | `bun run build`                      |
+| Real HTTP and SQLite                | `bun run test:e2e`                   |
+| Browser journeys                    | `bun run test:e2e:bdd`               |
+| Deployment bundle                   | `bun run deploy:check`               |
 
 Install Chromium with `bunx playwright install chromium` before browser tests.
 HTTP tests use port 17004; browser tests use 27004 and the built assets. Each run
@@ -134,14 +134,14 @@ The existing `noheir-db` must not be deleted when retiring the old VPS and Worke
 
 ## Stack
 
-| Area | Implementation |
-| --- | --- |
-| Web | Vite, React, React Router, Tailwind CSS, Basalt |
-| Charts | Recharts, Nivo Sunburst |
-| Identity / API | Cloudflare Access, jose, scoped Bearer keys |
-| API / storage | Cloudflare Workers, Hono, D1, Drizzle ORM |
-| Delivery | Bun, GitHub Actions, Workers Static Assets |
-| Tests | Vitest, Testing Library, Playwright, local Miniflare/SQLite |
+| Area           | Implementation                                              |
+| -------------- | ----------------------------------------------------------- |
+| Web            | Vite, React, React Router, Tailwind CSS, Basalt             |
+| Charts         | Recharts, Nivo Sunburst                                     |
+| Identity / API | Cloudflare Access, jose, scoped Bearer keys                 |
+| API / storage  | Cloudflare Workers, Hono, D1, Drizzle ORM                   |
+| Delivery       | Bun, GitHub Actions, Workers Static Assets                  |
+| Tests          | Vitest, Testing Library, Playwright, local Miniflare/SQLite |
 
 ## Documentation
 

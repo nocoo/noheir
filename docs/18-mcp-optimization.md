@@ -11,14 +11,14 @@ Optimize the NoHeir MCP server to reduce context consumption while maintaining f
 
 Before implementing this plan, the following gaps exist between Worker API and MCP layer:
 
-| Feature | Worker API | MCP Tool | WorkerClient | Gap |
-|---------|------------|----------|--------------|-----|
-| `includeArchived` for products | ✅ `GET /api/products?includeArchived=true` | ✅ `include_archived` param | ✅ `includeArchived` option | Fixed in Commit 1 |
-| Units summary | ✅ `GET /api/units/summary` | ✅ `get_units_summary` | ✅ `getUnitsSummary()` | Implemented in Commits 2, 4 |
-| Products summary | ✅ `GET /api/products/summary` | ✅ `get_products_summary` | ✅ `getProductsSummary()` | Implemented in Commits 3, 5 |
-| Field selection (`fields` param) | ❌ Not implemented | ❌ Not implemented | ❌ N/A | New feature |
-| Pagination (`limit`/`offset`) | ❌ Not implemented | ❌ Not implemented | ❌ N/A | New feature |
-| `available_within_days` filter | ❌ Not implemented | ❌ Not implemented | ❌ N/A | New feature |
+| Feature                          | Worker API                                  | MCP Tool                    | WorkerClient                | Gap                         |
+| -------------------------------- | ------------------------------------------- | --------------------------- | --------------------------- | --------------------------- |
+| `includeArchived` for products   | ✅ `GET /api/products?includeArchived=true` | ✅ `include_archived` param | ✅ `includeArchived` option | Fixed in Commit 1           |
+| Units summary                    | ✅ `GET /api/units/summary`                 | ✅ `get_units_summary`      | ✅ `getUnitsSummary()`      | Implemented in Commits 2, 4 |
+| Products summary                 | ✅ `GET /api/products/summary`              | ✅ `get_products_summary`   | ✅ `getProductsSummary()`   | Implemented in Commits 3, 5 |
+| Field selection (`fields` param) | ❌ Not implemented                          | ❌ Not implemented          | ❌ N/A                      | New feature                 |
+| Pagination (`limit`/`offset`)    | ❌ Not implemented                          | ❌ Not implemented          | ❌ N/A                      | New feature                 |
+| `available_within_days` filter   | ❌ Not implemented                          | ❌ Not implemented          | ❌ N/A                      | New feature                 |
 
 ## Problem Statement
 
@@ -48,53 +48,53 @@ Agent should be able to:
 
 ### 2. Six Components of Quality Tool Descriptions
 
-| Component | Requirement |
-|-----------|-------------|
-| **Purpose** | Clear statement of what tool does, independent of task |
-| **Guidelines** | When to use, how to use, activation criteria |
-| **Limitations** | Known constraints, failure cases, edge cases |
-| **Parameters** | Semantic explanation beyond just types |
-| **Length** | 3-4 sentences minimum; complex tools warrant more |
-| **Examples** | Can be omitted for simple tools (research shows minimal impact) |
+| Component       | Requirement                                                     |
+| --------------- | --------------------------------------------------------------- |
+| **Purpose**     | Clear statement of what tool does, independent of task          |
+| **Guidelines**  | When to use, how to use, activation criteria                    |
+| **Limitations** | Known constraints, failure cases, edge cases                    |
+| **Parameters**  | Semantic explanation beyond just types                          |
+| **Length**      | 3-4 sentences minimum; complex tools warrant more               |
+| **Examples**    | Can be omitted for simple tools (research shows minimal impact) |
 
 ### 3. Response Size Targets
 
-| Tool Type | Target Size | Strategy |
-|-----------|-------------|----------|
-| Summary | < 1KB | Aggregated counts and totals |
-| List (filtered) | < 5KB | Pagination, field selection, server-side filters |
-| Single item | < 500B | Full detail for one record |
+| Tool Type       | Target Size | Strategy                                         |
+| --------------- | ----------- | ------------------------------------------------ |
+| Summary         | < 1KB       | Aggregated counts and totals                     |
+| List (filtered) | < 5KB       | Pagination, field selection, server-side filters |
+| Single item     | < 500B      | Full detail for one record                       |
 
 ## Current Tool Inventory
 
 ### Query Tools (Read-only)
 
-| Tool | Current Issues | Context Cost |
-|------|---------------|--------------|
-| `get_summary` | ✅ Good - returns metadata only | ~500B |
-| `query_transactions` | ⚠️ Can return 500 rows | 5-50KB |
-| `query_transfers` | ⚠️ Can return 500 rows | 5-50KB |
-| `get_monthly_report` | ✅ Good - aggregated | ~1KB |
+| Tool                 | Current Issues                  | Context Cost |
+| -------------------- | ------------------------------- | ------------ |
+| `get_summary`        | ✅ Good - returns metadata only | ~500B        |
+| `query_transactions` | ⚠️ Can return 500 rows          | 5-50KB       |
+| `query_transfers`    | ⚠️ Can return 500 rows          | 5-50KB       |
+| `get_monthly_report` | ✅ Good - aggregated            | ~1KB         |
 
 ### Product Tools
 
-| Tool | Current Issues | Context Cost |
-|------|---------------|--------------|
-| `list_products` | ⚠️ Returns all products, no pagination | 5-20KB |
-| `get_product` | ✅ Good - single item | ~300B |
-| `create_product` | ✅ Good | ~300B |
-| `update_product` | ✅ Good | ~300B |
-| `delete_product` | ✅ Good | ~50B |
+| Tool             | Current Issues                         | Context Cost |
+| ---------------- | -------------------------------------- | ------------ |
+| `list_products`  | ⚠️ Returns all products, no pagination | 5-20KB       |
+| `get_product`    | ✅ Good - single item                  | ~300B        |
+| `create_product` | ✅ Good                                | ~300B        |
+| `update_product` | ✅ Good                                | ~300B        |
+| `delete_product` | ✅ Good                                | ~50B         |
 
 ### Unit Tools
 
-| Tool | Current Issues | Context Cost |
-|------|---------------|--------------|
-| `list_units` | ❌ Returns all units with full product join | 10-50KB |
-| `get_unit` | ✅ Good - single item | ~500B |
-| `create_unit` | ✅ Good | ~300B |
-| `update_unit` | ✅ Good | ~300B |
-| `delete_unit` | ✅ Good | ~50B |
+| Tool          | Current Issues                              | Context Cost |
+| ------------- | ------------------------------------------- | ------------ |
+| `list_units`  | ❌ Returns all units with full product join | 10-50KB      |
+| `get_unit`    | ✅ Good - single item                       | ~500B        |
+| `create_unit` | ✅ Good                                     | ~300B        |
+| `update_unit` | ✅ Good                                     | ~300B        |
+| `delete_unit` | ✅ Good                                     | ~50B         |
 
 ## Optimization Plan
 
@@ -152,8 +152,8 @@ Add lightweight aggregation tools that return statistics without raw data.
 
 **Parameters**:
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
+| Parameter          | Type    | Default | Description                         |
+| ------------------ | ------- | ------- | ----------------------------------- |
 | `include_archived` | boolean | `false` | Include archived products in counts |
 
 **Note**: Matches existing `list_products` behavior which excludes archived by default.
@@ -177,20 +177,20 @@ Add field selection and improved filtering to existing list tools.
 
 New parameters:
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `fields` | enum | `"minimal"` \| `"standard"` \| `"full"` (default: `"minimal"`) |
+| Parameter               | Type   | Description                                                                              |
+| ----------------------- | ------ | ---------------------------------------------------------------------------------------- |
+| `fields`                | enum   | `"minimal"` \| `"standard"` \| `"full"` (default: `"minimal"`)                           |
 | `available_within_days` | number | Filter units becoming available within N days (requires `fields="standard"` or `"full"`) |
-| `limit` | number | Max results (default: 50, max: 200) |
-| `offset` | number | Pagination offset |
+| `limit`                 | number | Max results (default: 50, max: 200)                                                      |
+| `offset`                | number | Pagination offset                                                                        |
 
 **Field presets**:
 
-| Preset | Fields Included | Size | Notes |
-|--------|-----------------|------|-------|
-| `minimal` | `id`, `unitCode`, `amountCents`, `status`, `strategy`, `tactics`, `currency`, `productId` | ~100B/unit | Basic info + productId for relationship lookup |
-| `standard` | + `availableDate`, `isAvailable`, `daysUntilAvailable`, `latestInvestDate` | ~180B/unit | Requires product join + contribution_logs lookup |
-| `full` | + `product.*`, `note`, `startDate`, `endDate`, timestamps | ~450B/unit | Complete data with nested product |
+| Preset     | Fields Included                                                                           | Size       | Notes                                            |
+| ---------- | ----------------------------------------------------------------------------------------- | ---------- | ------------------------------------------------ |
+| `minimal`  | `id`, `unitCode`, `amountCents`, `status`, `strategy`, `tactics`, `currency`, `productId` | ~100B/unit | Basic info + productId for relationship lookup   |
+| `standard` | + `availableDate`, `isAvailable`, `daysUntilAvailable`, `latestInvestDate`                | ~180B/unit | Requires product join + contribution_logs lookup |
+| `full`     | + `product.*`, `note`, `startDate`, `endDate`, timestamps                                 | ~450B/unit | Complete data with nested product                |
 
 **Key Implementation Details**:
 - `minimal`: Direct query on `capital_units` table only, no joins
@@ -211,12 +211,12 @@ New parameters:
 
 New parameters:
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `fields` | enum | `"minimal"` \| `"full"` (default: `"full"`) |
+| Parameter          | Type    | Description                                  |
+| ------------------ | ------- | -------------------------------------------- |
+| `fields`           | enum    | `"minimal"` \| `"full"` (default: `"full"`)  |
 | `include_archived` | boolean | Include archived products (default: `false`) |
-| `limit` | number | Max results (default: 50, max: 200) |
-| `offset` | number | Pagination offset |
+| `limit`            | number  | Max results (default: 50, max: 200)          |
+| `offset`           | number  | Pagination offset                            |
 
 **Implementation Note**: Worker API already supports `includeArchived` query param (`worker/src/index.ts:312`), but it is NOT exposed in:
 - `mcp/src/index.ts` - `list_products` tool schema
@@ -226,10 +226,10 @@ This needs to be added as part of Phase 2 implementation.
 
 **Field presets**:
 
-| Preset | Fields Included |
-|--------|-----------------|
-| `minimal` | `id`, `name`, `channel`, `category`, `currency` |
-| `full` | All fields including `lockPeriodDays`, `annualReturnRate`, timestamps |
+| Preset    | Fields Included                                                       |
+| --------- | --------------------------------------------------------------------- |
+| `minimal` | `id`, `name`, `channel`, `category`, `currency`                       |
+| `full`    | All fields including `lockPeriodDays`, `annualReturnRate`, timestamps |
 
 ### Phase 3: Tool Description Quality Improvements
 
@@ -267,6 +267,7 @@ PARAMETERS:
 Document recommended tool call sequences for common tasks.
 
 #### Pattern A: Capital Overview
+
 ```
 1. get_units_summary     → Understand totals and distribution
 2. list_units (filtered) → Get specific subset if needed
@@ -274,12 +275,14 @@ Document recommended tool call sequences for common tasks.
 ```
 
 #### Pattern B: Availability Check
+
 ```
 1. get_units_summary                                       → Check availability.available_30d count
 2. list_units (available_within_days=30, fields="standard") → Get upcoming units with availability info
 ```
 
 #### Pattern C: Product-Unit Relationship
+
 ```
 1. get_products_summary                     → Understand product distribution
 2. list_products (fields="minimal")         → Get product IDs and names
@@ -293,13 +296,13 @@ Note: `minimal` preset includes `productId` for relationship lookup. Use `get_un
 
 ### Files to Modify
 
-| File | Changes |
-|------|---------|
-| `mcp/src/index.ts` | Add new tools, enhance existing tool parameters and descriptions |
-| `mcp/src/worker-client.ts` | Add new API methods for summary endpoints |
-| `worker/src/index.ts` | Add new API routes |
-| `worker/db/repositories/units.ts` | Add summary aggregation queries |
-| `worker/db/repositories/products.ts` | Add summary aggregation query |
+| File                                 | Changes                                                          |
+| ------------------------------------ | ---------------------------------------------------------------- |
+| `mcp/src/index.ts`                   | Add new tools, enhance existing tool parameters and descriptions |
+| `mcp/src/worker-client.ts`           | Add new API methods for summary endpoints                        |
+| `worker/src/index.ts`                | Add new API routes                                               |
+| `worker/db/repositories/units.ts`    | Add summary aggregation queries                                  |
+| `worker/db/repositories/products.ts` | Add summary aggregation query                                    |
 
 ### New Worker API Endpoints
 
@@ -328,9 +331,9 @@ const unitsWithAvailability = repos.units.enrichWithAvailability(units, latestIn
 const summary = {
   total_count: units.length,
   total_amount_cents: units.reduce((sum, u) => sum + u.amountCents, 0),
-  by_strategy: groupByWithSum(units, 'strategy'),
-  by_status: groupByWithSum(units, 'status'),
-  by_tactics: groupByWithSum(units, 'tactics'),
+  by_strategy: groupByWithSum(units, "strategy"),
+  by_status: groupByWithSum(units, "status"),
+  by_tactics: groupByWithSum(units, "tactics"),
   availability: categorizeByAvailability(unitsWithAvailability),
 };
 ```
@@ -377,18 +380,18 @@ WHERE user_id = ? AND is_archived = true
 
 #### Worker E2E Tests (`worker/tests/e2e/`)
 
-| Test File | Test Cases |
-|-----------|------------|
-| `units-summary.e2e.test.ts` | Summary aggregation by strategy/status/tactics; availability categorization; empty state |
-| `products-summary.e2e.test.ts` | Summary aggregation; include_archived behavior; empty state |
-| `units-fields.e2e.test.ts` | Field presets (minimal/standard/full); pagination; available_within_days filter |
-| `products-fields.e2e.test.ts` | Field presets; pagination; include_archived param |
+| Test File                      | Test Cases                                                                               |
+| ------------------------------ | ---------------------------------------------------------------------------------------- |
+| `units-summary.e2e.test.ts`    | Summary aggregation by strategy/status/tactics; availability categorization; empty state |
+| `products-summary.e2e.test.ts` | Summary aggregation; include_archived behavior; empty state                              |
+| `units-fields.e2e.test.ts`     | Field presets (minimal/standard/full); pagination; available_within_days filter          |
+| `products-fields.e2e.test.ts`  | Field presets; pagination; include_archived param                                        |
 
 #### MCP E2E Tests (`mcp/tests/`)
 
-| Test File | Test Cases |
-|-----------|------------|
-| `summary-tools.e2e.test.ts` | `get_units_summary` roundtrip; `get_products_summary` roundtrip |
+| Test File                       | Test Cases                                                                                                         |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `summary-tools.e2e.test.ts`     | `get_units_summary` roundtrip; `get_products_summary` roundtrip                                                    |
 | `list-enhancements.e2e.test.ts` | `list_units` with fields/pagination/available_within_days; `list_products` with fields/pagination/include_archived |
 
 ### Test Implementation Order
@@ -409,11 +412,11 @@ After implementation, all new tests must pass in CI:
 
 ## Success Metrics
 
-| Metric | Before | Target |
-|--------|--------|--------|
-| Typical overview query context | 20-50KB | < 2KB |
+| Metric                              | Before          | Target                      |
+| ----------------------------------- | --------------- | --------------------------- |
+| Typical overview query context      | 20-50KB         | < 2KB                       |
 | Tool calls for "show me my capital" | 1 (returns all) | 2 (summary → filtered list) |
-| Tool description completeness | ~3 components | 5-6 components |
+| Tool description completeness       | ~3 components   | 5-6 components              |
 
 ## References
 

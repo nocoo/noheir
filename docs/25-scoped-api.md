@@ -38,36 +38,36 @@ This section records the pre-implementation source inspection. Paths and line
 numbers are historical, not current connection instructions. All three worktrees
 were clean at inspection time. Fresh implementation results appear in section 13.
 
-| Repository | Inspected revision |
-| --- | --- |
-| Noheir | `d95279a55b7285c719e61edf13cdb9a292813240` |
-| xray | `433095a02e732c54711571d2cf2c652cff230051` |
-| his.fm | `4c81209bc28b52337075b80f011835cefe2647e1` |
+| Repository | Inspected revision                         |
+| ---------- | ------------------------------------------ |
+| Noheir     | `d95279a55b7285c719e61edf13cdb9a292813240` |
+| xray       | `433095a02e732c54711571d2cf2c652cff230051` |
+| his.fm     | `4c81209bc28b52337075b80f011835cefe2647e1` |
 
 ### Noheir Before This Refactor
 
-| Finding | Source evidence | Consequence |
-| --- | --- | --- |
-| AI settings save `enabled/baseURL/modelName/apiKey`; the insight loader runs recurring-payment heuristics, not model inference | `src/app/actions/settings-actions.ts:87`, `src/app/ai-insight/page.tsx:43` | Remove this surface rather than building or repairing an internal AI engine |
-| Most business CRUD already exists behind Access; machine routes are MCP/OAuth | `worker/src/index.ts:149`, `worker/src/index.ts:161`, `worker/src/index.ts:200` | Reuse business behavior, not the existing authentication boundary |
+| Finding                                                                                                                                         | Source evidence                                                                                                                        | Consequence                                                                                              |
+| ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| AI settings save `enabled/baseURL/modelName/apiKey`; the insight loader runs recurring-payment heuristics, not model inference                  | `src/app/actions/settings-actions.ts:87`, `src/app/ai-insight/page.tsx:43`                                                             | Remove this surface rather than building or repairing an internal AI engine                              |
+| Most business CRUD already exists behind Access; machine routes are MCP/OAuth                                                                   | `worker/src/index.ts:149`, `worker/src/index.ts:161`, `worker/src/index.ts:200`                                                        | Reuse business behavior, not the existing authentication boundary                                        |
 | Transaction search returns only `total_returned`, clamps at 5,000 and orders without a unique tie-breaker; tags use manually assembled LIKE SQL | `worker/db/repositories/transactions.ts:30`, `worker/db/repositories/transactions.ts:61`, `worker/db/repositories/transactions.ts:172` | Do not advertise complete or stable reads without a new query contract; parameterize exact tag filtering |
-| Some summaries sum across currencies when no currency is supplied | `worker/db/repositories/reports.ts:26`, `worker/db/repositories/reports.ts:176` | Financial aggregation must separate currencies, including UI callers of shared services |
-| Ordinary bulk insertion loops over separate writes | `worker/db/repositories/transactions.ts:209` | Do not promise atomic bulk writes by merely exposing this method |
-| Capital commit already uses expected-state checks and an atomic D1 batch | `worker/lib/unit-commit.ts`, `worker/src/index.ts:1001` | Preserve this business operation instead of bypassing it with generic unit CRUD |
-| Export includes raw settings; restore replaces transactions/transfers only | `worker/src/index.ts:1477`, `worker/src/index.ts:1499` | Existing export is not safe for keys and is not a complete restore contract |
-| Account classifications, balance anchors and financial assumptions share a JSON field with site/AI preferences | `src/app/actions/settings-actions.ts`, `src/domain/types.ts:263` | Define the financial/admin boundary before exposing these resources |
-| MCP includes useful transaction aggregation, portfolio joins and availability enrichment | `src/lib/mcp/tools/query.ts`, `src/lib/mcp/tools/portfolio.ts`, `src/lib/mcp/tools/unit.ts` | Move useful domain behavior out before deleting protocol code |
+| Some summaries sum across currencies when no currency is supplied                                                                               | `worker/db/repositories/reports.ts:26`, `worker/db/repositories/reports.ts:176`                                                        | Financial aggregation must separate currencies, including UI callers of shared services                  |
+| Ordinary bulk insertion loops over separate writes                                                                                              | `worker/db/repositories/transactions.ts:209`                                                                                           | Do not promise atomic bulk writes by merely exposing this method                                         |
+| Capital commit already uses expected-state checks and an atomic D1 batch                                                                        | `worker/lib/unit-commit.ts`, `worker/src/index.ts:1001`                                                                                | Preserve this business operation instead of bypassing it with generic unit CRUD                          |
+| Export includes raw settings; restore replaces transactions/transfers only                                                                      | `worker/src/index.ts:1477`, `worker/src/index.ts:1499`                                                                                 | Existing export is not safe for keys and is not a complete restore contract                              |
+| Account classifications, balance anchors and financial assumptions share a JSON field with site/AI preferences                                  | `src/app/actions/settings-actions.ts`, `src/domain/types.ts:263`                                                                       | Define the financial/admin boundary before exposing these resources                                      |
+| MCP includes useful transaction aggregation, portfolio joins and availability enrichment                                                        | `src/lib/mcp/tools/query.ts`, `src/lib/mcp/tools/portfolio.ts`, `src/lib/mcp/tools/unit.ts`                                            | Move useful domain behavior out before deleting protocol code                                            |
 
 ### Reference Projects: Adopt Patterns, Not Entire Subsystems
 
-| Reference | Adopt | Do not copy |
-| --- | --- | --- |
-| his.fm `packages/contracts/src/access.ts`, `apps/web/worker/agent-api.ts:178`, `apps/web/worker/management.ts` | Finite scopes, independent read/write permissions, separate human/machine authentication calling shared controllers | Its `tokens:*` and `appearance:*` machine scopes, delegated-token tree or editorial workflow |
-| his.fm `apps/web/worker/agent-tokens.ts`, `docs/scoped-api.md` | One-time plaintext display, hash-only storage, expiry/revocation, actor provenance and minimal write-only responses | Owner presets that silently include every administrative capability |
-| his.fm `apps/web/worker/agent-contract.ts`, `docs/api-onboarding.md` | OpenAPI 3.1, discovery, capabilities, explicit retry/concurrency instructions | Unpaginated production lists; financial collections need bounded complete traversal |
-| xray `packages/worker/src/index.ts`, `packages/worker/src/middleware/access-auth.ts` | Strong machine/human route separation and human-only key administration | A second hostname merely because Xray has one; Noheir can use an isolated prefix on its existing Worker |
-| xray `packages/worker/src/lib/query-cursor.ts`, `packages/worker/src/repos/query.ts` | Stable keyset pagination, scope/query-bound cursor validation and honest consistency semantics | Claiming keyset pagination alone is a database snapshot |
-| xray `packages/worker/src/repos/channels.ts:281` | Stable external identifiers, duplicate/conflict handling and server-stamped key provenance for external reports | Channel-only immutable ingestion as a substitute for Noheir's requested report CRUD |
+| Reference                                                                                                     | Adopt                                                                                                               | Do not copy                                                                                             |
+| ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| his.fm`packages/contracts/src/access.ts`, `apps/web/worker/agent-api.ts:178`, `apps/web/worker/management.ts` | Finite scopes, independent read/write permissions, separate human/machine authentication calling shared controllers | Its `tokens:*` and `appearance:*` machine scopes, delegated-token tree or editorial workflow            |
+| his.fm`apps/web/worker/agent-tokens.ts`, `docs/scoped-api.md`                                                 | One-time plaintext display, hash-only storage, expiry/revocation, actor provenance and minimal write-only responses | Owner presets that silently include every administrative capability                                     |
+| his.fm`apps/web/worker/agent-contract.ts`, `docs/api-onboarding.md`                                           | OpenAPI 3.1, discovery, capabilities, explicit retry/concurrency instructions                                       | Unpaginated production lists; financial collections need bounded complete traversal                     |
+| xray`packages/worker/src/index.ts`, `packages/worker/src/middleware/access-auth.ts`                           | Strong machine/human route separation and human-only key administration                                             | A second hostname merely because Xray has one; Noheir can use an isolated prefix on its existing Worker |
+| xray`packages/worker/src/lib/query-cursor.ts`, `packages/worker/src/repos/query.ts`                           | Stable keyset pagination, scope/query-bound cursor validation and honest consistency semantics                      | Claiming keyset pagination alone is a database snapshot                                                 |
+| xray`packages/worker/src/repos/channels.ts:281`                                                               | Stable external identifiers, duplicate/conflict handling and server-stamped key provenance for external reports     | Channel-only immutable ingestion as a substitute for Noheir's requested report CRUD                     |
 
 Xray's general push-token defaults are not a production-wide arbitrary-scope
 editor. His.fm does permit delegated key administration. Neither should be
@@ -140,21 +140,21 @@ This is the complete scope family list, not wildcard syntax. For each
 `read / write / delete` cell, define three literal enum values such as
 `transactions:read`, `transactions:write`, `transactions:delete`.
 
-| Resource family / path | Explicit actions | Notes |
-| --- | --- | --- |
-| `transactions` / `/transactions` | read / write / delete | Income/expense rows, bounded search and atomic batch creation |
-| `transfers` / `/transfers` | read / write / delete | Preserve current transfer-row semantics; not a new double-entry ledger |
-| `products` / `/products` | read / write / delete | Reference-aware deletion; no hidden cascade or ownership reassignment |
-| `units` / `/units` | read / write / delete; separate `units:commit` | CRUD cannot bypass investment/redemption, product switch or availability rules |
-| `contribution-logs` / `/contribution-logs` | read / write / delete | Versioned correction, soft deletion and restoration; distinct from immutable API audit |
-| `expense-categories` / `/expense-categories` | read / write / delete | Existing recurring-expense category records, not a new transaction taxonomy |
-| `recurring-expenses` / `/recurring-expenses` | read / write / delete | State transitions under write; bounded calendar occurrences under read |
-| `account-classifications` / `/account-classifications` | read / write / delete | Versioned financial data |
-| `balance-anchors` / `/balance-anchors` | read / write / delete | Versioned financial data, cents and explicit currency |
-| `financial-preferences` / `/financial-preferences` | read / write / delete | Singleton; GET/PUT/PATCH/DELETE; delete resets defaults |
-| `analyses` / `/analyses` | read / write / delete | Externally authored private reports |
-| `audit` / `/audit-events` | read only | Allowlisted operation metadata; never credentials, settings values or copied financial payloads |
-| Destructive ledger replacement | separate `data:replace` | Also requires read/write/delete on every affected transaction/transfer resource |
+| Resource family / path                                 | Explicit actions                               | Notes                                                                                           |
+| ------------------------------------------------------ | ---------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `transactions` / `/transactions`                       | read / write / delete                          | Income/expense rows, bounded search and atomic batch creation                                   |
+| `transfers` / `/transfers`                             | read / write / delete                          | Preserve current transfer-row semantics; not a new double-entry ledger                          |
+| `products` / `/products`                               | read / write / delete                          | Reference-aware deletion; no hidden cascade or ownership reassignment                           |
+| `units` / `/units`                                     | read / write / delete; separate `units:commit` | CRUD cannot bypass investment/redemption, product switch or availability rules                  |
+| `contribution-logs` / `/contribution-logs`             | read / write / delete                          | Versioned correction, soft deletion and restoration; distinct from immutable API audit          |
+| `expense-categories` / `/expense-categories`           | read / write / delete                          | Existing recurring-expense category records, not a new transaction taxonomy                     |
+| `recurring-expenses` / `/recurring-expenses`           | read / write / delete                          | State transitions under write; bounded calendar occurrences under read                          |
+| `account-classifications` / `/account-classifications` | read / write / delete                          | Versioned financial data                                                                        |
+| `balance-anchors` / `/balance-anchors`                 | read / write / delete                          | Versioned financial data, cents and explicit currency                                           |
+| `financial-preferences` / `/financial-preferences`     | read / write / delete                          | Singleton; GET/PUT/PATCH/DELETE; delete resets defaults                                         |
+| `analyses` / `/analyses`                               | read / write / delete                          | Externally authored private reports                                                             |
+| `audit` / `/audit-events`                              | read only                                      | Allowlisted operation metadata; never credentials, settings values or copied financial payloads |
+| Destructive ledger replacement                         | separate `data:replace`                        | Also requires read/write/delete on every affected transaction/transfer resource                 |
 
 Permission rules:
 
@@ -217,13 +217,13 @@ cannot submit contradictory date components or modify ownership/audit columns.
 
 Public discovery contains no user data, live balances or token metadata:
 
-| Endpoint | Purpose |
-| --- | --- |
-| `/.well-known/api-catalog` | Link the versioned API, OpenAPI and agent guide |
-| `/api/v1/openapi.json` | OpenAPI 3.1, HTTP Bearer scheme, schemas, operation IDs, `x-required-scopes`, limits and examples |
-| `/api/v1/instructions` | Read/aggregate/write workflows, financial semantics, retries and scope guidance |
-| `/api/v1/me` | Authenticated current key ID/label/scopes/expiry and opaque owner ID; no owner email or key list |
-| `/api/v1/capabilities` | Authenticated available operations, schema version, limits and financial conventions |
+| Endpoint                   | Purpose                                                                                           |
+| -------------------------- | ------------------------------------------------------------------------------------------------- |
+| `/.well-known/api-catalog` | Link the versioned API, OpenAPI and agent guide                                                   |
+| `/api/v1/openapi.json`     | OpenAPI 3.1, HTTP Bearer scheme, schemas, operation IDs, `x-required-scopes`, limits and examples |
+| `/api/v1/instructions`     | Read/aggregate/write workflows, financial semantics, retries and scope guidance                   |
+| `/api/v1/me`               | Authenticated current key ID/label/scopes/expiry and opaque owner ID; no owner email or key list  |
+| `/api/v1/capabilities`     | Authenticated available operations, schema version, limits and financial conventions              |
 
 Reuse installed Zod 4, including its JSON Schema conversion, for wire schemas.
 Bind explicit operation metadata to route registration/scope enforcement and
@@ -264,15 +264,15 @@ key audit additions invalidate its cursors. Its cursor also binds key and limit.
 
 ### Query Surface
 
-| Query | Purpose / required source scopes |
-| --- | --- |
-| `/transactions/aggregate` | Count/sum and bounded grouping by month/category/account/tag/currency; transactions read |
-| `/transfers/aggregate` | Inflow/outflow by account/time/currency; transfers read |
-| `/summaries/cash-flow` | Income/expense plus separately labeled transfers; transactions and transfers read |
-| `/summaries/portfolio` and `/products/{id}/portfolio` | Holdings, latest investment, realized P&L and availability; products, units and contribution-logs read |
-| `/accounts/balances` | Anchor-based balance reconstruction with assumptions/unknown states; transactions, transfers, account-classifications and balance-anchors read |
-| `/recurring-expenses/occurrences` | Existing deterministic recurrence/calendar expansion; recurring-expenses read, plus expense-categories read if category details are requested |
-| `/metadata` | Available years/currencies/account names/tags/category paths from explicitly selected authorized source families |
+| Query                                                 | Purpose / required source scopes                                                                                                               |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/transactions/aggregate`                             | Count/sum and bounded grouping by month/category/account/tag/currency; transactions read                                                       |
+| `/transfers/aggregate`                                | Inflow/outflow by account/time/currency; transfers read                                                                                        |
+| `/summaries/cash-flow`                                | Income/expense plus separately labeled transfers; transactions and transfers read                                                              |
+| `/summaries/portfolio` and `/products/{id}/portfolio` | Holdings, latest investment, realized P&L and availability; products, units and contribution-logs read                                         |
+| `/accounts/balances`                                  | Anchor-based balance reconstruction with assumptions/unknown states; transactions, transfers, account-classifications and balance-anchors read |
+| `/recurring-expenses/occurrences`                     | Existing deterministic recurrence/calendar expansion; recurring-expenses read, plus expense-categories read if category details are requested  |
+| `/metadata`                                           | Available years/currencies/account names/tags/category paths from explicitly selected authorized source families                               |
 
 Aggregates operate on the complete filtered dataset in SQL, not on one result
 page. Group dimensions and result cardinality are bounded. High-cardinality
@@ -408,19 +408,19 @@ with evidence -> return its private UI link. Noheir never calls the model.
 
 ## 9. Data and Code Change Map
 
-| Area | Implemented change |
-| --- | --- |
-| `worker/src/index.ts`, `worker/src/access.ts`, `worker/lib/request-policy.ts` | Separate router/auth boundaries; factor shared business use cases without replacing the Worker |
-| `worker/db/schema.ts`, canonical `worker/db/migrations/` | Keys, idempotency receipts, operation audit, financial revision, versions, reports and typed financial metadata |
-| `worker/db/repositories/`, `worker/lib/unit-commit.ts`, import helpers | Stable queries, currency-safe aggregates, shared owner checks, atomic mutations and version guards |
-| `src/lib/mcp/tools/` | Extract useful query/portfolio/availability behavior into shared services, then delete protocol handlers and compaction conventions |
-| `src/app/actions/settings-actions.ts`, financial settings pages | Finance-only fields use typed versioned resources; no arbitrary settings-JSON route for keys |
-| `src/app/ai-settings/`, `src/app/ai-insight/`, AI-only domain/detector/types/tests | Remove; retain legitimate recurring-expense calendar and non-AI financial calculations |
-| `src/app/mcp-tokens/`, `src/services/mcp-*`, `worker/src/mcp.ts`, `src/lib/mcp/` | Remove MCP/OAuth clients, authorization sessions, token management, discovery and protocol routes |
-| Root dependencies/locks, `worker/src/env.ts`, Wrangler configuration | Remove MCP-only packages/configuration after reference checks; retain Hono, jose, Zod and D1 |
-| Routes/navigation, new API-key and Reports pages | Basalt controls, MVVM, one-time key view, finite scope selection, expiry/revocation, report provenance |
-| Demo catalog, local environment scripts, fixtures, HTTP/browser tests, deployment verification | Replace AI/MCP fixtures/contracts with scoped API behavior while preserving isolated Demo/E2E/Prod modes |
-| `AGENTS.md`, README, runbook, feature/MCP docs | Update only with implemented behavior; clearly mark retired historical docs, no misleading connection instructions |
+| Area                                                                                           | Implemented change                                                                                                                  |
+| ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `worker/src/index.ts`, `worker/src/access.ts`, `worker/lib/request-policy.ts`                  | Separate router/auth boundaries; factor shared business use cases without replacing the Worker                                      |
+| `worker/db/schema.ts`, canonical `worker/db/migrations/`                                       | Keys, idempotency receipts, operation audit, financial revision, versions, reports and typed financial metadata                     |
+| `worker/db/repositories/`, `worker/lib/unit-commit.ts`, import helpers                         | Stable queries, currency-safe aggregates, shared owner checks, atomic mutations and version guards                                  |
+| `src/lib/mcp/tools/`                                                                           | Extract useful query/portfolio/availability behavior into shared services, then delete protocol handlers and compaction conventions |
+| `src/app/actions/settings-actions.ts`, financial settings pages                                | Finance-only fields use typed versioned resources; no arbitrary settings-JSON route for keys                                        |
+| `src/app/ai-settings/`, `src/app/ai-insight/`, AI-only domain/detector/types/tests             | Remove; retain legitimate recurring-expense calendar and non-AI financial calculations                                              |
+| `src/app/mcp-tokens/`, `src/services/mcp-*`, `worker/src/mcp.ts`, `src/lib/mcp/`               | Remove MCP/OAuth clients, authorization sessions, token management, discovery and protocol routes                                   |
+| Root dependencies/locks, `worker/src/env.ts`, Wrangler configuration                           | Remove MCP-only packages/configuration after reference checks; retain Hono, jose, Zod and D1                                        |
+| Routes/navigation, new API-key and Reports pages                                               | Basalt controls, MVVM, one-time key view, finite scope selection, expiry/revocation, report provenance                              |
+| Demo catalog, local environment scripts, fixtures, HTTP/browser tests, deployment verification | Replace AI/MCP fixtures/contracts with scoped API behavior while preserving isolated Demo/E2E/Prod modes                            |
+| `AGENTS.md`, README, runbook, feature/MCP docs                                                 | Update only with implemented behavior; clearly mark retired historical docs, no misleading connection instructions                  |
 
 Account classifications and anchors should become small owner-scoped versioned
 resources; remaining approved financial assumptions can use one typed per-owner
@@ -545,26 +545,26 @@ interface. Old credentials require neither preservation nor a transition plan.
 
 ## 13. Local Implementation Evidence
 
-| Workstream | Owner | Status / evidence |
-| --- | --- | --- |
-| REST backend, schema, auth, scopes, safe financial operations | Backend pane | TDD complete; 501 Worker tests pass |
-| Human key/report UI and finance configuration | UI pane | TDD complete; 918 root tests pass |
-| AI/MCP retirement, dependency cleanup, integration and docs | Coordinator | Old runtime, credentials, dependencies and active connection instructions removed |
-| Independent correctness review | Review pane | Reported findings fixed with regressions; final limited source recheck has no unresolved P1/P2 |
-| Full local gates and Chrome acceptance | Coordinator | Passed against isolated native fixtures and the existing persistent Demo; no reset or production writes |
+| Workstream                                                    | Owner        | Status / evidence                                                                                       |
+| ------------------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------- |
+| REST backend, schema, auth, scopes, safe financial operations | Backend pane | TDD complete; 501 Worker tests pass                                                                     |
+| Human key/report UI and finance configuration                 | UI pane      | TDD complete; 918 root tests pass                                                                       |
+| AI/MCP retirement, dependency cleanup, integration and docs   | Coordinator  | Old runtime, credentials, dependencies and active connection instructions removed                       |
+| Independent correctness review                                | Review pane  | Reported findings fixed with regressions; final limited source recheck has no unresolved P1/P2          |
+| Full local gates and Chrome acceptance                        | Coordinator  | Passed against isolated native fixtures and the existing persistent Demo; no reset or production writes |
 
 Results on 2026-10-20, before publication:
 
-| Command / check | Result |
-| --- | --- |
-| `bun run typecheck` | Browser and Worker lanes pass |
-| `bun run lint` | 414 files, zero warnings/errors |
-| `bun run test:coverage` | 84 files / 918 tests; statements 98.44%, branches 96.44%, functions 100%, lines 99.51% |
-| `bun run --cwd worker test:coverage` | 31 files / 501 tests; statements 99.00%, branches 97.71%, functions 100%, lines 99.77% |
-| `bun run test:e2e` | 190 real-HTTP tests plus 6 environment lifecycle tests pass |
-| `bun run test:e2e:bdd` | 41 browser scenarios pass, including scoped report writeback, safe rendering, versioned human edits and revocation |
-| `bun run test:environments:browser` | Installed Chrome: 33 routes, no API/image failures; mode isolation and disabled-storage checks pass |
-| `bun run deploy:check` | Vite bundles and Wrangler dry-run pass; nothing uploaded |
+| Command / check                                  | Result                                                                                                                                                                         |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `bun run typecheck`                              | Browser and Worker lanes pass                                                                                                                                                  |
+| `bun run lint`                                   | 414 files, zero warnings/errors                                                                                                                                                |
+| `bun run test:coverage`                          | 84 files / 918 tests; statements 98.44%, branches 96.44%, functions 100%, lines 99.51%                                                                                         |
+| `bun run --cwd worker test:coverage`             | 31 files / 501 tests; statements 99.00%, branches 97.71%, functions 100%, lines 99.77%                                                                                         |
+| `bun run test:e2e`                               | 190 real-HTTP tests plus 6 environment lifecycle tests pass                                                                                                                    |
+| `bun run test:e2e:bdd`                           | 41 browser scenarios pass, including scoped report writeback, safe rendering, versioned human edits and revocation                                                             |
+| `bun run test:environments:browser`              | Installed Chrome: 33 routes, no API/image failures; mode isolation and disabled-storage checks pass                                                                            |
+| `bun run deploy:check`                           | Vite bundles and Wrangler dry-run pass; nothing uploaded                                                                                                                       |
 | Persistent Demo at `https://noheir.dev.hexly.ai` | Headed installed Chrome: issue one-time key, Bearer-only cash-flow query, external report write, human edit/delete, revoked-key 401; 1440px desktop and 390px mobile inspected |
 
 Coverage describes the existing configured scopes, not the whole runtime. The
@@ -630,9 +630,7 @@ const token = process.env.NOHEIR_TOKEN;
 if (!origin || !token) throw new Error("Set NOHEIR_ORIGIN and NOHEIR_TOKEN");
 const headers = {
   Authorization: `Bearer ${token}`,
-  ...(process.env.NOHEIR_INSTANCE
-    ? { "x-noheir-instance": process.env.NOHEIR_INSTANCE }
-    : {}),
+  ...(process.env.NOHEIR_INSTANCE ? { "x-noheir-instance": process.env.NOHEIR_INSTANCE } : {}),
 };
 async function call(path, options = {}) {
   const response = await fetch(new URL(`/api/v1${path}`, origin), {
@@ -648,21 +646,33 @@ async function call(path, options = {}) {
 const periodStart = "2026-01-01";
 const periodEnd = "2026-12-31";
 const query = new URLSearchParams({
-  currency: "CNY", startDate: periodStart, endDate: periodEnd,
+  currency: "CNY",
+  startDate: periodStart,
+  endDate: periodEnd,
 });
 const { data, meta } = await call(`/summaries/cash-flow?${query}`);
-const markdown = "# CNY cash flow\n\n" + data.transactions.map((row) =>
-  `- ${row.type}: ${(row.amountCents / 100).toFixed(2)} CNY (${row.count} records)`
-).join("\n") + "\n\nTransfers are separate. No currency conversion is implied.";
+const markdown =
+  "# CNY cash flow\n\n" +
+  data.transactions
+    .map((row) => `- ${row.type}: ${(row.amountCents / 100).toFixed(2)} CNY (${row.count} records)`)
+    .join("\n") +
+  "\n\nTransfers are separate. No currency conversion is implied.";
 const externalId = `cash-flow:${periodStart}:${periodEnd}:CNY:${meta.dataRevision}`;
 const receipt = await call("/analyses", {
   method: "POST",
   headers: { "Content-Type": "application/json", "Idempotency-Key": externalId },
   body: JSON.stringify({
-    title: "External CNY cash-flow review", markdown, externalId,
-    periodStart, periodEnd, currencies: ["CNY"], dataRevision: meta.dataRevision,
+    title: "External CNY cash-flow review",
+    markdown,
+    externalId,
+    periodStart,
+    periodEnd,
+    currencies: ["CNY"],
+    dataRevision: meta.dataRevision,
     evidence: ["transactions", "transfers"].map((resource) => ({
-      resource, ids: [], dataRevision: meta.dataRevision,
+      resource,
+      ids: [],
+      dataRevision: meta.dataRevision,
     })),
   }),
 });

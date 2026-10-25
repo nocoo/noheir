@@ -29,6 +29,10 @@ function renderShell(children: ReactNode) {
   );
 }
 
+function AccentProbe() {
+  return <output>{useAccent().accent}</output>;
+}
+
 describe("Basalt shell contract", () => {
   it("uses native navigation selection and keeps year-aware anchors in both rail modes", () => {
     const { container } = renderShell(<Sidebar />);
@@ -66,9 +70,6 @@ describe("Basalt shell contract", () => {
 
   it("fixes the product accent to Basalt Blue despite a stored different accent", () => {
     localStorage.setItem("basalt-accent", "rose");
-    function AccentProbe() {
-      return <output>{useAccent().accent}</output>;
-    }
     renderShell(<AccentProbe />);
     expect(screen.getByRole("status")).toHaveTextContent("primary");
     localStorage.removeItem("basalt-accent");

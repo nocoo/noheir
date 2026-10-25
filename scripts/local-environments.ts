@@ -46,7 +46,7 @@ export async function createEnvironmentController(options: {
   let locked: Instance | undefined;
   const origin = options.origin;
   const visible = !options.ci;
-  const describe = (instance: Instance) => ({
+  const describeInstance = (instance: Instance) => ({
     protocol: "noheir-local-v1",
     id: instance.id,
     mode: instance.mode,
@@ -145,26 +145,26 @@ export async function createEnvironmentController(options: {
         if (options.automated) {
           if (body.action === "switch" || (body.mode !== undefined && body.mode !== "e2e"))
             return json({ error: "Automated E2E is locked" }, 409);
-          return json(describe(locked as Instance));
+          return json(describeInstance(locked as Instance));
         }
         const previous = body.instance ? instances.get(body.instance) : undefined;
         if (body.action === "switch") {
           if (!previous || previous.expired)
             return json({ error: "Instance expired; reload" }, 410);
           if (!isMode(body.mode)) return json({ error: "Unknown environment" }, 400);
-          if (body.mode === previous.mode) return json(describe(previous));
+          if (body.mode === previous.mode) return json(describeInstance(previous));
           const next = await create(body.mode);
           await retire(previous);
-          return json(describe(next));
+          return json(describeInstance(next));
         }
         if (body.action !== "start" && body.action !== "select")
           return json({ error: "Unknown action" }, 400);
-        if (previous && !previous.expired) return json(describe(previous));
+        if (previous && !previous.expired) return json(describeInstance(previous));
         const mode =
           body.action === "select" && isMode(body.mode)
             ? body.mode
             : (options.initial ?? (isMode(body.mode) ? body.mode : "demo"));
-        return json(describe(await create(mode)));
+        return json(describeInstance(await create(mode)));
       } catch (error) {
         console.error(
           "Local environment startup failed:",

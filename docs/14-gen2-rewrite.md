@@ -13,21 +13,21 @@
 
 ## Current State
 
-| Dimension | Now | Target |
-|-----------|-----|--------|
-| Framework | Vite 7 SPA (pure client-side) | Next.js 16 (SSR + server actions) |
-| React | 18 | 19 |
-| Routing | react-router-dom 6 (flat tab-based) | Next.js App Router (file-based) |
-| Layout | Gen 1 DashboardLayout (props) | Gen 2 AppShell + Sidebar + SidebarContext |
-| Auth | Supabase Auth (Google OAuth) | NextAuth v5 (Google OAuth + ALLOWED_EMAILS) |
-| Database | Supabase Postgres (5 tables + 5 RPC) | Cloudflare D1 (`noheir-db`) + Drizzle ORM |
-| Backend | No backend (client-side SDK) | CF Worker (`noheir`) + proxy.ts + repository pattern |
-| Charts | ECharts | Recharts |
-| MCP Server | Supabase-backed (email/password auth) | D1-backed via same Worker |
-| Deployment | Railway (Railpack, Caddy SPA) | Railway (Dockerfile, Next.js standalone) + CF Worker |
-| TypeScript | strict: false, strictNullChecks: false | strict: true + noUncheckedIndexedAccess |
-| Testing | 327 unit + 59 E2E + 168 MCP (C-tier) | S-tier (L1/L2/L3 + G1/G2 + D1) |
-| Quality | C (G1 strictNull=false) | S |
+| Dimension  | Now                                    | Target                                               |
+| ---------- | -------------------------------------- | ---------------------------------------------------- |
+| Framework  | Vite 7 SPA (pure client-side)          | Next.js 16 (SSR + server actions)                    |
+| React      | 18                                     | 19                                                   |
+| Routing    | react-router-dom 6 (flat tab-based)    | Next.js App Router (file-based)                      |
+| Layout     | Gen 1 DashboardLayout (props)          | Gen 2 AppShell + Sidebar + SidebarContext            |
+| Auth       | Supabase Auth (Google OAuth)           | NextAuth v5 (Google OAuth + ALLOWED_EMAILS)          |
+| Database   | Supabase Postgres (5 tables + 5 RPC)   | Cloudflare D1 (`noheir-db`) + Drizzle ORM            |
+| Backend    | No backend (client-side SDK)           | CF Worker (`noheir`) + proxy.ts + repository pattern |
+| Charts     | ECharts                                | Recharts                                             |
+| MCP Server | Supabase-backed (email/password auth)  | D1-backed via same Worker                            |
+| Deployment | Railway (Railpack, Caddy SPA)          | Railway (Dockerfile, Next.js standalone) + CF Worker |
+| TypeScript | strict: false, strictNullChecks: false | strict: true + noUncheckedIndexedAccess              |
+| Testing    | 327 unit + 59 E2E + 168 MCP (C-tier)   | S-tier (L1/L2/L3 + G1/G2 + D1)                       |
+| Quality    | C (G1 strictNull=false)                | S                                                    |
 
 ## Architecture Decisions
 
@@ -119,30 +119,30 @@ The Worker uses a single shared `WORKER_TOKEN` (env secret). It does **not** con
 
 **Worker API surface** (REST-like, JSON in/out):
 
-| Method | Endpoint | Maps to |
-|--------|----------|---------|
-| GET | `/transactions?keyword=...&year=...` | `repos.transactions.search(filters)` |
-| POST | `/transactions` | `repos.transactions.create(data)` |
-| GET | `/transfers?keyword=...` | `repos.transfers.search(filters)` |
-| POST | `/transfers` | `repos.transfers.create(data)` |
-| GET | `/products` | `repos.products.findAll(filters)` |
-| GET | `/products/:id` | `repos.products.findById(id)` |
-| POST | `/products` | `repos.products.create(data)` |
-| PUT | `/products/:id` | `repos.products.update(id, data)` |
-| DELETE | `/products/:id` | `repos.products.delete(id)` |
-| GET | `/units?with_products=true` | `repos.units.findAllWithProducts()` |
-| GET | `/units/:id` | `repos.units.findById(id)` |
-| POST | `/units` | `repos.units.create(data)` |
-| PUT | `/units/:id` | `repos.units.update(id, data)` |
-| DELETE | `/units/:id` | `repos.units.delete(id)` |
-| GET | `/settings` | `repos.settings.getByUserId(userId)` |
-| PUT | `/settings` | `repos.settings.upsert(userId, data)` |
-| GET | `/metadata` | `repos.metadata.getAll(userId)` |
-| GET | `/reports/monthly?year=...&month=...` | `repos.reports.monthly(userId, year, month, currency?)` |
-| POST | `/import/transactions` | Bulk insert (user-scoped) |
-| POST | `/import/transfers` | Bulk insert (user-scoped) |
-| GET | `/backup` | Export all data **for the requesting userId only** |
-| POST | `/restore` | Delete + re-import all data **for the requesting userId only** |
+| Method | Endpoint                              | Maps to                                                        |
+| ------ | ------------------------------------- | -------------------------------------------------------------- |
+| GET    | `/transactions?keyword=...&year=...`  | `repos.transactions.search(filters)`                           |
+| POST   | `/transactions`                       | `repos.transactions.create(data)`                              |
+| GET    | `/transfers?keyword=...`              | `repos.transfers.search(filters)`                              |
+| POST   | `/transfers`                          | `repos.transfers.create(data)`                                 |
+| GET    | `/products`                           | `repos.products.findAll(filters)`                              |
+| GET    | `/products/:id`                       | `repos.products.findById(id)`                                  |
+| POST   | `/products`                           | `repos.products.create(data)`                                  |
+| PUT    | `/products/:id`                       | `repos.products.update(id, data)`                              |
+| DELETE | `/products/:id`                       | `repos.products.delete(id)`                                    |
+| GET    | `/units?with_products=true`           | `repos.units.findAllWithProducts()`                            |
+| GET    | `/units/:id`                          | `repos.units.findById(id)`                                     |
+| POST   | `/units`                              | `repos.units.create(data)`                                     |
+| PUT    | `/units/:id`                          | `repos.units.update(id, data)`                                 |
+| DELETE | `/units/:id`                          | `repos.units.delete(id)`                                       |
+| GET    | `/settings`                           | `repos.settings.getByUserId(userId)`                           |
+| PUT    | `/settings`                           | `repos.settings.upsert(userId, data)`                          |
+| GET    | `/metadata`                           | `repos.metadata.getAll(userId)`                                |
+| GET    | `/reports/monthly?year=...&month=...` | `repos.reports.monthly(userId, year, month, currency?)`        |
+| POST   | `/import/transactions`                | Bulk insert (user-scoped)                                      |
+| POST   | `/import/transfers`                   | Bulk insert (user-scoped)                                      |
+| GET    | `/backup`                             | Export all data **for the requesting userId only**             |
+| POST   | `/restore`                            | Delete + re-import all data **for the requesting userId only** |
 
 **All endpoints require `userId` via `X-User-Id` header** (set by Next.js server from NextAuth session, or by MCP server from its auth). The Worker trusts this header because only holders of `WORKER_TOKEN` can reach the Worker at all. See AD-2 for the full trust model.
 
@@ -152,18 +152,18 @@ The Worker uses a single shared `WORKER_TOKEN` (env secret). It does **not** con
 
 **Postgres features used that need D1 alternatives:**
 
-| Postgres Feature | D1/SQLite Alternative |
-|------------------|-----------------------|
-| `uuid_generate_v4()` | Application-level `crypto.randomUUID()` |
-| `auth.uid()` RLS | Application-level user filtering in repository layer |
-| Array columns (`text[]` for tags) | JSON text column (`JSON.stringify(tags)`) |
-| GIN index on arrays | No equivalent; filter in application |
-| `pg_trgm` trigram search | SQLite `LIKE '%keyword%'` (or FTS5 if needed later) |
-| `NUMERIC(12,2)` | `INTEGER` (store cents) |
-| `JSONB` (settings) | `TEXT` with `JSON.parse()` |
-| RPC functions (5) | Repository methods in Worker |
-| RLS policies | proxy.ts + repository userId filtering |
-| `CHECK` constraints (enums) | Zod validation at API boundary |
+| Postgres Feature                  | D1/SQLite Alternative                                |
+| --------------------------------- | ---------------------------------------------------- |
+| `uuid_generate_v4()`              | Application-level `crypto.randomUUID()`              |
+| `auth.uid()` RLS                  | Application-level user filtering in repository layer |
+| Array columns (`text[]` for tags) | JSON text column (`JSON.stringify(tags)`)            |
+| GIN index on arrays               | No equivalent; filter in application                 |
+| `pg_trgm` trigram search          | SQLite `LIKE '%keyword%'` (or FTS5 if needed later)  |
+| `NUMERIC(12,2)`                   | `INTEGER` (store cents)                              |
+| `JSONB` (settings)                | `TEXT` with `JSON.parse()`                           |
+| RPC functions (5)                 | Repository methods in Worker                         |
+| RLS policies                      | proxy.ts + repository userId filtering               |
+| `CHECK` constraints (enums)       | Zod validation at API boundary                       |
 
 **Decision: Store monetary amounts as INTEGER cents** (multiply by 100). Avoids floating-point precision issues entirely. Display layer divides by 100.
 
@@ -178,7 +178,9 @@ Current Supabase `settings` table has nullable `owner_id` and relies on RLS for 
 ```typescript
 export const settings = sqliteTable("settings", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  ownerId: text("owner_id").notNull().unique()
+  ownerId: text("owner_id")
+    .notNull()
+    .unique()
     .references(() => users.id, { onDelete: "cascade" }),
   siteName: text("site_name").default(""),
   settings: text("settings").default("{}"),
@@ -245,25 +247,25 @@ app/
 └── privacy/page.tsx
 ```
 
-**Note:** No data CRUD routes in Next.js *directly*. All data mutations go through Next.js **server actions** which internally call `WorkerDbClient` → Cloudflare Worker. The browser never talks to the Worker. See AD-8 for the trust boundary.
+**Note:** No data CRUD routes in Next.js _directly_. All data mutations go through Next.js **server actions** which internally call `WorkerDbClient` → Cloudflare Worker. The browser never talks to the Worker. See AD-8 for the trust boundary.
 
 ### AD-7: Charts — ECharts to Recharts
 
 All charts need rewriting. Mapping:
 
-| Current (ECharts) | Target (Recharts) |
-|-------------------|-------------------|
-| ScissorsTrendChart (line) | LineChart + Area |
-| FinancialHealthRadar (radar) | RadarChart |
-| DistributionPieChart (pie) | PieChart |
-| StrategySunburst (sunburst) | Custom TreeMap or nested PieChart |
-| LiquidityLadder (bar) | BarChart |
-| BalanceWaterfall (custom bar) | BarChart with custom shapes |
-| MonthlyChart (bar+line combo) | ComposedChart |
-| SavingsRateChart (area) | AreaChart |
-| YearComparisonChart (multi-line) | LineChart multi-series |
-| IncomeExpenseComparison (grouped bar) | BarChart grouped |
-| FlowAnalysis (Sankey-like) | Custom or Sankey from recharts |
+| Current (ECharts)                     | Target (Recharts)                 |
+| ------------------------------------- | --------------------------------- |
+| ScissorsTrendChart (line)             | LineChart + Area                  |
+| FinancialHealthRadar (radar)          | RadarChart                        |
+| DistributionPieChart (pie)            | PieChart                          |
+| StrategySunburst (sunburst)           | Custom TreeMap or nested PieChart |
+| LiquidityLadder (bar)                 | BarChart                          |
+| BalanceWaterfall (custom bar)         | BarChart with custom shapes       |
+| MonthlyChart (bar+line combo)         | ComposedChart                     |
+| SavingsRateChart (area)               | AreaChart                         |
+| YearComparisonChart (multi-line)      | LineChart multi-series            |
+| IncomeExpenseComparison (grouped bar) | BarChart grouped                  |
+| FlowAnalysis (Sankey-like)            | Custom or Sankey from recharts    |
 
 **Note:** Sunburst is ECharts-specific. Recharts has no native sunburst. Options: (a) TreeMap, (b) nested donut, (c) keep echarts for this one chart only. **Decision: TreeMap** — simpler, readable, no extra dependency.
 
@@ -347,17 +349,17 @@ The 5 Supabase RPC functions contain non-obvious behavioral contracts that must 
 
 **Behavioral contract:**
 
-| Behavior | Current SQL | Repository must do |
-|----------|-------------|--------------------|
-| Keyword matches across 5 fields | `note ILIKE`, `primary_category ILIKE`, `secondary_category ILIKE`, `tertiary_category ILIKE`, `account ILIKE` | SQLite `LIKE '%' \|\| keyword \|\| '%'` on same 5 fields (case-insensitive via `COLLATE NOCASE` or `lower()`) |
-| `matched_field` return value | CASE expression returns which field matched ('note', 'category', 'secondary_category', 'tertiary_category', 'account', null) | Must return identical field name strings in response |
-| Limit clamping | `LEAST(GREATEST(p_limit, 1), 500)` | Clamp to `[1, 500]` in repository |
-| Offset pagination | `LIMIT v_limit OFFSET p_offset` | Same |
-| Tags overlap | `t.tags && p_tags` (Postgres array overlap) | Parse JSON tags, check `tags.some(t => filterTags.includes(t))`, or `LIKE` per tag with OR |
-| All filters AND logic | Every non-null param adds a WHERE clause | Same — all filters combine with AND |
-| Sort order | `ORDER BY t.date DESC, t.created_at DESC` | Same |
-| Amount is cents in D1 | `t.amount >= p_min_amount` (float in Postgres) | Compare cents: `amountCents >= minAmountCents` (caller converts) |
-| User isolation | `t.user_id = auth.uid()` | `WHERE user_id = ?` (userId param) |
+| Behavior                        | Current SQL                                                                                                                  | Repository must do                                                                                            |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Keyword matches across 5 fields | `note ILIKE`, `primary_category ILIKE`, `secondary_category ILIKE`, `tertiary_category ILIKE`, `account ILIKE`               | SQLite `LIKE '%' \|\| keyword \|\| '%'` on same 5 fields (case-insensitive via `COLLATE NOCASE` or `lower()`) |
+| `matched_field` return value    | CASE expression returns which field matched ('note', 'category', 'secondary_category', 'tertiary_category', 'account', null) | Must return identical field name strings in response                                                          |
+| Limit clamping                  | `LEAST(GREATEST(p_limit, 1), 500)`                                                                                           | Clamp to `[1, 500]` in repository                                                                             |
+| Offset pagination               | `LIMIT v_limit OFFSET p_offset`                                                                                              | Same                                                                                                          |
+| Tags overlap                    | `t.tags && p_tags` (Postgres array overlap)                                                                                  | Parse JSON tags, check `tags.some(t => filterTags.includes(t))`, or `LIKE` per tag with OR                    |
+| All filters AND logic           | Every non-null param adds a WHERE clause                                                                                     | Same — all filters combine with AND                                                                           |
+| Sort order                      | `ORDER BY t.date DESC, t.created_at DESC`                                                                                    | Same                                                                                                          |
+| Amount is cents in D1           | `t.amount >= p_min_amount` (float in Postgres)                                                                               | Compare cents: `amountCents >= minAmountCents` (caller converts)                                              |
+| User isolation                  | `t.user_id = auth.uid()`                                                                                                     | `WHERE user_id = ?` (userId param)                                                                            |
 
 **Response shape:** `{ transactions: Transaction[], total_returned: number }`
 
@@ -367,12 +369,12 @@ The 5 Supabase RPC functions contain non-obvious behavioral contracts that must 
 
 **Behavioral contract (differences from transactions):**
 
-| Behavior | Current SQL | Repository must do |
-|----------|-------------|--------------------|
-| Keyword matches across 4 fields | `note ILIKE`, `primary_category ILIKE`, `secondary_category ILIKE`, `account ILIKE` | Same 4 fields with LIKE |
-| `matched_field` values | 'note', 'category', 'account' (only 3 distinct values despite 4 fields searched) | Preserve: secondary_category match returns 'category' (current behavior) |
-| Amount filter uses GREATEST | `GREATEST(t.inflow_amount, t.outflow_amount) >= p_min_amount` | `MAX(inflowAmountCents, outflowAmountCents) >= minAmountCents` |
-| Limit clamping | `LEAST(GREATEST(p_limit, 1), 500)` | Same `[1, 500]` |
+| Behavior                        | Current SQL                                                                         | Repository must do                                                       |
+| ------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Keyword matches across 4 fields | `note ILIKE`, `primary_category ILIKE`, `secondary_category ILIKE`, `account ILIKE` | Same 4 fields with LIKE                                                  |
+| `matched_field` values          | 'note', 'category', 'account' (only 3 distinct values despite 4 fields searched)    | Preserve: secondary_category match returns 'category' (current behavior) |
+| Amount filter uses GREATEST     | `GREATEST(t.inflow_amount, t.outflow_amount) >= p_min_amount`                       | `MAX(inflowAmountCents, outflowAmountCents) >= minAmountCents`           |
+| Limit clamping                  | `LEAST(GREATEST(p_limit, 1), 500)`                                                  | Same`[1, 500]`                                                           |
 
 **Response shape:** `{ transfers: Transfer[], total_returned: number }`
 
@@ -380,12 +382,12 @@ The 5 Supabase RPC functions contain non-obvious behavioral contracts that must 
 
 **Behavioral contract:**
 
-| Behavior | Current SQL | Repository must do |
-|----------|-------------|--------------------|
-| LEFT JOIN | `capital_units LEFT JOIN financial_products ON product_id = id` | Drizzle `leftJoin` |
-| Product as nested JSON | `to_jsonb(p) AS product` — null when no product | Return `{ ...unit, product: Product \| null }` |
-| Sort order | `ORDER BY u.created_at DESC` | Same |
-| User isolation | `WHERE u.user_id = auth.uid()` | `WHERE user_id = ?` |
+| Behavior               | Current SQL                                                     | Repository must do                             |
+| ---------------------- | --------------------------------------------------------------- | ---------------------------------------------- |
+| LEFT JOIN              | `capital_units LEFT JOIN financial_products ON product_id = id` | Drizzle `leftJoin`                             |
+| Product as nested JSON | `to_jsonb(p) AS product` — null when no product                 | Return `{ ...unit, product: Product \| null }` |
+| Sort order             | `ORDER BY u.created_at DESC`                                    | Same                                           |
+| User isolation         | `WHERE u.user_id = auth.uid()`                                  | `WHERE user_id = ?`                            |
 
 **Response shape:** `{ units: UnitWithProduct[], total_returned: number }`
 
@@ -393,17 +395,17 @@ The 5 Supabase RPC functions contain non-obvious behavioral contracts that must 
 
 **Behavioral contract:**
 
-| Field | Current SQL | Repository must do |
-|-------|-------------|--------------------|
-| `years` | `SELECT DISTINCT year FROM transactions UNION transfers`, sorted DESC | Same union + sort |
-| `accounts` | `SELECT DISTINCT account FROM transactions UNION transfers`, sorted ASC | Same |
-| `categories` | `SELECT DISTINCT primary_category FROM transactions`, sorted ASC | Same |
-| `secondary_categories` | `SELECT DISTINCT secondary_category FROM transactions WHERE NOT NULL AND != ''`, sorted ASC | Same null/empty filter |
-| `tertiary_categories` | Same pattern as secondary | Same |
-| `currencies` | `SELECT DISTINCT currency FROM transactions UNION transfers`, sorted ASC | Same |
-| `tags` | `SELECT DISTINCT unnest(tags) FROM transactions UNION transfers`, sorted ASC | Parse JSON tags, collect unique, sort |
-| `transaction_count` | `SELECT count(*) FROM transactions` | Same |
-| `transfer_count` | `SELECT count(*) FROM transfers` | Same |
+| Field                  | Current SQL                                                                                 | Repository must do                    |
+| ---------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------- |
+| `years`                | `SELECT DISTINCT year FROM transactions UNION transfers`, sorted DESC                       | Same union + sort                     |
+| `accounts`             | `SELECT DISTINCT account FROM transactions UNION transfers`, sorted ASC                     | Same                                  |
+| `categories`           | `SELECT DISTINCT primary_category FROM transactions`, sorted ASC                            | Same                                  |
+| `secondary_categories` | `SELECT DISTINCT secondary_category FROM transactions WHERE NOT NULL AND != ''`, sorted ASC | Same null/empty filter                |
+| `tertiary_categories`  | Same pattern as secondary                                                                   | Same                                  |
+| `currencies`           | `SELECT DISTINCT currency FROM transactions UNION transfers`, sorted ASC                    | Same                                  |
+| `tags`                 | `SELECT DISTINCT unnest(tags) FROM transactions UNION transfers`, sorted ASC                | Parse JSON tags, collect unique, sort |
+| `transaction_count`    | `SELECT count(*) FROM transactions`                                                         | Same                                  |
+| `transfer_count`       | `SELECT count(*) FROM transfers`                                                            | Same                                  |
 
 **Response shape:** Exact JSON structure preserved — MCP tools depend on these field names.
 
@@ -413,19 +415,19 @@ The 5 Supabase RPC functions contain non-obvious behavioral contracts that must 
 
 **Behavioral contract:**
 
-| Field | Current SQL | Repository must do |
-|-------|-------------|--------------------|
-| `total_income` | `SUM(amount) WHERE type='income'` | `SUM(amountCents)` → return as cents |
-| `total_expense` | `SUM(amount) WHERE type='expense'` | Same |
-| `net_amount` | `SUM(CASE income THEN amount, expense THEN -amount)` | Same sign logic with cents |
-| `transaction_count` | `count(*)` filtered | Same |
-| `transfer_count` | `count(*)` filtered | Same |
-| `total_transfer_in` | `SUM(inflow_amount)` | `SUM(inflowAmountCents)` |
-| `total_transfer_out` | `SUM(outflow_amount)` | `SUM(outflowAmountCents)` |
-| `expense_by_category` | `GROUP BY primary_category, ORDER BY total DESC` | Same grouping + sort |
-| `income_by_category` | Same pattern | Same |
-| `currencies` | DISTINCT currencies from both tables for that month | Same |
-| Optional currency filter | `AND (p_currency IS NULL OR currency = p_currency)` on every sub-query | Same |
+| Field                    | Current SQL                                                            | Repository must do                   |
+| ------------------------ | ---------------------------------------------------------------------- | ------------------------------------ |
+| `total_income`           | `SUM(amount) WHERE type='income'`                                      | `SUM(amountCents)` → return as cents |
+| `total_expense`          | `SUM(amount) WHERE type='expense'`                                     | Same                                 |
+| `net_amount`             | `SUM(CASE income THEN amount, expense THEN -amount)`                   | Same sign logic with cents           |
+| `transaction_count`      | `count(*)` filtered                                                    | Same                                 |
+| `transfer_count`         | `count(*)` filtered                                                    | Same                                 |
+| `total_transfer_in`      | `SUM(inflow_amount)`                                                   | `SUM(inflowAmountCents)`             |
+| `total_transfer_out`     | `SUM(outflow_amount)`                                                  | `SUM(outflowAmountCents)`            |
+| `expense_by_category`    | `GROUP BY primary_category, ORDER BY total DESC`                       | Same grouping + sort                 |
+| `income_by_category`     | Same pattern                                                           | Same                                 |
+| `currencies`             | DISTINCT currencies from both tables for that month                    | Same                                 |
+| Optional currency filter | `AND (p_currency IS NULL OR currency = p_currency)` on every sub-query | Same                                 |
 
 **Response shape:** Exact JSON structure preserved — MCP and UI both consume this.
 
@@ -437,18 +439,18 @@ The 5 Supabase RPC functions contain non-obvious behavioral contracts that must 
 
 **Goal:** Next.js 16 project skeleton with Gen 2 layout, auth, D1, and quality gates.
 
-| # | Commit | Description | Files | Status |
-|---|--------|-------------|-------|--------|
-| 0.1a | `chore: archive Gen 1 codebase to _archive/` | Move (not delete) all Gen 1 source into `_archive/` for reference during rewrite. Old code stays accessible for copy-paste and comparison. `_archive/` is gitignored after Phase 5 cutover and deleted once rewrite is verified. | See "Phase 0.1a: Archive Scope" below | **DONE** |
-| 0.1b | `feat: scaffold Next.js 16 project` | `create-next-app` with App Router, React 19, Tailwind v4, TypeScript strict. Copy design tokens from `_archive/src/index.css` to `app/globals.css`. Configure `next.config.ts` (standalone output). | `package.json`, `next.config.ts`, `tsconfig.json`, `app/globals.css`, `app/layout.tsx` | **DONE** |
-| 0.2 | `feat: add Gen 2 layout system` | Port `_archive/src/components/layout/DashboardLayout.tsx` (539 lines) → `app-shell.tsx` + `sidebar.tsx` + `sidebar-context.tsx`. Extract nav config to `lib/navigation.ts`. | `components/layout/{app-shell,sidebar,sidebar-context,index}.tsx`, `lib/navigation.ts` | **DONE** |
-| 0.3 | `feat: add NextAuth v5 Google OAuth with users table` | `auth.ts` with Google provider + ALLOWED_EMAILS + signIn callback that upserts `users` row. `proxy.ts` for auth enforcement. `lib/proxy-logic.ts` (pure, testable). Badge login page. | `auth.ts`, `proxy.ts`, `lib/proxy-logic.ts`, `app/login/page.tsx` | **DONE** |
-| 0.4 | `feat: add D1 database schema with Drizzle` | 6 tables: `users` + 5 data tables. See Drizzle Schema section. Lives in shared `worker/db/` directory. | `worker/db/schema.ts`, `worker/db/types.ts`, `drizzle.config.ts` | **DONE** |
-| 0.5 | `feat: add repository layer` | Repository factory per table inside `worker/db/repositories/`. Each method takes `userId` as explicit parameter. `createAllRepos(db)` compositor. | `worker/db/repositories/{transactions,transfers,products,units,settings,metadata,reports,index}.ts` | **DONE** |
-| 0.6 | `feat: add Cloudflare Worker with Hono router` | Worker entry point (`noheir` worker, domain `noheir.worker.hexly.ai`). Bearer token auth + `X-User-Id` header. `X-Target-DB` header routes to `DB` or `DB_TEST` binding. Routes map to repository methods. Drizzle runs inside Worker. | `worker/src/index.ts`, `worker/wrangler.toml` | **DONE** |
-| 0.7 | `feat: add WorkerDbClient` | Typed HTTP client used by Next.js. Methods mirror Worker endpoints. No Drizzle import. | `src/lib/worker-db-client.ts`, `src/lib/api-helpers.ts` | **DONE** |
-| 0.8 | `feat: add quality infrastructure (husky + lint + typecheck)` | husky v9 pre-commit (test:coverage + lint-staged + typecheck), pre-push (osv-scanner + gitleaks + E2E). ESLint strict + max-warnings=0. tsconfig strict + noUncheckedIndexedAccess + exactOptionalPropertyTypes. | `.husky/{pre-commit,pre-push}`, `eslint.config.js`, `tsconfig.json`, `scripts/check-coverage.ts` | **DONE** |
-| 0.9 | `feat: add health check and version` | `/api/live` health endpoint. `lib/version.ts` from package.json. | `app/api/live/route.ts`, `lib/version.ts` | **DONE** |
+| #    | Commit                                                        | Description                                                                                                                                                                                                                            | Files                                                                                               | Status   |
+| ---- | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | -------- |
+| 0.1a | `chore: archive Gen 1 codebase to _archive/`                  | Move (not delete) all Gen 1 source into `_archive/` for reference during rewrite. Old code stays accessible for copy-paste and comparison. `_archive/` is gitignored after Phase 5 cutover and deleted once rewrite is verified.       | See "Phase 0.1a: Archive Scope" below                                                               | **DONE** |
+| 0.1b | `feat: scaffold Next.js 16 project`                           | `create-next-app` with App Router, React 19, Tailwind v4, TypeScript strict. Copy design tokens from `_archive/src/index.css` to `app/globals.css`. Configure `next.config.ts` (standalone output).                                    | `package.json`, `next.config.ts`, `tsconfig.json`, `app/globals.css`, `app/layout.tsx`              | **DONE** |
+| 0.2  | `feat: add Gen 2 layout system`                               | Port `_archive/src/components/layout/DashboardLayout.tsx` (539 lines) → `app-shell.tsx` + `sidebar.tsx` + `sidebar-context.tsx`. Extract nav config to `lib/navigation.ts`.                                                            | `components/layout/{app-shell,sidebar,sidebar-context,index}.tsx`, `lib/navigation.ts`              | **DONE** |
+| 0.3  | `feat: add NextAuth v5 Google OAuth with users table`         | `auth.ts` with Google provider + ALLOWED_EMAILS + signIn callback that upserts `users` row. `proxy.ts` for auth enforcement. `lib/proxy-logic.ts` (pure, testable). Badge login page.                                                  | `auth.ts`, `proxy.ts`, `lib/proxy-logic.ts`, `app/login/page.tsx`                                   | **DONE** |
+| 0.4  | `feat: add D1 database schema with Drizzle`                   | 6 tables: `users` + 5 data tables. See Drizzle Schema section. Lives in shared `worker/db/` directory.                                                                                                                                 | `worker/db/schema.ts`, `worker/db/types.ts`, `drizzle.config.ts`                                    | **DONE** |
+| 0.5  | `feat: add repository layer`                                  | Repository factory per table inside `worker/db/repositories/`. Each method takes `userId` as explicit parameter. `createAllRepos(db)` compositor.                                                                                      | `worker/db/repositories/{transactions,transfers,products,units,settings,metadata,reports,index}.ts` | **DONE** |
+| 0.6  | `feat: add Cloudflare Worker with Hono router`                | Worker entry point (`noheir` worker, domain `noheir.worker.hexly.ai`). Bearer token auth + `X-User-Id` header. `X-Target-DB` header routes to `DB` or `DB_TEST` binding. Routes map to repository methods. Drizzle runs inside Worker. | `worker/src/index.ts`, `worker/wrangler.toml`                                                       | **DONE** |
+| 0.7  | `feat: add WorkerDbClient`                                    | Typed HTTP client used by Next.js. Methods mirror Worker endpoints. No Drizzle import.                                                                                                                                                 | `src/lib/worker-db-client.ts`, `src/lib/api-helpers.ts`                                             | **DONE** |
+| 0.8  | `feat: add quality infrastructure (husky + lint + typecheck)` | husky v9 pre-commit (test:coverage + lint-staged + typecheck), pre-push (osv-scanner + gitleaks + E2E). ESLint strict + max-warnings=0. tsconfig strict + noUncheckedIndexedAccess + exactOptionalPropertyTypes.                       | `.husky/{pre-commit,pre-push}`, `eslint.config.js`, `tsconfig.json`, `scripts/check-coverage.ts`    | **DONE** |
+| 0.9  | `feat: add health check and version`                          | `/api/live` health endpoint. `lib/version.ts` from package.json.                                                                                                                                                                       | `app/api/live/route.ts`, `lib/version.ts`                                                           | **DONE** |
 
 #### Phase 0.1a: Archive Scope
 
@@ -472,21 +474,21 @@ git mv .env.test _archive/
 
 **Stays in place (not archived):**
 
-| File/Dir | Reason |
-|----------|--------|
-| `docs/` | Documentation (including this rewrite plan) |
-| `public/` | Static assets (logos, favicons, manifest) — reused as-is |
-| `logo.png` | Source logo for `scripts/resize-logos.py` |
-| `scripts/` | Utility scripts (resize-logos) — reused |
-| `.husky/` | Skeleton stays, hook content rewritten in Phase 0.8 |
-| `.env.example` | Updated with new env vars |
-| `.env.local` | Local dev config (not in git) |
-| `CLAUDE.md` | Project instructions — updated after rewrite |
-| `README.md` | Updated after rewrite |
-| `CHANGELOG.md` | Continued |
-| `package.json` | Replaced by `create-next-app` output in 0.1b |
-| `tsconfig.json` | Replaced by Next.js config in 0.1b |
-| `eslint.config.js` | Replaced in 0.8 |
+| File/Dir           | Reason                                                   |
+| ------------------ | -------------------------------------------------------- |
+| `docs/`            | Documentation (including this rewrite plan)              |
+| `public/`          | Static assets (logos, favicons, manifest) — reused as-is |
+| `logo.png`         | Source logo for `scripts/resize-logos.py`                |
+| `scripts/`         | Utility scripts (resize-logos) — reused                  |
+| `.husky/`          | Skeleton stays, hook content rewritten in Phase 0.8      |
+| `.env.example`     | Updated with new env vars                                |
+| `.env.local`       | Local dev config (not in git)                            |
+| `CLAUDE.md`        | Project instructions — updated after rewrite             |
+| `README.md`        | Updated after rewrite                                    |
+| `CHANGELOG.md`     | Continued                                                |
+| `package.json`     | Replaced by `create-next-app` output in 0.1b             |
+| `tsconfig.json`    | Replaced by Next.js config in 0.1b                       |
+| `eslint.config.js` | Replaced in 0.8                                          |
 
 **Cleanup (Phase 5.6):**
 ```bash
@@ -498,31 +500,31 @@ rm -rf _archive/
 
 **Goal:** All Worker endpoints working and tested. Behavioral contracts from RPC section verified.
 
-| # | Commit | Description | Status |
-|---|--------|-------------|--------|
-| 1.1 | `feat: add transactions search + CRUD` | `repos.transactions.search()` with full 16-param filter, `matched_field`, limit clamping `[1,500]`, offset pagination, tags JSON overlap, AND logic, `ORDER BY date DESC, created_at DESC`. CRUD: create, update, delete. | **DONE** (Phase 0.5+0.6) |
-| 1.2 | `feat: add transfers search + CRUD` | `repos.transfers.search()` with 13-param filter, `GREATEST(inflow, outflow)` for amount filter, `matched_field` values preserved. CRUD. | **DONE** (Phase 0.5+0.6) |
-| 1.3 | `feat: add products CRUD` | list (with channel/category/currency filters), get by id, create, update, delete. Zod validation for enum fields. | **DONE** (Phase 0.5+0.6) |
-| 1.4 | `feat: add units CRUD + findAllWithProducts` | LEFT JOIN via Drizzle, `product` as nested object or null. All CRUD ops. | **DONE** (Phase 0.5+0.6) |
-| 1.5 | `feat: add settings upsert` | GET returns single row by userId (or null). PUT does INSERT OR REPLACE keyed by `ownerId` UNIQUE constraint. | **DONE** (Phase 0.5+0.6) |
-| 1.6 | `feat: add metadata aggregation` | `repos.metadata.getAll()` — 9 fields, UNION queries for years/accounts/currencies/tags, DISTINCT with null/empty filtering for categories. Exact JSON field names preserved. | **DONE** (Phase 0.5+0.6) |
-| 1.7 | `feat: add monthly report aggregation` | `repos.reports.monthly()` — income/expense/net/transfer totals, category breakdowns sorted by total DESC, optional currency filter applied to every sub-query. | **DONE** (Phase 0.5+0.6) |
-| 1.8 | `feat: add bulk import endpoints` | `/import/transactions`, `/import/transfers` — CSV/JSON bulk insert. | **DONE** (Phase 0.6) |
-| 1.9 | `feat: add backup/restore endpoints` | `/backup` exports all tables for requesting userId as JSON. `/restore` deletes requesting user's data then bulk inserts. Never touches other users' rows. | **DONE** (Phase 0.6) |
-| 1.10 | `test: add L1 unit tests for repositories` | Test all repository methods with `:memory:` SQLite. Verify every behavioral contract from RPC section. 90% coverage. | **DONE** (93 tests) |
-| 1.11 | `test: add L2 E2E tests for Worker API` | Start Worker locally, test all endpoints. Verify response shapes match MCP/UI expectations. |
+| #    | Commit                                       | Description                                                                                                                                                                                                               | Status                   |
+| ---- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| 1.1  | `feat: add transactions search + CRUD`       | `repos.transactions.search()` with full 16-param filter, `matched_field`, limit clamping `[1,500]`, offset pagination, tags JSON overlap, AND logic, `ORDER BY date DESC, created_at DESC`. CRUD: create, update, delete. | **DONE** (Phase 0.5+0.6) |
+| 1.2  | `feat: add transfers search + CRUD`          | `repos.transfers.search()` with 13-param filter, `GREATEST(inflow, outflow)` for amount filter, `matched_field` values preserved. CRUD.                                                                                   | **DONE** (Phase 0.5+0.6) |
+| 1.3  | `feat: add products CRUD`                    | list (with channel/category/currency filters), get by id, create, update, delete. Zod validation for enum fields.                                                                                                         | **DONE** (Phase 0.5+0.6) |
+| 1.4  | `feat: add units CRUD + findAllWithProducts` | LEFT JOIN via Drizzle, `product` as nested object or null. All CRUD ops.                                                                                                                                                  | **DONE** (Phase 0.5+0.6) |
+| 1.5  | `feat: add settings upsert`                  | GET returns single row by userId (or null). PUT does INSERT OR REPLACE keyed by `ownerId` UNIQUE constraint.                                                                                                              | **DONE** (Phase 0.5+0.6) |
+| 1.6  | `feat: add metadata aggregation`             | `repos.metadata.getAll()` — 9 fields, UNION queries for years/accounts/currencies/tags, DISTINCT with null/empty filtering for categories. Exact JSON field names preserved.                                              | **DONE** (Phase 0.5+0.6) |
+| 1.7  | `feat: add monthly report aggregation`       | `repos.reports.monthly()` — income/expense/net/transfer totals, category breakdowns sorted by total DESC, optional currency filter applied to every sub-query.                                                            | **DONE** (Phase 0.5+0.6) |
+| 1.8  | `feat: add bulk import endpoints`            | `/import/transactions`, `/import/transfers` — CSV/JSON bulk insert.                                                                                                                                                       | **DONE** (Phase 0.6)     |
+| 1.9  | `feat: add backup/restore endpoints`         | `/backup` exports all tables for requesting userId as JSON. `/restore` deletes requesting user's data then bulk inserts. Never touches other users' rows.                                                                 | **DONE** (Phase 0.6)     |
+| 1.10 | `test: add L1 unit tests for repositories`   | Test all repository methods with `:memory:` SQLite. Verify every behavioral contract from RPC section. 90% coverage.                                                                                                      | **DONE** (93 tests)      |
+| 1.11 | `test: add L2 E2E tests for Worker API`      | Start Worker locally, test all endpoints. Verify response shapes match MCP/UI expectations.                                                                                                                               |
 
 ### Phase 2: Domain Logic Port (pure functions, no UI)
 
 **Goal:** Port all 24 domain modules and 31 viewmodels. Maximum test coverage.
 
-| # | Commit | Description | Status |
-|---|--------|-------------|--------|
-| 2.1 | `feat: port domain/dashboard logic` | Port 11 dashboard domain modules. Pure functions, no React. Adapt to INTEGER cents (divide by 100 for display). | **DONE** |
-| 2.2 | `feat: port domain/assets logic` | Port 4 asset domain modules. | **DONE** |
-| 2.3 | `feat: port domain/settings logic` | Port 9 settings domain modules + shared libs (financial-health-algorithm, tag-colors, chart-config). | **DONE** |
+| #   | Commit                                            | Description                                                                                                                                                   | Status   |
+| --- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| 2.1 | `feat: port domain/dashboard logic`               | Port 11 dashboard domain modules. Pure functions, no React. Adapt to INTEGER cents (divide by 100 for display).                                               | **DONE** |
+| 2.2 | `feat: port domain/assets logic`                  | Port 4 asset domain modules.                                                                                                                                  | **DONE** |
+| 2.3 | `feat: port domain/settings logic`                | Port 9 settings domain modules + shared libs (financial-health-algorithm, tag-colors, chart-config).                                                          | **DONE** |
 | 2.4 | `feat: port viewmodels to server-compatible form` | Deferred to Phase 3 — viewmodels port alongside their pages. Server Components replace data-fetching VMs; interactive state hooks created per-page as needed. |
-| 2.5 | `test: add L1 tests for domain + viewmodels` | Port and adapt existing 327 unit tests. Target 90% coverage. |
+| 2.5 | `test: add L1 tests for domain + viewmodels`      | Port and adapt existing 327 unit tests. Target 90% coverage.                                                                                                  |
 
 ### Phase 3: UI Migration (page by page)
 
@@ -530,29 +532,29 @@ rm -rf _archive/
 
 **Strategy:** Port pages in dependency order — shared components first, then pages that depend on them.
 
-| # | Commit | Description |
-|---|--------|-------------|
-| 3.0 | `feat: port shared UI components` | Port shadcn/ui components, ChartCard, StatCard, shared chart components. Replace ECharts imports with Recharts. | **DONE** |
-| 3.1 | `feat: port overview page` | `(dashboard)/overview/page.tsx` — Server Component fetches summary via WorkerDbClient, passes to Client Components with Recharts charts. | **DONE** |
-| 3.2 | `feat: port financial-health page` | Radar chart → Recharts RadarChart. Extract shared toDomainTransaction/buildMonthlyData to lib/transaction-mappers. | **DONE** |
-| 3.3 | `feat: port ai-insight page` | AI insight display — port RecurringPaymentDetector to pure functions, server-side detection. | **DONE** |
-| 3.4 | `feat: port cash flow pages (6)` | savings, freedom, income, expense, flow, compare. All chart replacements. Extract shared category/account builders. | **DONE** |
-| 3.5 | `feat: port account pages (2)` | Account overview with bar/pie charts, groups, detail table. Account detail with balance line chart and transaction table. | **DONE** |
-| 3.6 | `feat: port capital pages (7)` | capital-dashboard, capital-decisions, warehouse, strategy-sunburst (→TreeMap), liquidity-ladder, products, funds. | **DONE** |
-| 3.7 | `feat: port system pages (6)` | settings, ai-settings, account-types, manage, import, quality. | **DONE** |
-| 3.8 | `feat: port terms and privacy pages` | Static pages, straightforward. | **DONE** |
-| 3.9 | `feat: port command palette (cmdk)` | ⌘K search across all pages. | **DONE** |
-| 3.10 | `test: add L3 Playwright tests` | Core user flows: login → overview → navigate → settings. | **DONE** |
+| #    | Commit                               | Description                                                                                                                              |
+| ---- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| 3.0  | `feat: port shared UI components`    | Port shadcn/ui components, ChartCard, StatCard, shared chart components. Replace ECharts imports with Recharts.                          | **DONE** |
+| 3.1  | `feat: port overview page`           | `(dashboard)/overview/page.tsx` — Server Component fetches summary via WorkerDbClient, passes to Client Components with Recharts charts. | **DONE** |
+| 3.2  | `feat: port financial-health page`   | Radar chart → Recharts RadarChart. Extract shared toDomainTransaction/buildMonthlyData to lib/transaction-mappers.                       | **DONE** |
+| 3.3  | `feat: port ai-insight page`         | AI insight display — port RecurringPaymentDetector to pure functions, server-side detection.                                             | **DONE** |
+| 3.4  | `feat: port cash flow pages (6)`     | savings, freedom, income, expense, flow, compare. All chart replacements. Extract shared category/account builders.                      | **DONE** |
+| 3.5  | `feat: port account pages (2)`       | Account overview with bar/pie charts, groups, detail table. Account detail with balance line chart and transaction table.                | **DONE** |
+| 3.6  | `feat: port capital pages (7)`       | capital-dashboard, capital-decisions, warehouse, strategy-sunburst (→TreeMap), liquidity-ladder, products, funds.                        | **DONE** |
+| 3.7  | `feat: port system pages (6)`        | settings, ai-settings, account-types, manage, import, quality.                                                                           | **DONE** |
+| 3.8  | `feat: port terms and privacy pages` | Static pages, straightforward.                                                                                                           | **DONE** |
+| 3.9  | `feat: port command palette (cmdk)`  | ⌘K search across all pages.                                                                                                              | **DONE** |
+| 3.10 | `test: add L3 Playwright tests`      | Core user flows: login → overview → navigate → settings.                                                                                 | **DONE** |
 
 ### Phase 4: MCP Server Rewrite
 
 **Goal:** MCP server queries D1 via the same Cloudflare Worker.
 
-| # | Commit | Description |
-|---|--------|-------------|
+| #   | Commit                                    | Description                                                                         |
+| --- | ----------------------------------------- | ----------------------------------------------------------------------------------- |
 | 4.1 | `feat: rewrite MCP server for D1 backend` | Replace Supabase client with `WorkerDbClient`. Same 14 tools, same response shapes. | **DONE** |
-| 4.2 | `feat: update MCP auth to API key` | Replace Supabase email/password auth with Worker Bearer token. | **DONE** |
-| 4.3 | `test: update MCP tests` | Adapt 168 tests to new backend. Mock WorkerDbClient for unit tests. | **DONE** |
+| 4.2 | `feat: update MCP auth to API key`        | Replace Supabase email/password auth with Worker Bearer token.                      | **DONE** |
+| 4.3 | `test: update MCP tests`                  | Adapt 168 tests to new backend. Mock WorkerDbClient for unit tests.                 | **DONE** |
 
 ### Phase 5: Infrastructure & Deployment
 
@@ -603,13 +605,13 @@ rm -rf _archive/
 
 **Naming conventions:**
 
-| Resource | Name | Domain | Purpose |
-|----------|------|--------|---------|
-| CF D1 database (prod) | `noheir-db` | — | Production data |
-| CF D1 database (test) | `noheir-db-test` | — | E2E test isolation (D1 quality dimension) |
-| CF Worker | `noheir` | `noheir.worker.hexly.ai` | Data access proxy (Drizzle + Hono) |
-| Railway service (new) | `noheir` | `noheir.hexly.ai` (after cutover) | Next.js 16 frontend |
-| Railway service (old) | `noheir-legacy` | (renamed, then deleted) | Gen 1 Vite SPA (keep alive during transition) |
+| Resource              | Name             | Domain                            | Purpose                                       |
+| --------------------- | ---------------- | --------------------------------- | --------------------------------------------- |
+| CF D1 database (prod) | `noheir-db`      | —                                 | Production data                               |
+| CF D1 database (test) | `noheir-db-test` | —                                 | E2E test isolation (D1 quality dimension)     |
+| CF Worker             | `noheir`         | `noheir.worker.hexly.ai`          | Data access proxy (Drizzle + Hono)            |
+| Railway service (new) | `noheir`         | `noheir.hexly.ai` (after cutover) | Next.js 16 frontend                           |
+| Railway service (old) | `noheir-legacy`  | (renamed, then deleted)           | Gen 1 Vite SPA (keep alive during transition) |
 
 **D1 test isolation (6-dim D1 quality dimension):**
 - `noheir-db-test` is a **separate D1 database**, not a table prefix or flag
@@ -623,28 +625,28 @@ rm -rf _archive/
 
 #### Phase 5 Commits
 
-| # | Commit | Description |
-|---|--------|-------------|
-| 5.1 | `feat: add Cloudflare Worker wrangler config` | `worker/wrangler.toml` with D1 bindings (`noheir-db` as DB, `noheir-db-test` as DB_TEST). Custom domain `noheir.worker.hexly.ai`. `X-Target-DB` header routing logic. | **DONE** |
-| 5.2 | `chore: create D1 databases and deploy Worker` | `wrangler d1 create noheir-db` + `wrangler d1 create noheir-db-test`. `wrangler deploy`. Apply Drizzle migrations to both databases. Set `WORKER_TOKEN` secret. Verify Worker health at `noheir.worker.hexly.ai`. | **DONE** |
-| 5.3 | `feat: add Dockerfile for Railway` | Three-stage Bun build (deps → builder → runner). `AUTH_SECRET=build-placeholder` at build time. `output: 'standalone'` in next.config.ts. | **DONE** |
-| 5.4 | `chore: disconnect old Railway auto-deploy` | Rename old Railway service to `noheir-legacy`. **Disconnect GitHub auto-deploy** on old service to prevent Gen 2 commits from breaking the live Vite SPA. Old service stays running on its current build. |
-| 5.5 | `chore: deploy new Railway service` | Create new Railway service `noheir`. Connect GitHub repo with auto-deploy on `main`. Set env vars: `WORKER_URL=https://noheir.worker.hexly.ai`, `WORKER_TOKEN`, `AUTH_SECRET`, `ALLOWED_EMAILS`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `NEXTAUTH_URL`. Deploy. Verify on Railway's temporary domain. |
-| 5.6 | `chore: import data via UI` | Sign in on temporary domain (creates user row), then use the import feature to restore transactions and transfers from CSV. Re-create products and units. All data keyed to the authenticated user's `users.id`. |
-| 5.7 | `chore: verify new deployment` | Full smoke test on temporary domain: all 23 pages render, charts display, CRUD works, import/export works, MCP tools connect. Compare key pages against old `noheir-legacy` visually. |
-| 5.8 | `chore: cut over DNS to new service` | Point `noheir.hexly.ai` to the new Railway service. Update `NEXTAUTH_URL` to `https://noheir.hexly.ai`. Update Google OAuth redirect URI. Verify auth flow on production domain. |
-| 5.9 | `chore: tear down old infrastructure` | Delete `noheir-legacy` Railway service. Cancel Supabase project (or downgrade to free tier as backup for 30 days). `rm -rf _archive/`. |
+| #   | Commit                                         | Description                                                                                                                                                                                                                                                                                                |
+| --- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 5.1 | `feat: add Cloudflare Worker wrangler config`  | `worker/wrangler.toml` with D1 bindings (`noheir-db` as DB, `noheir-db-test` as DB_TEST). Custom domain `noheir.worker.hexly.ai`. `X-Target-DB` header routing logic.                                                                                                                                      | **DONE** |
+| 5.2 | `chore: create D1 databases and deploy Worker` | `wrangler d1 create noheir-db` + `wrangler d1 create noheir-db-test`. `wrangler deploy`. Apply Drizzle migrations to both databases. Set `WORKER_TOKEN` secret. Verify Worker health at `noheir.worker.hexly.ai`.                                                                                          | **DONE** |
+| 5.3 | `feat: add Dockerfile for Railway`             | Three-stage Bun build (deps → builder → runner). `AUTH_SECRET=build-placeholder` at build time. `output: 'standalone'` in next.config.ts.                                                                                                                                                                  | **DONE** |
+| 5.4 | `chore: disconnect old Railway auto-deploy`    | Rename old Railway service to `noheir-legacy`. **Disconnect GitHub auto-deploy** on old service to prevent Gen 2 commits from breaking the live Vite SPA. Old service stays running on its current build.                                                                                                  |
+| 5.5 | `chore: deploy new Railway service`            | Create new Railway service `noheir`. Connect GitHub repo with auto-deploy on `main`. Set env vars: `WORKER_URL=https://noheir.worker.hexly.ai`, `WORKER_TOKEN`, `AUTH_SECRET`, `ALLOWED_EMAILS`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `NEXTAUTH_URL`. Deploy. Verify on Railway's temporary domain. |
+| 5.6 | `chore: import data via UI`                    | Sign in on temporary domain (creates user row), then use the import feature to restore transactions and transfers from CSV. Re-create products and units. All data keyed to the authenticated user's `users.id`.                                                                                           |
+| 5.7 | `chore: verify new deployment`                 | Full smoke test on temporary domain: all 23 pages render, charts display, CRUD works, import/export works, MCP tools connect. Compare key pages against old `noheir-legacy` visually.                                                                                                                      |
+| 5.8 | `chore: cut over DNS to new service`           | Point `noheir.hexly.ai` to the new Railway service. Update `NEXTAUTH_URL` to `https://noheir.hexly.ai`. Update Google OAuth redirect URI. Verify auth flow on production domain.                                                                                                                           |
+| 5.9 | `chore: tear down old infrastructure`          | Delete `noheir-legacy` Railway service. Cancel Supabase project (or downgrade to free tier as backup for 30 days). `rm -rf _archive/`.                                                                                                                                                                     |
 
 ### Phase 6: Quality S-Tier Certification
 
-| # | Commit | Description |
-|---|--------|-------------|
-| 6.1 | `chore: verify L1 — unit test coverage >= 90%` | All domain, viewmodel, repository, proxy-logic tests passing. |
-| 6.2 | `chore: verify G1 — strict lint + typecheck` | `strict: true` + `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes`. ESLint `max-warnings=0`. `tsc --noEmit` in pre-commit. |
-| 6.3 | `chore: verify L2 — E2E API tests in pre-push` | Worker E2E tests in pre-push hook. All endpoints covered. |
-| 6.4 | `chore: verify G2 — security scanning` | `gitleaks detect` + `osv-scanner --lockfile=bun.lock` in pre-push. |
-| 6.5 | `chore: verify L3 — Playwright browser tests` | Core flows tested in CI. |
-| 6.6 | `chore: verify D1 — test isolation` | Unit tests use `:memory:` SQLite (no network). E2E tests use `noheir-db-test` via `X-Target-DB: test` header. Production `noheir-db` is never touched by any test. |
+| #   | Commit                                         | Description                                                                                                                                                        |
+| --- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 6.1 | `chore: verify L1 — unit test coverage >= 90%` | All domain, viewmodel, repository, proxy-logic tests passing.                                                                                                      |
+| 6.2 | `chore: verify G1 — strict lint + typecheck`   | `strict: true` + `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes`. ESLint `max-warnings=0`. `tsc --noEmit` in pre-commit.                                 |
+| 6.3 | `chore: verify L2 — E2E API tests in pre-push` | Worker E2E tests in pre-push hook. All endpoints covered.                                                                                                          |
+| 6.4 | `chore: verify G2 — security scanning`         | `gitleaks detect` + `osv-scanner --lockfile=bun.lock` in pre-push.                                                                                                 |
+| 6.5 | `chore: verify L3 — Playwright browser tests`  | Core flows tested in CI.                                                                                                                                           |
+| 6.6 | `chore: verify D1 — test isolation`            | Unit tests use `:memory:` SQLite (no network). E2E tests use `noheir-db-test` via `X-Target-DB: test` header. Production `noheir-db` is never touched by any test. |
 
 ---
 
@@ -657,7 +659,9 @@ import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
 // --- Identity ---
 
 export const users = sqliteTable("users", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   email: text("email").notNull().unique(),
   name: text("name"),
   image: text("image"),
@@ -668,8 +672,12 @@ export const users = sqliteTable("users", {
 // --- Financial Data ---
 
 export const financialProducts = sqliteTable("financial_products", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   code: text("code"),
   channel: text("channel"),
@@ -681,8 +689,12 @@ export const financialProducts = sqliteTable("financial_products", {
 });
 
 export const capitalUnits = sqliteTable("capital_units", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   unitCode: text("unit_code").notNull(),
   amountCents: integer("amount_cents").notNull(),
   currency: text("currency").default("CNY"),
@@ -697,8 +709,12 @@ export const capitalUnits = sqliteTable("capital_units", {
 });
 
 export const transactions = sqliteTable("transactions", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   date: text("date").notNull(),
   year: integer("year").notNull(),
   month: integer("month").notNull(),
@@ -718,8 +734,12 @@ export const transactions = sqliteTable("transactions", {
 });
 
 export const transfers = sqliteTable("transfers", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   date: text("date").notNull(),
   year: integer("year").notNull(),
   month: integer("month").notNull(),
@@ -739,7 +759,9 @@ export const transfers = sqliteTable("transfers", {
 
 export const settings = sqliteTable("settings", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  ownerId: text("owner_id").notNull().unique()
+  ownerId: text("owner_id")
+    .notNull()
+    .unique()
     .references(() => users.id, { onDelete: "cascade" }),
   siteName: text("site_name").default(""),
   settings: text("settings").default("{}"),
@@ -751,47 +773,47 @@ export const settings = sqliteTable("settings", {
 
 ## Risk Register
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| **Sunburst chart has no Recharts equivalent** | Medium | Use TreeMap. If unacceptable, keep echarts for this one chart only. |
-| **D1 has no array columns or GIN indexes** | Medium | Tags as JSON text + application-level filtering. For < 10k transactions this is fine. |
-| **5 RPC functions contain complex behavioral contracts** | High | Contracts fully specified in "RPC → Repository Behavioral Contract" section. Each contract has explicit acceptance criteria. Unit tests verify every behavior. |
-| **23 pages is a large UI migration** | High | Phase 3 is the longest phase. Can be parallelized by page groups. |
-| **Worker ↔ Next.js network latency** | Medium | `noheir.worker.hexly.ai` deployed to Cloudflare edge (auto-routed, nearest PoP to Railway Singapore). Batch endpoints for import/export reduce roundtrips. |
-| **MCP server needs new auth mechanism** | Medium | Phase 4 is self-contained and can be done last. Reuses same WorkerDbClient. |
-| **D1 row limits (< 10 million rows per database)** | Low | Personal finance app. < 50k rows total expected. |
-| **Server action serialization overhead** | Low | All mutation data is small JSON. Read-heavy workload is SSR (no serialization boundary). |
+| Risk                                                     | Impact | Mitigation                                                                                                                                                     |
+| -------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Sunburst chart has no Recharts equivalent**            | Medium | Use TreeMap. If unacceptable, keep echarts for this one chart only.                                                                                            |
+| **D1 has no array columns or GIN indexes**               | Medium | Tags as JSON text + application-level filtering. For < 10k transactions this is fine.                                                                          |
+| **5 RPC functions contain complex behavioral contracts** | High   | Contracts fully specified in "RPC → Repository Behavioral Contract" section. Each contract has explicit acceptance criteria. Unit tests verify every behavior. |
+| **23 pages is a large UI migration**                     | High   | Phase 3 is the longest phase. Can be parallelized by page groups.                                                                                              |
+| **Worker ↔ Next.js network latency**                     | Medium | `noheir.worker.hexly.ai` deployed to Cloudflare edge (auto-routed, nearest PoP to Railway Singapore). Batch endpoints for import/export reduce roundtrips.     |
+| **MCP server needs new auth mechanism**                  | Medium | Phase 4 is self-contained and can be done last. Reuses same WorkerDbClient.                                                                                    |
+| **D1 row limits (< 10 million rows per database)**       | Low    | Personal finance app. < 50k rows total expected.                                                                                                               |
+| **Server action serialization overhead**                 | Low    | All mutation data is small JSON. Read-heavy workload is SSR (no serialization boundary).                                                                       |
 
 ---
 
 ## Dependency Removals
 
-| Package | Reason |
-|---------|--------|
-| `@supabase/supabase-js` | Replaced by D1 + Drizzle |
-| `echarts` | Replaced by Recharts |
-| `echarts-for-react` | Replaced by Recharts |
-| `react-router-dom` | Replaced by Next.js App Router |
-| `react` (v18) | Upgraded to v19 |
-| `react-dom` (v18) | Upgraded to v19 |
-| `@vitejs/plugin-react-swc` | Replaced by Next.js compiler |
-| `vite` | Replaced by Next.js |
-| `@tailwindcss/vite` | Replaced by `@tailwindcss/postcss` for Next.js |
+| Package                    | Reason                                         |
+| -------------------------- | ---------------------------------------------- |
+| `@supabase/supabase-js`    | Replaced by D1 + Drizzle                       |
+| `echarts`                  | Replaced by Recharts                           |
+| `echarts-for-react`        | Replaced by Recharts                           |
+| `react-router-dom`         | Replaced by Next.js App Router                 |
+| `react` (v18)              | Upgraded to v19                                |
+| `react-dom` (v18)          | Upgraded to v19                                |
+| `@vitejs/plugin-react-swc` | Replaced by Next.js compiler                   |
+| `vite`                     | Replaced by Next.js                            |
+| `@tailwindcss/vite`        | Replaced by `@tailwindcss/postcss` for Next.js |
 
 ## Dependency Additions
 
-| Package | Purpose |
-|---------|---------|
-| `next` (16) | Framework |
-| `react` (19) | UI library |
-| `next-auth` (v5) | Authentication |
-| `drizzle-orm` | Database ORM (Worker-side) |
-| `drizzle-kit` | Migration tooling |
-| `hono` | Cloudflare Worker router |
-| `recharts` | Charts (already a dep, becomes primary) |
-| `@playwright/test` | L3 browser testing |
-| `osv-scanner` (system) | G2 vulnerability scanning |
-| `gitleaks` (system) | G2 secret scanning |
+| Package                | Purpose                                 |
+| ---------------------- | --------------------------------------- |
+| `next` (16)            | Framework                               |
+| `react` (19)           | UI library                              |
+| `next-auth` (v5)       | Authentication                          |
+| `drizzle-orm`          | Database ORM (Worker-side)              |
+| `drizzle-kit`          | Migration tooling                       |
+| `hono`                 | Cloudflare Worker router                |
+| `recharts`             | Charts (already a dep, becomes primary) |
+| `@playwright/test`     | L3 browser testing                      |
+| `osv-scanner` (system) | G2 vulnerability scanning               |
+| `gitleaks` (system)    | G2 secret scanning                      |
 
 ---
 

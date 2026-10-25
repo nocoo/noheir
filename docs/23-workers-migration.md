@@ -59,12 +59,12 @@ presenting an empty balance. Mutations revalidate affected route data.
 Existing business REST paths and response shapes remain, but identity always
 comes from Worker authentication. Additional endpoints:
 
-| Method / path | Request | Response |
-| --- | --- | --- |
-| `GET /api/auth/me` | Access session | `{user:{id,email,name,image}}` |
-| `POST /api/transactions/import` | `{year,rows}` | `{imported:number}` |
-| `POST /api/transfers/import` | `{year,rows}` | `{imported:number}` |
-| `POST /api/recurring-expenses/:id/state` | `{transition:"pause"|"resume"|"end"}` | `{success:true}` |
+| Method / path                            | Request              | Response                       |
+| ---------------------------------------- | -------------------- | ------------------------------ |
+| `GET /api/auth/me`                       | Access session       | `{user:{id,email,name,image}}` |
+| `POST /api/transactions/import`          | `{year,rows}`        | `{imported:number}`            |
+| `POST /api/transfers/import`             | `{year,rows}`        | `{imported:number}`            |
+| `POST /api/recurring-expenses/:id/state` | `{transition:"pause" | "resume"                       | "end"}` | `{success:true}` |
 
 Annual replacement validates all rows and their year before any deletion, then
 performs deletion and inserts in one D1 batch. Transaction import retains the
@@ -83,11 +83,11 @@ All agents first verify `/Users/nocoo/workspace/personal/noheir` with `pwd` and
 `git rev-parse --show-toplevel`. Only the coordinator installs, stages, commits,
 pushes, changes deployment configuration or touches production.
 
-| Owner | Files |
-| --- | --- |
-| Pi | Frontend `src/app` pages/actions/client views, components/hooks, router/main, browser API client; relevant frontend tests. Excludes all API/metadata routes and backend MCP/service/db files. |
-| Grok | Worker libraries, validation, Access middleware, backend unit tests, direct D1 adapter and MCP services. |
-| Coordinator | Worker HTTP/MCP entrypoints; root/Worker config and locks; local test harness and HTTP tests; CI/hooks, docs, release/deployment and integration review. |
+| Owner       | Files                                                                                                                                                                                         |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pi          | Frontend `src/app` pages/actions/client views, components/hooks, router/main, browser API client; relevant frontend tests. Excludes all API/metadata routes and backend MCP/service/db files. |
+| Grok        | Worker libraries, validation, Access middleware, backend unit tests, direct D1 adapter and MCP services.                                                                                      |
+| Coordinator | Worker HTTP/MCP entrypoints; root/Worker config and locks; local test harness and HTTP tests; CI/hooks, docs, release/deployment and integration review.                                      |
 
 Pi provider failures, including `Provider finish_reason: error`, are retried after
 checking actual agent state. Lifecycle waits have a separate time-based monitor.
@@ -147,12 +147,12 @@ coverage thresholds, production fixture writes or unverified release claims.
 
 Independent review follow-up before cutover:
 
-| Finding | Resolution |
-| --- | --- |
-| P1: settings writes accepted ownership/row fields from JSON | `812daea`: validate writable fields and project repository writes; exercise both insert/update with forged identity |
-| P1: units could link and expose another owner's product | `71dacea`: reject foreign/missing product links, scope REST/MCP/portfolio joins and name lookups by owner; test stale cross-owner relations |
-| P2: browser-only recurrence constraints could be bypassed | `9b2bb63`: validate complete schedules in the Worker, merge patches before validation, reject impossible dates and preserve omitted currency/interval |
-| P2: anonymously served legal HTML depended on protected assets | `6ad48b3`: require Access for legal pages and assets consistently, matching the existing protected root application; retain authenticated legal routes |
+| Finding                                                          | Resolution                                                                                                                                                      |
+| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P1: settings writes accepted ownership/row fields from JSON      | `812daea`: validate writable fields and project repository writes; exercise both insert/update with forged identity                                             |
+| P1: units could link and expose another owner's product          | `71dacea`: reject foreign/missing product links, scope REST/MCP/portfolio joins and name lookups by owner; test stale cross-owner relations                     |
+| P2: browser-only recurrence constraints could be bypassed        | `9b2bb63`: validate complete schedules in the Worker, merge patches before validation, reject impossible dates and preserve omitted currency/interval           |
+| P2: anonymously served legal HTML depended on protected assets   | `6ad48b3`: require Access for legal pages and assets consistently, matching the existing protected root application; retain authenticated legal routes          |
 | P2: validated full-rule updates could overwrite concurrent edits | Compare every persisted snapshot field in the atomic update, return 409 on a stale snapshot, and test interleaved writes without relying on timestamp precision |
 
 The follow-up build and 183 HTTP tests passed; the browser acceptance suite has

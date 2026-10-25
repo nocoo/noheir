@@ -140,7 +140,7 @@ function parseIntervalOrOne(raw: string): number {
   const n = Number(raw);
   if (!Number.isFinite(n)) return 1;
   const trunc = Math.trunc(n);
-  return trunc >= 1 ? trunc : 1;
+  return Math.max(trunc, 1);
 }
 
 export function FrequencyPicker({
@@ -153,7 +153,7 @@ export function FrequencyPicker({
 }: FrequencyPickerProps): React.ReactElement {
   const buttonRef = React.useRef<(HTMLButtonElement | null)[]>([]);
   const selectedIdx = FREQUENCIES.indexOf(value.frequency);
-  const [tabIdx, setTabIdx] = React.useState<number>(selectedIdx >= 0 ? selectedIdx : 0);
+  const [tabIdx, setTabIdx] = React.useState<number>(Math.max(selectedIdx, 0));
   React.useEffect(() => {
     if (selectedIdx >= 0) setTabIdx(selectedIdx);
   }, [selectedIdx]);

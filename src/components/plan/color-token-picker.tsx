@@ -117,7 +117,7 @@ export function ColorTokenPicker({
   // index, or 0 if nothing selected. Updated as the user navigates so
   // arrow-key selection feels native.
   const selectedIndex = value ? items.indexOf(value) : -1;
-  const [tabIndex, setTabIndex] = React.useState<number>(selectedIndex >= 0 ? selectedIndex : 0);
+  const [tabIndex, setTabIndex] = React.useState<number>(Math.max(selectedIndex, 0));
 
   // Keep tabIndex in sync when the controlled value changes from outside.
   React.useEffect(() => {

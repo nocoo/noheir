@@ -9,15 +9,15 @@ Direction: [README.md](README.md), [runbook](docs/04-run.md), [operations/UI con
 This handbook is the project contract; hooks, CI and configuration enforce it.
 Raise weaker enforcement to the contract. Maintain project rules only here.
 
-| Fact | Where |
-| --- | --- |
-| Human docs | [README.md](README.md), [docs/README.md](docs/README.md) |
+| Fact                           | Where                                                       |
+| ------------------------------ | ----------------------------------------------------------- |
+| Human docs                     | [README.md](README.md), [docs/README.md](docs/README.md)    |
 | Scoped Bearer REST (`/api/v1`) | [docs/api.md](docs/api.md), live `GET /api/v1/openapi.json` |
-| Version | Root `package.json`, imported by UI and Worker |
-| Enforcement | `.husky/`, parallel hook scripts, CI, root/Worker Vitest |
-| Runtime configuration | `wrangler.jsonc`, `vite.config.ts`, `.env.example` |
-| Migration and cutover evidence | [Migration plan](docs/23-workers-migration.md) |
-| Accidents | [Retrospective.md](Retrospective.md) |
+| Version                        | Root `package.json`, imported by UI and Worker              |
+| Enforcement                    | `.husky/`, parallel hook scripts, CI, root/Worker Vitest    |
+| Runtime configuration          | `wrangler.jsonc`, `vite.config.ts`, `.env.example`          |
+| Migration and cutover evidence | [Migration plan](docs/23-workers-migration.md)              |
+| Accidents                      | [Retrospective.md](Retrospective.md)                        |
 
 ## Project Invariants
 
@@ -39,13 +39,13 @@ Raise weaker enforcement to the contract. Maintain project rules only here.
 
 ## Stack / Layout
 
-| Component | Choice |
-| --- | --- |
-| Web | Vite, React, React Router data loaders; `src/app/`, `src/routes.tsx` |
-| Domain/UI | `src/domain/`, `src/components/`; preserve MVVM and Basalt controls |
-| API/auth | Hono, jose/Access, scoped Bearer REST; `worker/src/`, shared `src/domain/api-contract.ts` |
-| Data | Direct request-scoped D1, Drizzle; `worker/db/`, canonical `worker/db/migrations/` |
-| Tooling | Bun 1.4.2 / Node 26.12.1 in CI, TypeScript 7, Biome, Vitest/Playwright |
+| Component | Choice                                                                                    |
+| --------- | ----------------------------------------------------------------------------------------- |
+| Web       | Vite, React, React Router data loaders; `src/app/`, `src/routes.tsx`                      |
+| Domain/UI | `src/domain/`, `src/components/`; preserve MVVM and Basalt controls                       |
+| API/auth  | Hono, jose/Access, scoped Bearer REST; `worker/src/`, shared `src/domain/api-contract.ts` |
+| Data      | Direct request-scoped D1, Drizzle; `worker/db/`, canonical `worker/db/migrations/`        |
+| Tooling   | Bun 1.4.2 / Node 26.12.1 in CI, TypeScript 7, Biome, Vitest/Playwright                    |
 
 ## Commands
 
@@ -108,18 +108,18 @@ them if they cannot be made deterministic (for example, prove stability with
 `bunx playwright test <spec> --repeat-each=30` locally with zero failures). Never
 add retries, skips, or looser assertions solely to mask timing or layout races.
 
-| Piece | Requirement and scope | Status | Evidence |
-| --- | --- | --- | --- |
-| L1 — complete unified contract | All four coverage metrics >=95% plus strict static lanes on an installed index-snapshot hook with proven rejection, under 30s | planned | `.husky/pre-commit` runs `scripts/pre-commit.py` against a temporary export of the Git index and fails closed on missing/empty/failed/skipped test reports, missing/invalid/below-95% coverage reports, static failures and timeout. Installed-hook fixture rejection and full timing remain to be verified. The subcheck rows below describe the configured lanes |
-| L1 subcheck — App coverage | Four metrics >=95% in configured TypeScript logic; UI, wiring and listed domain/service exclusions are outside the coverage denominator | enforced | Root Vitest; pre-commit/pre-push/CI |
-| L1 subcheck — Worker coverage | Four metrics >=95% for `worker/lib/**/*.ts` and `db/validation.ts`; HTTP entrypoints/repositories outside this unit denominator | enforced | Worker Vitest; pre-commit/pre-push/CI |
-| L2 | Native Worker real HTTP with SQLite, signed JWT failures, scoped Bearer isolation, CRUD, idempotency/CAS, state races, annual import rollback and backup scope | enforced | `scripts/run-e2e.ts`; pre-push/CI; not a complete endpoint/method coverage claim |
-| L3 | Authenticated route rendering and financial/import/backup/error workflows on built assets | enforced | Playwright CI; acceptance evidence in migration plan |
-| L1 subcheck — static lanes (former G1) | Both type lanes; zero-warning/error Biome | enforced | Root typecheck and lint; pre-commit/CI; pre-commit runs these lanes from the index snapshot |
-| G2 | Required OSV on both locks; redacted gitleaks | enforced | Pre-push and reusable CI security gates |
-| D1 | Per-run local state, marker validation before fixture writes/cleanup, reserved ports, controlled JWKS | enforced | `scripts/test-fixture.ts`, HTTP/browser runners |
-| Build | Vite client/Worker bundles and deployment dry-run | enforced/manual | Build in CI preparation; dry-run during release validation |
-| Docs | Operations, limitations and release evidence aligned | manual | README, handbook and numbered docs |
+| Piece                                  | Requirement and scope                                                                                                                                          | Status          | Evidence                                                                                                                                                                                                                                                                                                                                                           |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| L1 — complete unified contract         | All four coverage metrics >=95% plus strict static lanes on an installed index-snapshot hook with proven rejection, under 30s                                  | planned         | `.husky/pre-commit` runs `scripts/pre-commit.py` against a temporary export of the Git index and fails closed on missing/empty/failed/skipped test reports, missing/invalid/below-95% coverage reports, static failures and timeout. Installed-hook fixture rejection and full timing remain to be verified. The subcheck rows below describe the configured lanes |
+| L1 subcheck — App coverage             | Four metrics >=95% in configured TypeScript logic; UI, wiring and listed domain/service exclusions are outside the coverage denominator                        | enforced        | Root Vitest; pre-commit/pre-push/CI                                                                                                                                                                                                                                                                                                                                |
+| L1 subcheck — Worker coverage          | Four metrics >=95% for `worker/lib/**/*.ts` and `db/validation.ts`; HTTP entrypoints/repositories outside this unit denominator                                | enforced        | Worker Vitest; pre-commit/pre-push/CI                                                                                                                                                                                                                                                                                                                              |
+| L2                                     | Native Worker real HTTP with SQLite, signed JWT failures, scoped Bearer isolation, CRUD, idempotency/CAS, state races, annual import rollback and backup scope | enforced        | `scripts/run-e2e.ts`; pre-push/CI; not a complete endpoint/method coverage claim                                                                                                                                                                                                                                                                                   |
+| L3                                     | Authenticated route rendering and financial/import/backup/error workflows on built assets                                                                      | enforced        | Playwright CI; acceptance evidence in migration plan                                                                                                                                                                                                                                                                                                               |
+| L1 subcheck — static lanes (former G1) | Both type lanes; zero-warning/error Biome                                                                                                                      | enforced        | Root typecheck and lint; pre-commit/CI; pre-commit runs these lanes from the index snapshot                                                                                                                                                                                                                                                                        |
+| G2                                     | Required OSV on both locks; redacted gitleaks                                                                                                                  | enforced        | Pre-push and reusable CI security gates                                                                                                                                                                                                                                                                                                                            |
+| D1                                     | Per-run local state, marker validation before fixture writes/cleanup, reserved ports, controlled JWKS                                                          | enforced        | `scripts/test-fixture.ts`, HTTP/browser runners                                                                                                                                                                                                                                                                                                                    |
+| Build                                  | Vite client/Worker bundles and deployment dry-run                                                                                                              | enforced/manual | Build in CI preparation; dry-run during release validation                                                                                                                                                                                                                                                                                                         |
+| Docs                                   | Operations, limitations and release evidence aligned                                                                                                           | manual          | README, handbook and numbered docs                                                                                                                                                                                                                                                                                                                                 |
 
 Pre-commit exports the index into a temporary source snapshot; it does not stage or
 rewrite project files. Coverage outputs, logs and caches are temporary. Pre-push secrets
@@ -130,11 +130,11 @@ merged former G1 into L1 on 2026-09-21; the framework keeps the 6DQ name.
 
 ## Resources / Isolation
 
-| Purpose | Port / state | Policy |
-| --- | --- | --- |
+| Purpose           | Port / state                                 | Policy                                           |
+| ----------------- | -------------------------------------------- | ------------------------------------------------ |
 | Demo / manual E2E | 7004 / persistent Demo or owned temporary D1 | Caddy HTTPS; signed fixture identity; switchable |
-| L2 | 17004 / per-run temporary SQLite | Real Worker HTTP; signed synthetic identities |
-| L3 | 27004 / independent temporary SQLite | Built client, real Worker and browser fixtures |
+| L2                | 17004 / per-run temporary SQLite             | Real Worker HTTP; signed synthetic identities    |
+| L3                | 27004 / independent temporary SQLite         | Built client, real Worker and browser fixtures   |
 
 Never create remote test resources, seed production, or reuse daily-development
 data. A `_test_marker` and matching private directory marker guard fixture writes
