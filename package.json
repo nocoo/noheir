@@ -24,6 +24,7 @@
     "types": "wrangler types worker/worker-configuration.d.ts --env-interface WorkerBindings --include-runtime=false --strict-vars=false",
     "prod:login": "cloudflared access login https://noheir.hexly.ai",
     "demo:reset": "node scripts/reset-demo.ts",
+    "test:l1-gate": "bun scripts/verify-l1-gate.ts",
     "test:environments": "node --test scripts/environments.test.ts",
     "test:environments:browser": "bun run build && node scripts/check-environments.ts",
     "demo:capture": "bun run build && node scripts/check-environments.ts --capture",
