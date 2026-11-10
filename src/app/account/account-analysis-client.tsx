@@ -1,6 +1,7 @@
 import { LayerCard } from "@nocoo/basalt";
 import { Badge } from "@nocoo/basalt/components/badge";
 import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
+import { PageHeader } from "@nocoo/basalt/components/page-header";
 import {
   Table,
   TableBody,
@@ -87,16 +88,15 @@ export function AccountAnalysisClient({
 }: AccountAnalysisClientProps) {
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold">
+      <PageHeader
+        title={
+          <span className="flex items-center gap-2">
             <Wallet className="text-basalt-primary size-6" />
             账户分析
-          </h1>
-          <p className="text-basalt-muted-foreground text-sm">各账户收支概览与分布</p>
-        </div>
-      </div>
+          </span>
+        }
+        description="各账户收支概览与分布"
+      />
 
       {/* Summary Stats */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
