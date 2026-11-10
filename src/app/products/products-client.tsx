@@ -10,6 +10,7 @@ import {
 } from "@nocoo/basalt/components/dialog";
 import { Input } from "@nocoo/basalt/components/input";
 import { Label } from "@nocoo/basalt/components/label";
+import { PageHeader } from "@nocoo/basalt/components/page-header";
 import {
   Select,
   SelectContent,
@@ -273,87 +274,90 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold">
+      <PageHeader
+        title={
+          <span className="flex items-center gap-2">
             <Package className="text-basalt-primary size-6" />
             产品管理
-          </h1>
-          <p className="text-basalt-muted-foreground text-sm">
+          </span>
+        }
+        description={
+          <>
             金融产品目录 · ({filteredAndSorted.length} / {activeProductCount} 个产品)
             {showArchived && <span className="ml-1 text-amber-600">(含已存档)</span>}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <div className="relative min-w-0 flex-1 sm:flex-none">
-            <Search className="text-basalt-muted-foreground absolute left-3 top-1/2 size-4 -translate-y-1/2" />
-            <Input
-              placeholder="搜索产品..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 sm:w-[200px]"
-            />
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            aria-expanded={showFilters}
-            className="shrink-0"
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <Filter className="mr-1 size-4" />
-            筛选
-            {activeFilterCount > 0 && (
-              <Badge variant="secondary" className="ml-1 text-xs">
-                {activeFilterCount}
-              </Badge>
-            )}
-          </Button>
-          <Dialog
-            open={dialogOpen}
-            onOpenChange={(open) => {
-              setDialogOpen(open);
-              if (searchParams.has("edit")) navigate("/products", { replace: true });
-            }}
-          >
-            <DialogTrigger asChild>
-              <Button onClick={handleCreate} size="sm" className="shrink-0">
-                <Plus className="mr-1 size-4" />
-                新增
-              </Button>
-            </DialogTrigger>
-            <DialogContent size="lg" className="grid gap-4">
-              <DialogHeader>
-                <DialogTitle className="pr-8">
-                  {editingProduct ? "编辑产品" : "新增产品"}
-                </DialogTitle>
-                <DialogDescription>
-                  {editingProduct ? "修改理财产品信息" : "添加新的理财产品到产品库"}
-                </DialogDescription>
-              </DialogHeader>
-              <ProductForm
-                product={editingProduct}
-                onClose={() => setDialogOpen(false)}
-                onSuccess={() => {
-                  setDialogOpen(false);
-                  revalidator.revalidate();
-                }}
+          </>
+        }
+        actions={
+          <>
+            <div className="relative min-w-0 flex-1 sm:flex-none">
+              <Search className="text-basalt-muted-foreground absolute left-3 top-1/2 size-4 -translate-y-1/2" />
+              <Input
+                placeholder="搜索产品..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-9 sm:w-[200px]"
               />
-              <DialogClose asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-2 top-2"
-                  aria-label="Close"
-                >
-                  <XIcon aria-hidden="true" />
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              aria-expanded={showFilters}
+              className="shrink-0"
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <Filter className="mr-1 size-4" />
+              筛选
+              {activeFilterCount > 0 && (
+                <Badge variant="secondary" className="ml-1 text-xs">
+                  {activeFilterCount}
+                </Badge>
+              )}
+            </Button>
+            <Dialog
+              open={dialogOpen}
+              onOpenChange={(open) => {
+                setDialogOpen(open);
+                if (searchParams.has("edit")) navigate("/products", { replace: true });
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button onClick={handleCreate} size="sm" className="shrink-0">
+                  <Plus className="mr-1 size-4" />
+                  新增
                 </Button>
-              </DialogClose>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
+              </DialogTrigger>
+              <DialogContent size="lg" className="grid gap-4">
+                <DialogHeader>
+                  <DialogTitle className="pr-8">
+                    {editingProduct ? "编辑产品" : "新增产品"}
+                  </DialogTitle>
+                  <DialogDescription>
+                    {editingProduct ? "修改理财产品信息" : "添加新的理财产品到产品库"}
+                  </DialogDescription>
+                </DialogHeader>
+                <ProductForm
+                  product={editingProduct}
+                  onClose={() => setDialogOpen(false)}
+                  onSuccess={() => {
+                    setDialogOpen(false);
+                    revalidator.revalidate();
+                  }}
+                />
+                <DialogClose asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-2"
+                    aria-label="Close"
+                  >
+                    <XIcon aria-hidden="true" />
+                  </Button>
+                </DialogClose>
+              </DialogContent>
+            </Dialog>
+          </>
+        }
+      />
 
       {/* Filter Panel */}
       {showFilters && (
