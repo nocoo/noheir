@@ -1,11 +1,11 @@
 import { Button, ContentIsland } from "@nocoo/basalt";
 import { AppHeader } from "@nocoo/basalt/components/app-header";
-import { LinkButton } from "@nocoo/basalt/components/button";
 import {
   AppMain,
   AppSkipLink,
   AppShell as BasaltAppShell,
 } from "@nocoo/basalt/components/app-shell";
+import { LinkButton } from "@nocoo/basalt/components/button";
 import {
   Sheet,
   SheetContent,
