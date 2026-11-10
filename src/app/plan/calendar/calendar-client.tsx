@@ -20,6 +20,7 @@
 
 import { Button, DialogClose } from "@nocoo/basalt";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@nocoo/basalt/components/dialog";
+import { PageHeader } from "@nocoo/basalt/components/page-header";
 import { ChevronLeft, ChevronRight, Plus, XIcon } from "lucide-react";
 import * as React from "react";
 import { useRevalidator } from "react-router";
@@ -137,16 +138,16 @@ export function CalendarClient({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">资金计划日历</h1>
-          <p className="text-sm text-basalt-muted-foreground">管理家庭周期支出，可视化未来现金流</p>
-        </div>
-        <Button onClick={() => setCreateOpen(true)} data-testid="open-create-rule">
-          <Plus className="size-4" />
-          新建周期支出
-        </Button>
-      </div>
+      <PageHeader
+        title="资金计划日历"
+        description="管理家庭周期支出，可视化未来现金流"
+        actions={
+          <Button onClick={() => setCreateOpen(true)} data-testid="open-create-rule">
+            <Plus className="size-4" />
+            新建周期支出
+          </Button>
+        }
+      />
 
       <PlanSummaryCards rules={rules} viewMonth={viewMonth} todayIso={todayIso} />
 
