@@ -1,5 +1,6 @@
 import { ResponsiveSunburst } from "@nivo/sunburst";
 import { LayerCard } from "@nocoo/basalt";
+import { PageHeader } from "@nocoo/basalt/components/page-header";
 import { Layers } from "lucide-react";
 import type { SunburstData } from "@/domain/assets/strategy-sunburst";
 import { formatCurrencyFull } from "@/lib/chart-config";
@@ -74,17 +75,20 @@ export function StrategyClient({ hierarchy, totalAmount }: StrategyClientProps) 
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <Layers className="text-basalt-primary size-6" />
-          策略透视
-        </h1>
-        <p className="text-basalt-muted-foreground text-sm">
-          从币种 → 策略 → 产品的层级视角，识别集中度风险
-          {totalAmount > 0 && ` · 总计 ${formatCurrencyFull(totalAmount)}`}
-        </p>
-      </div>
+      <PageHeader
+        title={
+          <span className="flex items-center gap-2">
+            <Layers className="text-basalt-primary size-6" />
+            策略透视
+          </span>
+        }
+        description={
+          <>
+            从币种 → 策略 → 产品的层级视角，识别集中度风险
+            {totalAmount > 0 && ` · 总计 ${formatCurrencyFull(totalAmount)}`}
+          </>
+        }
+      />
 
       {/* Sunburst Chart */}
       <LayerCard>
