@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@nocoo/basalt/components/dialog";
+import { PageHeader } from "@nocoo/basalt/components/page-header";
 import { toast } from "@nocoo/basalt/components/toast";
 import { Pencil, Plus, Trash2, XIcon } from "lucide-react";
 import * as React from "react";
@@ -71,16 +72,16 @@ export function CategoriesClient({ categories, usage }: CategoriesClientProps): 
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-2">
-        <div>
-          <h1 className="text-2xl font-bold">分类</h1>
-          <p className="text-sm text-basalt-muted-foreground">管理周期支出的分类与颜色标记</p>
-        </div>
-        <Button onClick={() => setCreateOpen(true)} data-testid="open-create">
-          <Plus className="size-4" />
-          新建分类
-        </Button>
-      </div>
+      <PageHeader
+        title="分类"
+        description="管理周期支出的分类与颜色标记"
+        actions={
+          <Button onClick={() => setCreateOpen(true)} data-testid="open-create">
+            <Plus className="size-4" />
+            新建分类
+          </Button>
+        }
+      />
 
       {categories.length === 0 ? (
         <div
