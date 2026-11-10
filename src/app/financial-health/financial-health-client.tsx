@@ -1,6 +1,7 @@
 import { LayerCard } from "@nocoo/basalt";
 import { Badge } from "@nocoo/basalt/components/badge";
 import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
+import { PageHeader } from "@nocoo/basalt/components/page-header";
 import {
   AlertCircle,
   CheckCircle2,
@@ -84,13 +85,7 @@ export function FinancialHealthClient({ healthResult, monthlyData }: FinancialHe
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">财务健康分析</h1>
-          <p className="text-basalt-muted-foreground text-sm">5维度反脆弱评估体系</p>
-        </div>
-      </div>
+      <PageHeader title="财务健康分析" description="5维度反脆弱评估体系" />
 
       {/* Overall Score Card */}
       <LayerCard className={cn("border-2", colors.border)}>
