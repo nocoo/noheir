@@ -53,7 +53,7 @@ describe("ColorTokenPicker (P3-C1)", () => {
   test("uses CSS variable for each swatch background", () => {
     render(<Wrapper />);
     const sky = screen.getByRole("radio", { name: "Sky" });
-    expect(sky).toHaveStyle({ backgroundColor: "hsl(var(--chart-1))" });
+    expect(sky.style.backgroundColor).toBe("hsl(var(--chart-1))");
   });
 
   // ── Closed-set guard ──────────────────────────────────────────────

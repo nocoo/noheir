@@ -114,9 +114,7 @@ describe("RuleList render (P3-C8)", () => {
     expect(li.textContent).toMatch(/每个月/);
     expect(li.textContent).toMatch(/7 日/);
     expect(li.textContent).toMatch(/订阅/);
-    expect(screen.getByTestId("rule-color-r1")).toHaveStyle({
-      backgroundColor: "hsl(var(--chart-1))",
-    });
+    expect(screen.getByTestId("rule-color-r1").style.backgroundColor).toBe("hsl(var(--chart-1))");
   });
 
   test("missing category → muted color fallback", () => {
