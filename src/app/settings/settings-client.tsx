@@ -1,4 +1,5 @@
 import { Button, Field, Input, Label, LayerCard } from "@nocoo/basalt";
+import { PageHeader } from "@nocoo/basalt/components/page-header";
 import { Slider } from "@nocoo/basalt/components/slider";
 import { toast } from "@nocoo/basalt/components/toast";
 import { Save, Settings, Target, TrendingUp } from "lucide-react";
@@ -61,16 +62,15 @@ export function SettingsClient({ preferences }: SettingsClientProps) {
           setBaseVersion(preferences.version);
         }}
       />
-      {/* Header */}
-      <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <Settings className="text-basalt-primary size-6" />
-          财务假设
-        </h1>
-        <p className="text-basalt-muted-foreground text-sm">
-          储蓄目标、收益率假设与收支分类；不包含身份、外观或密钥管理。
-        </p>
-      </div>
+      <PageHeader
+        title={
+          <span className="flex items-center gap-2">
+            <Settings className="text-basalt-primary size-6" />
+            财务假设
+          </span>
+        }
+        description="储蓄目标、收益率假设与收支分类；不包含身份、外观或密钥管理。"
+      />
 
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" asChild>
