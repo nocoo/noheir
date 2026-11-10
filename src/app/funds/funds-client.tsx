@@ -2,6 +2,7 @@ import { Button, LayerCard } from "@nocoo/basalt";
 import { Badge } from "@nocoo/basalt/components/badge";
 import { Input } from "@nocoo/basalt/components/input";
 import { Label } from "@nocoo/basalt/components/label";
+import { PageHeader } from "@nocoo/basalt/components/page-header";
 import {
   Select,
   SelectContent,
@@ -190,49 +191,52 @@ export function FundsClient({ units, products }: FundsClientProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold">
+      <PageHeader
+        title={
+          <span className="flex items-center gap-2">
             <Landmark className="text-basalt-primary size-6" />
             资本单位管理
-          </h1>
-          <p className="text-basalt-muted-foreground text-sm">
+          </span>
+        }
+        description={
+          <>
             ({filteredAndSorted.length} / {units.length} 个单位) · CNY 总计{" "}
             {formatCurrencyFull(totalAmount)}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <div className="relative min-w-0 flex-1 sm:flex-none">
-            <Search className="text-basalt-muted-foreground absolute left-3 top-1/2 size-4 -translate-y-1/2" />
-            <Input
-              placeholder="搜索单位..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 sm:w-[200px]"
-            />
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            aria-expanded={showFilters}
-            className="shrink-0"
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <Filter className="mr-1 size-4" />
-            筛选
-            {activeFilterCount > 0 && (
-              <Badge variant="secondary" className="ml-1 text-xs">
-                {activeFilterCount}
-              </Badge>
-            )}
-          </Button>
-          <Button onClick={handleCreate} size="sm" className="shrink-0">
-            <Plus className="mr-1 size-4" />
-            新增
-          </Button>
-        </div>
-      </div>
+          </>
+        }
+        actions={
+          <>
+            <div className="relative min-w-0 flex-1 sm:flex-none">
+              <Search className="text-basalt-muted-foreground absolute left-3 top-1/2 size-4 -translate-y-1/2" />
+              <Input
+                placeholder="搜索单位..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-9 sm:w-[200px]"
+              />
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              aria-expanded={showFilters}
+              className="shrink-0"
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <Filter className="mr-1 size-4" />
+              筛选
+              {activeFilterCount > 0 && (
+                <Badge variant="secondary" className="ml-1 text-xs">
+                  {activeFilterCount}
+                </Badge>
+              )}
+            </Button>
+            <Button onClick={handleCreate} size="sm" className="shrink-0">
+              <Plus className="mr-1 size-4" />
+              新增
+            </Button>
+          </>
+        }
+      />
 
       {/* Unit Editor Dialog */}
       <UnitEditor
