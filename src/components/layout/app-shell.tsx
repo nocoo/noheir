@@ -5,6 +5,7 @@ import {
   AppSkipLink,
   AppShell as BasaltAppShell,
 } from "@nocoo/basalt/components/app-shell";
+import { LinkButton } from "@nocoo/basalt/components/button";
 import {
   Sheet,
   SheetContent,
@@ -104,7 +105,6 @@ function AppShellInner() {
       <AppMain>
         {/* Header */}
         <AppHeader
-          className="max-[360px]:h-auto max-[360px]:flex-wrap max-[360px]:py-basalt-space-sm"
           leading={
             isMobile ? (
               <HeaderTooltip label="打开导航">
@@ -115,7 +115,7 @@ function AppShellInner() {
                   onClick={() => setMobileOpen(true)}
                   aria-label="打开导航"
                 >
-                  <Menu className="h-5 w-5" aria-hidden="true" strokeWidth={1.5} />
+                  <Menu aria-hidden="true" strokeWidth={1.5} />
                 </Button>
               </HeaderTooltip>
             ) : null
@@ -128,20 +128,17 @@ function AppShellInner() {
                 <GlobalYearSelector />
               </Suspense>
               <HeaderTooltip label="GitHub repository">
-                <Button variant="ghost" size="icon" className="hidden md:inline-flex" asChild>
-                  <a
-                    href="https://github.com/nocoo/noheir"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="GitHub repository"
-                  >
-                    <GithubIcon
-                      className="h-[18px] w-[18px]"
-                      aria-hidden="true"
-                      strokeWidth={1.5}
-                    />
-                  </a>
-                </Button>
+                <LinkButton
+                  variant="ghost"
+                  size="icon"
+                  className="hidden md:inline-flex"
+                  href="https://github.com/nocoo/noheir"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="GitHub repository"
+                >
+                  <GithubIcon aria-hidden="true" strokeWidth={1.5} />
+                </LinkButton>
               </HeaderTooltip>
               <HexlyLink className="hidden md:inline-flex" />
               <ThemeToggle />
