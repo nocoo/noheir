@@ -2,7 +2,6 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-  Badge,
   Sidebar as BasaltSidebar,
   Button,
   SidebarFooter,
@@ -28,6 +27,7 @@ import { Link, useLocation } from "react-router";
 import { GithubIcon } from "@/components/icons/github-icon";
 import { useAuth } from "@/lib/auth-context";
 import { ALL_NAV_ITEMS, isNavItemActive, NAV_GROUPS } from "@/lib/navigation";
+import { cn } from "@/lib/utils";
 import pkg from "../../../package.json";
 import { HexlyLink } from "./header-links";
 import { useSidebar } from "./sidebar-context";
@@ -55,39 +55,54 @@ export function Sidebar({ mobile = false }: { mobile?: boolean }) {
   return (
     <TooltipProvider delayDuration={0}>
       <BasaltSidebar aria-label={mobile ? "主导航抽屉" : "主导航"} collapsed={isCollapsed}>
-        <SidebarHeader className="gap-0">
-          <div className="flex w-[calc(var(--basalt-size-rail)-2*var(--basalt-space-nav-inset))] shrink-0 justify-center">
-            <img src="/logo-24.png" alt="noheir" width={24} height={24} />
-          </div>
-          {!isCollapsed && (
-            <>
-              <div className="flex min-w-0 flex-1 items-center gap-2">
-                <span className="font-semibold tracking-tight">noheir</span>
-                <Badge variant="secondary" className="font-mono">
-                  v{pkg.version}
-                </Badge>
-              </div>
-              {!mobile && (
-                <Button variant="ghost" size="icon" onClick={toggle} aria-label="收起侧边栏">
-                  <PanelLeft aria-hidden="true" strokeWidth={1.5} />
-                </Button>
+        <SidebarHeader>
+          <div
+            className={cn(
+              "flex w-full items-center",
+              isCollapsed ? "justify-center" : "justify-between pl-basalt-layout-sm",
+            )}
+          >
+            <div className="flex min-w-0 items-center gap-basalt-space-lg">
+              <img
+                src="/logo-24.png"
+                alt="noheir"
+                width={24}
+                height={24}
+                className="h-6 w-6 shrink-0 object-contain"
+              />
+              {!isCollapsed && (
+                <>
+                  <span className="truncate text-basalt-xl font-semibold text-basalt-foreground">
+                    noheir
+                  </span>
+                  <span className="shrink-0 rounded-basalt-md bg-basalt-secondary px-basalt-space-md py-basalt-space-xs text-basalt-sm leading-basalt-tight font-medium text-basalt-muted-foreground">
+                    v{pkg.version}
+                  </span>
+                </>
               )}
-            </>
-          )}
+            </div>
+            {!isCollapsed && !mobile && (
+              <Button variant="ghost" size="icon" onClick={toggle} aria-label="收起侧边栏">
+                <PanelLeft aria-hidden="true" strokeWidth={1.5} />
+              </Button>
+            )}
+          </div>
         </SidebarHeader>
+
+        {isCollapsed && !mobile && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggle}
+            aria-label="展开侧边栏"
+            className="mb-basalt-space-sm self-center"
+          >
+            <PanelLeft aria-hidden="true" strokeWidth={1.5} />
+          </Button>
+        )}
 
         {isCollapsed ? (
           <>
-            <div className="flex justify-center">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <SidebarIconItem onClick={toggle} aria-label="展开侧边栏">
-                    <PanelLeft aria-hidden="true" strokeWidth={1.5} />
-                  </SidebarIconItem>
-                </TooltipTrigger>
-                <TooltipContent side="right">展开侧边栏</TooltipContent>
-              </Tooltip>
-            </div>
             <NavigationMenu
               orientation="vertical"
               className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain"
