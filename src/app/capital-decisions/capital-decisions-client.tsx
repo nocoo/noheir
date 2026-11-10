@@ -1,5 +1,6 @@
 import { Button, LayerCard } from "@nocoo/basalt";
 import { Badge } from "@nocoo/basalt/components/badge";
+import { PageHeader } from "@nocoo/basalt/components/page-header";
 import {
   Table,
   TableBody,
@@ -109,17 +110,39 @@ export function CapitalDecisionsClient({
     return result;
   }, [decisions, filter, sortColumn, sortDirection]);
 
+  const pageTitle = (
+    <span className="flex items-center gap-2">
+      <Lightbulb className="text-basalt-primary size-6" />
+      决策中心
+    </span>
+  );
+
+  const urgencyFilters = (
+    <div className="flex flex-wrap gap-2">
+      {["all", "high", "medium", "low"].map((key) => {
+        const count = key === "all" ? decisions.length : (filterCounts[key] ?? 0);
+        return (
+          <Button
+            key={key}
+            variant="outline"
+            aria-pressed={filter === key}
+            size="sm"
+            onClick={() => setFilter(key)}
+            className="gap-2"
+          >
+            {key === "all" ? "全部" : (URGENCY_CONFIG[key]?.label ?? key)}
+            <Badge variant="secondary">{count}</Badge>
+          </Button>
+        );
+      })}
+    </div>
+  );
+
   // Empty state
   if (decisions.length === 0) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold">
-            <Lightbulb className="text-basalt-primary size-6" />
-            决策中心
-          </h1>
-          <p className="text-basalt-muted-foreground text-sm">需要关注和处理的资本单位</p>
-        </div>
+        <PageHeader title={pageTitle} description="需要关注和处理的资本单位" />
         <div className="rounded-xl border p-12 text-center">
           <div className="mb-4 text-4xl">✅</div>
           <h3 className="mb-2 text-lg font-semibold">一切正常</h3>
@@ -131,14 +154,11 @@ export function CapitalDecisionsClient({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <Lightbulb className="text-basalt-primary size-6" />
-          决策中心
-        </h1>
-        <p className="text-basalt-muted-foreground text-sm">需要关注和处理的资本单位</p>
-      </div>
+      <PageHeader
+        title={pageTitle}
+        description="需要关注和处理的资本单位"
+        filters={urgencyFilters}
+      />
 
       {/* Summary Stats */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -170,26 +190,6 @@ export function CapitalDecisionsClient({
             {formatCurrencyFull(stats.normalAmount)}
           </p>
         </div>
-      </div>
-
-      {/* Filter */}
-      <div className="flex flex-wrap gap-2">
-        {["all", "high", "medium", "low"].map((key) => {
-          const count = key === "all" ? decisions.length : (filterCounts[key] ?? 0);
-          return (
-            <Button
-              key={key}
-              variant="outline"
-              aria-pressed={filter === key}
-              size="sm"
-              onClick={() => setFilter(key)}
-              className="gap-2"
-            >
-              {key === "all" ? "全部" : (URGENCY_CONFIG[key]?.label ?? key)}
-              <Badge variant="secondary">{count}</Badge>
-            </Button>
-          );
-        })}
       </div>
 
       {/* Decisions Table */}
