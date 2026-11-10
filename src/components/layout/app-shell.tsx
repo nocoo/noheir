@@ -104,7 +104,6 @@ function AppShellInner() {
       <AppMain>
         {/* Header */}
         <AppHeader
-          className="max-[360px]:h-auto max-[360px]:flex-wrap max-[360px]:py-basalt-space-sm"
           leading={
             isMobile ? (
               <HeaderTooltip label="打开导航">
