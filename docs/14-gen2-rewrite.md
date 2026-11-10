@@ -47,6 +47,7 @@ Google OAuth → NextAuth session (JWT) → session.user.id = users.id (UUID)
 **Why not email as userId:** Email can change (Google allows it). Provider `accountId` is immutable but opaque. A self-owned `users.id` UUID decouples identity from any provider.
 
 **Auth enforcement boundary (3 layers):**
+
 1. **`proxy.ts` (Next.js)** — rejects unauthenticated browser requests before they reach any page/action
 2. **Server actions / Server Components** — extract `session.user.id` via `auth()`, set `X-User-Id` header on Worker requests
 3. **Worker `WORKER_TOKEN` check** — rejects requests without valid token. Trusts `X-User-Id` from authenticated callers. Passes userId to repository layer for row-level filtering.
@@ -103,6 +104,7 @@ The Worker uses a single shared `WORKER_TOKEN` (env secret). It does **not** con
 3. **The Worker itself has no user/session concept.** It is a pure data access proxy. User authentication lives in Next.js (NextAuth) and MCP (API key). The Worker only enforces "is the caller authorized to talk to me at all" (token check), then passes userId to repositories for row-level filtering.
 
 **Why this is safe:**
+
 - `WORKER_TOKEN` is a server-side secret. The browser never has it (see AD-8).
 - Next.js extracts userId from NextAuth session (`auth()`) — unforgeable by the browser.
 - MCP extracts userId from its own auth mechanism — also server-side.
@@ -111,6 +113,7 @@ The Worker uses a single shared `WORKER_TOKEN` (env secret). It does **not** con
 **Why NOT per-user JWTs:** This is a personal-use app with a whitelist. Adding JWT signing/verification between Next.js and Worker adds complexity with no practical security gain — the only callers are server processes we control. If the project ever becomes multi-tenant with untrusted intermediaries, upgrade to signed JWTs.
 
 **Key implications:**
+
 - `db/schema.ts` and `db/repositories/` live in a **shared package** (or `worker/` directory) used by both the Worker and `:memory:` SQLite tests
 - Next.js never imports Drizzle at runtime — it only uses `WorkerDbClient` (typed HTTP client)
 - `WorkerDbClient` exposes **high-level typed methods** (`searchTransactions(filters)`, `getMonthlyReport(year, month)`), not raw SQL
@@ -189,6 +192,7 @@ export const settings = sqliteTable("settings", {
 ```
 
 Repository API:
+
 - `settings.getByUserId(userId)` — returns the single row or null
 - `settings.upsert(userId, data)` — INSERT OR REPLACE keyed by ownerId
 
@@ -300,18 +304,21 @@ Trust boundary
 ```
 
 **Read path (SSR):**
+
 1. Server Component `page.tsx` calls `auth()` to get `session.user.id`
 2. Calls `workerDb.searchTransactions(userId, filters)` server-side
 3. Passes result as props to Client Component
 4. Client Component renders with data — no fetch needed
 
 **Write path (Server Actions):**
+
 1. Client Component calls a `"use server"` function (e.g., `createTransaction(formData)`)
 2. Server action calls `auth()` to get `session.user.id` — client cannot forge this
 3. Server action calls `workerDb.createTransaction(userId, data)`
 4. Returns result to client for optimistic UI update
 
 **Refetch path (TanStack Query):**
+
 1. Client Component uses `useQuery()` with a server action as `queryFn`
 2. Server action extracts userId server-side, calls Worker, returns data
 3. TanStack Query manages cache/revalidation
@@ -323,6 +330,7 @@ This means `WorkerDbClient` is **only ever imported in server-side code** (`page
 Current MCP authenticates via Supabase email/password, queries via RPC.
 
 Target MCP connects to the **same Cloudflare Worker** as the Next.js app:
+
 - Reuses `WorkerDbClient` with same `WORKER_TOKEN` + `X-User-Id` header
 - MCP's own auth (API key or env-based) determines which userId to set in `X-User-Id`
 - MCP tools call typed client methods, not raw SQL
@@ -333,6 +341,7 @@ Target MCP connects to the **same Cloudflare Worker** as the Next.js app:
 **Decision:** No Supabase-to-D1 migration script. Data starts fresh.
 
 The existing import feature (CSV/JSON for transactions and transfers) will be used to restore data after the rewrite. Products and units can be re-imported or re-created. This eliminates:
+
 - UUID mapping complexity
 - Amount float→cents conversion edge cases
 - User ID remapping risk
@@ -491,6 +500,7 @@ git mv .env.test _archive/
 | `eslint.config.js` | Replaced in 0.8                                          |
 
 **Cleanup (Phase 5.6):**
+
 ```bash
 rm -rf _archive/
 # Commit: chore: remove Gen 1 archive after rewrite verification
@@ -614,6 +624,7 @@ rm -rf _archive/
 | Railway service (old) | `noheir-legacy`  | (renamed, then deleted)           | Gen 1 Vite SPA (keep alive during transition) |
 
 **D1 test isolation (6-dim D1 quality dimension):**
+
 - `noheir-db-test` is a **separate D1 database**, not a table prefix or flag
 - Worker exposes both via bindings: `DB` (prod) and `DB_TEST` (test)
 - E2E test harness sends `X-Target-DB: test` header alongside `WORKER_TOKEN`

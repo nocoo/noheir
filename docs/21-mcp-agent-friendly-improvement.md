@@ -54,6 +54,7 @@ All tools accepting entity identifiers MUST use the same resolution logic.
 | `product_code`                     | Exact match `code = ?`               | If multiple rows → error "Multiple products with code X, use product_id" |
 
 **Identifier rules**:
+
 - Exactly one identifier is recommended.
 - If multiple identifiers are provided, all must resolve to the same product. If they conflict → error "Conflicting identifiers: product_id points to X but product_name points to Y".
 - This prevents masking upstream reasoning errors (e.g., correct ID + wrong name).
@@ -154,6 +155,7 @@ Replace current `{ count, limit, offset }` with the unified envelope (see KD-3).
 **Applied to**: `list_products`, `list_units`, `query_transactions`, `query_transfers`
 
 **Before** (list_units):
+
 ```json
 {
   "units": [...],
@@ -164,6 +166,7 @@ Replace current `{ count, limit, offset }` with the unified envelope (see KD-3).
 ```
 
 **After**:
+
 ```json
 {
   "units": [...],
@@ -340,6 +343,7 @@ Add filter parameter:
 ```
 
 **Resolution logic** (uses KD-1 resolver):
+
 - `product_id` full → `u.product_id = ?`
 - `product_id` short (≤8) → resolve to full ID first via product resolver, then filter
 - `product_name` → resolve to product_id first, then filter by `u.product_id = ?`
@@ -428,12 +432,14 @@ This is more reliable than relying on Agent to read `linked_units_count` and inf
 | L3 Smoke (optional) | Real MCP route, mock auth           | Full MCP client call → response shape                        | `bun run test:e2e` |
 
 **L1 Unit** (blocking): Every tool function tested in isolation with mock Db. Validates:
+
 - SQL query construction (correct WHERE clauses, parameter binding)
 - Envelope structure (`page`, `completeness`, `next`)
 - Error handling (not found, ambiguous, validation)
 - Edge cases (empty results, boundary values)
 
 **L2 Workflow** (blocking): Multi-tool scenarios with mock Db that returns sequential results. Validates:
+
 - Product resolver → `get_product_portfolio` flow
 - `get_product` → `next` hint → `get_product_portfolio` flow
 - Pagination: first page → `has_more` → second page → `has_more: false`
@@ -443,6 +449,7 @@ This is more reliable than relying on Agent to read `linked_units_count` and inf
 #### 5.2 New Test Cases
 
 **Envelope tests** (`src/__tests__/mcp/envelope.test.ts`):
+
 - Paginated tool returns `page` with `total`, `has_more`
 - `has_more: false` when all results returned
 - `total` matches actual DB count
@@ -452,6 +459,7 @@ This is more reliable than relying on Agent to read `linked_units_count` and inf
 - Backward-compatible `count`/`limit`/`offset` still present during deprecation period
 
 **Product resolver tests** (`src/__tests__/mcp/resolver.test.ts`):
+
 - Full ID → exact match
 - Short ID (8 chars) → prefix match, single result
 - Short ID → ambiguous (2+ matches) → error
@@ -462,6 +470,7 @@ This is more reliable than relying on Agent to read `linked_units_count` and inf
 - No identifier provided → error
 
 **`get_product_portfolio` tests** (`src/__tests__/mcp/portfolio.test.ts`):
+
 - Returns product + all linked units + summary
 - Handles product with no linked units (empty units, summary all zeros)
 - Handles product with archived units (status=已归档) excluded by default
@@ -473,6 +482,7 @@ This is more reliable than relying on Agent to read `linked_units_count` and inf
 - Returns `completeness.complete=true` when not truncated
 
 **`list_units` with product_id filter** (`src/__tests__/mcp/unit.test.ts`):
+
 - Filters by full product_id
 - Filters by short product_id (resolver)
 - Filters by product_name (resolver)
@@ -480,11 +490,13 @@ This is more reliable than relying on Agent to read `linked_units_count` and inf
 - Combines with existing filters (status, strategy, etc.)
 
 **`get_product` enhancement** (`src/__tests__/mcp/product.test.ts`):
+
 - Returns `linked_units_count` and `linked_units_amount`
 - Returns `next` hint when linked_units_count > 0
 - No `next` when linked_units_count === 0
 
 **Edge cases**:
+
 - Empty result sets (page.total=0, page.returned=0, has_more=false, no next, no completeness)
 - Single result (page.total=1, page.returned=1, has_more=false)
 - Exactly at limit boundary (e.g., 50 results with limit 50 → has_more depends on total)
@@ -495,6 +507,7 @@ This is more reliable than relying on Agent to read `linked_units_count` and inf
 Current coverage enforcement is defined in [AGENTS.md](../AGENTS.md): all four configured metrics must meet 95%. This document retains the original feature plan; it is not evidence of complete MCP route coverage.
 
 Commands:
+
 ```bash
 bun run test                    # L1 + L2 unit/workflow tests
 bun run test:coverage           # With coverage report

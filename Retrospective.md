@@ -100,7 +100,6 @@ and removal of the one-time fragment. A hosted fixture check also preserves the
 original request method/body; static-only forwarding would falsely report a
 business API failure in the test harness.
 
-
 ## 2026-09-28 — Local Prod authentication prerequisite
 
 The initial local Prod proxy was delivered without exercising real Access login.

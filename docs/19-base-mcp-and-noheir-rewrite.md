@@ -12,12 +12,14 @@
 从 firefly MCP 提取通用代码，形成独立的、可复用的 MCP Server 开发框架。
 
 **核心能力**：
+
 1. OAuth 2.1 无缝登录（PKCE + Dynamic Client Registration）
 2. Entity-Driven CRUD 框架（声明式定义 → 自动生成工具）
 3. Streamable HTTP 传输（stateless / stateful 可选）
 4. 完善的测试工具链
 
 **不包含**：
+
 - 具体业务实体（由各项目自定义）
 - 数据库 schema（由各项目自定义）
 - 认证 provider 配置（由各项目自定义）
@@ -303,6 +305,7 @@ export function GET() {
 8. **文档**: README + API 文档
 
 **版本策略**：
+
 - `0.1.0-alpha.x`: 开发阶段，API 可能变动
 - `0.1.0`: noheir 验证通过后的首个稳定版
 - 在 noheir 之外的第二个项目（如 firefly）集成后再考虑 `1.0.0`
@@ -330,6 +333,7 @@ export function GET() {
 | 17  | `chore: publish v0.1.0-alpha.1`       | npm publish (预发版，仅供 noheir 验证) | ✅              |
 
 **Part 1 完成统计**：
+
 - 代码行数：~1500 行
 - 测试数量：157 个
 - 测试覆盖率：96.61%
@@ -351,6 +355,7 @@ export function GET() {
 ### 2.2 当前 vs 目标架构
 
 **当前架构 (v2)**:
+
 ```
 Claude Desktop ──stdio──► MCP Server (bun 进程)
                               │
@@ -360,6 +365,7 @@ Claude Desktop ──stdio──► MCP Server (bun 进程)
 ```
 
 **目标架构 (v3)**:
+
 ```
 Claude Desktop ──HTTP──► Worker /mcp 端点
                               │
@@ -373,6 +379,7 @@ Claude Desktop ──HTTP──► Worker /mcp 端点
 **选择 Stateless 模式**：每个 HTTP 请求独立处理，不维护 WebSocket 连接。
 
 理由：
+
 - Worker 无持久连接能力
 - MCP 工具调用本身是请求-响应模式
 - 简化部署和调试
@@ -413,6 +420,7 @@ export async function handleMcpRequest(request: Request, server: McpServer): Pro
 ```
 
 **注意**：SDK 提供两种 HTTP transport：
+
 - `StreamableHTTPServerTransport`: Node.js HTTP 包装层，用于 Express/Node HTTP
 - `WebStandardStreamableHTTPServerTransport`: Web Standard APIs，用于 Cloudflare Workers/Deno/Bun/Hono
 
@@ -706,6 +714,7 @@ CREATE INDEX idx_mcp_refresh_tokens_expires ON mcp_refresh_tokens(expires_at);
 | Refresh Token      | 30 天  | 每次使用都 rotate |
 
 **Refresh Token Rotation**：
+
 - 每次用 refresh token 换新 access token 时，同时发放新 refresh token
 - 旧 refresh token 标记为已 rotate，保留 24 小时用于检测 token theft
 - 如果已 rotate 的 refresh token 被再次使用，撤销整个 token family
@@ -720,6 +729,7 @@ CREATE INDEX idx_mcp_refresh_tokens_expires ON mcp_refresh_tokens(expires_at);
 | E2E         | `worker/tests/e2e/mcp.e2e.ts`   | 完整 MCP 协议         |
 
 **TDD 流程**:
+
 1. 先写测试（基于现有 MCP 行为）
 2. 实现代码
 3. 运行测试确认通过
@@ -737,6 +747,7 @@ CREATE INDEX idx_mcp_refresh_tokens_expires ON mcp_refresh_tokens(expires_at);
 | 4   | `test(worker): add oauth e2e tests`        | 完整 OAuth 流程测试 (16 tests)                                                 | ✅ (合并到 #3) |
 
 **Phase 1 完成统计**：
+
 - OAuth 表：4 个 (mcp_clients, mcp_auth_sessions, mcp_tokens, mcp_refresh_tokens)
 - OAuth 端点：6 个 (metadata, register, authorize, callback, token, revoke)
 - E2E 测试：16 个
@@ -754,6 +765,7 @@ CREATE INDEX idx_mcp_refresh_tokens_expires ON mcp_refresh_tokens(expires_at);
 | 11  | `test(worker): add mcp e2e tests`          | 完整 MCP 协议测试                                                    | ✅             |
 
 **Phase 2 完成统计**：
+
 - Entity 定义：2 个 (product, unit)
 - Extra Tools：6 个 (query_transactions, query_transfers, get_summary, get_monthly_report, get_products_summary, get_units_summary)
 - Custom Tools：2 个 (delete_product, delete_unit)
@@ -769,6 +781,7 @@ CREATE INDEX idx_mcp_refresh_tokens_expires ON mcp_refresh_tokens(expires_at);
 | 19  | `chore: remove deprecated mcp/`       | 删除旧代码             | ✅   |
 
 **Phase 3 完成统计**：
+
 - 删除旧 MCP 目录（8 个文件，1759 行）
 - 更新 docs/12-mcp-server.md 为 v3 架构
 - 更新 CLAUDE.md 测试架构说明
@@ -781,6 +794,7 @@ CREATE INDEX idx_mcp_refresh_tokens_expires ON mcp_refresh_tokens(expires_at);
 | 20  | `chore(base-mcp): publish v0.1.0` | API 验证通过，发布正式版 | ✅   |
 
 **Phase 4 完成统计**：
+
 - `@nocoo/base-mcp@0.1.0` 发布到 npm
 - noheir Worker 更新到正式版依赖
 - GitHub 仓库标签: v0.1.0
@@ -788,6 +802,7 @@ CREATE INDEX idx_mcp_refresh_tokens_expires ON mcp_refresh_tokens(expires_at);
 ### 2.10 回滚计划
 
 如果新 MCP 出现问题：
+
 1. 旧 `mcp/` 目录保留到 v3 稳定后再删除
 2. Claude Desktop 可以同时配置新旧 MCP（不同名称）
 3. Worker 的 REST API 不受影响

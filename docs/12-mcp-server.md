@@ -138,16 +138,19 @@ src/
 ### Product Entity (Simple)
 
 Standard CRUD operations. Delete is a custom tool because it needs to:
+
 1. Archive the product (soft delete)
 2. Unlink all associated units (set `product_id` to NULL)
 
 ### Unit Entity (With Hooks)
 
 **Availability Enrichment**: Each unit includes:
+
 - `daysToAvailable`: Days until funds can be withdrawn
 - `availabilityStatus`: "available" | "locked" | "unknown"
 
 **Business Constraints**:
+
 - **endDate Invariant**: `status=已归档` requires endDate; others must have null
 - **productId CAS**: Changing productId requires compare-and-swap check
 - **Contribution Logs**: productId changes auto-generate withdraw/invest logs
@@ -171,6 +174,7 @@ Standard CRUD operations. Delete is a custom tool because it needs to:
 ### Token Revocation
 
 `POST /mcp/revoke` supports revoking:
+
 - `access_token`: Revokes the access token only
 - `refresh_token`: Revokes both access and refresh tokens
 
@@ -212,6 +216,7 @@ cd worker && bun test
 The v2 stdio-based MCP server in `mcp/` is deprecated. See `mcp/DEPRECATED.md` for migration instructions.
 
 Key differences:
+
 - **Transport**: stdio → Streamable HTTP
 - **Auth**: Environment variables → OAuth 2.1 with PKCE
 - **Deployment**: Local bun process → Worker integrated

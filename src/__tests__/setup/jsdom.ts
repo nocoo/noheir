@@ -5,7 +5,7 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { afterEach } from "vitest";
 
-// jsdom 30.1 keeps viewport focus after removing a focused node. Clear it after
+// jsdom 31 keeps viewport focus after removing a focused node. Clear it after
 // React/Radix unmount work so the next test's first focus cannot emit a Window
 // blur that dismisses its newly opened menu. Use normal DOM focus/blur APIs.
 afterEach(async () => {

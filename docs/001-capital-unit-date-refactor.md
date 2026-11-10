@@ -29,6 +29,7 @@ Current implementation incorrectly uses `capitalUnits.endDate` as "product matur
   - `isAvailable = false` if `today < availableDate`
 
 **Interpreting availability state**:
+
 | `availableDate` | `isAvailable` | `daysUntilAvailable` | Meaning                                                          |
 | --------------- | ------------- | -------------------- | ---------------------------------------------------------------- |
 | `null`          | `false`       | `null`               | Data insufficient (no override, and no product or no invest log) |
@@ -77,6 +78,7 @@ Keep `capitalUnits.endDate` as archive date. Availability stays computed, except
 Backend computes and returns availability fields. Frontend only maps/displays them.
 
 **Repository enhancement**:
+
 ```typescript
 // worker/db/repositories/units.ts
 
@@ -103,6 +105,7 @@ interface UnitWithAvailability {
 ```
 
 **Computation logic** (in repository or service layer):
+
 ```typescript
 function computeAvailability(
   latestInvestLog: ContributionLog | null,
@@ -136,6 +139,7 @@ Frontend receives pre-computed fields from API, no longer derives from `endDate`
 | `endDate` (in maturity context) | `availableDate`                 | All pages showing "maturity"                                  |
 
 **Two distinct modules**:
+
 - `liquidity-ladder.ts`: Monthly aggregation of future available funds (bar chart by month × strategy)
 - `capital-dashboard.ts`: Bucket distribution by time range (7d/30d/90d/90d+)
 
@@ -159,6 +163,7 @@ Frontend receives pre-computed fields from API, no longer derives from `endDate`
 - User manually adds invest logs to populate correct data over time
 
 **Legacy `endDate` handling**:
+
 - Existing `endDate` values (incorrectly used as maturity dates) are preserved temporarily
 - **Invariant**: After this refactor, backend and frontend MUST NOT interpret `endDate` on non-archived units as any business meaning
 - **Cleanup rule**: When `status !== 已归档`, `endDate` can be batch-cleared via future cleanup script

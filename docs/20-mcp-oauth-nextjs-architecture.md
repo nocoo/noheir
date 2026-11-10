@@ -162,6 +162,7 @@ noheir/
 ### 3.3 Token Rotation
 
 每次使用 refresh token 时：
+
 1. 发放新的 access token + refresh token
 2. 撤销该 client+user 的所有旧 token
 3. 防止 token 泄露后被滥用

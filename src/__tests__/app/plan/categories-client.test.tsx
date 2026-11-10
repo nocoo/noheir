@@ -62,9 +62,7 @@ describe("CategoriesClient render (P3-C9)", () => {
     expect(screen.getByText("订阅")).toBeInTheDocument();
     expect(screen.getByText("3 条规则使用")).toBeInTheDocument();
     expect(screen.getByText("未被规则使用")).toBeInTheDocument();
-    expect(screen.getByTestId("cat-color-c1")).toHaveStyle({
-      backgroundColor: "hsl(var(--chart-9))",
-    });
+    expect(screen.getByTestId("cat-color-c1").style.backgroundColor).toBe("hsl(var(--chart-9))");
   });
 
   test("category with off-palette colorToken renders fallback color", () => {

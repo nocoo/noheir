@@ -222,9 +222,7 @@ describe("DayDetailPopover render (P3-C7)", () => {
     expect(row.textContent).toMatch(/每个月/);
     expect(row.textContent).toMatch(/7 日/);
     expect(row.textContent).toMatch(/订阅/);
-    expect(screen.getByTestId("color-chip-r1")).toHaveStyle({
-      backgroundColor: "hsl(var(--chart-1))",
-    });
+    expect(screen.getByTestId("color-chip-r1").style.backgroundColor).toBe("hsl(var(--chart-1))");
   });
 });
 
