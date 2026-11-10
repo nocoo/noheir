@@ -86,14 +86,16 @@ function cloneFixture() {
   if (existsSync(join(repo, "worker/node_modules"))) {
     symlinkSync(join(repo, "worker/node_modules"), join(clone, "worker/node_modules"));
   }
+  runGit(["checkout", "-B", "l1-gate-fixture"]);
   runGit(["config", "user.email", "l1-gate@example.test"]);
   runGit(["config", "user.name", "L1 Gate Fixture"]);
-  writeFileSync(
-    join(clone, "scripts/pre-commit.py"),
-    readFileSync(join(repo, "scripts/pre-commit.py")),
-  );
-  runGit(["add", "scripts/pre-commit.py"]);
-  runGit(["commit", "-q", "-m", "sync pre-commit launcher for L1 probes"]);
+  const livePreCommit = readFileSync(join(repo, "scripts/pre-commit.py"), "utf8");
+  const clonedPreCommit = readFileSync(join(clone, "scripts/pre-commit.py"), "utf8");
+  if (livePreCommit !== clonedPreCommit) {
+    writeFileSync(join(clone, "scripts/pre-commit.py"), livePreCommit);
+    runGit(["add", "scripts/pre-commit.py"]);
+    runGit(["commit", "-q", "-m", "sync pre-commit launcher for L1 probes"]);
+  }
   execFileSync("bun", ["run", "prepare"], { cwd: clone, stdio: "inherit" });
   chmodSync(join(clone, ".husky/pre-commit"), 0o755);
 }
