@@ -1,3 +1,4 @@
+import { PageHeader } from "@nocoo/basalt/components/page-header";
 import { Calendar, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import type {
   AccountChartData,
@@ -53,11 +54,7 @@ export function TransactionAnalysisClient({
   if (transactionCount === 0) {
     return (
       <div className="space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">{isIncome ? "收入分析" : "支出分析"}</h1>
-          </div>
-        </div>
+        <PageHeader title={isIncome ? "收入分析" : "支出分析"} />
         <div className="text-basalt-muted-foreground py-8 text-center">
           暂无{isIncome ? "收入" : "支出"}数据
         </div>
@@ -67,15 +64,10 @@ export function TransactionAnalysisClient({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">{isIncome ? "收入分析" : "支出分析"}</h1>
-          <p className="text-basalt-muted-foreground text-sm">
-            {isIncome ? "收入来源与趋势分析" : "支出结构与趋势分析"}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title={isIncome ? "收入分析" : "支出分析"}
+        description={isIncome ? "收入来源与趋势分析" : "支出结构与趋势分析"}
+      />
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
