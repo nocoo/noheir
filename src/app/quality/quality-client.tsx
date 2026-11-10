@@ -1,5 +1,6 @@
 import { LayerCard } from "@nocoo/basalt";
 import { Badge } from "@nocoo/basalt/components/badge";
+import { PageHeader } from "@nocoo/basalt/components/page-header";
 import { AlertTriangle, CheckCircle, Info, Shield } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
@@ -86,14 +87,15 @@ export function QualityClient({ metadata }: QualityClientProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <Shield className="text-basalt-primary size-6" />
-          数据质量
-        </h1>
-        <p className="text-basalt-muted-foreground text-sm">检查数据完整性与质量指标</p>
-      </div>
+      <PageHeader
+        title={
+          <span className="flex items-center gap-2">
+            <Shield className="text-basalt-primary size-6" />
+            数据质量
+          </span>
+        }
+        description="检查数据完整性与质量指标"
+      />
 
       {/* Score */}
       <LayerCard>

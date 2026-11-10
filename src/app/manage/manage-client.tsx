@@ -5,6 +5,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@nocoo/basalt/components/collapsible";
+import { PageHeader } from "@nocoo/basalt/components/page-header";
 import { Separator } from "@nocoo/basalt/components/separator";
 import { toast } from "@nocoo/basalt/components/toast";
 import {
@@ -142,14 +143,15 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <Database className="text-basalt-primary size-6" />
-          数据管理
-        </h1>
-        <p className="text-basalt-muted-foreground text-sm">查看数据概览、导出备份与管理数据</p>
-      </div>
+      <PageHeader
+        title={
+          <span className="flex items-center gap-2">
+            <Database className="text-basalt-primary size-6" />
+            数据管理
+          </span>
+        }
+        description="查看数据概览、导出备份与管理数据"
+      />
 
       {/* Overall Summary Card */}
       <LayerCard>

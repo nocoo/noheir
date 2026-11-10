@@ -1,5 +1,6 @@
 import { Button, Checkbox, Label, LayerCard } from "@nocoo/basalt";
 import { Badge } from "@nocoo/basalt/components/badge";
+import { PageHeader } from "@nocoo/basalt/components/page-header";
 import { ScrollArea } from "@nocoo/basalt/components/scroll-area";
 import { toast } from "@nocoo/basalt/components/toast";
 import { Save, Shield, Tags, TrendingUp } from "lucide-react";
@@ -72,14 +73,15 @@ export function CategorySettingsClient({
           setBaseVersion(version);
         }}
       />
-      {/* Header */}
-      <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <Tags className="text-basalt-primary size-6" />
-          分类设置
-        </h1>
-        <p className="text-basalt-muted-foreground text-sm">配置收入和支出分类的类型</p>
-      </div>
+      <PageHeader
+        title={
+          <span className="flex items-center gap-2">
+            <Tags className="text-basalt-primary size-6" />
+            分类设置
+          </span>
+        }
+        description="配置收入和支出分类的类型"
+      />
 
       {/* Income Category Settings */}
       <LayerCard>

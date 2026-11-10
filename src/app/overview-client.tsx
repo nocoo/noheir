@@ -1,3 +1,4 @@
+import { PageHeader } from "@nocoo/basalt/components/page-header";
 import { List, Percent, PiggyBank, TrendingDown, TrendingUp } from "lucide-react";
 import { StatCard } from "@/components/shared/stat-card";
 import type { DomainTransaction, MonthlyData } from "@/domain/types";
@@ -28,13 +29,7 @@ export function OverviewClient({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">财务概览</h1>
-          <p className="text-basalt-muted-foreground text-sm">查看您的财务状况和趋势</p>
-        </div>
-      </div>
+      <PageHeader title="财务概览" description="查看您的财务状况和趋势" />
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">

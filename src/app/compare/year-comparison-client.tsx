@@ -1,5 +1,6 @@
 import { LayerCard } from "@nocoo/basalt";
 import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
+import { PageHeader } from "@nocoo/basalt/components/page-header";
 import {
   Select,
   SelectContent,
@@ -463,13 +464,15 @@ export function YearComparisonClient({
 
 function Header() {
   return (
-    <div>
-      <h1 className="flex items-center gap-2 text-2xl font-bold">
-        <GitCompare className="text-basalt-primary size-6" />
-        年度对比分析
-      </h1>
-      <p className="text-basalt-muted-foreground text-sm">多维度收支趋势与储蓄率对比</p>
-    </div>
+    <PageHeader
+      title={
+        <span className="flex items-center gap-2">
+          <GitCompare className="text-basalt-primary size-6" />
+          年度对比分析
+        </span>
+      }
+      description="多维度收支趋势与储蓄率对比"
+    />
   );
 }
 

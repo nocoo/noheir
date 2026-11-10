@@ -5,6 +5,7 @@ import {
   CollapsibleTrigger,
 } from "@nocoo/basalt/components/collapsible";
 import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
+import { PageHeader } from "@nocoo/basalt/components/page-header";
 import {
   Table,
   TableBody,
@@ -109,14 +110,15 @@ export function LiquidityClient({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <Droplets className="text-basalt-primary size-6" />
-          流动性阶梯
-        </h1>
-        <p className="text-basalt-muted-foreground text-sm">未来24个月到期资金分布</p>
-      </div>
+      <PageHeader
+        title={
+          <span className="flex items-center gap-2">
+            <Droplets className="text-basalt-primary size-6" />
+            流动性阶梯
+          </span>
+        }
+        description="未来24个月到期资金分布"
+      />
 
       {/* Summary Stats */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">

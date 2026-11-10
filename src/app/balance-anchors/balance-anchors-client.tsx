@@ -1,6 +1,7 @@
 import { Button, Input, Label, LayerCard } from "@nocoo/basalt";
 import { Badge } from "@nocoo/basalt/components/badge";
 import { Banner } from "@nocoo/basalt/components/banner";
+import { PageHeader } from "@nocoo/basalt/components/page-header";
 import {
   Select,
   SelectContent,
@@ -93,16 +94,15 @@ export function BalanceAnchorsClient({
           setBaseRevision(revision);
         }}
       />
-      {/* Header */}
-      <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <Anchor className="text-basalt-primary size-6" />
-          余额锚点设置
-        </h1>
-        <p className="text-basalt-muted-foreground text-sm">
-          为账户设置已知日期的余额，用于计算历史余额
-        </p>
-      </div>
+      <PageHeader
+        title={
+          <span className="flex items-center gap-2">
+            <Anchor className="text-basalt-primary size-6" />
+            余额锚点设置
+          </span>
+        }
+        description="为账户设置已知日期的余额，用于计算历史余额"
+      />
 
       {/* Info Alert */}
       <Banner

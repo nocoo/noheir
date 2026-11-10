@@ -1,5 +1,6 @@
 import { LayerCard } from "@nocoo/basalt";
 import { Badge } from "@nocoo/basalt/components/badge";
+import { PageHeader } from "@nocoo/basalt/components/page-header";
 import { Slider } from "@nocoo/basalt/components/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@nocoo/basalt/components/tabs";
 import { Briefcase, Coins, Lightbulb, Target } from "lucide-react";
@@ -47,16 +48,15 @@ export function FinancialFreedomClient({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold">
+      <PageHeader
+        title={
+          <span className="flex items-center gap-2">
             <Target className="text-basalt-primary size-6" />
             财务自由分析
-          </h1>
-          <p className="text-basalt-muted-foreground text-sm">被动收入 vs 支出，追踪财务自由进度</p>
-        </div>
-      </div>
+          </span>
+        }
+        description="被动收入 vs 支出，追踪财务自由进度"
+      />
 
       {/* Status Card */}
       <LayerCard

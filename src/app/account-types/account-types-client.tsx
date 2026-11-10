@@ -1,5 +1,6 @@
 import { Button, LayerCard } from "@nocoo/basalt";
 import { Badge } from "@nocoo/basalt/components/badge";
+import { PageHeader } from "@nocoo/basalt/components/page-header";
 import {
   Select,
   SelectContent,
@@ -72,16 +73,15 @@ export function AccountTypesClient({
           setBaseRevision(revision);
         }}
       />
-      {/* Header */}
-      <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <CreditCard className="text-basalt-primary size-6" />
-          账户类型管理
-        </h1>
-        <p className="text-basalt-muted-foreground text-sm">
-          配置各账户的归类（储蓄卡、信用卡、理财等）
-        </p>
-      </div>
+      <PageHeader
+        title={
+          <span className="flex items-center gap-2">
+            <CreditCard className="text-basalt-primary size-6" />
+            账户类型管理
+          </span>
+        }
+        description="配置各账户的归类（储蓄卡、信用卡、理财等）"
+      />
 
       {/* Grouped View */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">

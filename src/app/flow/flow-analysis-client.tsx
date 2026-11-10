@@ -1,5 +1,6 @@
 import { LayerCard } from "@nocoo/basalt";
 import { Badge } from "@nocoo/basalt/components/badge";
+import { PageHeader } from "@nocoo/basalt/components/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@nocoo/basalt/components/tabs";
 import { ArrowRight, ArrowRightLeft } from "lucide-react";
 import { useState } from "react";
@@ -71,16 +72,15 @@ export function FlowAnalysisClient({ incomeFlows, expenseFlows }: FlowAnalysisCl
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold">
+      <PageHeader
+        title={
+          <span className="flex items-center gap-2">
             <ArrowRightLeft className="text-basalt-primary size-6" />
             流向分析
-          </h1>
-          <p className="text-basalt-muted-foreground text-sm">可视化资金从来源到分类的流向分布</p>
-        </div>
-      </div>
+          </span>
+        }
+        description="可视化资金从来源到分类的流向分布"
+      />
 
       {/* Flow Chart */}
       <LayerCard>

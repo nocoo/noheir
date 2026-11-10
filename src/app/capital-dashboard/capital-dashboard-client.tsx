@@ -1,5 +1,6 @@
 import { Button, LayerCard } from "@nocoo/basalt";
 import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
+import { PageHeader } from "@nocoo/basalt/components/page-header";
 import {
   Select,
   SelectContent,
@@ -225,89 +226,90 @@ export function CapitalDashboardClient({ units, deploymentRate }: CapitalDashboa
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold">
+      <PageHeader
+        title={
+          <span className="flex items-center gap-2">
             <BarChart3 className="text-basalt-primary size-6" />
             资本仪表盘
-          </h1>
-          <p className="text-basalt-muted-foreground text-sm">
+          </span>
+        }
+        description={
+          <>
             资本配置总览与分布分析
             {activeFilterCount > 0 && (
               <span className="ml-2">
                 ({filteredUnits.length} / {units.length} 个单位)
               </span>
             )}
-          </p>
-        </div>
-      </div>
+          </>
+        }
+        filters={
+          <div className="flex flex-wrap items-center gap-2">
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[110px]">
+                <SelectValue placeholder="状态" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部状态</SelectItem>
+                {STATUSES.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-      {/* Filter Bar - Single Row */}
-      <div className="flex flex-wrap items-center gap-2">
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-[110px]">
-            <SelectValue placeholder="状态" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">全部状态</SelectItem>
-            {STATUSES.map((s) => (
-              <SelectItem key={s} value={s}>
-                {s}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+            <Select value={filterStrategy} onValueChange={setFilterStrategy}>
+              <SelectTrigger className="w-[110px]">
+                <SelectValue placeholder="策略" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部策略</SelectItem>
+                {STRATEGIES.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-        <Select value={filterStrategy} onValueChange={setFilterStrategy}>
-          <SelectTrigger className="w-[110px]">
-            <SelectValue placeholder="策略" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">全部策略</SelectItem>
-            {STRATEGIES.map((s) => (
-              <SelectItem key={s} value={s}>
-                {s}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+            <Select value={filterTactics} onValueChange={setFilterTactics}>
+              <SelectTrigger className="w-[110px]">
+                <SelectValue placeholder="战术" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部战术</SelectItem>
+                {TACTICS.map((t) => (
+                  <SelectItem key={t} value={t}>
+                    {t}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-        <Select value={filterTactics} onValueChange={setFilterTactics}>
-          <SelectTrigger className="w-[110px]">
-            <SelectValue placeholder="战术" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">全部战术</SelectItem>
-            {TACTICS.map((t) => (
-              <SelectItem key={t} value={t}>
-                {t}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+            <Select value={filterCurrency} onValueChange={setFilterCurrency}>
+              <SelectTrigger className="w-[90px]">
+                <SelectValue placeholder="币种" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部币种</SelectItem>
+                {CURRENCIES.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-        <Select value={filterCurrency} onValueChange={setFilterCurrency}>
-          <SelectTrigger className="w-[90px]">
-            <SelectValue placeholder="币种" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">全部币种</SelectItem>
-            {CURRENCIES.map((c) => (
-              <SelectItem key={c} value={c}>
-                {c}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {activeFilterCount > 0 && (
-          <Button variant="ghost" size="sm" onClick={resetFilters}>
-            <X className="mr-1 size-3" />
-            清除 ({activeFilterCount})
-          </Button>
-        )}
-      </div>
+            {activeFilterCount > 0 && (
+              <Button variant="ghost" size="sm" onClick={resetFilters}>
+                <X className="mr-1 size-3" />
+                清除 ({activeFilterCount})
+              </Button>
+            )}
+          </div>
+        }
+      />
 
       {/* Summary Stats */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">

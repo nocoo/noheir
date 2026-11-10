@@ -5,6 +5,7 @@ import {
   CollapsibleTrigger,
 } from "@nocoo/basalt/components/collapsible";
 import { Input } from "@nocoo/basalt/components/input";
+import { PageHeader } from "@nocoo/basalt/components/page-header";
 import {
   Tooltip,
   TooltipContent,
@@ -410,46 +411,47 @@ export function WarehouseClient({ units, products }: WarehouseClientProps) {
   return (
     <TooltipProvider delayDuration={150} skipDelayDuration={100}>
       <div className="space-y-3 sm:space-y-4">
-        {/* Header Row: Title left, Search right */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0 flex-1">
-            <h1 className="flex items-center gap-2 text-xl font-bold sm:text-2xl">
-              <Warehouse className="text-basalt-primary size-5 shrink-0 sm:size-6" />
+        <PageHeader
+          title={
+            <span className="flex items-center gap-2">
+              <Warehouse className="text-basalt-primary size-6" />
               资本仓库
-            </h1>
-            <p className="text-basalt-muted-foreground text-xs sm:text-sm">
+            </span>
+          }
+          description={
+            <>
               {groupedUnits.length}个分组 · {filtered.length}个单位 · CNY{" "}
               {formatCurrencyFull(totalAmount)}
-            </p>
-          </div>
-
-          {/* Search - right aligned, always visible */}
-          <div className="relative shrink-0">
-            <Search className="text-basalt-muted-foreground absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2" />
-            <Input
-              ref={searchInputRef}
-              placeholder="筛选 /"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-[120px] pl-8 pr-10 sm:w-[160px]"
-            />
-            {search && (
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="清除搜索"
-                className="absolute right-0 top-1/2 -translate-y-1/2"
-                type="button"
-                onClick={() => {
-                  setSearch("");
-                  searchInputRef.current?.focus();
-                }}
-              >
-                <X className="size-3.5" />
-              </Button>
-            )}
-          </div>
-        </div>
+            </>
+          }
+          actions={
+            <div className="relative shrink-0">
+              <Search className="text-basalt-muted-foreground absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2" />
+              <Input
+                ref={searchInputRef}
+                placeholder="筛选 /"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-[120px] pl-8 pr-10 sm:w-[160px]"
+              />
+              {search && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="清除搜索"
+                  className="absolute right-0 top-1/2 -translate-y-1/2"
+                  type="button"
+                  onClick={() => {
+                    setSearch("");
+                    searchInputRef.current?.focus();
+                  }}
+                >
+                  <X className="size-3.5" />
+                </Button>
+              )}
+            </div>
+          }
+        />
 
         {/* Filter Rows */}
         <Collapsible open={!filtersCollapsed} onOpenChange={(open) => setFiltersCollapsed(!open)}>

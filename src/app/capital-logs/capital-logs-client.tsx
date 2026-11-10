@@ -1,5 +1,6 @@
 import { Button, LayerCard } from "@nocoo/basalt";
 import { Badge } from "@nocoo/basalt/components/badge";
+import { PageHeader } from "@nocoo/basalt/components/page-header";
 import {
   Select,
   SelectContent,
@@ -185,98 +186,101 @@ export function CapitalLogsClient({ logs, units, products }: CapitalLogsClientPr
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold">
+      <PageHeader
+        title={
+          <span className="flex items-center gap-2">
             <History className="text-basalt-primary size-6" />
             时间视图
-          </h1>
-          <p className="text-basalt-muted-foreground text-sm">
+          </span>
+        }
+        description={
+          <>
             资金投入/取出历史记录
             {activeFilterCount > 0 && <span className="ml-2">({filteredLogs.length} 条记录)</span>}
-          </p>
-        </div>
-        <Button onClick={handleCreate} size="sm">
-          <Plus className="mr-1 size-4" />
-          新增记录
-        </Button>
-      </div>
-
-      {/* Filter Bar */}
-      <div className="flex flex-wrap items-center gap-2">
-        <Select value={filterUnit} onValueChange={setFilterUnit}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="资金单元" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">全部单元</SelectItem>
-            {units.map((u) => (
-              <SelectItem key={u.id} value={u.id}>
-                {u.unitCode}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={filterProduct} onValueChange={setFilterProduct}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="产品" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">全部产品</SelectItem>
-            {products.map((p) => (
-              <SelectItem key={p.id} value={p.id}>
-                {p.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={filterType} onValueChange={setFilterType}>
-          <SelectTrigger className="w-[100px]">
-            <SelectValue placeholder="类型" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">全部类型</SelectItem>
-            {OPERATION_TYPES.map((t) => (
-              <SelectItem key={t.value} value={t.value}>
-                {t.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={filterSource} onValueChange={setFilterSource}>
-          <SelectTrigger className="w-[100px]">
-            <SelectValue placeholder="来源" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">全部来源</SelectItem>
-            {SOURCES.map((s) => (
-              <SelectItem key={s.value} value={s.value}>
-                {s.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Button
-          variant="ghost"
-          aria-pressed={showDeleted}
-          size="sm"
-          onClick={() => setShowDeleted(!showDeleted)}
-        >
-          {showDeleted ? "隐藏已删除" : "显示已删除"}
-        </Button>
-
-        {activeFilterCount > 0 && (
-          <Button variant="ghost" size="sm" onClick={resetFilters}>
-            <X className="mr-1 size-3" />
-            清除 ({activeFilterCount})
+          </>
+        }
+        actions={
+          <Button onClick={handleCreate} size="sm">
+            <Plus className="mr-1 size-4" />
+            新增记录
           </Button>
-        )}
-      </div>
+        }
+        filters={
+          <div className="flex flex-wrap items-center gap-2">
+            <Select value={filterUnit} onValueChange={setFilterUnit}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="资金单元" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部单元</SelectItem>
+                {units.map((u) => (
+                  <SelectItem key={u.id} value={u.id}>
+                    {u.unitCode}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filterProduct} onValueChange={setFilterProduct}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="产品" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部产品</SelectItem>
+                {products.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filterType} onValueChange={setFilterType}>
+              <SelectTrigger className="w-[100px]">
+                <SelectValue placeholder="类型" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部类型</SelectItem>
+                {OPERATION_TYPES.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>
+                    {t.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filterSource} onValueChange={setFilterSource}>
+              <SelectTrigger className="w-[100px]">
+                <SelectValue placeholder="来源" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部来源</SelectItem>
+                {SOURCES.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    {s.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Button
+              variant="ghost"
+              aria-pressed={showDeleted}
+              size="sm"
+              onClick={() => setShowDeleted(!showDeleted)}
+            >
+              {showDeleted ? "隐藏已删除" : "显示已删除"}
+            </Button>
+
+            {activeFilterCount > 0 && (
+              <Button variant="ghost" size="sm" onClick={resetFilters}>
+                <X className="mr-1 size-3" />
+                清除 ({activeFilterCount})
+              </Button>
+            )}
+          </div>
+        }
+      />
 
       {/* Summary Stats */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">

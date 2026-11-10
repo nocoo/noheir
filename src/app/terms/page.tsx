@@ -1,15 +1,18 @@
+import { PageHeader } from "@nocoo/basalt/components/page-header";
 import { FileText } from "lucide-react";
 
 export default function TermsPage() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <FileText className="text-basalt-primary size-6" />
-          服务条款
-        </h1>
-        <p className="text-basalt-muted-foreground text-sm">使用本应用即表示您同意以下条款</p>
-      </div>
+      <PageHeader
+        title={
+          <span className="flex items-center gap-2">
+            <FileText className="text-basalt-primary size-6" />
+            服务条款
+          </span>
+        }
+        description="使用本应用即表示您同意以下条款"
+      />
 
       <div className="prose prose-sm dark:prose-invert max-w-none space-y-4">
         <section>
