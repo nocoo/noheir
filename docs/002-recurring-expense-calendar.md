@@ -170,6 +170,7 @@ CREATE UNIQUE INDEX expense_categories_user_name_uniq
 ```
 
 约束：
+
 - `(userId, name)` 唯一 —— Drizzle `uniqueIndex` + 迁移 SQL 双重落实。
 - `colorToken` 必须是 `CHART_TOKENS` 之一（24 个 token 的闭集，Zod 在 Action 层校验）。
 - 颜色调色板复用 `src/lib/palette.ts` 的 24 色（与"资金仓库"等页面同一套），自动支持主题切换。
@@ -246,6 +247,7 @@ function deriveDisplayStatus(rule, today): "active" | "paused" | "ended" | "expi
 **关键不变量**：DB 中的 `status` 字段**永远不会**因 `endDate` 过期而被后台自动改写。所有 `status` 变更必须经过 Server Action。`expired` 是纯前端派生状态，列表 chip 显示"已到期 · YYYY-MM-DD"，与"已结束"视觉区分。
 
 Occurrence 展开过滤规则（详见下文 Occurrence 算法的统一公式）:
+
 - `status === 'paused'` → 返回 `[]`。
 - `status === 'active' | 'ended'` → 同一公式：实际上限 = `min(toDate, endDate ?? +∞, endedAt ?? +∞)`，三个上限取最小。`endedAt` 仅在 `ended` 时非 null，`endDate` 由用户在表单设置。
 
@@ -261,6 +263,7 @@ export function computeOccurrences(
 ```
 
 行为（**所有规则均以 `startDate` 为 0 号锚点**，避免歧义）：
+
 - `status === 'paused'` 直接返回 `[]`。
 - 通用展开窗口公式（`active` / `ended` 共用，三上限取最小）：
 
@@ -299,6 +302,7 @@ export function sumWindow(rules: RecurrenceRule[], window: Window): number; // �
 ```
 
 UI 调用（视图月 = `viewMonth`，真实今天 = `today`）：
+
 - **当月合计**：`sumWindow(rules, { fromDate: monthStart(viewMonth), toDate: monthEnd(viewMonth) })` —— 随视图月切换。
 - **未来 30 天**：`sumWindow(rules, { fromDate: today, toDate: today + 30d })` —— **始终基于真实今天**，不随视图月。
 - **未来 12 个月**：`sumWindow(rules, { fromDate: today, toDate: today + 365d })` —— 同上。
@@ -352,6 +356,7 @@ export async function deleteCategory(id: string): Promise<ActionResult>;
 ### Worker SQL 端点（新增 8 个，**严格沿用现有 Worker 约定**）
 
 约定（与 `worker/src/index.ts` 内 `products` / `units` 等现有资源一致）：
+
 - 路径前缀：`/api/<resource>`、`/api/<resource>/:id`
 - 用户上下文：**通过 `X-User-Id` header 传递，不用 query string**
 - 鉴权：`Authorization: Bearer ${WORKER_TOKEN}`
@@ -424,6 +429,7 @@ deleteRecurringExpense(userId, id): Promise<void>;
 ```
 
 行为：
+
 - 顶部 `◀ ▶` 任意月份导航；`今天` 跳回当月。（年视图本期不做，详见 Out of Scope。）
 - 日格里多笔时叠加多个圆点（限 3 个，第 4+ 显示 `+N`），颜色取分类色。
 - 日格点击 → `popover` 列出当日所有项（名字 + 金额 + 分类徽章）。
@@ -434,6 +440,7 @@ deleteRecurringExpense(userId, id): Promise<void>;
 ### `/plan/categories`
 
 简单 CRUD 列表页：
+
 - 表格列：颜色色块 / 名称 / 引用规则数 / 创建时间 / 操作（编辑、删除）。
 - 新建按钮 → dialog（`category-form` 组件）。
 - 删除带二次确认，提示"将取消 N 条规则的分类（不删除规则）"。
@@ -473,6 +480,7 @@ export async function createRecurringExpense(data: unknown): Promise<ActionResul
 ```
 
 要点：
+
 - 金额：UI 输入 yuan（`number`），写库前 `Math.round(amount * 100)`，读出来在 mapper 中除回。
 - 日期：ISO `"YYYY-MM-DD"`；不传 `Date` 对象。
 - 颜色：`colorToken`（如 `"chart-7"`），渲染时用 `hsl(var(--${token}))`；调色板从 `CHART_TOKENS` 取，与现有页面一致，自动随主题切换。
@@ -556,6 +564,7 @@ export async function createRecurringExpense(data: unknown): Promise<ActionResul
 | **P1-C7** `chore(worker): pin recurring-expenses status guard with regression test` | 加额外回归测试：模拟 web client（不带 internal header）通过整个 PUT 路径试图改 `status` 和 `endedAt` 各一次，验证两个字段都没变                                                                                                                                                                                                                                                                  | 仅测试，无生产代码改动                                                                                                                                                                                                                                                                                  | 无 deploy                                                                                                                               |
 
 **[Decision A] worker 层如何阻止 client 直接改 `status`/`endedAt`**：
+
 - **方案**：`PUT /api/recurring-expenses/:id` body 中的 `status` 和 `endedAt` 字段在 endpoint 层 silently drop，除非 request 带 `X-Internal-Action: 1` header。
 - **同步改动**：`worker/src/index.ts` `allowHeaders` 数组加 `"X-Internal-Action"`（CORS 必须放行，否则 browser 触发 PATCH-类受限请求会被 preflight 拦掉；web Server Actions 不走 browser CORS 但保持一致）。
 - **这不是安全边界**：worker 端点已经有 `Authorization: Bearer ${WORKER_TOKEN}` + Server Action 链路在前，`X-Internal-Action` 只是**契约级 guard**：防止应用层错误地用普通 PUT 改 status 字段。攻击者已经持有 WORKER_TOKEN 时此 header 不构成额外屏障。
@@ -564,6 +573,7 @@ export async function createRecurringExpense(data: unknown): Promise<ActionResul
 - **回退**：若实际跑下来这种 silently drop 让 web 工程师困惑，可以在 P3 之后补一个 `worker/scripts/audit-status-mutations.ts` 周期性比对 `recurring_expenses.status` 历史值，发现非 Action 路径的 status 变化时报警。
 
 **Phase 1 验收**：
+
 - worker 单测全绿，覆盖率不下降
 - 远端 D1 应用 0007 migration 后，`wrangler d1 execute noheir-db --remote --command "PRAGMA table_info(recurring_expenses);"` 输出 14 列
 - web 端完全没动；`bun run dev` 走旧路径无 regression
@@ -588,6 +598,7 @@ export async function createRecurringExpense(data: unknown): Promise<ActionResul
 | **P2-C10** `chore(navigation): add 资金计划 NavGroup (data only)`       | `src/lib/navigation.ts` 加 NavGroup（指向 `/plan/calendar` 和 `/plan/categories`），但**先在 navigation.ts 用 feature flag `FEATURE_PLAN_CALENDAR=false` gate**，避免 sidebar 显示死链。flag 落代码常量，commit 时为 false | 无新测试；`bun run typecheck` 验证 import                                                                |
 
 **Phase 2 验收**：
+
 - 全部新增 lib/ 文件 ≥ 90% 覆盖率（`occurrences` ≥ 95%）
 - Server Action 测试覆盖 ActionResult 错误路径
 - `bun run dev` 不出现 sidebar 新链（feature flag 为 false）
@@ -615,6 +626,7 @@ export async function createRecurringExpense(data: unknown): Promise<ActionResul
 | **P3-C12** `chore(release): version bump + smoke test`              | 按现有 release 流程，跑 `bun run test && bun run test:worker && bun run typecheck && bun run lint && bun run build`                                                                                                  | release tag                                                                                                                           |
 
 **Phase 3 验收**：
+
 - 整体覆盖率不下降；`src/lib/recurring-expense/` ≥ 90%
 - `bun run dev` 走 spec 9 个成功标准全部手测通过（spec § Objective 列表）
 - Lighthouse / first-render ≤ 2s（spec 标准 #9）

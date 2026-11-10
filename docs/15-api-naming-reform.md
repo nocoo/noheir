@@ -8,6 +8,7 @@
 The Gen 2 rewrite shipped a working Worker API, but naming was done ad-hoc during rapid development. Several inconsistencies exist across three layers (route paths, response shapes, client methods) that will compound as the API surface grows.
 
 **Scope classification:**
+
 - **Naming reform** — Route path renames, client method renames. No behavioral change.
 - **Contract fixes** — 404 response shape normalization (R1) and backup truncation fix (R2). These are **API behavior changes** that fix incorrect contracts, not cosmetic renames.
 
@@ -18,6 +19,7 @@ Next.js and Cloudflare Worker are **two independently deployable components**. N
 **Mitigation strategy — Dual-path transition:**
 
 Every route rename follows a 3-step process:
+
 1. **Worker: add new path as alias** — old path still works, new path also works
 2. **Next.js: switch client to new path** — deploy Next.js; it now uses new paths, Worker still serves both
 3. **Worker: remove old path alias** — separate commit/deploy after Next.js is confirmed working
@@ -81,20 +83,24 @@ Test-driven approach: **write/update tests first**, then make them pass.
 **Atomic commit 1: Normalize 404 responses** ✅ `aa3d04d`
 
 Test first:
+
 - Update Worker E2E tests to assert all GET-by-id 404s return `{ error: "Not found" }` instead of `{ entity: null }`
 - Affected routes: `GET /api/transactions/:id` (`index.ts:169`), `GET /api/transfers/:id` (`index.ts:236`), `GET /api/products/:id` (`index.ts:267`), `GET /api/units/:id` (`index.ts:313`)
 
 Then implement:
+
 - `worker/src/index.ts` — Change 4 GET-by-id handlers from `c.json({ transaction: null }, 404)` to `c.json({ error: "Not found" }, 404)`
 - `src/lib/worker-db-client.ts` — Update `getTransaction()`, `getTransfer()`, `getProduct()`, `getUnit()` return types (remove `| null` variant, callers now catch 404 via `WorkerDbError`)
 
 **Atomic commit 2: Dedicated backup export methods** ✅ `a5e28df`
 
 Test first (two layers):
+
 - **Repo unit tests**: Add tests for new `findAllByUser()` in transaction and transfer repos — assert no limit is applied, all rows returned
 - **Route-level E2E test**: The current bug is `search(userId, { limit: 5000 })` at `index.ts:468` — inserting 101 rows would still pass under the broken implementation. The test must either: (a) insert >5000 rows and assert all are returned (expensive but definitive), or (b) assert structurally that the backup route does **not** call `search()` — e.g., mock `repos.transactions.search` to throw, and confirm backup still succeeds via `findAllByUser()`. Option (b) is preferred for speed; option (a) can be a supplementary integration test if D1 test fixtures are cheap.
 
 Then implement:
+
 - `worker/db/repositories/transactions.ts` — Add `findAllByUser(userId)` that returns all rows without limit
 - `worker/db/repositories/transfers.ts` — Add `findAllByUser(userId)` that returns all rows without limit
 - `worker/src/index.ts` — Backup route uses `findAllByUser()` instead of `search(userId, { limit: 5000 })`
@@ -106,10 +112,12 @@ Each route rename follows the 3-step protocol from the Deployment Model section 
 **Atomic commit 3a: Add `PUT /api/users/me` alias + switch client** ✅ `e6647df`
 
 Test first:
+
 - Add E2E test asserting `PUT /api/users/me` works identically to `POST /api/users/upsert`
 - Keep existing tests for old path passing (old path still served)
 
 Then implement:
+
 - `worker/src/index.ts` — Add `app.put("/api/users/me", ...)` alongside existing `app.post("/api/users/upsert", ...)`
 - `src/lib/worker-db-client.ts` — `upsertUser()` → `syncUser()`, path → `/api/users/me`, method → `PUT`
 - `src/auth.ts` — Update `client.upsertUser(...)` → `client.syncUser(...)` at line 123
@@ -142,9 +150,11 @@ Same dual-path protocol. Old paths kept until Phase 3 cleanup.
 **Atomic commit 8a: Add resourceful year-scoped paths for transactions + switch client** ✅ `15f5de9`
 
 Test first:
+
 - Add E2E tests for `GET /api/transactions/years/:year/count` and `DELETE /api/transactions/years/:year`
 
 Then implement:
+
 - Worker: Add new routes alongside old `/count-by-year` and `/by-year`
 - Client: `countTransactionsByYear()` and `deleteTransactionsByYear()` path updates
 
@@ -168,6 +178,7 @@ Then implement:
 **Atomic commit 12: Remove all old-path aliases from Worker** ✅ `d8d191b`
 
 After confirming Next.js is deployed and stable on new paths:
+
 - Remove all old route handlers that were kept as aliases in Phase 1–2:
   - `POST /api/users/upsert`
   - `GET /api/metadata`

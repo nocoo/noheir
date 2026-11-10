@@ -650,7 +650,6 @@ buildCommitPayload({ unit, form, operations, commitNote, operationDate }): Commi
 >
 > 教训：业务字段的后置状态可以重复，不能用作身份凭证 —— 而且一旦引入身份凭证，**每一条依赖"前序是否成功"的语句都要用它**，漏一条就留一个洞。
 
-
 | #      | Commit                                                       | 文件                                                   | 门控                                                                                                                                                                                           |
 | ------ | ------------------------------------------------------------ | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | P1-C1  | `feat(db): add 0008 pnl_cents migration`                     | `worker/db/migrations/0008_contribution_log_pnl.sql`   | 本地 `wrangler d1 migrations apply noheir-db --local`；**部署门：本 commit 合并后立即 `--remote` 应用到生产，确认 `PRAGMA table_info(contribution_logs)` 含 `pnl_cents` 后，才继续合入 P1-C2** |
@@ -674,7 +673,6 @@ buildCommitPayload({ unit, form, operations, commitNote, operationDate }): Commi
 
 > **落地记录**：web 测试 **975 → 1009**，typecheck / lint 全绿。新增 `src/__tests__/lib/capital-mappers.test.ts`（此前无测试）与 `src/__tests__/mcp/unit-log-writer.test.ts`（对 SQL 文本做回归断言，锁住 B2a/B2c）。
 
-
 P2-C1 类型（`DomainContributionLog.pnl`、`ContributionSummary.totalPnl`、`SerializedUnit` 迁至 `src/domain/types.ts` 并 re-export）· P2-C2 `capital-mappers.ts`（pnl + `createdAtMs`）· P2-C3 `worker-db-client.ts`（`commitUnit`、`listUnitLogs` 含 `expected`、pnl 参数、两个 summary 加 `totalPnl`）· P2-C4 `src/lib/unit-commit-plan.ts` + 测试 · ~~P2-C5 `refactor: fold unit-update-diff into unit-commit-plan`~~ **→ 顺序调整为 P3-C6**（删除 `unit-update-diff.ts` 必须在 unit-editor 改用 `/commit` 之后，否则破坏编译）· P2-C6 Server Actions · **P2-C7 `fix(mcp): correct withdraw sign and date format`（B2a + B2c + 回归测试；B2b 走 [Decision K] 另行处理）** · **P2-C8 `feat(types): add mcp to contribution source union`（仅 `src/domain/types.ts` 的 union，UI 筛选器留到 P3-C7；须在 P1-C14 之后部署）**
 
 ### Phase 3 — UI ✅ 已完成
@@ -685,7 +683,6 @@ P2-C1 类型（`DomainContributionLog.pnl`、`ContributionSummary.totalPnl`、`S
 > 1. **P2-C5 顺延为 P3-C6** —— 删除 `unit-update-diff.ts` 必须在 unit-editor 改用 `/commit` 之后，否则破坏编译。
 > 2. **编辑模式抽为独立组件** `unit-commit-dialog.tsx` —— 三栏布局与单栏创建表单的状态模型差异过大（前者有暂存操作、时间线、raw 快照），塞进同一个组件会让 `isEditing` 分支遍布全文件。抽离后 `UnitEditor` 只做路由，创建模式的产品下拉与单栏布局原样保留（文档验收标准）。顺带删除了 `UnitEditorForm` 中因此变成死代码的整个编辑分支。
 > 3. **jsdom 环境补 polyfill** —— cmdk 依赖 `ResizeObserver` 与 `Element.prototype.scrollIntoView`，jsdom 均不提供。加在 `src/__tests__/setup/jsdom.ts`（环境 polyfill，非业务 mock）。
-
 
 P3-C1 提取 `unit-panel-primitives.tsx` · P3-C2 `unit-log-timeline.tsx` + RTL · P3-C3 `unit-swap-picker.tsx` + RTL · P3-C4 `unit-operations-panel.tsx` + RTL · P3-C5 三栏布局 + 备注框 + 接 `/commit`（**仅编辑模式**）· P3-C6 时间线逐行 pnl 内联编辑 · P3-C7 `/capital-logs` 收益列 + 独立日志表单 pnl 字段 + **来源筛选器加 `mcp`（[Decision K]）** · P3-C8 文档收尾 + release
 

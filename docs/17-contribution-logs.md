@@ -3,6 +3,7 @@
 ## Context
 
 当前系统中，资金单元 (`capital_units`) 通过 `productId` 字段直接关联理财产品，但没有记录历史变更。用户无法追溯：
+
 - 什么时候把多少钱投入了哪个产品
 - 资金的进出历史
 - 某产品累计收到了多少投入
@@ -33,10 +34,12 @@
 | updated_at          | INTEGER | NOT NULL                               | 更新时间                                   |
 
 **设计要点:**
+
 - `product_id` 使用 **RESTRICT** 而非 SET NULL，防止删除有历史记录的产品破坏审计
 - `product_name` 作为快照字段，即使产品被删除（未来放开限制时）也能追溯
 
 **Enums:**
+
 ```ts
 CONTRIBUTION_OPERATION_TYPES = ["invest", "withdraw", "adjust"] as const;
 CONTRIBUTION_SOURCES = ["manual", "auto", "import"] as const;
@@ -54,6 +57,7 @@ CONTRIBUTION_SOURCES = ["manual", "auto", "import"] as const;
 **变更后:** 删除有关联 contribution_logs 的产品返回 409 Conflict
 
 **影响范围:**
+
 - `worker/src/index.ts` - `DELETE /api/products/:id` 路由
 - `worker/tests/e2e/products.e2e.test.ts` - 需新增测试用例
 
@@ -88,6 +92,7 @@ app.delete("/api/products/:id", async (c) => {
 ```
 
 **新增测试:**
+
 ```ts
 // worker/tests/e2e/products.e2e.test.ts
 test("DELETE /api/products/:id returns 409 when product has contribution logs", async () => {
@@ -155,6 +160,7 @@ POST /api/contribution-logs/search
 **修改 `productId` 时，禁止同时修改任何其他字段**。请求只能包含 `productId` 一个字段，否则返回 400 错误。
 
 理由：
+
 1. 避免语义不清（如同时改金额和产品，是先调整再转移还是转移后调整？）
 2. 避免分支代码静默丢失其他字段更新
 3. 保证日志语义清晰，便于审计
@@ -204,6 +210,7 @@ export const updateUnitSchema = z
 修改 `worker/src/index.ts` 中的 `PUT /api/units/:id` 路由。
 
 **核心挑战**: D1 batch 内的语句无法依赖前一条语句的执行结果。需要同时保证：
+
 1. CAS 并发安全（防止基于过期状态写日志）
 2. 原子性（UPDATE 和日志同时成功或失败）
 
@@ -537,6 +544,7 @@ curl -X POST http://localhost:8787/api/contribution-logs \
 ### 逻辑
 
 对于每个 `capital_units` 记录：
+
 - 如果有 `product_id`，创建一条 `invest` 日志
 - `operation_date` = `start_date`（如果为空则用 `created_at`）
 - `amount_cents` = 资金单元的 `amount_cents`
@@ -547,6 +555,7 @@ curl -X POST http://localhost:8787/api/contribution-logs \
 ### 幂等性设计
 
 Seed 端点设计为**幂等且可断点续传**：
+
 - 每个 unit 插入前先检查是否已存在 `source="import"` 的日志（**包括软删除的**）
 - 已存在则跳过，不重复创建
 - 中途失败后可重新执行，继续处理剩余 units

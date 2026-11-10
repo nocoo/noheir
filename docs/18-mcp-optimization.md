@@ -42,6 +42,7 @@ Summary → Filtered List → Single Item
 ```
 
 Agent should be able to:
+
 - Get overview without fetching all data
 - Filter server-side before data reaches context
 - Drill down to specific items only when needed
@@ -111,11 +112,13 @@ Add lightweight aggregation tools that return statistics without raw data.
 **Parameters**: None (returns full summary)
 
 **Implementation Notes**:
+
 - Availability calculation: `available_date_override` if set, else `latestInvestLog.operationDate` + `product.lockPeriodDays`
 - Units without override and without product or invest log have `availableDate = null`, counted as "unknown"
 - All amounts returned in cents (`amount_cents`) to match DB schema
 
 **Response** (~600B):
+
 ```json
 {
   "total_count": 45,
@@ -141,6 +144,7 @@ Add lightweight aggregation tools that return statistics without raw data.
 ```
 
 **Availability Calculation Logic** (from `worker/lib/availability.ts`):
+
 1. Fetch all units with product join
 2. Fetch latest invest log per unit from contribution_logs (operationType = 'invest')
 3. For each unit: `availableDate` from override or `latestInvestDate + product.lockPeriodDays`, then cyclic windows
@@ -159,6 +163,7 @@ Add lightweight aggregation tools that return statistics without raw data.
 **Note**: Matches existing `list_products` behavior which excludes archived by default.
 
 **Response** (~300B):
+
 ```json
 {
   "total_count": 25,
@@ -193,12 +198,14 @@ New parameters:
 | `full`     | + `product.*`, `note`, `startDate`, `endDate`, timestamps                                 | ~450B/unit | Complete data with nested product                |
 
 **Key Implementation Details**:
+
 - `minimal`: Direct query on `capital_units` table only, no joins
 - `standard`: Joins `financial_products` + queries `contribution_logs` for latest invest date, then computes availability per `worker/lib/availability.ts`
 - `full`: Same as `standard` but includes all product fields and unit metadata
 - `available_within_days`: Server-side filter applied AFTER availability computation; only valid with `standard` or `full`
 
 **Example call for upcoming availability check**:
+
 ```json
 {
   "fields": "standard",
@@ -219,6 +226,7 @@ New parameters:
 | `offset`           | number  | Pagination offset                            |
 
 **Implementation Note**: Worker API already supports `includeArchived` query param (`worker/src/index.ts:312`), but it is NOT exposed in:
+
 - `mcp/src/index.ts` - `list_products` tool schema
 - `mcp/src/worker-client.ts` - `listProducts()` method
 
@@ -238,11 +246,13 @@ Rewrite all tool descriptions following the six-component framework.
 #### Example: Improved `list_units` Description
 
 **Before** (current):
+
 ```
 List all capital units (资金单元) with optional filters. Set with_products=true to include linked product details.
 ```
 
 **After** (improved):
+
 ```
 Get a filtered list of capital units with configurable detail level.
 
@@ -407,6 +417,7 @@ Tests should be written BEFORE implementing features (TDD):
 ### Regression Protection
 
 After implementation, all new tests must pass in CI:
+
 - `bun run test:e2e` (worker/)
 - `bun run test:mcp` (mcp/)
 

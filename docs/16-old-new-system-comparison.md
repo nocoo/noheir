@@ -76,6 +76,7 @@ This document details the differences between the old Supabase-based system and 
 ### Removed Constraints
 
 Old system enforced via PostgreSQL CHECK:
+
 ```sql
 CHECK (channel IN ('支付宝', '微信', '招商银行', ...))
 CHECK (category IN ('货币基金', '债券基金', '股票基金', ...))
@@ -109,6 +110,7 @@ The `create_unit` MCP tool accepts `amount` parameter but documentation doesn't 
 ### Amount Units
 
 All report endpoints now return amounts in **cents (分)**:
+
 - `total_income`, `total_expense`, `net_amount`
 - `total_transfer_in`, `total_transfer_out`
 - Category breakdown `total` values
@@ -135,6 +137,7 @@ All report endpoints now return amounts in **cents (分)**:
 ### Missing Fields
 
 Monthly report response in new system is missing:
+
 - `year` field
 - `month` field
 
@@ -161,12 +164,14 @@ Clients must track these from the request parameters.
 ### Security Model
 
 **Old (RLS)**:
+
 ```sql
 CREATE POLICY "Users can only see own data" ON transactions
   USING (user_id = auth.uid());
 ```
 
 **New (Application layer)**:
+
 ```typescript
 // Worker validates X-User-Id header against session
 const userId = request.headers.get("X-User-Id");
