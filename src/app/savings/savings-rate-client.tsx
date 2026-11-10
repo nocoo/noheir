@@ -1,6 +1,7 @@
 import { LayerCard } from "@nocoo/basalt";
 import { Badge } from "@nocoo/basalt/components/badge";
 import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
+import { PageHeader } from "@nocoo/basalt/components/page-header";
 import { PiggyBank, Target, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import {
   Bar,
@@ -48,16 +49,15 @@ export function SavingsRateClient({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold">
+      <PageHeader
+        title={
+          <span className="flex items-center gap-2">
             <PiggyBank className="text-basalt-primary size-6" />
             储蓄率分析
-          </h1>
-          <p className="text-basalt-muted-foreground text-sm">月度储蓄率趋势和累计储蓄</p>
-        </div>
-      </div>
+          </span>
+        }
+        description="月度储蓄率趋势和累计储蓄"
+      />
 
       {/* Summary Stats */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
