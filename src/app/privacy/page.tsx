@@ -1,15 +1,18 @@
+import { PageHeader } from "@nocoo/basalt/components/page-header";
 import { ShieldCheck } from "lucide-react";
 
 export default function PrivacyPage() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <ShieldCheck className="text-basalt-primary size-6" />
-          隐私政策
-        </h1>
-        <p className="text-basalt-muted-foreground text-sm">我们重视并保护您的隐私</p>
-      </div>
+      <PageHeader
+        title={
+          <span className="flex items-center gap-2">
+            <ShieldCheck className="text-basalt-primary size-6" />
+            隐私政策
+          </span>
+        }
+        description="我们重视并保护您的隐私"
+      />
 
       <div className="prose prose-sm dark:prose-invert max-w-none space-y-4">
         <section>
