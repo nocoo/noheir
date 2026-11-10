@@ -57,8 +57,8 @@ export function Sidebar({ mobile = false }: { mobile?: boolean }) {
         <SidebarHeader>
           <div
             className={cn(
-              "flex w-full items-center",
-              isCollapsed ? "justify-center" : "justify-between pl-basalt-layout-sm",
+              "flex w-full items-center pl-basalt-layout-sm",
+              !isCollapsed && "justify-between",
             )}
           >
             <div className="flex min-w-0 items-center gap-basalt-space-lg">
