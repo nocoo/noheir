@@ -46,9 +46,9 @@ export function Sidebar({ mobile = false }: { mobile?: boolean }) {
   const userName = user?.name ?? "用户";
   const handleNavigate = () => setMobileOpen(false);
   const avatar = (
-    <Avatar>
+    <Avatar className="h-9 w-9 shrink-0">
       {user?.image && <AvatarImage src={user.image} alt={userName} />}
-      <AvatarFallback>{userName[0] ?? "?"}</AvatarFallback>
+      <AvatarFallback className="text-basalt-sm">{userName[0] ?? "?"}</AvatarFallback>
     </Avatar>
   );
 
@@ -169,13 +169,15 @@ export function Sidebar({ mobile = false }: { mobile?: boolean }) {
             </div>
           )}
           {isCollapsed ? (
-            <Tooltip>
+            <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="icon" onClick={logout} aria-label="退出登录">
                   {avatar}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="right">{userName} · 退出登录</TooltipContent>
+              <TooltipContent side="right" sideOffset={8}>
+                {userName} · 退出登录
+              </TooltipContent>
             </Tooltip>
           ) : (
             <SidebarUser
@@ -183,13 +185,15 @@ export function Sidebar({ mobile = false }: { mobile?: boolean }) {
               email={user?.email ?? ""}
               avatar={avatar}
               action={
-                <Tooltip>
+                <Tooltip delayDuration={0}>
                   <TooltipTrigger asChild>
                     <Button variant="ghost" size="icon" onClick={logout} aria-label="退出登录">
                       <LogOut aria-hidden="true" strokeWidth={1.5} />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent side="top">退出登录</TooltipContent>
+                  <TooltipContent side="top" sideOffset={8}>
+                    退出登录
+                  </TooltipContent>
                 </Tooltip>
               }
             />
