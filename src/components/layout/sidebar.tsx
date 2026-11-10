@@ -89,13 +89,7 @@ export function Sidebar({ mobile = false }: { mobile?: boolean }) {
         </SidebarHeader>
 
         {isCollapsed && !mobile && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggle}
-            aria-label="展开侧边栏"
-            className="mb-basalt-space-sm self-center"
-          >
+          <Button variant="ghost" size="icon" onClick={toggle} aria-label="展开侧边栏">
             <PanelLeft aria-hidden="true" strokeWidth={1.5} />
           </Button>
         )}
