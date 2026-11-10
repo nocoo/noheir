@@ -89,46 +89,35 @@ export function Sidebar({ mobile = false }: { mobile?: boolean }) {
         </SidebarHeader>
 
         {isCollapsed && !mobile && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggle}
-            aria-label="展开侧边栏"
-            className="mb-basalt-space-sm self-center"
-          >
+          <Button variant="ghost" size="icon" onClick={toggle} aria-label="展开侧边栏">
             <PanelLeft aria-hidden="true" strokeWidth={1.5} />
           </Button>
         )}
 
         {isCollapsed ? (
-          <NavigationMenu
-            orientation="vertical"
-            className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain"
-          >
-            <NavigationMenuList className="items-center">
-              {ALL_NAV_ITEMS.map((item) => (
-                <NavigationMenuItem key={item.href}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <NavigationMenuLink
-                        asChild
-                        active={isNavItemActive(pathname, item.href)}
-                        className="w-basalt-control justify-center"
-                      >
-                        <Link
-                          to={buildHrefWithYear(item.href, year)}
-                          onClick={handleNavigate}
-                          aria-label={item.label}
-                        >
-                          <item.icon aria-hidden="true" strokeWidth={1.5} />
-                        </Link>
-                      </NavigationMenuLink>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">{item.label}</TooltipContent>
-                  </Tooltip>
-                </NavigationMenuItem>
-              ))}
-            </NavigationMenuList>
+          <NavigationMenu orientation="vertical" asChild>
+            <SidebarNav>
+              <NavigationMenuList>
+                {ALL_NAV_ITEMS.map((item) => (
+                  <NavigationMenuItem key={item.href}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <NavigationMenuLink asChild active={isNavItemActive(pathname, item.href)}>
+                          <Link
+                            to={buildHrefWithYear(item.href, year)}
+                            onClick={handleNavigate}
+                            aria-label={item.label}
+                          >
+                            <item.icon aria-hidden="true" strokeWidth={1.5} />
+                          </Link>
+                        </NavigationMenuLink>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">{item.label}</TooltipContent>
+                    </Tooltip>
+                  </NavigationMenuItem>
+                ))}
+              </NavigationMenuList>
+            </SidebarNav>
           </NavigationMenu>
         ) : (
           <SidebarNav>
