@@ -6,7 +6,7 @@
       "name": "noheir-worker",
       "dependencies": {
         "drizzle-orm": "0.45.4",
-        "hono": "4.13.13",
+        "hono": "4.13.17",
         "zod": "4.6.7",
       },
       "devDependencies": {
@@ -23,7 +23,7 @@
     "better-sqlite3",
   ],
   "overrides": {
-    "hono": "4.13.13",
+    "hono": "4.13.17",
     "postcss": "8.5.31",
     "sharp": "0.35.5",
     "source-map-js": "1.2.2",
@@ -124,7 +124,7 @@
 
     "fsevents": ["fsevents@2.3.3", "", { "os": "darwin" }, "sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw=="],
 
-    "hono": ["hono@4.13.13", "", {}, "sha512-CQ46U0ZkAGmbT/4UxdzzGJpacP2IeKgY4a5/tOI9AABbpOMfK739wfDXmv1usCk+3RkKj1hQy4/fjhiwa2xlrA=="],
+    "hono": ["hono@4.13.17", "", {}, "sha512-vZIcbkvjOR5hHRWERbGkr8fGfF0GGM1ooYkuH448iO3b2AdVEr3AXZSw4Z3Kn+1L5z0CVoVeyV29VGYmFh05kQ=="],
 
     "js-tokens": ["js-tokens@10.0.0", "", {}, "sha512-lM/UBzQmfJRo9ABXbPWemivdCW8V2G8FHaHdypQaIy523snUjog0W71ayWXTjiR+ixeMyVHN2XcpnTd/liPg/Q=="],
 

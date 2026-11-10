@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "drizzle-orm": "0.45.4",
-    "hono": "4.13.13",
+    "hono": "4.13.17",
     "zod": "4.6.7"
   },
   "devDependencies": {
@@ -20,7 +20,7 @@
     "vitest": "5.0.5"
   },
   "overrides": {
-    "hono": "4.13.13",
+    "hono": "4.13.17",
     "postcss": "8.5.31",
     "sharp": "0.35.5",
     "vite": "8.3.5",
