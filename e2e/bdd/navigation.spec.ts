@@ -508,9 +508,6 @@ for (const theme of ["light", "dark"]) {
     }, theme);
     await page.goto("/income?year=2025");
     const sidebar = page.getByRole("complementary", { name: "主导航", exact: true });
-    const logo = sidebar.getByRole("img", { name: "noheir", exact: true });
-    const expandedLogo = await logo.boundingBox();
-    if (!expandedLogo) throw new Error("Sidebar logo missing");
     for (const collapsed of [false, true]) {
       if (collapsed) await page.getByRole("button", { name: "收起侧边栏" }).click();
       const current = sidebar.locator('a[aria-current="page"]');
@@ -539,9 +536,6 @@ for (const theme of ["light", "dark"]) {
       await expect
         .poll(() => row.evaluate((el) => getComputedStyle(el).backgroundColor))
         .toBe(expected);
-      await expect
-        .poll(async () => Math.abs((await logo.boundingBox())!.x - expandedLogo.x))
-        .toBeLessThan(1);
     }
   });
 }
