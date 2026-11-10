@@ -9,7 +9,7 @@ import sys
 import tempfile
 import time
 
-TIMEOUT = 240
+TIMEOUT = int(os.environ.get("NOHEIR_L1_TIMEOUT_SEC", "240"))
 METRICS = ("statements", "branches", "functions", "lines")
 DEPENDENCIES = ("node_modules", "worker/node_modules")
 

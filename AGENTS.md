@@ -108,25 +108,58 @@ them if they cannot be made deterministic (for example, prove stability with
 `bunx playwright test <spec> --repeat-each=30` locally with zero failures). Never
 add retries, skips, or looser assertions solely to mask timing or layout races.
 
-| Piece                                  | Requirement and scope                                                                                                                                          | Status          | Evidence                                                                                                                                                                                                                                                                                                                                                           |
-| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| L1 — complete unified contract         | All four coverage metrics >=95% plus strict static lanes on an installed index-snapshot hook with proven rejection, under 30s                                  | planned         | `.husky/pre-commit` runs `scripts/pre-commit.py` against a temporary export of the Git index and fails closed on missing/empty/failed/skipped test reports, missing/invalid/below-95% coverage reports, static failures and timeout. Installed-hook fixture rejection and full timing remain to be verified. The subcheck rows below describe the configured lanes |
-| L1 subcheck — App coverage             | Four metrics >=95% in configured TypeScript logic; UI, wiring and listed domain/service exclusions are outside the coverage denominator                        | enforced        | Root Vitest; pre-commit/pre-push/CI                                                                                                                                                                                                                                                                                                                                |
-| L1 subcheck — Worker coverage          | Four metrics >=95% for `worker/lib/**/*.ts` and `db/validation.ts`; HTTP entrypoints/repositories outside this unit denominator                                | enforced        | Worker Vitest; pre-commit/pre-push/CI                                                                                                                                                                                                                                                                                                                              |
-| L2                                     | Native Worker real HTTP with SQLite, signed JWT failures, scoped Bearer isolation, CRUD, idempotency/CAS, state races, annual import rollback and backup scope | enforced        | `scripts/run-e2e.ts`; pre-push/CI; not a complete endpoint/method coverage claim                                                                                                                                                                                                                                                                                   |
-| L3                                     | Authenticated route rendering and financial/import/backup/error workflows on built assets                                                                      | enforced        | Playwright CI; acceptance evidence in migration plan                                                                                                                                                                                                                                                                                                               |
-| L1 subcheck — static lanes (former G1) | Both type lanes; zero-warning/error Biome                                                                                                                      | enforced        | Root typecheck and lint; pre-commit/CI; pre-commit runs these lanes from the index snapshot                                                                                                                                                                                                                                                                        |
-| G2                                     | Required OSV on both locks; redacted gitleaks                                                                                                                  | enforced        | Pre-push and reusable CI security gates                                                                                                                                                                                                                                                                                                                            |
-| D1                                     | Per-run local state, marker validation before fixture writes/cleanup, reserved ports, controlled JWKS                                                          | enforced        | `scripts/test-fixture.ts`, HTTP/browser runners                                                                                                                                                                                                                                                                                                                    |
-| Build                                  | Vite client/Worker bundles and deployment dry-run                                                                                                              | enforced/manual | Build in CI preparation; dry-run during release validation                                                                                                                                                                                                                                                                                                         |
-| Docs                                   | Operations, limitations and release evidence aligned                                                                                                           | manual          | README, handbook and numbered docs                                                                                                                                                                                                                                                                                                                                 |
+| Piece                                  | Requirement and scope                                                                                                                                          | Status          | Evidence                                                                                                           |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------ |
+| L1 — complete unified contract         | All four coverage metrics >=95% plus strict static lanes on an installed index-snapshot hook with proven rejection, under 30s                                  | enforced        | See **L1 measured evidence** below; automated rejection matrix in `bun run test:l1-gate` (CI job `l1-hook-verify`) |
+| L1 subcheck — App coverage             | Four metrics >=95% in configured TypeScript logic; UI, wiring and listed domain/service exclusions are outside the coverage denominator                        | enforced        | Root Vitest; pre-commit/pre-push/CI                                                                                |
+| L1 subcheck — Worker coverage          | Four metrics >=95% for `worker/lib/**/*.ts` and `db/validation.ts`; HTTP entrypoints/repositories outside this unit denominator                                | enforced        | Worker Vitest; pre-commit/pre-push/CI                                                                              |
+| L2                                     | Native Worker real HTTP with SQLite, signed JWT failures, scoped Bearer isolation, CRUD, idempotency/CAS, state races, annual import rollback and backup scope | enforced        | `scripts/run-e2e.ts`; pre-push/CI; not a complete endpoint/method coverage claim                                   |
+| L3                                     | Authenticated route rendering and financial/import/backup/error workflows on built assets                                                                      | enforced        | Playwright CI; acceptance evidence in migration plan                                                               |
+| L1 subcheck — static lanes (former G1) | Both type lanes; zero-warning/error Biome                                                                                                                      | enforced        | Root typecheck and lint; pre-commit/CI; pre-commit runs these lanes from the index snapshot                        |
+| G2                                     | Required OSV on both locks; redacted gitleaks                                                                                                                  | enforced        | Pre-push and reusable CI security gates                                                                            |
+| D1                                     | Per-run local state, marker validation before fixture writes/cleanup, reserved ports, controlled JWKS                                                          | enforced        | `scripts/test-fixture.ts`, HTTP/browser runners                                                                    |
+| Build                                  | Vite client/Worker bundles and deployment dry-run                                                                                                              | enforced/manual | Build in CI preparation; dry-run during release validation                                                         |
+| Docs                                   | Operations, limitations and release evidence aligned                                                                                                           | manual          | README, handbook and numbered docs                                                                                 |
 
 Pre-commit exports the index into a temporary source snapshot; it does not stage or
 rewrite project files. Coverage outputs, logs and caches are temporary. Pre-push secrets
 scan `origin/main..HEAD`, not arbitrary pushed refs from stdin. Index-only unified L1
-under 30 seconds and pushed-ref L2/G2 under three minutes remain workflow targets;
-never describe them as implemented. Explicitly stage logical commits only. The owner
-merged former G1 into L1 on 2026-09-21; the framework keeps the 6DQ name.
+under 30 seconds is verified on the reference cloud-agent image (2026-11-09, frozen
+locks after `bun install --frozen-lockfile` in root and `worker/`). Pushed-ref L2/G2
+under three minutes remain workflow targets. Explicitly stage logical commits only. The
+owner merged former G1 into L1 on 2026-09-21; the framework keeps the 6DQ name.
+
+### L1 measured evidence (2026-11-09)
+
+Recorded on `main` lineage after `bun install --frozen-lockfile`, `bun install --cwd
+worker --frozen-lockfile`, and `bun run prepare` (`core.hooksPath=.husky/_`).
+
+| Check               | Command                                        | Exit | Wall time                              |
+| ------------------- | ---------------------------------------------- | ---- | -------------------------------------- |
+| Healthy hook (cold) | `sh .husky/pre-commit`                         | 0    | 23.59s                                 |
+| Healthy hook (warm) | `sh .husky/pre-commit`                         | 0    | 22.77s                                 |
+| Helper invariants   | `python3 -B scripts/pre-commit.py --self-test` | 0    | under 1s                               |
+| Rejection matrix    | `bun run test:l1-gate`                         | 0    | about 8m (disposable clone; cleans up) |
+
+Four-metric coverage from a healthy cold run (index snapshot, Vitest `json-summary` parsed
+by `scripts/pre-commit.py`):
+
+| Suite                                    | statements | branches | functions | lines  |
+| ---------------------------------------- | ---------- | -------- | --------- | ------ |
+| App (`vitest.config.ts` scope)           | 98.44%     | 96.44%   | 100.00%   | 99.51% |
+| Worker (`worker/vitest.config.ts` scope) | 99.00%     | 97.71%   | 100.00%   | 99.77% |
+
+Parallel lanes in the healthy hook (same cold run): `lint` 0, `typecheck` 0, `worker tests
+and coverage` 0, `app tests and coverage` 0; final line `L1 index snapshot passed in
+23.22s`.
+
+`bun run test:l1-gate` exercises real Husky on an isolated `git clone` with symlinked
+`node_modules`: healthy index and commit; rejects failing UT; each coverage metric floor
+(8 vitest threshold probes); Biome error and warning; `tsc` error; `.only` and `skip`;
+staged-bad/unstaged-good index mismatch; parallel multi-lane failure; empty suite; missing
+`coverage-summary.json`; missing `bun`; `NOHEIR_L1_TIMEOUT_SEC` budget; SIGINT
+interruption. Malformed or below-floor reports are additionally covered by
+`pre-commit.py --self-test`.
 
 ## Resources / Isolation
 
