@@ -1,32 +1,23 @@
-import { Button } from "@nocoo/basalt/components/button";
-import { useTheme } from "@nocoo/basalt/providers/theme";
-import { Monitor, Moon, Sun } from "lucide-react";
-import { HeaderTooltip } from "./header-links";
+import {
+  ThemeToggle as BasaltThemeToggle,
+  type ThemeToggleProps,
+} from "@nocoo/basalt/components/theme-toggle";
 
-export type ThemeToggleProps = { "aria-label"?: string };
-
-export function ThemeToggle({ "aria-label": ariaLabel = "切换主题" }: ThemeToggleProps = {}) {
-  const { theme, setTheme } = useTheme();
-  const nextTheme = theme === "system" ? "light" : theme === "light" ? "dark" : "system";
-  const Icon = theme === "system" ? Monitor : theme === "dark" ? Moon : Sun;
+export function ThemeToggle({
+  "aria-label": ariaLabel = "切换主题",
+  ...props
+}: ThemeToggleProps = {}) {
   return (
-    <HeaderTooltip
-      label={
-        nextTheme === "system"
-          ? "跟随系统主题"
-          : nextTheme === "dark"
-            ? "切换为深色主题"
-            : "切换为浅色主题"
-      }
-    >
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setTheme(nextTheme)}
-        aria-label={ariaLabel}
-      >
-        <Icon aria-hidden="true" strokeWidth={1.5} />
-      </Button>
-    </HeaderTooltip>
+    <BasaltThemeToggle
+      aria-label={ariaLabel}
+      labels={{
+        light: "切换为浅色主题",
+        dark: "切换为深色主题",
+        system: "跟随系统主题",
+      }}
+      {...props}
+    />
   );
 }
+
+export type { ThemeToggleProps } from "@nocoo/basalt/components/theme-toggle";
