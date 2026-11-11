@@ -18,7 +18,7 @@ database status and no-store; dependency failures return a generic 503.
 
 ## Basalt integration
 
-The installed `@nocoo/basalt` 3.2.0 artifact is the UI API authority. Configure
+The installed `@nocoo/basalt` 3.3.1 artifact is the UI API authority. Configure
 the product's Blue preset with `AccentProvider accent="primary" persist={false}`;
 ordinary surfaces and controls use the package's `basalt-*` tokens, not a second
 application theme. Financial colors and stable domain-label mappings remain
@@ -46,11 +46,12 @@ query-only changes keep the content instance. The shared layout loader supplies
 available years on navigation and revalidation, including after imports. Mobile
 navigation closes and restores focus to the persistent header trigger.
 
-Navigation uses public link-capable components: `EditableNavItem` inside
-`SidebarNav`, and `NavigationMenuLink asChild` in the collapsed rail. The router
-adapter forwards anchor attributes, events and refs. Do not paint selected rows
-with `accent` or override native hover; selection must persist while the pointer
-highlights another destination. Keep the logo aligned in both rail modes.
+Navigation uses Basalt shell primitives: `SidebarBrand`, `SidebarGroup`,
+`SidebarItem`, and `SidebarIconItem` inside `SidebarNav`, with `SidebarToggle` and
+`SidebarUser` for chrome and Access logout. The router adapter forwards anchor
+attributes, events and refs. Do not paint selected rows with `accent` or override
+native hover; selection must persist while the pointer highlights another
+destination. Keep the logo aligned in both rail modes via `SidebarBrand` (24px mark).
 
 Let public controls own focus, selection and surface styling. Application-owned
 composites may supply business content, responsive layout and domain colors;

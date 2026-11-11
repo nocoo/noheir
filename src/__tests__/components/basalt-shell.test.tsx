@@ -4,10 +4,10 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { createRef } from "react";
 import { MemoryRouter } from "react-router";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GlobalYearSelector } from "@/components/layout/global-year-selector";
-import { Sidebar } from "@/components/layout/sidebar";
-import { SidebarProvider } from "@/components/layout/sidebar-context";
+import { MobileNavProvider } from "@/components/layout/mobile-nav-context";
+import { PersistedSidebarProvider, Sidebar } from "@/components/layout/sidebar";
 import { Providers } from "@/components/providers";
 
 vi.mock("@/lib/auth-context", () => ({
@@ -23,7 +23,9 @@ function renderShell(children: ReactNode) {
   return render(
     <MemoryRouter initialEntries={["/income?year=2025"]}>
       <Providers>
-        <SidebarProvider>{children}</SidebarProvider>
+        <MobileNavProvider>
+          <PersistedSidebarProvider>{children}</PersistedSidebarProvider>
+        </MobileNavProvider>
       </Providers>
     </MemoryRouter>,
   );
@@ -34,8 +36,12 @@ function AccentProbe() {
 }
 
 describe("Basalt shell contract", () => {
+  beforeEach(() => {
+    localStorage.removeItem("noheir:sidebar-collapsed");
+  });
+
   it("uses native navigation selection and keeps year-aware anchors in both rail modes", () => {
-    const { container } = renderShell(<Sidebar />);
+    const { container } = renderShell(<Sidebar ariaLabel="主导航" />);
     const active = container.querySelector('a[aria-current="page"]');
     expect(active).toHaveAttribute("href", "/income?year=2025");
     expect(active?.closest("[data-basalt-hover-item]")).toHaveAttribute(
@@ -51,6 +57,12 @@ describe("Basalt shell contract", () => {
       "data-hover-selected",
       "true",
     );
+  });
+
+  it("wires Cloudflare Access logout on SidebarUser", () => {
+    renderShell(<Sidebar ariaLabel="主导航" />);
+    const signOut = screen.getByRole("link", { name: "退出登录" });
+    expect(signOut).toHaveAttribute("href", "/cdn-cgi/access/logout");
   });
 
   it("forwards link events, accessibility, target and ref through the router adapter", () => {

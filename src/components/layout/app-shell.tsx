@@ -1,11 +1,10 @@
-import { Button, ContentIsland } from "@nocoo/basalt";
-import { AppHeader } from "@nocoo/basalt/components/app-header";
+import { ContentIsland, SidebarProvider } from "@nocoo/basalt";
+import { AppHeader, AppHeaderMenuButton, ProjectLinks } from "@nocoo/basalt/components/app-header";
 import {
   AppMain,
   AppSkipLink,
   AppShell as BasaltAppShell,
 } from "@nocoo/basalt/components/app-shell";
-import { LinkButton } from "@nocoo/basalt/components/button";
 import {
   Sheet,
   SheetContent,
@@ -13,17 +12,15 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@nocoo/basalt/components/sheet";
-import { Menu } from "lucide-react";
+import { TooltipProvider } from "@nocoo/basalt/components/tooltip";
 import { Suspense, useEffect, useMemo, useRef } from "react";
 import { Outlet, useLoaderData, useLocation } from "react-router";
 import { EnvironmentSwitch } from "@/components/environment-switch";
-import { GithubIcon } from "@/components/icons/github-icon";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ALL_NAV_ITEMS, isNavItemActive, NAV_GROUPS } from "@/lib/navigation";
 import { GlobalYearSelector } from "./global-year-selector";
-import { HeaderTooltip, HexlyLink } from "./header-links";
-import { Sidebar } from "./sidebar";
-import { SidebarProvider, useSidebar } from "./sidebar-context";
+import { MobileNavProvider, useMobileNav } from "./mobile-nav-context";
+import { PersistedSidebarProvider, Sidebar } from "./sidebar";
 import { ThemeToggle } from "./theme-toggle";
 import { YearProvider } from "./year-context";
 
@@ -31,24 +28,20 @@ import { YearProvider } from "./year-context";
  * Build breadcrumbs from pathname using navigation config
  */
 function buildBreadcrumbsFromPath(pathname: string): { label: string; href?: string }[] {
-  // Find matching nav item
   const navItem = ALL_NAV_ITEMS.find((item) => isNavItemActive(pathname, item.href));
 
   if (!navItem || navItem.href === "/") {
-    return []; // Home page, no extra breadcrumbs
+    return [];
   }
 
-  // Find the group this item belongs to
   const group = NAV_GROUPS.find((g) => g.items.some((i) => i.href === navItem.href));
 
   const crumbs: { label: string; href?: string }[] = [];
 
-  // Add group label if different from item label
   if (group && group.label !== navItem.label) {
     crumbs.push({ label: group.label });
   }
 
-  // Add current page (no href = current page)
   crumbs.push({ label: navItem.label });
 
   return crumbs;
@@ -56,13 +49,12 @@ function buildBreadcrumbsFromPath(pathname: string): { label: string; href?: str
 
 function AppShellInner() {
   const isMobile = useIsMobile();
-  const { mobileOpen, setMobileOpen } = useSidebar();
-  const mobileMenuTrigger = useRef<HTMLButtonElement>(null);
+  const { mobileOpen, setMobileOpen } = useMobileNav();
+  const menuButton = useRef<HTMLButtonElement>(null);
   const location = useLocation();
   const pathname = location.pathname;
 
-  // Close mobile sidebar on route change
-  // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is the trigger; body doesn't read its value
+  // biome-ignore lint/correctness/useExhaustiveDependencies: pathname triggers close on route change
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname, setMobileOpen]);
@@ -77,119 +69,117 @@ function AppShellInner() {
   );
 
   return (
-    <BasaltAppShell layout="workspace">
-      <AppSkipLink>跳到主要内容</AppSkipLink>
+    <TooltipProvider delayDuration={0}>
+      <BasaltAppShell layout="workspace">
+        <AppSkipLink>跳到主要内容</AppSkipLink>
 
-      {/* Desktop sidebar */}
-      {!isMobile && <Sidebar />}
+        {!isMobile && (
+          <PersistedSidebarProvider>
+            <Sidebar ariaLabel="主导航" />
+          </PersistedSidebarProvider>
+        )}
 
-      {isMobile && (
-        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetContent
-            side="left"
-            className="w-fit p-0 sm:p-0"
-            onCloseAutoFocus={(event) => {
-              event.preventDefault();
-              mobileMenuTrigger.current?.focus();
-            }}
-          >
-            <SheetHeader className="sr-only">
-              <SheetTitle>导航菜单</SheetTitle>
-              <SheetDescription>浏览 noheir 页面</SheetDescription>
-            </SheetHeader>
-            <Sidebar mobile />
-          </SheetContent>
-        </Sheet>
-      )}
+        {isMobile && (
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <SheetContent
+              side="left"
+              className="w-[260px] max-w-[260px] border-0 bg-basalt-background p-0 sm:max-w-[260px] sm:p-0"
+              onCloseAutoFocus={(event) => {
+                event.preventDefault();
+                menuButton.current?.focus();
+              }}
+            >
+              <SheetHeader className="sr-only">
+                <SheetTitle>导航菜单</SheetTitle>
+                <SheetDescription>浏览 noheir 页面</SheetDescription>
+              </SheetHeader>
+              <SidebarProvider collapsed={false} defaultWidth={260}>
+                <Sidebar
+                  ariaLabel="主导航抽屉"
+                  variant="mobile"
+                  onNavigate={() => setMobileOpen(false)}
+                  onDismiss={() => setMobileOpen(false)}
+                />
+              </SidebarProvider>
+            </SheetContent>
+          </Sheet>
+        )}
 
-      <AppMain>
-        {/* Header */}
-        <AppHeader
-          leading={
-            isMobile ? (
-              <HeaderTooltip label="打开导航">
-                <Button
-                  ref={mobileMenuTrigger}
-                  variant="ghost"
-                  size="icon"
+        <AppMain>
+          <AppHeader
+            leading={
+              isMobile ? (
+                <AppHeaderMenuButton
+                  ref={menuButton}
+                  label="打开导航"
                   onClick={() => setMobileOpen(true)}
-                  aria-label="打开导航"
-                >
-                  <Menu aria-hidden="true" strokeWidth={1.5} />
-                </Button>
-              </HeaderTooltip>
-            ) : null
-          }
-          breadcrumbs={isMobile ? [] : breadcrumbsList}
-          actions={
-            <>
-              <EnvironmentSwitch />
-              <Suspense>
-                <GlobalYearSelector />
-              </Suspense>
-              <HeaderTooltip label="GitHub repository">
-                <LinkButton
-                  variant="ghost"
-                  size="icon"
-                  className="hidden md:inline-flex"
-                  href="https://github.com/nocoo/noheir"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="GitHub repository"
-                >
-                  <GithubIcon aria-hidden="true" strokeWidth={1.5} />
-                </LinkButton>
-              </HeaderTooltip>
-              <HexlyLink className="hidden md:inline-flex" />
-              <ThemeToggle />
-            </>
-          }
-        />
+                />
+              ) : null
+            }
+            breadcrumbs={breadcrumbsList}
+            breadcrumbsLabel="面包屑导航"
+            actions={
+              <>
+                <EnvironmentSwitch />
+                <Suspense>
+                  <GlobalYearSelector />
+                </Suspense>
+                <ProjectLinks
+                  github="nocoo/noheir"
+                  hexly="noheir"
+                  name="Noheir"
+                  githubLabel="GitHub repository"
+                  hexlyLabel="Noheir on hexly.ai"
+                />
+                <ThemeToggle />
+              </>
+            }
+          />
 
-        {/* Floating island content area */}
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col px-basalt-space-lg pb-basalt-space-lg">
-          <ContentIsland key={pathname}>
-            {[
-              "/",
-              "/income",
-              "/expense",
-              "/savings",
-              "/compare",
-              "/freedom",
-              "/financial-health",
-              "/account",
-              "/account-detail",
-              "/flow",
-              "/funds",
-              "/warehouse",
-              "/capital-logs",
-              "/capital-decisions",
-              "/liquidity",
-              "/strategy",
-              "/plan/calendar",
-              "/manage",
-            ].includes(pathname) && (
-              <p className="mb-3 text-sm text-basalt-muted-foreground">
-                金额汇总币种：CNY（人民币）。不折算或合计其他币种；其他币种记录与编辑操作保留。
-              </p>
-            )}
-            <Outlet />
-          </ContentIsland>
-        </div>
-      </AppMain>
-    </BasaltAppShell>
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col px-basalt-space-lg pb-basalt-space-lg">
+            <ContentIsland key={pathname}>
+              {[
+                "/",
+                "/income",
+                "/expense",
+                "/savings",
+                "/compare",
+                "/freedom",
+                "/financial-health",
+                "/account",
+                "/account-detail",
+                "/flow",
+                "/funds",
+                "/warehouse",
+                "/capital-logs",
+                "/capital-decisions",
+                "/liquidity",
+                "/strategy",
+                "/plan/calendar",
+                "/manage",
+              ].includes(pathname) && (
+                <p className="mb-3 text-sm text-basalt-muted-foreground">
+                  金额汇总币种：CNY（人民币）。不折算或合计其他币种；其他币种记录与编辑操作保留。
+                </p>
+              )}
+              <Outlet />
+            </ContentIsland>
+          </div>
+        </AppMain>
+      </BasaltAppShell>
+    </TooltipProvider>
   );
 }
 
 export function AppShell() {
   const years = useLoaderData<number[]>();
   return (
-    <SidebarProvider>
+    <MobileNavProvider>
       <Suspense>
         <YearProvider years={years}>
           <AppShellInner />
         </YearProvider>
       </Suspense>
-    </SidebarProvider>
+    </MobileNavProvider>
   );
 }

@@ -3,188 +3,198 @@ import {
   AvatarFallback,
   AvatarImage,
   Sidebar as BasaltSidebar,
-  Button,
+  SidebarBrand,
   SidebarFooter,
   SidebarGroup,
   SidebarHeader,
+  SidebarIconItem,
+  SidebarItem,
   SidebarNav,
+  SidebarProvider,
+  SidebarToggle,
   SidebarUser,
+} from "@nocoo/basalt";
+import { useSidebar } from "@nocoo/basalt/components/sidebar";
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@nocoo/basalt";
-import { EditableNavItem } from "@nocoo/basalt/components/editable-nav-item";
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-} from "@nocoo/basalt/components/navigation-menu";
-import { LogOut, PanelLeft } from "lucide-react";
-import { Link, useLocation } from "react-router";
-import { GithubIcon } from "@/components/icons/github-icon";
+} from "@nocoo/basalt/components/tooltip";
+import { type ReactNode, useCallback, useState } from "react";
+import { useLocation } from "react-router";
 import { useAuth } from "@/lib/auth-context";
 import { ALL_NAV_ITEMS, isNavItemActive, NAV_GROUPS } from "@/lib/navigation";
-import { cn } from "@/lib/utils";
 import pkg from "../../../package.json";
-import { HexlyLink } from "./header-links";
-import { useSidebar } from "./sidebar-context";
 import { useYear, YEAR_ENABLED_PATHS } from "./year-context";
+
+const ACCESS_LOGOUT_URL = "/cdn-cgi/access/logout";
+const SIDEBAR_COLLAPSED_KEY = "noheir:sidebar-collapsed";
+type SidebarCollapsedPreference = "false" | "true";
 
 function buildHrefWithYear(href: string, year: number): string {
   return YEAR_ENABLED_PATHS.has(href) ? `${href}?year=${year}` : href;
 }
 
-export function Sidebar({ mobile = false }: { mobile?: boolean }) {
+function usePersistedSidebarCollapsed(
+  key: string,
+  defaultValue: SidebarCollapsedPreference,
+): [SidebarCollapsedPreference, (value: SidebarCollapsedPreference) => void] {
+  const [stored, setStored] = useState<SidebarCollapsedPreference>(() => {
+    if (typeof window === "undefined") return defaultValue;
+    const value = localStorage.getItem(key);
+    return value === "true" || value === "false" ? value : defaultValue;
+  });
+
+  const setValue = useCallback(
+    (next: SidebarCollapsedPreference) => {
+      setStored(next);
+      localStorage.setItem(key, next);
+    },
+    [key],
+  );
+
+  return [stored, setValue];
+}
+
+export function PersistedSidebarProvider({ children }: { children: ReactNode }) {
+  const [stored, setStored] = usePersistedSidebarCollapsed(SIDEBAR_COLLAPSED_KEY, "false");
+  const collapsed = stored === "true";
+  const onCollapsedChange = useCallback(
+    (next: boolean) => {
+      setStored(next ? "true" : "false");
+    },
+    [setStored],
+  );
+
+  return (
+    <SidebarProvider collapsed={collapsed} onCollapsedChange={onCollapsedChange} defaultWidth={260}>
+      {children}
+    </SidebarProvider>
+  );
+}
+
+interface SidebarProps {
+  ariaLabel: string;
+  variant?: "desktop" | "mobile";
+  onNavigate?: () => void;
+  onDismiss?: () => void;
+}
+
+function NoheirSidebarBody({
+  variant,
+  onNavigate,
+  onDismiss,
+}: {
+  variant?: SidebarProps["variant"];
+  onNavigate?: () => void;
+  onDismiss?: () => void;
+}) {
   const { pathname } = useLocation();
-  const { collapsed, toggle, setMobileOpen } = useSidebar();
+  const { collapsed, peek, peeking } = useSidebar();
+  const railCollapsed = collapsed && !(peek && peeking);
   const { year } = useYear();
-  const { user, logout } = useAuth();
-  const isCollapsed = !mobile && collapsed;
+  const { user } = useAuth();
   const userName = user?.name ?? "用户";
-  const handleNavigate = () => setMobileOpen(false);
+  const userEmail = user?.email ?? "";
+
   const avatar = (
-    <Avatar className="h-9 w-9 shrink-0">
+    <Avatar>
       {user?.image && <AvatarImage src={user.image} alt={userName} />}
-      <AvatarFallback className="text-basalt-sm">{userName[0] ?? "?"}</AvatarFallback>
+      <AvatarFallback>{userName[0] ?? "?"}</AvatarFallback>
     </Avatar>
   );
 
   return (
-    <TooltipProvider delayDuration={0}>
-      <BasaltSidebar aria-label={mobile ? "主导航抽屉" : "主导航"} collapsed={isCollapsed}>
-        <SidebarHeader>
-          <div
-            className={cn(
-              "flex w-full items-center pl-basalt-layout-sm",
-              !isCollapsed && "justify-between",
-            )}
-          >
-            <div className="flex min-w-0 items-center gap-basalt-space-lg">
-              <img
-                src="/logo-24.png"
-                alt="noheir"
-                width={24}
-                height={24}
-                className="h-6 w-6 shrink-0 object-contain"
+    <>
+      <SidebarHeader>
+        <SidebarBrand
+          logo={<img src="/logo-24.png" alt="" width={24} height={24} />}
+          name="noheir"
+          version={`v${pkg.version}`}
+          action={
+            variant === "mobile" ? (
+              <SidebarToggle
+                mode="dismiss"
+                dismissLabel="关闭导航菜单"
+                {...(onDismiss ? { onDismiss } : {})}
               />
-              {!isCollapsed && (
-                <>
-                  <span className="truncate text-basalt-xl font-semibold text-basalt-foreground">
-                    noheir
-                  </span>
-                  <span className="shrink-0 rounded-basalt-md bg-basalt-secondary px-basalt-space-md py-basalt-space-xs text-basalt-sm leading-basalt-tight font-medium text-basalt-muted-foreground">
-                    v{pkg.version}
-                  </span>
-                </>
-              )}
-            </div>
-            {!isCollapsed && !mobile && (
-              <Button variant="ghost" size="icon" onClick={toggle} aria-label="收起侧边栏">
-                <PanelLeft aria-hidden="true" strokeWidth={1.5} />
-              </Button>
-            )}
-          </div>
-        </SidebarHeader>
-
-        {isCollapsed && !mobile && (
-          <Button variant="ghost" size="icon" onClick={toggle} aria-label="展开侧边栏">
-            <PanelLeft aria-hidden="true" strokeWidth={1.5} />
-          </Button>
-        )}
-
-        {isCollapsed ? (
-          <NavigationMenu orientation="vertical" asChild>
-            <SidebarNav>
-              <NavigationMenuList>
-                {ALL_NAV_ITEMS.map((item) => (
-                  <NavigationMenuItem key={item.href}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <NavigationMenuLink asChild active={isNavItemActive(pathname, item.href)}>
-                          <Link
-                            to={buildHrefWithYear(item.href, year)}
-                            onClick={handleNavigate}
-                            aria-label={item.label}
-                          >
-                            <item.icon aria-hidden="true" strokeWidth={1.5} />
-                          </Link>
-                        </NavigationMenuLink>
-                      </TooltipTrigger>
-                      <TooltipContent side="right">{item.label}</TooltipContent>
-                    </Tooltip>
-                  </NavigationMenuItem>
-                ))}
-              </NavigationMenuList>
-            </SidebarNav>
-          </NavigationMenu>
-        ) : (
-          <SidebarNav>
-            {NAV_GROUPS.map((group) => (
+            ) : (
+              <SidebarToggle expandLabel="展开侧边栏" collapseLabel="收起侧边栏" />
+            )
+          }
+        />
+      </SidebarHeader>
+      <SidebarNav aria-label="主导航链接">
+        {railCollapsed
+          ? ALL_NAV_ITEMS.map((item) => {
+              const Icon = item.icon;
+              const active = isNavItemActive(pathname, item.href);
+              return (
+                <Tooltip key={item.href} delayDuration={0}>
+                  <TooltipTrigger asChild>
+                    <SidebarIconItem
+                      href={buildHrefWithYear(item.href, year)}
+                      active={active}
+                      aria-label={item.label}
+                      onClick={onNavigate}
+                    >
+                      <Icon strokeWidth={1.5} aria-hidden="true" />
+                    </SidebarIconItem>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" sideOffset={8}>
+                    {item.label}
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })
+          : NAV_GROUPS.map((group) => (
               <SidebarGroup
                 key={group.label}
                 label={group.label}
                 defaultOpen={group.defaultOpen ?? true}
               >
-                {group.items.map((item) => (
-                  <EditableNavItem
-                    key={item.href}
-                    label={item.label}
-                    href={buildHrefWithYear(item.href, year)}
-                    selected={isNavItemActive(pathname, item.href)}
-                    icon={<item.icon strokeWidth={1.5} />}
-                    onSelect={handleNavigate}
-                  />
-                ))}
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  const active = isNavItemActive(pathname, item.href);
+                  return (
+                    <SidebarItem
+                      key={item.href}
+                      href={buildHrefWithYear(item.href, year)}
+                      active={active}
+                      onClick={onNavigate}
+                    >
+                      <Icon className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
+                      <span className="flex-1 truncate text-left">{item.label}</span>
+                    </SidebarItem>
+                  );
+                })}
               </SidebarGroup>
             ))}
-          </SidebarNav>
-        )}
+      </SidebarNav>
+      <SidebarFooter>
+        <SidebarUser
+          name={userName}
+          email={userEmail || undefined}
+          avatar={avatar}
+          tooltip={userName}
+          signOutHref={ACCESS_LOGOUT_URL}
+          signOutLabel="退出登录"
+        />
+      </SidebarFooter>
+    </>
+  );
+}
 
-        <SidebarFooter>
-          {mobile && (
-            <div className="flex items-center gap-basalt-space-sm">
-              <Button variant="ghost" asChild>
-                <a href="https://github.com/nocoo/noheir" target="_blank" rel="noopener noreferrer">
-                  <GithubIcon aria-hidden="true" strokeWidth={1.5} />
-                  GitHub
-                </a>
-              </Button>
-              <HexlyLink />
-            </div>
-          )}
-          {isCollapsed ? (
-            <Tooltip delayDuration={0}>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" onClick={logout} aria-label="退出登录">
-                  {avatar}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right" sideOffset={8}>
-                {userName} · 退出登录
-              </TooltipContent>
-            </Tooltip>
-          ) : (
-            <SidebarUser
-              name={userName}
-              email={user?.email ?? ""}
-              avatar={avatar}
-              action={
-                <Tooltip delayDuration={0}>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={logout} aria-label="退出登录">
-                      <LogOut aria-hidden="true" strokeWidth={1.5} />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" sideOffset={8}>
-                    退出登录
-                  </TooltipContent>
-                </Tooltip>
-              }
-            />
-          )}
-        </SidebarFooter>
+export function Sidebar({ ariaLabel, variant = "desktop", onNavigate, onDismiss }: SidebarProps) {
+  return (
+    <TooltipProvider delayDuration={0}>
+      <BasaltSidebar aria-label={ariaLabel} resizable={false}>
+        <NoheirSidebarBody
+          variant={variant}
+          {...(onNavigate ? { onNavigate } : {})}
+          {...(onDismiss ? { onDismiss } : {})}
+        />
       </BasaltSidebar>
     </TooltipProvider>
   );
