@@ -48,6 +48,16 @@ async function scrollSidebarNavToSettledBottom(nav: Locator) {
   return await nav.evaluate((node) => node.scrollTop);
 }
 
+async function sidebarAvatarBounds(sidebar: Locator) {
+  const avatar = sidebar.locator('[data-slot="avatar"]');
+  await expect(avatar).toBeVisible();
+  await expect(avatar).toHaveCSS("width", "36px");
+  await expect(avatar).toHaveCSS("height", "36px");
+  const bounds = await avatar.boundingBox();
+  if (!bounds) throw new Error("Sidebar avatar bounds missing");
+  return bounds;
+}
+
 const origin = "http://127.0.0.1:27004";
 const tokenPath = new URL("../../.wrangler/browser-token.json", import.meta.url);
 let token: string;
@@ -335,7 +345,11 @@ test("mobile navigation restores focus and unlocks scrolling after dismissal", a
   await page.goto("/api-keys");
   const opener = page.getByRole("button", { name: "打开导航", exact: true });
   await opener.click();
-  await expect(page.getByRole("dialog")).toBeVisible();
+  const drawer = page.locator('[data-slot="sidebar-drawer"]');
+  await expect(drawer).toBeVisible();
+  await expect(opener).toHaveAttribute("aria-expanded", "true");
+  await expect(opener).toHaveAttribute("aria-controls", (await drawer.getAttribute("id")) ?? "");
+  await expect(drawer.getByRole("button", { name: "关闭导航菜单", exact: true })).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(opener).toBeFocused();
@@ -560,6 +574,95 @@ test("mobile financial header keeps navigation, year and theme controls inside t
     await expect(page).toHaveURL(/year=2024/);
   }
 });
+
+for (const theme of ["light", "dark"]) {
+  test(`sidebar avatar stays stationary across collapse in ${theme} mode`, async ({
+    page,
+  }, testInfo) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.addInitScript((value) => localStorage.setItem("theme", value), theme);
+    await page.goto("/api-keys");
+    await page.evaluate(() => document.fonts.ready);
+    const sidebar = page.getByRole("complementary", { name: "主导航", exact: true });
+    await expect(sidebar).toHaveCSS("width", "260px");
+    const email = sidebar.locator('[data-slot="sidebar-user"] p').last();
+    await expect(email).toHaveCSS("line-height", "16px");
+    const brand = sidebar.locator('[data-slot="sidebar-brand-copy"]');
+    await expect(brand).toBeVisible();
+    await expect(brand.getByText("noheir", { exact: true })).toBeVisible();
+    await expect(brand.locator('[data-slot="sidebar-brand-version"]')).toBeVisible();
+    const expanded = await sidebarAvatarBounds(sidebar);
+    await page.screenshot({ path: testInfo.outputPath("expanded.png") });
+    await sidebar.getByRole("button", { name: "收起侧边栏", exact: true }).click();
+    await page.mouse.move(1000, 500);
+    await expect(sidebar).toHaveCSS("width", "68px");
+    await expect(brand).toBeHidden();
+    const collapsed = await sidebarAvatarBounds(sidebar);
+    await testInfo.attach("avatar-geometry", {
+      body: JSON.stringify({ theme, expanded, collapsed }),
+      contentType: "application/json",
+    });
+    await page.screenshot({ path: testInfo.outputPath("collapsed.png") });
+    expect(collapsed.y).toBe(expanded.y);
+    await sidebar.getByRole("link", { name: "分析报告", exact: true }).click();
+    await expect(page).toHaveURL("/analyses");
+    await expect(page.getByRole("heading", { name: "分析报告", exact: true })).toBeVisible();
+    await expect(sidebar).toHaveCSS("width", "68px");
+  });
+
+  for (const width of [390, 640]) {
+    test(`mobile SidebarDrawer is 260px with zero padding at ${width}px in ${theme} mode`, async ({
+      page,
+    }, testInfo) => {
+      await page.setViewportSize({ width, height: 844 });
+      await page.addInitScript((value) => localStorage.setItem("theme", value), theme);
+      await page.goto("/api-keys");
+      const opener = page.getByRole("button", { name: "打开导航", exact: true });
+      await opener.click();
+      const drawer = page.locator('[data-slot="sidebar-drawer"]');
+      await expect(drawer).toBeVisible();
+      await drawer.evaluate(async (node) => {
+        await document.fonts.ready;
+        await Promise.all(node.getAnimations().map((animation) => animation.finished));
+      });
+      const geometry = await drawer.evaluate((node) => {
+        const bounds = node.getBoundingClientRect();
+        const style = getComputedStyle(node);
+        return {
+          x: bounds.x,
+          width: bounds.width,
+          paddingLeft: style.paddingLeft,
+          paddingRight: style.paddingRight,
+          paddingTop: style.paddingTop,
+          paddingBottom: style.paddingBottom,
+        };
+      });
+      await testInfo.attach("drawer-geometry", {
+        body: JSON.stringify({ theme, viewport: width, ...geometry }),
+        contentType: "application/json",
+      });
+      await page.screenshot({ path: testInfo.outputPath("drawer.png") });
+      expect(geometry).toEqual({
+        x: 0,
+        width: 260,
+        paddingLeft: "0px",
+        paddingRight: "0px",
+        paddingTop: "0px",
+        paddingBottom: "0px",
+      });
+      await expect(drawer.getByRole("button", { name: "关闭导航菜单", exact: true })).toBeVisible();
+      await sidebarAvatarBounds(drawer);
+      await page.keyboard.press("Escape");
+      await expect(drawer).toHaveCount(0);
+      await expect(opener).toBeFocused();
+      await opener.click();
+      await drawer.getByRole("link", { name: "分析报告", exact: true }).click();
+      await expect(page).toHaveURL("/analyses");
+      await expect(drawer).toHaveCount(0);
+      await expect(opener).toBeFocused();
+    });
+  }
+}
 
 test("permission groups have a visible desktop divider and stack without mobile overflow", async ({
   page,
