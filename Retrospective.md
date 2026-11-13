@@ -2,6 +2,24 @@
 
 Accident narratives and original lessons. Historical instructions below describe their time; the current handbook and its local-isolation contract take precedence.
 
+## 2026-11-14 — Sidebar acceptance selectors were not verified against rendered DOM
+
+The Basalt 3.3.4 upgrade added an avatar locator using `data-slot="avatar"`,
+which the published Avatar does not emit by default. It also queried the mobile
+menu opener with a role locator while the modal made the background inaccessible.
+The full built-application browser run therefore produced two avatar locator
+failures and one opener locator failure, independently of four genuine drawer
+width failures (320px instead of the required 260px). Desktop width and email
+line-height assertions passed before the invalid avatar locator, but avatar size,
+vertical stability and the extended keyboard path were not verified.
+
+Check the published component source and actual rendered attributes before
+choosing acceptance locators. For modal-background attribute checks, use a stable
+DOM locator rather than an accessibility-tree query that excludes hidden content.
+Keep genuine geometry failures distinct from test implementation mistakes. The
+upgrade stopped at the reproduced drawer blocker; the incorrect locators remain
+an explicit follow-up, without relaxing geometry or existing tests.
+
 ## Undated entries migrated from CLAUDE.md
 
 - D1 uses SQLite syntax — use `strftime('%Y', date)` instead of `EXTRACT(YEAR FROM date)`.
