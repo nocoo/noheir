@@ -108,7 +108,7 @@ function AppShellInner() {
             breadcrumbsLabel="面包屑导航"
             actions={
               <>
-                <EnvironmentSwitch />
+                {!isMobile && <EnvironmentSwitch />}
                 <Suspense>
                   <GlobalYearSelector />
                 </Suspense>

@@ -23,6 +23,7 @@ import {
 } from "@nocoo/basalt/components/tooltip";
 import { type ReactNode, useCallback, useState } from "react";
 import { useLocation } from "react-router";
+import { EnvironmentSwitch } from "@/components/environment-switch";
 import { useAuth } from "@/lib/auth-context";
 import { ALL_NAV_ITEMS, isNavItemActive, NAV_GROUPS } from "@/lib/navigation";
 import pkg from "../../../package.json";
@@ -173,6 +174,11 @@ function NoheirSidebarBody({
             ))}
       </SidebarNav>
       <SidebarFooter>
+        {variant === "mobile" && (
+          <div className="mb-basalt-space-lg">
+            <EnvironmentSwitch />
+          </div>
+        )}
         <SidebarUser
           name={userName}
           email={userEmail || undefined}
