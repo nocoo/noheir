@@ -49,7 +49,7 @@ async function scrollSidebarNavToSettledBottom(nav: Locator) {
 }
 
 async function sidebarAvatarBounds(sidebar: Locator) {
-  const avatar = sidebar.locator('[data-slot="avatar"]');
+  const avatar = sidebar.locator('[data-slot="sidebar-user"] .h-basalt-9.w-basalt-9');
   await expect(avatar).toBeVisible();
   await expect(avatar).toHaveCSS("width", "36px");
   await expect(avatar).toHaveCSS("height", "36px");
@@ -343,7 +343,11 @@ test("capital unit commit persists updated fields and writes contribution log", 
 test("mobile navigation restores focus and unlocks scrolling after dismissal", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/api-keys");
-  const opener = page.getByRole("button", { name: "打开导航", exact: true });
+  const opener = page.getByRole("button", {
+    name: "打开导航",
+    exact: true,
+    includeHidden: true,
+  });
   await opener.click();
   const drawer = page.locator('[data-slot="sidebar-drawer"]');
   await expect(drawer).toBeVisible();
@@ -611,7 +615,7 @@ for (const theme of ["light", "dark"]) {
   });
 
   for (const width of [390, 640]) {
-    test(`mobile SidebarDrawer is 260px with zero padding at ${width}px in ${theme} mode`, async ({
+    test(`mobile SidebarDrawer is 320px with a 260px sidebar and zero padding at ${width}px in ${theme} mode`, async ({
       page,
     }, testInfo) => {
       await page.setViewportSize({ width, height: 844 });
@@ -631,6 +635,7 @@ for (const theme of ["light", "dark"]) {
         return {
           x: bounds.x,
           width: bounds.width,
+          sidebarWidth: node.querySelector("[data-basalt-sidebar]")?.getBoundingClientRect().width,
           paddingLeft: style.paddingLeft,
           paddingRight: style.paddingRight,
           paddingTop: style.paddingTop,
@@ -644,7 +649,8 @@ for (const theme of ["light", "dark"]) {
       await page.screenshot({ path: testInfo.outputPath("drawer.png") });
       expect(geometry).toEqual({
         x: 0,
-        width: 260,
+        width: 320,
+        sidebarWidth: 260,
         paddingLeft: "0px",
         paddingRight: "0px",
         paddingTop: "0px",
