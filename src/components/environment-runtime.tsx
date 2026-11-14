@@ -75,7 +75,7 @@ export function environmentFetch(input: string, init?: RequestInit) {
 export async function switchEnvironment(mode: EnvironmentMode) {
   if (!environment || environment.locked || environment.mode === mode) return;
   if (
-    (dirty || document.querySelector('[role="dialog"]')) &&
+    (dirty || document.querySelector('[role="dialog"]:not([data-slot="sidebar-drawer"])')) &&
     !window.confirm("丢弃未保存的修改并切换环境？")
   )
     return;
