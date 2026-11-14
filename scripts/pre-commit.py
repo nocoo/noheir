@@ -149,23 +149,19 @@ def self_test():
 
 
 def terminate(processes):
+    active = []
     for process, _ in processes:
         if process.poll() is not None:
             continue
+        active.append(process)
         try:
             os.killpg(process.pid, signal.SIGTERM)
         except ProcessLookupError:
             pass
-    deadline = time.monotonic() + 3
-    for process, _ in processes:
-        if process.poll() is None:
-            try:
-                process.wait(timeout=max(0, deadline - time.monotonic()))
-            except subprocess.TimeoutExpired:
-                pass
-    for process, _ in processes:
-        if process.poll() is not None:
-            continue
+    # Keep active leaders unreaped until KILL to retain process-group ownership.
+    if active:
+        time.sleep(3)
+    for process in active:
         try:
             os.killpg(process.pid, signal.SIGKILL)
         except ProcessLookupError:
@@ -174,9 +170,39 @@ def terminate(processes):
         process.wait()
 
 
+def cleanup_test():
+    child_code = "import signal,time; signal.signal(signal.SIGTERM,signal.SIG_IGN); print('ready',flush=True); time.sleep(10)"
+    parent_code = (
+        "import subprocess,sys,time; "
+        f"child=subprocess.Popen([sys.executable,'-c',{child_code!r}],stdout=subprocess.PIPE,text=True); "
+        "child.stdout.readline(); print(child.pid,flush=True); time.sleep(10)"
+    )
+    leader = subprocess.Popen(
+        [sys.executable, "-c", parent_code],
+        stdout=subprocess.PIPE,
+        text=True,
+        start_new_session=True,
+    )
+    child_pid = int(leader.stdout.readline())
+    terminate([(leader, None)])
+    assert leader.returncode == -signal.SIGTERM, "Leader did not exit during TERM grace"
+    state = subprocess.run(
+        ["ps", "-o", "stat=", "-p", str(child_pid)],
+        capture_output=True,
+        text=True,
+        check=False,
+    ).stdout.strip()
+    assert not state or state.startswith("Z"), f"Child survived process-group cleanup: {state}"
+    leader.stdout.close()
+    print("Process-group cleanup rejects surviving descendants")
+
+
 def main():
     if len(sys.argv) == 2 and sys.argv[1] == "--self-test":
         self_test()
+        return
+    if len(sys.argv) == 2 and sys.argv[1] == "--cleanup-test":
+        cleanup_test()
         return
     for tool in ("git", "bun", "node"):
         if shutil.which(tool) is None:
