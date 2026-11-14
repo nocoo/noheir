@@ -134,11 +134,24 @@ def self_test():
             pass
         else:
             raise AssertionError("Non-finite coverage was accepted")
+    from types import SimpleNamespace
+
+    completed = SimpleNamespace(pid=123, poll=lambda: 0, wait=lambda: 0)
+    signals = []
+    killpg = os.killpg
+    try:
+        os.killpg = lambda pid, signum: signals.append((pid, signum))
+        terminate([(completed, None)])
+    finally:
+        os.killpg = killpg
+    assert signals == [], "Completed process groups must not be signaled"
     print("pre-commit helper checks passed")
 
 
 def terminate(processes):
     for process, _ in processes:
+        if process.poll() is not None:
+            continue
         try:
             os.killpg(process.pid, signal.SIGTERM)
         except ProcessLookupError:
@@ -151,6 +164,8 @@ def terminate(processes):
             except subprocess.TimeoutExpired:
                 pass
     for process, _ in processes:
+        if process.poll() is not None:
+            continue
         try:
             os.killpg(process.pid, signal.SIGKILL)
         except ProcessLookupError:
