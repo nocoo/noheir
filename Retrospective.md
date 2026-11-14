@@ -42,6 +42,30 @@ original strict viewport assertions. Additional drawer cases cover 320px,
 The owner-approved outer320/inner260 geometry is an acceptance amendment, not
 an upstream fix or a pass against the historical outer260 requirement.
 
+## 2026-11-14 — Preserve environment and gate isolation during the repair
+
+Review caught that moving environment controls into SidebarDrawer made the
+existing unsaved-dialog guard treat navigation as editing. Only the navigation
+dialog is now excluded; actual editing dialogs and dirty fields retain their
+confirmation. Real unlocked mobile checks cover clean switching plus dirty
+cancel/accept, alongside the original desktop checks.
+
+The full environment script also revealed two existing failures: navigating to
+the literal route pattern `*`, and unguarded sidebar preference access when
+Storage throws. The wildcard now exercises a concrete unknown URL and asserts
+its error boundary. Sidebar preferences retain their current in-memory state
+when persistence is unavailable; restricted-storage collapse/expand and switching
+are browser-verified, without dropping those scenarios.
+
+The L1 rejection matrix initially failed its timeout probe with an operating
+system permission error during process-group cleanup. Cleanup attempted signals
+against completed, already reaped process leaders as well as running ones.
+Completed numeric process-group IDs are not durable ownership handles and can
+be reused. Cleanup now signals only groups whose own leaders are still running;
+a regression self-test rejects signaling completed groups. Permission errors
+are not ignored, and timeouts, thresholds and rejection assertions are unchanged.
+The full matrix subsequently passed, including timeout and interruption.
+
 ## Undated entries migrated from CLAUDE.md
 
 - D1 uses SQLite syntax — use `strftime('%Y', date)` instead of `EXTRACT(YEAR FROM date)`.
