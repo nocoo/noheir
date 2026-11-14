@@ -64,7 +64,18 @@ Completed numeric process-group IDs are not durable ownership handles and can
 be reused. Cleanup now signals only groups whose own leaders are still running;
 a regression self-test rejects signaling completed groups. Permission errors
 are not ignored, and timeouts, thresholds and rejection assertions are unchanged.
-The full matrix subsequently passed, including timeout and interruption.
+An initial rerun passed, but a later rerun reproduced EPERM. A full traceback
+showed Darwin rejecting SIGKILL for an owned group containing only zombies;
+this was not proof of missing privileges or process-ID reuse. Review also caught
+that polling/reaping a terminated group leader before KILL could leave children
+that ignore TERM alive. Cleanup now keeps initially active leaders unreaped until
+group KILL, then reaps them. On EPERM it confirms that every remaining group
+member is a zombie before reaping; a live member or failed inspection still
+raises. A real regression fixture proves a TERM-exited leader cannot leave its
+TERM-ignoring child running; the previous implementation fails that fixture.
+Mocked checks retain live-process permission rejection and completed-group safety.
+Eight repeated real timeout probes and the final full matrix passed, including
+timeout and interruption. No privilege, timeout budget or rejection was waived.
 
 ## Undated entries migrated from CLAUDE.md
 
