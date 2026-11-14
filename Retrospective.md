@@ -20,6 +20,28 @@ Keep genuine geometry failures distinct from test implementation mistakes. The
 upgrade stopped at the reproduced drawer blocker; the incorrect locators remain
 an explicit follow-up, without relaxing geometry or existing tests.
 
+## 2026-11-14 — Repair sidebar acceptance and local mobile header composition
+
+The resumed upgrade verified the published Avatar token classes and corrected
+its locator without changing size expectations. The modal opener query now
+includes the inaccessible background solely to inspect its retained attributes;
+actual opening, first Escape, dismissal and focus return are exercised normally.
+A diagnostic initially matched both the shell and page `header`; scoping it to
+`data-basalt-header` avoided conflating separate header roles.
+
+The 390.234375px header overflow persisted before and after font readiness and
+a one-second settle. The local environment control consumed 160.234375px in a
+nonshrinking 374.234375px actions row, overlapping navigation and overflowing at
+both 390px and 320px. Basalt 3.3.1 and 3.3.4 AppHeader modules were byte-identical;
+the unchanged consumer composed too many local controls into the mobile row.
+The application now places environment selection in the mobile drawer footer
+and keeps it in the desktop header. No component CSS, size tolerance or quality
+floor was changed. The full 60-case browser suite then passed, including the
+original strict viewport assertions. Additional drawer cases cover 320px,
+390px and 640px in both themes and verify the preserved environment server lock.
+The owner-approved outer320/inner260 geometry is an acceptance amendment, not
+an upstream fix or a pass against the historical outer260 requirement.
+
 ## Undated entries migrated from CLAUDE.md
 
 - D1 uses SQLite syntax — use `strftime('%Y', date)` instead of `EXTRACT(YEAR FROM date)`.
