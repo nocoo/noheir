@@ -2,6 +2,94 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.2.0] - 2026-11-14
+
+### Fixes
+
+- reap zombie-only groups after darwin eperm
+- retain group ownership until descendant cleanup
+- signal only running l1 process groups
+- keep sidebar usable without browser storage
+- exclude navigation from unsaved dialog guard
+- keep mobile environment control in drawer
+- **l1** — clone fixture on a branch for CI probes
+
+### Refactoring
+
+- **noheir** — adopt basalt SidebarDrawer
+- **ui** — align app shell with Basalt 3.3 sidebar primitives
+- **ui** — 资本仓库改用 basalt PageHeader
+- **ui** — 决策中心改用 basalt PageHeader
+- **ui** — 时间视图改用 basalt PageHeader
+- **ui** — 资本仪表盘改用 basalt PageHeader
+- **ui** — 年度对比分析改用 basalt PageHeader
+- **ui** — 产品管理改用 basalt PageHeader
+- **ui** — 资本单位管理改用 basalt PageHeader
+- **ui** — 计划分类页改用 basalt PageHeader
+- **ui** — 资金计划日历改用 basalt PageHeader
+- **ui** — 隐私政策与服务条款改用 basalt PageHeader
+- **ui** — 策略透视改用 basalt PageHeader
+- **ui** — 数据质量改用 basalt PageHeader
+- **ui** — 财务假设改用 basalt PageHeader
+- **ui** — 分类设置改用 basalt PageHeader
+- **ui** — 余额锚点设置改用 basalt PageHeader
+- **ui** — 账户类型管理改用 basalt PageHeader
+- **ui** — 账户明细改用 basalt PageHeader
+- **ui** — 账户分析改用 basalt PageHeader
+- **ui** — 收支分析改用 basalt PageHeader
+- **ui** — 储蓄率分析改用 basalt PageHeader
+- **ui** — 流动性阶梯改用 basalt PageHeader
+- **ui** — 财务自由分析改用 basalt PageHeader
+- **ui** — 流向分析改用 basalt PageHeader
+- **ui** — 财务健康分析改用 basalt PageHeader
+- **ui** — 数据管理改用 basalt PageHeader
+- **ui** — 数据导入改用 basalt PageHeader
+- **ui** — 财务概览改用 basalt PageHeader
+- **sidebar** — render collapsed links in basalt SidebarNav
+- **sidebar** — drop ineffective expand-rail button layout overrides
+- **chrome** — keep sidebar mark inset stable across collapse
+- **chrome** — fix lint after shell cleanup
+- **chrome** — align sidebar footer user block with basalt defaults
+- **chrome** — use basalt LinkButton and tooltips in header actions
+- **chrome** — use AppHeader breadcrumbs without site overrides
+- **chrome** — align sidebar header with basalt AppSidebar
+
+### Documentation
+
+- clarify darwin cleanup evidence and regression
+- record environment and gate isolation repairs
+- explain approved drawer and header repair
+- record sidebar acceptance locator mistakes
+- update basalt navigation contract
+- **agents** — record measured L1 hook evidence
+
+### Tests
+
+- cover unlocked mobile environment switching
+- cover mobile environment and drawer actions
+- correct sidebar locators and acceptance
+- verify sidebar avatar and drawer geometry
+- **ui** — cover Basalt sidebar selection and Access logout
+- **e2e** — drop removed calc-slot sidebar logo position assertion
+- **l1** — add Husky gate verification harness and CI job
+
+### Chores
+
+- **deps** — bump @nocoo/basalt to 3.3.4
+- **deps** — bump @nocoo/basalt to 3.3.1
+- release 3.1.5
+- **l1** — honor NOHEIR_L1_TIMEOUT_SEC in pre-commit
+- release 3.1.4
+- release 3.1.3
+- **deps** — bump @nocoo/basalt to 3.2.1
+
+### CI
+
+- migrate to base-ci v2026.12 strict slot-status via quality.yml
+- pin base-ci to v2026.10
+- bump node to 26.12.1
+- bump base-ci to ac635753
+
 ## [3.1.2] - 2026-10-22
 
 ### Documentation
