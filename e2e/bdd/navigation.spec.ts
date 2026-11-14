@@ -614,7 +614,7 @@ for (const theme of ["light", "dark"]) {
     await expect(sidebar).toHaveCSS("width", "68px");
   });
 
-  for (const width of [390, 640]) {
+  for (const width of [320, 390, 640]) {
     test(`mobile SidebarDrawer is 320px with a 260px sidebar and zero padding at ${width}px in ${theme} mode`, async ({
       page,
     }, testInfo) => {
@@ -656,9 +656,37 @@ for (const theme of ["light", "dark"]) {
         paddingTop: "0px",
         paddingBottom: "0px",
       });
-      await expect(drawer.getByRole("button", { name: "关闭导航菜单", exact: true })).toBeVisible();
+      const dismiss = drawer.getByRole("button", { name: "关闭导航菜单", exact: true });
+      await expect(dismiss).toBeFocused();
+      await expect(drawer.locator('[data-slot="sidebar-user"] p').last()).toHaveCSS(
+        "line-height",
+        "16px",
+      );
+      await expect(drawer.locator('[data-slot="sidebar-brand-name"]')).toBeVisible();
+      await expect(drawer.locator('[data-slot="sidebar-brand-version"]')).toBeVisible();
+      await expect(drawer.getByRole("link", { name: "退出登录", exact: true })).toHaveAttribute(
+        "href",
+        "/cdn-cgi/access/logout",
+      );
+      if (process.env.CI) await expect(drawer.locator('[aria-label="环境"]')).toHaveCount(0);
+      else {
+        for (const name of ["Demo", "E2E", "Prod"]) {
+          const mode = drawer.getByRole("radio", { name, exact: true });
+          await expect(mode).toBeVisible();
+          await expect(mode).toBeDisabled();
+        }
+        await expect(drawer.getByRole("radio", { name: "E2E", exact: true })).toHaveAttribute(
+          "data-state",
+          "on",
+        );
+      }
       await sidebarAvatarBounds(drawer);
       await page.keyboard.press("Escape");
+      await expect(drawer).toHaveCount(0);
+      await expect(opener).toBeFocused();
+      await expect(opener).toHaveAttribute("aria-expanded", "false");
+      await opener.click();
+      await dismiss.click();
       await expect(drawer).toHaveCount(0);
       await expect(opener).toBeFocused();
       await opener.click();
