@@ -145,6 +145,23 @@ def self_test():
     finally:
         os.killpg = killpg
     assert signals == [], "Completed process groups must not be signaled"
+
+    from unittest.mock import patch
+
+    active = SimpleNamespace(pid=123, poll=lambda: None, wait=lambda: 0)
+    for state in ("Z", "S"):
+        status = subprocess.CompletedProcess([], 0, stdout=state)
+        with (
+            patch("time.sleep"),
+            patch("os.killpg", side_effect=[None, PermissionError("signal denied")]),
+            patch("subprocess.run", return_value=status),
+        ):
+            try:
+                terminate([(active, None)])
+            except PermissionError:
+                assert state == "S", "Zombie-only group must be reaped"
+            else:
+                assert state == "Z", "Live process signal denial must remain a failure"
     print("pre-commit helper checks passed")
 
 
@@ -166,6 +183,19 @@ def terminate(processes):
             os.killpg(process.pid, signal.SIGKILL)
         except ProcessLookupError:
             pass
+        except PermissionError:
+            # Darwin rejects signals to groups containing only zombies.
+            status = subprocess.run(
+                ["ps", "-o", "stat=", "-g", str(process.pid)],
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=5,
+            )
+            if status.returncode not in (0, 1) or any(
+                not state.startswith("Z") for state in status.stdout.split()
+            ):
+                raise
     for process, _ in processes:
         process.wait()
 
