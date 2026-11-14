@@ -23,6 +23,7 @@ import {
 } from "@nocoo/basalt/components/tooltip";
 import { type ReactNode, useCallback, useState } from "react";
 import { useLocation } from "react-router";
+import { EnvironmentSwitch } from "@/components/environment-switch";
 import { useAuth } from "@/lib/auth-context";
 import { ALL_NAV_ITEMS, isNavItemActive, NAV_GROUPS } from "@/lib/navigation";
 import pkg from "../../../package.json";
@@ -42,14 +43,20 @@ function usePersistedSidebarCollapsed(
 ): [SidebarCollapsedPreference, (value: SidebarCollapsedPreference) => void] {
   const [stored, setStored] = useState<SidebarCollapsedPreference>(() => {
     if (typeof window === "undefined") return defaultValue;
-    const value = localStorage.getItem(key);
-    return value === "true" || value === "false" ? value : defaultValue;
+    try {
+      const value = localStorage.getItem(key);
+      return value === "true" || value === "false" ? value : defaultValue;
+    } catch {
+      return defaultValue;
+    }
   });
 
   const setValue = useCallback(
     (next: SidebarCollapsedPreference) => {
       setStored(next);
-      localStorage.setItem(key, next);
+      try {
+        localStorage.setItem(key, next);
+      } catch {}
     },
     [key],
   );
@@ -173,6 +180,11 @@ function NoheirSidebarBody({
             ))}
       </SidebarNav>
       <SidebarFooter>
+        {variant === "mobile" && (
+          <div className="mb-basalt-space-lg">
+            <EnvironmentSwitch />
+          </div>
+        )}
         <SidebarUser
           name={userName}
           email={userEmail || undefined}

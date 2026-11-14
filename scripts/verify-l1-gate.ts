@@ -173,6 +173,17 @@ async function runProbes() {
       selfTest.stderr,
     );
 
+    const cleanupTest = spawnSync("python3", ["-B", "scripts/pre-commit.py", "--cleanup-test"], {
+      cwd: clone,
+      encoding: "utf8",
+      timeout: 15_000,
+    });
+    check(
+      "process-group cleanup kills descendants after leader exit",
+      cleanupTest.status === 0,
+      `${cleanupTest.stdout ?? ""}${cleanupTest.stderr ?? ""}`,
+    );
+
     resetTree();
     const healthy = runHook();
     check("healthy index snapshot passes", healthy.status === 0, healthy.output);

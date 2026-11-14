@@ -69,6 +69,29 @@ try {
       "data-state",
       "on",
     );
+    await page.setViewportSize({ width: 390, height: 844 });
+    const unexpectedConfirmations: string[] = [];
+    const rejectUnexpectedConfirmation = async (dialog: import("@playwright/test").Dialog) => {
+      unexpectedConfirmations.push(dialog.message());
+      await dialog.dismiss();
+    };
+    page.on("dialog", rejectUnexpectedConfirmation);
+    for (const mode of ["Demo", "E2E"]) {
+      await page.getByRole("button", { name: "打开导航", exact: true }).click();
+      const drawer = page.locator('[data-slot="sidebar-drawer"]');
+      await expect(drawer.getByRole("radio", { name: mode, exact: true })).toBeEnabled();
+      await Promise.all([
+        page.waitForNavigation(),
+        drawer.getByRole("radio", { name: mode, exact: true }).click(),
+      ]);
+      assert.equal(
+        await page.evaluate(() => localStorage.getItem("noheir:environment-mode")),
+        mode.toLowerCase(),
+      );
+    }
+    page.off("dialog", rejectUnexpectedConfirmation);
+    assert.deepEqual(unexpectedConfirmations, []);
+    await page.setViewportSize({ width: 1440, height: 1000 });
     const original = await page.evaluate(() =>
       sessionStorage.getItem("noheir:environment-instance"),
     );
@@ -122,8 +145,40 @@ try {
       "data-state",
       "on",
     );
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`${origin}/api-keys`);
+    await page.getByLabel("密钥名称", { exact: true }).fill("mobile-unsaved-label");
+    const mobileInstance = await page.evaluate(() =>
+      sessionStorage.getItem("noheir:environment-instance"),
+    );
+    await page.getByRole("button", { name: "打开导航", exact: true }).click();
+    const mobileDrawer = page.locator('[data-slot="sidebar-drawer"]');
+    const declined = page.waitForEvent("dialog");
+    page.once("dialog", (dialog) => dialog.dismiss());
+    await mobileDrawer.getByRole("radio", { name: "E2E", exact: true }).click();
+    assert.equal((await declined).message(), "丢弃未保存的修改并切换环境？");
+    assert.equal(
+      await page.evaluate(() => sessionStorage.getItem("noheir:environment-instance")),
+      mobileInstance,
+    );
+    await expect(page.getByLabel("密钥名称", { exact: true })).toHaveValue("mobile-unsaved-label");
+    page.once("dialog", (dialog) => dialog.accept());
+    await Promise.all([
+      page.waitForNavigation(),
+      mobileDrawer.getByRole("radio", { name: "E2E", exact: true }).click(),
+    ]);
+    assert.notEqual(
+      await page.evaluate(() => sessionStorage.getItem("noheir:environment-instance")),
+      mobileInstance,
+    );
+    await page.getByRole("button", { name: "打开导航", exact: true }).click();
+    await Promise.all([
+      page.waitForNavigation(),
+      mobileDrawer.getByRole("radio", { name: "Demo", exact: true }).click(),
+    ]);
+    await page.setViewportSize({ width: 1440, height: 1000 });
     console.log(
-      "交互验证通过：保存的 E2E、取消草稿、接受切换、旧实例 410、重新进入、偏好不热切换。",
+      "交互验证通过：移动端无草稿切换、桌面与移动端取消/确认草稿、旧实例 410、重新进入、偏好不热切换。",
     );
   } else {
     await page.addInitScript(() => localStorage.setItem("noheir:environment-mode", "prod"));
@@ -134,8 +189,10 @@ try {
       "prod",
     );
   }
+  const notFoundPath = "/__environment-unknown-route";
   const routes = [...readFileSync("src/routes.tsx", "utf8").matchAll(/path: "([^"]+)"/g)].flatMap(
-    (match) => (match[1] && !match[1].includes(":") ? [match[1]] : []),
+    (match) =>
+      match[1] && !match[1].includes(":") ? [match[1] === "*" ? notFoundPath : match[1]] : [],
   );
   assert.ok(routes.includes("/api-keys") && routes.includes("/analyses"));
   assert.ok(
@@ -155,7 +212,9 @@ try {
   for (const route of routes) {
     await page.goto(`${origin}${route}`);
     await page.waitForLoadState("networkidle");
-    await expect(page.getByText("数据加载失败", { exact: true })).toHaveCount(0);
+    if (route === notFoundPath)
+      await expect(page.getByRole("heading", { name: "数据加载失败", exact: true })).toBeVisible();
+    else await expect(page.getByText("数据加载失败", { exact: true })).toHaveCount(0);
     await expect(page.locator("body")).not.toContainText("Unauthorized");
     await page.waitForTimeout(1100);
     if (capture || ["/", "/warehouse", "/plan/calendar", "/strategy", "/products"].includes(route))
@@ -190,6 +249,14 @@ try {
       "data-state",
       "on",
     );
+    await isolatedPage.getByRole("button", { name: "收起侧边栏", exact: true }).click();
+    const restrictedSidebar = isolatedPage.getByRole("complementary", {
+      name: "主导航",
+      exact: true,
+    });
+    await expect(restrictedSidebar).toHaveCSS("width", "68px");
+    await isolatedPage.getByRole("button", { name: "展开侧边栏", exact: true }).click();
+    await expect(restrictedSidebar).toHaveCSS("width", "260px");
     await isolatedPage.getByRole("radio", { name: "E2E", exact: true }).click();
     await expect(isolatedPage.getByRole("radio", { name: "E2E", exact: true })).toHaveAttribute(
       "data-state",

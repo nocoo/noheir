@@ -18,7 +18,7 @@ database status and no-store; dependency failures return a generic 503.
 
 ## Basalt integration
 
-The installed `@nocoo/basalt` 3.3.1 artifact is the UI API authority. Configure
+The installed `@nocoo/basalt` 3.3.4 artifact is the UI API authority. Configure
 the product's Blue preset with `AccentProvider accent="primary" persist={false}`;
 ordinary surfaces and controls use the package's `basalt-*` tokens, not a second
 application theme. Financial colors and stable domain-label mappings remain
@@ -44,7 +44,18 @@ collapsed state and open groups survive navigation, query changes and child-load
 failures. Only the ContentIsland is keyed by pathname to reset page scrolling;
 query-only changes keep the content instance. The shared layout loader supplies
 available years on navigation and revalidation, including after imports. Mobile
-navigation closes and restores focus to the persistent header trigger.
+navigation uses `SidebarDrawer` with a forced-expanded sidebar, a dismiss-mode
+`SidebarToggle` and `returnFocusRef` pointing to the persistent header trigger.
+The drawer owns width, padding, accessible title/description and focus restoration;
+navigation closes on pathname changes. For the 3.3.4 upgrade, the owner explicitly
+approved changing acceptance from a 260px outer drawer to a 320px outer drawer,
+while the inner sidebar remains 260px; this is an acceptance change, not a
+library geometry fix. Verify zero padding, 36px avatars, unchanged avatar y
+across desktop collapse and 16px email line-height in both themes.
+
+The local environment control stays in the desktop header and moves into the
+mobile navigation footer. This preserves environment selection without crowding
+navigation, financial year selection or theme controls at 320px and 390px.
 
 Navigation uses Basalt shell primitives: `SidebarBrand`, `SidebarGroup`,
 `SidebarItem`, and `SidebarIconItem` inside `SidebarNav`, with `SidebarToggle` and

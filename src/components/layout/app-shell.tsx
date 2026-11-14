@@ -1,19 +1,12 @@
-import { ContentIsland, SidebarProvider } from "@nocoo/basalt";
+import { ContentIsland, SidebarDrawer } from "@nocoo/basalt";
 import { AppHeader, AppHeaderMenuButton, ProjectLinks } from "@nocoo/basalt/components/app-header";
 import {
   AppMain,
   AppSkipLink,
   AppShell as BasaltAppShell,
 } from "@nocoo/basalt/components/app-shell";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@nocoo/basalt/components/sheet";
 import { TooltipProvider } from "@nocoo/basalt/components/tooltip";
-import { Suspense, useEffect, useMemo, useRef } from "react";
+import { Suspense, useEffect, useId, useMemo, useRef } from "react";
 import { Outlet, useLoaderData, useLocation } from "react-router";
 import { EnvironmentSwitch } from "@/components/environment-switch";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -51,6 +44,7 @@ function AppShellInner() {
   const isMobile = useIsMobile();
   const { mobileOpen, setMobileOpen } = useMobileNav();
   const menuButton = useRef<HTMLButtonElement>(null);
+  const drawerId = useId();
   const location = useLocation();
   const pathname = location.pathname;
 
@@ -80,29 +74,21 @@ function AppShellInner() {
         )}
 
         {isMobile && (
-          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-            <SheetContent
-              side="left"
-              className="w-[260px] max-w-[260px] border-0 bg-basalt-background p-0 sm:max-w-[260px] sm:p-0"
-              onCloseAutoFocus={(event) => {
-                event.preventDefault();
-                menuButton.current?.focus();
-              }}
-            >
-              <SheetHeader className="sr-only">
-                <SheetTitle>导航菜单</SheetTitle>
-                <SheetDescription>浏览 noheir 页面</SheetDescription>
-              </SheetHeader>
-              <SidebarProvider collapsed={false} defaultWidth={260}>
-                <Sidebar
-                  ariaLabel="主导航抽屉"
-                  variant="mobile"
-                  onNavigate={() => setMobileOpen(false)}
-                  onDismiss={() => setMobileOpen(false)}
-                />
-              </SidebarProvider>
-            </SheetContent>
-          </Sheet>
+          <SidebarDrawer
+            id={drawerId}
+            open={mobileOpen}
+            onOpenChange={setMobileOpen}
+            returnFocusRef={menuButton}
+            title="导航菜单"
+            description="浏览 noheir 页面"
+          >
+            <Sidebar
+              ariaLabel="主导航抽屉"
+              variant="mobile"
+              onNavigate={() => setMobileOpen(false)}
+              onDismiss={() => setMobileOpen(false)}
+            />
+          </SidebarDrawer>
         )}
 
         <AppMain>
@@ -112,6 +98,8 @@ function AppShellInner() {
                 <AppHeaderMenuButton
                   ref={menuButton}
                   label="打开导航"
+                  aria-controls={drawerId}
+                  aria-expanded={mobileOpen}
                   onClick={() => setMobileOpen(true)}
                 />
               ) : null
@@ -120,7 +108,7 @@ function AppShellInner() {
             breadcrumbsLabel="面包屑导航"
             actions={
               <>
-                <EnvironmentSwitch />
+                {!isMobile && <EnvironmentSwitch />}
                 <Suspense>
                   <GlobalYearSelector />
                 </Suspense>

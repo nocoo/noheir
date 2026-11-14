@@ -134,34 +134,105 @@ def self_test():
             pass
         else:
             raise AssertionError("Non-finite coverage was accepted")
+    from types import SimpleNamespace
+
+    completed = SimpleNamespace(pid=123, poll=lambda: 0, wait=lambda: 0)
+    signals = []
+    killpg = os.killpg
+    try:
+        os.killpg = lambda pid, signum: signals.append((pid, signum))
+        terminate([(completed, None)])
+    finally:
+        os.killpg = killpg
+    assert signals == [], "Completed process groups must not be signaled"
+
+    from unittest.mock import patch
+
+    active = SimpleNamespace(pid=123, poll=lambda: None, wait=lambda: 0)
+    for state in ("Z", "S"):
+        status = subprocess.CompletedProcess([], 0, stdout=state)
+        with (
+            patch("time.sleep"),
+            patch("os.killpg", side_effect=[None, PermissionError("signal denied")]),
+            patch("subprocess.run", return_value=status),
+        ):
+            try:
+                terminate([(active, None)])
+            except PermissionError:
+                assert state == "S", "Zombie-only group must be reaped"
+            else:
+                assert state == "Z", "Live process signal denial must remain a failure"
     print("pre-commit helper checks passed")
 
 
 def terminate(processes):
+    active = []
     for process, _ in processes:
+        if process.poll() is not None:
+            continue
+        active.append(process)
         try:
             os.killpg(process.pid, signal.SIGTERM)
         except ProcessLookupError:
             pass
-    deadline = time.monotonic() + 3
-    for process, _ in processes:
-        if process.poll() is None:
-            try:
-                process.wait(timeout=max(0, deadline - time.monotonic()))
-            except subprocess.TimeoutExpired:
-                pass
-    for process, _ in processes:
+    # Keep active leaders unreaped until KILL to retain process-group ownership.
+    if active:
+        time.sleep(3)
+    for process in active:
         try:
             os.killpg(process.pid, signal.SIGKILL)
         except ProcessLookupError:
             pass
+        except PermissionError:
+            # Darwin rejects signals to groups containing only zombies.
+            status = subprocess.run(
+                ["ps", "-o", "stat=", "-g", str(process.pid)],
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=5,
+            )
+            if status.returncode not in (0, 1) or any(
+                not state.startswith("Z") for state in status.stdout.split()
+            ):
+                raise
     for process, _ in processes:
         process.wait()
+
+
+def cleanup_test():
+    child_code = "import signal,time; signal.signal(signal.SIGTERM,signal.SIG_IGN); print('ready',flush=True); time.sleep(10)"
+    parent_code = (
+        "import subprocess,sys,time; "
+        f"child=subprocess.Popen([sys.executable,'-c',{child_code!r}],stdout=subprocess.PIPE,text=True); "
+        "child.stdout.readline(); print(child.pid,flush=True); time.sleep(10)"
+    )
+    leader = subprocess.Popen(
+        [sys.executable, "-c", parent_code],
+        stdout=subprocess.PIPE,
+        text=True,
+        start_new_session=True,
+    )
+    child_pid = int(leader.stdout.readline())
+    terminate([(leader, None)])
+    assert leader.returncode == -signal.SIGTERM, "Leader did not exit during TERM grace"
+    state = subprocess.run(
+        ["ps", "-o", "stat=", "-p", str(child_pid)],
+        capture_output=True,
+        text=True,
+        check=False,
+    ).stdout.strip()
+    assert not state or state.startswith("Z"), f"Child survived process-group cleanup: {state}"
+    leader.stdout.close()
+    print("Process-group cleanup rejects surviving descendants")
 
 
 def main():
     if len(sys.argv) == 2 and sys.argv[1] == "--self-test":
         self_test()
+        return
+    if len(sys.argv) == 2 and sys.argv[1] == "--cleanup-test":
+        cleanup_test()
         return
     for tool in ("git", "bun", "node"):
         if shutil.which(tool) is None:

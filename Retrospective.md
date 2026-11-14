@@ -2,6 +2,81 @@
 
 Accident narratives and original lessons. Historical instructions below describe their time; the current handbook and its local-isolation contract take precedence.
 
+## 2026-11-14 — Sidebar acceptance selectors were not verified against rendered DOM
+
+The Basalt 3.3.4 upgrade added an avatar locator using `data-slot="avatar"`,
+which the published Avatar does not emit by default. It also queried the mobile
+menu opener with a role locator while the modal made the background inaccessible.
+The full built-application browser run therefore produced two avatar locator
+failures and one opener locator failure, independently of four genuine drawer
+width failures (320px instead of the required 260px). Desktop width and email
+line-height assertions passed before the invalid avatar locator, but avatar size,
+vertical stability and the extended keyboard path were not verified.
+
+Check the published component source and actual rendered attributes before
+choosing acceptance locators. For modal-background attribute checks, use a stable
+DOM locator rather than an accessibility-tree query that excludes hidden content.
+Keep genuine geometry failures distinct from test implementation mistakes. The
+upgrade stopped at the reproduced drawer blocker; the incorrect locators remain
+an explicit follow-up, without relaxing geometry or existing tests.
+
+## 2026-11-14 — Repair sidebar acceptance and local mobile header composition
+
+The resumed upgrade verified the published Avatar token classes and corrected
+its locator without changing size expectations. The modal opener query now
+includes the inaccessible background solely to inspect its retained attributes;
+actual opening, first Escape, dismissal and focus return are exercised normally.
+A diagnostic initially matched both the shell and page `header`; scoping it to
+`data-basalt-header` avoided conflating separate header roles.
+
+The 390.234375px header overflow persisted before and after font readiness and
+a one-second settle. The local environment control consumed 160.234375px in a
+nonshrinking 374.234375px actions row, overlapping navigation and overflowing at
+both 390px and 320px. Basalt 3.3.1 and 3.3.4 AppHeader modules were byte-identical;
+the unchanged consumer composed too many local controls into the mobile row.
+The application now places environment selection in the mobile drawer footer
+and keeps it in the desktop header. No component CSS, size tolerance or quality
+floor was changed. The full 60-case browser suite then passed, including the
+original strict viewport assertions. Additional drawer cases cover 320px,
+390px and 640px in both themes and verify the preserved environment server lock.
+The owner-approved outer320/inner260 geometry is an acceptance amendment, not
+an upstream fix or a pass against the historical outer260 requirement.
+
+## 2026-11-14 — Preserve environment and gate isolation during the repair
+
+Review caught that moving environment controls into SidebarDrawer made the
+existing unsaved-dialog guard treat navigation as editing. Only the navigation
+dialog is now excluded; actual editing dialogs and dirty fields retain their
+confirmation. Real unlocked mobile checks cover clean switching plus dirty
+cancel/accept, alongside the original desktop checks.
+
+The full environment script also revealed two existing failures: navigating to
+the literal route pattern `*`, and unguarded sidebar preference access when
+Storage throws. The wildcard now exercises a concrete unknown URL and asserts
+its error boundary. Sidebar preferences retain their current in-memory state
+when persistence is unavailable; restricted-storage collapse/expand and switching
+are browser-verified, without dropping those scenarios.
+
+The L1 rejection matrix initially failed its timeout probe with an operating
+system permission error during process-group cleanup. Cleanup attempted signals
+against completed, already reaped process leaders as well as running ones.
+Completed numeric process-group IDs are not durable ownership handles and can
+be reused. Cleanup now signals only groups whose own leaders are still running;
+a regression self-test rejects signaling completed groups. Permission errors
+are not ignored, and timeouts, thresholds and rejection assertions are unchanged.
+An initial rerun passed, but a later rerun reproduced EPERM. A full traceback
+showed Darwin rejecting SIGKILL for an owned group containing only zombies;
+this was not proof of missing privileges or process-ID reuse. Review also caught
+that polling/reaping a terminated group leader before KILL could leave children
+that ignore TERM alive. Cleanup now keeps initially active leaders unreaped until
+group KILL, then reaps them. On EPERM it confirms that every remaining group
+member is a zombie before reaping; a live member or failed inspection still
+raises. A real regression fixture proves a TERM-exited leader cannot leave its
+TERM-ignoring child running; the previous implementation fails that fixture.
+Mocked checks retain live-process permission rejection and completed-group safety.
+Eight repeated real timeout probes and the final full matrix passed, including
+timeout and interruption. No privilege, timeout budget or rejection was waived.
+
 ## Undated entries migrated from CLAUDE.md
 
 - D1 uses SQLite syntax — use `strftime('%Y', date)` instead of `EXTRACT(YEAR FROM date)`.
