@@ -43,14 +43,20 @@ function usePersistedSidebarCollapsed(
 ): [SidebarCollapsedPreference, (value: SidebarCollapsedPreference) => void] {
   const [stored, setStored] = useState<SidebarCollapsedPreference>(() => {
     if (typeof window === "undefined") return defaultValue;
-    const value = localStorage.getItem(key);
-    return value === "true" || value === "false" ? value : defaultValue;
+    try {
+      const value = localStorage.getItem(key);
+      return value === "true" || value === "false" ? value : defaultValue;
+    } catch {
+      return defaultValue;
+    }
   });
 
   const setValue = useCallback(
     (next: SidebarCollapsedPreference) => {
       setStored(next);
-      localStorage.setItem(key, next);
+      try {
+        localStorage.setItem(key, next);
+      } catch {}
     },
     [key],
   );
