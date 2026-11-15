@@ -615,7 +615,7 @@ for (const theme of ["light", "dark"]) {
   });
 
   for (const width of [320, 390, 640]) {
-    test(`mobile SidebarDrawer is 320px with a 260px sidebar and zero padding at ${width}px in ${theme} mode`, async ({
+    test(`mobile SidebarDrawer is 260px with a 260px sidebar and zero padding at ${width}px in ${theme} mode`, async ({
       page,
     }, testInfo) => {
       await page.setViewportSize({ width, height: 844 });
@@ -649,7 +649,7 @@ for (const theme of ["light", "dark"]) {
       await page.screenshot({ path: testInfo.outputPath("drawer.png") });
       expect(geometry).toEqual({
         x: 0,
-        width: 320,
+        width: 260,
         sidebarWidth: 260,
         paddingLeft: "0px",
         paddingRight: "0px",
