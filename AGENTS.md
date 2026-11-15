@@ -98,7 +98,7 @@ conflict; use the scoped D1 aliases in `src/worker-types.d.ts`.
 
 ## Verification
 
-6DQ = unified L1 (absorbing former G1) + L2/L3 + G2 + D1. Status describes enforcement, not a claim of complete
+Quality slots are enforced via `.github/workflows/quality-slots.yml` (`quality / Z1: Gate`, System1 v1.3.0 / `nocoo/base-ci v2026.15`). Status describes enforcement, not a claim of complete
 coverage. Both L1 suites require statements/branches/functions/lines each >=95%
 in their configured scope. Do not lower thresholds, add exclusions to hide new
 logic, skip/focus tests or bypass hooks.
@@ -127,7 +127,7 @@ scan `origin/main..HEAD`, not arbitrary pushed refs from stdin. Index-only unifi
 under 30 seconds is verified on the reference cloud-agent image (2026-11-09, frozen
 locks after `bun install --frozen-lockfile` in root and `worker/`). Pushed-ref L2/G2
 under three minutes remain workflow targets. Explicitly stage logical commits only. The
-owner merged former G1 into L1 on 2026-09-21; the framework keeps the 6DQ name.
+owner merged former G1 into L1 on 2026-09-21.
 
 ### L1 measured evidence (2026-11-09)
 
