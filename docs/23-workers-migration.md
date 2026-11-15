@@ -99,16 +99,16 @@ checking actual agent state. Lifecycle waits have a separate time-based monitor.
 3. [x] Native Worker auth/MCP/business boundary and Vite routes/client integration.
 4. [x] Build/type/lint/unit checks; retain all existing coverage floors.
 5. [x] Isolated local real-HTTP tests with per-run SQLite and a verified test
-   marker, signed JWT failures, ownership isolation, OAuth/PKCE/replay/refresh,
-   state transitions, import rollback and backup scope.
+       marker, signed JWT failures, ownership isolation, OAuth/PKCE/replay/refresh,
+       state transitions, import rollback and backup scope.
 6. [x] Browser acceptance: all routes render, year filtering, financial overview,
-   unit commit, recurring rules, import preview/commit, backup and error states.
+       unit commit, recurring rules, import preview/commit, backup and error states.
 7. [x] Implement native deployment workflow with successful-CI source verification,
-   immutable build revision and live checks. The production workflow passed.
+       immutable build revision and live checks. The production workflow passed.
 8. [x] Read-only production identity/count fingerprint, D1 backup, Access path
-   policy inspection, deploy and domain cutover; repeat live/data checks.
+       policy inspection, deploy and domain cutover; repeat live/data checks.
 9. [x] Publish v3.0.0 only after successful CI and deployment; update all active
-   documentation, push atomic commits and record exact release evidence.
+       documentation, push atomic commits and record exact release evidence.
 
 Keep commits buildable and grouped by logical boundary. No hook bypasses, lowered
 coverage thresholds, production fixture writes or unverified release claims.
