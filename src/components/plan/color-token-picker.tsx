@@ -175,7 +175,7 @@ export function ColorTokenPicker({
               onChange(token);
             }}
             onKeyDown={(e) => handleKeyDown(e, idx)}
-            style={{ backgroundColor: `hsl(var(--basalt-${token}))` }}
+            style={{ backgroundColor: `hsl(var(--${token}))` }}
             className={cn(
               "size-8 rounded-md outline-none transition-all",
               "focus-visible:ring-2 focus-visible:ring-basalt-ring focus-visible:ring-offset-2 focus-visible:ring-offset-basalt-background",

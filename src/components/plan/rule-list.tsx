@@ -80,7 +80,7 @@ const FALLBACK_COLOR = "hsl(var(--basalt-muted-foreground))";
 
 function tokenColor(token: string | undefined): string {
   if (!token) return FALLBACK_COLOR;
-  return CHART_TOKENS.includes(token) ? `hsl(var(--basalt-${token}))` : FALLBACK_COLOR;
+  return CHART_TOKENS.includes(token) ? `hsl(var(--${token}))` : FALLBACK_COLOR;
 }
 
 const STATUS_LABEL: Record<RecurringExpenseDisplayStatus, string> = {

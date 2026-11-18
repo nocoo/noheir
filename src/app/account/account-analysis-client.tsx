@@ -67,17 +67,17 @@ interface AccountAnalysisClientProps {
 }
 
 const PIE_COLORS = [
-  "hsl(var(--basalt-chart-1))",
-  "hsl(var(--basalt-chart-2))",
-  "hsl(var(--basalt-chart-3))",
-  "hsl(var(--basalt-chart-4))",
-  "hsl(var(--basalt-chart-5))",
+  "hsl(var(--chart-1))",
+  "hsl(var(--chart-2))",
+  "hsl(var(--chart-3))",
+  "hsl(var(--chart-4))",
+  "hsl(var(--chart-5))",
   "#64748b",
 ];
 
 const INCOME_HEX = "var(--color-income)";
 const EXPENSE_HEX = "var(--color-expense)";
-const BALANCE_HEX = "hsl(var(--basalt-chart-1))";
+const BALANCE_HEX = "hsl(var(--chart-1))";
 
 export function AccountAnalysisClient({
   accounts,

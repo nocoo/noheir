@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.2.2] - 2026-11-18
+
+### Fixed
+
+- Restore the 24-color financial `--chart-1..24` CSS variables and palette references for tags, badges, color-token picker swatches, and financial charts.
+
 ## [3.2.1] - 2026-11-18
 
 ### Refactoring

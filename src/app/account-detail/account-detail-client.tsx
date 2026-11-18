@@ -177,7 +177,7 @@ export function AccountDetailClient({
                     type="monotone"
                     dataKey="balance"
                     name="余额"
-                    stroke="hsl(var(--basalt-chart-1))"
+                    stroke="hsl(var(--chart-1))"
                     strokeWidth={2}
                     dot={false}
                     activeDot={{ r: 4 }}

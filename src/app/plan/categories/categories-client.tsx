@@ -41,7 +41,7 @@ export interface CategoriesClientProps {
 
 function colorCss(token: string): string {
   return CHART_TOKENS.includes(token)
-    ? `hsl(var(--basalt-${token}))`
+    ? `hsl(var(--${token}))`
     : "hsl(var(--basalt-muted-foreground))";
 }
 
