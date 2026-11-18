@@ -46,9 +46,9 @@ import { financeApi } from "@/lib/finance-api";
 const statusLabels = { active: "有效", expired: "已过期", revoked: "已撤销" };
 const iconTones = {
   blue: "bg-basalt-info-tint text-basalt-info",
-  green: "bg-basalt-chart-3/20 text-basalt-foreground",
+  green: "bg-chart-3/20 text-basalt-foreground",
   amber: "bg-basalt-warning-tint text-basalt-warning",
-  pink: "bg-basalt-chart-9/20 text-basalt-foreground",
+  pink: "bg-chart-9/20 text-basalt-foreground",
 };
 const resourcePresentation = {
   transactions: ["收支", ReceiptText, "green"],

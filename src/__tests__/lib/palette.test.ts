@@ -35,17 +35,17 @@ describe("palette", () => {
     });
 
     it("colors use CSS variables", () => {
-      expect(CHART_COLORS[0]).toBe("hsl(var(--basalt-chart-1))");
-      expect(CHART_COLORS[23]).toBe("hsl(var(--basalt-chart-24))");
+      expect(CHART_COLORS[0]).toBe("hsl(var(--chart-1))");
+      expect(CHART_COLORS[23]).toBe("hsl(var(--chart-24))");
     });
   });
 
   describe("chart object", () => {
     it("has named color accessors", () => {
-      expect(chart.sky).toBe("hsl(var(--basalt-chart-1))");
-      expect(chart.teal).toBe("hsl(var(--basalt-chart-2))");
-      expect(chart.jade).toBe("hsl(var(--basalt-chart-3))");
-      expect(chart.blue).toBe("hsl(var(--basalt-chart-24))");
+      expect(chart.sky).toBe("hsl(var(--chart-1))");
+      expect(chart.teal).toBe("hsl(var(--chart-2))");
+      expect(chart.jade).toBe("hsl(var(--chart-3))");
+      expect(chart.blue).toBe("hsl(var(--chart-24))");
     });
 
     it("has all 24 named colors", () => {
@@ -63,7 +63,7 @@ describe("palette", () => {
 
   describe("withAlpha", () => {
     it("adds alpha to CSS variable", () => {
-      expect(withAlpha("chart-1", 0.5)).toBe("hsl(var(--basalt-chart-1) / 0.5)");
+      expect(withAlpha("chart-1", 0.5)).toBe("hsl(var(--chart-1) / 0.5)");
       expect(withAlpha("income", 0.12)).toBe("hsl(var(--income) / 0.12)");
     });
   });
@@ -234,29 +234,29 @@ describe("palette", () => {
 
   describe("domain color helpers", () => {
     it("strategyColor returns CSS variable", () => {
-      expect(strategyColor("长期理财")).toBe("hsl(var(--basalt-chart-3))");
+      expect(strategyColor("长期理财")).toBe("hsl(var(--chart-3))");
       // Unknown uses hash, not gray
       const unknownColor = strategyColor("unknown");
-      expect(unknownColor).toMatch(/^hsl\(var\(--basalt-chart-\d+\)\)$/);
+      expect(unknownColor).toMatch(/^hsl\(var\(--chart-\d+\)\)$/);
     });
 
     it("tacticsColor returns CSS variable", () => {
-      expect(tacticsColor("养老年金")).toBe("hsl(var(--basalt-chart-24))");
-      expect(tacticsColor("定期存款")).toBe("hsl(var(--basalt-chart-2))");
+      expect(tacticsColor("养老年金")).toBe("hsl(var(--chart-24))");
+      expect(tacticsColor("定期存款")).toBe("hsl(var(--chart-2))");
     });
 
     it("currencyColor returns CSS variable", () => {
-      expect(currencyColor("CNY")).toBe("hsl(var(--basalt-chart-9))");
-      expect(currencyColor("USD")).toBe("hsl(var(--basalt-chart-24))");
+      expect(currencyColor("CNY")).toBe("hsl(var(--chart-9))");
+      expect(currencyColor("USD")).toBe("hsl(var(--chart-24))");
     });
 
     it("statusColor returns CSS variable", () => {
-      expect(statusColor("已成立")).toBe("hsl(var(--basalt-chart-3))");
+      expect(statusColor("已成立")).toBe("hsl(var(--chart-3))");
     });
 
     it("maturityColor returns CSS variable", () => {
-      expect(maturityColor("已到期")).toBe("hsl(var(--basalt-chart-9))");
-      expect(maturityColor("30天内")).toBe("hsl(var(--basalt-chart-6))");
+      expect(maturityColor("已到期")).toBe("hsl(var(--chart-9))");
+      expect(maturityColor("30天内")).toBe("hsl(var(--chart-6))");
     });
   });
 });

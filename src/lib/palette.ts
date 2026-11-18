@@ -5,20 +5,18 @@
  * Use these constants everywhere instead of hardcoded HSL strings.
  *
  * SVG/DOM consumers (Recharts, Nivo, inline styles) can use these tokens
- * directly — `hsl(var(--basalt-chart-N))` is browser-resolved on every paint, so
+ * directly — `hsl(var(--chart-N))` is browser-resolved on every paint, so
  * theme flips repaint charts without JS re-rendering.
  */
 
-/** Helper — wraps a Basalt CSS custom property name for inline style usage. */
-const v = (token: string) => `hsl(var(--basalt-${token}))`;
-const cssToken = (token: string) => (token.startsWith("chart-") ? `basalt-${token}` : token);
+/** Helper — wraps a CSS custom property name for inline style usage. */
+const v = (token: string) => `hsl(var(--${token}))`;
 
 /**
  * Returns a CSS color string with alpha from a CSS custom property.
- * Usage: `withAlpha("chart-1", 0.12)` → `hsl(var(--basalt-chart-1) / 0.12)`
+ * Usage: `withAlpha("chart-1", 0.12)` → `hsl(var(--chart-1) / 0.12)`
  */
-export const withAlpha = (token: string, alpha: number) =>
-  `hsl(var(--${cssToken(token)}) / ${alpha})`;
+export const withAlpha = (token: string, alpha: number) => `hsl(var(--${token}) / ${alpha})`;
 
 /**
  * A CSS colour string that reads from --{token} and shifts its L (lightness)
@@ -34,13 +32,13 @@ export const withAlpha = (token: string, alpha: number) =>
  * Chrome 119+, Safari 16.4+, Firefox 128+.
  */
 export function shadeChartColor(token: string, deltaL: number): string {
-  return `hsl(from hsl(var(--basalt-${token})) h s clamp(0, calc(l + ${deltaL}), 100))`;
+  return `hsl(from hsl(var(--${token})) h s clamp(0, calc(l + ${deltaL}), 100))`;
 }
 
 /** \`hsl(var(--{token}))\` — the raw CSS-var reference; browser resolves on
  *  every paint so theme flips repaint charts without JS re-render. */
 export function chartVar(token: string): string {
-  return `hsl(var(--basalt-${token}))`;
+  return `hsl(var(--${token}))`;
 }
 
 // ── 24 sequential chart colors ──

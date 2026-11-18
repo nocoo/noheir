@@ -226,23 +226,23 @@ export function SavingsRateClient({
                 <ReferenceLine
                   yAxisId="left"
                   y={summary.annualSavingsRate}
-                  stroke="hsl(var(--basalt-chart-1))"
+                  stroke="hsl(var(--chart-1))"
                   strokeDasharray="5 5"
                   label={{
                     value: `年度 ${summary.annualSavingsRate.toFixed(1)}%`,
-                    fill: "hsl(var(--basalt-chart-1))",
+                    fill: "hsl(var(--chart-1))",
                     fontSize: 11,
                   }}
                 />
                 <ReferenceLine
                   yAxisId="left"
                   y={targetSavingsRate}
-                  stroke="hsl(var(--basalt-chart-3))"
+                  stroke="hsl(var(--chart-3))"
                   strokeDasharray="3 3"
                   strokeWidth={2}
                   label={{
                     value: `目标 ${targetSavingsRate}%`,
-                    fill: "hsl(var(--basalt-chart-3))",
+                    fill: "hsl(var(--chart-3))",
                     fontSize: 11,
                     position: "insideTopRight",
                   }}
@@ -260,14 +260,14 @@ export function SavingsRateClient({
                   yAxisId="left"
                   type="monotone"
                   dataKey="savingsRate"
-                  stroke="hsl(var(--basalt-chart-1))"
+                  stroke="hsl(var(--chart-1))"
                   strokeWidth={3}
                   dot={{
-                    fill: "hsl(var(--basalt-chart-1))",
+                    fill: "hsl(var(--chart-1))",
                     strokeWidth: 2,
                     r: 4,
                   }}
-                  activeDot={{ r: 6, fill: "hsl(var(--basalt-chart-1))" }}
+                  activeDot={{ r: 6, fill: "hsl(var(--chart-1))" }}
                 />
               </ComposedChart>
             </ResponsiveContainer>
