@@ -1,4 +1,4 @@
-import { Button, DialogClose, LayerCard } from "@nocoo/basalt";
+import { Button, ConfirmDialog, DialogClose, LayerCard } from "@nocoo/basalt";
 import { Badge } from "@nocoo/basalt/components/badge";
 import {
   Dialog,
@@ -46,12 +46,11 @@ import {
   Warehouse,
   X,
   XIcon,
-} from "lucide-react";
+} from "@nocoo/basalt/icons";
 import { useMemo, useState, useTransition } from "react";
 import { Link, useNavigate, useRevalidator, useSearchParams } from "react-router";
 import { createProduct, deleteProduct, updateProduct } from "@/app/actions/product-actions";
-import { CategoryBadge, ChannelBadge, CurrencyBadge } from "@/components/ui/colored-badge";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { CategoryBadge, ChannelBadge, CurrencyBadge } from "@/components/shared/colored-badge";
 import {
   DEFAULT_MAX_RETURN_RATE,
   DEFAULT_MIN_RETURN_RATE,
@@ -361,7 +360,7 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
 
       {/* Filter Panel */}
       {showFilters && (
-        <div className="space-y-4 rounded-lg border bg-basalt-muted/30 p-4">
+        <div className="space-y-4 rounded-lg bg-basalt-muted/30 ring-1 ring-basalt-border/80 shadow-basalt-card p-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium">筛选条件</h3>
             <Button variant="ghost" size="sm" onClick={resetFilters}>
@@ -636,6 +635,9 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
         }}
         title="删除产品"
         description={`确定要删除产品「${deleteTarget?.name ?? ""}」吗？此操作不可撤销。`}
+        confirmLabel="确认删除"
+        cancelLabel="取消"
+        variant="destructive"
         onConfirm={confirmDelete}
         loading={isPending}
       />

@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@nocoo/basalt/components/select";
 import { toast } from "@nocoo/basalt/components/toast";
-import { CreditCard, Save } from "lucide-react";
+import { CreditCard, Save } from "@nocoo/basalt/icons";
 import { useState, useTransition } from "react";
 import { useRevalidator } from "react-router";
 import { saveAccountTypes } from "@/app/actions/settings-actions";

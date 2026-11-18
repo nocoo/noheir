@@ -22,7 +22,7 @@ import {
   ExternalLink,
   TrendingUp,
   Warehouse,
-} from "lucide-react";
+} from "@nocoo/basalt/icons";
 import { useState } from "react";
 import { Link } from "react-router";
 import {
@@ -35,13 +35,13 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { StatCard } from "@/components/shared/stat-card";
 import {
   ProductBadge,
   StrategyBadge,
   TacticsBadge,
   UnitCodeBadge,
-} from "@/components/ui/colored-badge";
+} from "@/components/shared/colored-badge";
+import { StatCard } from "@/components/shared/stat-card";
 import type { UpcomingUnit } from "@/domain/assets/liquidity-ladder";
 import { formatCurrencyFull, formatCurrencyK, yAxisWidth } from "@/lib/chart-config";
 import { CAPITAL_TABLE_COLUMNS } from "@/lib/table-columns";

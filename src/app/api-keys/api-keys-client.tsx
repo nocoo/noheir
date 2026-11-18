@@ -36,7 +36,7 @@ import {
   Tags,
   Trash2,
   WalletCards,
-} from "lucide-react";
+} from "@nocoo/basalt/icons";
 import { Fragment, useEffect, useState } from "react";
 import { currentEnvironment } from "@/components/environment-runtime";
 import type { ApiKeyInfo, ApiResource, ApiScope } from "@/domain/api-contract";

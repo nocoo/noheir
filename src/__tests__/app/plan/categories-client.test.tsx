@@ -62,7 +62,9 @@ describe("CategoriesClient render (P3-C9)", () => {
     expect(screen.getByText("订阅")).toBeInTheDocument();
     expect(screen.getByText("3 条规则使用")).toBeInTheDocument();
     expect(screen.getByText("未被规则使用")).toBeInTheDocument();
-    expect(screen.getByTestId("cat-color-c1").style.backgroundColor).toBe("hsl(var(--chart-9))");
+    expect(screen.getByTestId("cat-color-c1").style.backgroundColor).toBe(
+      "hsl(var(--basalt-chart-9))",
+    );
   });
 
   test("category with off-palette colorToken renders fallback color", () => {
@@ -120,7 +122,7 @@ describe("CategoriesClient delete confirm (P3-C9)", () => {
       />,
     );
     await user.click(screen.getByRole("button", { name: "删除 房贷" }));
-    const dialog = await screen.findByRole("dialog");
+    const dialog = await screen.findByRole("alertdialog");
     expect(within(dialog).getByText(/5 条规则正在使用/)).toBeInTheDocument();
     expect(within(dialog).getByText(/规则本身不会被删除/)).toBeInTheDocument();
   });
@@ -134,7 +136,7 @@ describe("CategoriesClient delete confirm (P3-C9)", () => {
       />,
     );
     await user.click(screen.getByRole("button", { name: "删除 空分类" }));
-    const dialog = await screen.findByRole("dialog");
+    const dialog = await screen.findByRole("alertdialog");
     expect(within(dialog).getByText("此操作不可撤销。", { exact: false })).toBeInTheDocument();
   });
 
@@ -148,7 +150,7 @@ describe("CategoriesClient delete confirm (P3-C9)", () => {
       />,
     );
     await user.click(screen.getByRole("button", { name: "删除 x" }));
-    const dialog = await screen.findByRole("dialog");
+    const dialog = await screen.findByRole("alertdialog");
     await user.click(within(dialog).getByRole("button", { name: /确认删除/ }));
     expect(deleteMock).toHaveBeenCalledWith("c1", 1);
     expect(toastSuccess).toHaveBeenCalledWith("分类已删除");
@@ -165,7 +167,7 @@ describe("CategoriesClient delete confirm (P3-C9)", () => {
       />,
     );
     await user.click(screen.getByRole("button", { name: "删除 x" }));
-    const dialog = await screen.findByRole("dialog");
+    const dialog = await screen.findByRole("alertdialog");
     await user.click(within(dialog).getByRole("button", { name: /确认删除/ }));
     expect(toastError).toHaveBeenCalledWith("无法删除");
     expect(revalidateMock).not.toHaveBeenCalled();

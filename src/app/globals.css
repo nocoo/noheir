@@ -1,6 +1,5 @@
-@import "@nocoo/basalt/styles/tailwind";
+@import "@nocoo/basalt/styles";
 @import "tailwindcss";
-@source "../../node_modules/@nocoo/basalt/dist/**/*.{js,jsx,ts,tsx}";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -32,34 +31,6 @@
   --color-expense-bg: hsl(var(--expense-bg));
   --color-expense-dark: hsl(var(--expense-dark));
   --color-expense-light: hsl(var(--expense-light));
-
-  /* Stable financial chart colors */
-  --color-chart-1: hsl(var(--chart-1));
-  --color-chart-2: hsl(var(--chart-2));
-  --color-chart-3: hsl(var(--chart-3));
-  --color-chart-4: hsl(var(--chart-4));
-  --color-chart-5: hsl(var(--chart-5));
-  --color-chart-6: hsl(var(--chart-6));
-  --color-chart-7: hsl(var(--chart-7));
-  --color-chart-8: hsl(var(--chart-8));
-  --color-chart-9: hsl(var(--chart-9));
-  --color-chart-10: hsl(var(--chart-10));
-  --color-chart-11: hsl(var(--chart-11));
-  --color-chart-12: hsl(var(--chart-12));
-  --color-chart-13: hsl(var(--chart-13));
-  --color-chart-14: hsl(var(--chart-14));
-  --color-chart-15: hsl(var(--chart-15));
-  --color-chart-16: hsl(var(--chart-16));
-  --color-chart-17: hsl(var(--chart-17));
-  --color-chart-18: hsl(var(--chart-18));
-  --color-chart-19: hsl(var(--chart-19));
-  --color-chart-20: hsl(var(--chart-20));
-  --color-chart-21: hsl(var(--chart-21));
-  --color-chart-22: hsl(var(--chart-22));
-  --color-chart-23: hsl(var(--chart-23));
-  --color-chart-24: hsl(var(--chart-24));
-  --color-chart-axis: hsl(var(--chart-axis));
-  --color-chart-muted: hsl(var(--chart-muted));
 
   /* Animations */
 
@@ -105,38 +76,6 @@
   --expense-light: 160 84% 95%;
 }
 
-:root {
-  /* ========== Stable Financial Chart Colors ========== */
-  --chart-1: 200 90% 55%; /* Sky (financial chart) */
-  --chart-2: 186 80% 45%; /* Teal */
-  --chart-3: 166 72% 44%; /* Jade */
-  --chart-4: 142 71% 45%; /* Green */
-  --chart-5: 84 65% 46%; /* Lime */
-  --chart-6: 45 93% 47%; /* Amber */
-  --chart-7: 30 90% 55%; /* Orange */
-  --chart-8: 15 85% 52%; /* Vermilion */
-  --chart-9: 0 72% 51%; /* Red */
-  --chart-10: 340 82% 55%; /* Rose */
-  --chart-11: 320 70% 55%; /* Magenta */
-  --chart-12: 290 65% 55%; /* Orchid */
-  --chart-13: 270 70% 60%; /* Purple */
-  --chart-14: 250 65% 58%; /* Indigo */
-  --chart-15: 230 70% 56%; /* Cobalt */
-  --chart-16: 210 55% 50%; /* Steel */
-  --chart-17: 195 45% 55%; /* Cadet */
-  --chart-18: 160 50% 50%; /* Seafoam */
-  --chart-19: 100 50% 48%; /* Olive */
-  --chart-20: 60 65% 45%; /* Gold */
-  --chart-21: 22 80% 50%; /* Tangerine */
-  --chart-22: 350 65% 50%; /* Crimson */
-  --chart-23: 0 0% 25%; /* Gray */
-  --chart-24: 217 91% 60%; /* Blue (accent) */
-
-  /* Chart utility tokens */
-  --chart-axis: 0 0% 40%;
-  --chart-muted: 0 0% 70%;
-}
-
 .dark {
   /* ========== Financial Colors (Dark Mode) ========== */
   --income: 160 100% 50%;
@@ -166,38 +105,6 @@
   --expense-bg: 160 84% 15%;
   --expense-dark: 160 100% 45%;
   --expense-light: 160 84% 25%;
-}
-
-.dark {
-  /* ========== 24 Sequential Chart Colors (boosted for dark bg) ========== */
-  --chart-1: 200 90% 60%;
-  --chart-2: 186 80% 50%;
-  --chart-3: 166 72% 50%;
-  --chart-4: 142 71% 50%;
-  --chart-5: 84 65% 52%;
-  --chart-6: 45 93% 52%;
-  --chart-7: 30 90% 60%;
-  --chart-8: 15 85% 57%;
-  --chart-9: 0 72% 56%;
-  --chart-10: 340 82% 60%;
-  --chart-11: 320 70% 60%;
-  --chart-12: 290 65% 60%;
-  --chart-13: 270 70% 65%;
-  --chart-14: 250 65% 63%;
-  --chart-15: 230 70% 61%;
-  --chart-16: 210 55% 56%;
-  --chart-17: 195 45% 60%;
-  --chart-18: 160 50% 55%;
-  --chart-19: 100 50% 53%;
-  --chart-20: 60 65% 50%;
-  --chart-21: 22 80% 55%;
-  --chart-22: 350 65% 55%;
-  --chart-23: 0 0% 65%;
-  --chart-24: 217 91% 65%;
-
-  /* Chart utility tokens */
-  --chart-axis: 0 0% 50%;
-  --chart-muted: 0 0% 35%;
 }
 
 /*

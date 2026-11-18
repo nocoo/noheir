@@ -1,7 +1,7 @@
 import { ResponsiveSunburst } from "@nivo/sunburst";
 import { LayerCard } from "@nocoo/basalt";
 import { PageHeader } from "@nocoo/basalt/components/page-header";
-import { Layers } from "lucide-react";
+import { Layers } from "@nocoo/basalt/icons";
 import type { SunburstData } from "@/domain/assets/strategy-sunburst";
 import { formatCurrencyFull } from "@/lib/chart-config";
 import {

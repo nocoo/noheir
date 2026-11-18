@@ -26,7 +26,7 @@ import {
   Warehouse,
   X,
   Zap,
-} from "lucide-react";
+} from "@nocoo/basalt/icons";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useNavigate, useRevalidator, useSearchParams } from "react-router";
 import { type SerializedUnit, UnitEditor } from "@/components/capital/unit-editor";
@@ -37,7 +37,7 @@ import {
   StatusBadge,
   StrategyBadge,
   TacticsBadge,
-} from "@/components/ui/colored-badge";
+} from "@/components/shared/colored-badge";
 import { sumCurrency } from "@/domain/currency-summary";
 import type { DomainProduct } from "@/domain/types";
 import { formatCurrencyFull } from "@/lib/chart-config";

@@ -1,5 +1,5 @@
 import { Separator } from "@nocoo/basalt/components/separator";
-import { Activity, CalendarClock, Package2, Sparkles } from "lucide-react";
+import { Activity, CalendarClock, Package2, Sparkles } from "@nocoo/basalt/icons";
 import type { SerializedUnit } from "@/components/capital/unit-editor";
 import { DataRow, SectionTitle } from "@/components/capital/unit-panel-primitives";
 import {
@@ -11,7 +11,7 @@ import {
   StrategyBadge,
   TacticsBadge,
   UnitCodeBadge,
-} from "@/components/ui/colored-badge";
+} from "@/components/shared/colored-badge";
 import type { DomainProduct } from "@/domain/types";
 import { formatCurrencyFull, formatDate } from "@/lib/chart-config";
 import {

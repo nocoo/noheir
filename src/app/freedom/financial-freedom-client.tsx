@@ -1,11 +1,10 @@
-import { LayerCard } from "@nocoo/basalt";
+import { LayerCard, Meter } from "@nocoo/basalt";
 import { Badge } from "@nocoo/basalt/components/badge";
 import { PageHeader } from "@nocoo/basalt/components/page-header";
 import { Slider } from "@nocoo/basalt/components/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@nocoo/basalt/components/tabs";
-import { Briefcase, Coins, Lightbulb, Target } from "lucide-react";
+import { Briefcase, Coins, Lightbulb, Target } from "@nocoo/basalt/icons";
 import { useState } from "react";
-import { Progress } from "@/components/ui/progress";
 import type { FinancialFreedomSummary } from "@/domain/dashboard/financial-freedom";
 import {
   buildIncreaseIncomeScenario,
@@ -86,7 +85,12 @@ export function FinancialFreedomClient({
               <span>被动收入: {formatCurrencyFull(passiveIncome)}</span>
               <span>总支出: {formatCurrencyFull(totalExpense)}</span>
             </div>
-            <Progress value={Math.min(summary.freedomRatio, 100)} className="h-3" />
+            <Meter
+              hideValue
+              value={Math.min(summary.freedomRatio, 100)}
+              size="lg"
+              aria-label="财务自由率"
+            />
           </div>
         </LayerCard.Body>
       </LayerCard>
@@ -188,7 +192,12 @@ export function FinancialFreedomClient({
                   <span>被动收入:</span>
                   <span className="font-medium">{formatCurrencyFull(passiveIncome)}</span>
                 </div>
-                <Progress value={Math.min(reduceScenario.percentage, 100)} className="h-3" />
+                <Meter
+                  hideValue
+                  value={Math.min(reduceScenario.percentage, 100)}
+                  size="lg"
+                  aria-label="削减支出后的财务自由率"
+                />
                 <Badge variant={reduceScenario.isAchieved ? "default" : "destructive"}>
                   {reduceScenario.isAchieved
                     ? "可实现财务自由"
@@ -223,7 +232,12 @@ export function FinancialFreedomClient({
                     {formatCurrencyFull(increaseScenario.targetValue)}
                   </span>
                 </div>
-                <Progress value={Math.min(increaseScenario.percentage, 100)} className="h-3" />
+                <Meter
+                  hideValue
+                  value={Math.min(increaseScenario.percentage, 100)}
+                  size="lg"
+                  aria-label="增加被动收入后的财务自由率"
+                />
                 <Badge variant={increaseScenario.isAchieved ? "default" : "destructive"}>
                   {increaseScenario.isAchieved
                     ? "可实现财务自由"

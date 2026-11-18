@@ -1,6 +1,6 @@
 import { Button } from "@nocoo/basalt";
 import { LoadingScreen } from "@nocoo/basalt/components/loading-screen";
-import { Shield } from "lucide-react";
+import { Shield } from "@nocoo/basalt/icons";
 import { Suspense } from "react";
 import { useSearchParams } from "react-router";
 import { EnvironmentSwitch } from "@/components/environment-switch";

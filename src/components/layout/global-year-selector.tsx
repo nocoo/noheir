@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@nocoo/basalt/components/select";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "@nocoo/basalt/icons";
 import { useTransition } from "react";
 import { useYear } from "./year-context";
 

@@ -3,7 +3,7 @@ import { Badge } from "@nocoo/basalt/components/badge";
 import { PageHeader } from "@nocoo/basalt/components/page-header";
 import { ScrollArea } from "@nocoo/basalt/components/scroll-area";
 import { toast } from "@nocoo/basalt/components/toast";
-import { Save, Shield, Tags, TrendingUp } from "lucide-react";
+import { Save, Shield, Tags, TrendingUp } from "@nocoo/basalt/icons";
 import { useId, useState, useTransition } from "react";
 import { useRevalidator } from "react-router";
 import { saveFinancialPreferences } from "@/app/actions/settings-actions";
@@ -113,7 +113,7 @@ export function CategorySettingsClient({
           </div>
 
           {showIncomeSelector && (
-            <div className="space-y-3 rounded-lg border p-4">
+            <div className="space-y-3 rounded-lg ring-1 ring-basalt-border/80 shadow-basalt-card p-4">
               <ScrollArea className="h-[250px] pr-4">
                 <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
                   {incomeCategories.map((category, index) => {
@@ -198,7 +198,7 @@ export function CategorySettingsClient({
           </div>
 
           {showExpenseSelector && (
-            <div className="space-y-3 rounded-lg border p-4">
+            <div className="space-y-3 rounded-lg ring-1 ring-basalt-border/80 shadow-basalt-card p-4">
               <ScrollArea className="h-[250px] pr-4">
                 <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
                   {expenseCategories.map((category, index) => {

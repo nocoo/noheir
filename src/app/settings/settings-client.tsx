@@ -2,7 +2,7 @@ import { Button, Field, Input, Label, LayerCard } from "@nocoo/basalt";
 import { PageHeader } from "@nocoo/basalt/components/page-header";
 import { Slider } from "@nocoo/basalt/components/slider";
 import { toast } from "@nocoo/basalt/components/toast";
-import { Save, Settings, Target, TrendingUp } from "lucide-react";
+import { Save, Settings, Target, TrendingUp } from "@nocoo/basalt/icons";
 import { useState, useTransition } from "react";
 import { Link, useRevalidator } from "react-router";
 import { saveFinancialPreferences } from "@/app/actions/settings-actions";

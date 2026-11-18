@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@nocoo/basalt/components/select";
 import { toast } from "@nocoo/basalt/components/toast";
-import { AlertCircle, Anchor, Calendar, Plus, Save, Trash2 } from "lucide-react";
+import { AlertCircle, Anchor, Calendar, Plus, Save, Trash2 } from "@nocoo/basalt/icons";
 import { useState, useTransition } from "react";
 import { useRevalidator } from "react-router";
 import { saveBalanceAnchors } from "@/app/actions/settings-actions";

@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@nocoo/basalt/components/select";
-import { BarChart3, Clock, Percent, PiggyBank, X } from "lucide-react";
+import { BarChart3, Clock, Percent, PiggyBank, X } from "@nocoo/basalt/icons";
 import { useMemo, useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { StatCard } from "@/components/shared/stat-card";

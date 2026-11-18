@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@nocoo/basalt/components/table";
-import { Trophy } from "lucide-react";
+import { Trophy } from "@nocoo/basalt/icons";
 import { getLabelColorClasses } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 

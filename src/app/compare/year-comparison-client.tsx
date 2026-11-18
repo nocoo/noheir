@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@nocoo/basalt/components/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@nocoo/basalt/components/tabs";
-import { GitCompare } from "lucide-react";
+import { GitCompare } from "@nocoo/basalt/icons";
 import { useMemo, useState } from "react";
 import {
   Bar,

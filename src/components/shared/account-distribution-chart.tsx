@@ -1,5 +1,5 @@
 import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
-import { CreditCard } from "lucide-react";
+import { CreditCard } from "@nocoo/basalt/icons";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ChartCard } from "@/components/shared/chart-card";
 import { formatCurrencyFull, formatCurrencyK } from "@/lib/chart-config";

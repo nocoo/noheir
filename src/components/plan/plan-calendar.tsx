@@ -78,7 +78,7 @@ const MAX_BANNERS = 3;
  *  a stale color value (or no category at all). */
 function tokenColor(token: string | undefined): string {
   if (!token) return FALLBACK_COLOR;
-  return CHART_TOKENS.includes(token) ? `hsl(var(--${token}))` : FALLBACK_COLOR;
+  return CHART_TOKENS.includes(token) ? `hsl(var(--basalt-${token}))` : FALLBACK_COLOR;
 }
 
 /** Build the 42-cell day grid for a given month, starting on Sunday.

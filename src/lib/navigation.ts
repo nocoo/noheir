@@ -25,7 +25,7 @@ import {
   TrendingUp,
   Wallet,
   Warehouse,
-} from "lucide-react";
+} from "@nocoo/basalt/icons";
 
 /** Feature flag for the 002-spec "资金计划" calendar.
  *

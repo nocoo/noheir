@@ -5,6 +5,8 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandPalette,
+  CommandPaletteTrigger,
   CommandSeparator,
   DialogClose,
 } from "@nocoo/basalt";
@@ -18,7 +20,6 @@ import {
 import { Input } from "@nocoo/basalt/components/input";
 import { InputArea } from "@nocoo/basalt/components/input-area";
 import { Label } from "@nocoo/basalt/components/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@nocoo/basalt/components/popover";
 import {
   Select,
   SelectContent,
@@ -28,13 +29,12 @@ import {
 } from "@nocoo/basalt/components/select";
 import { Separator } from "@nocoo/basalt/components/separator";
 import { toast } from "@nocoo/basalt/components/toast";
-import { Check, ChevronsUpDown, ExternalLink, Package, Plus, X, XIcon } from "lucide-react";
+import { Check, ChevronsUpDown, ExternalLink, Package, Plus, X, XIcon } from "@nocoo/basalt/icons";
 import { useMemo, useState, useTransition } from "react";
 import { Link } from "react-router";
 import { createProduct } from "@/app/actions/product-actions";
 import { createUnit } from "@/app/actions/unit-actions";
 import { UnitCommitDialog } from "@/components/capital/unit-commit-dialog";
-import { Command } from "@/components/ui/command";
 import type { DomainProduct, SerializedUnit } from "@/domain/types";
 import { cn } from "@/lib/utils";
 import { InvestmentTimeline } from "./investment-timeline";
@@ -415,8 +415,8 @@ function UnitEditorForm({
           {/* Product Selector */}
           <div className="space-y-1.5">
             <Label className="text-xs">投资产品</Label>
-            <Popover open={productSearchOpen} onOpenChange={setProductSearchOpen}>
-              <PopoverTrigger asChild>
+            <CommandPalette open={productSearchOpen} onOpenChange={setProductSearchOpen}>
+              <CommandPaletteTrigger asChild>
                 <Button
                   type="button"
                   variant="outline"
@@ -441,69 +441,65 @@ function UnitEditorForm({
                   )}
                   <ChevronsUpDown className="text-basalt-muted-foreground ml-2 size-4 shrink-0 opacity-50" />
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
-                <Command>
-                  <CommandInput placeholder="搜索产品..." />
-                  <CommandList>
-                    <CommandEmpty>
-                      <div className="py-2 text-center text-sm">未找到产品</div>
-                    </CommandEmpty>
-                    <CommandGroup>
-                      {products.map((product) => (
-                        <CommandItem
-                          key={product.id}
-                          value={`${product.name} ${product.channel ?? ""} ${product.category ?? ""}`}
-                          onSelect={() => {
-                            setProductId(product.id);
-                            setProductSearchOpen(false);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 size-4",
-                              productId === product.id ? "opacity-100" : "opacity-0",
-                            )}
-                          />
-                          <div className="flex flex-col">
-                            <span>{product.name}</span>
-                            {(product.channel || product.category) && (
-                              <span className="text-basalt-muted-foreground text-xs">
-                                {[product.channel, product.category].filter(Boolean).join(" · ")}
-                              </span>
-                            )}
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                    <CommandSeparator />
-                    <CommandGroup>
-                      <CommandItem
-                        onSelect={() => {
-                          setShowQuickCreate(true);
-                          setProductSearchOpen(false);
-                        }}
-                      >
-                        <Plus className="mr-2 size-4" />
-                        快速创建产品
-                      </CommandItem>
-                      {productId && (
-                        <CommandItem
-                          onSelect={() => {
-                            setProductId(null);
-                            setProductSearchOpen(false);
-                          }}
-                          className="text-basalt-muted-foreground"
-                        >
-                          <X className="mr-2 size-4" />
-                          取消关联
-                        </CommandItem>
-                      )}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+              </CommandPaletteTrigger>
+              <CommandInput placeholder="搜索产品..." />
+              <CommandList>
+                <CommandEmpty>
+                  <div className="py-2 text-center text-sm">未找到产品</div>
+                </CommandEmpty>
+                <CommandGroup>
+                  {products.map((product) => (
+                    <CommandItem
+                      key={product.id}
+                      value={`${product.name} ${product.channel ?? ""} ${product.category ?? ""}`}
+                      onSelect={() => {
+                        setProductId(product.id);
+                        setProductSearchOpen(false);
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 size-4",
+                          productId === product.id ? "opacity-100" : "opacity-0",
+                        )}
+                      />
+                      <div className="flex flex-col">
+                        <span>{product.name}</span>
+                        {(product.channel || product.category) && (
+                          <span className="text-basalt-muted-foreground text-xs">
+                            {[product.channel, product.category].filter(Boolean).join(" · ")}
+                          </span>
+                        )}
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+                <CommandSeparator />
+                <CommandGroup>
+                  <CommandItem
+                    onSelect={() => {
+                      setShowQuickCreate(true);
+                      setProductSearchOpen(false);
+                    }}
+                  >
+                    <Plus className="mr-2 size-4" />
+                    快速创建产品
+                  </CommandItem>
+                  {productId && (
+                    <CommandItem
+                      onSelect={() => {
+                        setProductId(null);
+                        setProductSearchOpen(false);
+                      }}
+                      className="text-basalt-muted-foreground"
+                    >
+                      <X className="mr-2 size-4" />
+                      取消关联
+                    </CommandItem>
+                  )}
+                </CommandGroup>
+              </CommandList>
+            </CommandPalette>
             {selectedProduct && (
               <Link
                 to={`/products?edit=${selectedProduct.id}`}
@@ -518,7 +514,7 @@ function UnitEditorForm({
 
           {/* Quick Product Create Form */}
           {showQuickCreate && (
-            <div className="space-y-3 rounded-lg border bg-basalt-muted/30 p-3">
+            <div className="space-y-3 rounded-lg bg-basalt-muted/30 ring-1 ring-basalt-border/80 shadow-basalt-card p-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium">快速创建产品</span>
                 <Button

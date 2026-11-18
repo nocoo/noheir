@@ -13,11 +13,19 @@ import { Badge } from "@nocoo/basalt/components/badge";
 import { Input } from "@nocoo/basalt/components/input";
 import { SkeletonLine } from "@nocoo/basalt/components/skeleton-line";
 import { toast } from "@nocoo/basalt/components/toast";
-import { ArrowDownLeft, ArrowUpRight, Check, History, Pencil, Settings2, X } from "lucide-react";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  Check,
+  History,
+  Pencil,
+  Settings2,
+  X,
+} from "@nocoo/basalt/icons";
 import { useState, useTransition } from "react";
 import { updateContributionLog } from "@/app/actions/contribution-log-actions";
 import { SectionTitle } from "@/components/capital/unit-panel-primitives";
-import { ProductBadge } from "@/components/ui/colored-badge";
+import { ProductBadge } from "@/components/shared/colored-badge";
 import type { ContributionOperationType, DomainContributionLog } from "@/domain/types";
 import { formatCurrencyFull } from "@/lib/chart-config";
 import { formatOperationDate } from "@/lib/local-date";

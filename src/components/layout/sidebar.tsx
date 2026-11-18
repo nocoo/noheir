@@ -22,7 +22,7 @@ import {
   TooltipTrigger,
 } from "@nocoo/basalt/components/tooltip";
 import { type ReactNode, useCallback, useState } from "react";
-import { useLocation } from "react-router";
+import { Link, useLocation } from "react-router";
 import { EnvironmentSwitch } from "@/components/environment-switch";
 import { useAuth } from "@/lib/auth-context";
 import { ALL_NAV_ITEMS, isNavItemActive, NAV_GROUPS } from "@/lib/navigation";
@@ -75,7 +75,7 @@ export function PersistedSidebarProvider({ children }: { children: ReactNode }) 
   );
 
   return (
-    <SidebarProvider collapsed={collapsed} onCollapsedChange={onCollapsedChange} defaultWidth={260}>
+    <SidebarProvider collapsed={collapsed} onCollapsedChange={onCollapsedChange}>
       {children}
     </SidebarProvider>
   );
@@ -116,7 +116,11 @@ function NoheirSidebarBody({
     <>
       <SidebarHeader>
         <SidebarBrand
-          logo={<img src="/logo-24.png" alt="" width={24} height={24} />}
+          logo={
+            <Link to="/" aria-label="noheir 首页">
+              <img src="/logo-24.png" alt="" width={24} height={24} />
+            </Link>
+          }
           name="noheir"
           version={`v${pkg.version}`}
           action={

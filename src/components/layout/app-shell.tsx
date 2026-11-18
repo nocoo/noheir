@@ -124,7 +124,7 @@ function AppShellInner() {
             }
           />
 
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col px-basalt-space-lg pb-basalt-space-lg">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col px-basalt-space-lg pb-basalt-space-lg md:px-basalt-layout-sm md:pb-basalt-layout-sm">
             <ContentIsland key={pathname}>
               {[
                 "/",
@@ -150,7 +150,9 @@ function AppShellInner() {
                   金额汇总币种：CNY（人民币）。不折算或合计其他币种；其他币种记录与编辑操作保留。
                 </p>
               )}
-              <Outlet />
+              <Suspense>
+                <Outlet />
+              </Suspense>
             </ContentIsland>
           </div>
         </AppMain>
@@ -163,11 +165,9 @@ export function AppShell() {
   const years = useLoaderData<number[]>();
   return (
     <MobileNavProvider>
-      <Suspense>
-        <YearProvider years={years}>
-          <AppShellInner />
-        </YearProvider>
-      </Suspense>
+      <YearProvider years={years}>
+        <AppShellInner />
+      </YearProvider>
     </MobileNavProvider>
   );
 }

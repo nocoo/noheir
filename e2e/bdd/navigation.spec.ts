@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
+import { SIDEBAR_DEFAULT_WIDTH_PX } from "@nocoo/basalt/components/sidebar";
 import { expect, type Locator, test } from "@playwright/test";
 
 /** Wait until the scrollable nav column stops reflowing (collapse transition, fonts, etc.). */
@@ -588,7 +589,7 @@ for (const theme of ["light", "dark"]) {
     await page.goto("/api-keys");
     await page.evaluate(() => document.fonts.ready);
     const sidebar = page.getByRole("complementary", { name: "主导航", exact: true });
-    await expect(sidebar).toHaveCSS("width", "260px");
+    await expect(sidebar).toHaveCSS("width", `${SIDEBAR_DEFAULT_WIDTH_PX}px`);
     const email = sidebar.locator('[data-slot="sidebar-user"] p').last();
     await expect(email).toHaveCSS("line-height", "16px");
     const brand = sidebar.locator('[data-slot="sidebar-brand-copy"]');
@@ -615,7 +616,7 @@ for (const theme of ["light", "dark"]) {
   });
 
   for (const width of [320, 390, 640]) {
-    test(`mobile SidebarDrawer opens with a 260px sidebar and zero padding at ${width}px in ${theme} mode`, async ({
+    test(`mobile SidebarDrawer opens at Basalt's standard width with zero padding at ${width}px in ${theme} mode`, async ({
       page,
     }, testInfo) => {
       await page.setViewportSize({ width, height: 844 });
@@ -648,7 +649,7 @@ for (const theme of ["light", "dark"]) {
       await page.screenshot({ path: testInfo.outputPath("drawer.png") });
       expect(geometry).toEqual({
         x: 0,
-        sidebarWidth: 260,
+        sidebarWidth: SIDEBAR_DEFAULT_WIDTH_PX,
         paddingLeft: "0px",
         paddingRight: "0px",
         paddingTop: "0px",

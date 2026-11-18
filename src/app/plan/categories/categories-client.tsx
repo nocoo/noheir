@@ -8,7 +8,7 @@
 //   `usage` — the per-category rule count is computed server-side so the
 //   delete-confirm dialog can warn that N rules will lose their color.
 
-import { Button, DialogClose } from "@nocoo/basalt";
+import { Button, ConfirmDialog, DialogClose } from "@nocoo/basalt";
 import {
   Dialog,
   DialogContent,
@@ -18,12 +18,11 @@ import {
 } from "@nocoo/basalt/components/dialog";
 import { PageHeader } from "@nocoo/basalt/components/page-header";
 import { toast } from "@nocoo/basalt/components/toast";
-import { Pencil, Plus, Trash2, XIcon } from "lucide-react";
+import { Pencil, Plus, Trash2, XIcon } from "@nocoo/basalt/icons";
 import * as React from "react";
 import { useRevalidator } from "react-router";
 import { deleteExpenseCategory } from "@/app/actions/expense-category-actions";
 import { CategoryForm } from "@/components/plan/category-form";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { CHART_TOKENS } from "@/lib/palette";
 
 export interface CategoryRow {
@@ -42,7 +41,7 @@ export interface CategoriesClientProps {
 
 function colorCss(token: string): string {
   return CHART_TOKENS.includes(token)
-    ? `hsl(var(--${token}))`
+    ? `hsl(var(--basalt-${token}))`
     : "hsl(var(--basalt-muted-foreground))";
 }
 
@@ -86,7 +85,7 @@ export function CategoriesClient({ categories, usage }: CategoriesClientProps): 
       {categories.length === 0 ? (
         <div
           data-testid="categories-empty"
-          className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-basalt-border p-12 text-sm text-basalt-muted-foreground"
+          className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-basalt-border/80 shadow-basalt-card p-12 text-sm text-basalt-muted-foreground"
         >
           <p>还没有任何分类</p>
           <Button variant="outline" size="sm" onClick={() => setCreateOpen(true)}>
@@ -97,7 +96,7 @@ export function CategoriesClient({ categories, usage }: CategoriesClientProps): 
       ) : (
         <ul
           aria-label="分类列表"
-          className="divide-y divide-basalt-border rounded-md border border-basalt-border"
+          className="divide-y divide-basalt-border rounded-md ring-1 ring-basalt-border/80 shadow-basalt-card"
         >
           {categories.map((cat) => {
             const count = usage[cat.id] ?? 0;
@@ -216,6 +215,9 @@ export function CategoriesClient({ categories, usage }: CategoriesClientProps): 
             ? `${usage[deleting.id]} 条规则正在使用这个分类。删除后这些规则将变成「未分类」，规则本身不会被删除。`
             : "确认删除？此操作不可撤销。"
         }
+        confirmLabel="确认删除"
+        cancelLabel="取消"
+        variant="destructive"
         loading={deletePending}
         onConfirm={handleDelete}
       />

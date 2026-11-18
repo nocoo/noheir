@@ -1,3 +1,4 @@
+import { Meter } from "@nocoo/basalt";
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -19,8 +20,7 @@ vi.mock("@nocoo/basalt/components/toast", () => ({ toast: { success: vi.fn(), er
 
 import { CategorySettingsClient } from "@/app/category-settings/category-settings-client";
 import { CommandPalette } from "@/components/command-palette";
-import { StrategyBadge, UnitCodeBadge } from "@/components/ui/colored-badge";
-import { Progress } from "@/components/ui/progress";
+import { StrategyBadge, UnitCodeBadge } from "@/components/shared/colored-badge";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -87,12 +87,9 @@ describe("Basalt leaf controls", () => {
   });
 
   test("progress exposes the actual finite value to assistive technology", () => {
-    const { rerender } = render(<Progress value={37} aria-label="导入进度" />);
-    expect(screen.getByRole("progressbar", { name: "导入进度" })).toHaveAttribute(
-      "aria-valuenow",
-      "37",
-    );
-    rerender(<Progress value={null} aria-label="导入进度" />);
-    expect(screen.getByRole("progressbar")).not.toHaveAttribute("aria-valuenow");
+    const { rerender } = render(<Meter hideValue value={37} aria-label="导入进度" />);
+    expect(screen.getByRole("meter", { name: "导入进度" })).toHaveAttribute("aria-valuenow", "37");
+    rerender(<Meter hideValue value={Number.NaN} aria-label="导入进度" />);
+    expect(screen.getByRole("meter")).not.toHaveAttribute("aria-valuenow");
   });
 });

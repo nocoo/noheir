@@ -1,6 +1,6 @@
 import { PageHeader } from "@nocoo/basalt/components/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@nocoo/basalt/components/tabs";
-import { ArrowRightLeft, FileUp } from "lucide-react";
+import { ArrowRightLeft, FileUp } from "@nocoo/basalt/icons";
 import { TransactionImport } from "./transaction-import";
 import { TransferImport } from "./transfer-import";
 

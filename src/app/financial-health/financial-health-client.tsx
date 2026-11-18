@@ -1,4 +1,4 @@
-import { LayerCard } from "@nocoo/basalt";
+import { LayerCard, Meter } from "@nocoo/basalt";
 import { Badge } from "@nocoo/basalt/components/badge";
 import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
 import { PageHeader } from "@nocoo/basalt/components/page-header";
@@ -13,7 +13,7 @@ import {
   TrendingUp,
   XCircle,
   Zap,
-} from "lucide-react";
+} from "@nocoo/basalt/icons";
 import {
   PolarAngleAxis,
   PolarGrid,
@@ -23,7 +23,6 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts";
-import { Progress } from "@/components/ui/progress";
 import type { MonthlyData } from "@/domain/types";
 import type { FinancialHealthResult } from "@/lib/financial-health-algorithm";
 import { cn } from "@/lib/utils";
@@ -40,7 +39,7 @@ const gradeColors: Record<string, { text: string; bg: string; border: string }> 
     border: "border-basalt-primary",
   },
   A: { text: "text-basalt-primary", bg: "bg-basalt-primary/10", border: "border-basalt-primary" },
-  B: { text: "text-chart-2", bg: "bg-chart-2/10", border: "border-chart-2" },
+  B: { text: "text-basalt-chart-2", bg: "bg-basalt-chart-2/10", border: "border-basalt-chart-2" },
   C: { text: "text-yellow-600", bg: "bg-yellow-100", border: "border-yellow-600" },
   D: {
     text: "text-basalt-destructive",
@@ -159,8 +158,8 @@ export function FinancialHealthClient({ healthResult, monthlyData }: FinancialHe
                 <Radar
                   name="得分"
                   dataKey="score"
-                  stroke="hsl(var(--chart-1))"
-                  fill="hsl(var(--chart-1))"
+                  stroke="hsl(var(--basalt-chart-1))"
+                  fill="hsl(var(--basalt-chart-1))"
                   fillOpacity={0.3}
                   strokeWidth={2}
                 />
@@ -205,7 +204,7 @@ export function FinancialHealthClient({ healthResult, monthlyData }: FinancialHe
                 </div>
               </LayerCard.Header>
               <LayerCard.Body className="min-h-0 flex-1 space-y-3">
-                <Progress value={pct} className="h-3" />
+                <Meter hideValue value={pct} size="lg" aria-label={`${dim.name}评分`} />
                 <div className="flex items-center gap-2">
                   <Badge variant={status.variant}>{status.label}</Badge>
                   <span className="text-basalt-muted-foreground text-sm">{interpretation}</span>

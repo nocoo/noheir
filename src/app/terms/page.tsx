@@ -1,5 +1,5 @@
 import { PageHeader } from "@nocoo/basalt/components/page-header";
-import { FileText } from "lucide-react";
+import { FileText } from "@nocoo/basalt/icons";
 
 export default function TermsPage() {
   return (
