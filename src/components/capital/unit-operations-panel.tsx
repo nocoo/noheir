@@ -13,15 +13,15 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandPalette,
+  CommandPaletteTrigger,
 } from "@nocoo/basalt";
 import { Input } from "@nocoo/basalt/components/input";
 import { Label } from "@nocoo/basalt/components/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@nocoo/basalt/components/popover";
-import { ArrowLeftRight, Calendar, Package, Repeat, X } from "lucide-react";
+import { ArrowLeftRight, Calendar, Package, Repeat, X } from "@nocoo/basalt/icons";
 import { useState } from "react";
 import { SectionTitle } from "@/components/capital/unit-panel-primitives";
 import { UnitSwapPicker } from "@/components/capital/unit-swap-picker";
-import { Command } from "@/components/ui/command";
 import type { DomainProduct, SerializedUnit } from "@/domain/types";
 import {
   describeStagedOperation,
@@ -155,10 +155,10 @@ export function UnitOperationsPanel({
         </div>
 
         {switchOpen && !stagedSwitch && (
-          <div className="bg-basalt-muted/30 space-y-2 rounded-lg border p-2.5">
+          <div className="bg-basalt-muted/30 space-y-2 rounded-lg ring-1 ring-basalt-border/80 shadow-basalt-card p-2.5">
             <Label className="text-xs">新产品</Label>
-            <Popover open={productPickerOpen} onOpenChange={setProductPickerOpen}>
-              <PopoverTrigger asChild>
+            <CommandPalette open={productPickerOpen} onOpenChange={setProductPickerOpen}>
+              <CommandPaletteTrigger asChild>
                 <Button
                   type="button"
                   variant="outline"
@@ -170,46 +170,42 @@ export function UnitOperationsPanel({
                     ? "选择产品..."
                     : (pendingProduct?.name ?? "取消关联")}
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
-                <Command>
-                  <CommandInput placeholder="搜索产品..." />
-                  <CommandList>
-                    <CommandEmpty>未找到产品</CommandEmpty>
-                    <CommandGroup>
-                      {/* Unlinking is only meaningful when a product is linked;
+              </CommandPaletteTrigger>
+              <CommandInput placeholder="搜索产品..." />
+              <CommandList>
+                <CommandEmpty>未找到产品</CommandEmpty>
+                <CommandGroup>
+                  {/* Unlinking is only meaningful when a product is linked;
                           offering it otherwise would stage a null → null no-op
                           that the server rejects with 400. */}
-                      {currentProductId && (
-                        <CommandItem
-                          value="__none__"
-                          onSelect={() => {
-                            setPendingProductId(null);
-                            setProductPickerOpen(false);
-                          }}
-                        >
-                          <span className="text-basalt-muted-foreground">取消关联</span>
-                        </CommandItem>
-                      )}
-                      {products
-                        .filter((p) => p.id !== currentProductId)
-                        .map((p) => (
-                          <CommandItem
-                            key={p.id}
-                            value={`${p.name} ${p.channel ?? ""}`}
-                            onSelect={() => {
-                              setPendingProductId(p.id);
-                              setProductPickerOpen(false);
-                            }}
-                          >
-                            {p.name}
-                          </CommandItem>
-                        ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+                  {currentProductId && (
+                    <CommandItem
+                      value="__none__"
+                      onSelect={() => {
+                        setPendingProductId(null);
+                        setProductPickerOpen(false);
+                      }}
+                    >
+                      <span className="text-basalt-muted-foreground">取消关联</span>
+                    </CommandItem>
+                  )}
+                  {products
+                    .filter((p) => p.id !== currentProductId)
+                    .map((p) => (
+                      <CommandItem
+                        key={p.id}
+                        value={`${p.name} ${p.channel ?? ""}`}
+                        onSelect={() => {
+                          setPendingProductId(p.id);
+                          setProductPickerOpen(false);
+                        }}
+                      >
+                        {p.name}
+                      </CommandItem>
+                    ))}
+                </CommandGroup>
+              </CommandList>
+            </CommandPalette>
 
             {/* pnl rides the withdraw row, which only exists if there is a
                 product to exit — the server rejects the combination otherwise. */}
@@ -242,7 +238,7 @@ export function UnitOperationsPanel({
         )}
 
         {swapOpen && !stagedSwap && (
-          <div className="bg-basalt-muted/30 space-y-2 rounded-lg border p-2.5">
+          <div className="bg-basalt-muted/30 space-y-2 rounded-lg ring-1 ring-basalt-border/80 shadow-basalt-card p-2.5">
             <Label className="text-xs">与哪个单元对换</Label>
             <UnitSwapPicker
               units={units}
@@ -261,7 +257,7 @@ export function UnitOperationsPanel({
         )}
 
         {availOpen && !stagedAvail && (
-          <div className="bg-basalt-muted/30 space-y-2 rounded-lg border p-2.5">
+          <div className="bg-basalt-muted/30 space-y-2 rounded-lg ring-1 ring-basalt-border/80 shadow-basalt-card p-2.5">
             <p className="text-basalt-muted-foreground text-basalt-sm">
               覆盖自动计算的解锁日，投入流水不变。
               {currentOverride

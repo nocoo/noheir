@@ -1,5 +1,5 @@
 import { PageHeader } from "@nocoo/basalt/components/page-header";
-import { List, Percent, PiggyBank, TrendingDown, TrendingUp } from "lucide-react";
+import { List, Percent, PiggyBank, TrendingDown, TrendingUp } from "@nocoo/basalt/icons";
 import { StatCard } from "@/components/shared/stat-card";
 import type { DomainTransaction, MonthlyData } from "@/domain/types";
 import { formatCurrencyFull } from "@/lib/chart-config";

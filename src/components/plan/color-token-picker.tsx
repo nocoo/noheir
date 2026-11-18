@@ -18,7 +18,7 @@
 // selection (the spec calls for keyboard-and-a11y test coverage,
 // so the keyboard behavior is a contract pinned by tests).
 
-import { Check } from "lucide-react";
+import { Check } from "@nocoo/basalt/icons";
 import * as React from "react";
 import { CHART_TOKENS } from "@/lib/palette";
 import { cn } from "@/lib/utils";
@@ -175,7 +175,7 @@ export function ColorTokenPicker({
               onChange(token);
             }}
             onKeyDown={(e) => handleKeyDown(e, idx)}
-            style={{ backgroundColor: `hsl(var(--${token}))` }}
+            style={{ backgroundColor: `hsl(var(--basalt-${token}))` }}
             className={cn(
               "size-8 rounded-md outline-none transition-all",
               "focus-visible:ring-2 focus-visible:ring-basalt-ring focus-visible:ring-offset-2 focus-visible:ring-offset-basalt-background",

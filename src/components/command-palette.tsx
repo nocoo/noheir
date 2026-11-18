@@ -34,7 +34,7 @@ import {
   TrendingUp,
   Warehouse,
   X,
-} from "lucide-react";
+} from "@nocoo/basalt/icons";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 

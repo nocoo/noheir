@@ -1,4 +1,4 @@
-import { Button, LayerCard } from "@nocoo/basalt";
+import { Button, ConfirmDialog, LayerCard } from "@nocoo/basalt";
 import { Badge } from "@nocoo/basalt/components/badge";
 import { Input } from "@nocoo/basalt/components/input";
 import { Label } from "@nocoo/basalt/components/label";
@@ -20,7 +20,7 @@ import {
   TableSortableHeader,
 } from "@nocoo/basalt/components/table";
 import { toast } from "@nocoo/basalt/components/toast";
-import { Filter, Landmark, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { Filter, Landmark, Pencil, Plus, Search, Trash2, X } from "@nocoo/basalt/icons";
 import { useMemo, useState, useTransition } from "react";
 import { useRevalidator } from "react-router";
 import { deleteUnit } from "@/app/actions/unit-actions";
@@ -31,8 +31,7 @@ import {
   StrategyBadge,
   TacticsBadge,
   UnitCodeBadge,
-} from "@/components/ui/colored-badge";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+} from "@/components/shared/colored-badge";
 import { sumCurrency } from "@/domain/currency-summary";
 import type { DomainProduct } from "@/domain/types";
 import { formatCurrencyFull } from "@/lib/chart-config";
@@ -250,7 +249,7 @@ export function FundsClient({ units, products }: FundsClientProps) {
 
       {/* Filter Panel */}
       {showFilters && (
-        <div className="space-y-4 rounded-lg border bg-basalt-muted/30 p-4">
+        <div className="space-y-4 rounded-lg bg-basalt-muted/30 ring-1 ring-basalt-border/80 shadow-basalt-card p-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium">筛选条件</h3>
             <Button variant="ghost" size="sm" onClick={resetFilters}>
@@ -489,6 +488,9 @@ export function FundsClient({ units, products }: FundsClientProps) {
         }}
         title="删除资本单位"
         description={`确定要删除单位「${deleteTarget?.unitCode ?? ""}」吗？此操作不可撤销。`}
+        confirmLabel="确认删除"
+        cancelLabel="取消"
+        variant="destructive"
         onConfirm={confirmDelete}
         loading={isPending}
       />

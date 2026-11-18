@@ -1,5 +1,5 @@
 import { Button } from "@nocoo/basalt";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertCircle, RefreshCw } from "@nocoo/basalt/icons";
 import { isRouteErrorResponse, useRouteError } from "react-router";
 
 export function RouteErrorBoundary() {

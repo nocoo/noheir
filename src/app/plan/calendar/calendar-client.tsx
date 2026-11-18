@@ -21,7 +21,7 @@
 import { Button, DialogClose } from "@nocoo/basalt";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@nocoo/basalt/components/dialog";
 import { PageHeader } from "@nocoo/basalt/components/page-header";
-import { ChevronLeft, ChevronRight, Plus, XIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, XIcon } from "@nocoo/basalt/icons";
 import * as React from "react";
 import { useRevalidator } from "react-router";
 import { DayDetailPopover } from "@/components/plan/day-detail-popover";
@@ -151,7 +151,7 @@ export function CalendarClient({
 
       <PlanSummaryCards rules={rules} viewMonth={viewMonth} todayIso={todayIso} />
 
-      <div className="rounded-md border border-basalt-border p-4">
+      <div className="rounded-md ring-1 ring-basalt-border/80 shadow-basalt-card p-4">
         <div className="mb-3 flex items-center gap-2">
           <Button
             type="button"

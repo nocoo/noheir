@@ -32,7 +32,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@nocoo/basalt/components/dialog";
-import { XIcon } from "lucide-react";
+import { XIcon } from "@nocoo/basalt/icons";
 import * as React from "react";
 import { CHART_TOKENS } from "@/lib/palette";
 import { describeFrequency, formatAmountYuan } from "@/lib/recurring-expense/format";
@@ -64,7 +64,7 @@ const FALLBACK_COLOR = "hsl(var(--basalt-muted-foreground))";
 
 function tokenColor(token: string | undefined): string {
   if (!token) return FALLBACK_COLOR;
-  return CHART_TOKENS.includes(token) ? `hsl(var(--${token}))` : FALLBACK_COLOR;
+  return CHART_TOKENS.includes(token) ? `hsl(var(--basalt-${token}))` : FALLBACK_COLOR;
 }
 
 /** Shape every visible row up front so render and tests agree. */

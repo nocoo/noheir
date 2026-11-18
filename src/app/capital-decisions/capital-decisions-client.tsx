@@ -10,9 +10,9 @@ import {
   TableRow,
   TableSortableHeader,
 } from "@nocoo/basalt/components/table";
-import { AlertTriangle, CheckCircle, Clock, Lightbulb } from "lucide-react";
+import { AlertTriangle, CheckCircle, Clock, Lightbulb } from "@nocoo/basalt/icons";
 import { useMemo, useState } from "react";
-import { CurrencyBadge, StrategyBadge, UnitCodeBadge } from "@/components/ui/colored-badge";
+import { CurrencyBadge, StrategyBadge, UnitCodeBadge } from "@/components/shared/colored-badge";
 import { formatCurrencyFull } from "@/lib/chart-config";
 import { CAPITAL_TABLE_COLUMNS } from "@/lib/table-columns";
 import { cn } from "@/lib/utils";
@@ -143,7 +143,7 @@ export function CapitalDecisionsClient({
     return (
       <div className="space-y-6">
         <PageHeader title={pageTitle} description="需要关注和处理的资本单位" />
-        <div className="rounded-xl border p-12 text-center">
+        <div className="rounded-xl ring-1 ring-basalt-border/80 shadow-basalt-card p-12 text-center">
           <div className="mb-4 text-4xl">✅</div>
           <h3 className="mb-2 text-lg font-semibold">一切正常</h3>
           <p className="text-basalt-muted-foreground">当前没有需要特别关注的资金项目</p>
@@ -162,28 +162,28 @@ export function CapitalDecisionsClient({
 
       {/* Summary Stats */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <div className="rounded-lg border p-4">
+        <div className="rounded-lg ring-1 ring-basalt-border/80 shadow-basalt-card p-4">
           <p className="text-basalt-muted-foreground text-sm">需决策项目</p>
           <p className="text-2xl font-bold">{stats.totalDecisions}</p>
           <p className="text-basalt-muted-foreground text-xs">
             涉及 {formatCurrencyFull(stats.totalAmount)}
           </p>
         </div>
-        <div className="rounded-lg border border-basalt-destructive/30 bg-basalt-destructive/5 p-4">
+        <div className="rounded-lg ring-1 ring-basalt-destructive/30 shadow-basalt-card bg-basalt-destructive/5 p-4">
           <p className="text-basalt-destructive text-sm">紧急</p>
           <p className="text-basalt-destructive text-2xl font-bold">{stats.urgentCount}</p>
           <p className="text-basalt-muted-foreground text-xs">
             {formatCurrencyFull(stats.urgentAmount)}
           </p>
         </div>
-        <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
+        <div className="rounded-lg ring-1 ring-amber-500/30 shadow-basalt-card bg-amber-500/5 p-4">
           <p className="text-sm text-amber-600 dark:text-amber-400">即将到期</p>
           <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.soonCount}</p>
           <p className="text-basalt-muted-foreground text-xs">
             {formatCurrencyFull(stats.soonAmount)}
           </p>
         </div>
-        <div className="rounded-lg border border-slate-500/30 bg-slate-500/5 p-4">
+        <div className="rounded-lg ring-1 ring-slate-500/30 shadow-basalt-card bg-slate-500/5 p-4">
           <p className="text-basalt-muted-foreground text-sm">正常</p>
           <p className="text-2xl font-bold">{stats.normalCount}</p>
           <p className="text-basalt-muted-foreground text-xs">

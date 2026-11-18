@@ -1,4 +1,4 @@
-import { Button, LayerCard } from "@nocoo/basalt";
+import { Button, ConfirmDialog, LayerCard, Meter } from "@nocoo/basalt";
 import { Badge } from "@nocoo/basalt/components/badge";
 import {
   Collapsible,
@@ -24,12 +24,10 @@ import {
   Upload,
   Wallet,
   XCircle,
-} from "lucide-react";
+} from "@nocoo/basalt/icons";
 import { useRef, useState, useTransition } from "react";
 import { useNavigate, useRevalidator } from "react-router";
 import { clearAllData, exportBackup, restoreBackup } from "@/app/actions/data-actions";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Progress } from "@/components/ui/progress";
 import type { DataHealthMetrics, DataSummary } from "@/domain/data-management";
 import {
   formatCurrency,
@@ -252,7 +250,7 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
                 {healthScore.toFixed(0)}%
               </div>
               <div className="flex-1 space-y-2">
-                <Progress value={healthScore} className="h-2" />
+                <Meter hideValue value={healthScore} aria-label="数据健康度" />
                 <p className={`text-sm font-medium ${healthColor}`}>数据质量{healthLabel}</p>
                 <div className="flex gap-2 flex-wrap">
                   <Badge variant="outline" className="gap-1 text-xs">
@@ -549,6 +547,9 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
         onOpenChange={setClearOpen}
         title="清除所有数据"
         description="确定要删除所有交易记录、转账记录、产品和资本单位，并重置账户分类、余额锚点与财务假设吗？站点设置、API 密钥与报告不会删除。此操作不可撤销；发生冲突或失败时会停止，部分步骤可能已完成。"
+        confirmLabel="确认清除"
+        cancelLabel="取消"
+        variant="destructive"
         onConfirm={confirmClear}
         loading={isPending}
       />

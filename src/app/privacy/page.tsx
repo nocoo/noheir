@@ -1,5 +1,5 @@
 import { PageHeader } from "@nocoo/basalt/components/page-header";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "@nocoo/basalt/icons";
 
 export default function PrivacyPage() {
   return (

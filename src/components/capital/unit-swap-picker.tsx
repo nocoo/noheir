@@ -10,11 +10,11 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandPalette,
+  CommandPaletteTrigger,
 } from "@nocoo/basalt";
-import { Popover, PopoverContent, PopoverTrigger } from "@nocoo/basalt/components/popover";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown } from "@nocoo/basalt/icons";
 import { useState } from "react";
-import { Command } from "@/components/ui/command";
 import type { SerializedUnit } from "@/domain/types";
 import { formatCurrencyFull } from "@/lib/chart-config";
 import { eligibleSwapTargets } from "@/lib/unit-commit-plan";
@@ -38,8 +38,8 @@ export function UnitSwapPicker({
   const selected = targets.find((u) => u.id === selectedUnitId) ?? null;
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+    <CommandPalette open={open} onOpenChange={setOpen}>
+      <CommandPaletteTrigger asChild>
         <Button
           type="button"
           variant="outline"
@@ -51,42 +51,36 @@ export function UnitSwapPicker({
           {selected ? selected.unitCode : "选择对换单元..."}
           <ChevronsUpDown className="ml-2 size-3.5 shrink-0 opacity-50" />
         </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
-        <Command>
-          <CommandInput placeholder="搜索番号..." />
-          <CommandList>
-            <CommandEmpty>未找到可对换的单元</CommandEmpty>
-            <CommandGroup>
-              {targets.map((unit) => (
-                <CommandItem
-                  key={unit.id}
-                  value={`${unit.unitCode} ${unit.productName ?? ""} ${unit.strategy}`}
-                  onSelect={() => {
-                    onSelect(unit);
-                    setOpen(false);
-                  }}
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 size-4",
-                      selectedUnitId === unit.id ? "opacity-100" : "opacity-0",
-                    )}
-                  />
-                  <div className="flex min-w-0 flex-col">
-                    <span className="truncate">{unit.unitCode}</span>
-                    <span className="text-basalt-muted-foreground truncate text-xs">
-                      {[unit.productName, formatCurrencyFull(unit.amount)]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </span>
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+      </CommandPaletteTrigger>
+      <CommandInput placeholder="搜索番号..." />
+      <CommandList>
+        <CommandEmpty>未找到可对换的单元</CommandEmpty>
+        <CommandGroup>
+          {targets.map((unit) => (
+            <CommandItem
+              key={unit.id}
+              value={`${unit.unitCode} ${unit.productName ?? ""} ${unit.strategy}`}
+              onSelect={() => {
+                onSelect(unit);
+                setOpen(false);
+              }}
+            >
+              <Check
+                className={cn(
+                  "mr-2 size-4",
+                  selectedUnitId === unit.id ? "opacity-100" : "opacity-0",
+                )}
+              />
+              <div className="flex min-w-0 flex-col">
+                <span className="truncate">{unit.unitCode}</span>
+                <span className="text-basalt-muted-foreground truncate text-xs">
+                  {[unit.productName, formatCurrencyFull(unit.amount)].filter(Boolean).join(" · ")}
+                </span>
+              </div>
+            </CommandItem>
+          ))}
+        </CommandGroup>
+      </CommandList>
+    </CommandPalette>
   );
 }

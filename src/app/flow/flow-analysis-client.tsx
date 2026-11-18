@@ -2,7 +2,7 @@ import { LayerCard } from "@nocoo/basalt";
 import { Badge } from "@nocoo/basalt/components/badge";
 import { PageHeader } from "@nocoo/basalt/components/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@nocoo/basalt/components/tabs";
-import { ArrowRight, ArrowRightLeft } from "lucide-react";
+import { ArrowRight, ArrowRightLeft } from "@nocoo/basalt/icons";
 import { useState } from "react";
 import { formatCurrencyFull } from "@/lib/chart-config";
 

@@ -1,8 +1,7 @@
-import { LayerCard } from "@nocoo/basalt";
+import { LayerCard, Meter } from "@nocoo/basalt";
 import { Badge } from "@nocoo/basalt/components/badge";
 import { PageHeader } from "@nocoo/basalt/components/page-header";
-import { AlertTriangle, CheckCircle, Info, Shield } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
+import { AlertTriangle, CheckCircle, Info, Shield } from "@nocoo/basalt/icons";
 
 interface QualityClientProps {
   metadata: {
@@ -108,7 +107,7 @@ export function QualityClient({ metadata }: QualityClientProps) {
         <LayerCard.Body className="min-h-0 flex-1">
           <div className="flex items-center gap-4">
             <div className="text-4xl font-bold">{score}%</div>
-            <Progress value={score} className="flex-1" />
+            <Meter hideValue value={score} className="flex-1" aria-label="数据质量评分" />
           </div>
           <p className="text-basalt-muted-foreground mt-2 text-xs">
             {passCount}/{checks.length} 项检查通过

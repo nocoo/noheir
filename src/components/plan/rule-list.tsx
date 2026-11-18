@@ -35,7 +35,7 @@ import {
   DropdownMenuTrigger,
 } from "@nocoo/basalt/components/dropdown-menu";
 import { toast } from "@nocoo/basalt/components/toast";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal } from "@nocoo/basalt/icons";
 import * as React from "react";
 import { deleteRecurringExpense } from "@/app/actions/recurring-expense-actions";
 import {
@@ -80,7 +80,7 @@ const FALLBACK_COLOR = "hsl(var(--basalt-muted-foreground))";
 
 function tokenColor(token: string | undefined): string {
   if (!token) return FALLBACK_COLOR;
-  return CHART_TOKENS.includes(token) ? `hsl(var(--${token}))` : FALLBACK_COLOR;
+  return CHART_TOKENS.includes(token) ? `hsl(var(--basalt-${token}))` : FALLBACK_COLOR;
 }
 
 const STATUS_LABEL: Record<RecurringExpenseDisplayStatus, string> = {
@@ -171,7 +171,7 @@ export function RuleList({
       <div
         data-testid="rule-list-empty"
         className={cn(
-          "flex flex-col items-center justify-center rounded-md border border-dashed border-basalt-border p-8 text-sm text-basalt-muted-foreground",
+          "flex flex-col items-center justify-center rounded-md border border-dashed border-basalt-border/80 shadow-basalt-card p-8 text-sm text-basalt-muted-foreground",
           className,
         )}
       >
@@ -184,7 +184,7 @@ export function RuleList({
     <ul
       aria-label="周期支出"
       className={cn(
-        "divide-y divide-basalt-border rounded-md border border-basalt-border",
+        "divide-y divide-basalt-border rounded-md ring-1 ring-basalt-border/80 shadow-basalt-card",
         className,
       )}
     >

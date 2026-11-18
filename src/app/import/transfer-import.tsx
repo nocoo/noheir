@@ -1,4 +1,4 @@
-import { Button, LayerCard } from "@nocoo/basalt";
+import { Button, LayerCard, Meter } from "@nocoo/basalt";
 import { Badge } from "@nocoo/basalt/components/badge";
 import { toast } from "@nocoo/basalt/components/toast";
 import {
@@ -9,11 +9,10 @@ import {
   FileText,
   Loader2,
   Upload,
-} from "lucide-react";
+} from "@nocoo/basalt/icons";
 import { useCallback, useRef, useState, useTransition } from "react";
 import { useRevalidator } from "react-router";
 import { countTransfersByYear, deleteAndImportTransfers } from "@/app/actions/import-actions";
-import { Progress } from "@/components/ui/progress";
 import {
   type ChineseTransferCSVParseResult,
   parseChineseTransferCSV,
@@ -250,7 +249,7 @@ export function TransferImport() {
 
             {step === "uploading" && (
               <div className="space-y-2">
-                <Progress value={uploadProgress} />
+                <Meter hideValue value={uploadProgress} aria-label="转账导入进度" />
                 <p className="text-basalt-muted-foreground text-xs">{uploadProgress}% 完成</p>
               </div>
             )}

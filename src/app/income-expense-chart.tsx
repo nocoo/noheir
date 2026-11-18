@@ -1,5 +1,5 @@
 import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp } from "@nocoo/basalt/icons";
 import {
   Bar,
   CartesianGrid,

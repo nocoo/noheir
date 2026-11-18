@@ -5,6 +5,8 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandPalette,
+  CommandPaletteTrigger,
   DialogClose,
 } from "@nocoo/basalt";
 import {
@@ -17,7 +19,6 @@ import {
 import { Input } from "@nocoo/basalt/components/input";
 import { InputArea } from "@nocoo/basalt/components/input-area";
 import { Label } from "@nocoo/basalt/components/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@nocoo/basalt/components/popover";
 import {
   Select,
   SelectContent,
@@ -26,13 +27,12 @@ import {
   SelectValue,
 } from "@nocoo/basalt/components/select";
 import { toast } from "@nocoo/basalt/components/toast";
-import { Check, ChevronsUpDown, XIcon } from "lucide-react";
+import { Check, ChevronsUpDown, XIcon } from "@nocoo/basalt/icons";
 import { useMemo, useState, useTransition } from "react";
 import {
   createContributionLog,
   updateContributionLog,
 } from "@/app/actions/contribution-log-actions";
-import { Command } from "@/components/ui/command";
 import type {
   ContributionOperationType,
   DomainContributionLog,
@@ -201,8 +201,8 @@ function ContributionLogFormInner({
           <Label>
             资金单元 <span className="text-basalt-destructive">*</span>
           </Label>
-          <Popover open={unitOpen} onOpenChange={setUnitOpen}>
-            <PopoverTrigger asChild>
+          <CommandPalette open={unitOpen} onOpenChange={setUnitOpen}>
+            <CommandPaletteTrigger asChild>
               <Button
                 variant="outline"
                 role="combobox"
@@ -213,48 +213,41 @@ function ContributionLogFormInner({
                 {selectedUnit ? selectedUnit.unitCode : "选择资金单元..."}
                 <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[300px] p-0">
-              <Command>
-                <CommandInput placeholder="搜索单元代码..." />
-                <CommandList>
-                  <CommandEmpty>未找到匹配的单元</CommandEmpty>
-                  <CommandGroup>
-                    {units.map((u) => (
-                      <CommandItem
-                        key={u.id}
-                        value={u.unitCode}
-                        onSelect={() => {
-                          setUnitId(u.id);
-                          setUnitOpen(false);
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 size-4",
-                            unitId === u.id ? "opacity-100" : "opacity-0",
-                          )}
-                        />
-                        <div className="flex flex-col">
-                          <span>{u.unitCode}</span>
-                          <span className="text-basalt-muted-foreground text-xs">
-                            {u.strategy} · {u.tactics}
-                          </span>
-                        </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+            </CommandPaletteTrigger>
+            <CommandInput placeholder="搜索单元代码..." />
+            <CommandList>
+              <CommandEmpty>未找到匹配的单元</CommandEmpty>
+              <CommandGroup>
+                {units.map((u) => (
+                  <CommandItem
+                    key={u.id}
+                    value={u.unitCode}
+                    onSelect={() => {
+                      setUnitId(u.id);
+                      setUnitOpen(false);
+                    }}
+                  >
+                    <Check
+                      className={cn("mr-2 size-4", unitId === u.id ? "opacity-100" : "opacity-0")}
+                    />
+                    <div className="flex flex-col">
+                      <span>{u.unitCode}</span>
+                      <span className="text-basalt-muted-foreground text-xs">
+                        {u.strategy} · {u.tactics}
+                      </span>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </CommandPalette>
         </div>
 
         {/* Product selector (optional, disabled when editing) */}
         <div className="space-y-1.5">
           <Label>关联产品（可选）</Label>
-          <Popover open={productOpen} onOpenChange={setProductOpen}>
-            <PopoverTrigger asChild>
+          <CommandPalette open={productOpen} onOpenChange={setProductOpen}>
+            <CommandPaletteTrigger asChild>
               <Button
                 variant="outline"
                 role="combobox"
@@ -265,53 +258,47 @@ function ContributionLogFormInner({
                 {selectedProduct ? selectedProduct.name : "选择产品..."}
                 <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[300px] p-0">
-              <Command>
-                <CommandInput placeholder="搜索产品..." />
-                <CommandList>
-                  <CommandEmpty>未找到匹配的产品</CommandEmpty>
-                  <CommandGroup>
-                    <CommandItem
-                      value=""
-                      onSelect={() => {
-                        setProductId("");
-                        setProductOpen(false);
-                      }}
-                    >
-                      <Check
-                        className={cn("mr-2 size-4", !productId ? "opacity-100" : "opacity-0")}
-                      />
-                      <span className="text-basalt-muted-foreground">不关联产品</span>
-                    </CommandItem>
-                    {products.map((p) => (
-                      <CommandItem
-                        key={p.id}
-                        value={p.name}
-                        onSelect={() => {
-                          setProductId(p.id);
-                          setProductOpen(false);
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 size-4",
-                            productId === p.id ? "opacity-100" : "opacity-0",
-                          )}
-                        />
-                        <div className="flex flex-col">
-                          <span>{p.name}</span>
-                          <span className="text-basalt-muted-foreground text-xs">
-                            {p.channel ?? ""} · {p.category ?? ""}
-                          </span>
-                        </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+            </CommandPaletteTrigger>
+            <CommandInput placeholder="搜索产品..." />
+            <CommandList>
+              <CommandEmpty>未找到匹配的产品</CommandEmpty>
+              <CommandGroup>
+                <CommandItem
+                  value=""
+                  onSelect={() => {
+                    setProductId("");
+                    setProductOpen(false);
+                  }}
+                >
+                  <Check className={cn("mr-2 size-4", !productId ? "opacity-100" : "opacity-0")} />
+                  <span className="text-basalt-muted-foreground">不关联产品</span>
+                </CommandItem>
+                {products.map((p) => (
+                  <CommandItem
+                    key={p.id}
+                    value={p.name}
+                    onSelect={() => {
+                      setProductId(p.id);
+                      setProductOpen(false);
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 size-4",
+                        productId === p.id ? "opacity-100" : "opacity-0",
+                      )}
+                    />
+                    <div className="flex flex-col">
+                      <span>{p.name}</span>
+                      <span className="text-basalt-muted-foreground text-xs">
+                        {p.channel ?? ""} · {p.category ?? ""}
+                      </span>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </CommandPalette>
         </div>
 
         {/* Operation type */}

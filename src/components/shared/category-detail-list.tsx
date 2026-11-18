@@ -1,5 +1,5 @@
 import { Button, LayerCard } from "@nocoo/basalt";
-import { ChevronDown, ChevronRight, FileText } from "lucide-react";
+import { ChevronDown, ChevronRight, FileText } from "@nocoo/basalt/icons";
 import { useMemo, useState } from "react";
 
 /** Transaction entry within a tertiary category */

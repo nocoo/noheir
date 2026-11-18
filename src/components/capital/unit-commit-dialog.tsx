@@ -22,7 +22,7 @@ import {
 } from "@nocoo/basalt/components/select";
 import { Separator } from "@nocoo/basalt/components/separator";
 import { toast } from "@nocoo/basalt/components/toast";
-import { Info } from "lucide-react";
+import { Info } from "@nocoo/basalt/icons";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { commitUnit, listUnitContributionLogs } from "@/app/actions/contribution-log-actions";
 import { InvestmentTimeline } from "@/components/capital/investment-timeline";

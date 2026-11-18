@@ -28,7 +28,7 @@ import {
   Trash2,
   TrendingUp,
   X,
-} from "lucide-react";
+} from "@nocoo/basalt/icons";
 import { useMemo, useState, useTransition } from "react";
 import { useRevalidator } from "react-router";
 import {
@@ -36,8 +36,8 @@ import {
   restoreContributionLog,
 } from "@/app/actions/contribution-log-actions";
 import { ContributionLogForm } from "@/components/capital/contribution-log-form";
+import { ProductBadge, UnitCodeBadge } from "@/components/shared/colored-badge";
 import { StatCard } from "@/components/shared/stat-card";
-import { ProductBadge, UnitCodeBadge } from "@/components/ui/colored-badge";
 import type {
   ContributionOperationType,
   DomainContributionLog,

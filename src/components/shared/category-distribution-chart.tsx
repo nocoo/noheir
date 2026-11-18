@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@nocoo/basalt/components/select";
-import { Layers } from "lucide-react";
+import { Layers } from "@nocoo/basalt/icons";
 import { useState } from "react";
 import {
   Bar,

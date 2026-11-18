@@ -1,5 +1,5 @@
 import { PageHeader } from "@nocoo/basalt/components/page-header";
-import { Calendar, TrendingDown, TrendingUp, Wallet } from "lucide-react";
+import { Calendar, TrendingDown, TrendingUp, Wallet } from "@nocoo/basalt/icons";
 import type {
   AccountChartData,
   CategoryGroup,
