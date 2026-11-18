@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.2.1] - 2026-11-18
+
+### Refactoring
+
+- upgrade basalt to 3.5
+
+### Chores
+
+- bump jsdom to 31.0.1 (#706)
+- bump hono to 4.13.18 (#704)
+- bump @biomejs/biome to 2.6.7 (#703)
+- bump @testing-library/user-event to 14.6.10 (#700)
+- bump vite to 8.3.8 (#691)
+- bump wrangler to 4.162.0 (#687)
+- bump jose to 6.2.17 (#686)
+- bump @cloudflare/vite-plugin to 1.69.1 (#685)
+- bump @vitejs/plugin-react to 6.3.0 (#681)
+- **ci** — migrate to System1 v1.3.0 native mode (base-ci v2026.15)
+- **deps** — upgrade @nocoo/basalt to 3.3.6 (#709)
+- **deps** — bump @nocoo/basalt to 3.3.5
+
 ## [3.2.0] - 2026-11-14
 
 ### Fixes
