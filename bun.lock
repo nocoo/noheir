@@ -13,7 +13,7 @@
         "date-fns": "^4.4.0",
         "drizzle-orm": "0.45.4",
         "esbuild": "^0.28.2",
-        "hono": "4.13.18",
+        "hono": "4.13.19",
         "jose": "6.2.17",
         "react": "19.3.1",
         "react-dom": "19.3.1",
@@ -56,7 +56,7 @@
   ],
   "overrides": {
     "esbuild": "^0.28.2",
-    "hono": "4.13.18",
+    "hono": "4.13.19",
     "postcss": "8.5.31",
     "sharp": "0.35.5",
     "source-map-js": "1.2.2",
@@ -719,7 +719,7 @@
 
     "hast-util-whitespace": ["hast-util-whitespace@3.0.0", "", { "dependencies": { "@types/hast": "^3.0.0" } }, "sha1-d3jtnTyS3Z6MXI9kiknCH8UctiE="],
 
-    "hono": ["hono@4.13.18", "", {}, "sha512-H9q/E1XizaWstJxUW881dmLxEj+t/TrGGnyxINkm4+sK0qUwsMtFdo2BWI9Vs3cIS19MU6b6iCijoUoEf4f3DA=="],
+    "hono": ["hono@4.13.19", "", {}, "sha512-KmXvQAXwcAHV+muzbIwoJ23niEB5nMoDVr9WcRkU8mvjUECm/1+7v4Jgp7P7a+H6MLFrh+vXrGonGrGS+RQfkA=="],
 
     "html-encoding-sniffer": ["html-encoding-sniffer@7.0.0", "", { "dependencies": { "@exodus/bytes": "^1.15.1" } }, "sha512-UikN5yr7xsCDAq87Or5or0PAlD3HJJOKVzM05az588WnpDJ4Ux7a2A53Qi6gofGg2/EtvF/H4hCi/TXfCW4Y6w=="],
 
