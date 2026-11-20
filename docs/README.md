@@ -5,6 +5,7 @@ Start with the [project README](../README.md) and [project rules](../AGENTS.md).
 | Document                                                                    | Scope                                                                                 |
 | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | [api](api.md)                                                               | Published scoped Bearer REST reference for `/api/v1` (external tools)                 |
+| [26-l1-gate-evidence](26-l1-gate-evidence.md)                               | L1 coverage scopes, Husky hook mechanics, rejection matrix and 2026-11-09 evidence    |
 | [25-scoped-api](25-scoped-api.md)                                           | Scoped REST API design record, acceptance notes and local verification                |
 | [24-local-environments](24-local-environments.md)                           | Demo/E2E/Prod launch, switching, ownership, catalog and verification                  |
 | [04-run](04-run.md)                                                         | Native Workers development, Access/scoped REST, CI/CD and data safety                 |
