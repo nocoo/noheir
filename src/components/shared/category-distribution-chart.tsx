@@ -1,4 +1,4 @@
-import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
+import { ChartTooltip } from "@nocoo/basalt/components/chart";
 import {
   Select,
   SelectContent,
@@ -108,16 +108,12 @@ export function CategoryDistributionChart({
                 if (!active || !payload?.length) return null;
                 const entry = payload[0];
                 return (
-                  <div
-                    className={overlayPanelClass(
-                      "px-basalt-card-sm py-basalt-space-lg text-basalt-sm",
-                    )}
-                  >
+                  <ChartTooltip className="text-basalt-sm" style={{ maxWidth: "none" }}>
                     <p className="font-medium">{entry?.payload?.name}</p>
                     <p style={{ color: tooltipColor }}>
                       金额: {formatCurrencyFull(Number(entry?.value ?? 0))}
                     </p>
-                  </div>
+                  </ChartTooltip>
                 );
               }}
             />

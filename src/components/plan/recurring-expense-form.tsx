@@ -22,7 +22,6 @@
 
 import { Button } from "@nocoo/basalt";
 import { Input } from "@nocoo/basalt/components/input";
-import { InputArea } from "@nocoo/basalt/components/input-area";
 import { Label } from "@nocoo/basalt/components/label";
 import {
   Select,
@@ -31,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@nocoo/basalt/components/select";
+import { Textarea } from "@nocoo/basalt/components/textarea";
 import { toast } from "@nocoo/basalt/components/toast";
 import * as React from "react";
 import {
@@ -195,7 +195,7 @@ export function RecurringExpenseForm({
           onSuccess(id ? { id } : {});
         }
       } else {
-        toast.error(result.error);
+        toast.danger(result.error);
         setErrors({ form: result.error });
       }
     });
@@ -343,7 +343,7 @@ export function RecurringExpenseForm({
 
       <div className="space-y-2">
         <Label htmlFor="rx-note">备注</Label>
-        <InputArea
+        <Textarea
           id="rx-note"
           maxLength={1000}
           value={note}

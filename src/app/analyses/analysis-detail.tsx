@@ -83,7 +83,7 @@ export function AnalysisDetail({
         <LayerCard.Header>来源与证据</LayerCard.Header>
         <LayerCard.Body className="space-y-3 text-sm">
           <div className="flex flex-wrap gap-2">
-            <Badge variant={status === "current" ? "secondary" : "warning"}>
+            <Badge tone={status === "current" ? "neutral" : "warning"}>
               来源修订 {report.dataRevision} · 当前修订 {currentRevision}
             </Badge>
             <Badge variant="outline">报告版本 {report.version}</Badge>

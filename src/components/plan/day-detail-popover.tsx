@@ -24,7 +24,7 @@
 //   - Mutate state. Pause/resume/end actions live on the rule list
 //     (P3-C8), not here.
 
-import { Button, DialogClose } from "@nocoo/basalt";
+import { Button } from "@nocoo/basalt";
 import {
   Dialog,
   DialogContent,
@@ -32,7 +32,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@nocoo/basalt/components/dialog";
-import { XIcon } from "@nocoo/basalt/icons";
 import * as React from "react";
 import { CHART_TOKENS } from "@/lib/palette";
 import { describeFrequency, formatAmountYuan } from "@/lib/recurring-expense/format";
@@ -185,11 +184,6 @@ export function DayDetailPopover({
             ))}
           </ul>
         )}
-        <DialogClose asChild>
-          <Button variant="ghost" size="icon" className="absolute right-2 top-2" aria-label="Close">
-            <XIcon aria-hidden="true" />
-          </Button>
-        </DialogClose>
       </DialogContent>
     </Dialog>
   );

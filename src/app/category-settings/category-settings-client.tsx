@@ -59,7 +59,7 @@ export function CategorySettingsClient({
       if (result.success) {
         toast.success("分类设置已保存");
         revalidator.revalidate();
-      } else toast.error(result.error);
+      } else toast.danger(result.error);
     });
   };
 
@@ -141,13 +141,13 @@ export function CategorySettingsClient({
           {activeIncome.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {activeIncome.slice(0, 8).map((category) => (
-                <Badge key={category} variant="default" className="gap-1">
+                <Badge key={category} variant="solid" className="gap-1">
                   <TrendingUp className="size-3" />
                   {category}
                 </Badge>
               ))}
               {activeIncome.length > 8 && (
-                <Badge variant="secondary">+{activeIncome.length - 8} 更多</Badge>
+                <Badge variant="soft">+{activeIncome.length - 8} 更多</Badge>
               )}
             </div>
           )}
@@ -226,13 +226,13 @@ export function CategorySettingsClient({
           {fixedExpense.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {fixedExpense.slice(0, 8).map((category) => (
-                <Badge key={category} variant="default" className="gap-1">
+                <Badge key={category} variant="solid" className="gap-1">
                   <Shield className="size-3" />
                   {category}
                 </Badge>
               ))}
               {fixedExpense.length > 8 && (
-                <Badge variant="secondary">+{fixedExpense.length - 8} 更多</Badge>
+                <Badge variant="soft">+{fixedExpense.length - 8} 更多</Badge>
               )}
             </div>
           )}

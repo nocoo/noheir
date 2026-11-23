@@ -11,7 +11,7 @@
 import { Button } from "@nocoo/basalt";
 import { Badge } from "@nocoo/basalt/components/badge";
 import { Input } from "@nocoo/basalt/components/input";
-import { SkeletonLine } from "@nocoo/basalt/components/skeleton-line";
+import { Skeleton } from "@nocoo/basalt/components/skeleton";
 import { toast } from "@nocoo/basalt/components/toast";
 import {
   ArrowDownLeft,
@@ -86,7 +86,7 @@ export function UnitLogTimeline({ logs, loading, onRefresh, limit = 500 }: UnitL
   const savePnl = (log: DomainContributionLog) => {
     const trimmed = draftPnl.trim();
     if (trimmed !== "" && Number.isNaN(Number(trimmed))) {
-      toast.error("请输入有效数字");
+      toast.danger("请输入有效数字");
       return;
     }
     startTransition(async () => {
@@ -102,7 +102,7 @@ export function UnitLogTimeline({ logs, loading, onRefresh, limit = 500 }: UnitL
         setEditing(null);
         onRefresh();
       } else {
-        toast.error(result.error);
+        toast.danger(result.error);
       }
     });
   };
@@ -118,7 +118,7 @@ export function UnitLogTimeline({ logs, loading, onRefresh, limit = 500 }: UnitL
           <SectionTitle icon={<History className="size-3" />} label="历史记录" />
         </div>
         {[0, 1, 2].map((i) => (
-          <SkeletonLine key={i} height={56} minWidth={100} maxWidth={100} />
+          <Skeleton key={i} variant="block" height={56} />
         ))}
       </div>
     );

@@ -59,7 +59,7 @@ export function AccountTypesClient({
         toast.success("账户类型已保存");
         revalidator.revalidate();
       } else {
-        toast.error(result.error);
+        toast.danger(result.error);
       }
     });
   };

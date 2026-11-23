@@ -13,7 +13,7 @@ vi.mock("@/app/actions/contribution-log-actions", () => ({
 }));
 
 vi.mock("@nocoo/basalt/components/toast", () => ({
-  toast: { success: toastSuccess, error: toastError },
+  toast: { success: toastSuccess, danger: toastError },
 }));
 
 import { UnitLogTimeline } from "@/components/capital/unit-log-timeline";

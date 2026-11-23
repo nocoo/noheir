@@ -1,6 +1,6 @@
 import { LayerCard } from "@nocoo/basalt";
 import { Badge } from "@nocoo/basalt/components/badge";
-import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
+import { ChartTooltip } from "@nocoo/basalt/components/chart";
 import { PageHeader } from "@nocoo/basalt/components/page-header";
 import { PiggyBank, Target, TrendingDown, TrendingUp, Wallet } from "@nocoo/basalt/icons";
 import {
@@ -77,7 +77,8 @@ export function SavingsRateClient({
                   {summary.annualSavingsRate.toFixed(1)}%
                 </p>
                 <Badge
-                  variant={summary.savingsRateDiff >= 0 ? "default" : "destructive"}
+                  tone={summary.savingsRateDiff >= 0 ? "neutral" : "danger"}
+                  variant={summary.savingsRateDiff >= 0 ? "solid" : "soft"}
                   className="text-xs"
                 >
                   {summary.savingsRateDiff >= 0 ? "+" : ""}
@@ -107,7 +108,8 @@ export function SavingsRateClient({
               </p>
               <div className="mt-1 flex items-center gap-1">
                 <Badge
-                  variant={summary.savingsGap >= 0 ? "default" : "destructive"}
+                  tone={summary.savingsGap >= 0 ? "neutral" : "danger"}
+                  variant={summary.savingsGap >= 0 ? "solid" : "soft"}
                   className="text-xs"
                 >
                   {summary.savingsGap >= 0 ? "+" : ""}
@@ -183,11 +185,7 @@ export function SavingsRateClient({
                   content={({ active, payload, label }) => {
                     if (!active || !payload?.length) return null;
                     return (
-                      <div
-                        className={overlayPanelClass(
-                          "px-basalt-card-sm py-basalt-space-lg text-basalt-sm",
-                        )}
-                      >
+                      <ChartTooltip className="text-basalt-sm" style={{ maxWidth: "none" }}>
                         <p className="mb-1 font-medium">{label}</p>
                         {payload.map((entry) => {
                           const key = String(entry.dataKey ?? "");
@@ -213,7 +211,7 @@ export function SavingsRateClient({
                           }
                           return null;
                         })}
-                      </div>
+                      </ChartTooltip>
                     );
                   }}
                 />

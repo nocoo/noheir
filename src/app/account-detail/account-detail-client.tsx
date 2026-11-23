@@ -1,6 +1,6 @@
 import { LayerCard } from "@nocoo/basalt";
 import { Badge } from "@nocoo/basalt/components/badge";
-import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
+import { ChartTooltip } from "@nocoo/basalt/components/chart";
 import { PageHeader } from "@nocoo/basalt/components/page-header";
 import {
   Select,
@@ -158,18 +158,14 @@ export function AccountDetailClient({
                     content={({ active, payload, label }) => {
                       if (!active || !payload?.length) return null;
                       return (
-                        <div
-                          className={overlayPanelClass(
-                            "px-basalt-card-sm py-basalt-space-lg text-basalt-sm",
-                          )}
-                        >
+                        <ChartTooltip className="text-basalt-sm" style={{ maxWidth: "none" }}>
                           <p className="mb-1 font-medium">{label}</p>
                           {payload.map((entry) => (
                             <p key={String(entry.dataKey)} className="text-basalt-muted-foreground">
                               {entry.name}: {formatCurrencyFull(Number(entry.value ?? 0))}
                             </p>
                           ))}
-                        </div>
+                        </ChartTooltip>
                       );
                     }}
                   />
@@ -236,13 +232,8 @@ export function AccountDetailClient({
                       </TableCell>
                       <TableCell>
                         <Badge
-                          variant={
-                            entry.type === "income"
-                              ? "default"
-                              : entry.type === "expense"
-                                ? "destructive"
-                                : "secondary"
-                          }
+                          tone={entry.type === "expense" ? "danger" : "neutral"}
+                          variant={entry.type === "income" ? "solid" : "soft"}
                         >
                           {typeInfo.label}
                         </Badge>

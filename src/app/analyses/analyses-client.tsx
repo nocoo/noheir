@@ -158,7 +158,7 @@ export function AnalysesClient({
                     >
                       {report.title}
                     </Link>
-                    <Badge variant="secondary">{report.currencies.join(" / ")}</Badge>
+                    <Badge variant="soft">{report.currencies.join(" / ")}</Badge>
                   </div>
                   <p className="mt-1 text-xs text-basalt-muted-foreground">
                     {report.periodStart} – {report.periodEnd} · 来源修订 {report.dataRevision} ·

@@ -246,7 +246,7 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
         toast.success("产品已删除");
         revalidator.revalidate();
       } else {
-        toast.error(result.error);
+        toast.danger(result.error);
       }
       setDeleteTarget(null);
     });
@@ -263,7 +263,7 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
         toast.success(product.isArchived ? "已取消存档" : "已存档");
         revalidator.revalidate();
       } else {
-        toast.error(result.error);
+        toast.danger(result.error);
       }
     });
   };
@@ -307,7 +307,7 @@ export function ProductsClient({ products, units }: ProductsClientProps) {
               <Filter className="mr-1 size-4" />
               筛选
               {activeFilterCount > 0 && (
-                <Badge variant="secondary" className="ml-1 text-xs">
+                <Badge variant="soft" className="ml-1 text-xs">
                   {activeFilterCount}
                 </Badge>
               )}
@@ -695,7 +695,7 @@ function ProductForm({
           toast.success("产品已更新");
           onSuccess();
         } else {
-          toast.error(result.error);
+          toast.danger(result.error);
         }
       } else {
         // Create: only send fields that have values
@@ -714,7 +714,7 @@ function ProductForm({
           toast.success("产品已创建");
           onSuccess();
         } else {
-          toast.error(result.error);
+          toast.danger(result.error);
         }
       }
     });

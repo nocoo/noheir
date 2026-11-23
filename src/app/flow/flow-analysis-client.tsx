@@ -48,7 +48,7 @@ function FlowList({ flows, colors }: { flows: FlowNode[]; colors: string[] }) {
                   {flow.source}
                 </Badge>
                 <ArrowRight className="text-basalt-muted-foreground size-3" />
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="soft" className="text-xs">
                   {flow.target}
                 </Badge>
               </div>

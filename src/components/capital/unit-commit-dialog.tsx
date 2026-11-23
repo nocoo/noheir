@@ -11,7 +11,6 @@
 import { Button } from "@nocoo/basalt";
 import { DialogDescription, DialogHeader, DialogTitle } from "@nocoo/basalt/components/dialog";
 import { Input } from "@nocoo/basalt/components/input";
-import { InputArea } from "@nocoo/basalt/components/input-area";
 import { Label } from "@nocoo/basalt/components/label";
 import {
   Select,
@@ -21,6 +20,7 @@ import {
   SelectValue,
 } from "@nocoo/basalt/components/select";
 import { Separator } from "@nocoo/basalt/components/separator";
+import { Textarea } from "@nocoo/basalt/components/textarea";
 import { toast } from "@nocoo/basalt/components/toast";
 import { Info } from "@nocoo/basalt/icons";
 import { useCallback, useEffect, useState, useTransition } from "react";
@@ -148,7 +148,7 @@ export function UnitCommitDialog({
       applySnapshot(result.data.expected);
       setVersion(result.data.version);
     } else {
-      toast.error(result.error);
+      toast.danger(result.error);
     }
     setLoading(false);
   }, [unit.id, applySnapshot]);
@@ -163,7 +163,7 @@ export function UnitCommitDialog({
     if (result.success) {
       setLogs(result.data.logs);
     } else {
-      toast.error(result.error);
+      toast.danger(result.error);
     }
   }, [unit.id]);
 
@@ -178,15 +178,15 @@ export function UnitCommitDialog({
     e.preventDefault();
 
     if (!expected || !initialForm) {
-      toast.error("单元数据尚未加载完成");
+      toast.danger("单元数据尚未加载完成");
       return;
     }
     if (!unitCode.trim()) {
-      toast.error("请输入单位编号");
+      toast.danger("请输入单位编号");
       return;
     }
     if (!amount || Number(amount) < 0) {
-      toast.error("请输入有效金额");
+      toast.danger("请输入有效金额");
       return;
     }
 
@@ -220,7 +220,7 @@ export function UnitCommitDialog({
         onSuccess();
         onOpenChange(false);
       } else {
-        toast.error(result.error);
+        toast.danger(result.error);
       }
     });
   };
@@ -386,7 +386,7 @@ export function UnitCommitDialog({
                 <Label htmlFor="unitNote" className="text-xs">
                   单元备注
                 </Label>
-                <InputArea
+                <Textarea
                   id="unitNote"
                   value={unitNote}
                   onChange={(e) => setUnitNote(e.target.value)}

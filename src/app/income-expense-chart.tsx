@@ -1,4 +1,4 @@
-import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
+import { ChartTooltip } from "@nocoo/basalt/components/chart";
 import { TrendingUp } from "@nocoo/basalt/icons";
 import {
   Bar,
@@ -64,11 +64,7 @@ export function IncomeExpenseChart({ monthlyData, targetSavingsRate }: IncomeExp
               content={({ active, payload, label }) => {
                 if (!active || !payload?.length) return null;
                 return (
-                  <div
-                    className={overlayPanelClass(
-                      "px-basalt-card-sm py-basalt-space-lg text-basalt-sm",
-                    )}
-                  >
+                  <ChartTooltip className="text-basalt-sm" style={{ maxWidth: "none" }}>
                     <p className="mb-1 font-medium">{label}</p>
                     {payload.map((entry) => {
                       const key = String(entry.dataKey ?? "");
@@ -92,7 +88,7 @@ export function IncomeExpenseChart({ monthlyData, targetSavingsRate }: IncomeExp
                     >
                       目标储蓄率: {targetSavingsRate}%
                     </p>
-                  </div>
+                  </ChartTooltip>
                 );
               }}
             />

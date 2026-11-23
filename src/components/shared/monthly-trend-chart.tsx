@@ -1,4 +1,4 @@
-import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
+import { ChartTooltip } from "@nocoo/basalt/components/chart";
 import {
   Area,
   AreaChart,
@@ -62,16 +62,12 @@ export function MonthlyTrendChart({
                 if (!active || !payload?.length) return null;
                 const entry = payload[0];
                 return (
-                  <div
-                    className={overlayPanelClass(
-                      "px-basalt-card-sm py-basalt-space-lg text-basalt-sm",
-                    )}
-                  >
+                  <ChartTooltip className="text-basalt-sm" style={{ maxWidth: "none" }}>
                     <p className="font-medium">{tooltipLabel}</p>
                     <p className="text-basalt-muted-foreground">
                       {labelText}: {formatCurrencyFull(Number(entry?.value ?? 0))}
                     </p>
-                  </div>
+                  </ChartTooltip>
                 );
               }}
             />

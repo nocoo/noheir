@@ -16,7 +16,7 @@ vi.mock("react-router", () => ({
 vi.mock("@/app/actions/settings-actions", () => ({
   saveFinancialPreferences: savePreferences,
 }));
-vi.mock("@nocoo/basalt/components/toast", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+vi.mock("@nocoo/basalt/components/toast", () => ({ toast: { success: vi.fn(), danger: vi.fn() } }));
 
 import { CategorySettingsClient } from "@/app/category-settings/category-settings-client";
 import { CommandPalette } from "@/components/command-palette";

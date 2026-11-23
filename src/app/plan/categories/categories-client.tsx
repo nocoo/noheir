@@ -62,7 +62,7 @@ export function CategoriesClient({ categories, usage }: CategoriesClientProps): 
         setDeleting(null);
         revalidator.revalidate();
       } else {
-        toast.error(result.error);
+        toast.danger(result.error);
       }
     } finally {
       setDeletePending(false);

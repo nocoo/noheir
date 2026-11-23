@@ -162,7 +162,7 @@ export function CapitalLogsClient({ logs, units, products }: CapitalLogsClientPr
         await revalidator.revalidate();
         toast.success("已删除");
       } else {
-        toast.error(result.error);
+        toast.danger(result.error);
       }
     });
   };
@@ -174,7 +174,7 @@ export function CapitalLogsClient({ logs, units, products }: CapitalLogsClientPr
         await revalidator.revalidate();
         toast.success("已恢复");
       } else {
-        toast.error(result.error);
+        toast.danger(result.error);
       }
     });
   };

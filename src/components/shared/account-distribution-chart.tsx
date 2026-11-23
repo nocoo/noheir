@@ -1,4 +1,4 @@
-import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
+import { ChartTooltip } from "@nocoo/basalt/components/chart";
 import { CreditCard } from "@nocoo/basalt/icons";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ChartCard } from "@/components/shared/chart-card";
@@ -76,17 +76,13 @@ export function AccountDistributionChart({
                 // biome-ignore lint/suspicious/noExplicitAny: recharts Tooltip payload shape is untyped
                 const pct = (entry?.payload as any)?.percentage as number | undefined;
                 return (
-                  <div
-                    className={overlayPanelClass(
-                      "px-basalt-card-sm py-basalt-space-lg text-basalt-sm",
-                    )}
-                  >
+                  <ChartTooltip className="text-basalt-sm" style={{ maxWidth: "none" }}>
                     <p className="font-medium">{entry?.payload?.name}</p>
                     <p className="text-basalt-muted-foreground">
                       金额: {formatCurrencyFull(Number(entry?.value ?? 0))}
                       {pct ? ` (${pct.toFixed(1)}%)` : ""}
                     </p>
-                  </div>
+                  </ChartTooltip>
                 );
               }}
             />

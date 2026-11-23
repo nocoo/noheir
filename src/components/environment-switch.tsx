@@ -13,7 +13,7 @@ export function EnvironmentSwitch() {
     try {
       await switchEnvironment(mode as EnvironmentMode);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "环境切换失败");
+      toast.danger(error instanceof Error ? error.message : "环境切换失败");
     } finally {
       setPending(false);
     }

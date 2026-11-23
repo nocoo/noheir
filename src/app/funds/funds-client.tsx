@@ -182,7 +182,7 @@ export function FundsClient({ units, products }: FundsClientProps) {
         toast.success("资本单位已删除");
         revalidator.revalidate();
       } else {
-        toast.error(result.error);
+        toast.danger(result.error);
       }
       setDeleteTarget(null);
     });
@@ -224,7 +224,7 @@ export function FundsClient({ units, products }: FundsClientProps) {
               <Filter className="mr-1 size-4" />
               筛选
               {activeFilterCount > 0 && (
-                <Badge variant="secondary" className="ml-1 text-xs">
+                <Badge variant="soft" className="ml-1 text-xs">
                   {activeFilterCount}
                 </Badge>
               )}

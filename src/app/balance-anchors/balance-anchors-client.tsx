@@ -80,7 +80,7 @@ export function BalanceAnchorsClient({
         toast.success("余额锚点已保存");
         revalidator.revalidate();
       } else {
-        toast.error(result.error);
+        toast.danger(result.error);
       }
     });
   };
@@ -209,7 +209,7 @@ export function BalanceAnchorsClient({
                 <div key={accountName} className="space-y-2">
                   <div className="flex items-center gap-2">
                     <h4 className="text-sm font-medium">{accountName}</h4>
-                    <Badge variant="secondary">{acctAnchors.length} 个锚点</Badge>
+                    <Badge variant="soft">{acctAnchors.length} 个锚点</Badge>
                   </div>
                   <div className="grid grid-cols-1 gap-2">
                     {acctAnchors.map((anchor) => (

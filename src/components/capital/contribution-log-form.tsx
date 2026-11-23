@@ -17,7 +17,6 @@ import {
   DialogTitle,
 } from "@nocoo/basalt/components/dialog";
 import { Input } from "@nocoo/basalt/components/input";
-import { InputArea } from "@nocoo/basalt/components/input-area";
 import { Label } from "@nocoo/basalt/components/label";
 import {
   Select,
@@ -26,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@nocoo/basalt/components/select";
+import { Textarea } from "@nocoo/basalt/components/textarea";
 import { toast } from "@nocoo/basalt/components/toast";
 import { Check, ChevronsUpDown, XIcon } from "@nocoo/basalt/icons";
 import { useMemo, useState, useTransition } from "react";
@@ -129,15 +129,15 @@ function ContributionLogFormInner({
   const handleSubmit = () => {
     // Validate required fields
     if (!unitId) {
-      toast.error("请选择资金单元");
+      toast.danger("请选择资金单元");
       return;
     }
     if (!amount || Number.isNaN(parseFloat(amount))) {
-      toast.error("请输入有效金额");
+      toast.danger("请输入有效金额");
       return;
     }
     if (!operationDate) {
-      toast.error("请选择日期");
+      toast.danger("请选择日期");
       return;
     }
 
@@ -163,7 +163,7 @@ function ContributionLogFormInner({
           toast.success("更新成功");
           onSuccess();
         } else {
-          toast.error(result.error);
+          toast.danger(result.error);
         }
       } else {
         const result = await createContributionLog({
@@ -180,7 +180,7 @@ function ContributionLogFormInner({
           toast.success("创建成功");
           onSuccess();
         } else {
-          toast.error(result.error);
+          toast.danger(result.error);
         }
       }
     });
@@ -372,7 +372,7 @@ function ContributionLogFormInner({
         {/* Note */}
         <div className="space-y-1.5">
           <Label>备注</Label>
-          <InputArea
+          <Textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="可选备注..."

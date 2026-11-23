@@ -1,6 +1,6 @@
 import { LayerCard } from "@nocoo/basalt";
 import { Badge } from "@nocoo/basalt/components/badge";
-import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
+import { ChartTooltip } from "@nocoo/basalt/components/chart";
 import { PageHeader } from "@nocoo/basalt/components/page-header";
 import {
   Table,
@@ -158,11 +158,7 @@ export function AccountAnalysisClient({
                   content={({ active, payload, label }) => {
                     if (!active || !payload?.length) return null;
                     return (
-                      <div
-                        className={overlayPanelClass(
-                          "px-basalt-card-sm py-basalt-space-lg text-basalt-sm",
-                        )}
-                      >
+                      <ChartTooltip className="text-basalt-sm" style={{ maxWidth: "none" }}>
                         <p className="mb-1 font-medium">{label}</p>
                         {payload.map((entry) => (
                           <p
@@ -172,7 +168,7 @@ export function AccountAnalysisClient({
                             {entry.name}: {formatCurrencyFull(Number(entry.value ?? 0))}
                           </p>
                         ))}
-                      </div>
+                      </ChartTooltip>
                     );
                   }}
                 />
@@ -233,16 +229,12 @@ export function AccountAnalysisClient({
                         | undefined;
                       if (!data) return null;
                       return (
-                        <div
-                          className={overlayPanelClass(
-                            "px-basalt-card-sm py-basalt-space-lg text-basalt-sm",
-                          )}
-                        >
+                        <ChartTooltip className="text-basalt-sm" style={{ maxWidth: "none" }}>
                           <p className="font-medium">{data.name}</p>
                           <p className="text-basalt-muted-foreground">
                             {formatCurrencyFull(data.value)} ({data.percentage.toFixed(1)}%)
                           </p>
-                        </div>
+                        </ChartTooltip>
                       );
                     }}
                   />
@@ -266,7 +258,7 @@ export function AccountAnalysisClient({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <h4 className="font-semibold">{group.prefix}</h4>
-                    <Badge variant="secondary">{group.accounts.length} 账户</Badge>
+                    <Badge variant="soft">{group.accounts.length} 账户</Badge>
                   </div>
                   <span
                     className={cn(

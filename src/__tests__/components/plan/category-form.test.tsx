@@ -20,7 +20,7 @@ vi.mock("@/app/actions/expense-category-actions", () => ({
 vi.mock("@nocoo/basalt/components/toast", () => ({
   toast: {
     success: toastSuccess,
-    error: toastError,
+    danger: toastError,
   },
 }));
 

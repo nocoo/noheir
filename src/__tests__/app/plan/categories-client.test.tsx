@@ -30,7 +30,7 @@ vi.mock("@/app/actions/expense-category-actions", () => ({
 }));
 
 vi.mock("@nocoo/basalt/components/toast", () => ({
-  toast: { success: toastSuccess, error: toastError },
+  toast: { success: toastSuccess, danger: toastError },
 }));
 
 import { CategoriesClient } from "@/app/plan/categories/categories-client";

@@ -1,6 +1,6 @@
 import { LayerCard, Meter } from "@nocoo/basalt";
 import { Badge } from "@nocoo/basalt/components/badge";
-import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
+import { ChartTooltip } from "@nocoo/basalt/components/chart";
 import { PageHeader } from "@nocoo/basalt/components/page-header";
 import {
   AlertCircle,
@@ -58,9 +58,9 @@ const dimensionConfig = [
 
 function getStatusBadge(score: number, max: number) {
   const pct = (score / max) * 100;
-  if (pct >= 80) return { label: "优秀", variant: "default" as const };
-  if (pct >= 50) return { label: "一般", variant: "secondary" as const };
-  return { label: "需改善", variant: "destructive" as const };
+  if (pct >= 80) return { label: "优秀", tone: "neutral" as const, variant: "solid" as const };
+  if (pct >= 50) return { label: "一般", tone: "neutral" as const, variant: "soft" as const };
+  return { label: "需改善", tone: "danger" as const, variant: "soft" as const };
 }
 
 export function FinancialHealthClient({ healthResult, monthlyData }: FinancialHealthClientProps) {
@@ -142,16 +142,12 @@ export function FinancialHealthClient({ healthResult, monthlyData }: FinancialHe
                       | undefined;
                     if (!data) return null;
                     return (
-                      <div
-                        className={overlayPanelClass(
-                          "px-basalt-card-sm py-basalt-space-lg text-basalt-sm",
-                        )}
-                      >
+                      <ChartTooltip className="text-basalt-sm" style={{ maxWidth: "none" }}>
                         <p className="font-medium">{data.dimension}</p>
                         <p className="text-basalt-muted-foreground">
                           {data.score} / {data.fullMark} 分
                         </p>
-                      </div>
+                      </ChartTooltip>
                     );
                   }}
                 />
@@ -206,7 +202,9 @@ export function FinancialHealthClient({ healthResult, monthlyData }: FinancialHe
               <LayerCard.Body className="min-h-0 flex-1 space-y-3">
                 <Meter hideValue value={pct} size="lg" aria-label={`${dim.name}评分`} />
                 <div className="flex items-center gap-2">
-                  <Badge variant={status.variant}>{status.label}</Badge>
+                  <Badge tone={status.tone} variant={status.variant}>
+                    {status.label}
+                  </Badge>
                   <span className="text-basalt-muted-foreground text-sm">{interpretation}</span>
                 </div>
                 <div className="flex items-start gap-2 rounded-md p-3">

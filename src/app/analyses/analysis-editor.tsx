@@ -1,5 +1,5 @@
 import { Button, Checkbox, Field, Input, LayerCard } from "@nocoo/basalt";
-import { InputArea } from "@nocoo/basalt/components/input-area";
+import { Textarea } from "@nocoo/basalt/components/textarea";
 import { useState } from "react";
 import { ReportMarkdown } from "@/components/report-markdown";
 import { type AnalysisDraft, buildAnalysisInput, createAnalysisDraft } from "@/domain/analyses";
@@ -148,7 +148,7 @@ export function AnalysisEditor({
                 htmlFor="report-markdown"
                 hint="不执行 HTML，不加载图片；链接仅允许安全协议。"
               >
-                <InputArea
+                <Textarea
                   id="report-markdown"
                   className="min-h-64 font-mono"
                   maxLength={100000}
@@ -200,7 +200,7 @@ export function AnalysisEditor({
                 '数组格式，例如 [{"resource":"transactions","ids":[],"dataRevision":1}]。服务端验证资源 ID 属于当前用户；外部写入还需要对应读取权限。正文、修订声明与描述标签不代表内容经过验证。'
               }
             >
-              <InputArea
+              <Textarea
                 id="report-evidence"
                 className="min-h-24 font-mono"
                 value={draft.evidence}

@@ -18,7 +18,7 @@ vi.mock("@/app/actions/recurring-expense-actions", () => ({
 }));
 
 vi.mock("@nocoo/basalt/components/toast", () => ({
-  toast: { success: toastSuccess, error: toastError },
+  toast: { success: toastSuccess, danger: toastError },
 }));
 
 import { RecurringExpenseForm } from "@/components/plan/recurring-expense-form";

@@ -109,7 +109,7 @@ export function CategoryForm({
           onSuccess(id ? { id } : {});
         }
       } else {
-        toast.error(result.error);
+        toast.danger(result.error);
         // Surface as inline error too. If the worker said "分类名已存在"
         // we can attribute it to the name field.
         if (result.error.includes("分类名")) {

@@ -74,7 +74,7 @@ export function FinancialFreedomClient({
                 被动收入覆盖支出的 {summary.freedomRatio.toFixed(1)}%
               </p>
             </div>
-            <Badge variant={summary.isFree ? "default" : "secondary"} className="text-sm">
+            <Badge variant={summary.isFree ? "solid" : "soft"} className="text-sm">
               {summary.isFree
                 ? `盈余 ${formatCurrencyFull(Math.abs(summary.freedomGap))}`
                 : `缺口 ${formatCurrencyFull(summary.freedomGap)}`}
@@ -198,7 +198,10 @@ export function FinancialFreedomClient({
                   size="lg"
                   aria-label="削减支出后的财务自由率"
                 />
-                <Badge variant={reduceScenario.isAchieved ? "default" : "destructive"}>
+                <Badge
+                  tone={reduceScenario.isAchieved ? "neutral" : "danger"}
+                  variant={reduceScenario.isAchieved ? "solid" : "soft"}
+                >
                   {reduceScenario.isAchieved
                     ? "可实现财务自由"
                     : `还差 ${formatCurrencyFull(Math.abs(reduceScenario.gap))}`}
@@ -238,7 +241,10 @@ export function FinancialFreedomClient({
                   size="lg"
                   aria-label="增加被动收入后的财务自由率"
                 />
-                <Badge variant={increaseScenario.isAchieved ? "default" : "destructive"}>
+                <Badge
+                  tone={increaseScenario.isAchieved ? "neutral" : "danger"}
+                  variant={increaseScenario.isAchieved ? "solid" : "soft"}
+                >
                   {increaseScenario.isAchieved
                     ? "可实现财务自由"
                     : `还差 ${formatCurrencyFull(Math.abs(increaseScenario.gap))}`}

@@ -473,12 +473,12 @@ export function ApiKeysClient({ initialKeys }: { initialKeys: ApiKeyInfo[] }) {
                         <span className="font-medium">{key.label}</span>
                         <Badge
                           dot
-                          variant={
+                          tone={
                             status === "active"
                               ? "success"
                               : status === "expired"
                                 ? "warning"
-                                : "secondary"
+                                : "neutral"
                           }
                         >
                           {statusLabels[status]}

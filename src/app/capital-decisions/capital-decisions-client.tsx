@@ -1,5 +1,5 @@
 import { Button, LayerCard } from "@nocoo/basalt";
-import { Badge } from "@nocoo/basalt/components/badge";
+import { Badge, type BadgeTone, type BadgeVariant } from "@nocoo/basalt/components/badge";
 import { PageHeader } from "@nocoo/basalt/components/page-header";
 import {
   Table,
@@ -54,11 +54,16 @@ const URGENCY_ORDER: Record<string, number> = { high: 0, medium: 1, low: 2 };
 
 const URGENCY_CONFIG: Record<
   string,
-  { label: string; variant: "destructive" | "default" | "secondary"; icon: typeof AlertTriangle }
+  {
+    label: string;
+    tone: BadgeTone;
+    variant?: BadgeVariant;
+    icon: typeof AlertTriangle;
+  }
 > = {
-  high: { label: "紧急", variant: "destructive", icon: AlertTriangle },
-  medium: { label: "即将", variant: "default", icon: Clock },
-  low: { label: "正常", variant: "secondary", icon: CheckCircle },
+  high: { label: "紧急", tone: "danger", variant: "soft", icon: AlertTriangle },
+  medium: { label: "即将", tone: "neutral", variant: "solid", icon: Clock },
+  low: { label: "正常", tone: "neutral", variant: "soft", icon: CheckCircle },
 };
 
 export function CapitalDecisionsClient({
@@ -131,7 +136,7 @@ export function CapitalDecisionsClient({
             className="gap-2"
           >
             {key === "all" ? "全部" : (URGENCY_CONFIG[key]?.label ?? key)}
-            <Badge variant="secondary">{count}</Badge>
+            <Badge variant="soft">{count}</Badge>
           </Button>
         );
       })}
@@ -273,7 +278,10 @@ export function CapitalDecisionsClient({
                     return (
                       <TableRow key={d.unitCode}>
                         <TableCell>
-                          <Badge variant={config?.variant ?? "secondary"}>
+                          <Badge
+                            tone={config?.tone ?? "neutral"}
+                            variant={config?.variant ?? "soft"}
+                          >
                             {config?.label ?? d.urgency}
                           </Badge>
                         </TableCell>

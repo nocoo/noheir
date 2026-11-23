@@ -46,7 +46,7 @@ export function SettingsClient({ preferences }: SettingsClientProps) {
       if (result.success) {
         toast.success("设置已保存");
         revalidator.revalidate();
-      } else toast.error(result.error);
+      } else toast.danger(result.error);
     });
   };
 

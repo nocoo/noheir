@@ -32,7 +32,7 @@ vi.mock("@/app/actions/recurring-expense-state-actions", () => ({
   endRecurringExpense: endMock,
 }));
 vi.mock("@nocoo/basalt/components/toast", () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
+  toast: { success: vi.fn(), danger: vi.fn() },
 }));
 
 import { CalendarClient, ruleToFormInitial } from "@/app/plan/calendar/calendar-client";

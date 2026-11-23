@@ -1,10 +1,10 @@
 import { Button, LayerCard } from "@nocoo/basalt";
+import { ChartTooltip } from "@nocoo/basalt/components/chart";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@nocoo/basalt/components/collapsible";
-import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
 import { PageHeader } from "@nocoo/basalt/components/page-header";
 import {
   Table,
@@ -163,11 +163,7 @@ export function LiquidityClient({
                     content={({ active, payload, label }) => {
                       if (!active || !payload?.length) return null;
                       return (
-                        <div
-                          className={overlayPanelClass(
-                            "px-basalt-card-sm py-basalt-space-lg text-basalt-sm",
-                          )}
-                        >
+                        <ChartTooltip className="text-basalt-sm" style={{ maxWidth: "none" }}>
                           <p className="mb-1 font-medium">{String(label ?? "")}</p>
                           {payload.map((entry) => (
                             <p
@@ -182,7 +178,7 @@ export function LiquidityClient({
                               {formatCurrencyFull(Number(entry.value ?? 0))}
                             </p>
                           ))}
-                        </div>
+                        </ChartTooltip>
                       );
                     }}
                   />

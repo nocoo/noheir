@@ -18,7 +18,6 @@ import {
   DialogTitle,
 } from "@nocoo/basalt/components/dialog";
 import { Input } from "@nocoo/basalt/components/input";
-import { InputArea } from "@nocoo/basalt/components/input-area";
 import { Label } from "@nocoo/basalt/components/label";
 import {
   Select,
@@ -28,6 +27,7 @@ import {
   SelectValue,
 } from "@nocoo/basalt/components/select";
 import { Separator } from "@nocoo/basalt/components/separator";
+import { Textarea } from "@nocoo/basalt/components/textarea";
 import { toast } from "@nocoo/basalt/components/toast";
 import { Check, ChevronsUpDown, ExternalLink, Package, Plus, X, XIcon } from "@nocoo/basalt/icons";
 import { useMemo, useState, useTransition } from "react";
@@ -212,7 +212,7 @@ function UnitEditorForm({
   // Handle quick product creation
   const handleQuickCreateProduct = () => {
     if (!newProductName.trim()) {
-      toast.error("请输入产品名称");
+      toast.danger("请输入产品名称");
       return;
     }
 
@@ -234,7 +234,7 @@ function UnitEditorForm({
         // Note: The new product won't appear in the list until page refreshes
         // But it's already selected by ID
       } else {
-        toast.error(result.error);
+        toast.danger(result.error);
       }
     });
   };
@@ -244,19 +244,19 @@ function UnitEditorForm({
     e.preventDefault();
 
     if (!unitCode.trim()) {
-      toast.error("请输入单位编号");
+      toast.danger("请输入单位编号");
       return;
     }
     if (!amount || Number(amount) <= 0) {
-      toast.error("请输入有效金额");
+      toast.danger("请输入有效金额");
       return;
     }
     if (!strategy) {
-      toast.error("请选择策略");
+      toast.danger("请选择策略");
       return;
     }
     if (!tactics) {
-      toast.error("请选择战术");
+      toast.danger("请选择战术");
       return;
     }
 
@@ -280,7 +280,7 @@ function UnitEditorForm({
         onSuccess();
         onOpenChange(false);
       } else {
-        toast.error(result.error);
+        toast.danger(result.error);
       }
     });
   };
@@ -616,7 +616,7 @@ function UnitEditorForm({
             <Label htmlFor="note" className="text-xs">
               备注
             </Label>
-            <InputArea
+            <Textarea
               id="note"
               value={note}
               onChange={(e) => setNote(e.target.value)}

@@ -1,5 +1,5 @@
 import { Button, LayerCard } from "@nocoo/basalt";
-import { overlayPanelClass } from "@nocoo/basalt/components/overlay";
+import { ChartTooltip } from "@nocoo/basalt/components/chart";
 import { PageHeader } from "@nocoo/basalt/components/page-header";
 import {
   Select,
@@ -113,16 +113,12 @@ function DistributionPie({
                     const d = payload[0]?.payload as DistributionItem | undefined;
                     if (!d) return null;
                     return (
-                      <div
-                        className={overlayPanelClass(
-                          "px-basalt-card-sm py-basalt-space-lg text-basalt-sm",
-                        )}
-                      >
+                      <ChartTooltip className="text-basalt-sm" style={{ maxWidth: "none" }}>
                         <p className="font-medium">{d.name}</p>
                         <p className="text-basalt-muted-foreground">
                           {formatCurrencyFull(d.value)} ({d.percentage.toFixed(1)}%)
                         </p>
-                      </div>
+                      </ChartTooltip>
                     );
                   }}
                 />

@@ -27,7 +27,7 @@
 //     deriveDisplayStatus (P2-C4) so we don't duplicate the rule.
 
 import { Button, Separator } from "@nocoo/basalt";
-import { Badge } from "@nocoo/basalt/components/badge";
+import { Badge, type BadgeTone, type BadgeVariant } from "@nocoo/basalt/components/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -107,14 +107,14 @@ function statusChipText(
   return STATUS_LABEL[status];
 }
 
-const STATUS_VARIANT: Record<
+const STATUS_BADGE: Record<
   RecurringExpenseDisplayStatus,
-  "default" | "secondary" | "destructive" | "outline"
+  { tone?: BadgeTone; variant?: BadgeVariant }
 > = {
-  active: "default",
-  paused: "secondary",
-  ended: "outline",
-  expired: "outline",
+  active: { variant: "solid" },
+  paused: { variant: "soft" },
+  ended: { variant: "outline" },
+  expired: { variant: "outline" },
 };
 
 /** Which action menu items apply to a given display status. Exported
@@ -152,7 +152,7 @@ async function callAction(
     toast.success(successMsg);
     onSuccess?.();
   } else {
-    toast.error(result.error ?? "操作失败");
+    toast.danger(result.error ?? "操作失败");
   }
 }
 
@@ -249,7 +249,7 @@ export function RuleList({
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <p className="truncate text-sm font-medium">{rule.name}</p>
-                <Badge variant={STATUS_VARIANT[status]} data-testid={`status-${rule.id}`}>
+                <Badge {...STATUS_BADGE[status]} data-testid={`status-${rule.id}`}>
                   {statusChipText(status, rule)}
                 </Badge>
               </div>

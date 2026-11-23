@@ -82,7 +82,7 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
         URL.revokeObjectURL(url);
         toast.success("数据已导出");
       } else {
-        toast.error(result.error);
+        toast.danger(result.error);
       }
     } finally {
       setExporting(false);
@@ -110,10 +110,10 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
         );
         revalidator.revalidate();
       } else {
-        toast.error(result.error);
+        toast.danger(result.error);
       }
     } catch {
-      toast.error("文件解析失败，请确保是有效的 JSON 备份文件");
+      toast.danger("文件解析失败，请确保是有效的 JSON 备份文件");
     } finally {
       setImporting(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -131,7 +131,7 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
         toast.success("所有数据已清除");
         revalidator.revalidate();
       } else {
-        toast.error(result.error);
+        toast.danger(result.error);
       }
       setClearOpen(false);
     });
@@ -200,7 +200,7 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
                   </p>
                   <div className="flex flex-wrap gap-1">
                     {dataSummary.totalAccounts.slice(0, 10).map((acc) => (
-                      <Badge key={acc} variant="secondary" className="text-xs">
+                      <Badge key={acc} variant="soft" className="text-xs">
                         {acc}
                       </Badge>
                     ))}
@@ -258,13 +258,13 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
                     {healthMetrics.totalRecords} 条记录
                   </Badge>
                   {healthMetrics.missingDates > 0 && (
-                    <Badge variant="destructive" className="gap-1 text-xs">
+                    <Badge tone="danger" className="gap-1 text-xs">
                       <XCircle className="size-3" />
                       {healthMetrics.missingDates} 无效日期
                     </Badge>
                   )}
                   {healthMetrics.zeroAmounts > 0 && (
-                    <Badge variant="secondary" className="gap-1 text-xs">
+                    <Badge variant="soft" className="gap-1 text-xs">
                       <AlertTriangle className="size-3" />
                       {healthMetrics.zeroAmounts} 零金额
                     </Badge>
@@ -357,7 +357,7 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
                 <CollapsibleTrigger asChild>
                   <Button variant="outline" className="w-full justify-between">
                     <div className="flex items-center gap-3">
-                      <Badge variant="default" className="text-sm font-semibold">
+                      <Badge variant="solid" className="text-sm font-semibold">
                         {stats.year}
                       </Badge>
                       <span className="text-sm text-basalt-muted-foreground">
@@ -430,7 +430,7 @@ export function ManageClient({ dataSummary, healthMetrics }: ManageClientProps) 
                         </p>
                         <div className="flex flex-wrap gap-1">
                           {stats.accounts.slice(0, 6).map((acc) => (
-                            <Badge key={acc} variant="secondary" className="text-xs">
+                            <Badge key={acc} variant="soft" className="text-xs">
                               {acc}
                             </Badge>
                           ))}

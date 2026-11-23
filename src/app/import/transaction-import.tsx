@@ -47,7 +47,7 @@ export function TransactionImport() {
   // Handle file selection
   const handleFile = async (file: File) => {
     if (!file.name.endsWith(".csv")) {
-      toast.error("请上传 CSV 格式的文件");
+      toast.danger("请上传 CSV 格式的文件");
       return;
     }
 
