@@ -1,10 +1,18 @@
-import { ContentIsland, SidebarDrawer } from "@nocoo/basalt";
+import { ContentIsland } from "@nocoo/basalt";
 import { AppHeader, AppHeaderMenuButton, ProjectLinks } from "@nocoo/basalt/components/app-header";
 import {
   AppMain,
   AppSkipLink,
   AppShell as BasaltAppShell,
 } from "@nocoo/basalt/components/app-shell";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@nocoo/basalt/components/sheet";
+import { SidebarProvider } from "@nocoo/basalt/components/sidebar";
 import { TooltipProvider } from "@nocoo/basalt/components/tooltip";
 import { Suspense, useEffect, useId, useMemo, useRef } from "react";
 import { Outlet, useLoaderData, useLocation } from "react-router";
@@ -74,21 +82,34 @@ function AppShellInner() {
         )}
 
         {isMobile && (
-          <SidebarDrawer
-            id={drawerId}
-            open={mobileOpen}
-            onOpenChange={setMobileOpen}
-            returnFocusRef={menuButton}
-            title="导航菜单"
-            description="浏览 noheir 页面"
-          >
-            <Sidebar
-              ariaLabel="主导航抽屉"
-              variant="mobile"
-              onNavigate={() => setMobileOpen(false)}
-              onDismiss={() => setMobileOpen(false)}
-            />
-          </SidebarDrawer>
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <SheetContent
+              id={drawerId}
+              data-slot="sidebar-drawer"
+              side="left"
+              showCloseButton={false}
+              className="basalt-sidebar-drawer max-h-dvh w-[var(--basalt-size-sidebar-width)] max-w-[var(--basalt-size-sidebar-width)] border-r-0 bg-basalt-background p-0 sm:p-0"
+              onCloseAutoFocus={(event) => {
+                if (menuButton.current) {
+                  event.preventDefault();
+                  menuButton.current.focus();
+                }
+              }}
+            >
+              <SheetHeader className="sr-only">
+                <SheetTitle>导航菜单</SheetTitle>
+                <SheetDescription>浏览 noheir 页面</SheetDescription>
+              </SheetHeader>
+              <SidebarProvider collapsed={false}>
+                <Sidebar
+                  ariaLabel="主导航抽屉"
+                  variant="mobile"
+                  onNavigate={() => setMobileOpen(false)}
+                  onDismiss={() => setMobileOpen(false)}
+                />
+              </SidebarProvider>
+            </SheetContent>
+          </Sheet>
         )}
 
         <AppMain>
