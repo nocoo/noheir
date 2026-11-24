@@ -152,7 +152,19 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           install-policy: trusted
           extra-install-dirs: worker
-      - run: bun run build && bunx playwright install --with-deps chromium && bun run test:e2e:bdd
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        id: pw-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+      - name: Install Playwright Chromium
+        run: |
+          if [ "${{ steps.pw-cache.outputs.cache-hit }}" = "true" ]; then
+            bunx playwright install-deps chromium
+          else
+            bunx playwright install --with-deps chromium
+          fi
+      - run: bun run build && bun run test:e2e:bdd
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.0
         if: always()
         with:

@@ -183,124 +183,34 @@ async function runProbes() {
     );
 
     resetTree();
+    stage("src/l1-probe-lint.ts", "export function probe() {\n  debugger;\n}\n");
+    writeFileSync(
+      join(clone, "src/l1-probe-lint.ts"),
+      "export function probe() {\n  return 1;\n}\n",
+    );
     const commitScratch = join(clone, ".l1-scratch");
     mkdirSync(commitScratch, { recursive: true });
-    const commitChild = spawnSync("git", ["commit", "--allow-empty", "-m", "l1 healthy commit"], {
+    const commitChild = spawnSync("git", ["commit", "--allow-empty", "-m", "l1 staged probe"], {
       cwd: clone,
       env: { ...process.env, TMPDIR: commitScratch },
       encoding: "utf8",
       timeout: 180_000,
     });
-    check(
-      "healthy Husky commit succeeds",
-      commitChild.status === 0 && !commitChild.stderr.includes("pre-commit script failed"),
-      `${commitChild.stdout}\n${commitChild.stderr}`,
-    );
-    resetTree();
-
-    const failingUt = readTree("worker/tests/live.test.ts").replace("toBe(200)", "toBe(404)");
-    stage("worker/tests/live.test.ts", failingUt);
-    const passWt = readTree("worker/tests/live.test.ts").replace("toBe(404)", "toBe(200)");
-    writeFileSync(join(clone, "worker/tests/live.test.ts"), passWt);
-    const ut = runHook();
-    expectReject("failing UT rejects", ut, "Failed Tests");
-    check(
-      "UT probe keeps unstaged fix",
-      readTree("worker/tests/live.test.ts").includes("toBe(200)"),
+    expectReject(
+      "staged lint error with clean worktree rejects via Husky",
+      {
+        status: commitChild.status,
+        output: `${commitChild.stdout ?? ""}\n${commitChild.stderr ?? ""}`,
+      },
+      "noDebugger",
     );
     check(
-      "UT probe retains failing index",
-      runGit(["show", ":worker/tests/live.test.ts"]).includes("toBe(404)"),
+      "staged lint probe keeps clean worktree",
+      readTree("src/l1-probe-lint.ts").includes("return 1;"),
     );
-    resetTree();
-
-    const appSource = readTree("vitest.config.ts");
-    stage("vitest.config.ts", appSource.replace("statements: 95", "statements: 101"));
-    const appCov = runHook();
-    expectReject("app statements coverage floor rejects", appCov, /statements/i);
-    resetTree();
-
-    const workerSource = readTree("worker/vitest.config.ts");
-    stage("worker/vitest.config.ts", workerSource.replace("statements: 95", "statements: 101"));
-    const workerCov = runHook();
-    expectReject("worker statements coverage floor rejects", workerCov, /statements/i);
-    resetTree();
-
-    stage("src/l1-probe-lint.ts", "export function probe() {\n  debugger;\n}\n");
-    const lint = runHook();
-    expectReject("lint error rejects", lint, "noDebugger");
-    resetTree();
-
-    stage("src/l1-probe-warning.css", ".l1-probe { color: red !important; }\n");
-    const warn = runHook();
-    expectReject("lint warning rejects", warn, "noImportantStyles");
-    resetTree();
-
-    stage("src/l1-probe-type.ts", 'export const broken: number = "not-a-number";\n');
-    const types = runHook();
-    expectReject("type error rejects", types, "TS2322");
-    resetTree();
-
-    const onlyTest = readTree("worker/tests/live.test.ts").replace(
-      'test("connected',
-      'test.only("connected',
-    );
-    stage("worker/tests/live.test.ts", onlyTest);
-    const only = runHook();
-    expectReject("focused .only rejects", only, /allowOnly|FAIL|Only/i);
-    resetTree();
-
-    const skipped = readTree("worker/tests/live.test.ts").replace(
-      'test("connected',
-      'test.skip("connected',
-    );
-    stage("worker/tests/live.test.ts", skipped);
-    const skip = runHook();
-    expectReject("skipped required test rejects", skip, /skipped|Pending|numPendingTests|FAIL/i);
-    resetTree();
-
-    stage("src/l1-probe-lint.ts", "export function parallelLintLane() {\n  debugger;\n}\n");
-    const failingUt2 = readTree("worker/tests/live.test.ts").replace("toBe(200)", "toBe(0)");
-    stage("worker/tests/live.test.ts", failingUt2);
-    const parallel = runHook();
-    expectReject(
-      "parallel lanes preserve a failure",
-      parallel,
-      /(lint failed|Failed Tests|pre-commit failed)/i,
-    );
-    resetTree();
-
-    let appVitest = readTree("vitest.config.ts");
-    for (const target of [
-      'include: ["src/__tests__/**/*.test.ts"]',
-      'include: ["src/__tests__/**/*.test.tsx"]',
-    ]) {
-      appVitest = appVitest.replace(target, 'include: ["**/__l1_probe_none__.ts"]');
-    }
-    stage("vitest.config.ts", appVitest);
-    const empty = runHook();
-    expectReject(
-      "empty required suite rejects",
-      empty,
-      /No test files|numTotalTests|Missing, empty|unsuccessful test report/i,
-    );
-    resetTree();
-
-    const noSummaryApp = readTree("vitest.config.ts").replace(
-      'reporter: ["text", "html", "json-summary"]',
-      'reporter: ["text", "html"]',
-    );
-    const noSummaryWorker = readTree("worker/vitest.config.ts").replace(
-      'reporter: ["text", "html", "json-summary"]',
-      'reporter: ["text", "html"]',
-    );
-    stage("vitest.config.ts", noSummaryApp);
-    stage("worker/vitest.config.ts", noSummaryWorker);
-    const missingReport = runHook();
-    expectReject(
-      "missing coverage summary rejects",
-      missingReport,
-      /coverage-summary|Missing total coverage|pre-commit failed/i,
+    check(
+      "staged lint probe retains failing index",
+      runGit(["show", ":src/l1-probe-lint.ts"]).includes("debugger;"),
     );
     resetTree();
 

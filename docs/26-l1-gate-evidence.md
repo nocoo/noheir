@@ -29,12 +29,12 @@ Hooks are installed via `bun run prepare` (`core.hooksPath=.husky/_`).
 
 Recorded on `main` lineage after `bun install --frozen-lockfile`, `bun install --cwd worker --frozen-lockfile`, and `bun run prepare` (`core.hooksPath=.husky/_`).
 
-| Check               | Command                                        | Exit | Wall time                              |
-| ------------------- | ---------------------------------------------- | ---- | -------------------------------------- |
-| Healthy hook (cold) | `sh .husky/pre-commit`                         | 0    | 23.59s                                 |
-| Healthy hook (warm) | `sh .husky/pre-commit`                         | 0    | 22.77s                                 |
-| Helper invariants   | `python3 -B scripts/pre-commit.py --self-test` | 0    | under 1s                               |
-| Rejection matrix    | `bun run test:l1-gate`                         | 0    | about 8m (disposable clone; cleans up) |
+| Check               | Command                                        | Exit | Wall time                               |
+| ------------------- | ---------------------------------------------- | ---- | --------------------------------------- |
+| Healthy hook (cold) | `sh .husky/pre-commit`                         | 0    | 23.59s                                  |
+| Healthy hook (warm) | `sh .husky/pre-commit`                         | 0    | 22.77s                                  |
+| Helper invariants   | `python3 -B scripts/pre-commit.py --self-test` | 0    | under 1s                                |
+| Contract probes     | `bun run test:l1-gate`                         | 0    | under 20s (disposable clone; cleans up) |
 
 Four-metric coverage from a healthy cold run (index snapshot, Vitest `json-summary` parsed by `scripts/pre-commit.py`):
 
@@ -45,22 +45,13 @@ Four-metric coverage from a healthy cold run (index snapshot, Vitest `json-summa
 
 Parallel lanes in the healthy cold run: `lint` 0, `typecheck` 0, `worker tests and coverage` 0, `app tests and coverage` 0; final line `L1 index snapshot passed in 23.22s`.
 
-## Rejection Matrix (`bun run test:l1-gate` / CI `l1-hook-verify`)
+## Contract Probes (`bun run test:l1-gate` / CI `l1-hook-verify`)
 
-`bun run test:l1-gate` exercises real Husky on an isolated `git clone` with symlinked `node_modules`:
+`bun run test:l1-gate` exercises real Husky on an isolated `git clone` with symlinked `node_modules` via fast fail-fast contract probes (full 4-metric coverage floor enforcement is verified by `l1-unit` and `scripts/pre-commit.py --self-test`):
 
-- Healthy index and commit
-- Rejects failing unit test
-- Each coverage metric floor (8 Vitest threshold probes across App and Worker)
-- Biome error and warning
-- `tsc` error
-- `.only` and `skip`
-- Staged-bad / unstaged-good index mismatch
-- Parallel multi-lane failure
-- Empty test suite
-- Missing `coverage-summary.json`
-- Missing `bun`
-- `NOHEIR_L1_TIMEOUT_SEC` budget
-- `SIGINT` interruption
-
-Malformed or below-floor reports and process-group cleanup invariants are additionally covered by `scripts/pre-commit.py --self-test`.
+- `scripts/pre-commit.py --self-test` (missing/empty/skipped test reports, missing/malformed/below-floor coverage across all 4 metrics, dependency symlinks, process-group reaper)
+- `scripts/pre-commit.py --cleanup-test` (descendant process-group cleanup on leader exit)
+- Real Husky `git commit` with staged Biome lint error and clean worktree (verifies fail-fast rejection, worktree preservation, and staged index retention)
+- Missing `bun` on `PATH`
+- `NOHEIR_L1_TIMEOUT_SEC` budget enforcement
+- `SIGINT` interruption and unchanged local `core.hooksPath`

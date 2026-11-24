@@ -109,6 +109,19 @@ def self_test():
         assert (snapshot / "node_modules" / "pkg").is_symlink()
         assert (snapshot / "node_modules" / "local-package").resolve() == (snapshot / "workspace").resolve()
         report = Path(directory) / "tests.json"
+        try:
+            check_tests(report)
+        except FileNotFoundError:
+            pass
+        else:
+            raise AssertionError("Missing test report was accepted")
+        report.write_text(json.dumps({"success": True, "numTotalTests": 0, "numPassedTests": 0, "numFailedTests": 0, "numPendingTests": 0, "numTodoTests": 0}))
+        try:
+            check_tests(report)
+        except RuntimeError:
+            pass
+        else:
+            raise AssertionError("Empty test report was accepted")
         report.write_text(json.dumps({"success": True, "numTotalTests": 1, "numPassedTests": 1, "numFailedTests": 0, "numPendingTests": 0, "numTodoTests": 0}))
         check_tests(report)
         report.write_text(json.dumps({"success": True, "numTotalTests": 1, "numPassedTests": 0, "numFailedTests": 0, "numPendingTests": 1, "numTodoTests": 0}))
@@ -118,6 +131,19 @@ def self_test():
             pass
         else:
             raise AssertionError("Skipped test report was accepted")
+        try:
+            check_coverage(Path(directory) / "missing-coverage.json")
+        except FileNotFoundError:
+            pass
+        else:
+            raise AssertionError("Missing coverage summary was accepted")
+        report.write_text(json.dumps({"other": {}}))
+        try:
+            check_coverage(report)
+        except RuntimeError:
+            pass
+        else:
+            raise AssertionError("Coverage summary without total was accepted")
         report.write_text(json.dumps({"total": {key: {"total": 20, "covered": 19, "pct": 95} for key in METRICS}}))
         check_coverage(report)
         for metric in METRICS:

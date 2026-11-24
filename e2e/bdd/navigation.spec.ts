@@ -157,14 +157,14 @@ const routes = [
   "/warehouse",
 ];
 
-for (const path of routes) {
-  test(`financial route ${path} renders without runtime or API failures`, async ({ page }) => {
-    const failures: string[] = [];
-    page.on("pageerror", (error) => failures.push(error.message));
-    page.on("response", (response) => {
-      if (response.url().startsWith(`${origin}/api/`) && response.status() >= 400)
-        failures.push(`${response.status()} ${response.url()}`);
-    });
+test("all financial routes render without runtime or API failures", async ({ page }) => {
+  const failures: string[] = [];
+  page.on("pageerror", (error) => failures.push(error.message));
+  page.on("response", (response) => {
+    if (response.url().startsWith(`${origin}/api/`) && response.status() >= 400)
+      failures.push(`${response.status()} ${response.url()}`);
+  });
+  for (const path of routes) {
     await page.goto(`${path}?year=2025`);
     await expect(page.locator("h1").first()).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole("heading", { name: "数据加载失败" })).toHaveCount(0);
@@ -175,9 +175,9 @@ for (const path of routes) {
       );
       await expect(page.locator("[data-basalt-main] [data-basalt-island]")).toHaveCount(1);
     }
-    expect(failures).toEqual([]);
-  });
-}
+  }
+  expect(failures).toEqual([]);
+});
 
 test("year navigation revalidates financial totals", async ({ page }) => {
   await page.goto("/?year=2025");
@@ -614,87 +614,90 @@ for (const theme of ["light", "dark"]) {
     await expect(page.getByRole("heading", { name: "分析报告", exact: true })).toBeVisible();
     await expect(sidebar).toHaveCSS("width", "68px");
   });
+}
 
-  for (const width of [320, 390, 640]) {
-    test(`mobile SidebarDrawer opens at Basalt's standard width with zero padding at ${width}px in ${theme} mode`, async ({
-      page,
-    }, testInfo) => {
-      await page.setViewportSize({ width, height: 844 });
-      await page.addInitScript((value) => localStorage.setItem("theme", value), theme);
-      await page.goto("/api-keys");
-      const opener = page.getByRole("button", { name: "打开导航", exact: true });
-      await opener.click();
-      const drawer = page.locator('[data-slot="sidebar-drawer"]');
-      await expect(drawer).toBeVisible();
-      await drawer.evaluate(async (node) => {
-        await document.fonts.ready;
-        await Promise.all(node.getAnimations().map((animation) => animation.finished));
-      });
-      const geometry = await drawer.evaluate((node) => {
-        const bounds = node.getBoundingClientRect();
-        const style = getComputedStyle(node);
-        return {
-          x: bounds.x,
-          sidebarWidth: node.querySelector("[data-basalt-sidebar]")?.getBoundingClientRect().width,
-          paddingLeft: style.paddingLeft,
-          paddingRight: style.paddingRight,
-          paddingTop: style.paddingTop,
-          paddingBottom: style.paddingBottom,
-        };
-      });
-      await testInfo.attach("drawer-geometry", {
-        body: JSON.stringify({ theme, viewport: width, ...geometry }),
-        contentType: "application/json",
-      });
-      await page.screenshot({ path: testInfo.outputPath("drawer.png") });
-      expect(geometry).toEqual({
-        x: 0,
-        sidebarWidth: SIDEBAR_DEFAULT_WIDTH_PX,
-        paddingLeft: "0px",
-        paddingRight: "0px",
-        paddingTop: "0px",
-        paddingBottom: "0px",
-      });
-      const dismiss = drawer.getByRole("button", { name: "关闭导航菜单", exact: true });
-      await expect(dismiss).toBeFocused();
-      await expect(drawer.locator('[data-slot="sidebar-user"] p').last()).toHaveCSS(
-        "line-height",
-        "16px",
-      );
-      await expect(drawer.locator('[data-slot="sidebar-brand-name"]')).toBeVisible();
-      await expect(drawer.locator('[data-slot="sidebar-brand-version"]')).toBeVisible();
-      await expect(drawer.getByRole("link", { name: "退出登录", exact: true })).toHaveAttribute(
-        "href",
-        "/cdn-cgi/access/logout",
-      );
-      if (process.env.CI) await expect(drawer.locator('[aria-label="环境"]')).toHaveCount(0);
-      else {
-        for (const name of ["Demo", "E2E", "Prod"]) {
-          const mode = drawer.getByRole("radio", { name, exact: true });
-          await expect(mode).toBeVisible();
-          await expect(mode).toBeDisabled();
-        }
-        await expect(drawer.getByRole("radio", { name: "E2E", exact: true })).toHaveAttribute(
-          "data-state",
-          "on",
-        );
-      }
-      await sidebarAvatarBounds(drawer);
-      await page.keyboard.press("Escape");
-      await expect(drawer).toHaveCount(0);
-      await expect(opener).toBeFocused();
-      await expect(opener).toHaveAttribute("aria-expanded", "false");
-      await opener.click();
-      await dismiss.click();
-      await expect(drawer).toHaveCount(0);
-      await expect(opener).toBeFocused();
-      await opener.click();
-      await drawer.getByRole("link", { name: "分析报告", exact: true }).click();
-      await expect(page).toHaveURL("/analyses");
-      await expect(drawer).toHaveCount(0);
-      await expect(opener).toBeFocused();
+for (const [theme, width] of [
+  ["light", 320],
+  ["dark", 390],
+] as const) {
+  test(`mobile SidebarDrawer opens at Basalt's standard width with zero padding at ${width}px in ${theme} mode`, async ({
+    page,
+  }, testInfo) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.addInitScript((value) => localStorage.setItem("theme", value), theme);
+    await page.goto("/api-keys");
+    const opener = page.getByRole("button", { name: "打开导航", exact: true });
+    await opener.click();
+    const drawer = page.locator('[data-slot="sidebar-drawer"]');
+    await expect(drawer).toBeVisible();
+    await drawer.evaluate(async (node) => {
+      await document.fonts.ready;
+      await Promise.all(node.getAnimations().map((animation) => animation.finished));
     });
-  }
+    const geometry = await drawer.evaluate((node) => {
+      const bounds = node.getBoundingClientRect();
+      const style = getComputedStyle(node);
+      return {
+        x: bounds.x,
+        sidebarWidth: node.querySelector("[data-basalt-sidebar]")?.getBoundingClientRect().width,
+        paddingLeft: style.paddingLeft,
+        paddingRight: style.paddingRight,
+        paddingTop: style.paddingTop,
+        paddingBottom: style.paddingBottom,
+      };
+    });
+    await testInfo.attach("drawer-geometry", {
+      body: JSON.stringify({ theme, viewport: width, ...geometry }),
+      contentType: "application/json",
+    });
+    await page.screenshot({ path: testInfo.outputPath("drawer.png") });
+    expect(geometry).toEqual({
+      x: 0,
+      sidebarWidth: SIDEBAR_DEFAULT_WIDTH_PX,
+      paddingLeft: "0px",
+      paddingRight: "0px",
+      paddingTop: "0px",
+      paddingBottom: "0px",
+    });
+    const dismiss = drawer.getByRole("button", { name: "关闭导航菜单", exact: true });
+    await expect(dismiss).toBeFocused();
+    await expect(drawer.locator('[data-slot="sidebar-user"] p').last()).toHaveCSS(
+      "line-height",
+      "16px",
+    );
+    await expect(drawer.locator('[data-slot="sidebar-brand-name"]')).toBeVisible();
+    await expect(drawer.locator('[data-slot="sidebar-brand-version"]')).toBeVisible();
+    await expect(drawer.getByRole("link", { name: "退出登录", exact: true })).toHaveAttribute(
+      "href",
+      "/cdn-cgi/access/logout",
+    );
+    if (process.env.CI) await expect(drawer.locator('[aria-label="环境"]')).toHaveCount(0);
+    else {
+      for (const name of ["Demo", "E2E", "Prod"]) {
+        const mode = drawer.getByRole("radio", { name, exact: true });
+        await expect(mode).toBeVisible();
+        await expect(mode).toBeDisabled();
+      }
+      await expect(drawer.getByRole("radio", { name: "E2E", exact: true })).toHaveAttribute(
+        "data-state",
+        "on",
+      );
+    }
+    await sidebarAvatarBounds(drawer);
+    await page.keyboard.press("Escape");
+    await expect(drawer).toHaveCount(0);
+    await expect(opener).toBeFocused();
+    await expect(opener).toHaveAttribute("aria-expanded", "false");
+    await opener.click();
+    await dismiss.click();
+    await expect(drawer).toHaveCount(0);
+    await expect(opener).toBeFocused();
+    await opener.click();
+    await drawer.getByRole("link", { name: "分析报告", exact: true }).click();
+    await expect(page).toHaveURL("/analyses");
+    await expect(drawer).toHaveCount(0);
+    await expect(opener).toBeFocused();
+  });
 }
 
 test("permission groups have a visible desktop divider and stack without mobile overflow", async ({

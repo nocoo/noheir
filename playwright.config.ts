@@ -5,8 +5,8 @@ export default defineConfig({
   fullyParallel: false,
   forbidOnly: true,
   retries: 0,
-  workers: 1,
-  reporter: "html",
+  workers: process.env.CI ? 2 : 1,
+  reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "html",
   use: { baseURL: "http://127.0.0.1:27004", trace: "retain-on-failure", headless: true },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
