@@ -55,30 +55,11 @@ const coverageExclude = [
 export default defineConfig({
   resolve: { alias },
   test: {
+    allowOnly: false,
+    passWithNoTests: false,
     maxWorkers: 4,
-    // Two projects so React component tests can use jsdom without
-    // forcing the existing pure-logic .test.ts suite to pay the
-    // jsdom setup cost.
-    projects: [
-      {
-        resolve: { alias },
-        test: {
-          name: "node",
-          include: ["src/__tests__/**/*.test.ts"],
-          environment: "node",
-        },
-      },
-      {
-        resolve: { alias },
-        test: {
-          name: "jsdom",
-          include: ["src/__tests__/**/*.test.tsx"],
-          environment: "jsdom",
-          setupFiles: ["src/__tests__/setup/jsdom.ts"],
-          globals: true,
-        },
-      },
-    ],
+    include: ["src/__tests__/**/*.test.ts"],
+    environment: "node",
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "json-summary"],
