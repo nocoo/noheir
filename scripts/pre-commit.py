@@ -120,13 +120,16 @@ def self_test():
             raise AssertionError("Skipped test report was accepted")
         report.write_text(json.dumps({"total": {key: {"total": 20, "covered": 19, "pct": 95} for key in METRICS}}))
         check_coverage(report)
-        report.write_text(json.dumps({"total": {key: {"total": 100, "covered": 94, "pct": 94} for key in METRICS}}))
-        try:
-            check_coverage(report)
-        except RuntimeError:
-            pass
-        else:
-            raise AssertionError("Below-floor coverage was accepted")
+        for metric in METRICS:
+            bad = {key: {"total": 100, "covered": 95, "pct": 95} for key in METRICS}
+            bad[metric] = {"total": 100, "covered": 94, "pct": 94}
+            report.write_text(json.dumps({"total": bad}))
+            try:
+                check_coverage(report)
+            except RuntimeError:
+                pass
+            else:
+                raise AssertionError(f"Below-floor {metric} coverage was accepted")
         report.write_text(json.dumps({"total": {key: {"total": 100, "covered": 95, "pct": float("nan")} for key in METRICS}}))
         try:
             check_coverage(report)
@@ -175,9 +178,11 @@ def terminate(processes):
             os.killpg(process.pid, signal.SIGTERM)
         except ProcessLookupError:
             pass
-    # Keep active leaders unreaped until KILL to retain process-group ownership.
+    # Poll briefly for graceful TERM exit before escalating to KILL.
     if active:
-        time.sleep(3)
+        deadline = time.monotonic() + 3.0
+        while time.monotonic() < deadline and any(p.poll() is None for p in active):
+            time.sleep(0.05)
     for process in active:
         try:
             os.killpg(process.pid, signal.SIGKILL)

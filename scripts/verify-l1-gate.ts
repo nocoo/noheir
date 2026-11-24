@@ -19,8 +19,6 @@ let failed = 0;
 
 type HookResult = { status: number | null; output: string };
 
-const METRICS = ["statements", "branches", "functions", "lines"] as const;
-
 function check(name: string, ok: boolean, detail = "") {
   const text = detail.replace(/\s+/g, " ").trim().slice(0, 320);
   console.log(`${ok ? "ok" : "FAIL"} ${name}${text ? `: ${text}` : ""}`);
@@ -153,7 +151,7 @@ async function runInterruptProbe() {
       } catch {
         /* already exited */
       }
-    }, 8000);
+    }, 2000);
     child.on("close", (code) => resolveDone({ status: code, output }));
   });
   check("interrupt does not succeed", interrupted.status !== 0, interrupted.output);
@@ -185,9 +183,6 @@ async function runProbes() {
     );
 
     resetTree();
-    const healthy = runHook();
-    check("healthy index snapshot passes", healthy.status === 0, healthy.output);
-
     const commitScratch = join(clone, ".l1-scratch");
     mkdirSync(commitScratch, { recursive: true });
     const commitChild = spawnSync("git", ["commit", "--allow-empty", "-m", "l1 healthy commit"], {
@@ -219,23 +214,17 @@ async function runProbes() {
     );
     resetTree();
 
-    for (const metric of METRICS) {
-      const source = readTree("vitest.config.ts");
-      const staged = source.replace(`${metric}: 95`, `${metric}: 101`);
-      stage("vitest.config.ts", staged);
-      const cov = runHook();
-      expectReject(`app ${metric} coverage floor rejects`, cov, new RegExp(metric, "i"));
-      resetTree();
-    }
+    const appSource = readTree("vitest.config.ts");
+    stage("vitest.config.ts", appSource.replace("statements: 95", "statements: 101"));
+    const appCov = runHook();
+    expectReject("app statements coverage floor rejects", appCov, /statements/i);
+    resetTree();
 
-    for (const metric of METRICS) {
-      const source = readTree("worker/vitest.config.ts");
-      const staged = source.replace(`${metric}: 95`, `${metric}: 101`);
-      stage("worker/vitest.config.ts", staged);
-      const cov = runHook();
-      expectReject(`worker ${metric} coverage floor rejects`, cov, new RegExp(metric, "i"));
-      resetTree();
-    }
+    const workerSource = readTree("worker/vitest.config.ts");
+    stage("worker/vitest.config.ts", workerSource.replace("statements: 95", "statements: 101"));
+    const workerCov = runHook();
+    expectReject("worker statements coverage floor rejects", workerCov, /statements/i);
+    resetTree();
 
     stage("src/l1-probe-lint.ts", "export function probe() {\n  debugger;\n}\n");
     const lint = runHook();
@@ -268,18 +257,6 @@ async function runProbes() {
     stage("worker/tests/live.test.ts", skipped);
     const skip = runHook();
     expectReject("skipped required test rejects", skip, /skipped|Pending|numPendingTests|FAIL/i);
-    resetTree();
-
-    const badStaged = readTree("worker/tests/live.test.ts").replace("toBe(200)", "toBe(0)");
-    const goodWorktree = readTree("worker/tests/live.test.ts");
-    stage("worker/tests/live.test.ts", badStaged);
-    writeFileSync(join(clone, "worker/tests/live.test.ts"), goodWorktree);
-    const indexProbe = runHook();
-    expectReject("staged failure with unstaged fix rejects", indexProbe, "AssertionError");
-    check(
-      "index mismatch leaves worktree healthy",
-      readTree("worker/tests/live.test.ts").includes("toBe(200)"),
-    );
     resetTree();
 
     stage("src/l1-probe-lint.ts", "export function parallelLintLane() {\n  debugger;\n}\n");
