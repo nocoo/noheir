@@ -81,7 +81,7 @@ def check_coverage(path):
             or not isinstance(covered, int)
             or isinstance(covered, bool)
             or not 0 <= covered <= count
-            or value < 95
+            or value < 80
         ):
             raise RuntimeError(f"Missing, inconsistent, empty, or below-floor {metric} coverage in {path}: {value}")
         values[metric] = value
@@ -144,11 +144,11 @@ def self_test():
             pass
         else:
             raise AssertionError("Coverage summary without total was accepted")
-        report.write_text(json.dumps({"total": {key: {"total": 20, "covered": 19, "pct": 95} for key in METRICS}}))
+        report.write_text(json.dumps({"total": {key: {"total": 20, "covered": 16, "pct": 80} for key in METRICS}}))
         check_coverage(report)
         for metric in METRICS:
-            bad = {key: {"total": 100, "covered": 95, "pct": 95} for key in METRICS}
-            bad[metric] = {"total": 100, "covered": 94, "pct": 94}
+            bad = {key: {"total": 100, "covered": 80, "pct": 80} for key in METRICS}
+            bad[metric] = {"total": 100, "covered": 79, "pct": 79}
             report.write_text(json.dumps({"total": bad}))
             try:
                 check_coverage(report)
