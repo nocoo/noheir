@@ -45,7 +45,7 @@ Four-metric coverage from a healthy cold run (index snapshot, Vitest `json-summa
 
 Parallel lanes in the healthy cold run: `lint` 0, `typecheck` 0, `worker tests and coverage` 0, `app tests and coverage` 0; final line `L1 index snapshot passed in 23.22s`.
 
-## Contract Probes (`bun run test:l1-gate` / CI `l1-hook-verify`)
+## Contract Probes (`bun run test:l1-gate` / CI `l1-precommit-gate`)
 
 `bun run test:l1-gate` exercises real Husky on an isolated `git clone` with symlinked `node_modules` via fast fail-fast contract probes (full 4-metric coverage floor enforcement is verified by `l1-unit` and `scripts/pre-commit.py --self-test`):
 
