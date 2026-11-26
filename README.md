@@ -73,7 +73,7 @@ scripts/             隔离测试夹具与发布/部署脚本
 
 `main` 分支 CI 通过后会触发固定版本的原生 Worker 发布工作流，校验 CI 源 commit 并将 UI 与 API 一同部署；生产校验在打 tag 前会核对精确 `build_sha`、根包版本、D1 连通性与认证边界。
 
-GitHub 环境 `noheir / production` 需配置 `CLOUDFLARE_API_TOKEN` 与 `CLOUDFLARE_ACCOUNT_ID`。发布入口为 `bun run release -- major`（或 `minor` / `patch`）。切换或清理前请阅读 [部署、回滚与旧版清理指南](docs/04-run.md)；清理旧 VPS 与旧 Worker 时严禁删除现有的 `noheir-db`。
+GitHub 环境 `production` 需配置 `CLOUDFLARE_API_TOKEN` 与 `CLOUDFLARE_ACCOUNT_ID`。发布入口为 `bun run release -- major`（或 `minor` / `patch`）。切换或清理前请阅读 [部署、回滚与旧版清理指南](docs/04-run.md)；清理旧 VPS 与旧 Worker 时严禁删除现有的 `noheir-db`。
 
 ## 测试
 

@@ -73,7 +73,7 @@ scripts/             Isolated test fixtures and release/deployment tools
 
 Successful main CI triggers the pinned native Worker release workflow. The workflow verifies the CI source commit and deploys UI/API together. Production verification checks the exact `build_sha`, root package version, D1 connectivity and authentication boundaries before release tagging.
 
-GitHub environment `noheir / production` needs `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. `bun run release -- major` (or `minor` / `patch`) is the release entrypoint. See [deployment, rollback and legacy cleanup](04-run.md) before cutover. The existing `noheir-db` must not be deleted when retiring the old VPS and Worker.
+GitHub environment `production` needs `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. `bun run release -- major` (or `minor` / `patch`) is the release entrypoint. See [deployment, rollback and legacy cleanup](04-run.md) before cutover. The existing `noheir-db` must not be deleted when retiring the old VPS and Worker.
 
 ## Tests
 

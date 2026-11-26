@@ -128,7 +128,7 @@ successful main-push CI commit and still the main branch tip before deployment.
 No Docker image, VPS SSH or separate API deployment is involved.
 
 Set `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` in GitHub environment
-`noheir / production`. The deploy token needs the scoped Workers/D1/domain
+`production`. The deploy token needs the scoped Workers/D1/domain
 permissions required by the configured account and zone. Do not commit tokens.
 
 ```sh

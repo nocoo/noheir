@@ -22,7 +22,7 @@ jobs:
       (github.event.workflow_run.conclusion == 'success' &&
        github.event.workflow_run.event == 'push' &&
        github.event.workflow_run.head_repository.full_name == github.repository)
-    uses: nocoo/base-ci/.github/workflows/deploy-worker.yml@bfaac83b5a4d5c7ed26320bb5b09f3ca0a01932c # v2026.18
+    uses: nocoo/base-ci/.github/workflows/deploy-worker.yml@98fc023423f82b010f17e0ebbc9dd580fe68736a # v2026.19
     with:
       required-quality-check: "quality / Z1: Gate"
       source-run-id: ${{ github.event_name == 'workflow_run' && format('{0}', github.event.workflow_run.id) || inputs.ci-run-id }}
@@ -30,9 +30,8 @@ jobs:
       node-version: "26.12.1"
       install-policy: trusted
       deploy-script: bun run deploy
-      environment: noheir / production
+      environment: production
       concurrency-group: deploy-noheir-production
       verify-command: bun run verify:production
     secrets:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
