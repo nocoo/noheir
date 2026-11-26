@@ -46,7 +46,7 @@ See [Local Envs](docs/24-local-environments.md) for `dev:built`, `test:environme
 
 Follows `system1-quality`; CI slots live in `.github/workflows/quality-slots.yml` (`quality / Z1: Gate` required on `main`). Status terms: `enforced`, `planned`, `manual`, `N/A`.
 
-- **Exceptions / gaps**: `L2 Runtime` and `P1 Package` are `N/A` (Worker app covered by L3/L4, not on npm); `deploy:check` dry-run and doc alignment are `manual`.
+- **Exceptions / gaps**: `L2 Runtime` is `N/A` (Worker app covered by L3/L4); `P1 Package` verifies Worker bundling via `wrangler deploy --dry-run` reusing `B1` (`b1-dist`); `L4` (`test:e2e:bdd`) reuses `B1` (`b1-dist`); `deploy:check` dry-run and doc alignment are `manual`.
 - **Coverage & flakes**: App and Worker require >=80% on all 4 metrics in scope (Views excluded); never lower below floor, skip/focus, or mask flakes (`--repeat-each=30` or delete).
 - **Pre-commit**: `.husky/pre-commit` (`bun run prepare`) checks staged snapshots (`S1/S2/L1`, blocks `.env*`/`worker/.dev.vars`). Local probes: `bun run test:l1-gate` ([L1 gate](docs/26-l1-gate-evidence.md)).
 - **Pre-push**: `.husky/pre-push` runs `L1/S2/G2/L3` + redacted `G1` (`origin/main..HEAD`, not stdin refs); `B1` and `L4` run in CI.
