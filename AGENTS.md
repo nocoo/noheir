@@ -44,7 +44,7 @@ See [Local Envs](docs/24-local-environments.md) for `dev:built`, `test:environme
 
 ## Quality & Local Gates
 
-Follows `system1-quality`; CI slots live in `.github/workflows/quality-slots.yml` (`quality / Z1: Gate` required on `main`). Status terms: `enforced`, `planned`, `manual`, `N/A`.
+Follows `system1-quality`; CI slots live in `.github/workflows/quality-slots.yml` and unified CI/CD runs in `.github/workflows/pipeline.yml` (`quality` followed by `D1`–`D5` Worker deploy reusing `B1` `b1-dist` on `main` push; `quality / Z1: Gate` required on `main`). Status terms: `enforced`, `planned`, `manual`, `N/A`.
 
 - **Exceptions / gaps**: `L2 Runtime` is `N/A` (Worker app covered by L3/L4); `P1 Package` verifies Worker bundling via `wrangler deploy --dry-run` reusing `B1` (`b1-dist`); `L4` (`test:e2e:bdd`) reuses `B1` (`b1-dist`); `deploy:check` dry-run and doc alignment are `manual`.
 - **Coverage & flakes**: App and Worker require >=80% on all 4 metrics in scope (Views excluded); never lower below floor, skip/focus, or mask flakes (`--repeat-each=30` or delete).
