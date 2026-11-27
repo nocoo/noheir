@@ -89,8 +89,8 @@
 
 /* ========== Swapped Color Scheme (Light Mode) ========== */
 /* In swapped mode: income=red, expense=green (common in Asian markets) */
-:root.color-scheme-swapped,
-.color-scheme-swapped {
+.color-scheme-swapped,
+:root.color-scheme-swapped {
   --income: 350 89% 60%;
   --income-foreground: 210 40% 98%;
   --income-bg: 350 89% 97%;
