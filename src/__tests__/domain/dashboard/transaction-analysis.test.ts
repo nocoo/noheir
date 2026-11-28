@@ -55,6 +55,12 @@ describe("transaction-analysis domain", () => {
       "income",
     );
     expect(buildAverageMonthly(monthly, "income")).toBe(1000);
+    const expenseMonthly = buildMonthlyFiltered(
+      [{ month: "1月", income: 1000, expense: 200, balance: 800 }],
+      "expense",
+    );
+    expect(buildAverageMonthly(expenseMonthly, "expense")).toBe(200);
+    expect(buildAverageMonthly([], "expense")).toBe(0);
   });
 
   it("builds top transactions", () => {
@@ -63,7 +69,9 @@ describe("transaction-analysis domain", () => {
   });
 
   it("builds labels", () => {
-    const labels = buildTransactionLabels("expense");
-    expect(labels.total).toBe("总支出");
+    const expenseLabels = buildTransactionLabels("expense");
+    expect(expenseLabels.total).toBe("总支出");
+    const incomeLabels = buildTransactionLabels("income");
+    expect(incomeLabels.total).toBe("总收入");
   });
 });

@@ -15,4 +15,12 @@ describe("savings-rate domain", () => {
     const summary = buildSavingsRateSummary(totals, 30);
     expect(summary.annualSavingsRate).toBeGreaterThan(0);
   });
+
+  it("handles empty chart data", () => {
+    const { chartData, totals } = buildSavingsRateChartData([]);
+    expect(chartData).toEqual([]);
+    expect(totals.annualSavingsRate).toBe(0);
+    expect(totals.bestMonth).toBeNull();
+    expect(totals.worstMonth).toBeNull();
+  });
 });

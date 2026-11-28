@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { toDomainContributionLog } from "@/lib/capital-mappers";
+import { toDomainContributionLog, toUnitDisplayInfo } from "@/lib/capital-mappers";
 
 describe("toDomainContributionLog", () => {
   const base = {
@@ -41,5 +41,55 @@ describe("toDomainContributionLog", () => {
     expect(log.amount).toBe(-1000);
     expect(log.isDeleted).toBe(true);
     expect(toDomainContributionLog(base).isDeleted).toBe(false);
+  });
+});
+
+describe("toUnitDisplayInfo", () => {
+  test("maps populated unit and product fields", () => {
+    const unit = toUnitDisplayInfo({
+      id: "u1",
+      version: 2,
+      unitCode: "A01",
+      amountCents: 250000,
+      currency: "USD",
+      status: "已成立",
+      strategy: "远期理财",
+      tactics: "定期存款",
+      productId: "p1",
+      startDate: "2026-01-01",
+      endDate: "2026-12-31",
+      note: "memo",
+      availableDate: "2026-12-31",
+      availableDateOverride: "2026-11-01",
+      isAvailable: true,
+      daysUntilAvailable: 0,
+      daysUntilLocked: 10,
+      latestInvestDate: "2026-01-01",
+      product: {
+        id: "p1",
+        version: 1,
+        name: "Deposit",
+        code: "D01",
+        channel: "Bank",
+        category: "Fixed",
+        currency: "USD",
+        lockPeriodDays: 365,
+        openDays: 5,
+        cycleDays: 30,
+        annualReturnRate: 0.04,
+        isArchived: false,
+      },
+    });
+    expect(unit.amount).toBe(2500);
+    expect(unit.product?.code).toBe("D01");
+    expect(unit.availableDateOverride).toBe("2026-11-01");
+  });
+
+  test("defaults nullable fields when omitted", () => {
+    const unit = toUnitDisplayInfo({ version: 1, product: {} });
+    expect(unit.currency).toBe("CNY");
+    expect(unit.productId).toBeNull();
+    expect(unit.product?.lockPeriodDays).toBeNull();
+    expect(unit.daysUntilAvailable).toBeNull();
   });
 });

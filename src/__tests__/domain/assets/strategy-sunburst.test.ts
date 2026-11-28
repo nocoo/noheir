@@ -58,6 +58,13 @@ describe("strategy-sunburst domain", () => {
         product: makeProduct({ name: "朝朝宝" }),
       }),
       makeUnit({
+        id: "4",
+        unitCode: "A03",
+        amount: 9000,
+        strategy: "短期理财",
+        product: makeProduct({ name: "货币基金" }),
+      }),
+      makeUnit({
         id: "3",
         unitCode: "B01",
         amount: 2000,
@@ -73,11 +80,12 @@ describe("strategy-sunburst domain", () => {
     const cny = data.children?.[0];
     expect(cny?.name).toBe("人民币");
     expect(cny?.currencyCode).toBe("CNY");
-    expect(cny?.children?.length).toBe(1); // "长期理财"
+    expect(cny?.children?.length).toBe(2);
 
-    const strategy = cny?.children?.[0];
-    expect(strategy?.name).toBe("长期理财");
-    expect(strategy?.children?.length).toBe(2); // 2 products
+    const topStrategy = cny?.children?.[0];
+    expect(topStrategy?.name).toBe("短期理财");
+    expect(cny?.children?.[1]?.name).toBe("长期理财");
+    expect(cny?.children?.[1]?.children?.length).toBe(2); // 2 products
   });
 
   it("groups units without product as 未分配", () => {
